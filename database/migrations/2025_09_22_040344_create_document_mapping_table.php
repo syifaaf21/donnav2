@@ -24,6 +24,7 @@ return new class extends Migration
             $table->date('obsolete_date');
             $table->date('reminder_date');
             $table->date('deadline');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
