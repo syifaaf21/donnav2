@@ -13,14 +13,14 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with(['role', 'department'])->get();
-        return view('contents.master.user', compact('users'));
+        $roles = Role::all();
+        $departments = Department::all();
+        return view('contents.master.user', compact('users', 'roles', 'departments'));
     }
 
     public function create()
     {
-        $roles = Role::all();
-        $departments = Department::all();
-        return view('contents.master.user-create', compact('roles', 'departments'));
+        //
     }
 
     public function store(Request $request)
@@ -48,9 +48,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::all();
-        $departments = Department::all();
-        return view('contents.master.user-edit', compact('user', 'roles', 'departments'));
+        //
     }
 
     public function update(Request $request, User $user)
@@ -79,4 +77,6 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
-}
+
+
+    }

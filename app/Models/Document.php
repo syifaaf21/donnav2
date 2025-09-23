@@ -9,6 +9,13 @@ class Document extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+    'name',
+    'parent_id',
+    'department_id',
+];
+
+
     public function mapping()
     {
         return $this->hasMany(DocumentMapping::class);

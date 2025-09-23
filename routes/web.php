@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\DocumentMappingController;
+use App\Models\DocumentMapping;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,4 +21,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/users', [UserController::class, 'index'])->name('user.index');
 Route::resource('users', UserController::class);
+
+Route::get('/documents', [DocumentMappingController::class, 'index'])->name('document.index');
+Route::resource('documents', DocumentMappingController::class);
+

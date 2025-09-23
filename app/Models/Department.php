@@ -13,4 +13,10 @@ class Department extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function documentMapping ()
+    {
+        return $this->hasMany(DocumentMapping::class);
+    }
+
 }
