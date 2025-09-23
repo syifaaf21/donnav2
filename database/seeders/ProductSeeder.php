@@ -25,6 +25,15 @@ class ProductSeeder extends Seeder
             'Outside Handle',
             'Powerseat Motor Assembly',
             'ECU Board',
+            'CAP',
+            'WP',
+            'Handle',
+            'Handle1',
+            'Handle2',
+            'Frame',
+            'Back D',
+            'Seat Motor',
+            'Antenna',
         ];
 
         foreach ($products as $name) {
