@@ -1,0 +1,84 @@
+/* Sidebar styling */
+#bsbSidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid #dee2e6;
+  transition: width 0.3s ease;
+  z-index: 1040;
+}
+
+#bsbSidebar.collapsed {
+  width: 75px;
+}
+
+#bsbSidebar.collapsed .nav-link-text,
+#bsbSidebar.collapsed h6,
+#bsbSidebar.collapsed .sidebar-divider {
+  display: none !important;
+}
+
+#bsbSidebar.collapsed .sidebar-brand img {
+  width: 40px;
+}
+
+/* Collapse Button */
+.toggle-sidebar-btn {
+  position: absolute;
+  bottom: 2rem;  /* tombol collapse di bawah sidebar */
+  right: -15px;
+  border-radius: 0 4px 4px 0;
+  z-index: 1050;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+/* Adjust layout */
+body {
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+#bsbSidebar.collapsed ~ #mainContent {
+  margin-left: 70px;
+}
+
+/* Submenu styling agar tidak terlalu ke kanan dan tidak tertutup tombol */
+.sidebar-submenu {
+  margin-left: 0.5rem !important;
+  margin-right: 0.5rem !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  overflow-x: hidden; /* supaya tidak melebar keluar */
+}
+
+.sidebar-submenu .nav-link {
+  padding-left: 1rem !important; /* jarak kiri submenu */
+}
+
+/* Pastikan dropdown collapse berada di atas (tidak tertutup tombol) */
+#bsbSidebar .collapse {
+  position: relative;
+  z-index: 1;
+}
+
+#bsbSidebar h6.py-1 {
+  padding-left: 1rem;
+}
+
+/* Navbar styling adjustment */
+/* #mainNavbar {
+  height: 60px;
+  padding: 0 1rem;
+}
+#mainContent {
+  transition: margin-left 0.3s ease;
+  padding: 2rem;
+  padding-top: 5rem;
+} */
+
+
+
