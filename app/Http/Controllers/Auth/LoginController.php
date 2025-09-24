@@ -26,7 +26,7 @@ class LoginController extends Controller
         }
 
         return back()->withErrors([
-            'npk' => 'NPK atau password salah.',
+            'npk' => 'Wrong NPK or Password.',
         ])->onlyInput('npk');
     }
 }
