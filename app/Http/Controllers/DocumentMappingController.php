@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\Document;
 use App\Models\DocumentMapping;
+use App\Models\PartNumber;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DocumentMappingController extends Controller
 {
@@ -13,10 +16,11 @@ class DocumentMappingController extends Controller
      */
     public function index()
     {
-        $documentMappings = DocumentMapping::with(['document', 'partNumber', 'status', 'user'])->get();
+        $documentMappings = DocumentMapping::with(['document', 'department'])->get();
         $departments = Department::all();
+        $documents = Document::all();
 
-        return view('contents.master.document', compact('documentMappings', 'departments'));
+        return view('contents.master.document', compact('documentMappings', 'departments', 'documents'));
     }
 
     /**
@@ -54,7 +58,7 @@ class DocumentMappingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Document $document)
     {
         //
     }
@@ -62,8 +66,8 @@ class DocumentMappingController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Document $document)
     {
-        //
+       //
     }
 }

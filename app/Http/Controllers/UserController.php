@@ -29,9 +29,14 @@ class UserController extends Controller
             'name' => 'required',
             'npk' => 'required|unique:users',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
+            'password' => 'required|min:6|confirmed',
             'role_id' => 'required',
             'department_id' => 'required',
+        ], [
+            // Optional: custom error messages in English
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 6 characters.',
+            'password.confirmed' => 'Password confirmation does not match.',
         ]);
 
         User::create([
@@ -42,8 +47,7 @@ class UserController extends Controller
             'role_id' => $request->role_id,
             'department_id' => $request->department_id,
         ]);
-
-        return redirect()->route('contents.master.user.')->with('success', 'User berhasil ditambahkan.');
+        return redirect()->route('users.index')->with('success', 'User successfully added.');
     }
 
     public function edit(User $user)
@@ -53,13 +57,27 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $request->validate([
+
+        $rules = [
             'name' => 'required',
             'npk' => 'required|unique:users,npk,' . $user->id,
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role_id' => 'required',
             'department_id' => 'required',
-        ]);
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'required|min:6|confirmed';
+        }
+
+        try {
+            $validated = $request->validate($rules);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput()
+                ->with('edit_modal', $user->id);
+        }
 
         $data = $request->only(['name', 'npk', 'email', 'role_id', 'department_id']);
 
@@ -68,15 +86,14 @@ class UserController extends Controller
         }
 
         $user->update($data);
-
-        return redirect()->route('users.index')->with('success', 'User berhasil diupdate.');
+        return redirect()->route('users.index')->with('success', 'User successfully updated.');
     }
+
+
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+        return redirect()->route('users.index')->with('success', 'User successfully deleted.');
     }
-
-
 }
