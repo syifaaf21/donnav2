@@ -23,25 +23,21 @@
 </head>
 
 <body>
-    <div class="d-flex">
-        <!-- Sidebar -->
-        <x-sidebar />
+  <div class="d-flex">
+  <!-- Sidebar -->
+  <x-sidebar />
 
-        <!-- Page Content -->
-        <div id="mainContent" class="flex-grow-1 p-3">
-            @yield('content')
-        </div>
+  <!-- Page Content -->
+  <div id="mainContent" class="flex-grow-1 p-3">
+    @yield('content')
+  </div>
+</div>
 
-    </div>
-
-    <!-- ✅ Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- ✅ Custom Sidebar JS -->
-    <script src="{{ asset('js/sidebar.js') }}"></script>
-
-    <!-- ✅ Custom Scripts (optional from children views) -->
-    @stack('scripts')
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ asset('js/sidebar.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  @stack('scripts')
 </body>
 
 </html>

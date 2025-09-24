@@ -7,7 +7,7 @@
   </div>
 
   <div class="offcanvas-body pt-0 px-0">
-    <hr class="sidebar-divider mb-3">
+    <hr class="sidebar-divider mb-1">
     <ul class="navbar-nav">
       <li class="nav-item">
         <a class="nav-link p-3 {{ request()->is('/') ? 'active bg-light rounded' : '' }}" href="/">
@@ -17,7 +17,7 @@
           <span class="nav-link-text fw-bold">Dashboards</span>
         </a>
       </li>
-      <li class="nav-item mt-3">
+      <li class="nav-item mt-1">
         <h6 class="py-1 text-secondary text-uppercase fs-7">Docs</h6>
       </li>
       <li class="nav-item">
@@ -37,7 +37,7 @@
         </a>
       </li>
 
-      <hr class="sidebar-divider my-4">
+      <hr class="sidebar-divider my-2">
 
       <li class="nav-item">
         <a class="nav-link p-3 collapsed" data-bs-toggle="collapse" href="#masterExamples" role="button" aria-expanded="false" aria-controls="masterExamples">
