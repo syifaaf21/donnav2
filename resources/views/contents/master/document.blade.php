@@ -20,9 +20,9 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($documentMappings as $i => $dm)
+            @foreach($documentMappings as $dm)
             <tr>
-                <td>{{ $i + 1 }}</td>
+                <td>{{ $loop->iteration }}</td>
                 <td>{{ $dm->document->name ?? '-' }}</td>
                 <td>{{ ucfirst($dm->type) }}</td>
                 <td>{{ $dm->partNumber->number ?? '-' }}</td>
@@ -33,7 +33,7 @@
                     <form action="{{ route('document-mappings.destroy', $dm->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
                         @csrf
                         @method('DELETE')
-                        <button type="submit">🗑️ Delete</button>
+                        <button type="submit">Delete</button>
                     </form>
                 </td>
             </tr>
