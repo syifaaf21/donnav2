@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\DocumentMapping;
 use Illuminate\Http\Request;
 
@@ -13,8 +14,9 @@ class DocumentMappingController extends Controller
     public function index()
     {
         $documentMappings = DocumentMapping::with(['document', 'partNumber', 'status', 'user'])->get();
+        $departments = Department::all();
 
-        return view('document_mappings.index', compact('documentMappings'));
+        return view('contents.master.document', compact('documentMappings', 'departments'));
     }
 
     /**

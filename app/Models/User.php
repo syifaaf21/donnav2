@@ -20,8 +20,11 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'npk',
         'email',
         'password',
+        'role_id',
+        'department_id',
     ];
 
     /**
@@ -45,11 +48,11 @@ class User extends Authenticatable
 
     public function role ()
     {
-        return $this->hasMany(Role::class);
+        return $this->belongsTo(Role::class);
     }
 
     public function department ()
     {
-        return $this->hasMany(Department::class);
+        return $this->belongsTo(Department::class);
     }
 }
