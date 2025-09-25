@@ -1,33 +1,39 @@
-/* Sidebar Styling */
+/* Import Font */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+/* ===================== SIDEBAR ===================== */
 #bsbSidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 250px;  /* Lebar sidebar saat terbuka */
+  width: 250px;
   height: 100vh;
-  background: #fff;
-  border-right: 1px solid #dee2e6;
-  transition: width 0.3s ease, transform 0.3s ease;  /* Transisi perubahan lebar dan geser */
-  z-index: 1040;  /* Menjaga sidebar tetap di atas konten */
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05); /* soft shadow ke kanan */
+  background-color: transparent !important; /* Fix transparency */
+  box-shadow: none !important;
+  border-right: none !important;
+  transition: width 0.3s ease, transform 0.3s ease;
+  z-index: 1040;
+
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-color);
 }
 
-/* Sidebar collapse desktop */
+/* Collapse mode */
 #bsbSidebar.collapsed {
-  width: 90px;  /* Lebar sidebar saat collapse */
+  width: 90px;
 }
 
 #bsbSidebar.collapsed .nav-link-text,
 #bsbSidebar.collapsed h6,
 #bsbSidebar.collapsed .sidebar-divider {
-  display: none !important;  /* Sembunyikan teks dan divider saat sidebar collapse */
+  display: none !important;
 }
 
 #bsbSidebar.collapsed .sidebar-brand img {
-  width: 40px;  /* Ukuran logo saat sidebar collapse */
+  width: 40px;
 }
 
-/* Konten Sidebar */
+/* Nav content */
 #bsbSidebar .navbar-nav {
   padding-left: 10px;
 }
@@ -36,10 +42,49 @@
   margin-bottom: 5px;
 }
 
+#bsbSidebar .nav-link {
+  color: var(--text-color);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#bsbSidebar .nav-link:hover,
+#bsbSidebar .nav-link.active {
+  color: var(--accent-color);
+  background-color: rgba(0, 123, 255, 0.08);
+  border-radius: 6px;
+}
+
+#bsbSidebar .nav-link i {
+  margin-right: 8px;
+}
+
+/* Section title / divider */
+#bsbSidebar h6.py-1 {
+  padding-left: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+/* Submenu */
+.sidebar-submenu {
+  margin: 0 0.5rem;
+  padding: 0 0.5rem;
+  overflow-x: hidden;
+}
+
+.sidebar-submenu .nav-link {
+  padding-left: 1rem !important;
+}
+
 /* Collapse Button */
 .toggle-sidebar-btn {
   position: absolute;
-  bottom: 2rem;  /* Tombol collapse di bawah sidebar */
+  bottom: 2rem;
   right: -15px;
   border-radius: 0 4px 4px 0;
   z-index: 1050;
@@ -47,93 +92,43 @@
   cursor: pointer;
   background-color: #fff;
   border: 1px solid #ccc;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Konten Utama */
+/* ===================== MAIN CONTENT ===================== */
 #mainContent {
-  margin-left: 250px;  /* Margin kiri saat sidebar terbuka */
-  transition: margin-left 0.3s ease;  /* Transisi untuk pergeseran margin */
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
   padding: 1rem;
 }
 
-/* Menyelaraskan konten saat sidebar collapse */
 body.sidebar-collapsed #mainContent {
-  margin-left: 90px;  /* Margin kiri saat sidebar collapse */
+  margin-left: 90px;
 }
 
-/* Pengaturan untuk submenu */
-.sidebar-submenu {
-  margin-left: 0.5rem !important;
-  margin-right: 0.5rem !important;
-  padding-left: 0.5rem !important;
-  padding-right: 0.5rem !important;
-  overflow-x: hidden;  /* Mencegah overflow horizontal */
-}
-
-.sidebar-submenu .nav-link {
-  padding-left: 1rem !important;  /* Jarak kiri submenu */
-}
-
-/* Pastikan dropdown berada di atas konten */
-#bsbSidebar .collapse {
-  position: relative;
-  z-index: 1;
-}
-
-/* Styling untuk divider pada sidebar */
-#bsbSidebar h6.py-1 {
-  padding-left: 1rem;
-}
-
-/* Styling untuk Navbar */
-#mainNavbar {
-  height: 60px;
-  padding: 0 1rem;
-  background-color: #f8f9fa;
-  box-shadow: 0 2px 4px rgba(0,0,0,.1);
-  position: fixed;
-  top: 0;
-  left: 250px;  /* Posisi navbar saat sidebar terbuka */
-  z-index: 1030; /* Pastikan navbar berada di atas sidebar */
-  width: calc(100% - 250px);  /* Lebar navbar menyesuaikan dengan lebar sidebar */
-  transition: left 0.3s ease, width 0.3s ease;  /* Transisi saat navbar bergerak */
-}
-
-/* Navbar saat sidebar collapse */
-body.sidebar-collapsed #mainNavbar {
-  left: 90px;  /* Posisi navbar saat sidebar collapse */
-  width: calc(100% - 90px);  /* Lebar navbar menyesuaikan lebar sidebar */
-}
-
-/* Responsive Styling untuk Sidebar dan Navbar */
+/* ===================== RESPONSIVE ===================== */
 @media (max-width: 991px) {
-  /* Sidebar default disembunyikan di mobile/tablet */
   #bsbSidebar {
     width: 250px;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
 
-  /* Jika body ada class "sidebar-open" maka tampilkan sidebar */
   body.sidebar-open #bsbSidebar {
     transform: translateX(0);
-    box-shadow: 2px 0 5px rgba(0,0,0,0.15);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.15);
   }
 
-  /* Navbar full width dan posisi fixed di atas */
   #mainNavbar {
     left: 0 !important;
     width: 100% !important;
   }
 
-  /* Konten utama tanpa margin */
   #mainContent {
     margin-left: 0 !important;
-    padding-top: 70px; /* beri padding supaya tidak tertutup navbar */
+    padding-top: 70px;
   }
 
-  /* Tombol toggle sidebar di navbar */
   .toggle-sidebar-btn {
     position: fixed;
     top: 15px;

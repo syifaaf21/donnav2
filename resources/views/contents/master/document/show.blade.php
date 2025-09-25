@@ -1,136 +1,208 @@
 @extends('layouts.app')
 
 @section('content')
-    <!-- resources/views/contents/master/document/show.blade.php -->
+    <div class="container py-4">
 
-    <h1>{{ $document->name }}</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button type="button" class="btn btn-outline-primary ms-auto btn-sm" data-bs-toggle="modal"
+                data-bs-target="#createDocumentModal">
+                <i class="bi bi-plus-circle me-1"></i> Add Document
+            </button>
+        </div>
 
-    <p>Department: {{ $document->department->name }}</p>
+        <div class="card shadow-sm border-0">
+            <div class="px-3 py-3">
+                <p class="mb-0"><strong>Parent:</strong> {{ $document->name }}</p>
+                <p class="mb-0"><strong>Department:</strong> {{ $document->department->name }}</p>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="dataTable" class="table modern-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($children as $child)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $child->name }}</td>
+                                    <td>{{ $child->department->name }}</td>
+                                    <td>
+                                        <a href="{{ route('documents.show', $child->id) }}"
+                                            class="btn btn-sm btn-outline-info me-1" title="View Children">
+                                            <i class="bi bi-diagram-3"></i>
+                                        </a>
 
-    <h4>Children Documents:</h4>
-    <!-- Button Add Document -->
-    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createDocumentModal">
-        Add Document
-    </button>
-    <table id="dataTable" class="table table-hover align-middle mt-4">
-        <thead class="table-dark">
-            <tr>
-                <th>No.</th>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($children as $child)
-                <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $child->name }}</td>
-                    <td>{{ $child->department->name }}</td>
-                    <td>
-                        <a href="{{ route('documents.show', $child->id) }}" class="btn btn-sm btn-info">View Children</a>
+                                        <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                            data-bs-toggle="modal" data-bs-target="#editDocumentModal-{{ $child->id }}"
+                                            title="Edit">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
 
-                        <!-- Edit Button -->
-                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                            data-bs-target="#editDocumentModal-{{ $child->id }}">
-                            Edit
-                        </button>
+                                        <form action="{{ route('documents.destroy', $child->id) }}" method="POST"
+                                            class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
 
-                        <!-- Delete Button -->
-                        <form action="{{ route('documents.destroy', $child->id) }}" method="POST"
-                            style="display:inline;"
-                            onsubmit="return confirm('Are you sure you want to delete this document?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                <!-- Modal Edit Document -->
-                <div class="modal fade" id="editDocumentModal-{{ $child->id }}" tabindex="-1"
-                    aria-labelledby="editDocumentModalLabel-{{ $child->id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <form action="{{ route('documents.update', $child->id) }}" method="POST">
-                            @csrf
-                            @method('PUT')
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="editDocumentModalLabel-{{ $child->id }}">Edit Document
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
+                                <!-- Modal Edit Document -->
+                                <div class="modal fade" id="editDocumentModal-{{ $child->id }}" tabindex="-1"
+                                    aria-labelledby="editDocumentModalLabel-{{ $child->id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <form action="{{ route('documents.update', $child->id) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title"
+                                                        id="editDocumentModalLabel-{{ $child->id }}">
+                                                        Edit Document
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Close"></button>
+                                                </div>
 
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label>Name</label>
-                                        <input type="text" name="name" class="form-control"
-                                            value="{{ $child->name }}" required>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label>Name</label>
+                                                        <input type="text" name="name"
+                                                            class="form-control @error('name') is-invalid @enderror"
+                                                            value="{{ old('name', $child->name) }}" required>
+                                                        @error('name')
+                                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label>Department</label>
+                                                        <select name="department_id"
+                                                            class="form-select @error('department_id') is-invalid @enderror"
+                                                            required>
+                                                            <option value="">Select Department</option>
+                                                            @foreach ($departments as $department)
+                                                                <option value="{{ $department->id }}"
+                                                                    {{ old('department_id', $child->department_id) == $department->id ? 'selected' : '' }}>
+                                                                    {{ $department->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('department_id')
+                                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-success">Save Changes</button>
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Cancel</button>
+                                                </div>
+                                            </div>
+                                        </form>
                                     </div>
-
-                                    <div class="mb-3">
-                                        <label>Department</label>
-                                        <select name="department_id" class="form-select" required>
-                                            <option value="">Select Department</option>
-                                            @foreach ($departments as $department)
-                                                <option value="{{ $department->id }}"
-                                                    {{ $child->department_id == $department->id ? 'selected' : '' }}>
-                                                    {{ $department->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
                                 </div>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center">No children documents found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-start mt-4">
+            <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left-circle me-1"></i>Documents List
+            </a>
+        </div>
+                </div>
+            </div>
+        </div>
 
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-success">Update Document</button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                </div>
+        <!-- Modal Create Document -->
+        <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <form action="{{ route('documents.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createDocumentModalLabel">Create New Document</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <input type="hidden" name="parent_id" value="{{ $document->id }}">
+
+                            <div class="mb-3">
+                                <label>Name</label>
+                                <input type="text" name="name"
+                                    class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}"
+                                    required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
-                        </form>
-                    </div>
-                </div>
-            @endforeach
-        </tbody>
-    </table>
-    <!-- Modal Create Document -->
-    <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog">
-            <form action="{{ route('documents.store') }}" method="POST">
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="createDocumentModalLabel">Create New Document</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
 
-                    <div class="modal-body">
-                        <input type="hidden" name="parent_id" value="{{ $document->id }}">
-
-                        <div class="mb-3">
-                            <label>Name</label>
-                            <input type="text" name="name" class="form-control" required>
+                            <div class="mb-3">
+                                <label>Department</label>
+                                <select name="department_id"
+                                    class="form-select @error('department_id') is-invalid @enderror" required>
+                                    <option value="">Select Department</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}"
+                                            {{ old('department_id') == $department->id ? 'selected' : '' }}>
+                                            {{ $department->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('department_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Department</label>
-                            <select name="department_id" class="form-select" required>
-                                <option value="">Select Department</option>
-                                @foreach ($departments as $department)
-                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Save Document</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         </div>
                     </div>
-
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Save Document</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-    <a href="{{ route('documents.index') }}" class="btn btn-secondary">Back to Documents List</a>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.delete-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+@endpush

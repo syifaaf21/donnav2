@@ -22,7 +22,7 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended('/part-numbers'); // Ganti sesuai tujuan
+            return redirect()->route('users.index'); // Ganti sesuai tujuan
         }
 
         return back()->withErrors([

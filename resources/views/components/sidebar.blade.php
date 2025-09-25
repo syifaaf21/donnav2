@@ -1,8 +1,8 @@
 <!-- Sidebar -->
-<aside id="bsbSidebar" class="bsb-sidebar-1">
+<aside id="bsbSidebar" class="bsb-sidebar-1 bg-transparent">
   <div class="offcanvas-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
     <a class="sidebar-brand" href="#!">
-      <img src="{{ asset('images/donna-logo.png') }}" id="bsbSidebarLabel1" class="img-fluid" alt="Donna Logo" width="135" height="44">
+      <img src="{{ asset('images/donna-logo.png') }}" id="bsbSidebarLabel1" class="logo" alt="Donna Logo" >
     </a>
   </div>
 
@@ -57,11 +57,11 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#!">
+              <a class="nav-link {{ Route::is('part_numbers.*') ? 'active bg-light rounded' : '' }}" href="{{ route('part_numbers.index') }}">
                 <div class="nav-link-icon text-success">
                   <i class="bi bi-box-seam"></i>
                 </div>
-                <span class="nav-link-text">Product</span>
+                <span class="nav-link-text">Part Numbers</span>
               </a>
             </li>
             <li class="nav-item">
@@ -85,33 +85,3 @@
     <i id="sidebarToggleIcon" class="bi bi-layout-sidebar-inset fs-5"></i>
   </button>
 </aside>
-
-<!-- NAVBAR -->
-{{-- <nav class="navbar navbar-light bg-white border-bottom shadow-sm px-4 py-2 position-fixed w-100" style="left: 250px; z-index:1030; transition: left 0.3s ease;" id="mainNavbar">
-  <div class="d-flex justify-content-between align-items-center w-100">
-    <div class="page-title fw-bold fs-5">@yield('title')</div>
-    <div class="d-flex align-items-center gap-3">
-      <!-- Datetime -->
-      <span id="datetime" class="text-muted small"></span>
-
-      <!-- Notification -->
-      <a href="#!" class="text-dark position-relative">
-        <i class="bi bi-bell fs-5"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-          3
-        </span>
-      </a>
-
-      <!-- Profile -->
-      <a href="#!" class="d-flex align-items-center text-decoration-none">
-        <i class="bi bi-person-circle fs-5 text-dark"></i>
-      </a>
-    </div>
-  </div>
-</nav> --}}
-
-{{-- <!-- Content Wrapper -->
-<div id="mainContent" class="pt-2" style="margin-left: 200px;">
-  @yield('content')
-</div> --}}
-

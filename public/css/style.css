@@ -5,6 +5,28 @@
 /* Import Google Fonts */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
+.logo {
+    width: 120px;
+    height: auto;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 20px;
+}
+
+#flashMessage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 250px;
+    z-index: 1050; /* pastikan di atas elemen lain */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border-radius: 6px;
+    text-align: center;
+
+}
+
+
 :root {
     --primary-color: #1e3c72;
     --secondary-color: #2a5298;
@@ -35,88 +57,138 @@
     --border-radius: 12px;
     --transition: all 0.3s ease;
 }
-/* Tables */
-.table {
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
+/* Styling khusus tabel modern */
+.modern-table {
+    border-collapse: separate; /* biar bisa ada jarak antar sel */
+    border-spacing: 0 8px; /* beri jarak vertikal antar baris */
 }
 
-.table thead th {
-    background: var(--background-color);
-    /* background: white; */
-    color: var(--text-color);
+.modern-table thead th {
     border: none;
+    /* bisa beri background yang ringan */
+    /* background-color: #fafafa; */
+    background: #f5f5f5;
     font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
+    border: none;
+    color: #333;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: middle;
+    margin-top: 10px;
+    /* text-align: center; */
 }
 
-.table tbody tr {
-    transition: var(--transition);
-    font-size: small;
+.modern-table tbody tr {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.table tbody tr:hover {
-    background: rgba(30, 60, 114, 0.05);
-    transform: scale(1.01);
-    transition: all 0.2s ease;
+/* Hilangkan border garis vertikal antar sel di body */
+.modern-table tbody td {
+    border: none;
+    padding: 12px 16px;
+    vertical-align: middle;
+    /* text-align: center; */
 }
 
-/* Tablet (≤ 768px) */
+/* Hover effect baris */
+.modern-table tbody tr:hover {
+    background-color: #f5f5ff;
+}
+
+/* Styling kolom aksi (ikon) */
+.modern-table .btn-outline-info,
+.modern-table .btn-outline-warning,
+.modern-table .btn-outline-danger {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+}
+
+/* Agar tombol tidak terlalu rapat */
+.modern-table .btn {
+    margin: 0 2px;
+}
+
+/* Responsif: sembunyikan kolom “Created At” di layar kecil (opsional) */
 @media (max-width: 768px) {
-    .table thead {
+    .modern-table thead th:nth-child(5),
+    .modern-table tbody td:nth-child(5) {
         display: none;
-        /* Sembunyikan header */
-    }
-
-    .table,
-    .table tbody,
-    .table tr,
-    .table td {
-        display: block;
-        width: 100%;
-    }
-
-    .table tr {
-        margin-bottom: 1rem;
-        box-shadow: var(--shadow-md);
-        background: white;
-        border-radius: var(--border-radius);
-        overflow: hidden;
-    }
-
-    .table td {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        gap: 0.5rem;
-        text-align: left;
-        padding: 0.75rem 1rem;
-        /* padding-left: 6rem;  */
-        position: relative;
-        font-size: 0.9rem;
-        border: none;
-    }
-
-    .table td::before {
-        content: attr(data-label);
-        /* Gunakan label dari atribut */
-        /* position: absolute; */
-        flex: 0 0 100px;
-        /* Lebar tetap untuk label */
-        left: 1rem;
-        top: 0.5rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        color: var(--text-color-muted);
-        font-size: 0.75rem;
     }
 }
+
+/* Placeholder untuk search input DataTable agar terlihat minimalis */
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
 
 .alert {
     font-size: 0.9rem;
     padding: 0.75rem 1rem;
     max-width: 300px;
 }
+        /* Global body styles */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f7fa;
+}
+
+/* Login Card Styles */
+.login-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.05);
+    padding: 40px;
+    background-color: #ffffff;
+}
+
+/* Logo inside login */
+.login-card img.logo {
+    width: 80px;
+    margin-bottom: 20px;
+}
+
+/* Title on login form */
+.login-title {
+    font-weight: 600;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Labels inside forms */
+.form-label {
+    font-weight: 500;
+}
+
+/* Primary button override */
+.btn-primary {
+    background-color: #4F46E5;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #4338CA;
+}
+
+/* Link style */
+a {
+    text-decoration: none;
+    color: #4F46E5;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* backgound-gradient */
+#mainContent {
+    background: linear-gradient(180deg, #030c3f, #e3e9f7);
+    min-height: 100vh;
+    transition: background 0.3s ease-in-out;
+}
+

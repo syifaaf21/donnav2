@@ -20,6 +20,11 @@ class Document extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function parent()
+{
+    return $this->belongsTo(Document::class, 'parent_id');
+}
+
     public function mapping()
     {
         return $this->hasMany(DocumentMapping::class);

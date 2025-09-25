@@ -32,7 +32,7 @@ class PartNumberController extends Controller
 
         PartNumber::create($request->only('part_number', 'product_id', 'model_id', 'process'));
 
-        return redirect()->back()->with('success', 'Part Number berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Part Number added sucessfully');
     }
 
     // Update Part Number berdasarkan id
@@ -47,7 +47,7 @@ class PartNumberController extends Controller
 
         $partNumber->update($request->only('part_number', 'product_id', 'model_id', 'process'));
 
-        return redirect()->back()->with('success', 'Part Number berhasil diupdate.');
+        return redirect()->back()->with('success', 'Part Number updated successfully.');
     }
 
     // Hapus Part Number berdasarkan id
@@ -55,6 +55,6 @@ class PartNumberController extends Controller
     {
         $partNumber->delete();
 
-        return redirect()->back()->with('success', 'Part Number berhasil dihapus.');
+        return redirect()->back()->with('success', 'Part Number deleted successfully.');
     }
 }
