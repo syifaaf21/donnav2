@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('part_numbers', function (Blueprint $table) {
             $table->id();
-            $table->string('part_number');
+            $table->string('part_number')->nullable()->unique();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('model_id')->constrained('models')->onDelete('cascade');
             $table->enum('process', ['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric']);

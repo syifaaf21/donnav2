@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->foreign('parent_id')->references('id')->on('documents')->onDelete('cascade');
+            $table->enum('type', ['control','review']);
             $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
             $table->timestamps();
         });

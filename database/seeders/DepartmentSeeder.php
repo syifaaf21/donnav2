@@ -18,24 +18,31 @@ class DepartmentSeeder extends Seeder
     public function run(): void
     {
         $departments = [
-            'ENGINEERING BODY',
-            'ENGINEERING UNIT',
-            'MAINTENANCE',
-            'QA UNIT',
-            'QA BODY',
-            'OMD, TPS, 3 PILLAR',
-            'PRO ENGINE GROUP (DC,MA,AS)',
-            'PRODUCTION BODY',
-            'ENGINEERING & QC ELECTRIC',
-            'PROJECT CONTROL',
-            'MANAGEMENT SYSTEM',
-            'PRODUCTION & PPIC ELECTRIC',
-            'IT DEVELOPMENT',
-            'HRD',
-            'COMMITE',
-            'PPIC',
-            'IRL & GA',
+            'Quality Body',
+            'Quality Unit',
+            'Quality Electric',
+            'PPIC Receiving',
+            'PPIC Delivery',
+            'PPIC Electric',
+            'Engineering Body',
+            'Engineering Unit',
+            'Engineering Electric',
+            'Maintenance',
+            'Maintenance Electric',
+            'Production Unit',
+            'Production Body',
+            'Production Electric',
+            'Production System Development',
+            'IT Development',
+            'Management System',
+            'Management Representative',
+            'OMD, TPS, 3 Pillar',
+            'Human Resource Development',
+            'Pro Engine Group (DC,MA,AS)',
+            'Project Control',
+            'Commite',
         ];
+
 
         foreach ($departments as $department) {
             Department::create([

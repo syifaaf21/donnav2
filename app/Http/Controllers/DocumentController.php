@@ -11,20 +11,51 @@ class DocumentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $documents = Document::whereNull('parent_id')->with('department')->get();
+        $search = $request->input('search');
+        $query = Document::whereNull('parent_id')->with('department');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('department', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Pastikan di sini menggunakan paginate, bukan get()
+        $documents = $query->paginate(10)->appends($request->query());
+
         $departments = Department::all();
+
         return view('contents.master.document.index', compact('documents', 'departments'));
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $document = Document::with('department')->findOrFail($id);
-        $children = Document::where('parent_id', $id)->with('department')->get();
         $departments = Department::all();
+
+        $search = $request->input('search');
+
+        $childrenQuery = Document::where('parent_id', $id)->with('department');
+
+        if ($search) {
+            $childrenQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('department', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $children = $childrenQuery->paginate(10)->appends($request->query());
+
         return view('contents.master.document.show', compact('document', 'children', 'departments'));
     }
+
 
     public function store(Request $request)
     {
@@ -32,6 +63,7 @@ class DocumentController extends Controller
             'name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'parent_id' => 'nullable|exists:documents,id',
+            'type' => 'required|in:control,review',
         ]);
 
         Document::create($validated);
@@ -44,6 +76,7 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
+            'type' => 'required|in:control,review',
         ]);
 
         $document = Document::findOrFail($id);

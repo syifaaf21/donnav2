@@ -10,9 +10,18 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['role', 'department'])->get();
+        $search = $request->input('search');
+        $query = User::with(['role', 'department']);
+
+        if($search){
+            $query->where(function ($q) use ($search){
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('npk', 'like', "%{$search}%");
+            });
+        }
+        $users = $query->paginate(10)->appends($request->query());
         $roles = Role::all();
         $departments = Department::all();
         return view('contents.master.user', compact('users', 'roles', 'departments'));
@@ -86,12 +95,12 @@ class UserController extends Controller
         }
 
         $user->update($data);
-        return redirect()->route('users.index')->with('success', 'User successfully updated.');
+        return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User successfully deleted.');
+        return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
 }

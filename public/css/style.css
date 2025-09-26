@@ -76,6 +76,10 @@
     vertical-align: middle;
     margin-top: 10px;
     /* text-align: center; */
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #f5f5f5;
 }
 
 .modern-table tbody tr {
@@ -125,6 +129,27 @@
     border-radius: 4px;
     padding: 4px 8px;
 }
+
+.table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* Scrollbar style khusus Chrome */
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 6px;
+}
+
 
 
 .alert {
@@ -185,10 +210,68 @@ a:hover {
     text-decoration: underline;
 }
 
+    .pagination {
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination .page-item .page-link {
+        color: #0d6efd;
+        border-radius: 6px;
+        margin: 0 2px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #aaa;
+        background-color: #f5f5f5;
+        border-color: #ddd;
+    }
+
+    /* ===== Table Wrapper Card Style ===== */
+.table-wrapper {
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+    transition: box-shadow 0.3s ease;
+}
+
+/* Lebih menonjolkan baris tabel */
+.modern-table tbody tr {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+/* Hover effect */
+.modern-table tbody tr:hover {
+    background-color: #f5f8ff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transform: scale(1.005);
+}
+
+/* Buat tabel lebih bersih dan spacing bagus */
+.modern-table td,
+.modern-table th {
+    padding: 14px 20px;
+}
+
+
 /* backgound-gradient */
-#mainContent {
+/* #mainContent {
     background: linear-gradient(180deg, #030c3f, #e3e9f7);
     min-height: 100vh;
     transition: background 0.3s ease-in-out;
-}
+} */
 

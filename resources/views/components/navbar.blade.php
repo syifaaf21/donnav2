@@ -9,6 +9,7 @@
                     'dashboard' => 'Dashboard',
                     'users.index' => 'User List',
                     'documents.index' => 'Document List',
+                    'documents.show' => 'Child Document',
                     'part_numbers.index' => 'Part Number List',
                 ];
                 $pageTitle = $titles[$routeName] ?? ucwords(str_replace('.', ' ', $routeName));
@@ -29,7 +30,8 @@
             {{-- Notification Icon --}}
             <a href="#" class="text-dark position-relative">
                 <i class="bi bi-bell fs-5"></i>
-                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                <span
+                    class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
                     <span class="visually-hidden">New alerts</span>
                 </span>
             </a>
@@ -46,9 +48,6 @@
                     </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li><a class="dropdown-item" href="#">Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
@@ -65,19 +64,26 @@
 </nav>
 
 @push('scripts')
-<script>
-    // Show current date and time (updates every second)
-    function updateTime() {
-        const now = new Date();
-        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-        const dateStr = now.toLocaleDateString('en-US', options);
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    <script>
+        // Show current date and time (updates every second)
+        function updateTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            };
+            const dateStr = now.toLocaleDateString('en-US', options);
+            const timeStr = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
 
-        document.getElementById('currentDatetime').textContent = `${dateStr}, ${timeStr}`;
-    }
+            document.getElementById('currentDatetime').textContent = `${dateStr}, ${timeStr}`;
+        }
 
-    setInterval(updateTime, 1000);
-    updateTime(); // Initial call
-</script>
+        setInterval(updateTime, 1000);
+        updateTime(); // Initial call
+    </script>
 @endpush
-

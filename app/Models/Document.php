@@ -13,6 +13,7 @@ class Document extends Model
         'name',
         'department_id',
         'parent_id',
+        'type'
     ];
 
     public function department()
@@ -21,12 +22,20 @@ class Document extends Model
     }
 
     public function parent()
-{
-    return $this->belongsTo(Document::class, 'parent_id');
-}
+    {
+        return $this->belongsTo(Document::class, 'parent_id');
+    }
 
     public function mapping()
     {
         return $this->hasMany(DocumentMapping::class);
+    }
+
+    public static function getTypes()
+    {
+        return [
+            'control' => 'Control',
+            'review' => 'Review',
+        ];
     }
 }

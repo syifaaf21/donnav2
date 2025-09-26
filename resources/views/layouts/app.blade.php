@@ -35,16 +35,6 @@
 </head>
 
 <body>
-    <script>
-        // Auto-hide setelah 5 detik
-        setTimeout(() => {
-            let flash = document.getElementById('flashMessage');
-            if (flash) {
-                let bsAlert = new bootstrap.Alert(flash);
-                bsAlert.close();
-            }
-        }, 5000);
-    </script>
 
     @if (!request()->is('login') && !request()->is('register') && !request()->is('password/*'))
         <div class="d-flex">

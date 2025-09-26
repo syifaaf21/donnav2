@@ -12,9 +12,21 @@ class PartNumberController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $partNumbers = PartNumber::with('product', 'productModel')->get();
+        $search = $request->input('search');
+        $query = PartNumber::with(['product', 'productModel']);
+
+        if($search){
+            $query->where(function ($q) use ($search){
+                $q->where('part_number', 'like', "%{$search}%")
+                ->orWhereHas('product', fn($p) => $p->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('productModel', fn($m) => $m->where('name', 'like', "%{$search}%"))
+                ->orWhere('process', 'like', "%{$search}%");
+            });
+        }
+
+        $partNumbers = $query->paginate(10)->appends($request->query());
         $products = Product::all();
         $models = ProductModel::all();
 
@@ -24,7 +36,7 @@ class PartNumberController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'part_number' => 'required|string|max:255',
+            'part_number' => 'required|string|max:255|unique:part_numbers,part_number',
             'product_id' => 'required|exists:products,id',
             'model_id' => 'required|exists:models,id',
             'process' => 'required|in:injection,painting,assembling body,die casting,machining,assembling unit,electric',
@@ -39,7 +51,7 @@ class PartNumberController extends Controller
     public function update(Request $request, PartNumber $partNumber)
     {
         $request->validate([
-            'part_number' => 'required|string|max:255',
+            'part_number' => 'required|string|max:255|unique:part_numbers,part_number',
             'product_id' => 'required|exists:products,id',
             'model_id' => 'required|exists:models,id',
             'process' => 'required|in:injection,painting,assembling body,die casting,machining,assembling unit,electric',

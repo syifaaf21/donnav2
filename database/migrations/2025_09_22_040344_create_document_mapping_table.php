@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('part_number_id')->constrained('part_numbers')->onDelete('cascade');
             $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
             $table->string('document_number');
-            $table->enum('type', ['control','review']);
             $table->string('version');
             $table->string('file_path');
             $table->text('notes');

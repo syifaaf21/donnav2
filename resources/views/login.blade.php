@@ -47,24 +47,18 @@
                             @enderror
                         </div>
 
-                        <!-- Remember Me -->
+                        {{-- <!-- Remember Me -->
                         <div class="mb-3 form-check text-start">
                             <input type="checkbox" name="remember" class="form-check-input" id="remember"
                                 {{ old('remember') ? 'checked' : '' }}>
                             <label class="form-check-label" for="remember">Remember me</label>
-                        </div>
+                        </div> --}}
 
                         <!-- Submit -->
                         <div class="d-grid mb-3">
                             <button type="submit" class="btn btn-primary">Login</button>
                         </div>
                     </form>
-
-                    <!-- Forgot password -->
-                    <div class="mt-2">
-                        <a href="#">Forgot your password?</a>
-                    </div>
-
                 </div>
             </div>
         </div>

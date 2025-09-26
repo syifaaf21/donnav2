@@ -1,5 +1,5 @@
-/* Import Font */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+/* ===================== FONT ===================== */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 /* ===================== SIDEBAR ===================== */
 #bsbSidebar {
@@ -8,17 +8,19 @@
   left: 0;
   width: 250px;
   height: 100vh;
-  background-color: transparent !important; /* Fix transparency */
-  box-shadow: none !important;
-  border-right: none !important;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
   transition: width 0.3s ease, transform 0.3s ease;
   z-index: 1040;
-
-  font-family: 'Poppins', sans-serif;
-  color: var(--text-color);
+  font-family: 'Inter', sans-serif;
+  color: #212529;
 }
 
-/* Collapse mode */
+/* Collapse Mode */
 #bsbSidebar.collapsed {
   width: 90px;
 }
@@ -33,7 +35,17 @@
   width: 40px;
 }
 
-/* Nav content */
+/* Sidebar Brand */
+#bsbSidebar .sidebar-brand img.logo {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+
+}
+
+/* Navigation Items */
 #bsbSidebar .navbar-nav {
   padding-left: 10px;
 }
@@ -43,42 +55,53 @@
 }
 
 #bsbSidebar .nav-link {
-  color: var(--text-color);
+  color: #343a40;
+  font-size: 0.875rem;
   font-weight: 500;
-  font-size: 0.95rem;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #bsbSidebar .nav-link:hover,
 #bsbSidebar .nav-link.active {
-  color: var(--accent-color);
-  background-color: rgba(0, 123, 255, 0.08);
-  border-radius: 6px;
+  color: #0d6efd;
+  background-color: rgba(13, 110, 253, 0.1);
 }
 
-#bsbSidebar .nav-link i {
+#bsbSidebar .nav-link .nav-link-icon {
   margin-right: 8px;
+  font-size: 1rem;
 }
 
-/* Section title / divider */
+/* Section Title */
 #bsbSidebar h6.py-1 {
-  padding-left: 1rem;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  color: #6c757d;
+  padding-left: 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
   text-transform: uppercase;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
+}
+
+/* Divider */
+.sidebar-divider {
+  border-top: 1px solid #dee2e6;
+  margin: 0.75rem 1rem;
 }
 
 /* Submenu */
 .sidebar-submenu {
   margin: 0 0.5rem;
   padding: 0 0.5rem;
-  overflow-x: hidden;
 }
 
 .sidebar-submenu .nav-link {
-  padding-left: 1rem !important;
+  padding-left: 1.5rem !important;
+  font-size: 0.85rem;
 }
 
 /* Collapse Button */
@@ -100,6 +123,7 @@
   margin-left: 250px;
   transition: margin-left 0.3s ease;
   padding: 1rem;
+  font-family: 'Inter', sans-serif;
 }
 
 body.sidebar-collapsed #mainContent {

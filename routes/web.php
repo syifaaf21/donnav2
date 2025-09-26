@@ -50,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
 
     // User Management Routes
     Route::resource('users', UserController::class);
-    // Route::get('/users', [UserController::class, 'index'])->name('user.index');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
 
     // Document Management Routes
     Route::resource('documents', DocumentController::class);
