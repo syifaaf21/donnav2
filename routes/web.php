@@ -56,4 +56,13 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('documents', DocumentController::class);
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
 
+// Document Mapping
+Route::get('/document-control', [DocumentMappingController::class, 'controlIndex'])
+    ->name('document.control');
+
+Route::get('/document-review', [DocumentMappingController::class, 'reviewIndex'])
+    ->name('document.review');
+
+// Untuk CRUD umum (store, update, delete)
+Route::resource('document-mappings', DocumentMappingController::class);
 });

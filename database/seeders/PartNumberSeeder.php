@@ -13,6 +13,11 @@ class PartNumberSeeder extends Seeder
 {
     public function run(): void
     {
+        $plantMapping = [
+            'body' => ['injection', 'painting', 'assembling body'],
+            'unit' => ['die casting', 'machining', 'assembling unit'],
+            'electric' => ['electric'],
+        ];
         $data = [
             'Timming Chain Cover' => [
                 'models' => ['D98E', '889F/D81F', 'D72F/D73F', 'D05E', '4A91', 'D18E', 'D41E', 'D13E'],
@@ -69,11 +74,27 @@ class PartNumberSeeder extends Seeder
                 }
 
                 foreach ($info['processes'] as $process) {
+                    // cari plant berdasarkan process
+                    $plant = null;
+                    foreach ($plantMapping as $plantName => $processes) {
+                        if (in_array($process, $processes)) {
+                            $plant = $plantName;
+                            break;
+                        }
+                    }
+
+                    // Kalau plant tidak ditemukan, bisa kasih nilai default atau skip
+                    if (!$plant) {
+                        echo "Plant not found for process: $process\n";
+                        continue;
+                    }
+
                     DB::table('part_numbers')->insert([
-                        'part_number' => strtoupper(Str::random(10)), // generate dummy part number
+                        'part_number' => strtoupper(Str::random(10)),
                         'product_id' => $product->id,
                         'model_id' => $model->id,
                         'process' => $process,
+                        'plant' => $plant,  // <- tambah kolom plant di sini
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);

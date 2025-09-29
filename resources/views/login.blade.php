@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
+    <div class="container min-vh-100 overflow-hidden">
         <div class="row justify-content-center align-items-center vh-100">
             <div class="col-md-6 col-lg-4">
                 <div class="login-card text-center">
@@ -46,13 +46,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
-                        {{-- <!-- Remember Me -->
-                        <div class="mb-3 form-check text-start">
-                            <input type="checkbox" name="remember" class="form-check-input" id="remember"
-                                {{ old('remember') ? 'checked' : '' }}>
-                            <label class="form-check-label" for="remember">Remember me</label>
-                        </div> --}}
 
                         <!-- Submit -->
                         <div class="d-grid mb-3">

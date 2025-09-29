@@ -14,6 +14,7 @@ class PartNumber extends Model
         'product_id',
         'model_id',
         'process',
+        'plant',
     ];
 
     protected $table = 'part_numbers'; // sesuaikan
@@ -26,5 +27,9 @@ class PartNumber extends Model
     public function productModel()
     {
         return $this->belongsTo(ProductModel::class, 'model_id', 'id');
+    }
+    public function documentMappings()
+    {
+        return $this->hasMany(DocumentMapping::class);
     }
 }

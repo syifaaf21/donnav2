@@ -164,6 +164,24 @@ body {
 }
 
 /* Login Card Styles */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Mencegah scroll vertikal */
+}
+
+body > .container {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.row {
+    height: 100%;
+    margin: 0; /* pastikan tidak ada margin bawah dari .row */
+}
+
 .login-card {
     border: none;
     border-radius: 20px;

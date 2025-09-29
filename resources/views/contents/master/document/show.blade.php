@@ -4,13 +4,20 @@
     <div class="container py-4">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <form method="GET" class="w-50">
+            <form method="GET" class="w-50 d-flex align-items-center" id="searchForm">
                 <div class="input-group">
-                    <input type="text" name="search" class="form-control"
+                    <input type="text" name="search" id="searchInput" class="form-control"
                         placeholder="Search by Document Name or Department" value="{{ request('search') }}">
-                    <button class="btn btn-outline-secondary ms-auto btn-sm" type="submit">
-                        <i class="bi bi-search"></i>
+
+                    <button class="btn btn-outline-secondary btn-sm" type="submit">
+                        <i class="bi bi-search me-1"></i> Search
                     </button>
+
+                    @if (true)
+                        <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="clearSearch">
+                            Clear
+                        </button>
+                    @endif
                 </div>
             </form>
             <button type="button" class="btn btn-outline-primary ms-auto btn-sm" data-bs-toggle="modal"
@@ -253,6 +260,20 @@
                     });
                 });
             });
+        });
+
+         // Clear Search functionality
+        document.addEventListener("DOMContentLoaded", function() {
+            const clearBtn = document.getElementById("clearSearch");
+            const searchInput = document.getElementById("searchInput");
+            const searchForm = document.getElementById("searchForm");
+
+            if (clearBtn && searchInput && searchForm) {
+                clearBtn.addEventListener("click", function() {
+                    searchInput.value = "";
+                    searchForm.submit();
+                });
+            }
         });
     </script>
 @endpush

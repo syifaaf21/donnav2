@@ -9,6 +9,8 @@ class Status extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['name'];
+
     public function mapping()
     {
         return $this->hasMany(DocumentMapping::class);

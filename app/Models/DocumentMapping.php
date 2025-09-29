@@ -14,7 +14,6 @@ class DocumentMapping extends Model
         'part_number_id',
         'status_id',
         'document_number',
-        'type',
         'version',
         'file_path',
         'notes',
@@ -24,6 +23,12 @@ class DocumentMapping extends Model
         'user_id',
     ];
 
+    protected $casts = [
+    'obsolete_date' => 'date',
+    'reminder_date' => 'date',
+    'deadline' => 'date',
+];
+
 
     public function document()
     {
@@ -32,7 +37,7 @@ class DocumentMapping extends Model
 
     public function partNumber()
     {
-        return $this->belongsTo(PartNumber::class);
+        return $this->belongsTo(PartNumber::class, 'part_number_id');
     }
 
     public function status()
