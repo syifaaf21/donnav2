@@ -16,8 +16,9 @@ class StatusSeeder extends Seeder
         $statuses = [
             ['name' => 'Obsolete'],
             ['name' => 'Active'],
-            ['name' => 'Approve'],
-            ['name' => 'Reject'],
+            ['name' => 'Approved'],
+            ['name' => 'Rejected'],
+            ['name' => 'Need Review'],
         ];
 
         foreach ($statuses as $status) {

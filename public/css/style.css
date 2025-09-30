@@ -285,6 +285,21 @@ a:hover {
     padding: 14px 20px;
 }
 
+#mainContent {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+#mainContent .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+}
+
+
 
 /* backgound-gradient */
 /* #mainContent {

@@ -49,7 +49,7 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     <li>
-                        <form action="{{ route('logout') }}" method="POST">
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button class="dropdown-item" type="submit">Logout</button>
                         </form>

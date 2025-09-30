@@ -46,7 +46,7 @@
                 <!-- Navbar -->
                 <x-navbar />
 
-                <x-flash-message/>
+                <x-flash-message />
 
                 <!-- Content -->
                 @yield('content')
@@ -87,6 +87,11 @@
                 lengthChange: true, // Pilihan jumlah data per halaman
                 pageLength: 10, // Default 10 baris
             });
+        });
+    </script>
+    <script>
+        document.querySelector('#logout-form')?.addEventListener('submit', () => {
+            localStorage.removeItem('activePlantTab');
         });
     </script>
 

@@ -2,203 +2,174 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\DocumentMapping;
 use App\Models\Document;
 use App\Models\PartNumber;
 use App\Models\Status;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentMappingController extends Controller
 {
-    /**
-     * Halaman Document Review (grouped by plant)
-     */
+    // ================= Document Review Index =================
     public function reviewIndex()
     {
-        $documentMappings = DocumentMapping::with(['document.department', 'partNumber', 'status'])
+        $documentMappings = DocumentMapping::with(['document.department', 'partNumber', 'status', 'user'])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->get();
 
-        $groupedByPlant = $documentMappings->groupBy(fn($m) => $m->partNumber->plant ?? 'Unknown');
+        // Group per plant
+        $partNumbers = PartNumber::all();
+        $allPlants = PartNumber::pluck('plant')->unique();
+        $groupedByPlant = [];
+        foreach ($allPlants as $plant) {
+            $groupedByPlant[$plant] = $documentMappings->filter(fn($m) => $m->partNumber->plant == $plant);
+        }
 
         $documentsMaster = Document::where('type', 'review')->get();
         $partNumbers = PartNumber::all();
         $statuses = Status::all();
 
-        return view('contents.document.review', compact('groupedByPlant', 'documentsMaster', 'partNumbers', 'statuses'));
+        return view('contents.document-review.index', compact(
+            'groupedByPlant',
+            'documentsMaster',
+            'partNumbers',
+            'statuses'
+        ));
     }
 
-    /**
-     * Halaman Document Control (single table, tidak grouped)
-     */
-    public function controlIndex()
+    // ================= Store Review (Admin) =================
+    public function storeReview(Request $request)
     {
-        $documentMappings = DocumentMapping::with(['document.department', 'partNumber', 'status'])
-            ->whereHas('document', fn($q) => $q->where('type', 'control'))
-            ->get();
+        if (Auth::user()->role->name != 'Admin') {
+            abort(403, 'Unauthorized action.');
+        }
 
-        $documentsMaster = Document::where('type', 'control')->get();
-        $partNumbers = PartNumber::all();
-        $statuses = Status::all();
-
-        return view('contents.document.control', compact('documentMappings', 'documentsMaster', 'partNumbers', 'statuses'));
-    }
-
-    /**
-     * Store new mapping (works for both review & control)
-     */
-    public function store(Request $request)
-    {
-        // get document to detect its type (ensures consistency with master)
         $request->validate([
             'document_id' => 'required|exists:documents,id',
+            'document_number' => 'required|string|max:255',
             'part_number_id' => 'required|exists:part_numbers,id',
-            // status_id optional, validated below
-            'file_path' => 'nullable|file|mimes:pdf,doc,docx,xlsx,xls|max:5120',
+            'file' => 'required|file|mimes:pdf,docx',
+            'reminder_date' => 'required|date',
+            'deadline' => 'required|date',
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        $document = Document::findOrFail($request->document_id);
-        $type = $document->type; // 'review' atau 'control'
+        $filePath = $request->file('file')->store('documents', 'public');
 
-        // build rules depending on type
-        $rules = [
-            'document_id' => 'required|exists:documents,id',
-            'part_number_id' => 'required|exists:part_numbers,id',
-            'status_id' => 'nullable|exists:statuses,id',
-            'notes' => 'nullable|string',
-            'file_path' => 'nullable|file|mimes:pdf,doc,docx,xlsx,xls|max:5120',
-        ];
+        DocumentMapping::create([
+            'document_id' => $request->document_id,
+            'document_number' => $request->document_number,
+            'part_number_id' => $request->part_number_id,
+            'file_path' => $filePath,
+            'department_id' => Document::find($request->document_id)->department_id,
+            'reminder_date' => $request->reminder_date,
+            'deadline' => $request->deadline,
+            'status_id' => Status::where('name', 'need review')->first()->id,
+            'notes' => $request->notes ?? '',
+            'user_id' => Auth::id(),
+            'version' => 1,
+        ]);
 
-        if ($type === 'review') {
-            $rules += [
-                'document_number' => 'required|string|max:255',
-                'version' => 'required|string|max:50',
-                'reminder_date' => 'nullable|date',
-                'deadline' => 'nullable|date',
-            ];
-        } else { // control
-            $rules += [
-                'obsolete_date' => 'nullable|date',
-                'reminder_date' => 'nullable|date',
-            ];
-        }
-
-        $validated = $request->validate($rules);
-
-        // handle file upload
-        if ($request->hasFile('file_path')) {
-            $validated['file_path'] = $request->file('file_path')->store('documents', 'public'); // storage/app/public/documents
-        }
-
-        // fill mandatory fields
-        $validated['user_id'] = auth()->id() ?? 1;
-
-        // set default status if not provided
-        if (empty($validated['status_id'])) {
-            $defaultStatus = Status::where('name', 'Active')->first();
-            $validated['status_id'] = $defaultStatus ? $defaultStatus->id : Status::first()->id ?? 1;
-        }
-
-        // ensure obsolete_date for review may be null (only control uses it)
-        if ($type === 'review') {
-            // document_number/version must exist (already validated)
-        } else {
-            // control: ensure document_number/version are not set accidentally
-            unset($validated['document_number'], $validated['version'], $validated['deadline']);
-        }
-
-        // assign type? (optional) — we keep type in documents master, not in mapping
-        // create record
-        DocumentMapping::create($validated);
-
-        // redirect back to the right listing page
-        return redirect()->route($type === 'review' ? 'document.review' : 'document.control')
-            ->with('success', 'Dokumen berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Document review created!');
     }
 
-    /**
-     * Update mapping
-     */
-    public function update(Request $request, DocumentMapping $documentMapping)
+    // ================= Update Review (Admin) =================
+    public function updateReview(Request $request, DocumentMapping $mapping)
     {
-        // allow change of document_id too (so re-evaluate type)
+        if (Auth::user()->role->name != 'Admin') abort(403);
+
         $request->validate([
             'document_id' => 'required|exists:documents,id',
+            'document_number' => 'required|string|max:255',
             'part_number_id' => 'required|exists:part_numbers,id',
-            'status_id' => 'nullable|exists:statuses,id',
-            'file_path' => 'nullable|file|mimes:pdf,doc,docx,xlsx,xls|max:5120',
-            'notes' => 'nullable|string',
+            'reminder_date' => 'required|date',
+            'deadline' => 'required|date',
         ]);
 
-        $document = Document::findOrFail($request->document_id);
-        $type = $document->type;
+        $mapping->update([
+            'document_id' => $request->document_id,
+            'document_number' => $request->document_number,
+            'part_number_id' => $request->part_number_id,
+            'department_id' => Document::find($request->document_id)->department_id,
+            'reminder_date' => $request->reminder_date,
+            'deadline' => $request->deadline,
+        ]);
 
-        $rules = [
-            'document_id' => 'required|exists:documents,id',
-            'part_number_id' => 'required|exists:part_numbers,id',
-            'status_id' => 'nullable|exists:statuses,id',
-            'notes' => 'nullable|string',
-            'file_path' => 'nullable|file|mimes:pdf,doc,docx,xlsx,xls|max:5120',
-        ];
-
-        if ($type === 'review') {
-            $rules += [
-                'document_number' => 'required|string|max:255',
-                'version' => 'required|string|max:50',
-                'reminder_date' => 'nullable|date',
-                'deadline' => 'nullable|date',
-            ];
-        } else {
-            $rules += [
-                'obsolete_date' => 'nullable|date',
-                'reminder_date' => 'nullable|date',
-            ];
-        }
-
-        $validated = $request->validate($rules);
-
-        // file replace: remove old file if a new one uploaded
-        if ($request->hasFile('file_path')) {
-            if ($documentMapping->file_path) {
-                Storage::disk('public')->delete($documentMapping->file_path);
-            }
-            $validated['file_path'] = $request->file('file_path')->store('documents', 'public');
-        }
-
-        // default status if not provided
-        if (empty($validated['status_id'])) {
-            $defaultStatus = Status::where('name', 'Active')->first();
-            $validated['status_id'] = $defaultStatus ? $defaultStatus->id : Status::first()->id ?? 1;
-        }
-
-        // clean fields not relevant to this type
-        if ($type === 'review') {
-            unset($validated['obsolete_date']);
-        } else {
-            unset($validated['document_number'], $validated['version'], $validated['deadline']);
-        }
-
-        $documentMapping->update($validated);
-
-        return redirect()->route($type === 'review' ? 'document.review' : 'document.control')
-            ->with('success', 'Dokumen berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Document metadata updated!');
     }
 
-    /**
-     * Destroy mapping
-     */
-    public function destroy(DocumentMapping $documentMapping)
+    // ================= Revisi Review (User) =================
+    public function reviseReview(Request $request, DocumentMapping $mapping)
     {
-        // delete file if exists
-        if ($documentMapping->file_path) {
-            Storage::disk('public')->delete($documentMapping->file_path);
+        if (Auth::user()->role->name != 'User' && Auth::user()->role->name != 'Admin') abort(403);
+
+        $request->validate([
+            'file' => 'required|file|mimes:pdf,docx',
+            'notes' => 'required|string|max:500',
+        ]);
+
+        $filePath = $request->file('file')->store('documents', 'public');
+
+        $mapping->update([
+            'file_path' => $filePath,
+            'notes' => $request->notes,
+            'status_id' => Status::where('name', 'need review')->first()->id,
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Document review revised!');
+    }
+
+    // ================= Delete Review (Admin) =================
+    public function destroyReview(DocumentMapping $mapping)
+    {
+        if (Auth::user()->role->name != 'Admin') abort(403);
+        $mapping->delete();
+        return redirect()->back()->with('success', 'Document review deleted!');
+    }
+
+    // ================= Approve / Reject Review (Admin) =================
+    public function approve(DocumentMapping $mapping)
+    {
+        if (Auth::user()->role->name != 'Admin') {
+            abort(403);
         }
 
-        $type = $documentMapping->document->type ?? 'review';
-        $documentMapping->delete();
+        $statusApproved = Status::where('name', 'approved')->first();
 
-        return redirect()->route($type === 'review' ? 'document.review' : 'document.control')
-            ->with('success', 'Dokumen berhasil dihapus.');
+        if (!$statusApproved) {
+            return redirect()->back()->with('error', 'Status "approved" not found!');
+        }
+
+        // ✅ Naikkan version ketika dokumen disetujui
+        $mapping->update([
+            'status_id' => $statusApproved->id,
+            'version' => $mapping->version + 1,
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Document approved successfully!');
+    }
+
+
+    public function reject(DocumentMapping $mapping)
+    {
+        if (Auth::user()->role->name != 'Admin') {
+            abort(403);
+        }
+
+        $statusRejected = Status::where('name', 'rejected')->first();
+
+        if (!$statusRejected) {
+            return redirect()->back()->with('error', 'Status "rejected" not found!');
+        }
+
+        $mapping->update([
+            'status_id' => $statusRejected->id,
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Document rejected!');
     }
 }

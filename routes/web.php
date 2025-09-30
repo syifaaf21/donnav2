@@ -55,14 +55,19 @@ Route::middleware(['auth'])->group(function () {
     // Document Management Routes
     Route::resource('documents', DocumentController::class);
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
-
-// Document Mapping
-Route::get('/document-control', [DocumentMappingController::class, 'controlIndex'])
-    ->name('document.control');
-
-Route::get('/document-review', [DocumentMappingController::class, 'reviewIndex'])
-    ->name('document.review');
-
-// Untuk CRUD umum (store, update, delete)
-Route::resource('document-mappings', DocumentMappingController::class);
 });
+
+Route::prefix('document-review')->name('document-review.')->group(function() {
+    Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
+
+    // Admin routes
+    Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
+    Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
+    Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroyReview'])->name('destroy');
+    Route::post('/approve/{mapping}', [DocumentMappingController::class, 'approve'])->name('approve');
+    Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
+
+    // User route
+    Route::post('/revise/{mapping}', [DocumentMappingController::class, 'reviseReview'])->name('revise');
+});
+
