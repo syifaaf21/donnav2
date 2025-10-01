@@ -253,10 +253,17 @@
                         <!-- NPK -->
                         <div class="col-md-6">
                             <label class="form-label fw-medium">NPK</label>
-                            <input type="text" name="npk"
+                            <input
+                                type="number"
+                                name="npk"
                                 class="form-control rounded-3 @error('npk') is-invalid @enderror"
-                                value="{{ old('npk') }}" required pattern="\d{6}" maxlength="6"
-                                title="NPK must be exactly 6 digits of number" inputmode="numeric">
+                                value="{{ old('npk') }}"
+                                pattern="\d{6}"
+                                maxlength="6"
+                                oninput="this.value = this.value.slice(0, 6);"
+                                title="NPK must be exactly 6 digits of number"
+                                inputmode="numeric"
+                                required>
                             @error('npk')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

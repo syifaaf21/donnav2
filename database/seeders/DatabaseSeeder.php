@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         PartNumberSeeder::class,
         StatusSeeder::class,
         DocumentSeeder::class,
-        DocumentMappingSeeder::class,
+        // DocumentMappingSeeder::class,
         ]);
 
     }

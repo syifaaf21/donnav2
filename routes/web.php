@@ -71,3 +71,7 @@ Route::prefix('document-review')->name('document-review.')->group(function() {
     Route::post('/revise/{mapping}', [DocumentMappingController::class, 'reviseReview'])->name('revise');
 });
 
+Route::prefix('document-control')->name('document-control.')->group(function() {
+    Route::get('/', [DocumentMappingController::class, 'controlIndex'])->name('index');
+});
+

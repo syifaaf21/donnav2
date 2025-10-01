@@ -203,9 +203,9 @@
                                             </tr>
 
                                             {{-- Include modal --}}
-                                            @include('contents.document-review.modal-edit')
-                                            @include('contents.document-review.modal-revise')
-                                            @include('contents.document-review.modal-approve')
+                                            @include('contents.document-review.partials.modal-edit')
+                                            @include('contents.document-review.partials.modal-revise')
+                                            @include('contents.document-review.partials.modal-approve')
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -221,7 +221,7 @@
         </div>
 
         {{-- Modal Add --}}
-        @include('contents.document-review.modal-add')
+        @include('contents.document-review.partials.modal-add')
     </div>
 @endsection
 

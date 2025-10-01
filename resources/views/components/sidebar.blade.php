@@ -21,8 +21,8 @@
                 <h6 class="py-1 text-secondary text-uppercase fs-7">Docs</h6>
             </li>
             <li class="nav-item">
-                {{-- <a class="nav-link p-3 {{ Route::is('document-control') ? 'active bg-light rounded' : '' }}"
-                    href="{{ route('document.control.index') }}"> --}}
+                <a class="nav-link p-3 {{ Route::is('document-control') ? 'active bg-light rounded' : '' }}"
+                    href="{{ route('document-control.index') }}">
                     <div class="nav-link-icon text-info">
                         <i class="bi bi-gear"></i>
                     </div>

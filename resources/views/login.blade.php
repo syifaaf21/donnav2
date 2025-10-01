@@ -20,13 +20,15 @@
                         <div class="mb-3 text-start">
                             <label for="npk" class="form-label">NPK</label>
                             <input
-                                type="text"
+                                type="number"
                                 name="npk"
                                 id="npk"
                                 class="form-control @error('npk') is-invalid @enderror"
                                 value="{{ old('npk') }}"
-                                required autofocus>
-
+                                maxlength="6"
+                                oninput="this.value = this.value.slice(0, 6);"
+                                required
+                                autofocus>
                             @error('npk')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -35,12 +37,8 @@
                         <!-- Password -->
                         <div class="mb-3 text-start">
                             <label for="password" class="form-label">Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                id="password"
-                                class="form-control @error('password') is-invalid @enderror"
-                                required>
+                            <input type="password" name="password" id="password"
+                                class="form-control @error('password') is-invalid @enderror" required>
 
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>

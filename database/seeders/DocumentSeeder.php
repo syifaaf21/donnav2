@@ -70,5 +70,11 @@ class DocumentSeeder extends Seeder
             'parent_id' => $qualityComponent->id,
             'type' => 'review',
         ]);
+
+        $iso = Document::create([
+            'name' => 'ISO 9001',
+            'parent_id' => null,
+            'type' => 'contoll',
+        ]);
     }
 }

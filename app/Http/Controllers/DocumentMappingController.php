@@ -190,4 +190,9 @@ class DocumentMappingController extends Controller
 
         return redirect()->back()->with('success', 'Document rejected!');
     }
+
+    // Document Controll
+    public function controlIndex() {
+        return view('contents.document-control.index');
+    }
 }
