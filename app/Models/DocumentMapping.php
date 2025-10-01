@@ -21,6 +21,7 @@ class DocumentMapping extends Model
         'reminder_date',
         'deadline',
         'user_id',
+        'department_id',
     ];
 
     protected $casts = [
@@ -50,8 +51,8 @@ class DocumentMapping extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // public function department()
-    // {
-    //     return $this -> belongsTo (Department::class);
-    // }
+    public function department()
+    {
+        return $this -> belongsTo (Department::class);
+    }
 }

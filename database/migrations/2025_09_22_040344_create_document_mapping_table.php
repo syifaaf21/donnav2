@@ -20,10 +20,11 @@ return new class extends Migration
             $table->string('version');
             $table->string('file_path');
             $table->text('notes');
-            $table->date('obsolete_date');
-            $table->date('reminder_date');
-            $table->date('deadline');
+            $table->date('obsolete_date')->nullable();
+            $table->date('reminder_date')->nullable();
+            $table->date('deadline')->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
             $table->timestamps();
         });
     }

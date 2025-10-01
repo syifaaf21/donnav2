@@ -19,8 +19,8 @@
                     @endif
                 </div>
             </form>
-            <button class="btn btn-outline-primary ms-auto btn-sm" data-bs-toggle="modal"
-                data-bs-target="#createPartNumberModal">
+            <button class="btn btn-outline-primary ms-auto btn-sm shadow-sm d-flex align-items-center gap-2"
+                data-bs-toggle="modal" data-bs-target="#createPartNumberModal" data-bs-title="Add New Part Number">
                 <i class="bi bi-plus-circle me-1"></i> Add Part Number
             </button>
         </div>
@@ -53,7 +53,8 @@
                                         <td>{{ ucfirst($part->plant) }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
-                                                data-bs-target="#editPartNumberModal-{{ $part->id }}">
+                                                data-bs-target="#editPartNumberModal-{{ $part->id }}"
+                                                data-bs-title="Edit Part Number">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
 
@@ -61,7 +62,8 @@
                                                 class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    data-bs-title="Delete Part Number">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
                                             </form>
@@ -90,11 +92,15 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="_form" value="edit">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Edit Part Number</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                        <div class="modal-content border-0 rounded-4 shadow-lg">
+                            <div class="modal-header bg-light text-dark rounded-top-4">
+                                <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;"
+                                    id="editPartNumberModalLabel-{{ $part->id }}">
+                                    <i class="bi bi-nut-fill me-2"></i>Edit Part Number
+                                </h5>
                             </div>
+
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label>Part Number</label>
@@ -105,6 +111,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+
                                 <div class="mb-3">
                                     <label>Product</label>
                                     <select name="product_id" class="form-select @error('product_id') is-invalid @enderror"
@@ -121,6 +128,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+
                                 <div class="mb-3">
                                     <label>Model</label>
                                     <select name="model_id" class="form-select @error('model_id') is-invalid @enderror"
@@ -137,6 +145,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+
                                 <div class="mb-3">
                                     <label>Process</label>
                                     <select name="process" class="form-select @error('process') is-invalid @enderror"
@@ -153,6 +162,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+
                                 <div class="mb-3">
                                     <label>Plant</label>
                                     <select name="plant" class="form-select @error('plant') is-invalid @enderror"
@@ -165,14 +175,18 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('process')
+                                    @error('plant')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Save Changes</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                                </button>
+                                <button type="submit" class="btn btn-outline-success px-4">
+                                    <i class="bi bi-check-circle me-1"></i> Save Changes
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -183,150 +197,183 @@
         {{-- Modal Create --}}
         <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
             aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
                 <form action="{{ route('part_numbers.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="_form" value="add">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Add Part Number</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        <!-- Header -->
+                        <div class="modal-header bg-light text-dark rounded-top-4">
+                            <h5 class="modal-title fw-semibold" id="createPartNumberModalLabel">
+                                <i class="bi bi-gear-fill me-2"></i>Add Part Number
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label>Part Number</label>
-                                <input type="text" name="part_number"
-                                    class="form-control @error('part_number') is-invalid @enderror"
-                                    value="{{ old('part_number') }}" required>
-                                @error('part_number')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label>Product</label>
-                                <select name="product_id" class="form-select @error('product_id') is-invalid @enderror"
-                                    required>
-                                    <option value="">Select Product</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product->id }}"
-                                            {{ old('product_id') == $product->id ? 'selected' : '' }}>
-                                            {{ $product->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('product_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label>Model</label>
-                                <select name="model_id" class="form-select @error('model_id') is-invalid @enderror"
-                                    required>
-                                    <option value="">Select Model</option>
-                                    @foreach ($models as $model)
-                                        <option value="{{ $model->id }}"
-                                            {{ old('model_id') == $model->id ? 'selected' : '' }}>
-                                            {{ $model->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('model_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label>Process</label>
-                                <select name="process" class="form-select @error('process') is-invalid @enderror"
-                                    required>
-                                    <option value="">Select Process</option>
-                                    @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric'] as $process)
-                                        <option value="{{ $process }}"
-                                            {{ old('process') == $process ? 'selected' : '' }}>
-                                            {{ ucfirst($process) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('process')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label>Plant</label>
-                                <select name="plant" class="form-select @error('plant') is-invalid @enderror"
-                                    required>
-                                    <option value="">Select Plant</option>
-                                    @foreach (['body', 'unit', 'electric'] as $plant)
-                                        <option value="{{ $plant }}"
-                                            {{ old('plant') == $plant ? 'selected' : '' }}>
-                                            {{ ucfirst($plant) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('process')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+
+                        <!-- Body -->
+                        <div class="modal-body p-4">
+                            <div class="row g-3">
+                                <!-- Part Number -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Part Number</label>
+                                    <input type="text" name="part_number"
+                                        class="form-control rounded-3 @error('part_number') is-invalid @enderror"
+                                        value="{{ old('part_number') }}" required>
+                                    @error('part_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- Product -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Product</label>
+                                    <select name="product_id"
+                                        class="form-select rounded-3 @error('product_id') is-invalid @enderror" required>
+                                        <option value="">-- Select Product --</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{ $product->id }}"
+                                                {{ old('product_id') == $product->id ? 'selected' : '' }}>
+                                                {{ $product->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('product_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- Model -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Model</label>
+                                    <select name="model_id"
+                                        class="form-select rounded-3 @error('model_id') is-invalid @enderror" required>
+                                        <option value="">-- Select Model --</option>
+                                        @foreach ($models as $model)
+                                            <option value="{{ $model->id }}"
+                                                {{ old('model_id') == $model->id ? 'selected' : '' }}>
+                                                {{ $model->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('model_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- Process -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Process</label>
+                                    <select name="process"
+                                        class="form-select rounded-3 @error('process') is-invalid @enderror" required>
+                                        <option value="">-- Select Process --</option>
+                                        @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric'] as $process)
+                                            <option value="{{ $process }}"
+                                                {{ old('process') == $process ? 'selected' : '' }}>
+                                                {{ ucfirst($process) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('process')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- Plant -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Plant</label>
+                                    <select name="plant"
+                                        class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
+                                        <option value="">-- Select Plant --</option>
+                                        @foreach (['body', 'unit', 'electric'] as $plant)
+                                            <option value="{{ $plant }}"
+                                                {{ old('plant') == $plant ? 'selected' : '' }}>
+                                                {{ ucfirst($plant) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('plant')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Save Part Number</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                        <!-- Footer -->
+                        <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary px-4">
+                                <i class="bi bi-save2 me-1"></i>Save Part Number
+                            </button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
+    @endsection
 
-    </div>
-@endsection
-
-@push('scripts')
-    <script>
-        document.querySelectorAll('.delete-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'This action cannot be undone.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        this.submit();
-                    }
+    @push('scripts')
+        <script>
+            document.querySelectorAll('.delete-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'This action cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.submit();
+                        }
+                    });
                 });
             });
-        });
 
-        // Clear Search functionality
-        document.addEventListener("DOMContentLoaded", function() {
-            const clearBtn = document.getElementById("clearSearch");
-            const searchInput = document.getElementById("searchInput");
-            const searchForm = document.getElementById("searchForm");
+            // Clear Search functionality
+            document.addEventListener("DOMContentLoaded", function() {
+                const clearBtn = document.getElementById("clearSearch");
+                const searchInput = document.getElementById("searchInput");
+                const searchForm = document.getElementById("searchForm");
 
-            if (clearBtn && searchInput && searchForm) {
-                clearBtn.addEventListener("click", function() {
-                    searchInput.value = "";
-                    searchForm.submit();
+                if (clearBtn && searchInput && searchForm) {
+                    clearBtn.addEventListener("click", function() {
+                        searchInput.value = "";
+                        searchForm.submit();
+                    });
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+                tooltipTriggerList.map(function(el) {
+                    return new bootstrap.Tooltip(el, {
+                        title: el.getAttribute('data-bs-title'),
+                        placement: 'top',
+                        trigger: 'hover'
+                    });
                 });
-            }
-        });
-    </script>
-    @if ($errors->any() && session('edit_modal'))
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                new bootstrap.Modal(document.getElementById("editPartNumberModal-{{ session('edit_modal') }}")).show();
             });
         </script>
-    @endif
+        @if ($errors->any() && session('edit_modal'))
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    new bootstrap.Modal(document.getElementById("editPartNumberModal-{{ session('edit_modal') }}")).show();
+                });
+            </script>
+        @endif
 
-    @if ($errors->any() && old('_form') === 'add')
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                new bootstrap.Modal(document.getElementById("createPartNumberModal")).show();
-            });
-        </script>
-    @endif
-@endpush
+        @if ($errors->any() && old('_form') === 'add')
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    new bootstrap.Modal(document.getElementById("createPartNumberModal")).show();
+                });
+            </script>
+        @endif
+    @endpush

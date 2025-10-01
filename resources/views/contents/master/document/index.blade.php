@@ -9,7 +9,7 @@
             <form method="GET" class="w-50 d-flex align-items-center" id="searchForm">
                 <div class="input-group">
                     <input type="text" name="search" id="searchInput" class="form-control"
-                        placeholder="Search by Document Name or Department" value="{{ request('search') }}">
+                        placeholder="Search by Document Name" value="{{ request('search') }}">
 
                     <button class="btn btn-outline-secondary btn-sm" type="submit">
                         <i class="bi bi-search me-1"></i> Search
@@ -23,7 +23,7 @@
                 </div>
             </form>
             <button type="button" class="btn btn-outline-primary ms-auto btn-sm" data-bs-toggle="modal"
-                data-bs-target="#createDocumentModal">
+                data-bs-target="#createDocumentModal" data-bs-title="Add New Document">
                 <i class="bi bi-plus-circle me-1"></i> Add Document
             </button>
         </div>
@@ -38,7 +38,6 @@
                                     <th>No</th>
                                     <th>Name</th>
                                     <th>Type</th>
-                                    <th>Department</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -49,16 +48,16 @@
                                         </td>
                                         <td>{{ $document->name }}</td>
                                         <td>{{ ucfirst($document->type) ?? '-' }}</td>
-                                        <td>{{ $document->department->name ?? '-' }}</td>
                                         <td>
                                             <a href="{{ route('documents.show', $document->id) }}"
-                                                class="btn btn-sm btn-outline-info me-1">
+                                                class="btn btn-sm btn-outline-info me-1" data-bs-title="View Child Document">
                                                 <i class="bi bi-diagram-3"></i>
                                             </a>
 
                                             <button type="button" class="btn btn-sm btn-outline-primary me-1"
                                                 data-bs-toggle="modal"
-                                                data-bs-target="#editDocumentModal-{{ $document->id }}">
+                                                data-bs-target="#editDocumentModal-{{ $document->id }}"
+                                                data-bs-title="Edit Document">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
 
@@ -66,7 +65,8 @@
                                                 class="delete-form d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                data-bs-title="Delete Document">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
                                             </form>
@@ -89,137 +89,119 @@
         </div>
 
         {{-- Modal Edit Document --}}
-        @foreach ($documents as $document)
-            <div class="modal fade" id="editDocumentModal-{{ $document->id }}" tabindex="-1"
-                aria-labelledby="editDocumentModalLabel-{{ $document->id }}" aria-hidden="true">
-                <div class="modal-dialog">
-                    <form action="{{ route('documents.update', $document->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Edit Document</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" name="name"
-                                        class="form-control @error('name') is-invalid @enderror"
-                                        value="{{ old('name', $document->name) }}" required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+@foreach ($documents as $document)
+    <div class="modal fade" id="editDocumentModal-{{ $document->id }}" tabindex="-1"
+        aria-labelledby="editDocumentModalLabel-{{ $document->id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form action="{{ route('documents.update', $document->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-content shadow-lg border-0 rounded-4">
+                    <div class="modal-header bg-light text-dark rounded-top-4">
+                        <h5 class="modal-title fw-semibold">
+                            <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Document
+                        </h5>
+                    </div>
 
-                                <div class="mb-3">
-                                    <label class="form-label">Type</label>
-                                    <select name="type" class="form-select @error('type') is-invalid @enderror" required>
-                                        <option value="">Select Type</option>
-                                        @foreach (\App\Models\Document::getTypes() as $value => $label)
-                                            <option value="{{ $value }}"
-                                                {{ old('type', $document->type) === $value ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('type')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Department</label>
-                                    <select name="department_id"
-                                        class="form-select @error('department_id') is-invalid @enderror" required>
-                                        <option value="">Select Department</option>
-                                        @foreach ($departments as $department)
-                                            <option value="{{ $department->id }}"
-                                                {{ old('department_id', $document->department_id) == $department->id ? 'selected' : '' }}>
-                                                {{ $department->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('department_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Save Changes</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        @endforeach
-
-        {{-- Modal Create Document --}}
-        <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog">
-                <form action="{{ route('documents.store') }}" method="POST">
-                    @csrf
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Create New Document</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-body px-4 py-3">
+                        {{-- Document Name --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Name</label>
+                            <input type="text" name="name"
+                                class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                value="{{ old('name', $document->name) }}" placeholder="Enter document name" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Name</label>
-                                <input type="text" name="name"
-                                    class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}"
-                                    required>
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Type</label>
-                                <select name="type" class="form-select @error('type') is-invalid @enderror" required>
-                                    <option value="">Select Type</option>
-                                    @foreach (\App\Models\Document::getTypes() as $value => $label)
-                                        <option value="{{ $value }}"
-                                            {{ old('type') === $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('type')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Department</label>
-                                <select name="department_id"
-                                    class="form-select @error('department_id') is-invalid @enderror" required>
-                                    <option value="">Select Department</option>
-                                    @foreach ($departments as $department)
-                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('department_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Save Document</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        {{-- Document Type --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Type</label>
+                            <select name="type"
+                                class="form-select rounded-3 @error('type') is-invalid @enderror" required>
+                                <option value="">Select Type</option>
+                                @foreach (\App\Models\Document::getTypes() as $value => $label)
+                                    <option value="{{ $value }}"
+                                        {{ old('type', $document->type) === $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('type')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
-                </form>
-            </div>
+
+                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-outline-success px-4">
+                            <i class="bi bi-check-circle me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
+@endforeach
+
+{{-- 📄 Create Document Modal --}}
+<div class="modal fade" id="createDocumentModal" tabindex="-1"
+    aria-labelledby="createDocumentModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-lg">
+        <form action="{{ route('documents.store') }}" method="POST">
+            @csrf
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-light text-dark rounded-top-4">
+                    <h5 class="modal-title fw-semibold">
+                        <i class="bi bi-file-earmark-plus me-2 text-primary"></i> Create New Document
+                    </h5>
+                </div>
+
+                <div class="modal-body px-4 py-3">
+                    {{-- Document Name --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Name</label>
+                        <input type="text" name="name"
+                            class="form-control rounded-3 @error('name') is-invalid @enderror"
+                            value="{{ old('name') }}" placeholder="Enter document name" required>
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- Document Type --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Type</label>
+                        <select name="type"
+                            class="form-select rounded-3 @error('type') is-invalid @enderror" required>
+                            <option value="">Select Type</option>
+                            @foreach (\App\Models\Document::getTypes() as $value => $label)
+                                <option value="{{ $value }}" {{ old('type') === $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('type')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-outline-primary px-4">
+                        <i class="bi bi-save me-1"></i> Save Document
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -256,6 +238,18 @@
                     searchForm.submit();
                 });
             }
+        });
+
+        //Tooltip
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el, {
+                    title: el.getAttribute('data-bs-title'),
+                    placement: 'top',
+                    trigger: 'hover'
+                });
+            });
         });
     </script>
 @endpush

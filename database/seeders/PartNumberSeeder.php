@@ -19,7 +19,7 @@ class PartNumberSeeder extends Seeder
             'electric' => ['electric'],
         ];
         $data = [
-            'Timming Chain Cover' => [
+            'Timing Chain Cover' => [
                 'models' => ['D98E', '889F/D81F', 'D72F/D73F', 'D05E', '4A91', 'D18E', 'D41E', 'D13E'],
                 'processes' => ['die casting', 'machining', 'assembling unit'],
             ],

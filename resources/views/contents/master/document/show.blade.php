@@ -7,7 +7,7 @@
             <form method="GET" class="w-50 d-flex align-items-center" id="searchForm">
                 <div class="input-group">
                     <input type="text" name="search" id="searchInput" class="form-control"
-                        placeholder="Search by Document Name or Department" value="{{ request('search') }}">
+                        placeholder="Search by Document Name" value="{{ request('search') }}">
 
                     <button class="btn btn-outline-secondary btn-sm" type="submit">
                         <i class="bi bi-search me-1"></i> Search
@@ -21,7 +21,7 @@
                 </div>
             </form>
             <button type="button" class="btn btn-outline-primary ms-auto btn-sm" data-bs-toggle="modal"
-                data-bs-target="#createDocumentModal">
+                data-bs-target="#createDocumentModal" data-bs-title="Add New Document">
                 <i class="bi bi-plus-circle me-1"></i> Add Document
             </button>
         </div>
@@ -29,7 +29,6 @@
         <div class="card shadow-sm border-0">
             <div class="px-3 py-3">
                 <p class="mb-0"><strong>Parent:</strong> {{ $document->name }}</p>
-                <p class="mb-0"><strong>Department:</strong> {{ $document->department->name }}</p>
             </div>
             <div class="card-body">
                 <div class="table-wrapper mb-3">
@@ -40,7 +39,6 @@
                                     <th>No</th>
                                     <th>Name</th>
                                     <th>Type</th>
-                                    <th>Department</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -51,16 +49,17 @@
                                         </td>
                                         <td>{{ $child->name }}</td>
                                         <td>{{ ucfirst($child->type) ?? '-' }}</td>
-                                        <td>{{ $child->department->name }}</td>
                                         <td>
                                             <a href="{{ route('documents.show', $child->id) }}"
-                                                class="btn btn-sm btn-outline-info me-1" title="View Children">
+                                                class="btn btn-sm btn-outline-info me-1" title="View Children"
+                                                data-bs-title="View Child Document">
                                                 <i class="bi bi-diagram-3"></i>
                                             </a>
 
                                             <button type="button" class="btn btn-sm btn-outline-primary me-1"
                                                 data-bs-toggle="modal"
-                                                data-bs-target="#editDocumentModal-{{ $child->id }}" title="Edit">
+                                                data-bs-target="#editDocumentModal-{{ $child->id }}" title="Edit"
+                                                data-bs-title="Edit Document">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
 
@@ -68,7 +67,8 @@
                                                 class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
+                                                    data-bs-title="Delete Document">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
                                             </form>
@@ -95,34 +95,43 @@
             </div>
         </div>
 
-        <!-- Modal Create Document -->
+        <!-- 🔹 Modal Create Document -->
         <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
             aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog  modal-lg">
                 <form action="{{ route('documents.store') }}" method="POST">
                     @csrf
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Create New Document</h5>
+                    <div class="modal-content shadow-lg border-0 rounded-4">
+
+                        {{-- 🔹 Header --}}
+                        <div class="modal-header bg-light text-dark rounded-top-4">
+                            <h5 class="modal-title fw-semibold mb-0" id="createDocumentModalLabel">
+                                <i class="bi bi-file-earmark-plus text-primary me-2"></i>
+                                Create New Document
+                            </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
-                        <div class="modal-body">
+                        {{-- 🔹 Body --}}
+                        <div class="modal-body px-4 py-3">
                             <input type="hidden" name="parent_id" value="{{ $document->id }}">
 
+                            {{-- Name --}}
                             <div class="mb-3">
-                                <label>Name</label>
+                                <label class="form-label fw-semibold small text-secondary">Name</label>
                                 <input type="text" name="name"
-                                    class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}"
-                                    required>
+                                    class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                    placeholder="Enter document name" value="{{ old('name') }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
+                            {{-- Type --}}
                             <div class="mb-3">
-                                <label class="form-label">Type</label>
-                                <select name="type" class="form-select @error('type') is-invalid @enderror" required>
+                                <label class="form-label fw-semibold small text-secondary">Type</label>
+                                <select name="type" class="form-select rounded-3 @error('type') is-invalid @enderror"
+                                    required>
                                     <option value="">Select Type</option>
                                     @foreach (\App\Models\Document::getTypes() as $value => $label)
                                         <option value="{{ $value }}"
@@ -135,66 +144,60 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-
-                            <div class="mb-3">
-                                <label>Department</label>
-                                <select name="department_id"
-                                    class="form-select @error('department_id') is-invalid @enderror" required>
-                                    <option value="">Select Department</option>
-                                    @foreach ($departments as $department)
-                                        <option value="{{ $department->id }}"
-                                            {{ old('department_id') == $department->id ? 'selected' : '' }}>
-                                            {{ $department->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('department_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
                         </div>
 
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Save Document</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        {{-- 🔹 Footer --}}
+                        <div class="modal-footer bg-light border-0 rounded-bottom-4 p-3 justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary px-4">
+                                <i class="bi bi-save me-1"></i> Save Document
+                            </button>
                         </div>
+
                     </div>
                 </form>
             </div>
         </div>
-
         <!-- Modal Edit Document -->
         @foreach ($children as $child)
             <div class="modal fade" id="editDocumentModal-{{ $child->id }}" tabindex="-1"
                 aria-labelledby="editDocumentModalLabel-{{ $child->id }}" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
                     <form action="{{ route('documents.update', $child->id) }}" method="POST">
                         @csrf
                         @method('PUT')
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="editDocumentModalLabel-{{ $child->id }}">
+                        <div class="modal-content shadow-lg border-0 rounded-4">
+
+                            {{-- 🔹 Header --}}
+                            <div class="modal-header bg-light text-dark rounded-top-4">
+                                <h5 class="modal-title fw-semibold mb-0" id="editDocumentModalLabel-{{ $child->id }}">
+                                    <i class="bi bi-pencil-square me-2 text-primary"></i>
                                     Edit Document
                                 </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
 
-                            <div class="modal-body">
+                            {{-- 🔹 Body --}}
+                            <div class="modal-body px-4 py-3">
+                                {{-- Document Name --}}
                                 <div class="mb-3">
-                                    <label>Name</label>
+                                    <label class="form-label fw-semibold small text-secondary">Name</label>
                                     <input type="text" name="name"
-                                        class="form-control @error('name') is-invalid @enderror"
-                                        value="{{ old('name', $child->name) }}" required>
+                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                        value="{{ old('name', $child->name) }}" placeholder="Enter document name"
+                                        required>
                                     @error('name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
+                                {{-- Document Type --}}
                                 <div class="mb-3">
-                                    <label class="form-label">Type</label>
-                                    <select name="type" class="form-select @error('type') is-invalid @enderror"
-                                        required>
+                                    <label class="form-label fw-semibold small text-secondary">Type</label>
+                                    <select name="type"
+                                        class="form-select rounded-3 @error('type') is-invalid @enderror" required>
                                         <option value="">Select Type</option>
                                         @foreach (\App\Models\Document::getTypes() as $value => $label)
                                             <option value="{{ $value }}"
@@ -207,29 +210,18 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
-                                <div class="mb-3">
-                                    <label>Department</label>
-                                    <select name="department_id"
-                                        class="form-select @error('department_id') is-invalid @enderror" required>
-                                        <option value="">Select Department</option>
-                                        @foreach ($departments as $department)
-                                            <option value="{{ $department->id }}"
-                                                {{ old('department_id', $child->department_id) == $department->id ? 'selected' : '' }}>
-                                                {{ $department->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('department_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
                             </div>
 
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Save Changes</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            {{-- 🔹 Footer --}}
+                            <div class="modal-footer bg-light border-0 rounded-bottom-4 p-3 justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                                </button>
+                                <button type="submit" class="btn btn-outline-success px-4">
+                                    <i class="bi bi-check-circle me-1"></i> Save Changes
+                                </button>
                             </div>
+
                         </div>
                     </form>
                 </div>
@@ -262,7 +254,7 @@
             });
         });
 
-         // Clear Search functionality
+        // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
             const clearBtn = document.getElementById("clearSearch");
             const searchInput = document.getElementById("searchInput");
@@ -274,6 +266,17 @@
                     searchForm.submit();
                 });
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el, {
+                    title: el.getAttribute('data-bs-title'),
+                    placement: 'top',
+                    trigger: 'hover'
+                });
+            });
         });
     </script>
 @endpush

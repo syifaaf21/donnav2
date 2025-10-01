@@ -64,8 +64,8 @@ Route::prefix('document-review')->name('document-review.')->group(function() {
     Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
     Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
     Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroyReview'])->name('destroy');
-    Route::post('/approve/{mapping}', [DocumentMappingController::class, 'approve'])->name('approve');
     Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
+    Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');
 
     // User route
     Route::post('/revise/{mapping}', [DocumentMappingController::class, 'reviseReview'])->name('revise');

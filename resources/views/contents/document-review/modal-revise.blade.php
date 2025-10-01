@@ -6,7 +6,7 @@
             @csrf
             <div class="modal-content border-0 rounded-4 shadow-lg">
                 {{-- Modal Header --}}
-                <div class="modal-header bg-gradient-warning text-white rounded-top-4">
+                <div class="modal-header bg-light text-dark rounded-top-4">
                     <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;">
                         <i class="bi bi-arrow-clockwise me-2"></i> Revisi Document: {{ $mapping->document->name }}
                     </h5>

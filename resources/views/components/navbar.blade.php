@@ -11,6 +11,7 @@
                     'documents.index' => 'Document List',
                     'documents.show' => 'Child Document',
                     'part_numbers.index' => 'Part Number List',
+                    'document-review.index' => 'Document Review'
                 ];
                 $pageTitle = $titles[$routeName] ?? ucwords(str_replace('.', ' ', $routeName));
             @endphp
@@ -56,9 +57,6 @@
                     </li>
                 </ul>
             </div>
-
-            {{-- Logo --}}
-            <img src="{{ asset('images/satu aisin.jfif') }}" alt="Logo" height="36" class="d-none d-md-block">
         </div>
     </div>
 </nav>
