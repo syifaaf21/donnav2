@@ -78,10 +78,11 @@ Route::prefix('document-control')->name('document-control.')->group(function() {
     Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveControl'])->name('approve');
     Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateControl'])->name('update');
     Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
-    Route::post('/document-control/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])
-    ->name('bulkDestroy');
 
     Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
 
 });
+
+Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])
+    ->name('bulkDestroy');
 

@@ -16,7 +16,7 @@ class DocumentMappingController extends Controller
     // ================= Document Review Index =================
     public function reviewIndex(Request $request)
     {
-        $documentsMaster = Document::where('type', 'review')->get();
+        $documentsMaster = Document::with('children.children')->where('type', 'review')->get();
         $partNumbers = PartNumber::all();
         $statuses = Status::all();
         $departments = Department::all();

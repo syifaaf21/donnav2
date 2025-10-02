@@ -119,7 +119,8 @@
                                 <table class="table modern-table align-middle table-hover mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>No</th>
+                                            <th></th>
+                                            <th>#</th>
                                             <th>Document Name</th>
                                             <th>Document Number</th>
                                             <th>Part Number</th>
@@ -135,31 +136,49 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($documents as $mapping)
+                                        @php
+                                            $groupedDocuments = $documents->groupBy('part_number');
+                                        @endphp
+
+                                        @forelse ($groupedDocuments as $partNumber => $docs)
+                                            @php
+                                                $parent = $docs->first();
+                                                $children = $docs->skip(1);
+                                            @endphp
+
+                                            {{-- Parent Row --}}
                                             <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $mapping->document->name }}</td>
-                                                <td>{{ $mapping->document_number }}</td>
-                                                <td>{{ $mapping->partNumber->part_number ?? '-' }}</td>
                                                 <td>
-                                                    @if ($mapping->file_path)
+                                                    @if ($children->count() > 0)
+                                                        <button class="btn btn-sm btn-link toggle-children"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#childRow{{ $loop->index }}"
+                                                            aria-expanded="false">
+                                                            <i class="bi bi-plus-square"></i>
+                                                        </button>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $parent->document->name }}</td>
+                                                <td>{{ $parent->document_number }}</td>
+                                                <td>{{ $parent->partNumber->part_number ?? '-' }}</td>
+                                                <td>
+                                                    @if ($parent->file_path)
                                                         <button type="button"
                                                             class="btn btn-outline-primary btn-sm view-file-btn"
                                                             data-bs-toggle="modal" data-bs-target="#viewFileModal"
-                                                            data-file="{{ asset('storage/' . $mapping->file_path) }}">
+                                                            data-file="{{ asset('storage/' . $parent->file_path) }}">
                                                             <i class="bi bi-file-earmark-text me-1"></i> View
                                                         </button>
                                                     @endif
                                                 </td>
-
-                                                <td>{{ $mapping->department->name ?? '-' }}</td>
-                                                <td>{{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') : '-' }}
+                                                <td>{{ $parent->department->name ?? '-' }}</td>
+                                                <td>{{ $parent->reminder_date ? \Carbon\Carbon::parse($parent->reminder_date)->format('Y-m-d') : '-' }}
                                                 </td>
-                                                <td>{{ $mapping->deadline ? \Carbon\Carbon::parse($mapping->deadline)->format('Y-m-d') : '-' }}
+                                                <td>{{ $parent->deadline ? \Carbon\Carbon::parse($parent->deadline)->format('Y-m-d') : '-' }}
                                                 </td>
-
                                                 <td>
-                                                    @switch($mapping->status->name)
+                                                    @switch($parent->status->name)
                                                         @case('Approved')
                                                             <span class="badge bg-success">Approved</span>
                                                         @break
@@ -174,110 +193,90 @@
 
                                                         @default
                                                             <span
-                                                                class="badge bg-secondary">{{ $mapping->status->name ?? '-' }}</span>
+                                                                class="badge bg-secondary">{{ $parent->status->name ?? '-' }}</span>
                                                     @endswitch
                                                 </td>
-                                                <td>{{ $mapping->version }}</td>
-                                                <td>{{ $mapping->notes }}</td>
-                                                <td>{{ $mapping->user->name ?? '-' }}</td>
-
+                                                <td>{{ $parent->version }}</td>
+                                                <td>{{ $parent->notes }}</td>
+                                                <td>{{ $parent->user->name ?? '-' }}</td>
                                                 <td class="text-nowrap">
-                                                    @if (auth()->user()->role->name == 'Admin')
-                                                        {{-- Edit --}}
-                                                        <button class="btn btn-outline-primary btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#editModal{{ $mapping->id }}"
-                                                            data-bs-title="Edit Metadata">
-                                                            <i class="bi bi-pencil-square"></i>
-                                                        </button>
-
-                                                        {{-- Delete --}}
-                                                        <form
-                                                            action="{{ route('document-review.destroy', $mapping->id) }}"
-                                                            method="POST" class="d-inline delete-form">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm"
-                                                                data-bs-title="Delete Document">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </form>
-
-
-                                                        {{-- Revisi --}}
-                                                        <button class="btn btn-outline-warning btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#reviseModal{{ $mapping->id }}"
-                                                            data-bs-title="Revise Document">
-                                                            <i class="bi bi-arrow-clockwise"></i>
-                                                        </button>
-
-
-                                                        {{-- Approve / Reject --}}
-                                                        @if ($mapping->status->name == 'Need Review')
-                                                            {{-- Tombol Approve buka modal --}}
-                                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#approveModal{{ $mapping->id }}"
-                                                                data-bs-title="Approve Document">
-                                                                <i class="bi bi-check2-circle"></i>
-                                                            </button>
-
-                                                            {{-- Tombol Reject tetap form --}}
-                                                            <form
-                                                                action="{{ route('document-review.reject', $mapping->id) }}"
-                                                                method="POST" class="d-inline reject-form">
-                                                                @csrf
-                                                                <button type="submit"
-                                                                    class="btn btn-outline-danger btn-sm"
-                                                                    data-bs-title="Reject Document">
-                                                                    <i class="bi bi-x-circle"></i>
-                                                                </button>
-                                                            </form>
-                                                        @elseif ($mapping->status->name == 'Approved')
-                                                            {{-- Sudah Approved --}}
-                                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                                disabled>
-                                                                <i class="bi bi-check2-all"></i>
-                                                            </button>
-                                                            <button type="button"
-                                                                class="btn btn-outline-secondary btn-sm" disabled>
-                                                                <i class="bi bi-x-circle"></i>
-                                                            </button>
-                                                        @elseif ($mapping->status->name == 'Rejected')
-                                                            {{-- Sudah Rejected --}}
-                                                            <button type="button"
-                                                                class="btn btn-outline-secondary btn-sm" disabled>
-                                                                <i class="bi bi-check2-circle"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                disabled>
-                                                                <i class="bi bi-x-circle-fill"></i>
-                                                            </button>
-                                                        @else
-                                                            {{-- Status lain --}}
-                                                            <button class="btn btn-outline-secondary btn-sm" disabled>
-                                                                <i class="bi bi-slash-circle"></i>
-                                                            </button>
-                                                        @endif
-                                                    @else
-                                                        {{-- User hanya revisi --}}
-                                                        <button class="btn btn-outline-warning btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#reviseModal{{ $mapping->id }}">
-                                                            <i class="bi bi-arrow-clockwise"></i>
-                                                        </button>
-                                                    @endif
+                                                    {{-- @include('contents.document-review.partials.action-buttons', ['mapping' => $parent]) --}}
                                                 </td>
                                             </tr>
 
-                                            {{-- Include modal --}}
-                                            @include('contents.document-review.modal-edit')
-                                            @include('contents.document-review.modal-revise')
-                                            @include('contents.document-review.modal-approve')
+                                            {{-- Child Row --}}
+                                            @if ($children->count() > 0)
+                                                <tr>
+                                                    <td colspan="14" class="p-0">
+                                                        <div class="collapse" id="childRow{{ $loop->index }}">
+                                                            <table class="table table-sm mb-0">
+                                                                <tbody>
+                                                                    @foreach ($children as $child)
+                                                                        <tr>
+                                                                            <td></td>
+                                                                            <td>-</td>
+                                                                            <td>{{ $child->document->name }}</td>
+                                                                            <td>{{ $child->document_number }}</td>
+                                                                            <td>{{ $child->partNumber->part_number ?? '-' }}
+                                                                            </td>
+                                                                            <td>
+                                                                                @if ($child->file_path)
+                                                                                    <button type="button"
+                                                                                        class="btn btn-outline-primary btn-sm view-file-btn"
+                                                                                        data-bs-toggle="modal"
+                                                                                        data-bs-target="#viewFileModal"
+                                                                                        data-file="{{ asset('storage/' . $child->file_path) }}">
+                                                                                        <i
+                                                                                            class="bi bi-file-earmark-text me-1"></i>
+                                                                                        View
+                                                                                    </button>
+                                                                                @endif
+                                                                            </td>
+                                                                            <td>{{ $child->department->name ?? '-' }}</td>
+                                                                            <td>{{ $child->reminder_date ? \Carbon\Carbon::parse($child->reminder_date)->format('Y-m-d') : '-' }}
+                                                                            </td>
+                                                                            <td>{{ $child->deadline ? \Carbon\Carbon::parse($child->deadline)->format('Y-m-d') : '-' }}
+                                                                            </td>
+                                                                            <td>
+                                                                                @switch($child->status->name)
+                                                                                    @case('Approved')
+                                                                                        <span
+                                                                                            class="badge bg-success">Approved</span>
+                                                                                    @break
+
+                                                                                    @case('Rejected')
+                                                                                        <span
+                                                                                            class="badge bg-danger">Rejected</span>
+                                                                                    @break
+
+                                                                                    @case('Need Review')
+                                                                                        <span
+                                                                                            class="badge bg-warning text-dark">Need
+                                                                                            Review</span>
+                                                                                    @break
+
+                                                                                    @default
+                                                                                        <span
+                                                                                            class="badge bg-secondary">{{ $child->status->name ?? '-' }}</span>
+                                                                                @endswitch
+                                                                            </td>
+                                                                            <td>{{ $child->version }}</td>
+                                                                            <td>{{ $child->notes }}</td>
+                                                                            <td>{{ $child->user->name ?? '-' }}</td>
+                                                                            <td class="text-nowrap">
+                                                                                {{-- @include('contents.document-review.partials.action-buttons', ['mapping' => $child]) --}}
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                             @empty
                                                 <tr>
-                                                    <td colspan="13" class="text-center py-4 text-muted">
+                                                    <td colspan="14" class="text-center py-4 text-muted">
                                                         <i class="bi bi-search me-2"></i>
                                                         No documents found for this tab.
                                                     </td>
@@ -285,10 +284,30 @@
                                             @endforelse
                                         </tbody>
                                     </table>
+
+                                    {{-- Script untuk toggle icon --}}
+                                    <script>
+                                        document.addEventListener("DOMContentLoaded", function() {
+                                            document.querySelectorAll(".toggle-children").forEach(function(btn) {
+                                                btn.addEventListener("click", function() {
+                                                    const icon = this.querySelector("i");
+                                                    if (this.getAttribute("aria-expanded") === "true") {
+                                                        icon.classList.remove("bi-dash-square");
+                                                        icon.classList.add("bi-plus-square");
+                                                    } else {
+                                                        icon.classList.remove("bi-plus-square");
+                                                        icon.classList.add("bi-dash-square");
+                                                    }
+                                                });
+                                            });
+                                        });
+                                    </script>
+
+
                                 </div>
-                                                            <div class="mt-3">
-                                {!! $documents->withQueryString()->links() !!}
-                            </div>
+                                <div class="mt-3">
+                                    {!! $documents->withQueryString()->links() !!}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -296,7 +315,7 @@
             </div>
 
             {{-- Modal Add --}}
-            @include('contents.document-review.modal-add')
+            @include('contents.document-review.partials.modal-add')
         </div>
         <!-- 📄 Modal Fullscreen View File -->
         <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
@@ -314,6 +333,22 @@
                     </div>
                 </div>
             </div>
+        </div>
+        {{-- Snackbar Bulk Action --}}
+        <div id="snackbar" class="snackbar shadow-lg d-flex justify-content-between align-items-center">
+            <div>
+                <span id="selectedCount">0 selected</span>
+            </div>
+
+            <form id="bulkDeleteForm" action="{{ route('bulkDestroy') }}" method="POST" class="mb-0">
+                @csrf
+                {{-- container untuk input hidden ids[] yang akan dibuat oleh JS --}}
+                <div id="bulkIdsContainer"></div>
+
+                <button id="bulkDeleteBtn" type="submit" class="btn btn-outline-danger btn-sm" disabled>
+                    <i class="bi bi-trash"></i> Delete Selected
+                </button>
+            </form>
         </div>
     @endsection
 
@@ -439,6 +474,86 @@
                 modal.addEventListener('hidden.bs.modal', () => {
                     iframe.src = '';
                 });
+            });
+
+
+            // Snackbar script
+            document.addEventListener('DOMContentLoaded', function() {
+                const selectAll = document.getElementById('selectAll');
+                const snackbar = document.getElementById('snackbar');
+                const selectedCount = document.getElementById('selectedCount');
+                const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+                const bulkIdsContainer = document.getElementById('bulkIdsContainer');
+                const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+                function getRowCheckboxes() {
+                    return Array.from(document.querySelectorAll('.row-checkbox'));
+                }
+
+                function updateSnackbar() {
+                    const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
+                    selectedCount.textContent = `${checkedBoxes.length} selected`;
+                    snackbar.classList.toggle('show', checkedBoxes.length > 0);
+                    bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+                }
+
+                // master checkbox handler
+                if (selectAll) {
+                    selectAll.addEventListener('change', function() {
+                        getRowCheckboxes().forEach(cb => cb.checked = this.checked);
+                        updateSnackbar();
+                    });
+                }
+
+                // listen perubahan pada checkbox (event delegation)
+                document.addEventListener('change', function(e) {
+                    if (e.target && e.target.classList && e.target.classList.contains('row-checkbox')) {
+                        // if any manual uncheck, uncheck master
+                        if (!e.target.checked && selectAll) selectAll.checked = false;
+
+                        // if all are checked, set master checked
+                        const all = getRowCheckboxes();
+                        if (selectAll && all.length > 0) {
+                            selectAll.checked = all.every(cb => cb.checked);
+                        }
+
+                        updateSnackbar();
+                    }
+                });
+
+                // on submit: build hidden inputs ids[] then submit
+                bulkDeleteForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
+                    if (checkedBoxes.length === 0) {
+                        alert('No documents selected.');
+                        return;
+                    }
+
+                    if (!confirm(
+                            `Are you sure you want to delete ${checkedBoxes.length} selected document(s)?`)) {
+                        return;
+                    }
+
+                    // clear previous inputs
+                    bulkIdsContainer.innerHTML = '';
+
+                    // create hidden inputs ids[]
+                    checkedBoxes.forEach(cb => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = cb.value;
+                        bulkIdsContainer.appendChild(input);
+                    });
+
+                    // submit native
+                    bulkDeleteForm.submit();
+                });
+
+                // init
+                updateSnackbar();
             });
         </script>
     @endpush

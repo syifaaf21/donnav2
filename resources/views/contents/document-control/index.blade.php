@@ -111,10 +111,18 @@
                                                     -
                                                 @endif
                                             </td>
-                                            <td>{{ $mapping->obsolete_date?->format('d-m-Y') ?? '-' }}</td>
-                                            <td>{{ $mapping->reminder_date?->format('d-m-Y') ?? '-' }}</td>
+                                            <td>
+                                                @if ($mapping->obsolete_date)
+                                                    {{ \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td>
+                                                {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
+                                            </td>
                                             <td>{{ $mapping->notes ?? '-' }}</td>
-                                            <td>{{ $mapping->created_at->format('d-m-Y') }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($mapping->created_at)->format('d-m-Y') }}</td>
                                             <td class="text-nowrap">
                                                 @if (auth()->user()->role->name == 'Admin')
                                                     {{-- Edit --}}
@@ -212,7 +220,7 @@
             <span id="selectedCount">0 selected</span>
         </div>
 
-        <form id="bulkDeleteForm" action="{{ route('document-control.bulkDestroy') }}" method="POST" class="mb-0">
+        <form id="bulkDeleteForm" action="{{ route('bulkDestroy') }}" method="POST" class="mb-0">
             @csrf
             {{-- container untuk input hidden ids[] yang akan dibuat oleh JS --}}
             <div id="bulkIdsContainer"></div>
