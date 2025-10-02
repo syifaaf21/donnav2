@@ -39,7 +39,22 @@ class DocumentMappingController extends Controller
                 });
             }
 
-            $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->paginate(10, ['*'], 'page_' . $plant);
+            // Filter by Status
+            if ($status = request('status')) {
+                $query->whereHas('status', fn($q) => $q->where('name', $status));
+            }
+
+            // Filter by Department
+            if ($department = request('department')) {
+                $query->where('department_id', $department);
+            }
+
+            // Filter by Deadline (tanggal exact)
+            if ($deadline = request('deadline')) {
+                $query->whereDate('deadline', $deadline);
+            }
+
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->paginate(5, ['*'], 'page_' . $plant);
             // pakai page_plant supaya paginator tiap tab independen
         }
 
@@ -155,8 +170,7 @@ class DocumentMappingController extends Controller
     // ================= Approve / Reject Review (Admin) =================
     public function approveWithDates(Request $request, DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin')
-            abort(403);
+        if (Auth::user()->role->name != 'Admin') abort(403);
 
         $request->validate([
             'reminder_date' => 'required|date|before_or_equal:deadline',

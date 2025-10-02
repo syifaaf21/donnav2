@@ -3,9 +3,9 @@
 @section('content')
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <form method="GET" class="w-50 d-flex align-items-center" id="searchForm">
-                <div class="input-group">
-                    <input type="text" name="search" id="searchInput" class="form-control"
+            <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
+                <div class="input-group" style="width: 600px; max-width: 100%;">
+                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
                         placeholder="Search by Part Number, Product, Model, or Process" value="{{ request('search') }}">
 
                     <button class="btn btn-outline-secondary btn-sm" type="submit">
@@ -13,13 +13,13 @@
                     </button>
 
                     @if (true)
-                        <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="clearSearch">
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch">
                             Clear
                         </button>
                     @endif
                 </div>
             </form>
-            <button class="btn btn-outline-primary ms-auto btn-sm shadow-sm d-flex align-items-center gap-2"
+            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3"
                 data-bs-toggle="modal" data-bs-target="#createPartNumberModal" data-bs-title="Add New Part Number">
                 <i class="bi bi-plus-circle me-1"></i> Add Part Number
             </button>

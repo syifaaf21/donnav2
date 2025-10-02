@@ -13,7 +13,7 @@
                 @csrf
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label for="reminder_date{{ $mapping->id }}" class="form-label fw-semibold">📅 Reminder Date</label>
+                        <label for="reminder_date{{ $mapping->id }}" class="form-label fw-semibold"> Reminder Date</label>
                         <input
                             type="date"
                             name="reminder_date"
@@ -24,7 +24,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="deadline{{ $mapping->id }}" class="form-label fw-semibold">⏰ Deadline</label>
+                        <label for="deadline{{ $mapping->id }}" class="form-label fw-semibold"> Deadline</label>
                         <input
                             type="date"
                             name="deadline"

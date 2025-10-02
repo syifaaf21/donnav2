@@ -11,25 +11,18 @@ class DocumentMapping extends Model
 
     protected $fillable = [
         'document_id',
-        'part_number_id',
-        'status_id',
         'document_number',
-        'version',
+        'part_number_id',
         'file_path',
-        'notes',
-        'obsolete_date',
+        'department_id',
         'reminder_date',
         'deadline',
+        'obsolete_date',
+        'status_id',
+        'notes',
         'user_id',
-        'department_id',
+        'version',
     ];
-
-    protected $casts = [
-    'obsolete_date' => 'date',
-    'reminder_date' => 'date',
-    'deadline' => 'date',
-];
-
 
     public function document()
     {
@@ -41,6 +34,11 @@ class DocumentMapping extends Model
         return $this->belongsTo(PartNumber::class, 'part_number_id');
     }
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function status()
     {
         return $this->belongsTo(Status::class);
@@ -48,11 +46,15 @@ class DocumentMapping extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
-    public function department()
+    public function children()
     {
-        return $this -> belongsTo (Department::class);
+        return $this->hasMany(DocumentMapping::class, 'part_number_id', 'part_number_id')
+            ->whereHas('document', function ($q) {
+                $q->whereColumn('documents.parent_id', 'document_mappings.document_id');
+            });
     }
+
 }

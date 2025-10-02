@@ -2,11 +2,10 @@
 
 @section('content')
     <div class="container py-4">
-
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <form method="GET" class="w-50 d-flex align-items-center" id="searchForm">
-                <div class="input-group">
-                    <input type="text" name="search" id="searchInput" class="form-control"
+            <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
+                <div class="input-group" style="width: 600px; max-width: 100%;">
+                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
                         placeholder="Search by Document Name" value="{{ request('search') }}">
 
                     <button class="btn btn-outline-secondary btn-sm" type="submit">
@@ -14,86 +13,91 @@
                     </button>
 
                     @if (true)
-                        <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="clearSearch">
+                        <button type="button" class="btn btn-outline-danger btn-sm " id="clearSearch">
                             Clear
                         </button>
                     @endif
                 </div>
             </form>
-            <button type="button" class="btn btn-outline-primary ms-auto btn-sm" data-bs-toggle="modal"
+            <button type="button" class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3" data-bs-toggle="modal"
                 data-bs-target="#createDocumentModal" data-bs-title="Add New Document">
                 <i class="bi bi-plus-circle me-1"></i> Add Document
             </button>
         </div>
 
         <div class="card shadow-sm border-0">
-            <div class="px-3 py-3">
-                <p class="mb-0"><strong>Parent:</strong> {{ $document->name }}</p>
+            <!-- Parent -->
+            <div class="card-body p-3">
+                <p class="mb-2"><strong>Parent:</strong> {{ $document->name }}</p>
             </div>
-            <div class="card-body">
-                <div class="table-wrapper mb-3">
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table modern-table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>No</th>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($children as $child)
-                                    <tr>
-                                        <td>{{ ($children->currentPage() - 1) * $children->perPage() + $loop->iteration }}
-                                        </td>
-                                        <td>{{ $child->name }}</td>
-                                        <td>{{ ucfirst($child->type) ?? '-' }}</td>
-                                        <td>
-                                            <a href="{{ route('documents.show', $child->id) }}"
-                                                class="btn btn-sm btn-outline-info me-1" title="View Children"
-                                                data-bs-title="View Child Document">
-                                                <i class="bi bi-diagram-3"></i>
-                                            </a>
+            <!-- Table Scrollable -->
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table modern-table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>No</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($children as $child)
+                            <tr>
+                                <td>{{ ($children->currentPage() - 1) * $children->perPage() + $loop->iteration }}</td>
+                                <td>{{ $child->name }}</td>
+                                <td>{{ ucfirst($child->type) ?? '-' }}</td>
+                                <td>
+                                    <a href="{{ route('documents.show', $child->id) }}"
+                                        class="btn btn-sm btn-outline-info me-1" title="View Children"
+                                        data-bs-title="View Child Document">
+                                        <i class="bi bi-diagram-3"></i>
+                                    </a>
 
-                                            <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#editDocumentModal-{{ $child->id }}" title="Edit"
-                                                data-bs-title="Edit Document">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                        data-bs-toggle="modal" data-bs-target="#editDocumentModal-{{ $child->id }}"
+                                        title="Edit" data-bs-title="Edit Document">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
 
-                                            <form action="{{ route('documents.destroy', $child->id) }}" method="POST"
-                                                class="d-inline delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
-                                                    data-bs-title="Delete Document">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">No documents found.</td>
-                                    </tr>
-                                @endforelse
+                                    <form action="{{ route('documents.destroy', $child->id) }}" method="POST"
+                                        class="d-inline delete-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
+                                            data-bs-title="Delete Document">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No documents found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-                            </tbody>
-                        </table>
-                        <div class="mt-3">
+            <!-- Footer (Document List + Pagination) -->
+            <div class="card-body pt-2 pb-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <!-- Document List Button -->
+                    <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Documents List
+                    </a>
+
+                    <!-- Pagination Center -->
+                    <div class="flex-grow-1 d-flex justify-content-center">
+                        <div class="pagination-wrapper">
                             {{ $children->withQueryString()->links() }}
                         </div>
-                    </div>
-                    <div class="d-flex justify-content-start mt-4">
-                        <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left-circle me-1"></i>Documents List
-                        </a>
                     </div>
                 </div>
             </div>
         </div>
+
 
         <!-- 🔹 Modal Create Document -->
         <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
