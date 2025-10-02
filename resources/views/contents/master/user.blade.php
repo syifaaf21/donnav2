@@ -3,28 +3,28 @@
 @section('content')
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <!-- Search Form -->
-            <form method="GET" class="w-50 d-flex align-items-center" id="searchForm">
-                <div class="input-group">
-                    <input type="text" name="search" id="searchInput" class="form-control"
+            <!-- 🔍 Search -->
+            <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
+                <div class="input-group" style="width: 600px; max-width: 100%;">
+                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
                         placeholder="Search by Name or NPK" value="{{ request('search') }}">
 
                     <button class="btn btn-outline-secondary btn-sm" type="submit">
-                        <i class="bi bi-search me-1"></i> Search
+                        <i class="bi bi-search"></i> Search
                     </button>
 
-                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="clearSearch">
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch">
                         Clear
                     </button>
                 </div>
             </form>
-
-            <button class="btn btn-outline-primary ms-auto btn-sm shadow-sm d-flex align-items-center gap-2"
+            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3"
                 data-bs-toggle="modal" data-bs-target="#addUserModal" data-bs-title="Add New User">
                 <i class="bi bi-plus-circle"></i>
                 <span>Add User</span>
             </button>
         </div>
+
 
         <div class="card shadow-sm border-0">
             <div class="card-body">
@@ -221,136 +221,135 @@
 
     <!-- Add User Modal -->
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form action="{{ route('users.store') }}" method="POST">
-            @csrf
-            <input type="hidden" name="_form" value="add">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form action="{{ route('users.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="_form" value="add">
 
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <!-- Header -->
-                <div class="modal-header bg-light text-dark rounded-top-4">
-                    <h5 class="modal-title fw-semibold" id="addUserModalLabel">
-                        <i class="bi bi-person-plus-fill me-2"></i>Create New User
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <!-- Header -->
+                    <div class="modal-header bg-light text-dark rounded-top-4">
+                        <h5 class="modal-title fw-semibold" id="addUserModalLabel">
+                            <i class="bi bi-person-plus-fill me-2"></i>Create New User
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
 
-                <!-- Body -->
-                <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <!-- Name -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Name</label>
-                            <input type="text" name="name"
-                                class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                value="{{ old('name') }}" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                    <!-- Body -->
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <!-- Name -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Name</label>
+                                <input type="text" name="name"
+                                    class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                    value="{{ old('name') }}" required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <!-- NPK -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">NPK</label>
-                            <input type="text" name="npk"
-                                class="form-control rounded-3 @error('npk') is-invalid @enderror"
-                                value="{{ old('npk') }}" required pattern="\d{6}" maxlength="6"
-                                title="NPK must be exactly 6 digits of number" inputmode="numeric">
-                            @error('npk')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <!-- NPK -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">NPK</label>
+                                <input type="text" name="npk"
+                                    class="form-control rounded-3 @error('npk') is-invalid @enderror"
+                                    value="{{ old('npk') }}" required pattern="\d{6}" maxlength="6"
+                                    title="NPK must be exactly 6 digits of number" inputmode="numeric">
+                                @error('npk')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <!-- Email -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Email</label>
-                            <input type="email" name="email"
-                                class="form-control rounded-3 @error('email') is-invalid @enderror"
-                                pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                                title="Please enter a valid email address (e.g. user@example.com)"
-                                value="{{ old('email') }}" required>
-                            @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Email</label>
+                                <input type="email" name="email"
+                                    class="form-control rounded-3 @error('email') is-invalid @enderror"
+                                    pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                    title="Please enter a valid email address (e.g. user@example.com)"
+                                    value="{{ old('email') }}" required>
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <!-- Password -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Password</label>
-                            <input type="password" name="password"
-                                class="form-control rounded-3 @error('password') is-invalid @enderror"
-                                pattern=".{6,}" minlength="6" title="Password must be at least 6 characters"
-                                value="{{ old('password') }}" required>
-                            @error('password')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <!-- Password -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Password</label>
+                                <input type="password" name="password"
+                                    class="form-control rounded-3 @error('password') is-invalid @enderror" pattern=".{6,}"
+                                    minlength="6" title="Password must be at least 6 characters"
+                                    value="{{ old('password') }}" required>
+                                @error('password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <!-- Confirm Password -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Confirm Password</label>
-                            <input type="password" name="password_confirmation"
-                                id="password_confirmation" class="form-control rounded-3"
-                                minlength="6" autocomplete="new-password" required
-                                title="Please retype the same password">
-                        </div>
+                            <!-- Confirm Password -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Confirm Password</label>
+                                <input type="password" name="password_confirmation" id="password_confirmation"
+                                    class="form-control rounded-3" minlength="6" autocomplete="new-password" required
+                                    title="Please retype the same password">
+                            </div>
 
-                        <!-- Role -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Role</label>
-                            <select name="role_id"
-                                class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
-                                <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>
-                                    -- Select Role --
-                                </option>
-                                @foreach ($roles as $role)
-                                    <option value="{{ $role->id }}"
-                                        {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                                        {{ $role->name }}
+                            <!-- Role -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Role</label>
+                                <select name="role_id"
+                                    class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
+                                    <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>
+                                        -- Select Role --
                                     </option>
-                                @endforeach
-                            </select>
-                            @error('role_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role->id }}"
+                                            {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                            {{ $role->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('role_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <!-- Department -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Department</label>
-                            <select name="department_id"
-                                class="form-select rounded-3 @error('department_id') is-invalid @enderror" required>
-                                <option value="" disabled {{ old('department_id') ? '' : 'selected' }}>
-                                    -- Select Department --
-                                </option>
-                                @foreach ($departments as $department)
-                                    <option value="{{ $department->id }}"
-                                        {{ old('department_id') == $department->id ? 'selected' : '' }}>
-                                        {{ $department->name }}
+                            <!-- Department -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Department</label>
+                                <select name="department_id"
+                                    class="form-select rounded-3 @error('department_id') is-invalid @enderror" required>
+                                    <option value="" disabled {{ old('department_id') ? '' : 'selected' }}>
+                                        -- Select Department --
                                     </option>
-                                @endforeach
-                            </select>
-                            @error('department_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}"
+                                            {{ old('department_id') == $department->id ? 'selected' : '' }}>
+                                            {{ $department->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('department_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Footer -->
+                    <!-- Footer -->
                     <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-outline-primary px-4">
-                        <i class="bi bi-save2 me-1"></i>Save User
-                    </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-outline-primary px-4">
+                            <i class="bi bi-save2 me-1"></i>Save User
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 @endsection
 
 @push('scripts')

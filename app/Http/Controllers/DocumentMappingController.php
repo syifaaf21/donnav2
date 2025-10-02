@@ -14,42 +14,57 @@ class DocumentMappingController extends Controller
 {
     // ================= Document Review Index =================
     public function reviewIndex(Request $request)
-{
-    $documentsMaster = Document::where('type', 'review')->get();
-    $partNumbers = PartNumber::all();
-    $statuses = Status::all();
-    $departments = Department::all();
+    {
+        $documentsMaster = Document::where('type', 'review')->get();
+        $partNumbers = PartNumber::all();
+        $statuses = Status::all();
+        $departments = Department::all();
 
-    $plants = PartNumber::pluck('plant')->map(fn($p) => ucfirst(strtolower($p)))->unique();
+        $plants = PartNumber::pluck('plant')->map(fn($p) => ucfirst(strtolower($p)))->unique();
 
-    $groupedByPlant = [];
+        $groupedByPlant = [];
 
-    foreach ($plants as $plant) {
-        $query = DocumentMapping::with(['document', 'department', 'partNumber', 'status', 'user'])
-            ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->whereHas('partNumber', fn($q) => $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]));
+        foreach ($plants as $plant) {
+            $query = DocumentMapping::with(['document', 'department', 'partNumber', 'status', 'user'])
+                ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereHas('partNumber', fn($q) => $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]));
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
-                  ->orWhere('document_number', 'like', "%{$search}%")
-                  ->orWhereHas('partNumber', fn($q3) => $q3->where('part_number', 'like', "%{$search}%"));
-            });
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
+                        ->orWhere('document_number', 'like', "%{$search}%")
+                        ->orWhereHas('partNumber', fn($q3) => $q3->where('part_number', 'like', "%{$search}%"));
+                });
+            }
+
+            // Filter by Status
+            if ($status = request('status')) {
+                $query->whereHas('status', fn($q) => $q->where('name', $status));
+            }
+
+            // Filter by Department
+            if ($department = request('department')) {
+                $query->where('department_id', $department);
+            }
+
+            // Filter by Deadline (tanggal exact)
+            if ($deadline = request('deadline')) {
+                $query->whereDate('deadline', $deadline);
+            }
+
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->paginate(5, ['*'], 'page_' . $plant);
+            // pakai page_plant supaya paginator tiap tab independen
         }
 
-        $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->paginate(10, ['*'], 'page_'.$plant);
-        // pakai page_plant supaya paginator tiap tab independen
+        return view('contents.document-review.index', compact(
+            'groupedByPlant',
+            'documentsMaster',
+            'partNumbers',
+            'statuses',
+            'departments'
+        ));
     }
-
-    return view('contents.document-review.index', compact(
-        'groupedByPlant',
-        'documentsMaster',
-        'partNumbers',
-        'statuses',
-        'departments'
-    ));
-}
 
     // ================= Store Review (Admin) =================
     public function storeReview(Request $request)
@@ -145,29 +160,29 @@ class DocumentMappingController extends Controller
 
     // ================= Approve / Reject Review (Admin) =================
     public function approveWithDates(Request $request, DocumentMapping $mapping)
-{
-    if (Auth::user()->role->name != 'Admin') abort(403);
+    {
+        if (Auth::user()->role->name != 'Admin') abort(403);
 
-    $request->validate([
-        'reminder_date' => 'required|date|before_or_equal:deadline',
-        'deadline' => 'required|date|after_or_equal:reminder_date',
-    ]);
+        $request->validate([
+            'reminder_date' => 'required|date|before_or_equal:deadline',
+            'deadline' => 'required|date|after_or_equal:reminder_date',
+        ]);
 
-    $statusApproved = Status::where('name', 'approved')->first();
-    if (!$statusApproved) {
-        return redirect()->back()->with('error', 'Status "approved" not found!');
+        $statusApproved = Status::where('name', 'approved')->first();
+        if (!$statusApproved) {
+            return redirect()->back()->with('error', 'Status "approved" not found!');
+        }
+
+        $mapping->update([
+            'status_id' => $statusApproved->id,
+            'version' => $mapping->version + 1,
+            'reminder_date' => $request->reminder_date,
+            'deadline' => $request->deadline,
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Document approved and dates set successfully!');
     }
-
-    $mapping->update([
-        'status_id' => $statusApproved->id,
-        'version' => $mapping->version + 1,
-        'reminder_date' => $request->reminder_date,
-        'deadline' => $request->deadline,
-        'user_id' => Auth::id(),
-    ]);
-
-    return redirect()->back()->with('success', 'Document approved and dates set successfully!');
-}
 
 
 

@@ -3,20 +3,25 @@
 @section('content')
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <form method="GET" class="d-flex align-items-center" id="searchForm">
-                <div class="input-group">
-                    <input type="text" name="search" class="form-control"
+            {{-- 🔍 Search + Filter --}}
+            <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
+                <div class="input-group" style="width: 600px; max-width: 100%;">
+                    <input type="text" name="search" class="form-control form-control-sm"
                         placeholder="Search by Document Name, Document Number, or Part Number"
-                        value="{{ request('search') }}" style="width: 510px; min-width: 300px;"> <!-- inline style -->
-
+                        value="{{ request('search') }}">
                     <button class="btn btn-outline-secondary btn-sm" type="submit">
                         <i class="bi bi-search"></i> Search
                     </button>
-
-                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="clearSearch">
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch">
                         Clear
                     </button>
                 </div>
+
+                {{-- 🎯 Filter --}}
+                <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+                    data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
             </form>
 
             @if (auth()->user()->role->name == 'Admin')
@@ -25,6 +30,68 @@
                     <i class="bi bi-plus-circle"></i> Add Document Review
                 </button>
             @endif
+        </div>
+
+
+        <!-- Modal Filter -->
+        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="GET" id="filterForm">
+                    <div class="modal-content border-0 rounded-4 shadow-lg">
+                        <div class="modal-header bg-light text-dark rounded-top-4">
+                            <h5 class="modal-title fw-semibold" id="filterModalLabel">
+                                <i class="bi bi-funnel me-2 text-primary"></i> Filter Documents
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body px-4 py-3">
+                            {{-- Status --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="Approved" {{ request('status') == 'Approved' ? 'selected' : '' }}>
+                                        Approved</option>
+                                    <option value="Need Review" {{ request('status') == 'Need Review' ? 'selected' : '' }}>
+                                        Need Review</option>
+                                    <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>
+                                        Rejected</option>
+                                </select>
+                            </div>
+
+                            {{-- Department --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Department</label>
+                                <select name="department" class="form-select">
+                                    <option value="">All Departments</option>
+                                    @foreach ($departments as $dept)
+                                        <option value="{{ $dept->id }}"
+                                            {{ request('department') == $dept->id ? 'selected' : '' }}>
+                                            {{ $dept->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Deadline --}}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Deadline</label>
+                                <input type="date" name="deadline" class="form-control"
+                                    value="{{ request('deadline') }}">
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 justify-content-between bg-light rounded-bottom-4">
+                            <button type="button" id="clearFilters" class="btn btn-outline-danger">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-funnel"></i> Apply Filter
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
 
         {{-- Tabs per Plant --}}
@@ -46,12 +113,9 @@
                     id="{{ \Illuminate\Support\Str::slug($plant) }}" role="tabpanel">
 
                     <div class="table-wrapper">
-                        <h6 class="fw-bold mb-3">
-                            <i class="bi bi-building-gear me-1"></i> Plant: {{ ucfirst(strtolower($plant)) }}
-                        </h6>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table modern-table align-middle table-hover">
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                                <table class="table modern-table align-middle table-hover mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>No</th>
@@ -70,7 +134,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($documents as $mapping)
+                                        @forelse ($documents as $mapping)
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $mapping->document->name }}</td>
@@ -78,12 +142,15 @@
                                                 <td>{{ $mapping->partNumber->part_number ?? '-' }}</td>
                                                 <td>
                                                     @if ($mapping->file_path)
-                                                        <a href="{{ asset('storage/' . $mapping->file_path) }}"
-                                                            target="_blank" class="btn btn-outline-primary btn-sm">
-                                                            <i class="bi bi-file-earmark-text"></i> View
-                                                        </a>
+                                                        <button type="button"
+                                                            class="btn btn-outline-primary btn-sm view-file-btn"
+                                                            data-bs-toggle="modal" data-bs-target="#viewFileModal"
+                                                            data-file="{{ asset('storage/' . $mapping->file_path) }}">
+                                                            <i class="bi bi-file-earmark-text me-1"></i> View
+                                                        </button>
                                                     @endif
                                                 </td>
+
                                                 <td>{{ $mapping->department->name ?? '-' }}</td>
                                                 <td>{{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') : '-' }}
                                                 </td>
@@ -125,7 +192,8 @@
 
 
                                                         {{-- Delete --}}
-                                                        <form action="{{ route('document-review.destroy', $mapping->id) }}"
+                                                        <form
+                                                            action="{{ route('document-review.destroy', $mapping->id) }}"
                                                             method="POST" class="d-inline delete-form">
                                                             @csrf
                                                             @method('DELETE')
@@ -160,7 +228,8 @@
                                                                 action="{{ route('document-review.reject', $mapping->id) }}"
                                                                 method="POST" class="d-inline reject-form">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                                <button type="submit"
+                                                                    class="btn btn-outline-danger btn-sm"
                                                                     data-bs-title="Reject Document">
                                                                     <i class="bi bi-x-circle"></i>
                                                                 </button>
@@ -171,14 +240,14 @@
                                                                 disabled>
                                                                 <i class="bi bi-check2-all"></i>
                                                             </button>
-                                                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                                disabled>
+                                                            <button type="button"
+                                                                class="btn btn-outline-secondary btn-sm" disabled>
                                                                 <i class="bi bi-x-circle"></i>
                                                             </button>
                                                         @elseif ($mapping->status->name == 'Rejected')
                                                             {{-- Sudah Rejected --}}
-                                                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                                disabled>
+                                                            <button type="button"
+                                                                class="btn btn-outline-secondary btn-sm" disabled>
                                                                 <i class="bi bi-check2-circle"></i>
                                                             </button>
                                                             <button type="button" class="btn btn-outline-danger btn-sm"
@@ -206,115 +275,170 @@
                                             @include('contents.document-review.modal-edit')
                                             @include('contents.document-review.modal-revise')
                                             @include('contents.document-review.modal-approve')
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
+                                            @empty
+                                                <tr>
+                                                    <td colspan="13" class="text-center py-4 text-muted">
+                                                        <i class="bi bi-search me-2"></i>
+                                                        No documents found for this tab.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                                            <div class="mt-3">
                                 {!! $documents->withQueryString()->links() !!}
                             </div>
-
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
+
+            {{-- Modal Add --}}
+            @include('contents.document-review.modal-add')
         </div>
+        <!-- 📄 Modal Fullscreen View File -->
+        <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content border-0 rounded-0 shadow-none">
+                    <div class="modal-header bg-light border-bottom">
+                        <h5 class="modal-title fw-semibold">
+                            <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
 
-        {{-- Modal Add --}}
-        @include('contents.document-review.modal-add')
-    </div>
-@endsection
+                    <div class="modal-body p-0">
+                        <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection
 
-@push('scripts')
-    <x-sweetalert-confirm />
+    @push('scripts')
+        <x-sweetalert-confirm />
 
-    <script>
-        // Autofill Department
-        const docSelect = document.getElementById('documentSelect');
-        const deptField = document.getElementById('departmentField');
-        docSelect?.addEventListener('change', function() {
-            deptField.value = this.options[this.selectedIndex].dataset.department || '';
-        });
+        <script>
+            // Autofill Department
+            const docSelect = document.getElementById('documentSelect');
+            const deptField = document.getElementById('departmentField');
+            docSelect?.addEventListener('change', function() {
+                deptField.value = this.options[this.selectedIndex].dataset.department || '';
+            });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('#plantTabs button');
+            document.addEventListener('DOMContentLoaded', function() {
+                const tabButtons = document.querySelectorAll('#plantTabs button');
 
-            function filterPartNumbersFor(selectElement, plantName) {
-                const options = selectElement.querySelectorAll('option');
-                options.forEach(opt => {
-                    const plant = opt.dataset.plant?.trim().toLowerCase();
-                    if (opt.selected) {
-                        // jangan sembunyikan yang selected
-                        opt.style.display = '';
-                    } else {
-                        opt.style.display = (!plantName || plant === plantName.toLowerCase() || opt
-                            .value === '') ? '' : 'none';
+                function filterPartNumbersFor(selectElement, plantName) {
+                    const options = selectElement.querySelectorAll('option');
+                    options.forEach(opt => {
+                        const plant = opt.dataset.plant?.trim().toLowerCase();
+                        if (opt.selected) {
+                            // jangan sembunyikan yang selected
+                            opt.style.display = '';
+                        } else {
+                            opt.style.display = (!plantName || plant === plantName.toLowerCase() || opt
+                                .value === '') ? '' : 'none';
+                        }
+                    });
+                    if (!Array.from(options).some(o => o.selected)) {
+                        selectElement.value = '';
                     }
-                });
-                if (!Array.from(options).some(o => o.selected)) {
-                    selectElement.value = '';
                 }
-            }
 
-            function applyFilterToAllModals(plantName) {
-                // Add modal
-                const addSelect = document.getElementById('addPartNumberSelect');
-                if (addSelect) filterPartNumbersFor(addSelect, plantName);
+                function applyFilterToAllModals(plantName) {
+                    // Add modal
+                    const addSelect = document.getElementById('addPartNumberSelect');
+                    if (addSelect) filterPartNumbersFor(addSelect, plantName);
 
-                // Edit modals
-                document.querySelectorAll('[id^="editPartNumberSelect"]').forEach(editSelect => {
-                    filterPartNumbersFor(editSelect, plantName);
+                    // Edit modals
+                    document.querySelectorAll('[id^="editPartNumberSelect"]').forEach(editSelect => {
+                        filterPartNumbersFor(editSelect, plantName);
+                    });
+                }
+
+                // filter saat halaman load sesuai tab aktif
+                const firstTab = document.querySelector('#plantTabs button.active');
+                if (firstTab) applyFilterToAllModals(firstTab.textContent.trim());
+
+                tabButtons.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const plant = this.textContent.trim();
+                        applyFilterToAllModals(plant);
+                        localStorage.setItem('activePlantTab', this.id);
+                    });
                 });
-            }
 
-            // filter saat halaman load sesuai tab aktif
-            const firstTab = document.querySelector('#plantTabs button.active');
-            if (firstTab) applyFilterToAllModals(firstTab.textContent.trim());
-
-            tabButtons.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const plant = this.textContent.trim();
-                    applyFilterToAllModals(plant);
-                    localStorage.setItem('activePlantTab', this.id);
-                });
+                // restore tab terakhir jika reload
+                const savedTabId = localStorage.getItem('activePlantTab');
+                if (savedTabId) {
+                    const savedBtn = document.getElementById(savedTabId);
+                    const savedPane = document.querySelector(savedBtn?.dataset.bsTarget);
+                    if (savedBtn && savedPane) {
+                        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
+                        document.querySelectorAll('#plantTabs button').forEach(b => b.classList.remove('active'));
+                        savedBtn.classList.add('active');
+                        savedPane.classList.add('show', 'active');
+                        applyFilterToAllModals(savedBtn.textContent.trim());
+                    }
+                }
             });
 
-            // restore tab terakhir jika reload
-            const savedTabId = localStorage.getItem('activePlantTab');
-            if (savedTabId) {
-                const savedBtn = document.getElementById(savedTabId);
-                const savedPane = document.querySelector(savedBtn?.dataset.bsTarget);
-                if (savedBtn && savedPane) {
-                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
-                    document.querySelectorAll('#plantTabs button').forEach(b => b.classList.remove('active'));
-                    savedBtn.classList.add('active');
-                    savedPane.classList.add('show', 'active');
-                    applyFilterToAllModals(savedBtn.textContent.trim());
-                }
-            }
-        });
-
-        // tooltip
-        document.addEventListener('DOMContentLoaded', function() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-            tooltipTriggerList.map(function(el) {
-                return new bootstrap.Tooltip(el, {
-                    title: el.getAttribute('data-bs-title'),
-                    placement: 'top',
-                    trigger: 'hover'
+            // tooltip
+            document.addEventListener('DOMContentLoaded', function() {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+                tooltipTriggerList.map(function(el) {
+                    return new bootstrap.Tooltip(el, {
+                        title: el.getAttribute('data-bs-title'),
+                        placement: 'top',
+                        trigger: 'hover'
+                    });
                 });
             });
-        });
+            document.addEventListener('DOMContentLoaded', function() {
+                // 🔍 Clear Search
+                document.getElementById('clearSearch')?.addEventListener('click', function() {
+                    const form = document.getElementById('searchForm');
+                    if (!form) return;
 
-        document.getElementById('clearSearch')?.addEventListener('click', function() {
-            const form = document.getElementById('searchForm');
-            if (!form) return;
+                    // Hapus input search
+                    form.querySelector('input[name="search"]').value = '';
 
-            // Kosongkan input search
-            form.querySelector('input[name="search"]').value = '';
+                    // Submit ulang tanpa search
+                    form.submit();
+                });
 
-            // Submit form tanpa parameter search
-            form.submit();
-        });
-    </script>
-@endpush
+                // 🧹 Clear Filter
+                document.getElementById('clearFilters')?.addEventListener('click', function() {
+                    const form = document.getElementById('filterForm');
+                    if (!form) return;
+
+                    // Kosongkan semua input & select
+                    form.querySelectorAll('input, select').forEach(el => el.value = '');
+
+                    // Submit form untuk reset filter
+                    form.submit();
+                });
+            });
+            //View File in tab
+            document.addEventListener('DOMContentLoaded', function() {
+                const modal = document.getElementById('viewFileModal');
+                const iframe = document.getElementById('fileViewer');
+
+                // Ketika tombol View diklik
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const fileUrl = this.dataset.file;
+                        iframe.src = fileUrl;
+                    });
+                });
+
+                // Reset iframe saat modal ditutup
+                modal.addEventListener('hidden.bs.modal', () => {
+                    iframe.src = '';
+                });
+            });
+        </script>
+    @endpush
