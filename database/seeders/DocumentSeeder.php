@@ -74,7 +74,13 @@ class DocumentSeeder extends Seeder
         $iso = Document::create([
             'name' => 'ISO 9001',
             'parent_id' => null,
-            'type' => 'contoll',
+            'type' => 'control',
+        ]);
+
+        $sop = Document::create([
+            'name' => 'SOP 0001',
+            'parent_id' => null,
+            'type' => 'control',
         ]);
     }
 }

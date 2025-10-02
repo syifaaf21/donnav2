@@ -1,32 +1,26 @@
 /* ========================================
-   1. CSS VARIABLES & ROOT SETTINGS
-   ======================================== */
+    Table of Contents
+    ========================================
+    1. Google Fonts Import
+    2. CSS Variables & Root Settings
+    3. Logo Styles
+    4. Flash Message Styles
+    5. Modern Table Styles
+    6. DataTable Search Input
+    7. Table Responsive & Scrollbar
+    8. Alert Styles
+    9. Global Body & Container Styles
+    10. Login Card Styles
+    11. Button & Link Styles
+    12. Pagination Styles
+    13. Table Wrapper Card
+    14. Main Content Styles
+    ======================================== */
 
-/* Import Google Fonts */
+/* 1. Google Fonts Import */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
-.logo {
-    width: 120px;
-    height: auto;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 20px;
-}
-
-#flashMessage {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    min-width: 250px;
-    z-index: 1050; /* pastikan di atas elemen lain */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    border-radius: 6px;
-    text-align: center;
-
-}
-
-
+/* 2. CSS Variables & Root Settings */
 :root {
     --primary-color: #1e3c72;
     --secondary-color: #2a5298;
@@ -37,19 +31,11 @@
     --text-color: #333;
     --text-light: #ffffff;
     --button-color: #0e54de;
-    --button-bg: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.12),
-        rgba(255, 255, 255, 0.05)
-    );
+    --button-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
     --footer-bg: #f8f8f8;
     --navbar-bg: #ffffff;
     --card-bg: #ffffff;
-    --card-header-bg: linear-gradient(
-        135deg,
-        var(--primary-color) 0%,
-        var(--secondary-color) 100%
-    );
+    --card-header-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     --border-color: #dee2e6;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -57,52 +43,66 @@
     --border-radius: 12px;
     --transition: all 0.3s ease;
 }
-/* Styling khusus tabel modern */
+
+/* 3. Logo Styles */
+.logo {
+    width: 120px;
+    height: auto;
+    display: block;
+    margin: 0 auto 20px auto;
+}
+
+/* 4. Flash Message Styles */
+#flashMessage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 250px;
+    z-index: 1050;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    text-align: center;
+}
+
+/* 5. Modern Table Styles */
 .modern-table {
-    border-collapse: separate; /* biar bisa ada jarak antar sel */
-    border-spacing: 0 8px; /* beri jarak vertikal antar baris */
+    border-collapse: separate;
+    border-spacing: 0 8px;
 }
 
 .modern-table thead th {
     border: none;
-    /* bisa beri background yang ringan */
-    /* background-color: #fafafa; */
     background: #f5f5f5;
     font-weight: 600;
-    border: none;
     color: #333;
     padding: 12px 16px;
     border-bottom: 1px solid #e0e0e0;
     vertical-align: middle;
-    margin-top: 10px;
-    /* text-align: center; */
     position: sticky;
     top: 0;
     z-index: 2;
-    background-color: #f5f5f5;
 }
 
 .modern-table tbody tr {
-    background-color: #ffffff;
+    background-color: #fff;
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
-/* Hilangkan border garis vertikal antar sel di body */
 .modern-table tbody td {
     border: none;
-    padding: 12px 16px;
+    padding: 14px 20px;
     vertical-align: middle;
-    /* text-align: center; */
 }
 
-/* Hover effect baris */
 .modern-table tbody tr:hover {
-    background-color: #f5f5ff;
+    background-color: #f5f8ff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transform: scale(1.005);
 }
 
-/* Styling kolom aksi (ikon) */
 .modern-table .btn-outline-info,
 .modern-table .btn-outline-warning,
 .modern-table .btn-outline-danger {
@@ -110,32 +110,32 @@
     padding: 6px 10px;
 }
 
-/* Agar tombol tidak terlalu rapat */
 .modern-table .btn {
     margin: 0 2px;
 }
 
-/* Responsif: sembunyikan kolom “Created At” di layar kecil (opsional) */
+/* Responsive: Hide "Created At" column on small screens */
 @media (max-width: 768px) {
+
     .modern-table thead th:nth-child(5),
     .modern-table tbody td:nth-child(5) {
         display: none;
     }
 }
 
-/* Placeholder untuk search input DataTable agar terlihat minimalis */
+/* 6. DataTable Search Input */
 .dataTables_wrapper .dataTables_filter input {
     border: 1px solid #d1d5db;
     border-radius: 4px;
     padding: 4px 8px;
 }
 
+/* 7. Table Responsive & Scrollbar */
 .table-responsive {
     scrollbar-width: thin;
     scrollbar-color: #ccc transparent;
 }
 
-/* Scrollbar style khusus Chrome */
 .table-responsive::-webkit-scrollbar {
     height: 6px;
     width: 6px;
@@ -150,65 +150,62 @@
     border-radius: 6px;
 }
 
-
-
+/* 8. Alert Styles */
 .alert {
     font-size: 0.9rem;
     padding: 0.75rem 1rem;
     max-width: 300px;
 }
-        /* Global body styles */
+
+/* 9. Global Body & Container Styles */
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f5f7fa;
+    background-color: var(--background-color);
 }
 
-/* Login Card Styles */
-
-html, body {
-    height: 100%;
+html,
+body {
+    /* height: 100%; */
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Mencegah scroll vertikal */
+    overflow: hidden;
 }
 
-body > .container {
-    height: 100vh;
+body>.container {
+    height: auto;
     overflow-y: auto;
 }
 
 .row {
     height: 100%;
-    margin: 0; /* pastikan tidak ada margin bawah dari .row */
+    margin: 0;
 }
 
+/* 10. Login Card Styles */
 .login-card {
     border: none;
     border-radius: 20px;
     box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.05);
     padding: 40px;
-    background-color: #ffffff;
+    background-color: #fff;
 }
 
-/* Logo inside login */
 .login-card img.logo {
     width: 80px;
     margin-bottom: 20px;
 }
 
-/* Title on login form */
 .login-title {
     font-weight: 600;
     font-size: 24px;
     margin-bottom: 20px;
 }
 
-/* Labels inside forms */
 .form-label {
     font-weight: 500;
 }
 
-/* Primary button override */
+/* 11. Button & Link Styles */
 .btn-primary {
     background-color: #4F46E5;
     border: none;
@@ -218,7 +215,6 @@ body > .container {
     background-color: #4338CA;
 }
 
-/* Link style */
 a {
     text-decoration: none;
     color: #4F46E5;
@@ -228,34 +224,35 @@ a:hover {
     text-decoration: underline;
 }
 
-    .pagination {
-        justify-content: center;
-        margin-top: 20px;
-    }
+/* 12. Pagination Styles */
+.pagination {
+    justify-content: center;
+    margin-top: 20px;
+}
 
-    .pagination .page-item .page-link {
-        color: #0d6efd;
-        border-radius: 6px;
-        margin: 0 2px;
-        padding: 6px 12px;
-        font-size: 14px;
-    }
+.pagination .page-item .page-link {
+    color: #0d6efd;
+    border-radius: 6px;
+    margin: 0 2px;
+    padding: 6px 12px;
+    font-size: 14px;
+}
 
-    .pagination .page-item.active .page-link {
-        background-color: #0d6efd;
-        color: #fff;
-        border-color: #0d6efd;
-    }
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+}
 
-    .pagination .page-item.disabled .page-link {
-        color: #aaa;
-        background-color: #f5f5f5;
-        border-color: #ddd;
-    }
+.pagination .page-item.disabled .page-link {
+    color: #aaa;
+    background-color: #f5f5f5;
+    border-color: #ddd;
+}
 
-    /* ===== Table Wrapper Card Style ===== */
+/* 13. Table Wrapper Card */
 .table-wrapper {
-    background-color: #ffffff;
+    background-color: #fff;
     border-radius: 16px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     padding: 24px;
@@ -263,32 +260,12 @@ a:hover {
     transition: box-shadow 0.3s ease;
 }
 
-/* Lebih menonjolkan baris tabel */
-.modern-table tbody tr {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
-}
-
-/* Hover effect */
-.modern-table tbody tr:hover {
-    background-color: #f5f8ff;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    transform: scale(1.005);
-}
-
-/* Buat tabel lebih bersih dan spacing bagus */
-.modern-table td,
-.modern-table th {
-    padding: 14px 20px;
-}
-
+/* 14. Main Content Styles */
 #mainContent {
     flex: 1;
     min-width: 0;
     overflow-x: auto;
+    overflow-y: auto;
 }
 
 #mainContent .table-responsive {
@@ -299,12 +276,29 @@ a:hover {
     white-space: nowrap;
 }
 
+/* 15. Snackbar */
+.snackbar {
+    position: fixed;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    padding: 10px 20px;
+    border-radius: 12px;
+    min-width: 300px;
+    transition: all 0.3s ease;
+    z-index: 1050;
+    border: 1px solid #ddd;
+}
 
+.snackbar.show {
+    bottom: 20px;
+}
 
-/* backgound-gradient */
-/* #mainContent {
-    background: linear-gradient(180deg, #030c3f, #e3e9f7);
-    min-height: 100vh;
-    transition: background 0.3s ease-in-out;
-} */
-
+/* Optional: Gradient background for main content
+#mainContent {
+     background: linear-gradient(180deg, #030c3f, #e3e9f7);
+     min-height: 100vh;
+     transition: background 0.3s ease-in-out;
+}
+*/

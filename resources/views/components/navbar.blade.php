@@ -3,21 +3,7 @@
 
         {{-- LEFT: Page Title --}}
         <div class="d-flex align-items-center">
-            @php
-                $routeName = Route::currentRouteName();
-                $titles = [
-                    'dashboard' => 'Dashboard',
-                    'users.index' => 'User List',
-                    'documents.index' => 'Document List',
-                    'documents.show' => 'Child Document',
-                    'part_numbers.index' => 'Part Number List',
-                    'document-review.index' => 'Document Review'
-                ];
-                $pageTitle = $titles[$routeName] ?? ucwords(str_replace('.', ' ', $routeName));
-            @endphp
-
-            <h4 class="mb-0 fw-semibold">{{ $pageTitle }}</h4>
-
+            <h4>@yield('title')</h4>
         </div>
 
         {{-- CENTER: Current Date & Time --}}

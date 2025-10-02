@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('title', 'Document Review')
 
 @section('content')
     <div class="container py-4">
@@ -122,7 +123,6 @@
                                                             data-bs-title="Edit Metadata">
                                                             <i class="bi bi-pencil-square"></i>
                                                         </button>
-
 
                                                         {{-- Delete --}}
                                                         <form action="{{ route('document-review.destroy', $mapping->id) }}"
