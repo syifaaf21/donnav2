@@ -25,13 +25,10 @@ class Document extends Model
         return $this->hasMany(Document::class, 'parent_id'); // recursive
     }
 
-    // Optional: untuk menampilkan children hanya dengan part number yang sama
-    // public function childrenSamePart()
-    // {
-    //     return $this->hasMany(Document::class, 'parent_id')
-    //                 ->where('part_number_id', $this->part_number_id)
-    //                 ->with('childrenSamePart');
-    // }
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
+    }
 
     public function mapping()
     {

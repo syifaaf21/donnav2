@@ -16,7 +16,7 @@ class DocumentMappingController extends Controller
     // ================= Document Review Index =================
     public function reviewIndex(Request $request)
     {
-        $documentsMaster = Document::with('children.children')->where('type', 'review')->get();
+        $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
         $partNumbers = PartNumber::all();
         $statuses = Status::all();
         $departments = Department::all();
@@ -26,9 +26,21 @@ class DocumentMappingController extends Controller
         $groupedByPlant = [];
 
         foreach ($plants as $plant) {
-            $query = DocumentMapping::with(['document', 'department', 'partNumber', 'status', 'user'])
-                ->whereHas('document', fn($q) => $q->where('type', 'review'))
-                ->whereHas('partNumber', fn($q) => $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]));
+            $query = DocumentMapping::with([
+                'document.parent', // ambil parent dokumen
+                'document.children', // ambil child dari document
+                'department',
+                'partNumber',
+                'status',
+                'user'
+            ])
+                ->whereHas('document', function ($q) {
+                    $q->where('type', 'review');
+                })
+                ->whereHas('partNumber', function ($q) use ($plant) {
+                    $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
+                });
+
 
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -54,7 +66,7 @@ class DocumentMappingController extends Controller
                 $query->whereDate('deadline', $deadline);
             }
 
-            $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->paginate(5, ['*'], 'page_' . $plant);
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->get();
             // pakai page_plant supaya paginator tiap tab independen
         }
 
@@ -170,7 +182,8 @@ class DocumentMappingController extends Controller
     // ================= Approve / Reject Review (Admin) =================
     public function approveWithDates(Request $request, DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin') abort(403);
+        if (Auth::user()->role->name != 'Admin')
+            abort(403);
 
         $request->validate([
             'reminder_date' => 'required|date|before_or_equal:deadline',
