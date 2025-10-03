@@ -104,9 +104,13 @@
                                             <td>{{ $mapping->version }}</td>
                                             <td>{{ $mapping->user->name ?? '-' }}</td>
                                             <td>
-                                                @if ($mapping->file_path)
-                                                    <a href="{{ asset('storage/' . $mapping->file_path) }}" target="_blank"
-                                                        class="btn btn-sm btn-outline-primary">View</a>
+                                                @if ($mapping->files->count())
+                                                    @foreach ($mapping->files as $file)
+                                                        <a href="{{ asset('storage/' . $file->file_path) }}"
+                                                            target="_blank" class="btn btn-sm btn-outline-primary mb-1">
+                                                            View {{ $loop->iteration }}
+                                                        </a>
+                                                    @endforeach
                                                 @else
                                                     -
                                                 @endif
@@ -289,7 +293,7 @@
                 }
 
                 if (!confirm(
-                    `Are you sure you want to delete ${checkedBoxes.length} selected document(s)?`)) {
+                        `Are you sure you want to delete ${checkedBoxes.length} selected document(s)?`)) {
                     return;
                 }
 

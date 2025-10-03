@@ -134,6 +134,8 @@
 .table-responsive {
     scrollbar-width: thin;
     scrollbar-color: #ccc transparent;
+    max-height: 550px;
+    overflow-y: auto;
 }
 
 .table-responsive::-webkit-scrollbar {
@@ -171,7 +173,7 @@ body {
     overflow: hidden;
 }
 
-body>.container {
+body>div.container {
     height: auto;
     overflow-y: auto;
 }
@@ -294,6 +296,23 @@ a:hover {
 .snackbar.show {
     bottom: 20px;
 }
+
+/* Nested table */
+/* Supaya nested table keliatan beda */
+.nested-table {
+    margin-left: 40px; /* biar agak masuk */
+    border-left: 2px solid #dee2e6;
+}
+
+.nested-table td, .nested-table th {
+    background-color: #f9f9f9; /* abu2 muda biar beda */
+}
+
+.toggle-children {
+    padding: 0;
+    border: none;
+}
+
 
 /* Optional: Gradient background for main content
 #mainContent {

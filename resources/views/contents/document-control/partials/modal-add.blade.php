@@ -40,19 +40,28 @@
                         </div>
                     </div>
                     <div class="row g-2 mt-2">
-                        <div class="col-md-4">
-                            <label for="file" class="form-label">File</label>
-                            <input type="file" class="form-control" id="file" name="file" required>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="obsolete_date" class="form-label">Obsolete Date</label>
                             <input type="date" class="form-control" id="obsolete_date" name="obsolete_date">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="reminder_date" class="form-label">Reminder Date</label>
                             <input type="date" class="form-control" id="reminder_date" name="reminder_date">
                         </div>
                     </div>
+                    <div class="row g-2 mt-2" id="file-fields">
+                        <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
+                            <input type="file" class="form-control" name="files[]" required>
+                            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-file">
+                        <i class="bi bi-plus-square"></i>
+                    </button>
+
                     {{-- Modal Footer --}}
                     <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
                         <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
@@ -67,3 +76,32 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const container = document.getElementById("file-fields");
+        const addBtn = document.getElementById("add-file");
+
+        addBtn.addEventListener("click", function() {
+            // Buat group baru
+            let group = document.createElement("div");
+            group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
+            "file-input-group");
+
+            group.innerHTML = `
+            <input type="file" class="form-control" name="files[]" required>
+            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+
+            container.appendChild(group);
+        });
+
+        // Event delegation untuk tombol remove
+        container.addEventListener("click", function(e) {
+            if (e.target.closest(".remove-file")) {
+                e.target.closest(".file-input-group").remove();
+            }
+        });
+    });
+</script>

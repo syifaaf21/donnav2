@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\DocumentFile;
 use Illuminate\Http\Request;
 use App\Models\DocumentMapping;
 use App\Models\Document;
@@ -10,6 +11,7 @@ use App\Models\PartNumber;
 use App\Models\Status;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class DocumentMappingController extends Controller
 {
@@ -32,7 +34,8 @@ class DocumentMappingController extends Controller
                 'department',
                 'partNumber',
                 'status',
-                'user'
+                'user',
+                'files',
             ])
                 ->whereHas('document', function ($q) {
                     $q->where('type', 'review');
@@ -90,27 +93,46 @@ class DocumentMappingController extends Controller
             'document_id' => 'required|exists:documents,id',
             'document_number' => 'required|string|max:255',
             'part_number_id' => 'required|exists:part_numbers,id',
-            'file' => 'required|file|mimes:pdf,docx',
+            'files' => 'required',
+            'files.*' => 'file|mimes:pdf,docx',
             'department_id' => 'required|exists:departments,id',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $filePath = $request->file('file')->store('documents', 'public');
-
-        DocumentMapping::create([
+        // Simpan DocumentMapping dulu
+        $mapping = DocumentMapping::create([
             'document_id' => $request->document_id,
             'document_number' => $request->document_number,
             'part_number_id' => $request->part_number_id,
-            'file_path' => $filePath,
             'department_id' => $request->department_id,
             'reminder_date' => null,
             'deadline' => null,
             'obsolete_date' => null,
-            'status_id' => Status::where('name', 'need review')->first()->id,
+            'status_id' => Status::where('name', 'Need Review')->first()->id,
             'notes' => $request->notes ?? '',
             'user_id' => Auth::id(),
             'version' => 1,
         ]);
+
+        // Upload file dan simpan ke DocumentFile
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $uploadedFile) {
+                $extension = $uploadedFile->getClientOriginalExtension();
+                $filename = $request->document_number . '_v' . $mapping->version . '_' . time() . '.' . $extension;
+
+                $path = $uploadedFile->storeAs(
+                    'document-reviews',
+                    $filename,
+                    'public'
+                );
+
+                DocumentFile::create([
+                    'document_mapping_id' => $mapping->id,
+                    'file_path' => $path,
+                    'uploaded_by' => Auth::id(),
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Document review created!');
     }
@@ -144,26 +166,58 @@ class DocumentMappingController extends Controller
 
     // ================= Revisi Review (User) =================
     public function revise(Request $request, DocumentMapping $mapping)
-    {
-        if (Auth::user()->role->name != 'User' && Auth::user()->role->name != 'Admin')
-            abort(403);
-
-        $request->validate([
-            'file' => 'required|file|mimes:pdf,docx',
-            'notes' => 'required|string|max:500',
-        ]);
-
-        $filePath = $request->file('file')->store('documents', 'public');
-
-        $mapping->update([
-            'file_path' => $filePath,
-            'notes' => $request->notes,
-            'status_id' => Status::where('name', 'need review')->first()->id,
-            'user_id' => Auth::id(),
-        ]);
-
-        return redirect()->back()->with('success', 'Document review revised!');
+{
+    if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
+        abort(403);
     }
+
+    // Validasi
+    $request->validate([
+        'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
+        'notes'   => 'required|string|max:500',
+    ]);
+
+    // Tentukan folder berdasarkan tipe dokumen
+    $mapping->load('document');
+    $folder = $mapping->document && $mapping->document->type === 'control'
+        ? 'document-controls'
+        : 'document-reviews';
+
+    $files = $request->file('files', []);
+    foreach ($files as $fileId => $uploadedFile) {
+        if (!$uploadedFile) continue;
+
+        $oldFile = $mapping->files()->where('id', $fileId)->first();
+        if (!$oldFile) continue;
+
+        // Hapus file lama
+        if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
+            Storage::disk('public')->delete($oldFile->file_path);
+        }
+
+        // Upload baru
+        $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
+        $newPath  = $uploadedFile->storeAs($folder, $filename, 'public');
+
+        // Update ke DB
+        $oldFile->update([
+            'file_path'     => $newPath,
+            'original_name' => $uploadedFile->getClientOriginalName(),
+            'file_type'     => $uploadedFile->getClientMimeType(),
+            'uploaded_by'   => Auth::id(),
+        ]);
+    }
+
+    // Update mapping
+    $mapping->update([
+        'notes'     => $request->notes,
+        'status_id' => Status::where('name', 'Need Review')->first()->id,
+        'user_id'   => Auth::id(),
+    ]);
+
+    return redirect()->back()->with('success', 'Document revised successfully!');
+}
+
 
     // ================= Delete Review (Admin) =================
     public function destroy(DocumentMapping $mapping)
@@ -233,7 +287,7 @@ class DocumentMappingController extends Controller
     public function controlIndex(Request $request)
     {
         // Ambil semua mapping dokumen control beserta relasi
-        $documentMappings = DocumentMapping::with(['document', 'department', 'status'])
+        $documentMappings = DocumentMapping::with(['document', 'department', 'status', 'files'])
             ->whereHas('document', fn($q) => $q->where('type', 'control'))
             ->get();
 
@@ -253,12 +307,14 @@ class DocumentMappingController extends Controller
         $documents = Document::where('type', 'control')->get();
         $statuses = Status::all();
         $departments = Department::all();
+        $files = DocumentFile::all();
 
         return view('contents.document-control.index', compact(
             'documentMappings',
             'documents',
             'statuses',
-            'departments'
+            'departments',
+            'files',
         ));
     }
 
@@ -269,7 +325,8 @@ class DocumentMappingController extends Controller
             'document_id' => 'required|exists:documents,id',
             'department' => 'required|exists:departments,id',
             'document_number' => 'required|string|max:100',
-            'file' => 'required|file|mimes:pdf,docx',
+            'files' => 'required',
+            'files.*' => 'file|mimes:pdf,docx',
             'obsolete_date' => 'nullable|date',
             'reminder_date' => 'nullable|date',
         ]);
@@ -278,23 +335,39 @@ class DocumentMappingController extends Controller
         if (!$status) {
             return redirect()->back()->with('error', 'Status "Need Review" not found!');
         }
-        $validated['status_id'] = $status->id;
 
-        // Upload file → simpan ke file_path
-        if ($request->hasFile('file')) {
-            $validated['file_path'] = $request->file('file')->store('document-controls', 'public');
+        // buat record document_mapping dulu
+        $mapping = DocumentMapping::create([
+            'document_id' => $validated['document_id'],
+            'document_number' => $validated['document_number'],
+            'status_id' => $status->id,
+            'obsolete_date' => $validated['obsolete_date'] ?? null,
+            'reminder_date' => $validated['reminder_date'] ?? null,
+            'deadline' => null,
+            'user_id' => Auth::id(),
+            'department_id' => $validated['department'],
+            'version' => 0,
+            'notes' => null,
+        ]);
+
+        // simpan file ke tabel document_files
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $index => $file) {
+                $extension = $file->getClientOriginalExtension();
+                $filename = $validated['document_number'] . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+
+                $path = $file->storeAs('document-controls', $filename, 'public');
+
+                $mapping->files()->create([
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientMimeType(),
+                ]);
+            }
         }
 
-        // Sesuaikan field nama kolom
-        $validated['user_id'] = Auth::id();
-        $validated['department_id'] = $validated['department'];
-        unset($validated['department']); // hapus biar ga error
-        $validated['version'] = 0;
-        $validated['notes'] = null; // kalau null wajib diisi karena field text
-
-        DocumentMapping::create($validated);
-
-        return redirect()->route('document-control.index')->with('success', 'Document Control berhasil ditambahkan!');
+        return redirect()->route('document-control.index')
+            ->with('success', 'Document Control berhasil ditambahkan!');
     }
 
     // Update Document Control

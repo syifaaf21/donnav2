@@ -7,7 +7,8 @@
                 <div class="modal-content border-0 rounded-4 shadow-lg">
                     {{-- Modal Header --}}
                     <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;" id="addDocumentModalLabel">
+                        <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;"
+                            id="addDocumentModalLabel">
                             <i class="bi bi-plus-circle me-2"></i> Add Document Review
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -71,12 +72,27 @@
                             </div>
 
                             {{-- File --}}
-                            <div class="col-12">
+                            <div class="row g-2 mt-2" id="file-fields">
+                                <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
+                                    <input type="file" class="form-control" name="files[]" required>
+                                    <button type="button"
+                                        class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-file">
+                                <i class="bi bi-plus-square"></i>
+                            </button>
+                            <small class="text-muted">Format yang diizinkan: PDF, DOCX</small>
+                            {{-- <div class="col-12">
                                 <label class="form-label fw-medium">Upload File <span
                                         class="text-danger">*</span></label>
                                 <input type="file" name="file" class="form-control border-1 shadow-sm" required>
-                                <small class="text-muted">Format yang diizinkan: PDF, DOCX, XLSX</small>
-                            </div>
+
+                            </div> --}}
                         </div>
                     </div>
 
@@ -95,3 +111,32 @@
         </div>
     </div>
 @endif
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const container = document.getElementById("file-fields");
+        const addBtn = document.getElementById("add-file");
+
+        addBtn.addEventListener("click", function() {
+            // Buat group baru
+            let group = document.createElement("div");
+            group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
+                "file-input-group");
+
+            group.innerHTML = `
+            <input type="file" class="form-control" name="files[]" required>
+            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+
+            container.appendChild(group);
+        });
+
+        // Event delegation untuk tombol remove
+        container.addEventListener("click", function(e) {
+            if (e.target.closest(".remove-file")) {
+                e.target.closest(".file-input-group").remove();
+            }
+        });
+    });
+</script>

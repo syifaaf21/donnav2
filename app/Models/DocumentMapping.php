@@ -13,7 +13,6 @@ class DocumentMapping extends Model
         'document_id',
         'document_number',
         'part_number_id',
-        'file_path',
         'department_id',
         'reminder_date',
         'deadline',
@@ -57,4 +56,7 @@ class DocumentMapping extends Model
             });
     }
 
+    public function files() {
+        return $this->hasMany(DocumentFile::class);
+    }
 }
