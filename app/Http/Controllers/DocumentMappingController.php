@@ -53,6 +53,17 @@ class DocumentMappingController extends Controller
                 $query->whereDate('deadline', $deadline);
             }
 
+            // Ambil versi terakhir per document berdasarkan updated_at (tanggal)
+            $mappings = $query->orderBy('updated_at', 'desc')->get()->groupBy('document_id')->map(function ($group) {
+                return $group->first(); // ambil mapping terakhir per document
+            });
+
+            // Ubah updated_at jadi hanya tanggal
+            $mappings->transform(function ($item) {
+                $item->updated_at = $item->updated_at->format('Y-m-d'); // format tanggal saja
+                return $item;
+            });
+
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->paginate(5, ['*'], 'page_' . $plant);
             // pakai page_plant supaya paginator tiap tab independen
         }
@@ -96,7 +107,6 @@ class DocumentMappingController extends Controller
             'status_id' => Status::where('name', 'need review')->first()->id,
             'notes' => $request->notes ?? '',
             'user_id' => Auth::id(),
-            'version' => 1,
         ]);
 
         return redirect()->back()->with('success', 'Document review created!');
@@ -140,7 +150,8 @@ class DocumentMappingController extends Controller
 
         $filePath = $request->file('file')->store('documents', 'public');
 
-        $mapping->update([
+        // update tanpa mengubah updated_at
+        $mapping->updateQuietly([
             'file_path' => $filePath,
             'notes' => $request->notes,
             'status_id' => Status::where('name', 'need review')->first()->id,
@@ -175,7 +186,6 @@ class DocumentMappingController extends Controller
 
         $mapping->update([
             'status_id' => $statusApproved->id,
-            'version' => $mapping->version + 1,
             'reminder_date' => $request->reminder_date,
             'deadline' => $request->deadline,
             'user_id' => Auth::id(),
@@ -184,24 +194,23 @@ class DocumentMappingController extends Controller
         return redirect()->back()->with('success', 'Document approved and dates set successfully!');
     }
 
-
-
     public function reject(DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin') {
-            abort(403);
-        }
+        if (Auth::user()->role->name != 'Admin') abort(403);
 
         $statusRejected = Status::where('name', 'rejected')->first();
-
         if (!$statusRejected) {
             return redirect()->back()->with('error', 'Status "rejected" not found!');
         }
 
-        $mapping->update([
-            'status_id' => $statusRejected->id,
-            'user_id' => Auth::id(),
-        ]);
+        // Update tanpa mengubah updated_at
+        DocumentMapping::withoutTouching(function () use ($mapping, $statusRejected) {
+            $mapping->updateQuietly([
+                'status_id' => $statusRejected->id,
+                'user_id' => Auth::id(),
+            ]);
+        });
+
 
         return redirect()->back()->with('success', 'Document rejected!');
     }

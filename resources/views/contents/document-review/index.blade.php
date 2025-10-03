@@ -127,7 +127,7 @@
                                             <th>Reminder Date</th>
                                             <th>Deadline</th>
                                             <th>Status</th>
-                                            <th>Version</th>
+                                            <th>Last Updated</th>
                                             <th>Notes</th>
                                             <th>Updated By</th>
                                             <th>Action</th>
@@ -176,7 +176,7 @@
                                                                 class="badge bg-secondary">{{ $mapping->status->name ?? '-' }}</span>
                                                     @endswitch
                                                 </td>
-                                                <td>{{ $mapping->version }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($mapping->updated_at)->format('Y-m-d') }}</td>
                                                 <td>{{ $mapping->notes }}</td>
                                                 <td>{{ $mapping->user->name ?? '-' }}</td>
 
