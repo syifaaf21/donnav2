@@ -1,7 +1,7 @@
 <!-- Sidebar -->
 <aside id="bsbSidebar" class="bsb-sidebar-1 bg-transparent">
     <div class="offcanvas-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-        <a class="sidebar-brand" href="#!">
+        <a class="sidebar-brand" href="{{ route('dashboard') }}">
             <img src="{{ asset('images/donna-logo.png') }}" id="bsbSidebarLabel1" class="logo" alt="Donna Logo">
         </a>
     </div>
@@ -10,7 +10,7 @@
         <hr class="sidebar-divider mb-1">
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link p-3 {{ request()->is('/') ? 'active bg-light rounded' : '' }}" href="/">
+                <a class="nav-link p-3 {{ request()->is('/') ? 'active bg-light rounded' : '' }}" href="{{ route('dashboard') }}">
                     <div class="nav-link-icon text-primary">
                         <i class="bi bi-house-gear"></i>
                     </div>
@@ -21,8 +21,8 @@
                 <h6 class="py-1 text-secondary text-uppercase fs-7">Docs</h6>
             </li>
             <li class="nav-item">
-                {{-- <a class="nav-link p-3 {{ Route::is('document-control') ? 'active bg-light rounded' : '' }}"
-                    href="{{ route('document.control.index') }}"> --}}
+                <a class="nav-link p-3 {{ Route::is('document-control') ? 'active bg-light rounded' : '' }}"
+                    href="{{ route('document-control.index') }}">
                     <div class="nav-link-icon text-info">
                         <i class="bi bi-gear"></i>
                     </div>

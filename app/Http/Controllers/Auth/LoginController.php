@@ -16,7 +16,7 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'npk'    => ['required'],
+            'npk' => 'required|numeric|digits_between:1,6',
             'password' => ['required'],
         ]);
 

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('title', 'Document Review')
 
 @section('content')
     <div class="container py-4">
@@ -29,6 +30,7 @@
                     data-bs-target="#addDocumentModal" data-bs-title="Add New Document Review">
                     <i class="bi bi-plus-circle"></i> Add Document Review
                 </button>
+                @include('contents.document-review.partials.modal-add')
             @endif
         </div>
 
@@ -115,330 +117,310 @@
                     <div class="table-wrapper">
                         <div class="card-body p-0">
                             <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                                <table class="table modern-table align-middle table-hover mb-0">
-                                    <thead class="table-light">
+                                <table class="table modern-table align-middle text-center table-hover mb-0">
+                                    @include('contents.document-review.partials.table-header')
+
+                                    @php
+                                        $parents = $documents->filter(fn($doc) => is_null($doc->document->parent_id));
+                                    @endphp
+
+                                    @if ($parents->isEmpty())
                                         <tr>
-                                            <th>No</th>
-                                            <th>Document Name</th>
-                                            <th>Document Number</th>
-                                            <th>Part Number</th>
-                                            <th>File</th>
-                                            <th>Department</th>
-                                            <th>Reminder Date</th>
-                                            <th>Deadline</th>
-                                            <th>Status</th>
-                                            <th>Last Updated</th>
-                                            <th>Notes</th>
-                                            <th>Updated By</th>
-                                            <th>Action</th>
+                                            <td colspan="14" class="text-center text-muted py-4">
+                                                <i class="bi bi-folder-x fs-4 d-block"></i>
+                                                No Document found for this tab.
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($documents as $mapping)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $mapping->document->name }}</td>
-                                                <td>{{ $mapping->document_number }}</td>
-                                                <td>{{ $mapping->partNumber->part_number ?? '-' }}</td>
-                                                <td>
-                                                    @if ($mapping->file_path)
-                                                        <button type="button"
-                                                            class="btn btn-outline-primary btn-sm view-file-btn"
-                                                            data-bs-toggle="modal" data-bs-target="#viewFileModal"
-                                                            data-file="{{ asset('storage/' . $mapping->file_path) }}">
-                                                            <i class="bi bi-file-earmark-text me-1"></i> View
-                                                        </button>
-                                                    @endif
-                                                </td>
+                                    @else
+                                        @foreach ($parents as $index => $parent)
+                                            @include(
+                                                'contents.document-review.partials.nested-row-recursive',
+                                                [
+                                                    'mapping' => $parent,
+                                                    'documents' => $documents,
+                                                    'loopIndex' => 'parent-' . $index,
+                                                    'rowNumber' => $loop->iteration, // misalnya 1, 2, 3
+                                                    'depth' => 0,
+                                                    'numbering' => $loop->iteration . '', // kirim '1', '2', '3'
+                                                ]
+                                            )
+                                        @endforeach
+                                    @endif
+                                </table>
 
-                                                <td>{{ $mapping->department->name ?? '-' }}</td>
-                                                <td>{{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') : '-' }}
-                                                </td>
-                                                <td>{{ $mapping->deadline ? \Carbon\Carbon::parse($mapping->deadline)->format('Y-m-d') : '-' }}
-                                                </td>
-
-                                                <td>
-                                                    @switch($mapping->status->name)
-                                                        @case('Approved')
-                                                            <span class="badge bg-success">Approved</span>
-                                                        @break
-
-                                                        @case('Rejected')
-                                                            <span class="badge bg-danger">Rejected</span>
-                                                        @break
-
-                                                        @case('Need Review')
-                                                            <span class="badge bg-warning text-dark">Need Review</span>
-                                                        @break
-
-                                                        @default
-                                                            <span
-                                                                class="badge bg-secondary">{{ $mapping->status->name ?? '-' }}</span>
-                                                    @endswitch
-                                                </td>
-                                                <td>{{ \Carbon\Carbon::parse($mapping->updated_at)->format('Y-m-d') }}</td>
-                                                <td>{{ $mapping->notes }}</td>
-                                                <td>{{ $mapping->user->name ?? '-' }}</td>
-
-                                                <td class="text-nowrap">
-                                                    @if (auth()->user()->role->name == 'Admin')
-                                                        {{-- Edit --}}
-                                                        <button class="btn btn-outline-primary btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#editModal{{ $mapping->id }}"
-                                                            data-bs-title="Edit Metadata">
-                                                            <i class="bi bi-pencil-square"></i>
-                                                        </button>
-
-
-                                                        {{-- Delete --}}
-                                                        <form
-                                                            action="{{ route('document-review.destroy', $mapping->id) }}"
-                                                            method="POST" class="d-inline delete-form">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm"
-                                                                data-bs-title="Delete Document">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </form>
-
-
-                                                        {{-- Revisi --}}
-                                                        <button class="btn btn-outline-warning btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#reviseModal{{ $mapping->id }}"
-                                                            data-bs-title="Revise Document">
-                                                            <i class="bi bi-arrow-clockwise"></i>
-                                                        </button>
-
-
-                                                        {{-- Approve / Reject --}}
-                                                        @if ($mapping->status->name == 'Need Review')
-                                                            {{-- Tombol Approve buka modal --}}
-                                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#approveModal{{ $mapping->id }}"
-                                                                data-bs-title="Approve Document">
-                                                                <i class="bi bi-check2-circle"></i>
-                                                            </button>
-
-                                                            {{-- Tombol Reject tetap form --}}
-                                                            <form
-                                                                action="{{ route('document-review.reject', $mapping->id) }}"
-                                                                method="POST" class="d-inline reject-form">
-                                                                @csrf
-                                                                <button type="submit"
-                                                                    class="btn btn-outline-danger btn-sm"
-                                                                    data-bs-title="Reject Document">
-                                                                    <i class="bi bi-x-circle"></i>
-                                                                </button>
-                                                            </form>
-                                                        @elseif ($mapping->status->name == 'Approved')
-                                                            {{-- Sudah Approved --}}
-                                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                                disabled>
-                                                                <i class="bi bi-check2-all"></i>
-                                                            </button>
-                                                            <button type="button"
-                                                                class="btn btn-outline-secondary btn-sm" disabled>
-                                                                <i class="bi bi-x-circle"></i>
-                                                            </button>
-                                                        @elseif ($mapping->status->name == 'Rejected')
-                                                            {{-- Sudah Rejected --}}
-                                                            <button type="button"
-                                                                class="btn btn-outline-secondary btn-sm" disabled>
-                                                                <i class="bi bi-check2-circle"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                disabled>
-                                                                <i class="bi bi-x-circle-fill"></i>
-                                                            </button>
-                                                        @else
-                                                            {{-- Status lain --}}
-                                                            <button class="btn btn-outline-secondary btn-sm" disabled>
-                                                                <i class="bi bi-slash-circle"></i>
-                                                            </button>
-                                                        @endif
-                                                    @else
-                                                        {{-- User hanya revisi --}}
-                                                        <button class="btn btn-outline-warning btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#reviseModal{{ $mapping->id }}">
-                                                            <i class="bi bi-arrow-clockwise"></i>
-                                                        </button>
-                                                    @endif
-                                                </td>
-                                            </tr>
-
-                                            {{-- Include modal --}}
-                                            @include('contents.document-review.modal-edit')
-                                            @include('contents.document-review.modal-revise')
-                                            @include('contents.document-review.modal-approve')
-                                            @empty
-                                                <tr>
-                                                    <td colspan="13" class="text-center py-4 text-muted">
-                                                        <i class="bi bi-search me-2"></i>
-                                                        No documents found for this tab.
-                                                    </td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                                                            <div class="mt-3">
-                                {!! $documents->withQueryString()->links() !!}
-                            </div>
+                                {{-- Render semua modal di luar table supaya ga kedip --}}
+                                @foreach ($documents as $doc)
+                                    @include('contents.document-review.partials.modal-edit', [
+                                        'mapping' => $doc,
+                                    ])
+                                    @include('contents.document-review.partials.modal-revise', [
+                                        'mapping' => $doc,
+                                    ])
+                                    @include('contents.document-review.partials.modal-approve', [
+                                        'mapping' => $doc,
+                                    ])
+                                @endforeach
                             </div>
                         </div>
                     </div>
-                @endforeach
-            </div>
-
-            {{-- Modal Add --}}
-            @include('contents.document-review.modal-add')
+                </div>
+            @endforeach
         </div>
-        <!-- 📄 Modal Fullscreen View File -->
-        <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-fullscreen">
-                <div class="modal-content border-0 rounded-0 shadow-none">
-                    <div class="modal-header bg-light border-bottom">
-                        <h5 class="modal-title fw-semibold">
-                            <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
+    </div>
+    <!-- 📄 Modal Fullscreen View File -->
+    <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content border-0 rounded-0 shadow-none">
+                <div class="modal-header bg-light border-bottom">
+                    <h5 class="modal-title fw-semibold">
+                        <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
 
-                    <div class="modal-body p-0">
-                        <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
-                    </div>
+                <div class="modal-body p-0">
+                    <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
                 </div>
             </div>
         </div>
-    @endsection
+    </div>
+    {{-- Snackbar Bulk Action --}}
+    <div id="snackbar" class="snackbar shadow-lg d-flex justify-content-between align-items-center">
+        <div>
+            <span id="selectedCount">0 selected</span>
+        </div>
 
-    @push('scripts')
-        <x-sweetalert-confirm />
+        <form id="bulkDeleteForm" action="{{ route('bulkDestroy') }}" method="POST" class="mb-0">
+            @csrf
+            {{-- container untuk input hidden ids[] yang akan dibuat oleh JS --}}
+            <div id="bulkIdsContainer"></div>
 
-        <script>
-            // Autofill Department
-            const docSelect = document.getElementById('documentSelect');
-            const deptField = document.getElementById('departmentField');
-            docSelect?.addEventListener('change', function() {
-                deptField.value = this.options[this.selectedIndex].dataset.department || '';
-            });
+            <button id="bulkDeleteBtn" type="submit" class="btn btn-outline-danger btn-sm" disabled>
+                <i class="bi bi-trash"></i> Delete Selected
+            </button>
+        </form>
+    </div>
+@endsection
 
-            document.addEventListener('DOMContentLoaded', function() {
-                const tabButtons = document.querySelectorAll('#plantTabs button');
+@push('scripts')
+    <x-sweetalert-confirm />
 
-                function filterPartNumbersFor(selectElement, plantName) {
-                    const options = selectElement.querySelectorAll('option');
-                    options.forEach(opt => {
-                        const plant = opt.dataset.plant?.trim().toLowerCase();
-                        if (opt.selected) {
-                            // jangan sembunyikan yang selected
-                            opt.style.display = '';
-                        } else {
-                            opt.style.display = (!plantName || plant === plantName.toLowerCase() || opt
-                                .value === '') ? '' : 'none';
-                        }
-                    });
-                    if (!Array.from(options).some(o => o.selected)) {
-                        selectElement.value = '';
+    <script>
+        // Autofill Department
+        const docSelect = document.getElementById('documentSelect');
+        const deptField = document.getElementById('departmentField');
+        docSelect?.addEventListener('change', function() {
+            deptField.value = this.options[this.selectedIndex].dataset.department || '';
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('#plantTabs button');
+
+            function filterPartNumbersFor(selectElement, plantName) {
+                const options = selectElement.querySelectorAll('option');
+                options.forEach(opt => {
+                    const plant = opt.dataset.plant?.trim().toLowerCase();
+                    if (opt.selected) {
+                        // jangan sembunyikan yang selected
+                        opt.style.display = '';
+                    } else {
+                        opt.style.display = (!plantName || plant === plantName.toLowerCase() || opt
+                            .value === '') ? '' : 'none';
                     }
-                }
-
-                function applyFilterToAllModals(plantName) {
-                    // Add modal
-                    const addSelect = document.getElementById('addPartNumberSelect');
-                    if (addSelect) filterPartNumbersFor(addSelect, plantName);
-
-                    // Edit modals
-                    document.querySelectorAll('[id^="editPartNumberSelect"]').forEach(editSelect => {
-                        filterPartNumbersFor(editSelect, plantName);
-                    });
-                }
-
-                // filter saat halaman load sesuai tab aktif
-                const firstTab = document.querySelector('#plantTabs button.active');
-                if (firstTab) applyFilterToAllModals(firstTab.textContent.trim());
-
-                tabButtons.forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        const plant = this.textContent.trim();
-                        applyFilterToAllModals(plant);
-                        localStorage.setItem('activePlantTab', this.id);
-                    });
                 });
+                if (!Array.from(options).some(o => o.selected)) {
+                    selectElement.value = '';
+                }
+            }
 
-                // restore tab terakhir jika reload
-                const savedTabId = localStorage.getItem('activePlantTab');
-                if (savedTabId) {
-                    const savedBtn = document.getElementById(savedTabId);
-                    const savedPane = document.querySelector(savedBtn?.dataset.bsTarget);
-                    if (savedBtn && savedPane) {
-                        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
-                        document.querySelectorAll('#plantTabs button').forEach(b => b.classList.remove('active'));
-                        savedBtn.classList.add('active');
-                        savedPane.classList.add('show', 'active');
-                        applyFilterToAllModals(savedBtn.textContent.trim());
+            function applyFilterToAllModals(plantName) {
+                // Add modal
+                const addSelect = document.getElementById('addPartNumberSelect');
+                if (addSelect) filterPartNumbersFor(addSelect, plantName);
+
+                // Edit modals
+                document.querySelectorAll('[id^="editPartNumberSelect"]').forEach(editSelect => {
+                    filterPartNumbersFor(editSelect, plantName);
+                });
+            }
+
+            // filter saat halaman load sesuai tab aktif
+            const firstTab = document.querySelector('#plantTabs button.active');
+            if (firstTab) applyFilterToAllModals(firstTab.textContent.trim());
+
+            tabButtons.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const plant = this.textContent.trim();
+                    applyFilterToAllModals(plant);
+                    localStorage.setItem('activePlantTab', this.id);
+                });
+            });
+
+            // restore tab terakhir jika reload
+            const savedTabId = localStorage.getItem('activePlantTab');
+            if (savedTabId) {
+                const savedBtn = document.getElementById(savedTabId);
+                const savedPane = document.querySelector(savedBtn?.dataset.bsTarget);
+                if (savedBtn && savedPane) {
+                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
+                    document.querySelectorAll('#plantTabs button').forEach(b => b.classList.remove('active'));
+                    savedBtn.classList.add('active');
+                    savedPane.classList.add('show', 'active');
+                    applyFilterToAllModals(savedBtn.textContent.trim());
+                }
+            }
+        });
+
+        // tooltip
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el, {
+                    title: el.getAttribute('data-bs-title'),
+                    placement: 'top',
+                    trigger: 'hover'
+                });
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            // 🔍 Clear Search
+            document.getElementById('clearSearch')?.addEventListener('click', function() {
+                const form = document.getElementById('searchForm');
+                if (!form) return;
+
+                // Hapus input search
+                form.querySelector('input[name="search"]').value = '';
+
+                // Submit ulang tanpa search
+                form.submit();
+            });
+
+            // 🧹 Clear Filter
+            document.getElementById('clearFilters')?.addEventListener('click', function() {
+                const form = document.getElementById('filterForm');
+                if (!form) return;
+
+                // Kosongkan semua input & select
+                form.querySelectorAll('input, select').forEach(el => el.value = '');
+
+                // Submit form untuk reset filter
+                form.submit();
+            });
+        });
+        //View File in tab
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('viewFileModal');
+            const iframe = document.getElementById('fileViewer');
+
+            // Ketika tombol View diklik
+            document.querySelectorAll('.view-file-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fileUrl = this.dataset.file;
+                    iframe.src = fileUrl;
+                });
+            });
+
+            // Reset iframe saat modal ditutup
+            modal.addEventListener('hidden.bs.modal', () => {
+                iframe.src = '';
+            });
+        });
+
+
+        // Snackbar script
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('selectAll');
+            const snackbar = document.getElementById('snackbar');
+            const selectedCount = document.getElementById('selectedCount');
+            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+            const bulkIdsContainer = document.getElementById('bulkIdsContainer');
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+            function getRowCheckboxes() {
+                return Array.from(document.querySelectorAll('.row-checkbox'));
+            }
+
+            function updateSnackbar() {
+                const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
+                selectedCount.textContent = `${checkedBoxes.length} selected`;
+                snackbar.classList.toggle('show', checkedBoxes.length > 0);
+                bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+            }
+
+            // master checkbox handler
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    getRowCheckboxes().forEach(cb => cb.checked = this.checked);
+                    updateSnackbar();
+                });
+            }
+
+            // listen perubahan pada checkbox (event delegation)
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.classList && e.target.classList.contains('row-checkbox')) {
+                    // if any manual uncheck, uncheck master
+                    if (!e.target.checked && selectAll) selectAll.checked = false;
+
+                    // if all are checked, set master checked
+                    const all = getRowCheckboxes();
+                    if (selectAll && all.length > 0) {
+                        selectAll.checked = all.every(cb => cb.checked);
                     }
+
+                    updateSnackbar();
                 }
             });
 
-            // tooltip
-            document.addEventListener('DOMContentLoaded', function() {
-                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-                tooltipTriggerList.map(function(el) {
-                    return new bootstrap.Tooltip(el, {
-                        title: el.getAttribute('data-bs-title'),
-                        placement: 'top',
-                        trigger: 'hover'
-                    });
+            // on submit: build hidden inputs ids[] then submit
+            bulkDeleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
+                if (checkedBoxes.length === 0) {
+                    alert('No documents selected.');
+                    return;
+                }
+
+                if (!confirm(
+                        `Are you sure you want to delete ${checkedBoxes.length} selected document(s)?`)) {
+                    return;
+                }
+
+                // clear previous inputs
+                bulkIdsContainer.innerHTML = '';
+
+                // create hidden inputs ids[]
+                checkedBoxes.forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ids[]';
+                    input.value = cb.value;
+                    bulkIdsContainer.appendChild(input);
                 });
+
+                // submit native
+                bulkDeleteForm.submit();
             });
-            document.addEventListener('DOMContentLoaded', function() {
-                // 🔍 Clear Search
-                document.getElementById('clearSearch')?.addEventListener('click', function() {
-                    const form = document.getElementById('searchForm');
-                    if (!form) return;
 
-                    // Hapus input search
-                    form.querySelector('input[name="search"]').value = '';
+            // init
+            updateSnackbar();
+        });
 
-                    // Submit ulang tanpa search
-                    form.submit();
-                });
+        // in form message
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil semua form yang butuh validasi
+            const forms = document.querySelectorAll('.needs-validation');
 
-                // 🧹 Clear Filter
-                document.getElementById('clearFilters')?.addEventListener('click', function() {
-                    const form = document.getElementById('filterForm');
-                    if (!form) return;
+            Array.from(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault(); // Stop form submit
+                        event.stopPropagation();
+                    }
 
-                    // Kosongkan semua input & select
-                    form.querySelectorAll('input, select').forEach(el => el.value = '');
-
-                    // Submit form untuk reset filter
-                    form.submit();
-                });
+                    form.classList.add('was-validated'); // Tambahkan class validasi Bootstrap
+                }, false);
             });
-            //View File in tab
-            document.addEventListener('DOMContentLoaded', function() {
-                const modal = document.getElementById('viewFileModal');
-                const iframe = document.getElementById('fileViewer');
-
-                // Ketika tombol View diklik
-                document.querySelectorAll('.view-file-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const fileUrl = this.dataset.file;
-                        iframe.src = fileUrl;
-                    });
-                });
-
-                // Reset iframe saat modal ditutup
-                modal.addEventListener('hidden.bs.modal', () => {
-                    iframe.src = '';
-                });
-            });
-        </script>
-    @endpush
+        });
+    </script>
+@endpush

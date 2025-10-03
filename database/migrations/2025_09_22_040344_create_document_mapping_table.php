@@ -14,12 +14,11 @@ return new class extends Migration
         Schema::create('document_mappings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained('documents')->onDelete('cascade');
-            $table->foreignId('part_number_id')->constrained('part_numbers')->onDelete('cascade');
+            $table->foreignId('part_number_id')->nullable()->constrained('part_numbers')->onDelete('cascade');
             $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
             $table->string('document_number');
-            $table->string('version');
             $table->string('file_path');
-            $table->text('notes');
+            $table->text('notes')->nullable();
             $table->date('obsolete_date')->nullable();
             $table->date('reminder_date')->nullable();
             $table->date('deadline')->nullable();

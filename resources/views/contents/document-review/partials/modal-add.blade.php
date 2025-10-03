@@ -7,7 +7,8 @@
                 <div class="modal-content border-0 rounded-4 shadow-lg">
                     {{-- Modal Header --}}
                     <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;" id="addDocumentModalLabel">
+                        <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;"
+                            id="addDocumentModalLabel">
                             <i class="bi bi-plus-circle me-2"></i> Add Document Review
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -22,11 +23,14 @@
                                 <label class="form-label fw-medium">Document Name <span
                                         class="text-danger">*</span></label>
                                 <select name="document_id" class="form-select border-1 shadow-sm" required>
-                                    <option value="">-- Pilih Document --</option>
+                                    <option value="">-- Select Document --</option>
                                     @foreach ($documentsMaster as $doc)
                                         <option value="{{ $doc->id }}">{{ $doc->name }}</option>
                                     @endforeach
                                 </select>
+                                <div class="invalid-feedback">
+                                    Document Name is required.
+                                </div>
                             </div>
 
                             {{-- Document Number --}}
@@ -34,7 +38,10 @@
                                 <label class="form-label fw-medium">Document Number <span
                                         class="text-danger">*</span></label>
                                 <input type="text" name="document_number" class="form-control border-1 shadow-sm"
-                                    placeholder="Masukkan nomor dokumen" required>
+                                    placeholder="Input Document Number" required>
+                                <div class="invalid-feedback">
+                                    Document Number is required.
+                                </div>
                             </div>
 
                             {{-- Part Number --}}
@@ -43,13 +50,16 @@
                                         class="text-danger">*</span></label>
                                 <select id="addPartNumberSelect" name="part_number_id"
                                     class="form-select border-1 shadow-sm" required>
-                                    <option value="">-- Pilih Part Number --</option>
+                                    <option value="">-- Select Part Number --</option>
                                     @foreach ($partNumbers as $part)
                                         <option value="{{ $part->id }}" data-plant="{{ $part->plant }}">
                                             {{ $part->part_number }}
                                         </option>
                                     @endforeach
                                 </select>
+                                <div class="invalid-feedback">
+                                    Part Number is required.
+                                </div>
                             </div>
 
                             {{-- Department --}}
@@ -57,17 +67,20 @@
                                 <label class="form-label fw-medium">Department <span
                                         class="text-danger">*</span></label>
                                 <select name="department_id" class="form-select border-1 shadow-sm" required>
-                                    <option value="">-- Pilih Department --</option>
+                                    <option value="">-- Select Department --</option>
                                     @foreach ($departments as $dept)
                                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                     @endforeach
                                 </select>
+                                <div class="invalid-feedback">
+                                    Department is required.
+                                </div>
                             </div>
                             {{-- Notes --}}
                             <div class="col-12">
                                 <label class="form-label fw-medium">Notes</label>
                                 <input type="text" name="notes" class="form-control border-1 shadow-sm"
-                                    placeholder="Tambahkan catatan jika perlu">
+                                    placeholder="Add any relevant notes here">
                             </div>
 
                             {{-- File --}}
@@ -75,7 +88,10 @@
                                 <label class="form-label fw-medium">Upload File <span
                                         class="text-danger">*</span></label>
                                 <input type="file" name="file" class="form-control border-1 shadow-sm" required>
-                                <small class="text-muted">Format yang diizinkan: PDF, DOCX, XLSX</small>
+                                <small class="text-muted">Allowed Format: PDF & DOCX</small>
+                                <div class="invalid-feedback">
+                                    Document Number is required.
+                                </div>
                             </div>
                         </div>
                     </div>
