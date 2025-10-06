@@ -10,7 +10,7 @@
         <th>Reminder Date</th>
         <th>Deadline</th>
         <th>Status</th>
-        <th>Version</th>
+        <th>Last Update</th>
         <th>Notes</th>
         <th>Updated By</th>
         <th>Action</th>

@@ -31,6 +31,9 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="invalid-feedback">
+                                Document Name is required.
+                            </div>
                         </div>
 
                         {{-- Document Number --}}
@@ -39,6 +42,9 @@
                                     class="text-danger">*</span></label>
                             <input type="text" name="document_number" class="form-control border-1 shadow-sm"
                                 value="{{ $mapping->document_number }}" required>
+                            <div class="invalid-feedback">
+                                Document Number is required.
+                            </div>
                         </div>
 
                         {{-- Part Number --}}
@@ -53,6 +59,9 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="invalid-feedback">
+                                Part Number is required.
+                            </div>
 
                         </div>
 
@@ -60,7 +69,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
                             <select name="department_id" class="form-select border-1 shadow-sm" required>
-                                <option value="">-- Pilih Department --</option>
+                                <option value="">-- Select Department --</option>
                                 @foreach ($departments as $dept)
                                     <option value="{{ $dept->id }}"
                                         @if ($mapping->department_id == $dept->id) selected @endif>
@@ -68,21 +77,27 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="invalid-feedback">
+                                Department is required.
+                            </div>
                         </div>
 
                         {{-- Reminder Date --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Reminder Date</label>
                             <input type="date" name="reminder_date" class="form-control border-1 shadow-sm"
-                                value="{{ \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') }}" >
+                                value="{{ $mapping->reminder_date?->format('Y-m-d') }}"
+                                @if ($mapping->status->name != 'Approved') readonly @endif>
                         </div>
 
                         {{-- Deadline --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Deadline</label>
                             <input type="date" name="deadline" class="form-control border-1 shadow-sm"
-                                value="{{ \Carbon\Carbon::parse($mapping->deadline)->format('Y-m-d') }}">
+                                value="{{ $mapping->deadline?->format('Y-m-d') }}"
+                                @if ($mapping->status->name != 'Approved') readonly @endif>
                         </div>
+
 
                     </div>
                 </div>

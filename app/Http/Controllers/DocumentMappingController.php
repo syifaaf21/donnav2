@@ -56,8 +56,13 @@ class DocumentMappingController extends Controller
 
             // Filter by Status
             if ($status = request('status')) {
-                $query->whereHas('status', fn($q) => $q->where('name', $status));
+                $query->whereHas(
+                    'status',
+                    fn($q) =>
+                    $q->whereRaw('LOWER(name) = ?', [strtolower($status)])
+                );
             }
+
 
             // Filter by Department
             if ($department = request('department')) {
@@ -69,7 +74,7 @@ class DocumentMappingController extends Controller
                 $query->whereDate('deadline', $deadline);
             }
 
-            $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')->get();
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
             // pakai page_plant supaya paginator tiap tab independen
         }
 
@@ -111,7 +116,7 @@ class DocumentMappingController extends Controller
             'status_id' => Status::where('name', 'Need Review')->first()->id,
             'notes' => $request->notes ?? '',
             'user_id' => Auth::id(),
-            'version' => 1,
+            'version' => 0,
         ]);
 
         // Upload file dan simpan ke DocumentFile
@@ -152,14 +157,20 @@ class DocumentMappingController extends Controller
             'deadline' => 'nullable|date',
         ]);
 
+        $mapping->timestamps = false;
         $mapping->update([
             'document_id' => $request->document_id,
             'document_number' => $request->document_number,
             'part_number_id' => $request->part_number_id,
             'department_id' => $request->department_id,
-            'reminder_date' => $request->reminder_date,
-            'deadline' => $request->deadline,
+            'reminder_date' => optional($mapping->status)->name === 'approved'
+                ? $request->reminder_date
+                : $mapping->reminder_date,
+            'deadline' => optional($mapping->status)->name === 'approved'
+                ? $request->deadline
+                : $mapping->deadline,
         ]);
+        $mapping->timestamps = true;
 
         return redirect()->back()->with('success', 'Document metadata updated!');
     }
@@ -251,7 +262,6 @@ class DocumentMappingController extends Controller
 
         $mapping->update([
             'status_id' => $statusApproved->id,
-            'version' => $mapping->version + 1,
             'reminder_date' => $request->reminder_date,
             'deadline' => $request->deadline,
             'user_id' => Auth::id(),
@@ -407,7 +417,6 @@ class DocumentMappingController extends Controller
         $mapping->update([
             'status_id' => $statusActive->id,
             'user_id' => Auth::id(),
-            'version' => $mapping->version + 1,
         ]);
 
         return redirect()->route('document-control.index')->with('success', 'Document Control approved and status set to active!');

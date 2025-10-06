@@ -57,7 +57,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
 });
 
-Route::prefix('document-review')->name('document-review.')->group(function() {
+Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
     Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
 
     // Admin routes
@@ -71,7 +71,7 @@ Route::prefix('document-review')->name('document-review.')->group(function() {
     Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
 });
 
-Route::prefix('document-control')->name('document-control.')->group(function() {
+Route::prefix('document-control')->name('document-control.')->middleware('auth')->group(function () {
     Route::get('/', [DocumentMappingController::class, 'controlIndex'])->name('index');
     Route::post('/store', [DocumentMappingController::class, 'storeControl'])->name('store');
     Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');

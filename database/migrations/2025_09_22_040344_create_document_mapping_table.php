@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('part_number_id')->nullable()->constrained('part_numbers')->onDelete('cascade');
             $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
             $table->string('document_number');
-            $table->string('version');
+            $table->string('file_path');
             $table->text('notes')->nullable();
             $table->date('obsolete_date')->nullable();
             $table->date('reminder_date')->nullable();

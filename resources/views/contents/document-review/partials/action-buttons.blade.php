@@ -18,7 +18,7 @@
 
     {{-- Revisi --}}
     <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal"
-        data-bs-target="#reviseModal{{ $mapping->id }}" data-bs-title="Revise Document">
+        data-bs-target="#reviseModal{{ $mapping->id }}" data-bs-title="Update Document">
         <i class="bi bi-arrow-clockwise"></i>
     </button>
 

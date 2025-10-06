@@ -20,8 +20,14 @@ class DocumentMapping extends Model
         'status_id',
         'notes',
         'user_id',
-        'version',
     ];
+
+    protected $casts = [
+    'reminder_date' => 'date',
+    'deadline' => 'date',
+];
+
+
 
     public function document()
     {
