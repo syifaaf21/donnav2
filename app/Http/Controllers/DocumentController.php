@@ -23,7 +23,7 @@ class DocumentController extends Controller
         // Pastikan menggunakan paginate, bukan get()
         $documents = $query->paginate(10)->appends($request->query());
 
-        return view('contents.master.document.index', compact('documents'));
+        return view('contents.master.hierarchy.index', compact('documents'));
     }
 
 

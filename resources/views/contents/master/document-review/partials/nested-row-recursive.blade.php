@@ -51,7 +51,7 @@
     <td>{{ $mapping->notes }}</td>
     <td>{{ $mapping->user->name ?? '-' }}</td>
     <td class="text-nowrap">
-        @include('contents.document-review.partials.action-buttons', ['mapping' => $mapping])
+        @include('contents.master.document-review.partials.action-buttons', ['mapping' => $mapping])
     </td>
 </tr>
 

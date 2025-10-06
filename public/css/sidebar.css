@@ -22,7 +22,7 @@
 
 /* Collapse Mode */
 #bsbSidebar.collapsed {
-  width: 90px;
+  width: 100px;
 }
 
 #bsbSidebar.collapsed .nav-link-text,
@@ -32,7 +32,7 @@
 }
 
 #bsbSidebar.collapsed .sidebar-brand img {
-  width: 40px;
+  width: 70px;
 }
 
 /* Sidebar Brand */

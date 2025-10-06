@@ -54,7 +54,7 @@
                             data-bs-target="#addDocumentControlModal">
                             <i class="bi bi-plus-lg"></i> Add Document
                         </button>
-                        @include('contents.document-control.partials.modal-add')
+                        @include('contents.master.document-control.partials.modal-add')
                     </div>
 
                     <div class="card-body p-0">
@@ -202,8 +202,8 @@
                                                 @endif
                                             </td>
                                         </tr>
-                                        @include('contents.document-control.partials.modal-edit')
-                                        @include('contents.document-control.partials.modal-revise')
+                                        @include('contents.master.document-control.partials.modal-edit')
+                                        @include('contents.master.document-control.partials.modal-revise')
                                     @empty
                                         <tr>
                                             <td colspan="14" class="text-center text-muted">No Data</td>

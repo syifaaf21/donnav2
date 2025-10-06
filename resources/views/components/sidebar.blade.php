@@ -10,7 +10,8 @@
         <hr class="sidebar-divider mb-1">
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link p-3 {{ request()->is('/') ? 'active bg-light rounded' : '' }}" href="{{ route('dashboard') }}">
+                <a class="nav-link p-3 {{ request()->is('/') ? 'active bg-light rounded' : '' }}"
+                    href="{{ route('dashboard') }}">
                     <div class="nav-link-icon text-primary">
                         <i class="bi bi-house-gear"></i>
                     </div>
@@ -62,6 +63,7 @@
                                 <span class="nav-link-text">Users</span>
                             </a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link {{ Route::is('part_numbers.*') ? 'active bg-light rounded' : '' }}"
                                 href="{{ route('part_numbers.index') }}">
@@ -71,15 +73,54 @@
                                 <span class="nav-link-text">Part Numbers</span>
                             </a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link {{ Route::is('documents.*') ? 'active bg-light rounded' : '' }}"
                                 href="{{ route('documents.index') }}">
                                 <div class="nav-link-icon text-warning">
-                                    <i class="bi bi-file-earmark-text"></i>
+                                    <i class="bi bi-diagram-3"></i>
                                 </div>
-                                <span class="nav-link-text">Documents</span>
+                                <span class="nav-link-text">Hierarchy</span>
                             </a>
                         </li>
+
+                        {{-- Dropdown for Documents --}}
+                        <li class="nav-item">
+                            <a class="nav-link p-3 collapsed" data-bs-toggle="collapse" href="#documentsDropdown"
+                                role="button"
+                                aria-expanded="{{ Route::is('document-control.*', 'document-review.*') ? 'true' : 'false' }}"
+                                aria-controls="documentsDropdown">
+                                <div class="nav-link-icon text-danger">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </div>
+                                <span class="nav-link-text fw-bold">Documents</span>
+                            </a>
+
+                            <div class="collapse {{ Route::is('document-control.*', 'document-review.*') ? 'show' : '' }}"
+                                id="documentsDropdown">
+                                <ul class="nav flex-column sidebar-submenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ Route::is('document-control.*') ? 'active bg-light rounded' : '' }}"
+                                            href="{{ route('document-control.index') }}">
+                                            <div class="nav-link-icon text-info">
+                                                <i class="bi bi-gear"></i>
+                                            </div>
+                                            <span class="nav-link-text">Control</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ Route::is('document-review.*') ? 'active bg-light rounded' : '' }}"
+                                            href="{{ route('document-review.index') }}">
+                                            <div class="nav-link-icon text-secondary">
+                                                <i class="bi bi-search me-1"></i>
+                                            </div>
+                                            <span class="nav-link-text">Review</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
                     </ul>
                 </div>
             </li>

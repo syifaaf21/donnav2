@@ -3,6 +3,7 @@
 
 @section('content')
     <div class="container py-4">
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             {{-- 🔍 Search + Filter --}}
             <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
@@ -30,13 +31,103 @@
                     data-bs-target="#addDocumentModal" data-bs-title="Add New Document Review">
                     <i class="bi bi-plus-circle"></i> Add Document Review
                 </button>
-                {{-- Modal Add --}}
-                @include('contents.document-review.partials.modal-add')
+                @include('contents.master.document-review.partials.modal-add')
             @endif
         </div>
 
+        {{-- Tabs per Plant --}}
+        <ul class="nav nav-tabs mb-3" id="plantTabs" role="tablist">
+            @foreach ($groupedByPlant as $plant => $documents)
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link @if ($loop->first) active @endif"
+                        id="{{ \Illuminate\Support\Str::slug($plant) }}-tab" data-bs-toggle="tab"
+                        data-bs-target="#{{ \Illuminate\Support\Str::slug($plant) }}" type="button" role="tab">
+                        <i class="bi bi-building-gear me-1"></i>{{ ucfirst(strtolower($plant)) }}
+                    </button>
+                </li>
+            @endforeach
+        </ul>
 
-        <!-- Modal Filter -->
+        <div class="tab-content" id="plantTabsContent">
+            @foreach ($groupedByPlant as $plant => $documents)
+                <div class="tab-pane fade @if ($loop->first) show active @endif"
+                    id="{{ \Illuminate\Support\Str::slug($plant) }}" role="tabpanel">
+
+                    <div class="table-wrapper">
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                                <table class="table modern-table align-middle text-center table-hover mb-0">
+                                    @include('contents.master.document-review.partials.table-header')
+
+                                    @php
+                                        $parents = $documents->filter(
+                                            fn($doc) => $doc->document && is_null($doc->document->parent_id),
+                                        );
+                                    @endphp
+
+                                    @if ($parents->isEmpty())
+                                        <tr>
+                                            <td colspan="14" class="text-center text-muted py-4">
+                                                <i class="bi bi-folder-x fs-4 d-block"></i>
+                                                No Document found for this tab.
+                                            </td>
+                                        </tr>
+                                    @else
+                                        @foreach ($parents as $index => $parent)
+                                            @include(
+                                                'contents.master.document-review.partials.nested-row-recursive',
+                                                [
+                                                    'mapping' => $parent,
+                                                    'documents' => $documents,
+                                                    'loopIndex' => 'parent-' . $index,
+                                                    'rowNumber' => $loop->iteration, // misalnya 1, 2, 3
+                                                    'depth' => 0,
+                                                    'numbering' => $loop->iteration . '', // kirim '1', '2', '3'
+                                                ]
+                                            )
+                                        @endforeach
+                                    @endif
+                                </table>
+
+                                {{-- Render semua modal di luar table supaya ga kedip --}}
+                                @foreach ($documents as $doc)
+                                    @include('contents.master.document-review.partials.modal-edit', [
+                                        'mapping' => $doc,
+                                    ])
+                                    @include('contents.master.document-review.partials.modal-revise', [
+                                        'mapping' => $doc,
+                                    ])
+                                    @include('contents.master.document-review.partials.modal-approve', [
+                                        'mapping' => $doc,
+                                    ])
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    <!-- 📄 Modal Fullscreen View File -->
+    <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content border-0 rounded-0 shadow-none">
+                <div class="modal-header bg-light border-bottom">
+                    <h5 class="modal-title fw-semibold">
+                        <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+<!-- Modal Filter -->
         <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="GET" id="filterForm">
@@ -96,99 +187,6 @@
                 </form>
             </div>
         </div>
-
-        {{-- Tabs per Plant --}}
-        <ul class="nav nav-tabs mb-3" id="plantTabs" role="tablist">
-            @foreach ($groupedByPlant as $plant => $documents)
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if ($loop->first) active @endif"
-                        id="{{ \Illuminate\Support\Str::slug($plant) }}-tab" data-bs-toggle="tab"
-                        data-bs-target="#{{ \Illuminate\Support\Str::slug($plant) }}" type="button" role="tab">
-                        <i class="bi bi-building-gear me-1"></i>{{ ucfirst(strtolower($plant)) }}
-                    </button>
-                </li>
-            @endforeach
-        </ul>
-
-        <div class="tab-content" id="plantTabsContent">
-            @foreach ($groupedByPlant as $plant => $documents)
-                <div class="tab-pane fade @if ($loop->first) show active @endif"
-                    id="{{ \Illuminate\Support\Str::slug($plant) }}" role="tabpanel">
-
-                    <div class="table-wrapper">
-                        <div class="card-body p-0">
-                            <div class="table-responsive" style="">
-                                <table class="table modern-table align-middle text-center table-hover mb-0">
-                                    @include('contents.document-review.partials.table-header')
-                                    @php
-                                        $parents = $documents->filter(fn($doc) => is_null($doc->document->parent_id));
-                                    @endphp
-
-                                    @foreach ($parents as $index => $parent)
-                                        @include('contents.document-review.partials.nested-row-recursive', [
-                                            'mapping' => $parent,
-                                            'documents' => $documents,
-                                            'loopIndex' => 'parent-' . $index,
-                                            'rowNumber' => $loop->iteration,
-                                        ])
-                                    @endforeach
-
-                                </table>
-
-                                {{-- Render semua modal di luar table supaya ga kedip --}}
-                                @foreach ($documents as $doc)
-                                    @include('contents.document-review.partials.modal-edit', [
-                                        'mapping' => $doc,
-                                    ])
-                                    @include('contents.document-review.partials.modal-revise', [
-                                        'mapping' => $doc,
-                                    ])
-                                    @include('contents.document-review.partials.modal-approve', [
-                                        'mapping' => $doc,
-                                    ])
-                                @endforeach
-
-                            </div>
-                        </div>
-                    </div>
-            @endforeach
-        </div>
-    </div>
-    <!-- 📄 Modal Fullscreen View File -->
-    <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content border-0 rounded-0 shadow-none">
-                <div class="modal-header bg-light border-bottom">
-                    <h5 class="modal-title fw-semibold">
-                        <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body p-0">
-                    <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-    {{-- Snackbar Bulk Action --}}
-    <div id="snackbar" class="snackbar shadow-lg d-flex justify-content-between align-items-center">
-        <div>
-            <span id="selectedCount">0 selected</span>
-        </div>
-
-        <form id="bulkDeleteForm" action="{{ route('bulkDestroy') }}" method="POST" class="mb-0">
-            @csrf
-            {{-- container untuk input hidden ids[] yang akan dibuat oleh JS --}}
-            <div id="bulkIdsContainer"></div>
-
-            <button id="bulkDeleteBtn" type="submit" class="btn btn-outline-danger btn-sm" disabled>
-                <i class="bi bi-trash"></i> Delete Selected
-            </button>
-        </form>
-    </div>
-@endsection
-
 @push('scripts')
     <x-sweetalert-confirm />
 
@@ -311,101 +309,6 @@
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
-        });
-
-        // toogle children button
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".toggle-children").forEach(function(btn) {
-                btn.addEventListener("click", function() {
-                    const icon = this.querySelector("i");
-                    if (this.getAttribute("aria-expanded") === "true") {
-                        icon.classList.remove("bi-plus-square");
-                        icon.classList.add("bi-dash-square");
-                    } else {
-                        icon.classList.remove("bi-dash-square");
-                        icon.classList.add("bi-plus-square");
-                    }
-                });
-            });
-        });
-
-        // Snackbar script
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectAll = document.getElementById('selectAll');
-            const snackbar = document.getElementById('snackbar');
-            const selectedCount = document.getElementById('selectedCount');
-            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
-            const bulkIdsContainer = document.getElementById('bulkIdsContainer');
-            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-
-            function getRowCheckboxes() {
-                return Array.from(document.querySelectorAll('.row-checkbox'));
-            }
-
-            function updateSnackbar() {
-                const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
-                selectedCount.textContent = `${checkedBoxes.length} selected`;
-                snackbar.classList.toggle('show', checkedBoxes.length > 0);
-                bulkDeleteBtn.disabled = checkedBoxes.length === 0;
-            }
-
-            // master checkbox handler
-            if (selectAll) {
-                selectAll.addEventListener('change', function() {
-                    getRowCheckboxes().forEach(cb => cb.checked = this.checked);
-                    updateSnackbar();
-                });
-            }
-
-            // listen perubahan pada checkbox (event delegation)
-            document.addEventListener('change', function(e) {
-                if (e.target && e.target.classList && e.target.classList.contains('row-checkbox')) {
-                    // if any manual uncheck, uncheck master
-                    if (!e.target.checked && selectAll) selectAll.checked = false;
-
-                    // if all are checked, set master checked
-                    const all = getRowCheckboxes();
-                    if (selectAll && all.length > 0) {
-                        selectAll.checked = all.every(cb => cb.checked);
-                    }
-
-                    updateSnackbar();
-                }
-            });
-
-            // on submit: build hidden inputs ids[] then submit
-            bulkDeleteForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
-                if (checkedBoxes.length === 0) {
-                    alert('No documents selected.');
-                    return;
-                }
-
-                if (!confirm(
-                        `Are you sure you want to delete ${checkedBoxes.length} selected document(s)?`)) {
-                    return;
-                }
-
-                // clear previous inputs
-                bulkIdsContainer.innerHTML = '';
-
-                // create hidden inputs ids[]
-                checkedBoxes.forEach(cb => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'ids[]';
-                    input.value = cb.value;
-                    bulkIdsContainer.appendChild(input);
-                });
-
-                // submit native
-                bulkDeleteForm.submit();
-            });
-
-            // init
-            updateSnackbar();
         });
 
         // in form message
