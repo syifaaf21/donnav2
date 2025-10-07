@@ -1,14 +1,13 @@
 @if (auth()->user()->role->name == 'Admin')
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form action="{{ route('document-review.store') }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ route('master.document-review.store') }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
                 <div class="modal-content border-0 rounded-4 shadow-lg">
                     {{-- Modal Header --}}
                     <div class="modal-header bg-light text-dark rounded-top-4">
                         <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;"
-
                             id="addDocumentModalLabel">
                             <i class="bi bi-plus-circle me-2"></i> Add Document Review
                         </h5>
@@ -84,31 +83,26 @@
                                     placeholder="Add any relevant notes here">
                             </div>
 
-                            {{-- File --}}
-                            <div class="row g-2 mt-2" id="file-fields">
-                                <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
-                                    <input type="file" class="form-control" name="files[]" required>
-                                    <button type="button"
-                                        class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
 
-                            </div>
 
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-file">
-                                <i class="bi bi-plus-square"></i>
-                            </button>
-                            <small class="text-muted">Format yang diizinkan: PDF, DOCX</small>
-                            {{-- <div class="col-12">
-                                <label class="form-label fw-medium">Upload File <span
-                                        class="text-danger">*</span></label>
-                                <input type="file" name="file" class="form-control border-1 shadow-sm" required>
-                                <small class="text-muted">Allowed Format: PDF & DOCX</small>
-                                <div class="invalid-feedback">
-                                    Document Number is required.
-                                </div>
+                        </div>
+                        {{-- File --}}
+                        <div class="row g-2 mt-2" id="file-fields">
+                            <div class="col-12 d-flex align-items-center mb-2 file-input-group">
+                                <input type="file" name="files[]" class="form-control border-1 shadow-sm" required>
+                                <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
+                        </div>
+
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-file">
+                            <i class="bi bi-plus-square"></i>
+                        </button>
+
+                        <small class="text-muted">Allowed Format: PDF & DOCX</small>
+                        <div class="invalid-feedback">
+                            Document Fi is required.
                         </div>
                     </div>
 

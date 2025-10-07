@@ -19,11 +19,16 @@
     <td>{{ $mapping->document_number }}</td>
     <td>{{ $mapping->partNumber->part_number ?? '-' }}</td>
     <td>
-        @if ($mapping->file_path)
-            <button type="button" class="btn btn-outline-primary btn-sm view-file-btn" data-bs-toggle="modal"
-                data-bs-target="#viewFileModal" data-file="{{ asset('storage/' . $mapping->file_path) }}">
-                <i class="bi bi-file-earmark-text me-1"></i> View
-            </button>
+        @if ($mapping->files->count())
+            @foreach ($mapping->files as $file)
+                <button type="button" class="btn btn-sm btn-outline-primary mb-1 view-file-btn" data-bs-toggle="modal"
+                    data-bs-target="#viewFileModal" data-file="{{ asset('storage/' . $file->file_path) }}">
+                    <i class="bi bi-file-earmark-text me-1"></i>
+                    View {{ $loop->iteration }}
+                </button>
+            @endforeach
+        @else
+            -
         @endif
     </td>
     <td>{{ $mapping->department->name ?? '-' }}</td>
@@ -51,7 +56,7 @@
     <td>{{ $mapping->notes }}</td>
     <td>{{ $mapping->user->name ?? '-' }}</td>
     <td class="text-nowrap">
-        @include('contents.document-review.partials.action-buttons', ['mapping' => $mapping])
+        @include('contents.master.document-review.partials.action-buttons', ['mapping' => $mapping])
     </td>
 </tr>
 
@@ -62,11 +67,11 @@
             <div class="collapse" id="childRow{{ $loopIndex }}">
                 <table class="table table-sm mb-0">
                     <thead>
-                        @include('contents.document-review.partials.table-header')
+                        @include('contents.master.document-review.partials.table-header')
                     </thead>
                     <tbody>
                         @foreach ($children as $index => $child)
-                            @include('contents.document-review.partials.nested-row-recursive', [
+                            @include('contents.master.document-review.partials.nested-row-recursive', [
                                 'mapping' => $child,
                                 'documents' => $documents,
                                 'loopIndex' => $loopIndex . '-' . $loop->iteration,

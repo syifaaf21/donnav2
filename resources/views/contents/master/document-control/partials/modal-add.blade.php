@@ -10,7 +10,7 @@
             </div>
             <div class="modal-body">
                 <!-- Paste form Anda di sini -->
-                <form action="{{ route('document-control.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('master.document-control.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-4">

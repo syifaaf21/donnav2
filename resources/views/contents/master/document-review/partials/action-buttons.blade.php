@@ -7,7 +7,7 @@
 
 
     {{-- Delete --}}
-    <form action="{{ route('document-review.destroy', $mapping->id) }}" method="POST" class="d-inline delete-form">
+    <form action="{{ route('master.document-review.destroy', $mapping->id) }}" method="POST" class="d-inline delete-form">
         @csrf
         @method('DELETE')
         <button type="submit" class="btn btn-outline-danger btn-sm" data-bs-title="Delete Document">
@@ -32,7 +32,7 @@
         </button>
 
         {{-- Tombol Reject tetap form --}}
-        <form action="{{ route('document-review.reject', $mapping->id) }}" method="POST" class="d-inline reject-form">
+        <form action="{{ route('master.document-review.reject', $mapping->id) }}" method="POST" class="d-inline reject-form">
             @csrf
             <button type="submit" class="btn btn-outline-danger btn-sm" data-bs-title="Reject Document">
                 <i class="bi bi-x-circle"></i>

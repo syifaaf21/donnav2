@@ -173,7 +173,7 @@ body {
     overflow: hidden;
 }
 
-body>div.container {
+body>div .container{
     height: auto;
     overflow-y: auto;
 }

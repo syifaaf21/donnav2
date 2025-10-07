@@ -58,7 +58,7 @@
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
 
-                                            <form action="{{ route('part_numbers.destroy', $part->id) }}" method="POST"
+                                            <form action="{{ route('master.part_numbers.destroy', $part->id) }}" method="POST"
                                                 class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
@@ -88,7 +88,7 @@
             <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
                 aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
                 <div class="modal-dialog">
-                    <form action="{{ route('part_numbers.update', $part->id) }}" method="POST">
+                    <form action="{{ route('master.part_numbers.update', $part->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="_form" value="edit">
@@ -198,7 +198,7 @@
         <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
-                <form action="{{ route('part_numbers.store') }}" method="POST">
+                <form action="{{ route('master.part_numbers.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="_form" value="add">
 

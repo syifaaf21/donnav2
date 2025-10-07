@@ -78,7 +78,7 @@ class DocumentMappingController extends Controller
             // pakai page_plant supaya paginator tiap tab independen
         }
 
-        return view('contents.document-review.index', compact(
+        return view('contents.master.document-review.index', compact(
             'groupedByPlant',
             'documentsMaster',
             'partNumbers',
@@ -177,57 +177,59 @@ class DocumentMappingController extends Controller
 
     // ================= Revisi Review (User) =================
     public function revise(Request $request, DocumentMapping $mapping)
-{
-    if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
-        abort(403);
-    }
-
-    // Validasi
-    $request->validate([
-        'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
-        'notes'   => 'required|string|max:500',
-    ]);
-
-    // Tentukan folder berdasarkan tipe dokumen
-    $mapping->load('document');
-    $folder = $mapping->document && $mapping->document->type === 'control'
-        ? 'document-controls'
-        : 'document-reviews';
-
-    $files = $request->file('files', []);
-    foreach ($files as $fileId => $uploadedFile) {
-        if (!$uploadedFile) continue;
-
-        $oldFile = $mapping->files()->where('id', $fileId)->first();
-        if (!$oldFile) continue;
-
-        // Hapus file lama
-        if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
-            Storage::disk('public')->delete($oldFile->file_path);
+    {
+        if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
+            abort(403);
         }
 
-        // Upload baru
-        $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
-        $newPath  = $uploadedFile->storeAs($folder, $filename, 'public');
-
-        // Update ke DB
-        $oldFile->update([
-            'file_path'     => $newPath,
-            'original_name' => $uploadedFile->getClientOriginalName(),
-            'file_type'     => $uploadedFile->getClientMimeType(),
-            'uploaded_by'   => Auth::id(),
+        // Validasi
+        $request->validate([
+            'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
+            'notes' => 'required|string|max:500',
         ]);
+
+        // Tentukan folder berdasarkan tipe dokumen
+        $mapping->load('document');
+        $folder = $mapping->document && $mapping->document->type === 'control'
+            ? 'document-controls'
+            : 'document-reviews';
+
+        $files = $request->file('files', []);
+        foreach ($files as $fileId => $uploadedFile) {
+            if (!$uploadedFile)
+                continue;
+
+            $oldFile = $mapping->files()->where('id', $fileId)->first();
+            if (!$oldFile)
+                continue;
+
+            // Hapus file lama
+            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
+                Storage::disk('public')->delete($oldFile->file_path);
+            }
+
+            // Upload baru
+            $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
+            $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+            // Update ke DB
+            $oldFile->update([
+                'file_path' => $newPath,
+                'original_name' => $uploadedFile->getClientOriginalName(),
+                'file_type' => $uploadedFile->getClientMimeType(),
+                'uploaded_by' => Auth::id(),
+            ]);
+        }
+
+        // Update mapping
+        $mapping->update([
+            'notes' => $request->notes,
+            'status_id' => Status::where('name', 'Need Review')->first()->id,
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Document revised successfully!');
     }
-
-    // Update mapping
-    $mapping->update([
-        'notes'     => $request->notes,
-        'status_id' => Status::where('name', 'Need Review')->first()->id,
-        'user_id'   => Auth::id(),
-    ]);
-
-    return redirect()->back()->with('success', 'Document revised successfully!');
-}
 
 
     // ================= Delete Review (Admin) =================
@@ -236,12 +238,22 @@ class DocumentMappingController extends Controller
         if (Auth::user()->role->name != 'Admin')
             abort(403);
 
-        if ($mapping->file_path) {
+        // Hapus semua file yang berelasi
+        foreach ($mapping->files as $file) {
+            if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+            $file->delete(); // Hapus record dari tabel document_files
+        }
+
+        // Hapus file utama (jika ada)
+        if ($mapping->file_path && Storage::disk('public')->exists($mapping->file_path)) {
             Storage::disk('public')->delete($mapping->file_path);
         }
 
         $mapping->delete();
-        return redirect()->back()->with('success', 'Document deleted successfully!');
+
+        return redirect()->back()->with('success', 'Document and associated files deleted successfully!');
     }
 
     // ================= Approve / Reject Review (Admin) =================
@@ -319,7 +331,7 @@ class DocumentMappingController extends Controller
         $departments = Department::all();
         $files = DocumentFile::all();
 
-        return view('contents.document-control.index', compact(
+        return view('contents.master.document-control.index', compact(
             'documentMappings',
             'documents',
             'statuses',
@@ -376,7 +388,7 @@ class DocumentMappingController extends Controller
             }
         }
 
-        return redirect()->route('document-control.index')
+        return redirect()->route('master.document-control.index')
             ->with('success', 'Document Control berhasil ditambahkan!');
     }
 
@@ -399,7 +411,7 @@ class DocumentMappingController extends Controller
 
         $mapping->update($validated);
 
-        return redirect()->route('document-control.index')->with('success', 'Document Control berhasil diupdate!');
+        return redirect()->route('master.document-control.index')->with('success', 'Document Control berhasil diupdate!');
     }
 
     // Approve Document Control
@@ -419,7 +431,7 @@ class DocumentMappingController extends Controller
             'user_id' => Auth::id(),
         ]);
 
-        return redirect()->route('document-control.index')->with('success', 'Document Control approved and status set to active!');
+        return redirect()->route('master.document-control.index')->with('success', 'Document Control approved and status set to active!');
     }
 
     public function bulkDestroy(Request $request)
@@ -442,7 +454,7 @@ class DocumentMappingController extends Controller
         // hapus records
         DocumentMapping::whereIn('id', $ids)->delete();
 
-        return redirect()->route('document-control.index')
+        return redirect()->route('master.document-control.index')
             ->with('success', count($ids) . ' document(s) deleted successfully.');
     }
 }
