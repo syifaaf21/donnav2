@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\DB;
 class DocumentMappingController extends Controller
 {
     // ================= Document Review Index =================
-    // ================= Document Review Index =================
 public function reviewIndex(Request $request)
 {
     $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
@@ -222,17 +221,27 @@ public function storeReview(Request $request)
 
     // ================= Delete Review (Admin) =================
     public function destroy(DocumentMapping $mapping)
-    {
-        if (Auth::user()->role->name != 'Admin')
-            abort(403);
+{
+    if (Auth::user()->role->name != 'Admin')
+        abort(403);
 
-        if ($mapping->file_path) {
-            Storage::disk('public')->delete($mapping->file_path);
+    // Hapus semua file yang berelasi
+    foreach ($mapping->files as $file) {
+        if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+            Storage::disk('public')->delete($file->file_path);
         }
-
-        $mapping->delete();
-        return redirect()->back()->with('success', 'Document deleted successfully!');
+        $file->delete(); // Hapus record dari tabel document_files
     }
+
+    // Hapus file utama (jika ada)
+    if ($mapping->file_path && Storage::disk('public')->exists($mapping->file_path)) {
+        Storage::disk('public')->delete($mapping->file_path);
+    }
+
+    $mapping->delete();
+
+    return redirect()->back()->with('success', 'Document and associated files deleted successfully!');
+}
 
     // ================= Approve / Reject Review (Admin) =================
     public function approveWithDates(Request $request, DocumentMapping $mapping)

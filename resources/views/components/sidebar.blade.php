@@ -56,7 +56,7 @@
                     <ul class="nav flex-column sidebar-submenu">
                         <li class="nav-item">
                             <a class="nav-link {{ Route::is('users.*') ? 'active bg-light rounded' : '' }}"
-                                href="{{ route('users.index') }}">
+                                href="{{ route('master.users.index') }}">
                                 <div class="nav-link-icon" style="color: cornflowerblue;">
                                     <i class="bi bi-person"></i>
                                 </div>
@@ -66,7 +66,7 @@
 
                         <li class="nav-item">
                             <a class="nav-link {{ Route::is('part_numbers.*') ? 'active bg-light rounded' : '' }}"
-                                href="{{ route('part_numbers.index') }}">
+                                href="{{ route('master.part_numbers.index') }}">
                                 <div class="nav-link-icon text-success">
                                     <i class="bi bi-box-seam"></i>
                                 </div>
@@ -75,8 +75,8 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ Route::is('documents.*') ? 'active bg-light rounded' : '' }}"
-                                href="{{ route('documents.index') }}">
+                            <a class="nav-link {{ Route::is('hierarchy.*') ? 'active bg-light rounded' : '' }}"
+                                href="{{ route('master.hierarchy.index') }}">
                                 <div class="nav-link-icon text-warning">
                                     <i class="bi bi-diagram-3"></i>
                                 </div>
@@ -101,7 +101,7 @@
                                 <ul class="nav flex-column sidebar-submenu">
                                     <li class="nav-item">
                                         <a class="nav-link {{ Route::is('document-control.*') ? 'active bg-light rounded' : '' }}"
-                                            href="{{ route('document-control.index') }}">
+                                            href="{{ route('master.document-control.index') }}">
                                             <div class="nav-link-icon text-info">
                                                 <i class="bi bi-gear"></i>
                                             </div>
@@ -110,7 +110,7 @@
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link {{ Route::is('document-review.*') ? 'active bg-light rounded' : '' }}"
-                                            href="{{ route('document-review.index') }}">
+                                            href="{{ route('master.document-review.index') }}">
                                             <div class="nav-link-icon text-secondary">
                                                 <i class="bi bi-search me-1"></i>
                                             </div>

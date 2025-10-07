@@ -55,8 +55,11 @@
 
                     <div class="table-wrapper">
                         <div class="card-body p-0">
-                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                                <table class="table modern-table align-middle text-center table-hover mb-0">
+                            <div class="table-responsive" style="max-height: 500px; overflow: auto;">
+                                <table class="table table-sm modern-table align-middle table-hover mb-0"
+                                    style="min-width: 1400px; white-space: nowrap;">
+
+
                                     @include('contents.master.document-review.partials.table-header')
 
                                     @php
@@ -128,65 +131,65 @@
 @endsection
 
 <!-- Modal Filter -->
-        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <form method="GET" id="filterForm">
-                    <div class="modal-content border-0 rounded-4 shadow-lg">
-                        <div class="modal-header bg-light text-dark rounded-top-4">
-                            <h5 class="modal-title fw-semibold" id="filterModalLabel">
-                                <i class="bi bi-funnel me-2 text-primary"></i> Filter Documents
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="GET" id="filterForm">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-light text-dark rounded-top-4">
+                    <h5 class="modal-title fw-semibold" id="filterModalLabel">
+                        <i class="bi bi-funnel me-2 text-primary"></i> Filter Documents
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
 
-                        <div class="modal-body px-4 py-3">
-                            {{-- Status --}}
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Status</label>
-                                <select name="status" class="form-select">
-                                    <option value="">All Status</option>
-                                    <option value="Approved" {{ request('status') == 'Approved' ? 'selected' : '' }}>
-                                        Approved</option>
-                                    <option value="Need Review" {{ request('status') == 'Need Review' ? 'selected' : '' }}>
-                                        Need Review</option>
-                                    <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>
-                                        Rejected</option>
-                                </select>
-                            </div>
-
-                            {{-- Department --}}
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Department</label>
-                                <select name="department" class="form-select">
-                                    <option value="">All Departments</option>
-                                    @foreach ($departments as $dept)
-                                        <option value="{{ $dept->id }}"
-                                            {{ request('department') == $dept->id ? 'selected' : '' }}>
-                                            {{ $dept->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Deadline --}}
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Deadline</label>
-                                <input type="date" name="deadline" class="form-control"
-                                    value="{{ request('deadline') }}">
-                            </div>
-                        </div>
-                        <div class="modal-footer border-0 justify-content-between bg-light rounded-bottom-4">
-                            <button type="button" id="clearFilters" class="btn btn-outline-danger">
-                                <i class="bi bi-x-circle"></i> Clear
-                            </button>
-                            <button type="submit" class="btn btn-outline-primary">
-                                <i class="bi bi-funnel"></i> Apply Filter
-                            </button>
-                        </div>
+                <div class="modal-body px-4 py-3">
+                    {{-- Status --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="Approved" {{ request('status') == 'Approved' ? 'selected' : '' }}>
+                                Approved</option>
+                            <option value="Need Review" {{ request('status') == 'Need Review' ? 'selected' : '' }}>
+                                Need Review</option>
+                            <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>
+                                Rejected</option>
+                        </select>
                     </div>
-                </form>
+
+                    {{-- Department --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Department</label>
+                        <select name="department" class="form-select">
+                            <option value="">All Departments</option>
+                            @foreach ($departments as $dept)
+                                <option value="{{ $dept->id }}"
+                                    {{ request('department') == $dept->id ? 'selected' : '' }}>
+                                    {{ $dept->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Deadline --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Deadline</label>
+                        <input type="date" name="deadline" class="form-control"
+                            value="{{ request('deadline') }}">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-between bg-light rounded-bottom-4">
+                    <button type="button" id="clearFilters" class="btn btn-outline-danger">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </button>
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-funnel"></i> Apply Filter
+                    </button>
+                </div>
             </div>
-        </div>
+        </form>
+    </div>
+</div>
 @push('scripts')
     <x-sweetalert-confirm />
 

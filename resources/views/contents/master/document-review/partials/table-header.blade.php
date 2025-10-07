@@ -1,7 +1,7 @@
 <thead class="table-light">
     <tr>
         <th></th>
-        <th>#</th>
+        <th>No.</th>
         <th>Document Name</th>
         <th>Document Number</th>
         <th>Part Number</th>

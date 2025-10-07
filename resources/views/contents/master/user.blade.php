@@ -59,7 +59,7 @@
                                             </button>
 
                                             @if ($user->role_id !== 1)
-                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST"
+                                                <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
                                                     class="d-inline delete-form">
                                                     @csrf
                                                     @method('DELETE')
@@ -93,7 +93,7 @@
         <div class="modal fade" id="editUserModal-{{ $user->id }}" tabindex="-1"
             aria-labelledby="editUserModalLabel-{{ $user->id }}" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
-                <form action="{{ route('users.update', $user->id) }}" method="POST">
+                <form action="{{ route('master.users.update', $user->id) }}" method="POST">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="_form" value="edit">
@@ -222,7 +222,7 @@
     <!-- Add User Modal -->
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form action="{{ route('users.store') }}" method="POST">
+            <form action="{{ route('master.users.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="_form" value="add">
 

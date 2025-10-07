@@ -56,7 +56,7 @@ class UserController extends Controller
             'role_id' => $request->role_id,
             'department_id' => $request->department_id,
         ]);
-        return redirect()->route('users.index')->with('success', 'User successfully added.');
+        return redirect()->route('master.users.index')->with('success', 'User successfully added.');
     }
 
     public function edit(User $user)
@@ -95,12 +95,12 @@ class UserController extends Controller
         }
 
         $user->update($data);
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+        return redirect()->route('master.users.index')->with('success', 'User updated successfully.');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+        return redirect()->route('master.users.index')->with('success', 'User deleted successfully.');
     }
 }

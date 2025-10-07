@@ -1,7 +1,7 @@
 @if (auth()->user()->role->name == 'Admin')
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form action="{{ route('document-review.store') }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ route('master.document-review.store') }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
                 <div class="modal-content border-0 rounded-4 shadow-lg">
@@ -102,7 +102,7 @@
 
                         <small class="text-muted">Allowed Format: PDF & DOCX</small>
                         <div class="invalid-feedback">
-                            Document Fi is required.
+                            Document File is required.
                         </div>
                     </div>
 

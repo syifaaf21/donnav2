@@ -2,7 +2,7 @@
 <div class="modal fade" id="editModal{{ $mapping->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $mapping->id }}"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <form action="{{ route('document-control.update', $mapping->id) }}" method="POST" class="needs-validation"
+        <form action="{{ route('master.document-control.update', $mapping->id) }}" method="POST" class="needs-validation"
             novalidate>
             @csrf
             @method('PUT')

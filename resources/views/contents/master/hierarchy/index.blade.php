@@ -49,7 +49,7 @@
                                         <td>{{ $document->name }}</td>
                                         <td>{{ ucfirst($document->type) ?? '-' }}</td>
                                         <td>
-                                            <a href="{{ route('documents.show', $document->id) }}"
+                                            <a href="{{ route('master.hierarchy.show', $document->id) }}"
                                                 class="btn btn-sm btn-outline-info me-1"
                                                 data-bs-title="View Child Document">
                                                 <i class="bi bi-diagram-3"></i>
@@ -62,7 +62,7 @@
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
 
-                                            <form action="{{ route('documents.destroy', $document->id) }}" method="POST"
+                                            <form action="{{ route('master.hierarchy.destroy', $document->id) }}" method="POST"
                                                 class="delete-form d-inline">
                                                 @csrf
                                                 @method('DELETE')
@@ -94,7 +94,7 @@
             <div class="modal fade" id="editDocumentModal-{{ $document->id }}" tabindex="-1"
                 aria-labelledby="editDocumentModalLabel-{{ $document->id }}" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
-                    <form action="{{ route('documents.update', $document->id) }}" method="POST">
+                    <form action="{{ route('master.hierarchy.update', $document->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="modal-content shadow-lg border-0 rounded-4">
@@ -154,7 +154,7 @@
         <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <form action="{{ route('documents.store') }}" method="POST">
+                <form action="{{ route('master.hierarchy.store') }}" method="POST">
                     @csrf
                     <div class="modal-content border-0 rounded-4 shadow-lg">
                         <div class="modal-header bg-light text-dark rounded-top-4">

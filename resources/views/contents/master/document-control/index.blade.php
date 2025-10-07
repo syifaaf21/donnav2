@@ -147,7 +147,7 @@
                                                     @if ($mapping->status->name == 'Need Review')
                                                         {{-- Approve --}}
                                                         <form
-                                                            action="{{ route('document-control.approve', $mapping->id) }}"
+                                                            action="{{ route('master.document-control.approve', $mapping->id) }}"
                                                             method="POST" class="d-inline">
                                                             @csrf
                                                             <button type="submit" class="btn btn-outline-success btn-sm"
@@ -157,7 +157,7 @@
                                                         </form>
 
                                                         {{-- Reject --}}
-                                                        <form action="{{ route('document-control.reject', $mapping->id) }}"
+                                                        <form action="{{ route('master.document-control.reject', $mapping->id) }}"
                                                             method="POST" class="d-inline reject-form">
                                                             @csrf
                                                             <button type="submit" class="btn btn-outline-danger btn-sm"
@@ -190,7 +190,7 @@
                                                     @endif
 
                                                     {{-- Delete --}}
-                                                    <form action="{{ route('document-control.destroy', $mapping->id) }}"
+                                                    <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
                                                         method="POST" class="d-inline delete-form">
                                                         @csrf
                                                         @method('DELETE')
@@ -224,7 +224,7 @@
             <span id="selectedCount">0 selected</span>
         </div>
 
-        <form id="bulkDeleteForm" action="{{ route('bulkDestroy') }}" method="POST" class="mb-0">
+        <form id="bulkDeleteForm" action="{{ route('master.bulkDestroy') }}" method="POST" class="mb-0">
             @csrf
             {{-- container untuk input hidden ids[] yang akan dibuat oleh JS --}}
             <div id="bulkIdsContainer"></div>

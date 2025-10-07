@@ -10,7 +10,7 @@
             </div>
 
             <form
-                action="{{ route('document-review.approveWithDates', $mapping->id) }}"
+                action="{{ route('master.document-review.approveWithDates', $mapping->id) }}"
                 method="POST"
                 onsubmit="return validateDates{{ $mapping->id }}(event)">
                 @csrf

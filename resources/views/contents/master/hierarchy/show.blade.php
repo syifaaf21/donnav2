@@ -48,7 +48,7 @@
                                 <td>{{ $child->name }}</td>
                                 <td>{{ ucfirst($child->type) ?? '-' }}</td>
                                 <td>
-                                    <a href="{{ route('documents.show', $child->id) }}"
+                                    <a href="{{ route('master.hierarchy.show', $child->id) }}"
                                         class="btn btn-sm btn-outline-info me-1" title="View Children"
                                         data-bs-title="View Child Document">
                                         <i class="bi bi-diagram-3"></i>
@@ -60,7 +60,7 @@
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
 
-                                    <form action="{{ route('documents.destroy', $child->id) }}" method="POST"
+                                    <form action="{{ route('master.hierarchy.destroy', $child->id) }}" method="POST"
                                         class="d-inline delete-form">
                                         @csrf
                                         @method('DELETE')
@@ -84,7 +84,7 @@
             <div class="card-body pt-2 pb-3">
                 <div class="d-flex justify-content-between align-items-center flex-wrap">
                     <!-- Document List Button -->
-                    <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
+                    <a href="{{ route('master.hierarchy.index') }}" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
                         <i class="bi bi-arrow-left-circle me-1"></i> Documents List
                     </a>
 
@@ -103,7 +103,7 @@
         <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
             aria-hidden="true">
             <div class="modal-dialog  modal-lg">
-                <form action="{{ route('documents.store') }}" method="POST">
+                <form action="{{ route('master.hierarchy.store') }}" method="POST">
                     @csrf
                     <div class="modal-content shadow-lg border-0 rounded-4">
 
@@ -169,7 +169,7 @@
             <div class="modal fade" id="editDocumentModal-{{ $child->id }}" tabindex="-1"
                 aria-labelledby="editDocumentModalLabel-{{ $child->id }}" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
-                    <form action="{{ route('documents.update', $child->id) }}" method="POST">
+                    <form action="{{ route('master.hierarchy.update', $child->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="modal-content shadow-lg border-0 rounded-4">

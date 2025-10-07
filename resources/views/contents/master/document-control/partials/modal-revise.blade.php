@@ -2,7 +2,7 @@
 <div class="modal fade" id="reviseModal{{ $mapping->id }}" tabindex="-1"
     aria-labelledby="reviseModalLabel{{ $mapping->id }}" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form action="{{ route('document-control.revise', $mapping->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('master.document-control.revise', $mapping->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="modal-content border-0 rounded-4 shadow-lg">
                 {{-- Header --}}
