@@ -1,5 +1,5 @@
 <!-- Navbar -->
-<header class="flex items-center justify-between px-4 py-3">
+<header class="flex items-center justify-between px-16 py-3">
     <div class="flex items-center gap-3">
         <button id="openSidebarBtn" class="md:hidden">
             <i data-feather="menu"></i>
@@ -36,21 +36,20 @@
 </header>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const dropdownBtn = document.getElementById('profileDropdownBtn');
-    const dropdownMenu = document.getElementById('profileDropdownMenu');
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdownBtn = document.getElementById('profileDropdownBtn');
+        const dropdownMenu = document.getElementById('profileDropdownMenu');
 
-    dropdownBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdownMenu.classList.toggle('hidden');
-    });
+        dropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('hidden');
+        });
 
-    // Klik di luar dropdown → otomatis tutup
-    document.addEventListener('click', (e) => {
-        if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
-            dropdownMenu.classList.add('hidden');
-        }
+        // Klik di luar dropdown → otomatis tutup
+        document.addEventListener('click', (e) => {
+            if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
     });
-});
 </script>
-
