@@ -13,7 +13,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            {{-- <div class="col-md-3">
                 <div class="card border-0 shadow">
                     <div class="card-body text-center">
                         <h6 class="fw-bold mb-2">Need Review</h6>
@@ -22,7 +22,7 @@
                         </span>
                     </div>
                 </div>
-            </div>
+            </div> --}}
             <div class="col-md-3">
                 <div class="card border-0 shadow">
                     <div class="card-body text-center">
@@ -48,13 +48,31 @@
         <div class="row mt-4">
             <div class="col-md-12">
                 <div class="card shadow-sm border-0 rounded-3">
-                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold">📄 Document Control List</h5>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                            data-bs-target="#addDocumentControlModal">
-                            <i class="bi bi-plus-lg"></i> Add Document
-                        </button>
-                        @include('contents.master.document-control.partials.modal-add')
+                    <div class="card-header bg-white border-0 d-flex justify-content-end">
+                        <div class="d-flex flex-column align-items-end gap-2">
+                            <!-- Add Document Button -->
+                            <div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#addDocumentControlModal">
+                                    <i class="bi bi-plus-lg"></i> Add Document
+                                </button>
+                                @include('contents.master.document-control.partials.modal-add')
+                            </div>
+
+                            <!-- Search Bar -->
+                            <form method="GET" id="filterForm" class="input-group mt-2 mt-md-0"
+                                style="width: 400px; max-width: 100%;">
+                                <input type="text" name="search" class="form-control form-control-sm"
+                                    placeholder="Search Document" value="{{ request('search') }}">
+                                <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch"
+                                    title="Clear Search">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     <div class="card-body p-0">
@@ -100,7 +118,8 @@
                                                     <div class="btn-group dropup">
                                                         <button type="button"
                                                             class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                                                            data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                                            data-bs-toggle="dropdown" data-bs-display="static"
+                                                            aria-expanded="false">
                                                             <i class="bi bi-paperclip"></i> Files
                                                         </button>
                                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -392,6 +411,12 @@
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
+        });
+
+        document.getElementById('clearSearch').addEventListener('click', function() {
+            const input = document.querySelector('input[name="search"]');
+            input.value = '';
+            document.getElementById('filterForm').submit();
         });
     </script>
 @endpush

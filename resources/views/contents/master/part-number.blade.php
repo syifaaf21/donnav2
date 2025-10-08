@@ -2,31 +2,31 @@
 
 @section('content')
     <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
-                <div class="input-group" style="width: 600px; max-width: 100%;">
-                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
-                        placeholder="Search by Part Number, Product, Model, or Process" value="{{ request('search') }}">
-
-                    <button class="btn btn-outline-secondary btn-sm" type="submit">
-                        <i class="bi bi-search me-1"></i> Search
-                    </button>
-
-                    @if (true)
-                        <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch">
-                            Clear
-                        </button>
-                    @endif
-                </div>
-            </form>
-            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3"
-                data-bs-toggle="modal" data-bs-target="#createPartNumberModal" data-bs-title="Add New Part Number">
+        <div class="d-flex justify-content-end mb-3">
+            {{-- Tombol Add Part Number --}}
+            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal"
+                data-bs-target="#createPartNumberModal" data-bs-title="Add New Part Number">
                 <i class="bi bi-plus-circle me-1"></i> Add Part Number
             </button>
         </div>
 
         <div class="card shadow-sm border-0">
             <div class="card-body">
+                <div class="d-flex justify-content-end mb-3">
+                    <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
+                        <div class="input-group" style="max-width: 600px;">
+                            <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
+                                placeholder="Search Part Number" value="{{ request('search') }}">
+                            <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
+                                <i class="bi bi-search"></i>
+                            </button>
+
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
                 <div class="table-wrapper mb-3">
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table modern-table table-hover align-middle">
@@ -58,8 +58,8 @@
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
 
-                                            <form action="{{ route('master.part_numbers.destroy', $part->id) }}" method="POST"
-                                                class="d-inline delete-form">
+                                            <form action="{{ route('master.part_numbers.destroy', $part->id) }}"
+                                                method="POST" class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger"

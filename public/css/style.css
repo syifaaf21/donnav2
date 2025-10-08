@@ -31,11 +31,19 @@
     --text-color: #333;
     --text-light: #ffffff;
     --button-color: #0e54de;
-    --button-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+    --button-bg: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.12),
+        rgba(255, 255, 255, 0.05)
+    );
     --footer-bg: #f8f8f8;
     --navbar-bg: #ffffff;
     --card-bg: #ffffff;
-    --card-header-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    --card-header-bg: linear-gradient(
+        135deg,
+        var(--primary-color) 0%,
+        var(--secondary-color) 100%
+    );
     --border-color: #dee2e6;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -116,7 +124,6 @@
 
 /* Responsive: Hide "Created At" column on small screens */
 @media (max-width: 768px) {
-
     .modern-table thead th:nth-child(5),
     .modern-table tbody td:nth-child(5) {
         display: none;
@@ -152,8 +159,6 @@
     border-radius: 6px;
 }
 
-
-
 /* 8. Alert Styles */
 .alert {
     font-size: 0.9rem;
@@ -163,7 +168,7 @@
 
 /* 9. Global Body & Container Styles */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     background-color: var(--background-color);
 }
 
@@ -175,7 +180,7 @@ body {
     overflow: hidden;
 }
 
-body>div .container{
+body > div .container {
     height: auto;
     overflow-y: auto;
 }
@@ -211,17 +216,17 @@ body>div .container{
 
 /* 11. Button & Link Styles */
 .btn-primary {
-    background-color: #4F46E5;
+    background-color: #4f46e5;
     border: none;
 }
 
 .btn-primary:hover {
-    background-color: #4338CA;
+    background-color: #4338ca;
 }
 
 a {
     text-decoration: none;
-    color: #4F46E5;
+    color: #4f46e5;
 }
 
 a:hover {
@@ -306,7 +311,8 @@ a:hover {
     border-left: 2px solid #dee2e6;
 }
 
-.nested-table td, .nested-table th {
+.nested-table td,
+.nested-table th {
     background-color: #f9f9f9; /* abu2 muda biar beda */
 }
 
@@ -333,7 +339,6 @@ a:hover {
     display: none !important; /* supaya saat tidak aktif disembunyikan */
 }
 
-
 .previewContainer {
     flex: 1 1 auto;
     overflow: auto;
@@ -347,8 +352,6 @@ a:hover {
     height: 100%;
     border: none;
 }
-
-
 
 /* Optional: Gradient background for main content
 #mainContent {

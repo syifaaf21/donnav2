@@ -1,17 +1,31 @@
 @php
-    $children = $documents->filter(function ($doc) use ($mapping) {
-        return $doc->document->parent_id === $mapping->document->id
-            && $doc->part_number_id == $mapping->part_number_id;
+    $doc = $mapping->document;
+    $docId = $doc->id ?? 'unknown';
+    $partKey = $mapping->part_number_id;
+    $parentDocId = $doc->parent_id; // parent document id (nullable)
+
+    // Apakah ini baris anak (depth > 0)
+    $isChild = ($depth ?? 0) > 0;
+
+    // Jika anak, tambahkan class yang menunjuk ke parent + part key (unique per part)
+    $rowClass = $isChild ? 'child-row children-of-' . ($parentDocId ?? 'root') . '-' . $partKey . ' d-none' : '';
+@endphp
+
+@php
+    // cari anak langsung (document parent_id == $docId) dan untuk part_number yang sama
+    $children = $documents->filter(function ($d) use ($docId, $partKey) {
+        return optional($d->document)->parent_id === $docId && $d->part_number_id == $partKey;
     });
 @endphp
 
-<!-- Parent Row -->
-<tr x-data="{ open: false }" class="border-b hover:bg-gray-50">
+<tr class="{{ $rowClass }} align-middle">
     <!-- Expand Button -->
     <td class="px-2 py-2">
         @if ($children->count() > 0)
-            <button @click="open = !open" class="text-gray-500 hover:text-blue-500 transition">
-                <i :class="open ? 'bi bi-dash-square' : 'bi bi-plus-square'"></i>
+            {{-- data-target harus unik: children-of-{docId}-{partKey} --}}
+            <button type="button" class="btn btn-sm btn-link toggle-children"
+                data-target="children-of-{{ $docId }}-{{ $partKey }}">
+                <i class="bi bi-plus-square"></i>
             </button>
         @else
             <span class="ms-4"></span>
@@ -26,26 +40,23 @@
     </td>
 
     <!-- Other Columns -->
-    <td class="px-3 py-2">{{ $mapping->document->name }}</td>
-    <td class="px-3 py-2">{{ $mapping->document_number }}</td>
-    <td class="px-3 py-2">{{ $mapping->partNumber->part_number ?? '-' }}</td>
-    <td class="px-3 py-2">{{ $mapping->department->name ?? '-' }}</td>
+    <td class="px-3 py-2">{{ $doc->name ?? '-' }}</td>
+    <td class="px-3 py-2">{{ $mapping->document_number ?? '-' }}</td>
+    <td class="px-3 py-2">{{ optional($mapping->partNumber)->part_number ?? '-' }}</td>
+    <td class="px-3 py-2">{{ optional($mapping->department)->name ?? '-' }}</td>
     <td class="px-3 py-2 text-nowrap">
         @include('contents.master.document-review.partials.action-buttons', ['mapping' => $mapping])
     </td>
 </tr>
 
-<!-- Child Rows -->
+{{-- Render children (rekursif). Anak sudah diberi class d-none default, dan tombol parent akan toggle class tersebut --}}
 @if ($children->count())
     @foreach ($children as $index => $child)
-        <tr x-show="open" x-transition>
-            @include('contents.master.document-review.partials.nested-row-recursive', [
-                'mapping' => $child,
-                'documents' => $documents,
-                'loopIndex' => ($loopIndex ?? 'row') . '-' . $loop->iteration,
-                'depth' => ($depth ?? 0) + 1,
-                'numbering' => ($numbering ?? '') . '.' . $loop->iteration,
-            ])
-        </tr>
+        @include('contents.master.document-review.partials.nested-row-recursive', [
+            'mapping' => $child,
+            'documents' => $documents,
+            'depth' => ($depth ?? 0) + 1,
+            'numbering' => ($numbering ?? '') . '.' . ($loop->iteration ?? $index + 1),
+        ])
     @endforeach
 @endif
