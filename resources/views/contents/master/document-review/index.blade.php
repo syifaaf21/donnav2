@@ -197,11 +197,11 @@
 
     <script>
         // Autofill Department
-        const docSelect = document.getElementById('documentSelect');
-        const deptField = document.getElementById('departmentField');
-        docSelect?.addEventListener('change', function() {
-            deptField.value = this.options[this.selectedIndex].dataset.department || '';
-        });
+        // const docSelect = document.getElementById('documentSelect');
+        // const deptField = document.getElementById('departmentField');
+        // docSelect?.addEventListener('change', function() {
+        //     deptField.value = this.options[this.selectedIndex].dataset.department || '';
+        // });
 
         document.addEventListener('DOMContentLoaded', function() {
             const tabButtons = document.querySelectorAll('#plantTabs button');

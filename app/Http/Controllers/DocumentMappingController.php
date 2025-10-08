@@ -46,12 +46,11 @@ class DocumentMappingController extends Controller
 
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
-                        ->orWhere('document_number', 'like', "%{$search}%")
-                        ->orWhereHas('partNumber', fn($q3) => $q3->where('part_number', 'like', "%{$search}%"));
+                $query->whereHas('partNumber', function ($q) use ($search) {
+                    $q->where('part_number', 'like', "%{$search}%");
                 });
             }
+
 
             if ($status = request('status')) {
                 $query->whereHas(

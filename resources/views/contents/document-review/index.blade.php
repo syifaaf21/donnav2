@@ -32,13 +32,13 @@
 
                                 <div class="collapse mt-2" id="collapse-{{ Str::slug($plant . '-' . $partNumber) }}">
                                     <ul class="list-group list-group-flush">
-                                        @foreach ($docs->whereNull('document.parent_id') as $parent)
+                                        {{-- @foreach ($docs->whereNull('document.parent_id') as $parent)
                                             @include('contents.document-review.partials.tree-node', [
                                                 'mapping' => $parent,
                                                 'allDocuments' => $docs,
                                                 'level' => 1,
                                             ])
-                                        @endforeach
+                                        @endforeach --}}
                                     </ul>
                                 </div>
                             </div>
@@ -80,8 +80,8 @@
                                     </button>
 
                                 </div>
-                                @include('contents.document-review.partials.modal-revise')
-                                @include('contents.document-review.partials.modal-approve')
+                                {{-- @include('contents.document-review.partials.modal-revise')
+                                @include('contents.document-review.partials.modal-approve') --}}
                             </div>
 
                             {{-- Detail Info --}}

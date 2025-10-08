@@ -3,8 +3,13 @@
 
 @section('content')
     <div class="container">
-        <div x-data="{ activeTab: '{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}' }" class="w-full">
-
+        <div x-data="{
+            activeTab: localStorage.getItem('activeTab') || '{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}',
+            setActiveTab(tab) {
+                this.activeTab = tab;
+                localStorage.setItem('activeTab', tab);
+            }
+        }">
             {{-- 🔹 Header: Breadcrumbs + Add Button --}}
             <div class="flex items-center justify-between mb-4">
                 {{-- Breadcrumbs --}}
@@ -78,11 +83,11 @@
                     </div>
 
                     {{-- Deadline --}}
-                    <div class="col-md-2">
+                    {{-- <div class="col-md-2">
                         <label class="form-label fw-semibold">Deadline</label>
                         <input type="date" name="deadline" class="form-control form-control-sm"
                             value="{{ request('deadline') }}">
-                    </div>
+                    </div> --}}
 
                     {{-- Buttons --}}
                     <div class="col-md-1 d-flex gap-2">
@@ -105,7 +110,7 @@
                     <div class="flex flex-wrap">
                         @foreach ($groupedByPlant as $plant => $documents)
                             @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                            <button type="button" @click="activeTab = '{{ $slug }}'"
+                            <button type="button" @click="setActiveTab('{{ $slug }}')"
                                 :class="activeTab === '{{ $slug }}'
                                     ?
                                     'bg-gray-100 text-gray-800 border-gray-100' :
@@ -119,8 +124,8 @@
 
                     {{-- Search Bar --}}
                     <div class="input-group mt-2 mt-md-0" style="width: 400px; max-width: 100%;">
-                        <input type="text" name="search" class="form-control form-control-sm"
-                            placeholder="Search by Document Name, Number, or Part Number" value="{{ request('search') }}">
+                        <input type="text" name="search" form="filterForm" class="form-control form-control-sm"
+                            placeholder="Search by Part Number" value="{{ request('search') }}">
                         <button class="btn btn-outline-secondary btn-sm" type="submit" form="filterForm" title="Search">
                             <i class="bi bi-search"></i>
                         </button>
@@ -139,63 +144,157 @@
                                 <table class="min-w-full text-sm text-left text-gray-700">
                                     @include('contents.master.document-review.partials.table-header')
 
-                                    @php
-                                        $parents = $documents->filter(
-                                            fn($doc) => $doc->document && is_null($doc->document->parent_id),
-                                        );
-                                    @endphp
+                                    <tbody>
+                                        @php
+                                            $parents = $documents->filter(
+                                                fn($doc) => $doc->document && is_null($doc->document->parent_id),
+                                            );
+                                        @endphp
 
-                                    @if ($parents->isEmpty())
-                                        <tr>
-                                            <td colspan="14" class="text-center py-8 text-gray-400">
-                                                <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-1"></i>
-                                                No Document found for this tab.
-                                            </td>
-                                        </tr>
-                                    @else
-                                        @foreach ($parents as $index => $parent)
-                                            @include(
-                                                'contents.master.document-review.partials.nested-row-recursive',
-                                                [
-                                                    'mapping' => $parent,
-                                                    'documents' => $documents,
-                                                    'loopIndex' => 'parent-' . $index,
-                                                    'rowNumber' => $loop->iteration,
-                                                    'depth' => 0,
-                                                    'numbering' => $loop->iteration . '',
-                                                ]
-                                            )
-                                        @endforeach
-                                    @endif
+                                        @if ($parents->isEmpty())
+                                            <tr>
+                                                <td colspan="14" class="text-center py-8 text-gray-400">
+                                                    <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-1"></i>
+                                                    No Document found for this tab.
+                                                </td>
+                                            </tr>
+                                        @else
+                                            @foreach ($parents as $index => $parent)
+                                                @include(
+                                                    'contents.master.document-review.partials.nested-row-recursive',
+                                                    [
+                                                        'mapping' => $parent,
+                                                        'documents' => $documents,
+                                                        'loopIndex' => 'parent-' . $index,
+                                                        'rowNumber' => $loop->iteration,
+                                                        'depth' => 0,
+                                                        'numbering' => $loop->iteration . '',
+                                                    ]
+                                                )
+                                            @endforeach
+                                        @endif
+                                    </tbody>
                                 </table>
+
+                                @foreach ($documents as $doc)
+                                    @include('contents.master.document-review.partials.modal-edit', [
+                                        'mapping' => $doc,
+                                    ])
+                                @endforeach
                             </div>
                         </div>
                     @endforeach
                 </div>
             </div>
+        </div>
+        <!-- 📄 Modal Fullscreen View File -->
+        <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content border-0 rounded-0 shadow-none">
+                    <div class="modal-header bg-light border-bottom">
+                        <h5 class="modal-title fw-semibold">
+                            <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
 
+                    <div class="modal-body p-0">
+                        <iframe id="fileViewer" src="" width="100%" height="100%"
+                            style="border:none;"></iframe>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    @push('scripts')
-        <x-sweetalert-confirm />
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Clear Filters
-                document.getElementById('clearFilters')?.addEventListener('click', function() {
-                    const form = document.getElementById('filterForm');
-                    form.querySelectorAll('input, select').forEach(el => el.value = '');
-                    form.submit();
-                });
-
-                // Clear Search only
-                document.getElementById('clearSearch')?.addEventListener('click', function() {
-                    document.querySelector('input[name="search"]').value = '';
-                    document.getElementById('filterForm').submit();
-                });
-
-                feather.replace();
-            });
-        </script>
-    @endpush
 @endsection
+
+@push('scripts')
+    <x-sweetalert-confirm />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear Filters
+            document.getElementById('clearFilters')?.addEventListener('click', function() {
+                const form = document.getElementById('filterForm');
+                form.querySelectorAll('input, select').forEach(el => el.value = '');
+                form.submit();
+            });
+
+            // Clear Search only
+            document.getElementById('clearSearch')?.addEventListener('click', function() {
+                document.querySelector('input[name="search"]').value = '';
+                document.getElementById('filterForm').submit();
+            });
+
+            feather.replace();
+        });
+        // in form message
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil semua form yang butuh validasi
+            const forms = document.querySelectorAll('.needs-validation');
+
+            Array.from(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault(); // Stop form submit
+                        event.stopPropagation();
+                    }
+
+                    form.classList.add('was-validated'); // Tambahkan class validasi Bootstrap
+                }, false);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const plantSelect = document.getElementById('addPlantSelect');
+            const partNumberSelect = document.getElementById('addPartNumberSelect');
+
+            function filterPartNumbersByPlant(plantValue) {
+                const options = partNumberSelect.querySelectorAll('option');
+
+                options.forEach(option => {
+                    const dataPlant = option.dataset.plant;
+
+                    // Tampilkan semua jika belum pilih plant
+                    if (!plantValue || option.value === '') {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = (dataPlant === plantValue) ? '' : 'none';
+                    }
+                });
+
+                // Reset value jika tidak cocok
+                if (![...partNumberSelect.options].some(opt => opt.value === partNumberSelect.value && opt.style
+                        .display !== 'none')) {
+                    partNumberSelect.value = '';
+                }
+            }
+
+            // Saat plant berubah
+            plantSelect?.addEventListener('change', function() {
+                filterPartNumbersByPlant(this.value);
+            });
+
+            // Filter saat modal dibuka (jaga-jaga)
+            if (plantSelect?.value) {
+                filterPartNumbersByPlant(plantSelect.value);
+            }
+        });
+
+        //View File in tab
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('viewFileModal');
+            const iframe = document.getElementById('fileViewer');
+
+            document.querySelectorAll('.view-file-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fileUrl = this.dataset.file;
+                    iframe.src = fileUrl;
+                });
+            });
+
+            modal.addEventListener('hidden.bs.modal', () => {
+                iframe.src = '';
+            });
+        });
+    </script>
+@endpush
