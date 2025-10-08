@@ -72,14 +72,14 @@ class DocumentMappingController extends Controller
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
         }
 
-    return view('contents.master.document-review.index2', compact(
-        'groupedByPlant',
-        'documentsMaster',
-        'partNumbers',
-        'statuses',
-        'departments'
-    ));
-}
+        return view('contents.master.document-review.index2', compact(
+            'groupedByPlant',
+            'documentsMaster',
+            'partNumbers',
+            'statuses',
+            'departments'
+        ));
+    }
 
     // ================= Store Review (Admin) =================
     public function storeReview(Request $request)
@@ -189,45 +189,48 @@ class DocumentMappingController extends Controller
 
         $files = $request->file('files', []);
         foreach ($files as $fileId => $uploadedFile) {
-            if (!$uploadedFile) continue;
-        $files = $request->file('files', []);
-        foreach ($files as $fileId => $uploadedFile) {
             if (!$uploadedFile)
                 continue;
+            $files = $request->file('files', []);
+            foreach ($files as $fileId => $uploadedFile) {
+                if (!$uploadedFile)
+                    continue;
 
-            $oldFile = $mapping->files()->where('id', $fileId)->first();
-            if (!$oldFile) continue;
+                $oldFile = $mapping->files()->where('id', $fileId)->first();
+                if (!$oldFile)
+                    continue;
 
-            // Hapus file lama
-            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
-                Storage::disk('public')->delete($oldFile->file_path);
+                // Hapus file lama
+                if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
+                    Storage::disk('public')->delete($oldFile->file_path);
+                }
+                // Hapus file lama
+                if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
+                    Storage::disk('public')->delete($oldFile->file_path);
+                }
+
+                // Upload baru
+                $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
+                $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+                // Update ke DB
+                $oldFile->update([
+                    'file_path' => $newPath,
+                    'original_name' => $uploadedFile->getClientOriginalName(),
+                    'file_type' => $uploadedFile->getClientMimeType(),
+                    'uploaded_by' => Auth::id(),
+                ]);
             }
-            // Hapus file lama
-            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
-                Storage::disk('public')->delete($oldFile->file_path);
-            }
 
-            // Upload baru
-            $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
-            $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
-
-            // Update ke DB
-            $oldFile->update([
-                'file_path' => $newPath,
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'file_type' => $uploadedFile->getClientMimeType(),
-                'uploaded_by' => Auth::id(),
+            // Update mapping
+            $mapping->update([
+                'notes' => $request->notes,
+                'status_id' => Status::where('name', 'Need Review')->first()->id,
+                'user_id' => Auth::id(),
             ]);
+
+            return redirect()->back()->with('success', 'Document revised successfully!');
         }
-
-        // Update mapping
-        $mapping->update([
-            'notes' => $request->notes,
-            'status_id' => Status::where('name', 'Need Review')->first()->id,
-            'user_id' => Auth::id(),
-        ]);
-
-        return redirect()->back()->with('success', 'Document revised successfully!');
     }
 
 
@@ -280,8 +283,6 @@ class DocumentMappingController extends Controller
 
         return redirect()->back()->with('success', 'Document approved and dates set successfully!');
     }
-
-
 
     public function reject(DocumentMapping $mapping)
     {
@@ -390,7 +391,7 @@ class DocumentMappingController extends Controller
         }
 
         return redirect()->route('master.document-control.index')
-    ->with('success', 'Document Control berhasil ditambahkan!');
+            ->with('success', 'Document Control berhasil ditambahkan!');
     }
 
     // Update Document Control

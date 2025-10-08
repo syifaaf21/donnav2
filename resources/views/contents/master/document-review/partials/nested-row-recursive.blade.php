@@ -15,23 +15,6 @@
     <td class="px-3 py-2">{{ $mapping->document->name }}</td>
     <td class="px-3 py-2">{{ $mapping->document_number }}</td>
     <td class="px-3 py-2">{{ $mapping->partNumber->part_number ?? '-' }}</td>
-
-    {{-- File --}}
-    <td class="px-3 py-2">
-        @if ($mapping->files->count())
-            @foreach ($mapping->files as $file)
-                <button type="button"
-                    class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
-                    data-bs-toggle="modal" data-bs-target="#viewFileModal"
-                    data-file="{{ asset('storage/' . $file->file_path) }}">
-                    <i class="bi bi-file-earmark-text me-1"></i>
-                </button>
-            @endforeach
-        @else
-            <span class="text-gray-400">-</span>
-        @endif
-    </td>
-
     <td class="px-3 py-2">{{ $mapping->department->name ?? '-' }}</td>
     <td class="px-3 py-2">{{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') : '-' }}</td>
     <td class="px-3 py-2">{{ $mapping->deadline ? \Carbon\Carbon::parse($mapping->deadline)->format('Y-m-d') : '-' }}</td>

@@ -85,18 +85,6 @@
                                             <td>{{ $mapping->document->name ?? '-' }}</td>
                                             <td>{{ $mapping->document_number }}</td>
                                             <td>{{ $mapping->department->name ?? '-' }}</td>
-                                            {{-- <td>
-                                                <span
-                                                    class="badge
-                                                @if ($mapping->status->name == 'Active') bg-success
-                                                @elseif($mapping->status->name == 'Need Review') bg-warning text-dark
-                                                @elseif($mapping->status->name == 'Rejected') bg-danger
-                                                @else bg-secondary @endif">
-                                                    {{ $mapping->status->name ?? '-' }}
-                                                </span>
-                                            </td> --}}
-                                            {{-- <td>{{ $mapping->version }}</td>
-                                            <td>{{ $mapping->user->name ?? '-' }}</td> --}}
                                             <td>
                                                 @if ($mapping->obsolete_date)
                                                     {{ \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') }}
