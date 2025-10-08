@@ -18,43 +18,9 @@
     <td>{{ $mapping->document->name }}</td>
     <td>{{ $mapping->document_number }}</td>
     <td>{{ $mapping->partNumber->part_number ?? '-' }}</td>
-    <td>
-        @if ($mapping->files->count())
-            @foreach ($mapping->files as $file)
-                <button type="button" class="btn btn-sm btn-outline-primary mb-1 view-file-btn" data-bs-toggle="modal"
-                    data-bs-target="#viewFileModal" data-file="{{ asset('storage/' . $file->file_path) }}">
-                    <i class="bi bi-file-earmark-text me-1"></i>
-                    View {{ $loop->iteration }}
-                </button>
-            @endforeach
-        @else
-            -
-        @endif
-    </td>
     <td>{{ $mapping->department->name ?? '-' }}</td>
     <td>{{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') : '-' }}</td>
     <td>{{ $mapping->deadline ? \Carbon\Carbon::parse($mapping->deadline)->format('Y-m-d') : '-' }}</td>
-    <td>
-        @switch($mapping->status->name)
-            @case('Approved')
-                <span class="badge bg-success">Approved</span>
-            @break
-
-            @case('Rejected')
-                <span class="badge bg-danger">Rejected</span>
-            @break
-
-            @case('Need Review')
-                <span class="badge bg-warning text-dark">Need Review</span>
-            @break
-
-            @default
-                <span class="badge bg-secondary">{{ $mapping->status->name ?? '-' }}</span>
-        @endswitch
-    </td>
-    <td>{{ \Carbon\Carbon::parse($mapping->updated_at)->format('Y-m-d') }}</td>
-    <td>{{ $mapping->notes }}</td>
-    <td>{{ $mapping->user->name ?? '-' }}</td>
     <td class="text-nowrap">
         @include('contents.master.document-review.partials.action-buttons', ['mapping' => $mapping])
     </td>

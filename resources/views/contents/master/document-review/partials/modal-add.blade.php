@@ -89,7 +89,7 @@
                         {{-- File --}}
                         <div class="row g-2 mt-2" id="file-fields">
                             <div class="col-12 d-flex align-items-center mb-2 file-input-group">
-                                <input type="file" name="files[]" class="form-control border-1 shadow-sm" required>
+                                <input type="file" name="files[]" class="form-control border-1 shadow-sm" required accept=".pdf,.doc,.docx,.xls,.xlsx">
                                 <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -100,7 +100,7 @@
                             <i class="bi bi-plus-square"></i>
                         </button>
 
-                        <small class="text-muted">Allowed Format: PDF & DOCX</small>
+                        <small class="text-muted">Allowed Format: PDF, DOCX, EXCEL</small>
                         <div class="invalid-feedback">
                             Document File is required.
                         </div>

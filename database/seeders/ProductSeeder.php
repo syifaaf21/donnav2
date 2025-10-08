@@ -23,6 +23,7 @@ class ProductSeeder extends Seeder
             'Center Pillar Garnish',
             'Power Slide Door',
             'Outside Handle',
+            'OP',
             'Powerseat Motor Assembly',
             'ECU Board',
             'CAP',
