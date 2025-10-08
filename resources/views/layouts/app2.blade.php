@@ -25,10 +25,8 @@
     {{-- ✅ Google Fonts --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-
     @stack('styles')
 </head>
-
 
 <body class="bg-gray-100 text-gray-800">
 
@@ -40,42 +38,27 @@
             @include('layouts.partials.navbar')
 
             <!-- Content -->
-            <main class="flex-1 p-6">
+            <main class="flex-1 p-6 overflow-y-auto">
                 @yield('content')
             </main>
         </div>
     </div>
+
+    <!-- ✅ Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
     @stack('scripts')
 </body>
 
 </html>
 
+<!-- ✅ Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         feather.replace(); // biar ikon feather muncul
     });
-</script>
-
-<script>
-    feather.replace();
-
-    const sidebar = document.getElementById('sidebar');
-    const toggleSidebar = document.getElementById('toggleSidebar');
-    const sidebarTexts = document.querySelectorAll('.sidebar-text');
-
-    toggleSidebar.addEventListener('click', () => {
-        sidebar.classList.toggle('w-64');
-        sidebar.classList.toggle('w-20');
-        sidebarTexts.forEach(t => t.classList.toggle('hidden'));
-    });
-
-    function toggleDropdown(id) {
-        const dropdown = document.getElementById(id);
-        const icon = document.getElementById('icon-' + id);
-        dropdown.classList.toggle('hidden');
-        icon.classList.toggle('rotate-180');
-    }
 </script>
 

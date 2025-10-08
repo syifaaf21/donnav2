@@ -120,7 +120,7 @@
                     {{-- Search Bar --}}
                     <div class="input-group mt-2 mt-md-0" style="width: 400px; max-width: 100%;">
                         <input type="text" name="search" class="form-control form-control-sm"
-                            placeholder="Search by Document Name, Number, or Part Number" value="{{ request('search') }}">
+                            placeholder="Search by Part Number" value="{{ request('search') }}">
                         <button class="btn btn-outline-secondary btn-sm" type="submit" form="filterForm" title="Search">
                             <i class="bi bi-search"></i>
                         </button>
@@ -173,7 +173,24 @@
                     @endforeach
                 </div>
             </div>
+        </div>
+        <!-- 📄 Modal Fullscreen View File -->
+        <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content border-0 rounded-0 shadow-none">
+                    <div class="modal-header bg-light border-bottom">
+                        <h5 class="modal-title fw-semibold">
+                            <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
 
+                    <div class="modal-body p-0">
+                        <iframe id="fileViewer" src="" width="100%" height="100%"
+                            style="border:none;"></iframe>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

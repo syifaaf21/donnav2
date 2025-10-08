@@ -47,6 +47,9 @@ Route::post('/logout', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/index', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
+    Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
+
     Route::prefix('master')->name('master.')->middleware('auth')->group(function() {
         // Part Number Management Routes
             Route::resource('part_numbers', PartNumberController::class);
