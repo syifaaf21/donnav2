@@ -1,14 +1,15 @@
 {{-- ✅ Modal Revise Document --}}
-<div class="modal fade" id="reviseModal{{ $mapping->id }}" tabindex="-1"
-    aria-labelledby="reviseModalLabel{{ $mapping->id }}" aria-hidden="true">
+<div class="modal fade" id="reviseModal" tabindex="-1"
+    aria-labelledby="reviseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form action="{{ route('master.document-review.revise', $mapping->id) }}" method="POST" enctype="multipart/form-data">
+        <form method="POST" action="" enctype="multipart/form-data" id="reviseForm">
             @csrf
             <div class="modal-content border-0 rounded-4 shadow-lg">
                 {{-- Header --}}
                 <div class="modal-header bg-light text-dark rounded-top-4">
                     <h5 class="modal-title fw-semibold">
-                        <i class="bi bi-arrow-clockwise me-2"></i> Revisi Document: {{ $mapping->document->name }}
+                        <i class="bi bi-arrow-clockwise me-2"></i> Revisi Dokumen
+                        <span class="docNameDisplay"></span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -16,34 +17,18 @@
                 {{-- Body --}}
                 <div class="modal-body p-4" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
 
-                    @forelse ($mapping->files as $file)
-                        <div class="mb-4 border rounded p-3 bg-light">
-                            <label class="form-label fw-medium">Current File:</label>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
-                                    class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-file-earmark-text me-1"></i>
-                                    {{ basename($file->file_path) }}
-                                </a>
-                            </div>
+                    {{-- List Files (diisi via JS) --}}
+                    <div class="existing-files-container">
 
-                            {{-- Upload file revisi --}}
-                            <div class="mt-2">
-                                <label class="form-label">Upload Revised File</label>
-                                <input type="file" name="files[{{ $file->id }}]"
-                                    class="form-control border-1 shadow-sm">
-                            </div>
-                        </div>
-                    @empty
-                        <span class="text-muted">No file available</span>
-                    @endforelse
+                        <p class="text-muted">No files available for revision.</p>
+                    </div>
+
                     {{-- Notes revisi --}}
                     <div class="mt-2">
                         <label class="form-label">Notes</label>
                         <input type="text" name="notes" class="form-control border-1 shadow-sm"
-                            placeholder="Catatan revisi untuk file ini...">
+                            placeholder="Catatan revisi untuk file ini..." required>
                     </div>
-
                 </div>
 
                 {{-- Footer --}}

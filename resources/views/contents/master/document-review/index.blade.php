@@ -58,6 +58,8 @@
                             <div class="table-responsive" style="max-height: 500px; overflow: auto;">
                                 <table class="table table-sm modern-table align-middle table-hover mb-0"
                                     style="min-width: 1400px; white-space: nowrap;">
+
+
                                     @include('contents.master.document-review.partials.table-header')
 
                                     @php

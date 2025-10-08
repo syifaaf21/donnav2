@@ -4,8 +4,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentControlController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
-use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DocumentReviewController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PartNumberController;
 use App\Http\Controllers\UserController;
 use App\Models\Document;
@@ -49,8 +49,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('master')->name('master.')->middleware('auth')->group(function() {
         // Part Number Management Routes
-        Route::resource('part_numbers', PartNumberController::class);
-        Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
+            Route::resource('part_numbers', PartNumberController::class);
+            Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
 
         // User Management Routes
         Route::resource('users', UserController::class);

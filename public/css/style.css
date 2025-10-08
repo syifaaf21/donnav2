@@ -313,6 +313,40 @@ a:hover {
     border: none;
 }
 
+.col-md-2 {
+    overflow-y: auto;
+}
+
+.col-md-10 > div {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-pane.fade {
+    display: flex !important;
+}
+
+.tab-pane.fade:not(.show) {
+    display: none !important; /* supaya saat tidak aktif disembunyikan */
+}
+
+
+.previewContainer {
+    flex: 1 1 auto;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.previewContainer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+
 
 /* Optional: Gradient background for main content
 #mainContent {

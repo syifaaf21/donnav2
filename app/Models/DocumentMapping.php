@@ -25,7 +25,7 @@ class DocumentMapping extends Model
     protected $casts = [
     'reminder_date' => 'date',
     'deadline' => 'date',
-];
+    ];
 
 
 
@@ -62,7 +62,8 @@ class DocumentMapping extends Model
             });
     }
 
-    public function files() {
+    public function files()
+    {
         return $this->hasMany(DocumentFile::class);
     }
 }

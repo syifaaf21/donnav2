@@ -14,7 +14,7 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         $products = [
-            'Timming Chain Cover',
+            'Timing Chain Cover',
             'Engine Front Module',
             'Camshaft Housing',
             'Oil Pan',

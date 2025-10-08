@@ -102,7 +102,11 @@
 
                         <small class="text-muted">Allowed Format: PDF & DOCX</small>
                         <div class="invalid-feedback">
+<<<<<<< HEAD
                             Document Fi is required.
+=======
+                            Document File is required.
+>>>>>>> f3899fec09a8a4677370e9e4d17fc02c74b3f381
                         </div>
                     </div>
 
