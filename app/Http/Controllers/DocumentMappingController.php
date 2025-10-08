@@ -70,7 +70,7 @@ public function reviewIndex(Request $request)
         $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
     }
 
-    return view('contents.master.document-review.index', compact(
+    return view('contents.master.document-review.index2', compact(
         'groupedByPlant',
         'documentsMaster',
         'partNumbers',

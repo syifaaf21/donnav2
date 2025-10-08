@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -34,9 +36,8 @@
     <!-- jQuery (wajib untuk Select2) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
+    {{-- ✅ Include Tailwind via Vite --}}
+    @vite('resources/css/app.css')
 
     <!-- ✅ Tambahan style dari child view -->
     @stack('styles')
