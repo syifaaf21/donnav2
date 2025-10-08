@@ -268,7 +268,7 @@
                                     <select name="process"
                                         class="form-select rounded-3 @error('process') is-invalid @enderror" required>
                                         <option value="">-- Select Process --</option>
-                                        @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric'] as $process)
+                                        @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'mounting', 'assembling electric', 'inspection'] as $process)
                                             <option value="{{ $process }}"
                                                 {{ old('process') == $process ? 'selected' : '' }}>
                                                 {{ ucfirst($process) }}

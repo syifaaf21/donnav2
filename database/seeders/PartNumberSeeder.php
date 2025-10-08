@@ -16,7 +16,7 @@ class PartNumberSeeder extends Seeder
         $plantMapping = [
             'body' => ['injection', 'painting', 'assembling body'],
             'unit' => ['die casting', 'machining', 'assembling unit'],
-            'electric' => ['electric'],
+            'electric' => ['mounting', 'assembling electric', 'inspection'],
         ];
         $data = [
             'Timing Chain Cover' => [
@@ -55,6 +55,10 @@ class PartNumberSeeder extends Seeder
                 'models' => ['4L45W', 'YHA', '660A', '230B', '560B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
                 'processes' => ['injection', 'assembling body'],
             ],
+            'Antenna' => [
+                'models' => ['4WD 5F00', 'EF160 105E', 'EF160 123E', 'EF160 Z12E', 'GA35', 'T431', '4WD IMV', 'PBD', 'ANTENNA ASSY',],
+                'processes' => ['mounting', 'assembling electric', 'inspection'],
+            ]
         ];
 
         foreach ($data as $productName => $info) {

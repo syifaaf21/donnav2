@@ -16,59 +16,61 @@ use Illuminate\Support\Facades\DB;
 class DocumentMappingController extends Controller
 {
     // ================= Document Review Index =================
-public function reviewIndex(Request $request)
-{
-    $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
-    $partNumbers = PartNumber::all();
-    $statuses = Status::all();
-    $departments = Department::all();
+    public function reviewIndex(Request $request)
+    {
+        $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
+        $partNumbers = PartNumber::all();
+        $statuses = Status::all();
+        $departments = Department::all();
 
-    $plants = PartNumber::pluck('plant')->map(fn($p) => ucfirst(strtolower($p)))->unique();
+        $plants = PartNumber::pluck('plant')->map(fn($p) => ucfirst(strtolower($p)))->unique();
 
-    $groupedByPlant = [];
+        $groupedByPlant = [];
 
-    foreach ($plants as $plant) {
-        $query = DocumentMapping::with([
-            'document.parent',
-            'document.children',
-            'department',
-            'partNumber',
-            'status',
-            'user',
-            'files',
-        ])
-            ->whereHas('document', function ($q) {
-                $q->where('type', 'review');
-            })
-            ->whereHas('partNumber', function ($q) use ($plant) {
-                $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
-            });
+        foreach ($plants as $plant) {
+            $query = DocumentMapping::with([
+                'document.parent',
+                'document.children',
+                'department',
+                'partNumber',
+                'status',
+                'user',
+                'files',
+            ])
+                ->whereHas('document', function ($q) {
+                    $q->where('type', 'review');
+                })
+                ->whereHas('partNumber', function ($q) use ($plant) {
+                    $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
+                });
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
-                    ->orWhere('document_number', 'like', "%{$search}%")
-                    ->orWhereHas('partNumber', fn($q3) => $q3->where('part_number', 'like', "%{$search}%"));
-            });
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
+                        ->orWhere('document_number', 'like', "%{$search}%")
+                        ->orWhereHas('partNumber', fn($q3) => $q3->where('part_number', 'like', "%{$search}%"));
+                });
+            }
+
+            if ($status = request('status')) {
+                $query->whereHas(
+                    'status',
+                    fn($q) =>
+                    $q->whereRaw('LOWER(name) = ?', [strtolower($status)])
+                );
+            }
+
+            if ($department = request('department')) {
+                $query->where('department_id', $department);
+            }
+
+            if ($deadline = request('deadline')) {
+                $query->whereDate('deadline', $deadline);
+            }
+
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
         }
-
-        if ($status = request('status')) {
-            $query->whereHas('status', fn($q) =>
-                $q->whereRaw('LOWER(name) = ?', [strtolower($status)])
-            );
-        }
-
-        if ($department = request('department')) {
-            $query->where('department_id', $department);
-        }
-
-        if ($deadline = request('deadline')) {
-            $query->whereDate('deadline', $deadline);
-        }
-
-        $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
-    }
 
     return view('contents.master.document-review.index2', compact(
         'groupedByPlant',
@@ -79,57 +81,59 @@ public function reviewIndex(Request $request)
     ));
 }
 
-// ================= Store Review (Admin) =================
-public function storeReview(Request $request)
-{
-    if (Auth::user()->role->name != 'Admin') {
-        abort(403, 'Unauthorized action.');
-    }
-
-    $request->validate([
-        'document_id' => 'required|exists:documents,id',
-        'document_number' => 'required|string|max:255',
-        'part_number_id' => 'required|exists:part_numbers,id',
-        'files' => 'required',
-        'files.*' => 'file|mimes:pdf,docx',
-        'department_id' => 'required|exists:departments,id',
-        'notes' => 'nullable|string|max:500',
-    ]);
-
-    // Simpan DocumentMapping dulu
-    $mapping = DocumentMapping::create([
-        'document_id' => $request->document_id,
-        'document_number' => $request->document_number,
-        'part_number_id' => $request->part_number_id,
-        'department_id' => $request->department_id,
-        'reminder_date' => null,
-        'deadline' => null,
-        'obsolete_date' => null,
-        'status_id' => Status::where('name', 'Need Review')->first()->id,
-        'notes' => $request->notes ?? '',
-        'user_id' => Auth::id(),
-        'version' => 0,
-    ]);
-
-    // Simpan file seperti di storeControl
-    if ($request->hasFile('files')) {
-        foreach ($request->file('files') as $index => $file) {
-            $extension = $file->getClientOriginalExtension();
-            $filename = $request->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
-
-            $path = $file->storeAs('document-reviews', $filename, 'public');
-
-            $mapping->files()->create([
-                'file_path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'file_type' => $file->getClientMimeType(),
-                'uploaded_by' => Auth::id(),
-            ]);
+    // ================= Store Review (Admin) =================
+    public function storeReview(Request $request)
+    {
+        if (Auth::user()->role->name != 'Admin') {
+            abort(403, 'Unauthorized action.');
         }
-    }
 
-    return redirect()->back()->with('success', 'Document review created!');
-}
+        $request->validate([
+            'document_id' => 'required|exists:documents,id',
+            'document_number' => 'required|string|max:255',
+            'part_number_id' => 'required|exists:part_numbers,id',
+            'department_id' => 'required|exists:departments,id',
+            'notes' => 'nullable|string|max:500',
+            'files' => 'required',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+        ], [
+            'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
+        ]);
+
+        // Simpan DocumentMapping dulu
+        $mapping = DocumentMapping::create([
+            'document_id' => $request->document_id,
+            'document_number' => $request->document_number,
+            'part_number_id' => $request->part_number_id,
+            'department_id' => $request->department_id,
+            'reminder_date' => null,
+            'deadline' => null,
+            'obsolete_date' => null,
+            'status_id' => Status::where('name', 'Need Review')->first()->id,
+            'notes' => $request->notes ?? '',
+            'user_id' => Auth::id(),
+            'version' => 0,
+        ]);
+
+        // Simpan file seperti di storeControl
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $index => $file) {
+                $extension = $file->getClientOriginalExtension();
+                $filename = $request->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+
+                $path = $file->storeAs('document-reviews', $filename, 'public');
+
+                $mapping->files()->create([
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientMimeType(),
+                    'uploaded_by' => Auth::id(),
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Document review created!');
+    }
 
     // ================= Update Review (Admin) =================
     public function updateReview(Request $request, DocumentMapping $mapping)
@@ -185,13 +189,19 @@ public function storeReview(Request $request)
 
         $files = $request->file('files', []);
         foreach ($files as $fileId => $uploadedFile) {
+            if (!$uploadedFile) continue;
+        $files = $request->file('files', []);
+        foreach ($files as $fileId => $uploadedFile) {
             if (!$uploadedFile)
                 continue;
 
             $oldFile = $mapping->files()->where('id', $fileId)->first();
-            if (!$oldFile)
-                continue;
+            if (!$oldFile) continue;
 
+            // Hapus file lama
+            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
+                Storage::disk('public')->delete($oldFile->file_path);
+            }
             // Hapus file lama
             if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
                 Storage::disk('public')->delete($oldFile->file_path);
@@ -223,9 +233,9 @@ public function storeReview(Request $request)
 
     // ================= Delete Review (Admin) =================
     public function destroy(DocumentMapping $mapping)
-{
-    if (Auth::user()->role->name != 'Admin')
-        abort(403);
+    {
+        if (Auth::user()->role->name != 'Admin')
+            abort(403);
 
         // Hapus semua file yang berelasi
         foreach ($mapping->files as $file) {
@@ -336,10 +346,12 @@ public function storeReview(Request $request)
             'document_id' => 'required|exists:documents,id',
             'department' => 'required|exists:departments,id',
             'document_number' => 'required|string|max:100',
-            'files' => 'required',
-            'files.*' => 'file|mimes:pdf,docx',
             'obsolete_date' => 'nullable|date',
             'reminder_date' => 'nullable|date',
+            'files' => 'required',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+        ], [
+            'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
 
         $status = Status::where('name', 'Need Review')->first();
@@ -378,7 +390,7 @@ public function storeReview(Request $request)
         }
 
         return redirect()->route('master.document-control.index')
-            ->with('success', 'Document Control berhasil ditambahkan!');
+    ->with('success', 'Document Control berhasil ditambahkan!');
     }
 
     // Update Document Control

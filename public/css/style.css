@@ -97,11 +97,11 @@
     vertical-align: middle;
 }
 
-.modern-table tbody tr:hover {
+/* .modern-table tbody tr:hover {
     background-color: #f5f8ff;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     transform: scale(1.005);
-}
+} */
 
 .modern-table .btn-outline-info,
 .modern-table .btn-outline-warning,
@@ -151,6 +151,8 @@
     background-color: #aaa;
     border-radius: 6px;
 }
+
+
 
 /* 8. Alert Styles */
 .alert {

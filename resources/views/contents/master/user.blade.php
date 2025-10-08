@@ -2,24 +2,9 @@
 
 @section('content')
     <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <!-- 🔍 Search -->
-            <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
-                <div class="input-group" style="width: 600px; max-width: 100%;">
-                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
-                        placeholder="Search by Name or NPK" value="{{ request('search') }}">
-
-                    <button class="btn btn-outline-secondary btn-sm" type="submit">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-
-                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch">
-                        Clear
-                    </button>
-                </div>
-            </form>
-            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3"
-                data-bs-toggle="modal" data-bs-target="#addUserModal" data-bs-title="Add New User">
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal"
+                data-bs-target="#addUserModal" data-bs-title="Add New User">
                 <i class="bi bi-plus-circle"></i>
                 <span>Add User</span>
             </button>
@@ -28,6 +13,20 @@
 
         <div class="card shadow-sm border-0">
             <div class="card-body">
+                <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
+                    <div class="input-group" style="width: 600px; max-width: 100%;">
+                        <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
+                            placeholder="Search by Name or NPK" value="{{ request('search') }}">
+
+                        <button class="btn btn-outline-secondary btn-sm" type="submit">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch">
+                            Clear
+                        </button>
+                    </div>
+                </form>
                 <div class="table-wrapper mb-3">
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table modern-table table-hover align-middle">
@@ -250,24 +249,18 @@
                                 @enderror
                             </div>
 
-                        <!-- NPK -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">NPK</label>
-                            <input
-                                type="number"
-                                name="npk"
-                                class="form-control rounded-3 @error('npk') is-invalid @enderror"
-                                value="{{ old('npk') }}"
-                                pattern="\d{6}"
-                                maxlength="6"
-                                oninput="this.value = this.value.slice(0, 6);"
-                                title="NPK must be exactly 6 digits of number"
-                                inputmode="numeric"
-                                required>
-                            @error('npk')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <!-- NPK -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">NPK</label>
+                                <input type="number" name="npk"
+                                    class="form-control rounded-3 @error('npk') is-invalid @enderror"
+                                    value="{{ old('npk') }}" pattern="\d{6}" maxlength="6"
+                                    oninput="this.value = this.value.slice(0, 6);"
+                                    title="NPK must be exactly 6 digits of number" inputmode="numeric" required>
+                                @error('npk')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
                             <!-- Email -->
                             <div class="col-md-6">

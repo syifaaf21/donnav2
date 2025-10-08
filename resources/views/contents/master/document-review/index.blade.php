@@ -97,12 +97,12 @@
                                     @include('contents.master.document-review.partials.modal-edit', [
                                         'mapping' => $doc,
                                     ])
-                                    @include('contents.master.document-review.partials.modal-revise', [
+                                    {{-- @include('contents.master.document-review.partials.modal-revise', [
                                         'mapping' => $doc,
                                     ])
                                     @include('contents.master.document-review.partials.modal-approve', [
                                         'mapping' => $doc,
-                                    ])
+                                    ]) --}}
                                 @endforeach
                             </div>
                         </div>
@@ -128,6 +128,8 @@
             </div>
         </div>
     </div>
+
+
 @endsection
 
 <!-- Modal Filter -->
@@ -300,19 +302,30 @@
             const modal = document.getElementById('viewFileModal');
             const iframe = document.getElementById('fileViewer');
 
-            // Ketika tombol View diklik
             document.querySelectorAll('.view-file-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const fileUrl = this.dataset.file;
-                    iframe.src = fileUrl;
+                    const extension = fileUrl.split('.').pop().toLowerCase();
+
+                    // Cek format file
+                    if (extension === 'pdf') {
+                        iframe.src = fileUrl;
+                    } else if (['doc', 'docx', 'xls', 'xlsx'].includes(extension)) {
+                        iframe.src =
+                            `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+                    } else {
+                        iframe.src = '';
+                        alert('File format not supported for preview.');
+                    }
                 });
             });
 
-            // Reset iframe saat modal ditutup
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
         });
+
+
 
         // in form message
         document.addEventListener('DOMContentLoaded', function() {

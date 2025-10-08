@@ -65,18 +65,12 @@
                                         <th>
                                             <input type="checkbox" id="selectAll" class="form-check-input">
                                         </th>
-                                        <th>#</th>
-                                        <th>Document</th>
-                                        <th>Number</th>
+                                        <th>No.</th>
+                                        <th>Document Name</th>
+                                        <th>Document Number</th>
                                         <th>Department</th>
-                                        <th>Status</th>
-                                        <th>Version</th>
-                                        <th>Updated By</th>
-                                        <th>File</th>
                                         <th>Obsolete</th>
-                                        <th>Reminder</th>
-                                        <th>Notes</th>
-                                        <th>Created</th>
+                                        <th>Reminder Date</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -91,7 +85,7 @@
                                             <td>{{ $mapping->document->name ?? '-' }}</td>
                                             <td>{{ $mapping->document_number }}</td>
                                             <td>{{ $mapping->department->name ?? '-' }}</td>
-                                            <td>
+                                            {{-- <td>
                                                 <span
                                                     class="badge
                                                 @if ($mapping->status->name == 'Active') bg-success
@@ -100,24 +94,9 @@
                                                 @else bg-secondary @endif">
                                                     {{ $mapping->status->name ?? '-' }}
                                                 </span>
-                                            </td>
-                                            <td>{{ $mapping->version }}</td>
-                                            <td>{{ $mapping->user->name ?? '-' }}</td>
-                                            <td>
-                                                @if ($mapping->files->count())
-                                                    @foreach ($mapping->files as $file)
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-primary mb-1 view-file-btn"
-                                                            data-bs-toggle="modal" data-bs-target="#viewFileModal"
-                                                            data-file="{{ asset('storage/' . $file->file_path) }}">
-                                                            <i class="bi bi-file-earmark-text me-1"></i>
-                                                            View {{ $loop->iteration }}
-                                                        </button>
-                                                    @endforeach
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
+                                            </td> --}}
+                                            {{-- <td>{{ $mapping->version }}</td>
+                                            <td>{{ $mapping->user->name ?? '-' }}</td> --}}
                                             <td>
                                                 @if ($mapping->obsolete_date)
                                                     {{ \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') }}
@@ -128,9 +107,68 @@
                                             <td>
                                                 {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
                                             </td>
-                                            <td>{{ $mapping->notes ?? '-' }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($mapping->created_at)->format('d-m-Y') }}</td>
                                             <td class="text-nowrap">
+                                                @if ($mapping->files->count())
+                                                    <div class="btn-group dropup">
+                                                        <button type="button"
+                                                            class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                                            data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                                            <i class="bi bi-paperclip"></i> Files
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-end">
+                                                            @foreach ($mapping->files as $file)
+                                                                @php
+                                                                    $fileUrl = asset('storage/' . $file->file_path);
+                                                                    $extension = strtolower(
+                                                                        pathinfo($file->file_path, PATHINFO_EXTENSION),
+                                                                    );
+                                                                    $isPdf = $extension === 'pdf';
+                                                                    $isOffice = in_array($extension, [
+                                                                        'doc',
+                                                                        'docx',
+                                                                        'xls',
+                                                                        'xlsx',
+                                                                    ]);
+                                                                    $viewerUrl = $isPdf
+                                                                        ? $fileUrl
+                                                                        : 'https://docs.google.com/gview?url=' .
+                                                                            urlencode($fileUrl) .
+                                                                            '&embedded=true';
+                                                                @endphp
+
+                                                                <li class="px-3 small text-muted text-truncate">
+                                                                    {{ $file->file_name ?? basename($file->file_path) }}
+                                                                </li>
+                                                                <li>
+                                                                    @if ($isPdf || $isOffice)
+                                                                        <button type="button"
+                                                                            class="dropdown-item view-file-btn"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#viewFileModal"
+                                                                            data-file="{{ $viewerUrl }}">
+                                                                            <i class="bi bi-eye me-1"></i> View
+                                                                        </button>
+                                                                    @else
+                                                                        <span
+                                                                            class="dropdown-item text-muted disabled">Preview
+                                                                            Not Supported</span>
+                                                                    @endif
+                                                                </li>
+                                                                <li>
+                                                                    <a href="{{ $fileUrl }}" class="dropdown-item"
+                                                                        download>
+                                                                        <i class="bi bi-download me-1"></i> Download
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <hr class="dropdown-divider">
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">No File</span>
+                                                @endif
                                                 @if (auth()->user()->role->name == 'Admin')
                                                     {{-- Edit --}}
                                                     <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
@@ -140,16 +178,16 @@
                                                     </button>
 
                                                     {{-- Revisi --}}
-                                                    <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal"
+                                                    {{-- <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal"
                                                         data-bs-target="#reviseModal{{ $mapping->id }}"
                                                         data-bs-title="Revise Document">
                                                         <i class="bi bi-arrow-clockwise"></i>
-                                                    </button>
+                                                    </button> --}}
 
                                                     {{-- Status Specific Actions --}}
-                                                    @if ($mapping->status->name == 'Need Review')
-                                                        {{-- Approve --}}
-                                                        <form
+                                                    {{-- @if ($mapping->status->name == 'Need Review') --}}
+                                                    {{-- Approve --}}
+                                                    {{-- <form
                                                             action="{{ route('master.document-control.approve', $mapping->id) }}"
                                                             method="POST" class="d-inline approve-form">
                                                             @csrf
@@ -157,10 +195,10 @@
                                                                 data-bs-title="Approve Document">
                                                                 <i class="bi bi-check2-circle"></i>
                                                             </button>
-                                                        </form>
+                                                        </form> --}}
 
-                                                        {{-- Reject --}}
-                                                        <form
+                                                    {{-- Reject --}}
+                                                    {{-- <form
                                                             action="{{ route('master.document-control.reject', $mapping->id) }}"
                                                             method="POST" class="d-inline reject-form">
                                                             @csrf
@@ -191,7 +229,7 @@
                                                         <button class="btn btn-outline-secondary btn-sm" disabled>
                                                             <i class="bi bi-slash-circle"></i>
                                                         </button>
-                                                    @endif
+                                                    @endif --}}
 
                                                     {{-- Delete --}}
                                                     <form
@@ -208,7 +246,7 @@
                                             </td>
                                         </tr>
                                         @include('contents.master.document-control.partials.modal-edit')
-                                        @include('contents.master.document-control.partials.modal-revise')
+                                        {{-- @include('contents.master.document-control.partials.modal-revise') --}}
                                     @empty
                                         <tr>
                                             <td colspan="14" class="text-center text-muted">No Data</td>
@@ -239,6 +277,7 @@
             </button>
         </form>
     </div>
+
     <!-- 📄 Modal Fullscreen View File -->
     <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
@@ -340,34 +379,30 @@
             updateSnackbar();
         });
 
-        //View File in tab
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('viewFileModal');
             const iframe = document.getElementById('fileViewer');
 
-            // Ketika tombol View diklik
             document.querySelectorAll('.view-file-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const fileUrl = this.dataset.file;
-                    iframe.src = fileUrl;
+                    const extension = fileUrl.split('.').pop().toLowerCase();
+
+                    // Cek format file
+                    if (extension === 'pdf') {
+                        iframe.src = fileUrl;
+                    } else if (['doc', 'docx', 'xls', 'xlsx'].includes(extension)) {
+                        iframe.src =
+                            `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+                    } else {
+                        iframe.src = '';
+                        alert('File format not supported for preview.');
+                    }
                 });
             });
 
-            // Reset iframe saat modal ditutup
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
-            });
-        });
-
-        // tooltip
-        document.addEventListener('DOMContentLoaded', function() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-            tooltipTriggerList.map(function(el) {
-                return new bootstrap.Tooltip(el, {
-                    title: el.getAttribute('data-bs-title'),
-                    placement: 'top',
-                    trigger: 'hover'
-                });
             });
         });
     </script>
