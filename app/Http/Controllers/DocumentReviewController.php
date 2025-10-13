@@ -2,162 +2,114 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Document;
 use App\Models\DocumentMapping;
 use App\Models\PartNumber;
-use App\Models\Status;
+use App\Models\ProductModel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DocumentReviewController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $query = DocumentMapping::with([
-            'document.parent',
-            'document.children',
-            'department',
-            'status',
-            'user',
-            'partNumber.product',
+        $plants = $this->getEnumValues('part_numbers', 'plant');
+        $processes = $this->getEnumValues('part_numbers', 'process');
+
+        $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
+        $departments = Department::all();
+        $partNumbers = PartNumber::all();
+        $models = ProductModel::all();
+
+        // ✅ Ambil semua document mappings dengan relasi yang dibutuhkan
+        $documentMappings = DocumentMapping::with([
+            'document',
             'partNumber.productModel',
-            'files'
-        ])->whereHas('document', fn($q) => $q->where('type', 'review'));
+            'user',
+            'status'
+        ])
+            ->when($request->plant, fn($q) => $q->whereHas('partNumber', fn($q2) => $q2->where('plant', $request->plant)))
+            ->when($request->department, fn($q) => $q->where('department_id', $request->department))
+            ->when($request->document_id, fn($q) => $q->where('document_id', $request->document_id))
+            ->when($request->part_number, fn($q) => $q->where('part_number_id', $request->part_number))
+            ->when($request->model, function ($q) use ($request) {
+                $q->whereHas('partNumber.model', function ($q2) use ($request) {
+                    $q2->where('id', $request->model);
+                });
+            })
+            ->when($request->process, function ($q) use ($request) {
+                $q->whereHas('partNumber', function ($q2) use ($request) {
+                    $q2->where('process', $request->process);
+                });
+            })
 
-        $documentMappings = $query->get();
+            ->get();
 
-        // Grouping berdasarkan plant → part_number
-        $groupedByPlant = $documentMappings->groupBy([
-            fn($item) => $item->partNumber->plant ?? 'Unknown',
-            fn($item) => $item->partNumber->part_number ?? 'Unknown',
-        ]);
+        // ✅ Kelompokkan berdasarkan kombinasi unik Part Number + Model + Process
+        $groupedData = $documentMappings->groupBy(function ($item) {
+            $partNumber = $item->partNumber?->part_number ?? 'unknown';
+            $model = $item->partNumber?->productModel?->name ?? 'unknown';
+            $process = $item->document?->process ?? 'unknown';
+            return "{$partNumber}-{$model}-{$process}";
+        });
 
-        $masterDocuments = Document::all()->keyBy('id');
-
-        return view('contents.document-review.index', compact('groupedByPlant', 'masterDocuments'));
-    }
-    // public function approveOrReject(Request $request, DocumentMapping $mapping)
-    // {
-    //     $request->validate([
-    //         'notes' => 'nullable|string|max:500',
-    //         'action' => 'required|in:approve,reject',
-    //     ]);
-
-    //     $statusName = $request->action === 'approve' ? 'Approved' : 'Rejected';
-    //     $status = Status::where('name', $statusName)->first();
-
-    //     if (!$status) {
-    //         return back()->with('error', 'Status not found.');
-    //     }
-
-    //     $mapping->update([
-    //         'status_id' => $status->id,
-    //         'notes' => $request->notes,
-    //     ]);
-
-    //     return back()->with('success', 'Document has been ' . strtolower($statusName));
-    // }
-
-    public function approveWithDates(Request $request, DocumentMapping $mapping)
-    {
-        if (Auth::user()->role->name != 'Admin')
-            abort(403);
-
-        $request->validate([
-            'reminder_date' => 'required|date|before_or_equal:deadline',
-            'deadline' => 'required|date|after_or_equal:reminder_date',
-        ]);
-
-        $statusApproved = Status::where('name', 'approved')->first();
-        if (!$statusApproved) {
-            return redirect()->back()->with('error', 'Status "approved" not found!');
-        }
-
-        $mapping->update([
-            'status_id' => $statusApproved->id,
-            'reminder_date' => $request->reminder_date,
-            'deadline' => $request->deadline,
-            'user_id' => Auth::id(),
-        ]);
-
-        return redirect()->back()->with('success', 'Document approved and dates set successfully!');
+        return view('contents.document-review.index', compact(
+            'plants',
+            'processes',
+            'departments',
+            'partNumbers',
+            'models',
+            'documentsMaster',
+            'groupedData',
+        ));
     }
 
-    public function reject(DocumentMapping $mapping)
+    private function getEnumValues($table, $column)
     {
-        if (Auth::user()->role->name != 'Admin') {
-            abort(403);
-        }
+        $type = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = '{$column}'")[0]->Type;
+        preg_match('/enum\((.*)\)/', $type, $matches);
+        $enum = [];
 
-        $statusRejected = Status::where('name', 'rejected')->first();
-
-        if (!$statusRejected) {
-            return redirect()->back()->with('error', 'Status "rejected" not found!');
-        }
-
-        $mapping->update([
-            'status_id' => $statusRejected->id,
-            'user_id' => Auth::id(),
-        ]);
-
-        return redirect()->back()->with('success', 'Document rejected!');
-    }
-
-
-    public function revise(Request $request, DocumentMapping $mapping)
-    {
-        if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
-            abort(403);
-        }
-
-        // Validasi
-        $request->validate([
-            'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
-            'notes'   => 'required|string|max:500',
-        ]);
-
-        // Tentukan folder berdasarkan tipe dokumen
-        $mapping->load('document');
-        $folder = $mapping->document && $mapping->document->type === 'control'
-            ? 'document-controls'
-            : 'document-reviews';
-
-        $files = $request->file('files', []);
-        foreach ($files as $fileId => $uploadedFile) {
-            if (!$uploadedFile) continue;
-
-            $oldFile = $mapping->files()->where('id', $fileId)->first();
-            if (!$oldFile) continue;
-
-            // Hapus file lama
-            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
-                Storage::disk('public')->delete($oldFile->file_path);
+        if (!empty($matches)) {
+            foreach (explode(',', $matches[1]) as $value) {
+                $enum[] = trim($value, "'");
             }
-
-            // Upload baru
-            $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
-            $newPath  = $uploadedFile->storeAs($folder, $filename, 'public');
-
-            // Update ke DB
-            $oldFile->update([
-                'file_path'     => $newPath,
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'file_type'     => $uploadedFile->getClientMimeType(),
-                'uploaded_by'   => Auth::id(),
-            ]);
         }
 
-        // Update mapping
-        $mapping->update([
-            'notes'     => $request->notes,
-            'status_id' => Status::where('name', 'Need Review')->first()->id,
-            'user_id'   => Auth::id(),
-        ]);
-
-        return redirect()->back()->with('success', 'Document revised successfully!');
+        return $enum;
     }
+
+
+    public function getDataByPlant(Request $request)
+    {
+        $plant = $request->plant;
+
+        // Ambil part number berdasarkan plant
+        $partNumbers = PartNumber::where('plant', $plant)
+            ->orderBy('part_number')
+            ->get(['id', 'part_number']);
+
+        Log::info('Plant selected: ' . $plant);
+        // Ambil unique process dari part numbers dengan plant tsb
+        $processes = PartNumber::where('plant', $plant)
+            ->select('process')
+            ->distinct()
+            ->pluck('process');
+
+        return response()->json([
+            'part_numbers' => $partNumbers,
+            'processes' => $processes,
+        ]);
+    }
+
+    // Tambahkan di DocumentReviewController
+public function show($id)
+{
+    $document = Document::with('childrenRecursive')->findOrFail($id);
+
+    return view('contents.document-review.show', compact('document'));
+}
+
 }

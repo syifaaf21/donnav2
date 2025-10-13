@@ -32,8 +32,8 @@
             </div>
 
             {{-- 🔹 Inline Filter Form --}}
-            {{-- <form method="GET" id="filterForm" class="card p-3 border-0 shadow-sm mb-3">
-                <div class="row g-3 align-items-end"> --}}
+            <form method="GET" id="filterForm" class="card p-3 border-0 shadow-sm mb-3">
+                <div class="row g-3 align-items-end">
             {{-- Document Name --}}
             {{-- <div class="col-md-3">
                         <label class="form-label fw-semibold">Document Name</label>

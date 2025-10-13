@@ -50,10 +50,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
 
-    Route::prefix('master')->name('master.')->middleware('auth')->group(function() {
+    Route::prefix('master')->name('master.')->middleware('auth')->group(function () {
         // Part Number Management Routes
-            Route::resource('part_numbers', PartNumberController::class);
-            Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
+        Route::resource('part_numbers', PartNumberController::class);
+        Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
 
         // User Management Routes
         Route::resource('users', UserController::class);
@@ -86,7 +86,6 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
 
             Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
-
         });
 
         Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])
@@ -95,7 +94,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'Index'])->name('index');
-
+        Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])
+            ->name('getDataByPlant');
+        Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
         // Admin routes
         // Route::post('/store', [DocumentReviewController::class, 'storeReview'])->name('store');
         // Route::put('/update/{mapping}', [DocumentReviewController::class, 'updateReview'])->name('update');
@@ -119,6 +120,3 @@ Route::middleware(['auth'])->group(function () {
     //     ->name('bulkDestroy');
 
 });
-
-
-
