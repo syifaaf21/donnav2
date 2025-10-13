@@ -39,6 +39,20 @@
                 @include('contents.master.document-control.partials.modal-add')
             </div>
 
+            <!-- Search Bar -->
+            <div class="flex justify-end px-6 py-2 bg-white">
+                <form method="GET" id="filterForm" class="flex space-x-2 w-full max-w-md">
+                    <input type="text" name="search" class="form-control form-control-sm flex-1"
+                        placeholder="Search Document" value="{{ request('search') }}">
+                    <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear Search">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="min-w-full table-auto text-sm text-gray-700">
                     <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-semibold">
@@ -299,6 +313,12 @@
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
+        });
+
+        document.getElementById('clearSearch').addEventListener('click', function() {
+            const input = document.querySelector('input[name="search"]');
+            input.value = '';
+            document.getElementById('filterForm').submit();
         });
     </script>
 @endpush

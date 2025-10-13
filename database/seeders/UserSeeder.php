@@ -23,8 +23,8 @@ class UserSeeder extends Seeder
 
         User::create([
             'npk' => '111111',
-            'name' => 'Fina',
-            'email' => 'fina@example.com',
+            'name' => 'Admin',
+            'email' => 'admin@example.com',
             'password' => Hash::make('admin123'),
             'role_id' => $adminRole->id,
             'department_id' => $adminDept->id,
@@ -48,7 +48,7 @@ class UserSeeder extends Seeder
             ['npk' => '000014', 'name' => 'Amin', 'department_id' => 14],
             ['npk' => '000015', 'name' => 'Jaka', 'department_id' => 15],
             ['npk' => '000016', 'name' => 'Yanto', 'department_id' => 16],
-            ['npk' => '000017', 'name' => 'Iman', 'department_id' => 17],
+            ['npk' => '000017', 'name' => 'Fina', 'department_id' => 17],
             ['npk' => '000018', 'name' => 'Aji', 'department_id' => 18],
             ['npk' => '000019', 'name' => 'Fauzan', 'department_id' => 19],
             ['npk' => '000020', 'name' => 'Fauji', 'department_id' => 20],

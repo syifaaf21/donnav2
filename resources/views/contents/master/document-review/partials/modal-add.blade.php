@@ -44,6 +44,24 @@
                                 </div>
                             </div>
 
+                            {{-- Plant Dropdown --}}
+                            <div class="col-md-4">
+                                <label for="addPlantSelect" class="form-label fw-medium">Plant <span
+                                        class="text-danger">*</span></label>
+                                <select name="plant" id="addPlantSelect" class="form-select border-1 shadow-sm"
+                                    required>
+                                    <option value="">Select Plant</option>
+                                    <option value="body">Body</option>
+                                    <option value="unit">Unit</option>
+                                    <option value="electric">Electric</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Plant is required.
+                                </div>
+                            </div>
+
+
+
                             {{-- Part Number --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Part Number <span
@@ -83,13 +101,12 @@
                                     placeholder="Add any relevant notes here">
                             </div>
 
-
-
                         </div>
                         {{-- File --}}
                         <div class="row g-2 mt-2" id="file-fields">
                             <div class="col-12 d-flex align-items-center mb-2 file-input-group">
-                                <input type="file" name="files[]" class="form-control border-1 shadow-sm" required accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                <input type="file" name="files[]" class="form-control border-1 shadow-sm" required
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx">
                                 <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -102,11 +119,7 @@
 
                         <small class="text-muted">Allowed Format: PDF, DOCX, EXCEL</small>
                         <div class="invalid-feedback">
-<<<<<<< HEAD
-                            Document Fi is required.
-=======
                             Document File is required.
->>>>>>> f3899fec09a8a4677370e9e4d17fc02c74b3f381
                         </div>
                     </div>
 

@@ -3,8 +3,7 @@
 
 @section('content')
     <div class="container">
-        <div x-data="{ activeTab: '{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}' }" class="w-full">
-
+        <div x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
             {{-- 🔹 Header: Breadcrumbs + Add Button --}}
             <div class="flex items-center justify-between mb-4">
                 {{-- Breadcrumbs --}}
@@ -33,10 +32,10 @@
             </div>
 
             {{-- 🔹 Inline Filter Form --}}
-            <form method="GET" id="filterForm" class="card p-3 border-0 shadow-sm mb-3">
-                <div class="row g-3 align-items-end">
-                    {{-- Document Name --}}
-                    <div class="col-md-3">
+            {{-- <form method="GET" id="filterForm" class="card p-3 border-0 shadow-sm mb-3">
+                <div class="row g-3 align-items-end"> --}}
+            {{-- Document Name --}}
+            {{-- <div class="col-md-3">
                         <label class="form-label fw-semibold">Document Name</label>
                         <select name="document_id" class="form-select form-select-sm">
                             <option value="">All Documents</option>
@@ -47,10 +46,10 @@
                                 </option>
                             @endforeach
                         </select>
-                    </div>
+                    </div> --}}
 
-                    {{-- Status --}}
-                    <div class="col-md-3">
+            {{-- Status --}}
+            {{-- <div class="col-md-3">
                         <label class="form-label fw-semibold">Status</label>
                         <select name="status" class="form-select form-select-sm">
                             <option value="">All Status</option>
@@ -61,10 +60,10 @@
                             <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected
                             </option>
                         </select>
-                    </div>
+                    </div> --}}
 
-                    {{-- Department --}}
-                    <div class="col-md-3">
+            {{-- Department --}}
+            {{-- <div class="col-md-3">
                         <label class="form-label fw-semibold">Department</label>
                         <select name="department" class="form-select form-select-sm">
                             <option value="">All Departments</option>
@@ -75,17 +74,17 @@
                                 </option>
                             @endforeach
                         </select>
-                    </div>
+                    </div> --}}
 
-                    {{-- Deadline --}}
-                    <div class="col-md-2">
+            {{-- Deadline --}}
+            {{-- <div class="col-md-2">
                         <label class="form-label fw-semibold">Deadline</label>
                         <input type="date" name="deadline" class="form-control form-control-sm"
                             value="{{ request('deadline') }}">
-                    </div>
+                    </div> --}}
 
-                    {{-- Buttons --}}
-                    <div class="col-md-1 d-flex gap-2">
+            {{-- Buttons --}}
+            {{-- <div class="col-md-1 d-flex gap-2">
                         <button type="submit" class="btn btn-outline-primary btn-sm w-100" title="Apply Filters">
                             <i class="bi bi-funnel"></i>
                         </button>
@@ -95,7 +94,7 @@
                         </button>
                     </div>
                 </div>
-            </form>
+            </form> --}}
 
             {{-- 🔹 Tabs + Search + Table --}}
             <div class="card border-0 shadow-sm">
@@ -105,7 +104,7 @@
                     <div class="flex flex-wrap">
                         @foreach ($groupedByPlant as $plant => $documents)
                             @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                            <button type="button" @click="activeTab = '{{ $slug }}'"
+                            <button type="button" @click="setActiveTab('{{ $slug }}')"
                                 :class="activeTab === '{{ $slug }}'
                                     ?
                                     'bg-gray-100 text-gray-800 border-gray-100' :
@@ -119,7 +118,7 @@
 
                     {{-- Search Bar --}}
                     <div class="input-group mt-2 mt-md-0" style="width: 400px; max-width: 100%;">
-                        <input type="text" name="search" class="form-control form-control-sm"
+                        <input type="text" name="search" form="filterForm" class="form-control form-control-sm"
                             placeholder="Search by Part Number" value="{{ request('search') }}">
                         <button class="btn btn-outline-secondary btn-sm" type="submit" form="filterForm" title="Search">
                             <i class="bi bi-search"></i>
@@ -139,35 +138,43 @@
                                 <table class="min-w-full text-sm text-left text-gray-700">
                                     @include('contents.master.document-review.partials.table-header')
 
-                                    @php
-                                        $parents = $documents->filter(
-                                            fn($doc) => $doc->document && is_null($doc->document->parent_id),
-                                        );
-                                    @endphp
+                                    <tbody>
+                                        @php
+                                            $parents = $documents->filter(
+                                                fn($doc) => $doc->document && is_null($doc->document->parent_id),
+                                            );
+                                        @endphp
 
-                                    @if ($parents->isEmpty())
-                                        <tr>
-                                            <td colspan="14" class="text-center py-8 text-gray-400">
-                                                <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-1"></i>
-                                                No Document found for this tab.
-                                            </td>
-                                        </tr>
-                                    @else
-                                        @foreach ($parents as $index => $parent)
-                                            @include(
-                                                'contents.master.document-review.partials.nested-row-recursive',
-                                                [
-                                                    'mapping' => $parent,
-                                                    'documents' => $documents,
-                                                    'loopIndex' => 'parent-' . $index,
-                                                    'rowNumber' => $loop->iteration,
-                                                    'depth' => 0,
-                                                    'numbering' => $loop->iteration . '',
-                                                ]
-                                            )
-                                        @endforeach
-                                    @endif
+                                        @if ($parents->isEmpty())
+                                            <tr>
+                                                <td colspan="14" class="text-center py-8 text-gray-400">
+                                                    <i data-feather="folder" class="mx-auto w-6 h-6 mb-1"></i>
+                                                    No Document found for this tab.
+                                                </td>
+                                            </tr>
+                                        @else
+                                            @foreach ($parents as $index => $parent)
+                                                @include(
+                                                    'contents.master.document-review.partials.nested-row-recursive',
+                                                    [
+                                                        'mapping' => $parent,
+                                                        'documents' => $documents,
+                                                        'loopIndex' => 'parent-' . $index,
+                                                        'rowNumber' => $loop->iteration,
+                                                        'depth' => 0,
+                                                        'numbering' => $loop->iteration . '',
+                                                    ]
+                                                )
+                                            @endforeach
+                                        @endif
+                                    </tbody>
                                 </table>
+
+                                @foreach ($documents as $doc)
+                                    @include('contents.master.document-review.partials.modal-edit', [
+                                        'mapping' => $doc,
+                                    ])
+                                @endforeach
                             </div>
                         </div>
                     @endforeach
@@ -186,33 +193,187 @@
                     </div>
 
                     <div class="modal-body p-0">
-                        <iframe id="fileViewer" src="" width="100%" height="100%"
-                            style="border:none;"></iframe>
+                        <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    @push('scripts')
-        <x-sweetalert-confirm />
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Clear Filters
-                document.getElementById('clearFilters')?.addEventListener('click', function() {
-                    const form = document.getElementById('filterForm');
-                    form.querySelectorAll('input, select').forEach(el => el.value = '');
-                    form.submit();
-                });
-
-                // Clear Search only
-                document.getElementById('clearSearch')?.addEventListener('click', function() {
-                    document.querySelector('input[name="search"]').value = '';
-                    document.getElementById('filterForm').submit();
-                });
-
-                feather.replace();
-            });
-        </script>
-    @endpush
 @endsection
+
+@push('scripts')
+    <x-sweetalert-confirm />
+    <script>
+        function documentReviewTabs(defaultTab) {
+            return {
+                activeTab: localStorage.getItem('activeTab') || defaultTab,
+                setActiveTab(tab) {
+                    this.activeTab = tab;
+                    localStorage.setItem('activeTab', tab);
+                }
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear Filters
+            document.getElementById('clearFilters')?.addEventListener('click', function() {
+                const form = document.getElementById('filterForm');
+                form.querySelectorAll('input, select').forEach(el => el.value = '');
+                form.submit();
+            });
+
+            // Clear Search only
+            document.getElementById('clearSearch')?.addEventListener('click', function() {
+                document.querySelector('input[name="search"]').value = '';
+                document.getElementById('filterForm').submit();
+            });
+
+            feather.replace();
+        });
+        // in form message
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil semua form yang butuh validasi
+            const forms = document.querySelectorAll('.needs-validation');
+
+            Array.from(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault(); // Stop form submit
+                        event.stopPropagation();
+                    }
+
+                    form.classList.add('was-validated'); // Tambahkan class validasi Bootstrap
+                }, false);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const plantSelect = document.getElementById('addPlantSelect');
+            const partNumberSelect = document.getElementById('addPartNumberSelect');
+
+            function filterPartNumbersByPlant(plantValue) {
+                const options = partNumberSelect.querySelectorAll('option');
+
+                options.forEach(option => {
+                    const dataPlant = option.dataset.plant;
+
+                    // Tampilkan semua jika belum pilih plant
+                    if (!plantValue || option.value === '') {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = (dataPlant === plantValue) ? '' : 'none';
+                    }
+                });
+
+                // Reset value jika tidak cocok
+                if (![...partNumberSelect.options].some(opt => opt.value === partNumberSelect.value && opt.style
+                        .display !== 'none')) {
+                    partNumberSelect.value = '';
+                }
+            }
+
+            // Saat plant berubah
+            plantSelect?.addEventListener('change', function() {
+                filterPartNumbersByPlant(this.value);
+            });
+
+            // Filter saat modal dibuka (jaga-jaga)
+            if (plantSelect?.value) {
+                filterPartNumbersByPlant(plantSelect.value);
+            }
+        });
+
+        //View File in tab
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('viewFileModal');
+            const iframe = document.getElementById('fileViewer');
+
+            // Gunakan event delegation
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('.view-file-btn');
+                if (btn) {
+                    const fileUrl = btn.dataset.file;
+                    const extension = fileUrl.split('.').pop().toLowerCase();
+
+                    if (extension === 'pdf') {
+                        iframe.src = fileUrl;
+                    } else if (['doc', 'docx', 'xls', 'xlsx'].includes(extension)) {
+                        iframe.src =
+                            `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+                    } else {
+                        iframe.src = '';
+                        alert('File format not supported for preview.');
+                        return;
+                    }
+
+                    // Optional: Tampilkan modal secara eksplisit (jika belum otomatis ditrigger)
+                    const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+                    bsModal.show();
+                }
+            });
+
+            // Bersihkan iframe saat modal ditutup
+            modal.addEventListener('hidden.bs.modal', function() {
+                iframe.src = '';
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.addEventListener('click', function(e) {
+                const btn = e.target.closest('.toggle-children');
+                if (!btn) return;
+
+                // Ambil target class unik, misal: children-of-12-3
+                const target = btn.dataset.target;
+                if (!target) return;
+
+                // Toggle semua anak dengan class itu
+                document.querySelectorAll('.' + target).forEach(el => {
+                    el.classList.toggle('d-none');
+                });
+
+                // Ganti ikon dari + jadi - dan sebaliknya
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    if (icon.classList.contains('bi-plus-square')) {
+                        icon.classList.remove('bi-plus-square');
+                        icon.classList.add('bi-dash-square');
+                    } else {
+                        icon.classList.remove('bi-dash-square');
+                        icon.classList.add('bi-plus-square');
+                    }
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Deteksi posisi dropdown saat akan dibuka
+            document.querySelectorAll('.dropdown').forEach(drop => {
+                drop.addEventListener('show.bs.dropdown', function() {
+                    const rect = drop.getBoundingClientRect();
+                    const spaceBelow = window.innerHeight - rect.bottom;
+                    const spaceAbove = rect.top;
+
+                    // Kalau ruang di bawah sempit dan di atas lebih luas → ubah jadi dropup
+                    if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+                        drop.classList.add('dropup');
+                    } else {
+                        drop.classList.remove('dropup');
+                    }
+                });
+
+                // Hapus class dropup saat dropdown ditutup
+                drop.addEventListener('hidden.bs.dropdown', function() {
+                    drop.classList.remove('dropup');
+                });
+            });
+        });
+    </script>
+@endpush
+@push('styles')
+    <style>
+        .toggle-children i.rotated {
+            transform: rotate(90deg);
+            transition: transform 0.15s ease-in-out;
+        }
+    </style>
+@endpush

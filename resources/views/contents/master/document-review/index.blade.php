@@ -71,7 +71,7 @@
                                     @if ($parents->isEmpty())
                                         <tr>
                                             <td colspan="14" class="text-center text-muted py-4">
-                                                <i class="bi bi-folder-x fs-4 d-block"></i>
+                                                <i data-feather="folder" class="fs-4 d-block"></i>
                                                 No Document found for this tab.
                                             </td>
                                         </tr>
@@ -197,11 +197,11 @@
 
     <script>
         // Autofill Department
-        const docSelect = document.getElementById('documentSelect');
-        const deptField = document.getElementById('departmentField');
-        docSelect?.addEventListener('change', function() {
-            deptField.value = this.options[this.selectedIndex].dataset.department || '';
-        });
+        // const docSelect = document.getElementById('documentSelect');
+        // const deptField = document.getElementById('departmentField');
+        // docSelect?.addEventListener('change', function() {
+        //     deptField.value = this.options[this.selectedIndex].dataset.department || '';
+        // });
 
         document.addEventListener('DOMContentLoaded', function() {
             const tabButtons = document.querySelectorAll('#plantTabs button');

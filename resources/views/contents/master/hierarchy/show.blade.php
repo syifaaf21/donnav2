@@ -2,25 +2,9 @@
 
 @section('content')
     <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
-                <div class="input-group" style="width: 600px; max-width: 100%;">
-                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
-                        placeholder="Search by Document Name" value="{{ request('search') }}">
-
-                    <button class="btn btn-outline-secondary btn-sm" type="submit">
-                        <i class="bi bi-search me-1"></i> Search
-                    </button>
-
-                    @if (true)
-                        <button type="button" class="btn btn-outline-danger btn-sm " id="clearSearch">
-                            Clear
-                        </button>
-                    @endif
-                </div>
-            </form>
-            <button type="button" class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3" data-bs-toggle="modal"
-                data-bs-target="#createDocumentModal" data-bs-title="Add New Document">
+        <div class="d-flex justify-content-end mb-3">
+            <button type="button" class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3"
+                data-bs-toggle="modal" data-bs-target="#createDocumentModal" data-bs-title="Add New Document">
                 <i class="bi bi-plus-circle me-1"></i> Add Document
             </button>
         </div>
@@ -28,6 +12,21 @@
         <div class="card shadow-sm border-0">
             <!-- Parent -->
             <div class="card-body p-3">
+                <div class="d-flex justify-content-end mb-3">
+                    <!-- 🔍 Search Bar -->
+                    <form method="GET" id="searchForm" class="input-group" style="width: 400px; max-width: 100%;">
+                        <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
+                            placeholder="Search by Name" value="{{ request('search') }}">
+
+                        <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </form>
+                </div>
                 <p class="mb-2"><strong>Parent:</strong> {{ $document->name }}</p>
             </div>
             <!-- Table Scrollable -->

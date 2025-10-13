@@ -83,20 +83,20 @@
                         </div>
 
                         {{-- Reminder Date --}}
-                        <div class="col-md-6">
+                        {{-- <div class="col-md-6">
                             <label class="form-label fw-medium">Reminder Date</label>
                             <input type="date" name="reminder_date" class="form-control border-1 shadow-sm"
                                 value="{{ $mapping->reminder_date?->format('Y-m-d') }}"
                                 @if ($mapping->status->name != 'Approved') readonly @endif>
-                        </div>
+                        </div> --}}
 
                         {{-- Deadline --}}
-                        <div class="col-md-6">
+                        {{-- <div class="col-md-6">
                             <label class="form-label fw-medium">Deadline</label>
                             <input type="date" name="deadline" class="form-control border-1 shadow-sm"
                                 value="{{ $mapping->deadline?->format('Y-m-d') }}"
                                 @if ($mapping->status->name != 'Approved') readonly @endif>
-                        </div>
+                        </div> --}}
 
 
                     </div>
@@ -107,7 +107,7 @@
                     <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Close
                     </button>
-                    <button type="submit" class="btn btn-primary px-4">
+                    <button type="submit" class="btn btn-outline-primary px-4">
                         <i class="bi bi-save2 me-1"></i> Save Changes
                     </button>
                 </div>

@@ -44,9 +44,11 @@
         </div>
     </div>
 
-    <!-- ✅ Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {{-- <script src="/js/bootstrap.bundle.min.js"></script> --}}
+    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     @stack('scripts')
 </body>
 
@@ -54,6 +56,8 @@
 
 <!-- ✅ Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
 
 <!-- ✅ Custom Script  -->
 <script src="{{ asset('js/script.js') }}"></script>
