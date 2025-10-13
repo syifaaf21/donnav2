@@ -1,6 +1,6 @@
 <!-- Sidebar Toggle External -->
 <button id="sidebarToggleExternal"
-    class="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center md:hidden">
+    class="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-white shadow-md border border-gray-700 flex items-center justify-center md:hidden">
     <i data-feather="menu" class="w-5 h-5"></i>
 </button>
 
@@ -33,7 +33,7 @@
         <div class="flex items-center gap-3 cursor-pointer group" id="profileToggle">
             <div class="w-10 h-10 flex items-center justify-center bg-sky-100 text-sky-700 font-bold rounded-full text-sm transition-all duration-300 transform"
                 id="profileIcon">
-                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
             </div>
             <div class="flex-1 sidebar-text">
                 <p class="font-semibold text-gray-800 leading-none">{{ Auth::user()->name }}</p>

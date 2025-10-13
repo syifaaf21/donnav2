@@ -2,43 +2,13 @@
 @section('title', 'Document Control')
 @section('content')
     <div class="container mx-auto my-2">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            @php
-                $stats = [
-                    ['title' => 'Total Documents', 'count' => $documentMappings->count(), 'color' => 'blue'],
-                    [
-                        'title' => 'Active',
-                        'count' => $documentMappings->where('status.name', 'Active')->count(),
-                        'color' => 'green',
-                    ],
-                    [
-                        'title' => 'Obsolete',
-                        'count' => $documentMappings->where('status.name', 'Obsolete')->count(),
-                        'color' => 'gray',
-                    ],
-                ];
-            @endphp
-
-            @foreach ($stats as $stat)
-                <div class="bg-white shadow-md rounded-lg p-6 text-center">
-                    <h6 class="font-semibold text-medium mb-2 text-gray-700">{{ $stat['title'] }}</h6>
-                    <span class="text-2xl font-bold text-{{ $stat['color'] }}-500">
-                        {{ $stat['count'] }}
-                    </span>
-                </div>
-            @endforeach
+        <div class="flex justify-end p-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal">
+                <i class="bi bi-plus-lg"></i> Add Document
+            </button>
+            @include('contents.master.document-control.partials.modal-add')
         </div>
-
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="flex justify-between items-center p-6 bg-gray-50 border-b">
-                <h5 class="font-bold text-lg text-gray-700">Document Control List</h5>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#addDocumentControlModal">
-                    <i class="bi bi-plus-lg"></i> Add Document
-                </button>
-                @include('contents.master.document-control.partials.modal-add')
-            </div>
-
             <!-- Search Bar -->
             <div class="flex justify-end px-6 py-2 bg-white">
                 <form method="GET" id="filterForm" class="flex space-x-2 w-full max-w-md">

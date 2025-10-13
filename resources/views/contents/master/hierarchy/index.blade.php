@@ -1,93 +1,77 @@
 @extends('layouts.app')
+@section('title', 'Document Hierarchy')
 
 @section('content')
     @php
         use Illuminate\Support\Str;
     @endphp
     <div class="container py-4">
-        <div class="d-flex justify-content-end mb-3">
-            <button type="button" class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2 me-3"
-                data-bs-toggle="modal" data-bs-target="#createDocumentModal" data-bs-title="Add New Document">
-                <i class="bi bi-plus-circle me-1"></i> Add Document
+        {{-- Header: Title + Action Buttons --}}
+        <div class="flex items-center justify-between mb-4">
+            {{-- Breadcrumbs --}}
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Master</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Hieararchy</a>
+                    </li>
+                </ol>
+            </nav>
+
+            {{-- Add Document Button --}}
+            <button class="btn btn-primary btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal"
+                data-bs-target="#createDocumentModal">
+                <i class="bi bi-plus-circle"></i> Add Document
             </button>
         </div>
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="d-flex justify-content-end m-3">
+                <!-- 🔍 Search Bar -->
+                <form method="GET" id="searchForm" class="input-group" style="width: 400px; max-width: 100%;">
+                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
+                        placeholder="Search by Name" value="{{ request('search') }}">
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <div class="d-flex justify-content-end mb-3">
-                    <!-- 🔍 Search Bar -->
-                    <form method="GET" id="searchForm" class="input-group" style="width: 400px; max-width: 100%;">
-                        <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
-                            placeholder="Search by Name" value="{{ request('search') }}">
+                    <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
 
-                        <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
-                            <i class="bi bi-search"></i>
-                        </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
+            {{-- Table Wrapper --}}
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-left text-gray-600">
+                    <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-2">Document Name</th>
+                            <th class="px-4 py-2">Type</th>
+                            <th class="px-4 py-2">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documentTableBody">
+                        @php $number = 1; @endphp
+                        @foreach ($documents as $document)
+                            @include('contents.master.hierarchy.partials.tree-node', [
+                                'document' => $document,
+                                'level' => 0,
+                                'number' => $number++,
+                                'parent_id' => null,
+                            ])
+                        @endforeach
+                    </tbody>
 
-                        <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </form>
-                </div>
-                <div class="table-wrapper mb-3">
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table modern-table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>No</th>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($documents as $document)
-                                    <tr>
-                                        <td>{{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->iteration }}
-                                        </td>
-                                        <td>{{ $document->name }}</td>
-                                        <td>{{ ucfirst($document->type) ?? '-' }}</td>
-                                        <td>
-                                            <a href="{{ route('master.hierarchy.show', $document->id) }}"
-                                                class="btn btn-sm btn-outline-info me-1"
-                                                data-bs-title="View Child Document">
-                                                <i class="bi bi-diagram-3"></i>
-                                            </a>
-
-                                            <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#editDocumentModal-{{ $document->id }}"
-                                                data-bs-title="Edit Document">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-
-                                            <form action="{{ route('master.hierarchy.destroy', $document->id) }}"
-                                                method="POST" class="delete-form d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                    data-bs-title="Delete Document">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">No documents found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    {{-- Pagination --}}
-                    <div class="mt-3">
-                        {{ $documents->withQueryString()->links() }}
-                    </div>
-                </div>
+                </table>
             </div>
         </div>
-
         {{-- Modal Edit Document --}}
         @foreach ($documents as $document)
             <div class="modal fade" id="editDocumentModal-{{ $document->id }}" tabindex="-1"
@@ -207,6 +191,7 @@
     @endsection
 
     @push('scripts')
+        <x-sweetalert-confirm />
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             document.querySelectorAll('.delete-form').forEach(form => {
@@ -253,5 +238,32 @@
                     });
                 });
             });
+
+            // Toggle visibility of child documents
+            document.addEventListener('DOMContentLoaded', function() {
+                feather.replace();
+
+                document.querySelectorAll('.toggle-children').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const targetClass = this.dataset.target;
+                        const children = document.querySelectorAll('.' + targetClass);
+                        children.forEach(row => {
+                            row.classList.toggle('hidden');
+                        });
+                        // rotate icon
+                        const icon = this.querySelector('i');
+                        icon.classList.toggle('rotate-90');
+                        // re-replace feather icons (so icons tetap muncul)
+                        feather.replace();
+                    });
+                });
+            });
         </script>
+
+        <style>
+            .rotate-90 {
+                transform: rotate(90deg);
+                transition: transform 0.2s ease;
+            }
+        </style>
     @endpush

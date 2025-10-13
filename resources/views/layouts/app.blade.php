@@ -14,7 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- ✅ Custom Style  -->
-    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style2.css') }}" rel="stylesheet">
 
     {{-- ✅ Feather Icons --}}
     <script src="https://unpkg.com/feather-icons"></script>
@@ -25,25 +25,27 @@
     {{-- ✅ Google Fonts --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- Data Tables --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
+
+    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
 
     @stack('styles')
 </head>
 
 <body class="bg-gray-100 text-gray-800">
 
-    <div class="flex min-h-screen">
-        @include('layouts.partials.sidebar')
+    @include('layouts.partials.sidebar')
 
-        <!-- ✅ Main Content -->
-        <div class="flex-1 flex flex-col min-h-screen">
-            @include('layouts.partials.navbar')
+    <!-- ✅ Main Content -->
+    <div class="flex flex-col min-h-screen ml-64">
+        @include('layouts.partials.navbar')
 
-            <!-- Content -->
-            <main class="flex-1 p-6 overflow-y-auto">
-                @yield('content')
-            </main>
-        </div>
+        <!-- Content -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            @yield('content')
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

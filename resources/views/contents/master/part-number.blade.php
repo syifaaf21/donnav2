@@ -1,69 +1,74 @@
 @extends('layouts.app')
+@section('title', 'Part Number')
 
 @section('content')
     <div class="container py-4">
         <div class="d-flex justify-content-end mb-3">
             {{-- Tombol Add Part Number --}}
-            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal"
-                data-bs-target="#createPartNumberModal" data-bs-title="Add New Part Number">
-                <i class="bi bi-plus-circle me-1"></i> Add Part Number
+            <button
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 bg-transparent border border-blue-600 rounded-md shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                data-bs-toggle="modal" data-bs-target="#createPartNumberModal">
+                <i class="bi bi-plus-circle"></i> Add Part Number
             </button>
         </div>
 
         <div class="card shadow-sm border-0">
             <div class="card-body">
                 <div class="d-flex justify-content-end mb-3">
-                    <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" id="searchForm">
-                        <div class="input-group" style="max-width: 600px;">
-                            <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
+                    <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
+                        <div class="relative max-w-md w-full">
+                            <input type="text" name="search" id="searchInput"
+                                class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Search Part Number" value="{{ request('search') }}">
-                            <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
+                            <button
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                                type="submit" title="Search">
                                 <i class="bi bi-search"></i>
                             </button>
-
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear">
+                            <button type="button"
+                                class="absolute right-12 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                                id="clearSearch" title="Clear">
                                 <i class="bi bi-x-circle"></i>
                             </button>
                         </div>
                     </form>
+
                 </div>
                 <div class="table-wrapper mb-3">
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table modern-table table-hover align-middle">
-                            <thead class="table-light">
+                        <table class="min-w-full table-auto text-sm text-left text-gray-600">
+                            <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
                                 <tr>
-                                    <th>No</th>
-                                    <th>Part Number</th>
-                                    <th>Product</th>
-                                    <th>Model</th>
-                                    <th>Process</th>
-                                    <th>Plant</th>
-                                    <th>Action</th>
+                                    <th class="px-4 py-2">No</th>
+                                    <th class="px-4 py-2">Part Number</th>
+                                    <th class="px-4 py-2">Product</th>
+                                    <th class="px-4 py-2">Model</th>
+                                    <th class="px-4 py-2">Process</th>
+                                    <th class="px-4 py-2">Plant</th>
+                                    <th class="px-4 py-2">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($partNumbers as $part)
-                                    <tr>
-                                        <td>{{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-2">
+                                            {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
                                         </td>
-                                        <td>{{ $part->part_number }}</td>
-                                        <td>{{ $part->product->name ?? '-' }}</td>
-                                        <td>{{ $part->productModel->name ?? '-' }}</td>
-                                        <td>{{ ucfirst($part->process) }}</td>
-                                        <td>{{ ucfirst($part->plant) }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
-                                                data-bs-target="#editPartNumberModal-{{ $part->id }}"
-                                                data-bs-title="Edit Part Number">
+                                        <td class="px-4 py-2">{{ $part->part_number }}</td>
+                                        <td class="px-4 py-2">{{ $part->product->name ?? '-' }}</td>
+                                        <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
+                                        <td class="px-4 py-2">{{ ucfirst($part->process) }}</td>
+                                        <td class="px-4 py-2">{{ ucfirst($part->plant) }}</td>
+                                        <td class="px-4 py-2 flex gap-2">
+                                            <button class="text-blue-600 hover:text-blue-700" data-bs-toggle="modal"
+                                                data-bs-target="#editPartNumberModal-{{ $part->id }}">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
-
                                             <form action="{{ route('master.part_numbers.destroy', $part->id) }}"
-                                                method="POST" class="d-inline delete-form">
+                                                method="POST" class="inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                    data-bs-title="Delete Part Number">
+                                                <button type="submit" class="text-red-600 hover:text-red-700">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
                                             </form>
@@ -71,11 +76,12 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center">No part number found.</td>
+                                        <td colspan="7" class="text-center px-4 py-2">No part number found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
+
                     </div>
                     <div class="mt-3">
                         {{ $partNumbers->withQueryString()->links() }}
@@ -92,29 +98,25 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="_form" value="edit">
-
                         <div class="modal-content border-0 rounded-4 shadow-lg">
-                            <div class="modal-header bg-light text-dark rounded-top-4">
-                                <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;"
+                            <div class="modal-header bg-gray-100 text-gray-800 rounded-t-lg">
+                                <h5 class="modal-title flex items-center gap-2 font-semibold"
                                     id="editPartNumberModalLabel-{{ $part->id }}">
-                                    <i class="bi bi-nut-fill me-2"></i>Edit Part Number
+                                    <i class="bi bi-nut-fill"></i> Edit Part Number
                                 </h5>
                             </div>
-
-                            <div class="modal-body">
+                            <div class="modal-body p-4">
                                 <div class="mb-3">
-                                    <label>Part Number</label>
+                                    <label class="block font-medium">Part Number</label>
                                     <input type="text" name="part_number"
-                                        class="form-control @error('part_number') is-invalid @enderror"
+                                        class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         value="{{ $part->part_number }}" required>
-                                    @error('part_number')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
                                 <div class="mb-3">
-                                    <label>Product</label>
-                                    <select name="product_id" class="form-select @error('product_id') is-invalid @enderror"
+                                    <label class="block font-medium">Product</label>
+                                    <select name="product_id"
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Product</option>
                                         @foreach ($products as $product)
@@ -124,14 +126,12 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('product_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
                                 <div class="mb-3">
-                                    <label>Model</label>
-                                    <select name="model_id" class="form-select @error('model_id') is-invalid @enderror"
+                                    <label class="block font-medium">Model</label>
+                                    <select name="model_id"
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Model</option>
                                         @foreach ($models as $model)
@@ -141,14 +141,12 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('model_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
                                 <div class="mb-3">
-                                    <label>Process</label>
-                                    <select name="process" class="form-select @error('process') is-invalid @enderror"
+                                    <label class="block font-medium">Process</label>
+                                    <select name="process"
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Process</option>
                                         @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric'] as $process)
@@ -158,14 +156,12 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('process')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
                                 <div class="mb-3">
-                                    <label>Plant</label>
-                                    <select name="plant" class="form-select @error('plant') is-invalid @enderror"
+                                    <label class="block font-medium">Plant</label>
+                                    <select name="plant"
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Plant</option>
                                         @foreach (['body', 'unit', 'electric'] as $plant)
@@ -175,17 +171,16 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('plant')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
                             </div>
-                            <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                            <div class="modal-footer border-0 p-3 justify-between bg-gray-100 rounded-b-lg">
+                                <button type="button" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-md"
+                                    data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle"></i> Cancel
                                 </button>
-                                <button type="submit" class="btn btn-outline-success px-4">
-                                    <i class="bi bi-check-circle me-1"></i> Save Changes
+                                <button type="submit"
+                                    class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                    <i class="bi bi-check-circle"></i> Save Changes
                                 </button>
                             </div>
                         </div>
@@ -194,6 +189,7 @@
             </div>
         @endforeach
 
+
         {{-- Modal Create --}}
         <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
             aria-hidden="true">
@@ -201,36 +197,28 @@
                 <form action="{{ route('master.part_numbers.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="_form" value="add">
-
                     <div class="modal-content border-0 shadow-lg rounded-4">
-                        <!-- Header -->
-                        <div class="modal-header bg-light text-dark rounded-top-4">
-                            <h5 class="modal-title fw-semibold" id="createPartNumberModalLabel">
-                                <i class="bi bi-gear-fill me-2"></i>Add Part Number
+                        <div class="modal-header bg-gray-100 text-gray-800 rounded-t-lg">
+                            <h5 class="modal-title flex items-center gap-2 font-semibold" id="createPartNumberModalLabel">
+                                <i class="bi bi-gear-fill"></i> Add Part Number
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
                         </div>
-
-                        <!-- Body -->
                         <div class="modal-body p-4">
-                            <div class="row g-3">
-                                <!-- Part Number -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Part Number</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block font-medium">Part Number</label>
                                     <input type="text" name="part_number"
-                                        class="form-control rounded-3 @error('part_number') is-invalid @enderror"
+                                        class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         value="{{ old('part_number') }}" required>
-                                    @error('part_number')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
-                                <!-- Product -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Product</label>
+                                <div>
+                                    <label class="block font-medium">Product</label>
                                     <select name="product_id"
-                                        class="form-select rounded-3 @error('product_id') is-invalid @enderror" required>
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required>
                                         <option value="">-- Select Product --</option>
                                         @foreach ($products as $product)
                                             <option value="{{ $product->id }}"
@@ -239,16 +227,13 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('product_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
-                                <!-- Model -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Model</label>
+                                <div>
+                                    <label class="block font-medium">Model</label>
                                     <select name="model_id"
-                                        class="form-select rounded-3 @error('model_id') is-invalid @enderror" required>
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required>
                                         <option value="">-- Select Model --</option>
                                         @foreach ($models as $model)
                                             <option value="{{ $model->id }}"
@@ -257,16 +242,13 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('model_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
-                                <!-- Process -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Process</label>
+                                <div>
+                                    <label class="block font-medium">Process</label>
                                     <select name="process"
-                                        class="form-select rounded-3 @error('process') is-invalid @enderror" required>
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required>
                                         <option value="">-- Select Process --</option>
                                         @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'mounting', 'assembling electric', 'inspection'] as $process)
                                             <option value="{{ $process }}"
@@ -275,16 +257,13 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('process')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
-                                <!-- Plant -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Plant</label>
+                                <div>
+                                    <label class="block font-medium">Plant</label>
                                     <select name="plant"
-                                        class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
+                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required>
                                         <option value="">-- Select Plant --</option>
                                         @foreach (['body', 'unit', 'electric'] as $plant)
                                             <option value="{{ $plant }}"
@@ -293,26 +272,23 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('plant')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Footer -->
-                        <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle me-1"></i>Cancel
+                        <div class="modal-footer border-0 p-3 justify-between bg-gray-100 rounded-b-lg">
+                            <button type="button" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-md"
+                                data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle"></i> Cancel
                             </button>
-                            <button type="submit" class="btn btn-outline-primary px-4">
-                                <i class="bi bi-save2 me-1"></i>Save Part Number
+                            <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                <i class="bi bi-save2"></i> Save Part Number
                             </button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
+
     @endsection
 
     @push('scripts')

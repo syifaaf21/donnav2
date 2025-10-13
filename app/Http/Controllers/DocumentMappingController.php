@@ -80,7 +80,7 @@ class DocumentMappingController extends Controller
 
         }
 
-        return view('contents.master.document-review.index2', compact(
+        return view('contents.master.document-review.index', compact(
             'groupedByPlant',
             'documentsMaster',
             'partNumbers',
