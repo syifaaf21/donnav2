@@ -1,4 +1,4 @@
-@extends('layouts.app2')
+@extends('layouts.app')
 @section('title', 'Document Control')
 @section('content')
     <div class="container mx-auto my-2">

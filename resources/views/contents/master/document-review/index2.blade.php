@@ -1,4 +1,4 @@
-@extends('layouts.app2')
+@extends('layouts.app')
 @section('title', 'Document Review')
 
 @section('content')
@@ -148,7 +148,7 @@
                                         @if ($parents->isEmpty())
                                             <tr>
                                                 <td colspan="14" class="text-center py-8 text-gray-400">
-                                                    <i data-feather="folder" class="mx-auto w-6 h-6 mb-1"></i>
+                                                    <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-1"></i>
                                                     No Document found for this tab.
                                                 </td>
                                             </tr>
@@ -287,32 +287,14 @@
             const modal = document.getElementById('viewFileModal');
             const iframe = document.getElementById('fileViewer');
 
-            // Gunakan event delegation
-            document.addEventListener('click', function(e) {
-                const btn = e.target.closest('.view-file-btn');
-                if (btn) {
-                    const fileUrl = btn.dataset.file;
-                    const extension = fileUrl.split('.').pop().toLowerCase();
-
-                    if (extension === 'pdf') {
-                        iframe.src = fileUrl;
-                    } else if (['doc', 'docx', 'xls', 'xlsx'].includes(extension)) {
-                        iframe.src =
-                            `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
-                    } else {
-                        iframe.src = '';
-                        alert('File format not supported for preview.');
-                        return;
-                    }
-
-                    // Optional: Tampilkan modal secara eksplisit (jika belum otomatis ditrigger)
-                    const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
-                    bsModal.show();
-                }
+            document.querySelectorAll('.view-file-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fileUrl = this.dataset.file;
+                    iframe.src = fileUrl;
+                });
             });
 
-            // Bersihkan iframe saat modal ditutup
-            modal.addEventListener('hidden.bs.modal', function() {
+            modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
         });

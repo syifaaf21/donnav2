@@ -29,52 +29,54 @@ class DocumentMappingController extends Controller
 
         foreach ($plants as $plant) {
             // di dalam foreach ($plants as $plant) { ... }
-$query = DocumentMapping::with([
-    'document.parent',
-    'document.children',
-    'department',
-    'partNumber',
-    'status',
-    'user',
-    'files',
-])
-    ->whereHas('document', function ($q) {
-        $q->where('type', 'review');
-    })
-    ->whereHas('partNumber', function ($q) use ($plant) {
-        $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
-    });
+            $query = DocumentMapping::with([
+                'document.parent',
+                'document.children',
+                'department',
+                'partNumber',
+                'status',
+                'user',
+                'files',
+            ])
+                ->whereHas('document', function ($q) {
+                    $q->where('type', 'review');
+                })
+                ->whereHas('partNumber', function ($q) use ($plant) {
+                    $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
+                });
 
-// Search by part number (tetap)
-if ($request->filled('search')) {
-    $search = $request->search;
-    $query->whereHas('partNumber', function ($q) use ($search) {
-        $q->where('part_number', 'like', "%{$search}%");
-    });
-}
+            // Search by part number (tetap)
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->whereHas('partNumber', function ($q) use ($search) {
+                    $q->where('part_number', 'like', "%{$search}%");
+                });
+            }
 
-// ----- NEW: filter by document mapping (document_id) -----
-if ($documentId = $request->get('document_id')) {
-    $query->where('document_id', $documentId);
-}
+            // ----- NEW: filter by document mapping (document_id) -----
+            if ($documentId = $request->get('document_id')) {
+                $query->where('document_id', $documentId);
+            }
 
-// status filter (existing)
-if ($status = $request->get('status')) {
-    $query->whereHas('status', fn($q) =>
-        $q->whereRaw('LOWER(name) = ?', [strtolower($status)])
-    );
-}
+            // status filter (existing)
+            if ($status = $request->get('status')) {
+                $query->whereHas(
+                    'status',
+                    fn($q) =>
+                    $q->whereRaw('LOWER(name) = ?', [strtolower($status)])
+                );
+            }
 
-// department filter (existing - applied on mapping)
-if ($department = $request->get('department')) {
-    $query->where('department_id', $department);
-}
+            // department filter (existing - applied on mapping)
+            if ($department = $request->get('department')) {
+                $query->where('department_id', $department);
+            }
 
-if ($deadline = $request->get('deadline')) {
-    $query->whereDate('deadline', $deadline);
-}
+            if ($deadline = $request->get('deadline')) {
+                $query->whereDate('deadline', $deadline);
+            }
 
-$groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
 
         }
 
@@ -312,49 +314,49 @@ $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
 
     // Document Controll
     // ================= Document Control Index =================
-   public function controlIndex(Request $request)
-{
-    $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
-        ->whereHas('document', fn($q) => $q->where('type', 'control'));
+    public function controlIndex(Request $request)
+    {
+        $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
+            ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
-    // 🔍 Filter by search (document name, number, or department)
-    if ($request->filled('search')) {
-        $search = $request->search;
-        $query->where(function ($q) use ($search) {
-            $q->whereHas('document', fn($d) => $d->where('name', 'like', "%$search%"))
-              ->orWhere('document_number', 'like', "%$search%")
-              ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%$search%"));
-        });
-    }
+        // 🔍 Filter by search (document name, number, or department)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('document', fn($d) => $d->where('name', 'like', "%$search%"))
+                    ->orWhere('document_number', 'like', "%$search%")
+                    ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%$search%"));
+            });
+        }
 
-    $documentMappings = $query->get();
+        $documentMappings = $query->get();
 
-    // 🔁 Update status Obsolete otomatis
-    $statusObsolete = Status::where('name', 'Obsolete')->first();
-    $now = now();
+        // 🔁 Update status Obsolete otomatis
+        $statusObsolete = Status::where('name', 'Obsolete')->first();
+        $now = now();
 
-    foreach ($documentMappings as $mapping) {
-        if ($mapping->obsolete_date && $mapping->obsolete_date < $now) {
-            if ($mapping->status_id !== $statusObsolete?->id) {
-                $mapping->status_id = $statusObsolete?->id;
-                $mapping->save();
+        foreach ($documentMappings as $mapping) {
+            if ($mapping->obsolete_date && $mapping->obsolete_date < $now) {
+                if ($mapping->status_id !== $statusObsolete?->id) {
+                    $mapping->status_id = $statusObsolete?->id;
+                    $mapping->save();
+                }
             }
         }
+
+        $documents = Document::where('type', 'control')->get();
+        $statuses = Status::all();
+        $departments = Department::all();
+        $files = DocumentFile::all();
+
+        return view('contents.master.document-control.index', compact(
+            'documentMappings',
+            'documents',
+            'statuses',
+            'departments',
+            'files'
+        ));
     }
-
-    $documents = Document::where('type', 'control')->get();
-    $statuses = Status::all();
-    $departments = Department::all();
-    $files = DocumentFile::all();
-
-    return view('contents.master.document-control.index', compact(
-        'documentMappings',
-        'documents',
-        'statuses',
-        'departments',
-        'files'
-    ));
-}
 
     // ================= Store Control (Admin) =================
     public function storeControl(Request $request)

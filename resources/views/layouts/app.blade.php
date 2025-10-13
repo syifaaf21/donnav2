@@ -1,107 +1,60 @@
+{{-- resources/views/layouts/app.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- ✅ Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- ✅ Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- ✅ Sidebar CSS -->
-    <link href="https://unpkg.com/bs-brain@2.0.4/components/sidebars/sidebar-1/assets/css/sidebar-1.css" rel="stylesheet">
-
-    <!-- ✅ Custom Sidebar CSS -->
-    <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
-
-    <!-- ✅ Custom Style  -->
-    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
-
-    <!-- ✅ DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap 5 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-    <!-- jQuery (wajib untuk Select2) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>@yield('title', 'Dashboard')</title>
 
     {{-- ✅ Include Tailwind via Vite --}}
     @vite('resources/css/app.css')
 
-    <!-- ✅ Tambahan style dari child view -->
+    <!-- ✅ Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- ✅ Custom Style  -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    {{-- ✅ Feather Icons --}}
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- ✅ Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    {{-- ✅ Google Fonts --}}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
     @stack('styles')
 </head>
 
-<body>
+<body class="bg-gray-100 text-gray-800">
 
-    @if (!request()->is('login') && !request()->is('register') && !request()->is('password/*'))
-        <div class="d-flex">
-            <!-- Sidebar -->
-            <x-sidebar />
+    <div class="flex min-h-screen">
+        @include('layouts.partials.sidebar')
 
-            <!-- Page Content -->
-            <div id="mainContent" class="flex-grow-1 p-3">
-                <!-- Navbar -->
-                <x-navbar />
+        <!-- ✅ Main Content -->
+        <div class="flex-1 flex flex-col min-h-screen">
+            @include('layouts.partials.navbar')
 
-                <x-flash-message />
-
-                <!-- Content -->
+            <!-- Content -->
+            <main class="flex-1 p-6 overflow-y-auto">
                 @yield('content')
-            </div>
+            </main>
         </div>
-    @else
-        {{-- Layout khusus login/register tanpa sidebar & navbar --}}
-        <main class="auth-wrapper d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-            @yield('content')
-        </main>
-    @endif
+    </div>
 
-
-    <!-- Bootstrap JS -->
-    {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> --}}
-
-    <!-- ✅ Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- ✅ Custom Sidebar JS -->
-    <script src="{{ asset('js/sidebar.js') }}"></script>
-
-    <!-- ✅ SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- ✅ jQuery + DataTables -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
-
-    <!-- ✅ Script DataTables -->
-    <script>
-        $(document).ready(function() {
-            $('#dataTable').DataTable({
-                paging: true, // Pagination
-                searching: true, // Search box
-                ordering: true, // Sorting
-                lengthChange: true, // Pilihan jumlah data per halaman
-                pageLength: 10, // Default 10 baris
-            });
-        });
-    </script>
-    <script>
-        document.querySelector('#logout-form')?.addEventListener('submit', () => {
-            localStorage.removeItem('activePlantTab');
-        });
-    </script>
-
+    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- ✅ Custom Script  -->
+    <script src="{{ asset('js/script.js') }}"></script>
     @stack('scripts')
 </body>
+
+
 
 </html>
