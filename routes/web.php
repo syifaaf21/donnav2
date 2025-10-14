@@ -93,10 +93,14 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
-        Route::get('/', [DocumentReviewController::class, 'Index'])->name('index');
+        Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])
             ->name('getDataByPlant');
         Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
+        Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
+        Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])
+    ->name('approveWithDates');
+
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
 
         // Admin routes

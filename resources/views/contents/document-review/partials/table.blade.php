@@ -1,5 +1,5 @@
 <table class="min-w-full table-auto text-sm text-left text-gray-700">
-    <thead class="bg-gray-100 text-gray-600 uppercase">
+    <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
         <tr>
             <th class="px-4 py-2">No</th>
             <th class="px-4 py-2">Part Number</th>
@@ -12,15 +12,13 @@
         @forelse ($groupedData as $index => $group)
             @php
                 $first = $group->first();
-                $partNumber = $first->partNumber;
-                $model = $partNumber->productModel->name ?? '-';
-                $process = $partNumber->process ?? '-';
             @endphp
             <tr class="border-b border-gray-200 bg-white hover:bg-gray-50">
                 <td class="px-4 py-2">{{ $loop->iteration }}</td>
-                <td class="px-4 py-2">{{ $partNumber->part_number }}</td>
-                <td class="px-4 py-2">{{ $model }}</td>
-                <td class="px-4 py-2">{{ ucwords($process) }}</td>
+                <td class="px-4 py-2">{{ $first->partNumber?->part_number ?? '-' }}</td>
+                <td class="px-4 py-2">{{ $first->partNumber?->productModel?->name ?? '-' }}</td>
+                <td class="px-4 py-2">{{ ucwords($first->partNumber?->process ?? '-') }}</td>
+
                 <td class="px-4 py-2 text-center space-x-1">
                     <!-- 👁 Toggle Detail -->
                     <button type="button"
@@ -28,23 +26,15 @@
                         data-target="#detail-{{ $index }}" title="View Details">
                         <i class="bi bi-eye"></i>
                     </button>
-
-                    <!-- ✏️ Revisi -->
-                    <a href="" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs"
-                        title="Revisi">
-                        <i class="bi bi-pencil-square"></i>
-                    </a>
                 </td>
-
             </tr>
 
             <!-- 🔽 Detail Row -->
             <tr id="detail-{{ $index }}" class="hidden bg-gray-50 border-t border-b border-gray-200">
                 <td colspan="5" class="p-4">
                     <table class="w-full table-fixed text-sm text-left text-gray-600">
-                        <thead class="bg-gray-100 text-gray-500 uppercase">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
                             <tr>
-                                {{-- <th class="px-2 py-1 w-8">No</th> --}}
                                 <th class="px-2 py-1">Document Name</th>
                                 <th class="px-2 py-1">Document Number</th>
                                 <th class="px-2 py-1">Notes</th>
@@ -59,27 +49,27 @@
                         <tbody>
                             @foreach ($group as $i => $doc)
                                 <tr class="border-b">
-                                    {{-- <td class="px-2 py-1">{{ $i + 1 }}</td> --}}
-                                    <td class="px-2 py-1">{{ $doc->document->name }}</td>
-                                    <td class="px-2 py-1">{{ $doc->document_number }}</td>
+                                    <td class="px-2 py-1">{{ $doc->document?->name ?? '-' }}</td>
+                                    <td class="px-2 py-1">{{ $doc->document_number ?? '-' }}</td>
                                     <td class="px-2 py-1">{{ $doc->notes ?? '-' }}</td>
                                     <td class="px-2 py-1">
-                                        {{ optional($doc->reminder_date)->format('Y-m-d') ?? '-' }}</td>
+                                        {{ $doc->reminder_date ? $doc->reminder_date->format('Y-m-d') : '-' }}
+                                    </td>
                                     <td class="px-2 py-1">
-                                        {{ optional($doc->deadline)->format('Y-m-d') ?? '-' }}</td>
+                                        {{ $doc->deadline ? $doc->deadline->format('Y-m-d') : '-' }}
+                                    </td>
                                     <td class="px-2 py-1">
-                                        {{ optional($doc->updated_at)->format('Y-m-d') ?? '-' }}</td>
-                                    <td class="px-2 py-1">{{ $doc->user->name ?? '-' }}</td>
-                                    <td class="px-2 py-1">{{ $doc->status->name ?? '-' }}</td>
-                                    <td class="px-2 py-1 text-center space-x-1">
-                                        <!-- 🔍 View Files -->
+                                        {{ $doc->updated_at ? $doc->updated_at->format('Y-m-d') : '-' }}
+                                    </td>
+                                    <td class="px-2 py-1">{{ $doc->user?->name ?? '-' }}</td>
+                                    <td class="px-2 py-1">{{ $doc->status?->name ?? '-' }}</td>
+                                    <td class="px-2 py-1 text-center">
                                         <div class="dropdown d-inline">
                                             <button type="button"
                                                 class="btn btn-outline-secondary px-2 py-1 rounded text-xs dropdown-toggle"
                                                 data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="bi bi-paperclip"></i> Files
                                             </button>
-
                                             <ul class="dropdown-menu dropdown-menu-end text-sm"
                                                 style="min-width: 220px;">
                                                 @forelse ($doc->files as $file)
@@ -103,7 +93,6 @@
                                                                     '&embedded=true'
                                                                 : null);
                                                     @endphp
-
                                                     <li class="px-3 py-1">
                                                         <div class="d-flex justify-content-between align-items-center">
                                                             <span class="text-truncate small" style="max-width: 140px;">
@@ -132,7 +121,6 @@
                                                             </div>
                                                         </div>
                                                     </li>
-
                                                     @if (!$loop->last)
                                                         <li>
                                                             <hr class="dropdown-divider">
@@ -144,33 +132,68 @@
                                                 @endforelse
                                             </ul>
                                         </div>
-
-                                        {{-- <!-- ✅ Approve -->
-                                        <form action="" method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit"
-                                                class="btn btn-outline-success px-2 py-1 rounded text-xs"
-                                                onclick="return confirm('Are you sure you want to approve this document?')"
-                                                title="Approve">
-                                                <i class="bi bi-check-circle"></i>
-                                            </button>
-                                        </form>
-
-                                        <!-- ❌ Reject -->
-                                        <form action="" method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit"
-                                                class="btn btn-outline-danger px-2 py-1 rounded text-xs"
-                                                onclick="return confirm('Are you sure you want to reject this document?')"
-                                                title="Reject">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        </form> --}}
+                                        <!-- ✏️ Revisi -->
+                                        <button type="button"
+                                            class="btn btn-warning hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs revise-btn"
+                                            title="Revisi" data-bs-toggle="modal" data-bs-target="#reviseModal"
+                                            data-doc-id="{{ $doc->id }}"
+                                            data-doc-name="{{ $doc->document?->name }}"
+                                            data-doc-number="{{ $doc->document_number }}"
+                                            data-files='@json(
+                                                $doc->files->map(fn($f) => [
+                                                        'name' => $f->file_name ?? basename($f->file_path),
+                                                        'url' => asset('storage/' . $f->file_path),
+                                                    ]))'>
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    {{-- ✅ Modal Revise Document --}}
+                    <div class="modal fade" id="reviseModal" tabindex="-1" aria-labelledby="reviseModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <form method="POST" action="" enctype="multipart/form-data" id="reviseForm">
+                                @csrf
+                                <div class="modal-content border-0 rounded-4 shadow-lg">
+                                    <div class="modal-header bg-light text-dark rounded-top-4">
+                                        <h5 class="modal-title fw-semibold">
+                                            <i class="bi bi-arrow-clockwise me-2"></i> Revisi Dokumen
+                                            <span class="docNameDisplay text-primary"></span>
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <div class="modal-body p-4"
+                                        style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                                        {{-- List Files --}}
+                                        <div class="existing-files-container mb-3"></div>
+
+                                        {{-- Notes revisi --}}
+                                        <div>
+                                            <label class="form-label">Notes</label>
+                                            <input type="text" name="notes"
+                                                class="form-control border-1 shadow-sm"
+                                                placeholder="Catatan revisi untuk file ini..." required>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                                        <button type="button" class="btn btn-outline-secondary px-4"
+                                            data-bs-dismiss="modal">
+                                            <i class="bi bi-x-circle me-1"></i> Close
+                                        </button>
+                                        <button type="submit" class="btn btn-warning px-4">
+                                            <i class="bi bi-save2 me-1"></i> Submit Revisi
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </td>
             </tr>
             @empty
@@ -182,3 +205,13 @@
             @endforelse
         </tbody>
     </table>
+
+    {{-- toggle-detail JS (pastikan hanya dipanggil sekali di index) --}}
+    <script>
+        document.querySelectorAll('.toggle-detail').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = document.querySelector(this.dataset.target);
+                if (target) target.classList.toggle('hidden');
+            });
+        });
+    </script>

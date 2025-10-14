@@ -18,43 +18,38 @@ class DocumentReviewController extends Controller
         $plants = $this->getEnumValues('part_numbers', 'plant');
         $processes = $this->getEnumValues('part_numbers', 'process');
 
-        $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
+        $documentsMaster = Document::with('childrenRecursive')
+            ->where('type', 'review')
+            ->get();
+
         $departments = Department::all();
         $partNumbers = PartNumber::all();
         $models = ProductModel::all();
 
-        // ✅ Ambil semua document mappings dengan relasi yang dibutuhkan
+        // ✅ Ambil hanya document mappings yang tipe dokumennya "review"
         $documentMappings = DocumentMapping::with([
             'document',
             'files',
+            'partNumber.product',
             'partNumber.productModel',
             'user',
-            'status'
+            'status',
+            'department',
         ])
-            ->when($request->plant, fn($q) => $q->whereHas('partNumber', fn($q2) => $q2->where('plant', $request->plant)))
-            ->when($request->department, fn($q) => $q->where('department_id', $request->department))
-            ->when($request->document_id, fn($q) => $q->where('document_id', $request->document_id))
-            ->when($request->part_number, fn($q) => $q->where('part_number_id', $request->part_number))
-            ->when($request->model, function ($q) use ($request) {
-                $q->whereHas('partNumber.model', function ($q2) use ($request) {
-                    $q2->where('id', $request->model);
-                });
-            })
-            ->when($request->process, function ($q) use ($request) {
-                $q->whereHas('partNumber', function ($q2) use ($request) {
-                    $q2->where('process', $request->process);
-                });
-            })
-
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->get();
 
-        // ✅ Kelompokkan berdasarkan kombinasi unik Part Number + Model + Process
-        $groupedData = $documentMappings->groupBy(function ($item) {
-            $partNumber = $item->partNumber?->part_number ?? 'unknown';
-            $model = $item->partNumber?->productModel?->name ?? 'unknown';
-            $process = $item->document?->process ?? 'unknown';
-            return "{$partNumber}-{$model}-{$process}";
-        });
+        // ✅ Kelompokkan data berdasarkan plant, lalu kombinasi part-model-process
+        $groupedByPlant = $documentMappings
+            ->groupBy(fn($item) => $item->partNumber?->plant ?? 'Unknown')
+            ->map(function ($items) {
+                return $items->groupBy(function ($item) {
+                    $partNumber = $item->partNumber?->part_number ?? 'unknown';
+                    $model = $item->partNumber?->productModel?->name ?? 'unknown';
+                    $process = $item->partNumber?->process ?? 'unknown';
+                    return "{$partNumber}-{$model}-{$process}";
+                });
+            });
 
         return view('contents.document-review.index', compact(
             'plants',
@@ -63,55 +58,59 @@ class DocumentReviewController extends Controller
             'partNumbers',
             'models',
             'documentsMaster',
-            'groupedData',
+            'groupedByPlant'
         ));
     }
 
     public function liveSearch(Request $request)
-    {
-        $keyword = $request->keyword;
+{
+    $keyword = $request->keyword;
 
-        $documentMappings = DocumentMapping::with([
-            'document',
-            'partNumber.productModel',
-            'user',
-            'status'
-        ])
-            ->when($keyword, function ($query) use ($keyword) {
-                $query->where(function ($q) use ($keyword) {
-                    $q->whereHas('partNumber', function ($q2) use ($keyword) {
-                        $q2->where('part_number', 'like', "%{$keyword}%")
-                            ->orWhere('plant', 'like', "%{$keyword}%")
-                            ->orWhere('process', 'like', "%{$keyword}%");
-                    })
-                        ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('document', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%")
-                                ->orWhere('document_number', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('status', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('user', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhere('notes', 'like', "%{$keyword}%");
-                });
-            })
-            ->get();
+    $documentMappings = DocumentMapping::with([
+        'document',
+        'partNumber.product',
+        'partNumber.productModel',
+        'user',
+        'status',
+        'files'
+    ])
+        ->whereHas('document', fn($q) => $q->where('type', 'review')) // pastikan hanya review
+        ->when($keyword, function ($query) use ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->whereHas('partNumber', function ($q2) use ($keyword) {
+                    $q2->where('part_number', 'like', "%{$keyword}%")
+                        ->orWhere('plant', 'like', "%{$keyword}%")
+                        ->orWhere('process', 'like', "%{$keyword}%");
+                })
+                ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
+                    $q2->where('name', 'like', "%{$keyword}%");
+                })
+                ->orWhereHas('document', function ($q2) use ($keyword) {
+                    $q2->where('name', 'like', "%{$keyword}%");
+                })
+                ->orWhereHas('status', function ($q2) use ($keyword) {
+                    $q2->where('name', 'like', "%{$keyword}%");
+                })
+                ->orWhereHas('user', function ($q2) use ($keyword) {
+                    $q2->where('name', 'like', "%{$keyword}%");
+                })
+                ->orWhere('notes', 'like', "%{$keyword}%")
+                ->orWhere('document_number', 'like', "%{$keyword}%");
+            });
+        })
+        ->get();
 
-        $groupedData = $documentMappings->groupBy(function ($item) {
-            $partNumber = $item->partNumber?->part_number ?? 'unknown';
-            $model = $item->partNumber?->productModel?->name ?? 'unknown';
-            $process = $item->document?->process ?? 'unknown';
-            return "{$partNumber}-{$model}-{$process}";
-        });
+    // group hasil by part-model-process (sama format seperti index partial expects)
+    $groupedData = $documentMappings->groupBy(function ($item) {
+        $partNumber = $item->partNumber?->part_number ?? 'unknown';
+        $model = $item->partNumber?->productModel?->name ?? 'unknown';
+        $process = $item->partNumber?->process ?? 'unknown';
+        return "{$partNumber}-{$model}-{$process}";
+    });
 
-        return view('contents.document-review.partials.table', compact('groupedData'))->render();
-    }
-
+    // render partial yang hanya menerima $groupedData
+    return view('contents.document-review.partials.table', compact('groupedData'))->render();
+}
 
     private function getEnumValues($table, $column)
     {
@@ -128,18 +127,16 @@ class DocumentReviewController extends Controller
         return $enum;
     }
 
-
     public function getDataByPlant(Request $request)
     {
         $plant = $request->plant;
 
-        // Ambil part number berdasarkan plant
         $partNumbers = PartNumber::where('plant', $plant)
             ->orderBy('part_number')
             ->get(['id', 'part_number']);
 
         Log::info('Plant selected: ' . $plant);
-        // Ambil unique process dari part numbers dengan plant tsb
+
         $processes = PartNumber::where('plant', $plant)
             ->select('process')
             ->distinct()
@@ -151,11 +148,71 @@ class DocumentReviewController extends Controller
         ]);
     }
 
-    // Tambahkan di DocumentReviewController
     public function show($id)
     {
         $document = Document::with('childrenRecursive')->findOrFail($id);
 
         return view('contents.document-review.show', compact('document'));
     }
+
+    public function revise(Request $request, $id)
+{
+    $doc = DocumentMapping::findOrFail($id);
+
+    $request->validate([
+        'notes' => 'required|string|max:255',
+        'new_files.*' => 'file|max:5120' // 5MB
+    ]);
+
+    // Simpan notes revisi
+    $doc->notes = $request->notes;
+    $doc->save();
+
+    // Upload file baru
+    if ($request->hasFile('new_files')) {
+        foreach ($request->file('new_files') as $file) {
+            $path = $file->store('documents', 'public');
+            $doc->files()->create([
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $path,
+            ]);
+        }
+    }
+
+    return redirect()->back()->with('success', 'Revisi dokumen berhasil disimpan!');
+}
+public function approveWithDates(Request $request, $id)
+{
+    // ✅ Validasi input
+    $validated = $request->validate([
+        'reminder_date' => 'required|date',
+        'deadline' => 'required|date|after_or_equal:reminder_date',
+    ]);
+
+    // ✅ Ambil data mapping berdasarkan ID
+    $mapping = DocumentMapping::findOrFail($id);
+
+    // ✅ Update status dan tanggal
+    $mapping->update([
+        'status_id'     => Status::where('name', 'Approved')->first()->id ?? $mapping->status_id,
+        'reminder_date' => $validated['reminder_date'],
+        'deadline'      => $validated['deadline'],
+        'updated_at'    => now(),
+        'user_id'       => auth()->id(), // siapa yang approve
+    ]);
+
+    // ✅ (Opsional) Catat log activity
+    // ActivityLog::create([
+    //     'user_id' => auth()->id(),
+    //     'action' => 'Approved document',
+    //     'document_mapping_id' => $mapping->id,
+    //     'details' => json_encode($validated),
+    // ]);
+
+    // ✅ Redirect dengan pesan sukses
+    return redirect()->route('document-review.index')
+        ->with('success', "Document '{$mapping->document_number}' approved successfully!");
+}
+
+
 }

@@ -17,8 +17,31 @@
         <!-- Table card -->
         <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
             <div id="search-results">
-                @include('contents.document-review.partials.table', ['groupedData' => $groupedData])
+                <!-- ✅ Tabs for each Plant -->
+                <ul class="nav nav-tabs" id="plantTabs" role="tablist">
+                    @foreach ($groupedByPlant as $plant => $groups)
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="tab-{{ Str::slug($plant) }}"
+                                data-bs-toggle="tab" data-bs-target="#content-{{ Str::slug($plant) }}" type="button"
+                                role="tab" aria-controls="content-{{ Str::slug($plant) }}"
+                                aria-selected="{{ $loop->first ? 'true' : 'false' }}">
+                                {{ ucwords($plant) }}
+                            </button>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <div class="tab-content mt-3" id="plantTabsContent">
+                    @foreach ($groupedByPlant as $plant => $groups)
+                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                            id="content-{{ Str::slug($plant) }}" role="tabpanel"
+                            aria-labelledby="tab-{{ Str::slug($plant) }}">
+                            @include('contents.document-review.partials.table', ['groupedData' => $groups])
+                        </div>
+                    @endforeach
+                </div>
             </div>
+
         </div>
 
     </div>
@@ -117,8 +140,9 @@
                             <!-- Approve Button -->
                             <form action="/approve-url" method="POST">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-success btn-sm"
-                                    onclick="return confirm('Approve this document?')">
+                                <button type="button" class="btn btn-outline-success btn-sm open-approve-modal"
+                                    data-doc-id="{{ $mapping->id ?? '' }}" data-bs-toggle="modal"
+                                    data-bs-target="#approveModal">
                                     <i class="bi bi-check-circle me-1"></i> Approve
                                 </button>
                             </form>
@@ -134,7 +158,8 @@
                         @endif
 
                         <!-- Close Button -->
-                        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
                 </div>
                 <div class="modal-body p-0 flex-grow-1">
@@ -266,6 +291,14 @@
         });
 
 
+        // 1) global setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        // 2) search handler (tetap pakai yang sudah ada)
         $('#live-search').on('keyup', function() {
             let keyword = $(this).val();
 
@@ -277,12 +310,24 @@
                 },
                 success: function(data) {
                     $('#search-results').html(data);
+
+                    // reinit Alpine/feather jika perlu (lihat diskusi sebelumnya)
+                    if (typeof feather !== 'undefined') feather.replace();
+                    if (typeof Alpine !== 'undefined') {
+                        document.querySelectorAll('[x-data]').forEach(el => {
+                            Alpine.destroyTree(el);
+                            Alpine.initTree(el);
+                        });
+                    }
                 },
-                error: function() {
+                error: function(xhr) {
+                    console.error('AJAX error', xhr);
+                    // tampilkan pesan error + server response (berguna debugging)
                     $('#search-results').html('<p class="text-red-500">Search failed.</p>');
                 }
             });
         });
+
 
         $(document).on('click', '.view-file-btn', function() {
             const fileUrl = $(this).data('file');
@@ -294,5 +339,125 @@
             const iframe = document.getElementById('fileViewer');
             if (iframe) iframe.src = '';
         });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const reviseModal = document.getElementById('reviseModal');
+            const docNameDisplay = reviseModal.querySelector('.docNameDisplay');
+            const filesContainer = reviseModal.querySelector('.existing-files-container');
+            const reviseForm = document.getElementById('reviseForm');
+
+            // Saat tombol revisi diklik
+            document.querySelectorAll('.revise-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const docId = this.dataset.docId;
+                    const docName = this.dataset.docName || '-';
+                    const docNumber = this.dataset.docNumber || '-';
+                    const files = JSON.parse(this.dataset.files || '[]');
+
+                    // Update judul modal
+                    docNameDisplay.textContent = `${docName} (${docNumber})`;
+
+                    // Update form action
+                    reviseForm.action = `/document-review/${docId}/revise`;
+
+                    // Isi daftar file
+                    if (files.length > 0) {
+                        filesContainer.innerHTML = `
+                    <label class="form-label fw-semibold">Existing Files:</label>
+                    <ul class="list-group mb-2">
+                        ${files.map(f => `
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <span class="text-truncate" style="max-width: 300px;">${f.name}</span>
+                                                    <a href="${f.url}" class="btn btn-outline-success btn-sm" download>
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                </li>
+                                            `).join('')}
+                    </ul>
+                    <div class="mt-3">
+                        <label class="form-label">Upload Revisi File</label>
+                        <input type="file" name="new_files[]" multiple class="form-control border-1 shadow-sm">
+                    </div>
+                `;
+                    } else {
+                        filesContainer.innerHTML =
+                            `<p class="text-muted">No files available for revision.</p>`;
+                    }
+                });
+            });
+        });
+
+        // ✅ Approve Modal Handler
+        $(document).on('click', '.open-approve-modal', function() {
+            const docId = $(this).data('doc-id');
+            const actionUrl = `/master/document-review/${docId}/approve-with-dates`;
+            $('#approveForm').attr('action', actionUrl);
+        });
+
+        // ✅ Validasi tanggal sebelum submit
+        $('#approveForm').on('submit', function(e) {
+            const reminderDate = new Date($('#reminder_date').val());
+            const deadlineDate = new Date($('#deadline').val());
+            let valid = true;
+
+            $('#reminderError').hide();
+            $('#deadlineError').hide();
+
+            if (reminderDate > deadlineDate) {
+                $('#reminderError').show();
+                $('#deadlineError').show();
+                valid = false;
+            }
+
+            if (!valid) e.preventDefault();
+        });
     </script>
+    <!-- ✅ Modal Approve (Global) -->
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-light text-dark">
+                    <h5 class="modal-title d-flex align-items-center" id="approveModalLabel">
+                        <i class="bi bi-check-circle-fill me-2"></i> Approve Document
+                    </h5>
+                </div>
+
+                <form id="approveForm" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        {{-- Reminder Date --}}
+                        <div class="mb-3">
+                            <label for="reminder_date" class="form-label fw-semibold">
+                                Reminder Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" name="reminder_date" id="reminder_date" class="form-control" required>
+                            <div id="reminderError" class="text-danger small mt-1" style="display:none;">
+                                Reminder Date must be earlier than or equal to Deadline.
+                            </div>
+                        </div>
+
+                        {{-- Deadline --}}
+                        <div class="mb-3">
+                            <label for="deadline" class="form-label fw-semibold">
+                                Deadline <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" name="deadline" id="deadline" class="form-control" required>
+                            <div id="deadlineError" class="text-danger small mt-1" style="display:none;">
+                                Deadline must be later than or equal to Reminder Date.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check2-circle me-1"></i> Approve
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endpush
