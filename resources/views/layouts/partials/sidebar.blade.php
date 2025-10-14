@@ -1,6 +1,6 @@
 <!-- Sidebar Toggle External -->
 <button id="sidebarToggleExternal"
-    class="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-white shadow-md border border-gray-700 flex items-center justify-center md:hidden">
+    class="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center md:hidden">
     <i data-feather="menu" class="w-5 h-5"></i>
 </button>
 
@@ -11,14 +11,15 @@
     <div class="flex items-center justify-between px-4 border-b bg-white">
         <div class="flex items-center gap-2">
             <div class="h-24 max-w-36 min-w-10 flex items-center justify-center">
-                <img src="{{ asset('images/donna.png') }}" alt="Logo"
-                    class="object-contain transition-all duration-300" id="sidebarLogo">
+                <img src="{{ asset('images/donna.png') }}" alt="Logo" id="sidebarLogo" style="width: 150px; height: auto;"
+                    class="object-contain transition-all duration-300" data-full="{{ asset('images/donna.png') }}"
+                    data-icon="{{ asset('images/donna-icon.png') }}" />
             </div>
             <span class="font-semibold text-gray-800 text-lg tracking-tight sidebar-text"></span>
         </div>
 
         <button id="toggleSidebar"
-            class="hidden md:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition">
+            class="hidden md:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition border border-gray-700">
             <i data-feather="chevron-left" class="w-5 h-5"></i>
         </button>
     </div>
@@ -35,26 +36,10 @@
                 id="profileIcon">
                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
             </div>
-            <div class="flex-1 sidebar-text">
-                <p class="font-semibold text-gray-800 leading-none">{{ Auth::user()->name }}</p>
+            <div class="flex-1 sidebar-text mt-3">
+                <p class="font-semibold text-gray-800 leading-none mb-1">{{ Auth::user()->name }}</p>
                 <p class="text-xs text-gray-500">{{ Auth::user()->role->name ?? 'User' }}</p>
             </div>
-            <i data-feather="chevron-up" class="w-4 h-4 text-gray-500 transition-transform" id="chevronIcon"></i>
-        </div>
-
-        <div id="profileDropup"
-            class="absolute bottom-16 left-3 right-3 bg-white border rounded-lg shadow-lg p-2 hidden animate-fadeIn">
-            <a href="{{ route('profile.index') }}"
-                class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                <i data-feather="user" class="w-4 h-4 text-gray-500"></i> Profile
-            </a>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit"
-                    class="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md">
-                    <i data-feather="log-out" class="w-4 h-4"></i> Logout
-                </button>
-            </form>
         </div>
     </div>
 </aside>

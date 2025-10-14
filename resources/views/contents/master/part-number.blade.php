@@ -2,11 +2,27 @@
 @section('title', 'Part Number')
 
 @section('content')
-    <div class="container py-4">
-        <div class="d-flex justify-content-end mb-3">
+    <div class="container py-2">
+        <div class="d-flex justify-between items-center mb-3">
+            {{-- Breadcrumbs --}}
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                                <i class="bi bi-house-door me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="#" class="text-decoration-none text-secondary">Master</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="#" class="text-decoration-none text-secondary">Part Number</a>
+                        </li>
+                    </ol>
+                </nav>
             {{-- Tombol Add Part Number --}}
             <button
-                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 bg-transparent border border-blue-600 rounded-md shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold btn btn-primary rounded-md shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 data-bs-toggle="modal" data-bs-target="#createPartNumberModal">
                 <i class="bi bi-plus-circle"></i> Add Part Number
             </button>
@@ -19,20 +35,19 @@
                         <div class="relative max-w-md w-full">
                             <input type="text" name="search" id="searchInput"
                                 class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Search Part Number" value="{{ request('search') }}">
+                                placeholder="Search..." value="{{ request('search') }}">
                             <button
                                 class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
                                 type="submit" title="Search">
                                 <i class="bi bi-search"></i>
                             </button>
                             <button type="button"
-                                class="absolute right-12 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                                class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
                                 id="clearSearch" title="Clear">
                                 <i class="bi bi-x-circle"></i>
                             </button>
                         </div>
                     </form>
-
                 </div>
                 <div class="table-wrapper mb-3">
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">

@@ -33,18 +33,22 @@
         </div>
         <div class="bg-white shadow-sm rounded-lg border border-gray-200">
             <div class="d-flex justify-content-end m-3">
-                <!-- 🔍 Search Bar -->
-                <form method="GET" id="searchForm" class="input-group" style="width: 400px; max-width: 100%;">
-                    <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
-                        placeholder="Search by Name" value="{{ request('search') }}">
-
-                    <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
-                        <i class="bi bi-search"></i>
-                    </button>
-
-                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
+                <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
+                    <div class="relative max-w-md w-full">
+                        <input type="text" name="search" id="searchInput"
+                            class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Search..." value="{{ request('search') }}">
+                        <button
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                            type="submit" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <button type="button"
+                            class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                            id="clearSearch" title="Clear">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
                 </form>
             </div>
             {{-- Table Wrapper --}}

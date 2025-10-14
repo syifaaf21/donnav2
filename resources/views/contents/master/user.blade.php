@@ -1,58 +1,79 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container py-4">
-        <div class="d-flex justify-content-end mb-3">
-            <button class="btn btn-outline-primary btn-sm shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal"
-                data-bs-target="#addUserModal" data-bs-title="Add New User">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add User</span>
+    <div class="container py-2">
+        <div class="flex justify-between items-center mb-3">
+            {{-- Breadcrumbs --}}
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Master</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">User</a>
+                    </li>
+                </ol>
+            </nav>
+            {{-- Tombol Add Part Number --}}
+            <button
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold btn btn-primary rounded-md shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                data-bs-toggle="modal" data-bs-target="#createPartNumberModal">
+                <i class="bi bi-plus-circle"></i> Add User
             </button>
         </div>
 
 
         <div class="card shadow-sm border-0">
             <div class="card-body">
-                <div class="d-flex justify-content-end mb-3">
-                    <!-- 🔍 Search Bar -->
-                    <form method="GET" id="searchForm" class="input-group" style="width: 400px; max-width: 100%;">
-                        <input type="text" name="search" id="searchInput" class="form-control form-control-sm"
-                            placeholder="Search by Name or NPK" value="{{ request('search') }}">
-
-                        <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
-                            <i class="bi bi-search"></i>
-                        </button>
-
-                        <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
+                <div class="flex justify-content-end mb-3">
+                    <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
+                        <div class="relative max-w-md w-full">
+                            <input type="text" name="search" id="searchInput"
+                                class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Search..." value="{{ request('search') }}">
+                            <button
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                                type="submit" title="Search">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            <button type="button"
+                                class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                                id="clearSearch" title="Clear">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
                     </form>
                 </div>
 
                 <div class="table-wrapper mb-3">
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table modern-table table-hover align-middle">
-                            <thead class="table-light">
+                    <div class="table-responsive">
+                        <table class="min-w-full table-auto text-sm text-left text-gray-600">
+                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
                                 <tr>
-                                    <th>No</th>
-                                    <th>Name</th>
-                                    <th>NPK</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Department</th>
-                                    <th>Action</th>
+                                    <th class="px-4 py-3">No</th>
+                                    <th class="px-4 py-3">Name</th>
+                                    <th class="px-4 py-3">NPK</th>
+                                    <th class="px-4 py-3">Email</th>
+                                    <th class="px-4 py-3">Role</th>
+                                    <th class="px-4 py-3">Department</th>
+                                    <th class="px-4 py-3">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($users as $user)
                                     <tr>
-                                        <td>{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
-                                        <td>{{ $user->name }}</td>
-                                        <td>{{ $user->npk }}</td>
-                                        <td>{{ $user->email }}</td>
-                                        <td>{{ $user->role->name ?? '-' }}</td>
-                                        <td>{{ $user->department->name ?? '-' }}</td>
-                                        <td>
+                                        <td class="px-4 py-3">{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
+                                        <td class="px-4 py-3">{{ $user->name }}</td>
+                                        <td class="px-4 py-3">{{ $user->npk }}</td>
+                                        <td class="px-4 py-3">{{ $user->email }}</td>
+                                        <td class="px-4 py-3">{{ $user->role->name ?? '-' }}</td>
+                                        <td class="px-4 py-3">{{ $user->department->name ?? '-' }}</td>
+                                        <td class="px-4 py-3">
                                             <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
                                                 data-bs-target="#editUserModal-{{ $user->id }}"
                                                 data-bs-title="Edit User">
@@ -74,7 +95,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted">No users found.</td>
+                                        <td colspan="7" class="text-center text-gray-500 py-4">No users found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

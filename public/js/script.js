@@ -1,3 +1,4 @@
+// Sidebar
 document.addEventListener("DOMContentLoaded", () => {
     feather.replace();
 
@@ -13,61 +14,115 @@ document.addEventListener("DOMContentLoaded", () => {
     const collapsedWidth = "w-20";
     const expandedWidth = "w-64";
 
+    // Preload icon version supaya tak delay saat switch
+    if (logo && logo.dataset && logo.dataset.icon) {
+        const imgPre = new Image();
+        imgPre.src = logo.dataset.icon;
+    }
+
+    function safeAddHidden(el) {
+        if (!el) return;
+        el.classList.add("hidden");
+    }
+    function safeToggle(el) {
+        if (!el) return;
+        el.classList.toggle("hidden");
+    }
+
     function collapseSidebar() {
-        sidebar.classList.replace(expandedWidth, collapsedWidth);
+        // pastikan class replace aman
+        if (sidebar.classList.contains(expandedWidth)) {
+            sidebar.classList.replace(expandedWidth, collapsedWidth);
+        } else {
+            // jika tidak ada expandedWidth jangan error - tambahkan collapsed kalau belum ada
+            sidebar.classList.add(collapsedWidth);
+        }
+
         sidebarTexts.forEach(t => t.classList.add("hidden"));
 
-        logo.src = "/public/images/donna-icon.png";
-        logo.style.width = "32px";
-        logo.style.height = "32px";
-        logo.style.margin = "0 auto"; // center
-        logo.style.display = "block";
+        // switch logo ke icon (gunakan data attribute)
+        if (logo && logo.dataset && logo.dataset.icon) {
+            logo.src = logo.dataset.icon;
+            logo.style.width = "32px";
+            logo.style.height = "32px";
+            logo.style.margin = "0 auto";
+            logo.style.display = "block";
+        }
 
-        profileIcon.classList.add("scale-90");
-        toggleBtn.querySelector("i").setAttribute("data-feather", "chevron-right");
+        if (profileIcon) profileIcon.classList.add("scale-90");
 
-        // Tutup semua dropdown/submenu
+        try {
+            const iconEl = toggleBtn && toggleBtn.querySelector("i");
+            if (iconEl) iconEl.setAttribute("data-feather", "chevron-right");
+        } catch (e) { /* ignore */ }
+
+        // Tutup semua dropdown/submenu (safe)
         document.querySelectorAll("[data-collapse]").forEach(btn => {
             const target = document.getElementById(btn.dataset.collapse);
             const icon = btn.querySelector("i");
-            target.classList.add("hidden");
-            icon.classList.remove("rotate-90");
+            if (target) target.classList.add("hidden");
+            if (icon) icon.classList.remove("rotate-90");
         });
 
-        // Tutup documentsDropdown dan profileDropup jika sedang terbuka
-        documentDropdown.classList.add("hidden");
-        profileDropup.classList.add("hidden");
+        // Tutup documentsDropdown dan profileDropup jika ada (safe)
+        safeAddHidden(documentDropdown);
+        safeAddHidden(profileDropup);
+
+        mainWrapper.classList.remove("ml-64");
+        mainWrapper.classList.add("ml-32");
+        if (navbar) navbar.classList.add("px-24");
 
         feather.replace();
     }
-
 
     function expandSidebar() {
-        sidebar.classList.replace(collapsedWidth, expandedWidth);
+        if (sidebar.classList.contains(collapsedWidth)) {
+            sidebar.classList.replace(collapsedWidth, expandedWidth);
+        } else {
+            sidebar.classList.add(expandedWidth);
+        }
+
         sidebarTexts.forEach(t => t.classList.remove("hidden"));
 
-        logo.src = "/public/images/donna.png";
-        logo.style.width = "100%";
-        logo.style.height = "100%";
-        logo.style.margin = "0";
-        logo.style.display = "block";
+        if (logo && logo.dataset && logo.dataset.full) {
+            logo.src = logo.dataset.full;
+            logo.style.width = "150px";
+            logo.style.height = "auto";
+            logo.style.margin = "0";
+            logo.style.display = "block";
+        }
 
-        profileIcon.classList.remove("scale-90");
-        toggleBtn.querySelector("i").setAttribute("data-feather", "chevron-left");
+        if (profileIcon) profileIcon.classList.remove("scale-90");
+
+        try {
+            const iconEl = toggleBtn && toggleBtn.querySelector("i");
+            if (iconEl) iconEl.setAttribute("data-feather", "chevron-left");
+        } catch (e) { /* ignore */ }
+
+        mainWrapper.classList.remove("ml-32");
+        mainWrapper.classList.add("ml-64");
+        if (navbar) navbar.classList.remove("px-24");
+
         feather.replace();
     }
 
-    toggleBtn.addEventListener("click", () => {
-        if (sidebar.classList.contains(expandedWidth)) collapseSidebar();
-        else expandSidebar();
-    });
+    // event listeners (safe null-check)
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            if (sidebar.classList.contains(expandedWidth)) collapseSidebar();
+            else expandSidebar();
+        });
+    }
 
-    toggleExternal.addEventListener("click", expandSidebar);
+    if (toggleExternal) toggleExternal.addEventListener("click", expandSidebar);
 
-    document.getElementById("profileToggle").addEventListener("click", () => {
-        if (sidebar.classList.contains(collapsedWidth)) expandSidebar();
-        profileDropup.classList.toggle("hidden");
-    });
+    const profileToggle = document.getElementById("profileToggle");
+    if (profileToggle) {
+        profileToggle.addEventListener("click", () => {
+            if (sidebar.classList.contains(collapsedWidth)) expandSidebar();
+            safeToggle(profileDropup);
+        });
+    }
 
     document.querySelectorAll("[data-collapse]").forEach(btn => {
         const target = document.getElementById(btn.dataset.collapse);
@@ -75,14 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         btn.addEventListener("click", () => {
             if (sidebar.classList.contains(collapsedWidth)) expandSidebar();
-            target.classList.toggle("hidden");
-            icon.classList.toggle("rotate-90");
+            if (target) target.classList.toggle("hidden");
+            if (icon) icon.classList.toggle("rotate-90");
         });
     });
 });
 
-
-document.addEventListener("DOMContentLoaded", function() {
+// DataTables
+document.addEventListener("DOMContentLoaded", function () {
     const table = new simpleDatatables.DataTable("#documentTable", {
         searchable: true,
         fixedHeight: true,
