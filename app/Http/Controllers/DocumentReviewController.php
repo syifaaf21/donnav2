@@ -26,6 +26,7 @@ class DocumentReviewController extends Controller
         // ✅ Ambil semua document mappings dengan relasi yang dibutuhkan
         $documentMappings = DocumentMapping::with([
             'document',
+            'files',
             'partNumber.productModel',
             'user',
             'status'
@@ -66,6 +67,52 @@ class DocumentReviewController extends Controller
         ));
     }
 
+    public function liveSearch(Request $request)
+    {
+        $keyword = $request->keyword;
+
+        $documentMappings = DocumentMapping::with([
+            'document',
+            'partNumber.productModel',
+            'user',
+            'status'
+        ])
+            ->when($keyword, function ($query) use ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->whereHas('partNumber', function ($q2) use ($keyword) {
+                        $q2->where('part_number', 'like', "%{$keyword}%")
+                            ->orWhere('plant', 'like', "%{$keyword}%")
+                            ->orWhere('process', 'like', "%{$keyword}%");
+                    })
+                        ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })
+                        ->orWhereHas('document', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%")
+                                ->orWhere('document_number', 'like', "%{$keyword}%");
+                        })
+                        ->orWhereHas('status', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })
+                        ->orWhereHas('user', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })
+                        ->orWhere('notes', 'like', "%{$keyword}%");
+                });
+            })
+            ->get();
+
+        $groupedData = $documentMappings->groupBy(function ($item) {
+            $partNumber = $item->partNumber?->part_number ?? 'unknown';
+            $model = $item->partNumber?->productModel?->name ?? 'unknown';
+            $process = $item->document?->process ?? 'unknown';
+            return "{$partNumber}-{$model}-{$process}";
+        });
+
+        return view('contents.document-review.partials.table', compact('groupedData'))->render();
+    }
+
+
     private function getEnumValues($table, $column)
     {
         $type = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = '{$column}'")[0]->Type;
@@ -105,11 +152,10 @@ class DocumentReviewController extends Controller
     }
 
     // Tambahkan di DocumentReviewController
-public function show($id)
-{
-    $document = Document::with('childrenRecursive')->findOrFail($id);
+    public function show($id)
+    {
+        $document = Document::with('childrenRecursive')->findOrFail($id);
 
-    return view('contents.document-review.show', compact('document'));
-}
-
+        return view('contents.document-review.show', compact('document'));
+    }
 }

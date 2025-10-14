@@ -97,6 +97,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])
             ->name('getDataByPlant');
         Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
+        Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
+
         // Admin routes
         // Route::post('/store', [DocumentReviewController::class, 'storeReview'])->name('store');
         // Route::put('/update/{mapping}', [DocumentReviewController::class, 'updateReview'])->name('update');

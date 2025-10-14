@@ -1,7 +1,36 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Login</title>
+    {{-- ✅ Include Tailwind via Vite --}}
+    @vite('resources/css/app.css')
 
-@section('content')
-    <div class="container min-vh-100 overflow-hidden">
+    <!-- ✅ Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- ✅ Custom Style  -->
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    {{-- ✅ Feather Icons --}}
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- ✅ Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    {{-- ✅ Google Fonts --}}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+
+    @stack('styles')
+</head>
+<body>
+<div class="container min-vh-100 overflow-hidden">
         <div class="row justify-content-center align-items-center vh-100">
             <div class="col-md-6 col-lg-4">
                 <div class="login-card text-center">
@@ -54,3 +83,6 @@
             </div>
         </div>
     </div>
+
+</body>
+</html>

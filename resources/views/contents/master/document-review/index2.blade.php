@@ -119,7 +119,7 @@
                     {{-- Search Bar --}}
                     <div class="input-group mt-2 mt-md-0" style="width: 400px; max-width: 100%;">
                         <input type="text" name="search" form="filterForm" class="form-control form-control-sm"
-                            placeholder="Search by Part Number" value="{{ request('search') }}">
+                            placeholder="Search.." value="{{ request('search') }}">
                         <button class="btn btn-outline-secondary btn-sm" type="submit" form="filterForm" title="Search">
                             <i class="bi bi-search"></i>
                         </button>
