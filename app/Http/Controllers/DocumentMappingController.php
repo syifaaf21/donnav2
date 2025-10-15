@@ -46,10 +46,19 @@ class DocumentMappingController extends Controller
                 });
 
             // Search by part number (tetap)
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->whereHas('partNumber', function ($q) use ($search) {
-                    $q->where('part_number', 'like', "%{$search}%");
+            $search = trim($request->search);
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('document_number', 'like', "%{$search}%")
+                        ->orWhereHas('partNumber', function ($q2) use ($search) {
+                            $q2->where('part_number', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('document', function ($q2) use ($search) {
+                            $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]);
+                        })
+                        ->orWhereHas('department', function ($q2) use ($search) {
+                            $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]);
+                        });
                 });
             }
 
@@ -77,7 +86,6 @@ class DocumentMappingController extends Controller
             }
 
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
-
         }
 
         return view('contents.master.document-review.index', compact(

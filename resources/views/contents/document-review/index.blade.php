@@ -1,218 +1,463 @@
 @extends('layouts.app')
+
 @section('title', 'Document Review')
+
 @section('content')
+    <div class="p-6 bg-gray-100 min-h-screen space-y-6">
 
-    <div class="container-fluid">
-        {{-- Tabs per Plant --}}
-        <ul class="nav nav-tabs mb-3" id="plantTabs" role="tablist">
-            @foreach ($groupedByPlant as $plant => $documentsByPart)
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if ($loop->first) active @endif" id="tab-{{ $loop->index }}"
-                        data-bs-toggle="tab" data-bs-target="#plant-{{ $loop->index }}" type="button" role="tab">
-                        <i class="bi bi-building"></i> {{ $plant }}
-                    </button>
-                </li>
-            @endforeach
-        </ul>
+        <!-- Search + Filter bar -->
+        <div class="flex justify-end items-center mb-4 space-x-3">
+            <input type="text" id="live-search" placeholder="Search..."
+                class="border border-gray-300 rounded p-2 focus:outline-none focus:ring focus:border-blue-300 w-64" />
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="bi bi-funnel-fill mr-1"></i> Filter
+            </button>
+        </div>
 
-        <div class="tab-content" id="plantTabsContent">
-            @foreach ($groupedByPlant as $plant => $partGroups)
-                <div class="tab-pane fade @if ($loop->first) show active @endif row"
-                    id="plant-{{ $loop->index }}" role="tabpanel" style="height: 80vh;">
+        <!-- Table card -->
+        <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
+            <div id="search-results">
+                <!-- ✅ Tabs for each Plant -->
+                <ul class="nav nav-tabs" id="plantTabs" role="tablist">
+                    @foreach ($groupedByPlant as $plant => $groups)
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="tab-{{ Str::slug($plant) }}"
+                                data-bs-toggle="tab" data-bs-target="#content-{{ Str::slug($plant) }}" type="button"
+                                role="tab" aria-controls="content-{{ Str::slug($plant) }}"
+                                aria-selected="{{ $loop->first ? 'true' : 'false' }}">
+                                {{ ucwords($plant) }}
+                            </button>
+                        </li>
+                    @endforeach
+                </ul>
 
-                    {{-- Left Panel: Document Tree --}}
-                    <div class="col-md-3 border-end" style="max-height: 80vh; overflow-y: auto;">
-                        @foreach ($partGroups as $partNumber => $docs)
-                            <div class="mb-3">
-                                <button class="btn btn-sm btn-outline-secondary w-100 text-start" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapse-{{ Str::slug($plant . '-' . $partNumber) }}">
-                                    <i class="bi bi-box"></i> {{ $partNumber }}
-                                </button>
+                <div class="tab-content mt-3" id="plantTabsContent">
+                    @foreach ($groupedByPlant as $plant => $groups)
+                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                            id="content-{{ Str::slug($plant) }}" role="tabpanel"
+                            aria-labelledby="tab-{{ Str::slug($plant) }}">
+                            @include('contents.document-review.partials.table', ['groupedData' => $groups])
+                        </div>
+                    @endforeach
+                </div>
+            </div>
 
-                                <div class="collapse mt-2" id="collapse-{{ Str::slug($plant . '-' . $partNumber) }}">
-                                    <ul class="list-group list-group-flush">
-                                        {{-- @foreach ($docs->whereNull('document.parent_id') as $parent)
-                                            @include('contents.document-review.partials.tree-node', [
-                                                'mapping' => $parent,
-                                                'allDocuments' => $docs,
-                                                'level' => 1,
-                                            ])
-                                        @endforeach --}}
-                                    </ul>
-                                </div>
+        </div>
+
+    </div>
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-lg">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="GET" action="{{ route('document-review.index') }}">
+                    <div class="modal-body">
+                        <div class="row g-3">
+
+                            <!-- Plant -->
+                            <div class="col-md-4">
+                                <label for="plant" class="form-label">Plant</label>
+                                <select name="plant" id="plant" class="form-select select2">
+                                    <option value="">All Plants</option>
+                                    @foreach ($plants as $plant)
+                                        <option value="{{ $plant }}"
+                                            {{ request('plant') == $plant ? 'selected' : '' }}>
+                                            {{ ucwords($plant) }}</option>
+                                    @endforeach
+                                </select>
                             </div>
-                        @endforeach
+
+                            <!-- Department -->
+                            <div class="col-md-4">
+                                <label for="department" class="form-label">Department</label>
+                                <select name="department" id="department" class="form-select select2">
+                                    <option value="">All Departments</option>
+                                    @foreach ($departments as $dept)
+                                        <option value="{{ $dept->id }}"
+                                            {{ request('department') == $dept->id ? 'selected' : '' }}>
+                                            {{ $dept->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Document -->
+                            <div class="col-md-4">
+                                <label for="document_id" class="form-label">Document</label>
+                                <select name="document_id" id="document_id" class="form-select select2">
+                                    <option value="">All Documents</option>
+                                    @foreach ($documentsMaster as $doc)
+                                        <option value="{{ $doc->id }}"
+                                            {{ request('document_id') == $doc->id ? 'selected' : '' }}>
+                                            {{ $doc->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Part Number -->
+                            <div class="col-md-6">
+                                <label for="part_number" class="form-label">Part Number</label>
+                                <select name="part_number" id="part_number" class="form-select select2">
+                                    <option value="">Select Part Number</option>
+                                    {{-- Options will be loaded dynamically --}}
+                                </select>
+                            </div>
+
+                            <!-- Process -->
+                            <div class="col-md-6">
+                                <label for="process" class="form-label">Process</label>
+                                <select name="process" id="process" class="form-select select2">
+                                    <option value="">All Processes</option>
+                                    @foreach ($processes as $proc)
+                                        <option value="{{ $proc }}"
+                                            {{ request('process') == $proc ? 'selected' : '' }}>
+                                            {{ ucwords($proc) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                        </div>
                     </div>
 
-                    {{-- Right Panel: Preview & Info --}}
-                    <div class="col-md-9 d-flex flex-column">
-                        <div class="border rounded-3 shadow-sm bg-white flex-grow-1 d-flex flex-column">
-                            {{-- Bar atas --}}
-                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
-                                <div class="fw-semibold">
-                                    <i class="bi bi-eye me-2 text-primary"></i> File Preview:
-                                    <span class="docNameDisplay">–</span>
-                                </div>
-                                <div class="mt-1 d-flex gap-1">
-                                    {{-- Approve --}}
-                                    <button type="button"
-                                        class="btn btn-outline-success btn-sm btnTriggerApprove btnApprove"
-                                        data-bs-toggle="modal" data-bs-target="#approveModal" data-mapping-id=""
-                                        title="Approve Document">
-                                        <i class="bi bi-check2-circle"></i>
-                                    </button>
+                    <div class="modal-footer">
+                        <a href="{{ route('document-review.index') }}" class="btn btn-secondary">Clear</a>
+                        <button type="submit" class="btn btn-primary">Apply Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Modal for File Viewer -->
+    <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content d-flex flex-column" style="height: 100vh;">
+                <div class="modal-header justify-content-between">
+                    <h5 class="modal-title">File Preview</h5>
 
-                                    {{-- Reject --}}
-                                    <form action="#" method="POST" class="d-inline reject-form">
-                                        @csrf
-                                        <button type="submit" class="btn btn-outline-danger btn-sm btnReject"
-                                            data-mapping-id="" title="Reject Document">
-                                            <i class="bi bi-x-circle"></i>
-                                        </button>
-                                    </form>
+                    <div class="d-flex gap-2">
+                        @if (auth()->user() && auth()->user()->role && auth()->user()->role->name === 'Admin')
+                            <!-- Approve Button -->
+                            <form action="/approve-url" method="POST">
+                                @csrf
+                                <button type="button" class="btn btn-outline-success btn-sm open-approve-modal"
+                                    data-doc-id="{{ $mapping->id ?? '' }}" data-bs-toggle="modal"
+                                    data-bs-target="#approveModal">
+                                    <i class="bi bi-check-circle me-1"></i> Approve
+                                </button>
+                            </form>
 
-                                    {{-- Revise --}}
-                                    <button type="button" class="btn btn-outline-warning btn-sm btnTriggerRevise btnRevise"
-                                        data-bs-toggle="modal" data-bs-target="#reviseModal" data-mapping-id=""
-                                        title="Request Revision">
-                                        <i class="bi bi-arrow-clockwise"></i>
-                                    </button>
+                            <!-- Reject Button -->
+                            <form action="/reject-url" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                    onclick="return confirm('Reject this document?')">
+                                    <i class="bi bi-x-circle me-1"></i> Reject
+                                </button>
+                            </form>
+                        @endif
 
-                                </div>
-                                {{-- @include('contents.document-review.partials.modal-revise')
-                                @include('contents.document-review.partials.modal-approve') --}}
+                        <!-- Close Button -->
+                        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0 flex-grow-1">
+                    <iframe id="fileViewer" src="" frameborder="0" width="100%" height="100%"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+    <script>
+        // Capitalize words
+        function ucwords(str) {
+            return str.replace(/\b\w/g, function(char) {
+                return char.toUpperCase();
+            });
+        }
+
+        // Init Select2
+        $(document).ready(function() {
+            // Initialize select2 on modal selects
+            $('.select2').select2({
+                width: '100%',
+                placeholder: 'Select an option',
+                allowClear: true,
+                dropdownParent: $('#filterModal') // important for bootstrap modal
+            });
+
+            // Load part numbers and processes when plant changes
+            $('#plant').on('change', function() {
+                let selectedPlant = $(this).val();
+                let $partNumberSelect = $('#part_number');
+                let $processSelect = $('#process');
+
+                // Reset selects first
+                $partNumberSelect.empty().append('<option value="">Loading...</option>');
+                $processSelect.empty().append('<option value="">Loading...</option>');
+
+                // Destroy select2 before update
+                if ($.fn.select2 && $partNumberSelect.hasClass("select2-hidden-accessible")) {
+                    $partNumberSelect.select2('destroy');
+                }
+                if ($.fn.select2 && $processSelect.hasClass("select2-hidden-accessible")) {
+                    $processSelect.select2('destroy');
+                }
+
+                if (selectedPlant) {
+                    $.ajax({
+                        url: '{{ route('document-review.getDataByPlant') }}',
+                        type: 'GET',
+                        data: {
+                            plant: selectedPlant
+                        },
+                        success: function(response) {
+                            $partNumberSelect.empty().append(
+                                '<option value="">Select Part Number</option>');
+                            if (response.part_numbers.length > 0) {
+                                response.part_numbers.forEach(function(item) {
+                                    $partNumberSelect.append(
+                                        `<option value="${item.id}">${item.part_number}</option>`
+                                    );
+                                });
+                            } else {
+                                $partNumberSelect.append(
+                                    '<option disabled>No part numbers found</option>');
+                            }
+
+                            $processSelect.empty().append(
+                                '<option value="">Select Process</option>');
+                            if (response.processes.length > 0) {
+                                response.processes.forEach(function(proc) {
+                                    $processSelect.append(
+                                        `<option value="${proc}">${ucwords(proc)}</option>`
+                                    );
+                                });
+                            } else {
+                                $processSelect.append(
+                                    '<option disabled>No processes found</option>');
+                            }
+
+                            $partNumberSelect.select2({
+                                width: '100%',
+                                placeholder: 'Select an option',
+                                allowClear: true,
+                                dropdownParent: $('#filterModal')
+                            });
+                            $processSelect.select2({
+                                width: '100%',
+                                placeholder: 'Select an option',
+                                allowClear: true,
+                                dropdownParent: $('#filterModal')
+                            });
+                        },
+                        error: function() {
+                            alert('Failed to fetch data by plant.');
+                            $partNumberSelect.empty().append(
+                                '<option value="">Select Part Number</option>');
+                            $processSelect.empty().append(
+                                '<option value="">Select Process</option>');
+                        }
+                    });
+                } else {
+                    // Reset selects if no plant selected
+                    $partNumberSelect.empty().append('<option value="">Select Part Number</option>');
+                    $processSelect.empty().append('<option value="">Select Process</option>');
+
+                    $partNumberSelect.select2({
+                        width: '100%',
+                        placeholder: 'Select an option',
+                        allowClear: true,
+                        dropdownParent: $('#filterModal')
+                    });
+                    $processSelect.select2({
+                        width: '100%',
+                        placeholder: 'Select an option',
+                        allowClear: true,
+                        dropdownParent: $('#filterModal')
+                    });
+                }
+            });
+        });
+
+        // Di luar $(document).ready juga boleh
+        $(document).on('click', '.toggle-detail', function() {
+            const target = $(this).data('target');
+            const escapedTarget = target.replace(/ /g, '\\ ');
+            $(escapedTarget).toggleClass('hidden');
+        });
+
+
+        // 1) global setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        // 2) search handler (tetap pakai yang sudah ada)
+        $('#live-search').on('keyup', function() {
+            let keyword = $(this).val();
+
+            $.ajax({
+                url: '{{ route('document-review.liveSearch') }}',
+                type: 'GET',
+                data: {
+                    keyword: keyword
+                },
+                success: function(data) {
+                    $('#search-results').html(data);
+
+                    // reinit Alpine/feather jika perlu (lihat diskusi sebelumnya)
+                    if (typeof feather !== 'undefined') feather.replace();
+                    if (typeof Alpine !== 'undefined') {
+                        document.querySelectorAll('[x-data]').forEach(el => {
+                            Alpine.destroyTree(el);
+                            Alpine.initTree(el);
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.error('AJAX error', xhr);
+                    // tampilkan pesan error + server response (berguna debugging)
+                    $('#search-results').html('<p class="text-red-500">Search failed.</p>');
+                }
+            });
+        });
+
+
+        $(document).on('click', '.view-file-btn', function() {
+            const fileUrl = $(this).data('file');
+            $('#fileViewer').attr('src', fileUrl);
+        });
+
+        // Kosongkan iframe saat modal ditutup (optional)
+        document.getElementById('viewFileModal').addEventListener('hidden.bs.modal', function() {
+            const iframe = document.getElementById('fileViewer');
+            if (iframe) iframe.src = '';
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const reviseModal = document.getElementById('reviseModal');
+            const docNameDisplay = reviseModal.querySelector('.docNameDisplay');
+            const filesContainer = reviseModal.querySelector('.existing-files-container');
+            const reviseForm = document.getElementById('reviseForm');
+
+            // Saat tombol revisi diklik
+            document.querySelectorAll('.revise-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const docId = this.dataset.docId;
+                    const docName = this.dataset.docName || '-';
+                    const docNumber = this.dataset.docNumber || '-';
+                    const files = JSON.parse(this.dataset.files || '[]');
+
+                    // Update judul modal
+                    docNameDisplay.textContent = `${docName} (${docNumber})`;
+
+                    // Update form action
+                    reviseForm.action = `/document-review/${docId}/revise`;
+
+                    // Isi daftar file
+                    if (files.length > 0) {
+                        filesContainer.innerHTML = `
+                    <label class="form-label fw-semibold">Existing Files:</label>
+                    <ul class="list-group mb-2">
+                        ${files.map(f => `
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <span class="text-truncate" style="max-width: 300px;">${f.name}</span>
+                                                    <a href="${f.url}" class="btn btn-outline-success btn-sm" download>
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                </li>
+                                            `).join('')}
+                    </ul>
+                    <div class="mt-3">
+                        <label class="form-label">Upload Revisi File</label>
+                        <input type="file" name="new_files[]" multiple class="form-control border-1 shadow-sm">
+                    </div>
+                `;
+                    } else {
+                        filesContainer.innerHTML =
+                            `<p class="text-muted">No files available for revision.</p>`;
+                    }
+                });
+            });
+        });
+
+        // ✅ Approve Modal Handler
+        $(document).on('click', '.open-approve-modal', function() {
+            const docId = $(this).data('doc-id');
+            const actionUrl = `/master/document-review/${docId}/approve-with-dates`;
+            $('#approveForm').attr('action', actionUrl);
+        });
+
+        // ✅ Validasi tanggal sebelum submit
+        $('#approveForm').on('submit', function(e) {
+            const reminderDate = new Date($('#reminder_date').val());
+            const deadlineDate = new Date($('#deadline').val());
+            let valid = true;
+
+            $('#reminderError').hide();
+            $('#deadlineError').hide();
+
+            if (reminderDate > deadlineDate) {
+                $('#reminderError').show();
+                $('#deadlineError').show();
+                valid = false;
+            }
+
+            if (!valid) e.preventDefault();
+        });
+    </script>
+    <!-- ✅ Modal Approve (Global) -->
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-light text-dark">
+                    <h5 class="modal-title d-flex align-items-center" id="approveModalLabel">
+                        <i class="bi bi-check-circle-fill me-2"></i> Approve Document
+                    </h5>
+                </div>
+
+                <form id="approveForm" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        {{-- Reminder Date --}}
+                        <div class="mb-3">
+                            <label for="reminder_date" class="form-label fw-semibold">
+                                Reminder Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" name="reminder_date" id="reminder_date" class="form-control" required>
+                            <div id="reminderError" class="text-danger small mt-1" style="display:none;">
+                                Reminder Date must be earlier than or equal to Deadline.
                             </div>
+                        </div>
 
-                            {{-- Detail Info --}}
-                            <div class="detailInfo px-3 py-2 border-bottom" style="max-height: 250px; overflow-y: auto;">
-                                <p><strong>Document Number:</strong> <span class="detailDocumentNumber">–</span></p>
-                                <p><strong>Department:</strong> <span class="detailDepartment">–</span></p>
-                                <p><strong>Status:</strong> <span class="detailStatus">–</span></p>
-                                <p><strong>Last Update:</strong> <span class="detailUpdatedAt">–</span></p>
-                                <p><strong>Updated By:</strong> <span class="detailUpdatedBy">–</span></p>
-                                <p><strong>Product:</strong> <span class="detailProduct">–</span></p>
-                                <p><strong>Model:</strong> <span class="detailModel">–</span></p>
-                                <p><strong>Process:</strong> <span class="detailProcess">–</span></p>
-                                <p><strong>Notes:</strong> <span class="detailNotes">–</span></p>
-                            </div>
-
-                            {{-- Preview File --}}
-                            <div class="previewContainer flex-grow-1 d-flex align-items-center justify-content-center p-3">
-                                <p class="text-muted">Select a file to preview</p>
+                        {{-- Deadline --}}
+                        <div class="mb-3">
+                            <label for="deadline" class="form-label fw-semibold">
+                                Deadline <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" name="deadline" id="deadline" class="form-control" required>
+                            <div id="deadlineError" class="text-danger small mt-1" style="display:none;">
+                                Deadline must be later than or equal to Reminder Date.
                             </div>
                         </div>
                     </div>
 
-                </div>
-            @endforeach
+                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check2-circle me-1"></i> Approve
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-
-@endsection
-
-@push('scripts')
-    <x-sweetAlert-confirm />
-    <script>
-        document.querySelectorAll('.view-file-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const container = btn.closest('.tab-pane');
-
-                // Update tampilan dokumen (judul, detail, dll)
-                container.querySelector('.docNameDisplay').textContent = btn.dataset.documentName || '-';
-                container.querySelector('.detailDocumentNumber').textContent = btn.dataset.documentNumber ||
-                    '-';
-                container.querySelector('.detailDepartment').textContent = btn.dataset.department || '-';
-                container.querySelector('.detailStatus').textContent = btn.dataset.status || '-';
-                container.querySelector('.detailUpdatedAt').textContent = btn.dataset.updatedAt || '-';
-                container.querySelector('.detailUpdatedBy').textContent = btn.dataset.user || '-';
-                container.querySelector('.detailProduct').textContent = btn.dataset.product || '-';
-                container.querySelector('.detailModel').textContent = btn.dataset.model || '-';
-                container.querySelector('.detailProcess').textContent = btn.dataset.process || '-';
-                container.querySelector('.detailNotes').textContent = btn.dataset.notes || '-';
-
-                const fileUrl = btn.dataset.file;
-                const previewContainer = container.querySelector('.previewContainer');
-                if (fileUrl) {
-                    previewContainer.innerHTML =
-                        `<iframe src="${fileUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
-                } else {
-                    previewContainer.innerHTML = `<p class="text-muted">No file available for preview</p>`;
-                }
-
-                // Simpan mapping ID ke semua tombol aksi di panel ini
-                const mappingId = btn.dataset.mappingId;
-                container.querySelectorAll('.btnApprove, .btnReject, .btnRevise').forEach(actionBtn => {
-                    actionBtn.dataset.mappingId = mappingId;
-                });
-
-                // Simpan juga ke form action reject
-                const rejectForm = container.querySelector('.reject-form');
-                if (rejectForm) {
-                    rejectForm.action = `/document-review/reject/${mappingId}`;
-                }
-
-                // Set form action approve
-                const approveForm = document.querySelector('#approveModal form');
-                if (approveForm) {
-                    approveForm.action = `/document-review/${mappingId}/approve`;
-                }
-
-                // Set form revise
-                const reviseForm = document.querySelector('#reviseModal form');
-                if (reviseForm) {
-                    reviseForm.action = `/document-review/revise/${mappingId}`;
-                }
-
-                // =============================
-                // 🔁 Generate file list for revise modal
-                // =============================
-                const reviseFilesContainer = document.querySelector(
-                    '#reviseModal .existing-files-container');
-                const filesRaw = btn.dataset.files;
-
-                if (reviseFilesContainer) {
-                    try {
-                        const files = filesRaw ? JSON.parse(filesRaw) : [];
-
-                        if (files.length > 0) {
-                            let html = '';
-                            files.forEach(file => {
-                                const fileUrl = file.file_path ? `/storage/${file.file_path}` : '#';
-                                html += `
-                            <div class="mb-4 border rounded p-3 bg-light">
-                                <label class="form-label fw-medium">Current File:</label>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <a href="${fileUrl}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                        <i class="bi bi-file-earmark-text me-1"></i>
-                                        ${file.name}
-                                    </a>
-                                </div>
-                                <div class="mt-2">
-                                    <label class="form-label">Upload Revised File</label>
-                                    <input type="file" name="files[${file.id}]" class="form-control border-1 shadow-sm">
-                                </div>
-                            </div>
-                        `;
-                            });
-                            reviseFilesContainer.innerHTML = html;
-                        } else {
-                            reviseFilesContainer.innerHTML =
-                                `<p class="text-muted">No files available for revision.</p>`;
-                        }
-                    } catch (e) {
-                        console.error('Invalid JSON in data-files:', e);
-                        reviseFilesContainer.innerHTML =
-                            `<p class="text-danger">Failed to load file list.</p>`;
-                    }
-                }
-
-                // Update nama dokumen di header modal revise
-                const docNameDisplay = document.querySelector('#reviseModal .docNameDisplay');
-                if (docNameDisplay) {
-                    docNameDisplay.textContent = btn.dataset.documentName || '';
-                }
-            });
-        });
-    </script>
 @endpush

@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
-
+    <title>Login</title>
     {{-- ✅ Include Tailwind via Vite --}}
     @vite('resources/css/app.css')
 
@@ -14,7 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- ✅ Custom Style  -->
-    <link href="{{ asset('css/style2.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
 
     {{-- ✅ Feather Icons --}}
     <script src="https://unpkg.com/feather-icons"></script>
@@ -25,19 +23,17 @@
     {{-- ✅ Google Fonts --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-    {{-- Data Tables --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
 
     @stack('styles')
 </head>
-
 <body>
-
-    <div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+<div class="container min-vh-100 overflow-hidden">
+        <div class="row justify-content-center align-items-center vh-100">
+            <div class="col-md-6 col-lg-4">
+                <div class="login-card text-center">
 
             <!-- Logo -->
             <div class="flex justify-center mb-6">
@@ -84,6 +80,6 @@
             </form>
         </div>
     </div>
-</body>
 
+</body>
 </html>
