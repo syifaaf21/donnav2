@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentMapping;
 use App\Models\PartNumber;
 use App\Models\ProductModel;
+use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -63,54 +64,54 @@ class DocumentReviewController extends Controller
     }
 
     public function liveSearch(Request $request)
-{
-    $keyword = $request->keyword;
+    {
+        $keyword = $request->keyword;
 
-    $documentMappings = DocumentMapping::with([
-        'document',
-        'partNumber.product',
-        'partNumber.productModel',
-        'user',
-        'status',
-        'files'
-    ])
-        ->whereHas('document', fn($q) => $q->where('type', 'review')) // pastikan hanya review
-        ->when($keyword, function ($query) use ($keyword) {
-            $query->where(function ($q) use ($keyword) {
-                $q->whereHas('partNumber', function ($q2) use ($keyword) {
-                    $q2->where('part_number', 'like', "%{$keyword}%")
-                        ->orWhere('plant', 'like', "%{$keyword}%")
-                        ->orWhere('process', 'like', "%{$keyword}%");
-                })
-                ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
-                    $q2->where('name', 'like', "%{$keyword}%");
-                })
-                ->orWhereHas('document', function ($q2) use ($keyword) {
-                    $q2->where('name', 'like', "%{$keyword}%");
-                })
-                ->orWhereHas('status', function ($q2) use ($keyword) {
-                    $q2->where('name', 'like', "%{$keyword}%");
-                })
-                ->orWhereHas('user', function ($q2) use ($keyword) {
-                    $q2->where('name', 'like', "%{$keyword}%");
-                })
-                ->orWhere('notes', 'like', "%{$keyword}%")
-                ->orWhere('document_number', 'like', "%{$keyword}%");
-            });
-        })
-        ->get();
+        $documentMappings = DocumentMapping::with([
+            'document',
+            'partNumber.product',
+            'partNumber.productModel',
+            'user',
+            'status',
+            'files'
+        ])
+            ->whereHas('document', fn($q) => $q->where('type', 'review')) // pastikan hanya review
+            ->when($keyword, function ($query) use ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->whereHas('partNumber', function ($q2) use ($keyword) {
+                        $q2->where('part_number', 'like', "%{$keyword}%")
+                            ->orWhere('plant', 'like', "%{$keyword}%")
+                            ->orWhere('process', 'like', "%{$keyword}%");
+                    })
+                        ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })
+                        ->orWhereHas('document', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })
+                        ->orWhereHas('status', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })
+                        ->orWhereHas('user', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })
+                        ->orWhere('notes', 'like', "%{$keyword}%")
+                        ->orWhere('document_number', 'like', "%{$keyword}%");
+                });
+            })
+            ->get();
 
-    // group hasil by part-model-process (sama format seperti index partial expects)
-    $groupedData = $documentMappings->groupBy(function ($item) {
-        $partNumber = $item->partNumber?->part_number ?? 'unknown';
-        $model = $item->partNumber?->productModel?->name ?? 'unknown';
-        $process = $item->partNumber?->process ?? 'unknown';
-        return "{$partNumber}-{$model}-{$process}";
-    });
+        // group hasil by part-model-process (sama format seperti index partial expects)
+        $groupedData = $documentMappings->groupBy(function ($item) {
+            $partNumber = $item->partNumber?->part_number ?? 'unknown';
+            $model = $item->partNumber?->productModel?->name ?? 'unknown';
+            $process = $item->partNumber?->process ?? 'unknown';
+            return "{$partNumber}-{$model}-{$process}";
+        });
 
-    // render partial yang hanya menerima $groupedData
-    return view('contents.document-review.partials.table', compact('groupedData'))->render();
-}
+        // render partial yang hanya menerima $groupedData
+        return view('contents.document-review.partials.table', compact('groupedData'))->render();
+    }
 
     private function getEnumValues($table, $column)
     {
@@ -156,63 +157,61 @@ class DocumentReviewController extends Controller
     }
 
     public function revise(Request $request, $id)
-{
-    $doc = DocumentMapping::findOrFail($id);
+    {
+        $doc = DocumentMapping::findOrFail($id);
 
-    $request->validate([
-        'notes' => 'required|string|max:255',
-        'new_files.*' => 'file|max:5120' // 5MB
-    ]);
+        $request->validate([
+            'notes' => 'required|string|max:255',
+            'new_files.*' => 'file|max:5120' // 5MB
+        ]);
 
-    // Simpan notes revisi
-    $doc->notes = $request->notes;
-    $doc->save();
+        // Simpan notes revisi
+        $doc->notes = $request->notes;
+        $doc->save();
 
-    // Upload file baru
-    if ($request->hasFile('new_files')) {
-        foreach ($request->file('new_files') as $file) {
-            $path = $file->store('documents', 'public');
-            $doc->files()->create([
-                'file_name' => $file->getClientOriginalName(),
-                'file_path' => $path,
-            ]);
+        // Upload file baru
+        if ($request->hasFile('new_files')) {
+            foreach ($request->file('new_files') as $file) {
+                $path = $file->store('documents', 'public');
+                $doc->files()->create([
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                ]);
+            }
         }
+
+        return redirect()->back()->with('success', 'Revisi dokumen berhasil disimpan!');
     }
+    public function approveWithDates(Request $request, $id)
+    {
+        // ✅ Validasi input
+        $validated = $request->validate([
+            'reminder_date' => 'required|date',
+            'deadline' => 'required|date|after_or_equal:reminder_date',
+        ]);
 
-    return redirect()->back()->with('success', 'Revisi dokumen berhasil disimpan!');
-}
-public function approveWithDates(Request $request, $id)
-{
-    // ✅ Validasi input
-    $validated = $request->validate([
-        'reminder_date' => 'required|date',
-        'deadline' => 'required|date|after_or_equal:reminder_date',
-    ]);
+        // ✅ Ambil data mapping berdasarkan ID
+        $mapping = DocumentMapping::findOrFail($id);
 
-    // ✅ Ambil data mapping berdasarkan ID
-    $mapping = DocumentMapping::findOrFail($id);
+        // ✅ Update status dan tanggal
+        $mapping->update([
+            'status_id'     => Status::where('name', 'Approved')->first()->id ?? $mapping->status_id,
+            'reminder_date' => $validated['reminder_date'],
+            'deadline'      => $validated['deadline'],
+            'updated_at'    => now(),
+            'user_id'       => auth()->id(), // siapa yang approve
+        ]);
 
-    // ✅ Update status dan tanggal
-    $mapping->update([
-        'status_id'     => Status::where('name', 'Approved')->first()->id ?? $mapping->status_id,
-        'reminder_date' => $validated['reminder_date'],
-        'deadline'      => $validated['deadline'],
-        'updated_at'    => now(),
-        'user_id'       => auth()->id(), // siapa yang approve
-    ]);
+        // ✅ (Opsional) Catat log activity
+        // ActivityLog::create([
+        //     'user_id' => auth()->id(),
+        //     'action' => 'Approved document',
+        //     'document_mapping_id' => $mapping->id,
+        //     'details' => json_encode($validated),
+        // ]);
 
-    // ✅ (Opsional) Catat log activity
-    // ActivityLog::create([
-    //     'user_id' => auth()->id(),
-    //     'action' => 'Approved document',
-    //     'document_mapping_id' => $mapping->id,
-    //     'details' => json_encode($validated),
-    // ]);
-
-    // ✅ Redirect dengan pesan sukses
-    return redirect()->route('document-review.index')
-        ->with('success', "Document '{$mapping->document_number}' approved successfully!");
-}
-
-
+        // ✅ Redirect dengan pesan sukses
+        return redirect()->route('document-review.index')
+            ->with('success', "Document '{$mapping->document_number}' approved successfully!");
+    }
 }

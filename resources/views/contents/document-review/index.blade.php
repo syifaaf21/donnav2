@@ -331,8 +331,26 @@
 
         $(document).on('click', '.view-file-btn', function() {
             const fileUrl = $(this).data('file');
+            const status = $(this).data('status');
+            const docId = $(this).data('doc-id');
+
             $('#fileViewer').attr('src', fileUrl);
+
+            // Atur tombol berdasarkan status
+            const isActionable = status === 'need review';
+
+            // Update tombol Approve (di dalam modal)
+            const $approveBtn = $('#viewFileModal .open-approve-modal');
+            const $rejectBtn = $('#viewFileModal form:has(button[type="submit"]) button[type="submit"]');
+
+            // Set data-doc-id juga kalau diperlukan
+            $approveBtn.attr('data-doc-id', docId);
+
+            // Enable/Disable
+            $approveBtn.prop('disabled', !isActionable);
+            $rejectBtn.prop('disabled', !isActionable);
         });
+
 
         // Kosongkan iframe saat modal ditutup (optional)
         document.getElementById('viewFileModal').addEventListener('hidden.bs.modal', function() {
@@ -366,13 +384,13 @@
                     <label class="form-label fw-semibold">Existing Files:</label>
                     <ul class="list-group mb-2">
                         ${files.map(f => `
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span class="text-truncate" style="max-width: 300px;">${f.name}</span>
-                                                    <a href="${f.url}" class="btn btn-outline-success btn-sm" download>
-                                                        <i class="bi bi-download"></i>
-                                                    </a>
-                                                </li>
-                                            `).join('')}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span class="text-truncate" style="max-width: 300px;">${f.name}</span>
+                                                        <a href="${f.url}" class="btn btn-outline-success btn-sm" download>
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                    </li>
+                                                `).join('')}
                     </ul>
                     <div class="mt-3">
                         <label class="form-label">Upload Revisi File</label>

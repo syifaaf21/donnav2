@@ -21,11 +21,13 @@
 
                 <td class="px-4 py-2 text-center space-x-1">
                     <!-- 👁 Toggle Detail -->
-                    <button type="button"
-                        class="toggle-detail bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded text-xs"
-                        data-target="#detail-{{ $index }}" title="View Details">
-                        <i class="bi bi-eye"></i>
-                    </button>
+                    @if ($group->count() > 0)
+                        <button type="button"
+                            class="toggle-detail bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded text-xs"
+                            data-target="#detail-{{ $index }}" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    @endif
                 </td>
             </tr>
 
@@ -104,7 +106,10 @@
                                                                         class="btn btn-outline-primary btn-sm view-file-btn"
                                                                         data-bs-toggle="modal"
                                                                         data-bs-target="#viewFileModal"
-                                                                        data-file="{{ $viewerUrl }}" title="View">
+                                                                        data-file="{{ $viewerUrl }}"
+                                                                        data-status="{{ strtolower($doc->status?->name) }}"
+                                                                        data-doc-id="{{ $doc->id }}"
+                                                                        title="View">
                                                                         <i class="bi bi-eye"></i>
                                                                     </button>
                                                                 @else
@@ -160,7 +165,7 @@
                                 <div class="modal-content border-0 rounded-4 shadow-lg">
                                     <div class="modal-header bg-light text-dark rounded-top-4">
                                         <h5 class="modal-title fw-semibold">
-                                            <i class="bi bi-arrow-clockwise me-2"></i> Revisi Dokumen
+                                            <i class="bi bi-arrow-clockwise me-2"></i> Edit Document
                                             <span class="docNameDisplay text-primary"></span>
                                         </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -176,7 +181,7 @@
                                             <label class="form-label">Notes</label>
                                             <input type="text" name="notes"
                                                 class="form-control border-1 shadow-sm"
-                                                placeholder="Catatan revisi untuk file ini..." required>
+                                                placeholder="Change of document." required>
                                         </div>
                                     </div>
 
@@ -186,7 +191,7 @@
                                             data-bs-dismiss="modal">
                                             <i class="bi bi-x-circle me-1"></i> Close
                                         </button>
-                                        <button type="submit" class="btn btn-warning px-4">
+                                        <button type="submit" class="btn btn-outline-warning px-4">
                                             <i class="bi bi-save2 me-1"></i> Submit Revisi
                                         </button>
                                     </div>
