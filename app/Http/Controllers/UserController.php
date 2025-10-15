@@ -15,15 +15,24 @@ class UserController extends Controller
         $search = $request->input('search');
         $query = User::with(['role', 'department']);
 
-        if($search){
-            $query->where(function ($q) use ($search){
+        if ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('npk', 'like', "%{$search}%");
+                    ->orWhere('npk', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('role', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('department', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
+
         $users = $query->paginate(10)->appends($request->query());
         $roles = Role::all();
         $departments = Department::all();
+
         return view('contents.master.user', compact('users', 'roles', 'departments'));
     }
 

@@ -2,54 +2,31 @@
 @section('title', 'Document Control')
 @section('content')
     <div class="container mx-auto my-2">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            @php
-                $stats = [
-                    ['title' => 'Total Documents', 'count' => $documentMappings->count(), 'color' => 'blue'],
-                    [
-                        'title' => 'Active',
-                        'count' => $documentMappings->where('status.name', 'Active')->count(),
-                        'color' => 'green',
-                    ],
-                    [
-                        'title' => 'Obsolete',
-                        'count' => $documentMappings->where('status.name', 'Obsolete')->count(),
-                        'color' => 'gray',
-                    ],
-                ];
-            @endphp
-
-            @foreach ($stats as $stat)
-                <div class="bg-white shadow-md rounded-lg p-6 text-center">
-                    <h6 class="font-semibold text-medium mb-2 text-gray-700">{{ $stat['title'] }}</h6>
-                    <span class="text-2xl font-bold text-{{ $stat['color'] }}-500">
-                        {{ $stat['count'] }}
-                    </span>
-                </div>
-            @endforeach
+        <div class="flex justify-end p-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal">
+                <i class="bi bi-plus-lg"></i> Add Document
+            </button>
+            @include('contents.master.document-control.partials.modal-add')
         </div>
-
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="flex justify-between items-center p-6 bg-gray-50 border-b">
-                <h5 class="font-bold text-lg text-gray-700">Document Control List</h5>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#addDocumentControlModal">
-                    <i class="bi bi-plus-lg"></i> Add Document
-                </button>
-                @include('contents.master.document-control.partials.modal-add')
-            </div>
-
             <!-- Search Bar -->
-            <div class="flex justify-end px-6 py-2 bg-white">
-                <form method="GET" id="filterForm" class="flex space-x-2 w-full max-w-md">
-                    <input type="text" name="search" class="form-control form-control-sm flex-1"
-                        placeholder="Search Document" value="{{ request('search') }}">
-                    <button class="btn btn-outline-secondary btn-sm" type="submit" title="Search">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearSearch" title="Clear Search">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
+            <div class="d-flex justify-content-end m-3">
+                <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
+                    <div class="relative max-w-md w-full">
+                        <input type="text" name="search" id="searchInput"
+                            class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Search..." value="{{ request('search') }}">
+                        <button
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                            type="submit" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <button type="button"
+                            class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                            id="clearSearch" title="Clear">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
                 </form>
             </div>
 

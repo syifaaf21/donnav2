@@ -14,18 +14,28 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $query = Document::whereNull('parent_id');
+
+        $query = \App\Models\Document::with('childrenRecursive'); // eager load recursive children
 
         if ($search) {
             $query->where('name', 'like', "%{$search}%");
         }
 
-        // Pastikan menggunakan paginate, bukan get()
-        $documents = $query->paginate(10)->appends($request->query());
+        // Ambil hanya root nodes (parent_id null) untuk memulai tree
+        $documents = Document::with('childrenRecursive')  // definisikan di model
+            ->when($request->search, function ($q, $search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%")
+                    ->orWhereHas('childrenRecursive', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%")
+                            ->orWhere('type', 'like', "%{$search}%");
+                    });
+            })
+            ->whereNull('parent_id')
+            ->get();
 
         return view('contents.master.hierarchy.index', compact('documents'));
     }
-
 
     public function show(Request $request, $id)
     {

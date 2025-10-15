@@ -1,5 +1,5 @@
 <!-- Navbar -->
-<header class="flex items-center justify-between px-16 py-3">
+<header class="flex items-center justify-between px-24 py-3">
     <div class="flex items-center gap-3">
         <button id="openSidebarBtn" class="md:hidden">
             <i data-feather="menu"></i>

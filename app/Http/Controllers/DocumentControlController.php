@@ -20,14 +20,28 @@ class DocumentControlController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
+        // Ambil data utama
         $documentsMapping = $query->get();
 
-        // Group by Department Name
+        // Hitung statistik berdasarkan relasi status
+        $totalDocuments = $documentsMapping->count();
+        $activeDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Active')->count();
+        $obsoleteDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Obsolete')->count();
+
+        // Group untuk accordion per department
         $groupedDocuments = $documentsMapping->groupBy(fn($d) => $d->department->name ?? 'Unknown Department');
 
+        // Dropdown filter department
         $departments = Department::all();
 
-        return view('contents.document-control.index', compact('documentsMapping', 'groupedDocuments', 'departments'));
+        return view('contents.document-control.index', compact(
+            'documentsMapping',
+            'groupedDocuments',
+            'departments',
+            'totalDocuments',
+            'activeDocuments',
+            'obsoleteDocuments'
+        ));
     }
 
     public function revise(Request $request, DocumentMapping $mapping)

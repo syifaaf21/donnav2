@@ -88,7 +88,7 @@ class DocumentMappingController extends Controller
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
         }
 
-        return view('contents.master.document-review.index2', compact(
+        return view('contents.master.document-review.index', compact(
             'groupedByPlant',
             'documentsMaster',
             'partNumbers',
