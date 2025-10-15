@@ -6,6 +6,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartNumberController;
 use App\Http\Controllers\UserController;
 use App\Models\Document;
@@ -49,6 +50,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
 
     Route::prefix('master')->name('master.')->middleware('auth')->group(function () {
         // Part Number Management Routes
@@ -100,6 +104,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])
     ->name('approveWithDates');
+    Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
+
 
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
 

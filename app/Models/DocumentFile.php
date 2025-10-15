@@ -9,7 +9,11 @@ class DocumentFile extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['document_mapping_id', 'file_path'];
+    protected $fillable = [
+    'document_mapping_id',
+    'file_path',
+    'original_name',
+];
 
      public function mapping()
     {

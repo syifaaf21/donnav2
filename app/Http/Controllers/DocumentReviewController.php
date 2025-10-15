@@ -9,59 +9,67 @@ use App\Models\PartNumber;
 use App\Models\ProductModel;
 use App\Models\Status;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentReviewController extends Controller
 {
     public function index(Request $request)
-    {
-        $plants = $this->getEnumValues('part_numbers', 'plant');
-        $processes = $this->getEnumValues('part_numbers', 'process');
+{
+    $plants = $this->getEnumValues('part_numbers', 'plant');
+    $processes = $this->getEnumValues('part_numbers', 'process');
 
-        $documentsMaster = Document::with('childrenRecursive')
-            ->where('type', 'review')
-            ->get();
+    $documentsMaster = Document::with('childrenRecursive')
+        ->where('type', 'review')
+        ->get();
 
-        $departments = Department::all();
-        $partNumbers = PartNumber::all();
-        $models = ProductModel::all();
+    $departments = Department::all();
+    $partNumbers = PartNumber::all();
+    $models = ProductModel::all();
 
-        // ✅ Ambil hanya document mappings yang tipe dokumennya "review"
-        $documentMappings = DocumentMapping::with([
-            'document',
-            'files',
-            'partNumber.product',
-            'partNumber.productModel',
-            'user',
-            'status',
-            'department',
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->get();
+    $documentMappings = DocumentMapping::with([
+        'document',
+        'files',
+        'partNumber.product',
+        'partNumber.productModel',
+        'user',
+        'status',
+        'department',
+    ])
+    ->whereHas('document', fn($q) => $q->where('type', 'review'))
+    ->get();
 
-        // ✅ Kelompokkan data berdasarkan plant, lalu kombinasi part-model-process
-        $groupedByPlant = $documentMappings
-            ->groupBy(fn($item) => $item->partNumber?->plant ?? 'Unknown')
-            ->map(function ($items) {
-                return $items->groupBy(function ($item) {
-                    $partNumber = $item->partNumber?->part_number ?? 'unknown';
-                    $model = $item->partNumber?->productModel?->name ?? 'unknown';
-                    $process = $item->partNumber?->process ?? 'unknown';
-                    return "{$partNumber}-{$model}-{$process}";
-                });
+    // Tambahkan properti url ke setiap file
+    $documentMappings->each(function ($mapping) {
+        $mapping->files->transform(function ($file) {
+            $file->url = asset('storage/' . $file->file_path);
+            return $file;
+        });
+    });
+
+    $groupedByPlant = $documentMappings
+        ->groupBy(fn($item) => $item->partNumber?->plant ?? 'Unknown')
+        ->map(function ($items) {
+            return $items->groupBy(function ($item) {
+                $partNumber = $item->partNumber?->part_number ?? 'unknown';
+                $model = $item->partNumber?->productModel?->name ?? 'unknown';
+                $process = $item->partNumber?->process ?? 'unknown';
+                return "{$partNumber}-{$model}-{$process}";
             });
+        });
 
-        return view('contents.document-review.index', compact(
-            'plants',
-            'processes',
-            'departments',
-            'partNumbers',
-            'models',
-            'documentsMaster',
-            'groupedByPlant'
-        ));
-    }
+    return view('contents.document-review.index', compact(
+        'plants',
+        'processes',
+        'departments',
+        'partNumbers',
+        'models',
+        'documentsMaster',
+        'groupedByPlant'
+    ));
+}
 
     public function liveSearch(Request $request)
     {
@@ -156,32 +164,68 @@ class DocumentReviewController extends Controller
         return view('contents.document-review.show', compact('document'));
     }
 
-    public function revise(Request $request, $id)
-    {
-        $doc = DocumentMapping::findOrFail($id);
+    public function revise(Request $request, DocumentMapping $mapping)
+{
+    if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
+        abort(403);
+    }
 
-        $request->validate([
-            'notes' => 'required|string|max:255',
-            'new_files.*' => 'file|max:5120' // 5MB
-        ]);
+    $request->validate([
+        'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
+        'notes' => 'required|string|max:500',
+    ]);
 
-        // Simpan notes revisi
-        $doc->notes = $request->notes;
-        $doc->save();
+    $mapping->load('document');
 
-        // Upload file baru
-        if ($request->hasFile('new_files')) {
-            foreach ($request->file('new_files') as $file) {
-                $path = $file->store('documents', 'public');
-                $doc->files()->create([
-                    'file_name' => $file->getClientOriginalName(),
-                    'file_path' => $path,
-                ]);
-            }
+    // Jika file ada yg diupload, proses simpan file baru dan hapus file lama
+    $files = $request->file('files', []);
+
+    foreach ($files as $fileId => $uploadedFile) {
+        if (!$uploadedFile) continue;
+
+        $oldFile = $mapping->files()->where('id', $fileId)->first();
+        if (!$oldFile) continue;
+
+        // Hapus file lama jika ada
+        if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
+            Storage::disk('public')->delete($oldFile->file_path);
         }
 
-        return redirect()->back()->with('success', 'Revisi dokumen berhasil disimpan!');
+        // Simpan file baru
+        $folder = $mapping->document && $mapping->document->type === 'control'
+            ? 'document-controls'
+            : 'document-reviews';
+
+        $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
+        $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+        $oldFile->update([
+            'file_path' => $newPath,
+            'original_name' => $uploadedFile->getClientOriginalName(),
+            'file_type' => $uploadedFile->getClientMimeType(),
+            'uploaded_by' => Auth::id(),
+        ]);
     }
+
+    // Update notes
+    $mapping->notes = $request->notes;
+
+    // Kalau user bukan admin dan statusnya bukan approved, ubah jadi Need Review
+    if (Auth::user()->role->name !== 'Admin') {
+        $approvedStatus = Status::where('name', 'Approved')->first();
+        $needReviewStatus = Status::where('name', 'Need Review')->first();
+
+        if ($mapping->status_id != $approvedStatus->id) {
+            $mapping->status_id = $needReviewStatus->id;
+        }
+    }
+
+    $mapping->user_id = Auth::id();
+    $mapping->save();
+
+    return redirect()->back()->with('success', 'Document revised successfully!');
+}
+
     public function approveWithDates(Request $request, $id)
     {
         // ✅ Validasi input
@@ -214,4 +258,19 @@ class DocumentReviewController extends Controller
         return redirect()->route('document-review.index')
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
+
+    public function reject(Request $request, $id)
+{
+    $mapping = DocumentMapping::findOrFail($id);
+
+    $mapping->update([
+        'status_id' => Status::where('name', 'Rejected')->first()->id ?? $mapping->status_id,
+        'updated_at' => now(),
+        'user_id' => auth()->id(),
+    ]);
+
+    return redirect()->route('document-review.index')
+        ->with('success', "Document '{$mapping->document_number}' has been rejected.");
+}
+
 }

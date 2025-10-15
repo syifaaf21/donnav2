@@ -137,68 +137,27 @@
                                                 @endforelse
                                             </ul>
                                         </div>
-                                        <!-- ✏️ Revisi -->
-                                        <button type="button"
-                                            class="btn btn-warning hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs revise-btn"
-                                            title="Revisi" data-bs-toggle="modal" data-bs-target="#reviseModal"
-                                            data-doc-id="{{ $doc->id }}"
-                                            data-doc-name="{{ $doc->document?->name }}"
-                                            data-doc-number="{{ $doc->document_number }}"
-                                            data-files='@json(
-                                                $doc->files->map(fn($f) => [
-                                                        'name' => $f->file_name ?? basename($f->file_path),
-                                                        'url' => asset('storage/' . $f->file_path),
-                                                    ]))'>
-                                            <i class="bi bi-pencil-square"></i>
+                                        @php
+                                            $fileList = $doc->files->map(function ($f) {
+                                                return [
+                                                    'id' => $f->id,
+                                                    'name' => $f->file_name ?? basename($f->file_path),
+                                                    'url' => asset('storage/' . $f->file_path),
+                                                ];
+                                            });
+                                        @endphp
+
+                                        <button type="button" class="btn btn-outline-warning btn-sm edit-doc-btn px-2 py-1 rounded text-xs"
+                                            data-doc-id="{{ $doc->id }}" data-notes="{{ $doc->notes }}"
+                                            data-route="{{ route('document-review.revise', $doc->id) }}"
+                                            data-files='@json($fileList)' title="Edit Document">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                    {{-- ✅ Modal Revise Document --}}
-                    <div class="modal fade" id="reviseModal" tabindex="-1" aria-labelledby="reviseModalLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <form method="POST" action="" enctype="multipart/form-data" id="reviseForm">
-                                @csrf
-                                <div class="modal-content border-0 rounded-4 shadow-lg">
-                                    <div class="modal-header bg-light text-dark rounded-top-4">
-                                        <h5 class="modal-title fw-semibold">
-                                            <i class="bi bi-arrow-clockwise me-2"></i> Edit Document
-                                            <span class="docNameDisplay text-primary"></span>
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-
-                                    <div class="modal-body p-4"
-                                        style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
-                                        {{-- List Files --}}
-                                        <div class="existing-files-container mb-3"></div>
-
-                                        {{-- Notes revisi --}}
-                                        <div>
-                                            <label class="form-label">Notes</label>
-                                            <input type="text" name="notes"
-                                                class="form-control border-1 shadow-sm"
-                                                placeholder="Change of document." required>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                                        <button type="button" class="btn btn-outline-secondary px-4"
-                                            data-bs-dismiss="modal">
-                                            <i class="bi bi-x-circle me-1"></i> Close
-                                        </button>
-                                        <button type="submit" class="btn btn-outline-warning px-4">
-                                            <i class="bi bi-save2 me-1"></i> Submit Revisi
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
                 </td>
             </tr>
             @empty
@@ -210,13 +169,3 @@
             @endforelse
         </tbody>
     </table>
-
-    {{-- toggle-detail JS (pastikan hanya dipanggil sekali di index) --}}
-    <script>
-        document.querySelectorAll('.toggle-detail').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const target = document.querySelector(this.dataset.target);
-                if (target) target.classList.toggle('hidden');
-            });
-        });
-    </script>
