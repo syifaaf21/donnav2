@@ -64,7 +64,25 @@
                                         {{ $doc->updated_at ? $doc->updated_at->format('Y-m-d') : '-' }}
                                     </td>
                                     <td class="px-2 py-1">{{ $doc->user?->name ?? '-' }}</td>
-                                    <td class="px-2 py-1">{{ $doc->status?->name ?? '-' }}</td>
+                                    @php
+                                        $statusName = strtolower($doc->status?->name ?? '');
+                                        $statusClass = match ($statusName) {
+                                            'approved'
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                                            'rejected'
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                                            'need review'
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
+                                            default
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
+                                        };
+                                    @endphp
+
+                                    <td class="px-2 py-1">
+                                        <span class="{{ $statusClass }}">
+                                            {{ ucfirst($statusName ?: '-') }}
+                                        </span>
+                                    </td>
                                     <td class="px-2 py-1 text-center">
                                         <div class="dropdown d-inline">
                                             <button type="button"
@@ -146,13 +164,21 @@
                                                 ];
                                             });
                                         @endphp
+                                        @php
+                                            $statusName = strtolower($doc->status?->name ?? '');
+                                            $canRevise = in_array($statusName, ['approved', 'rejected']); // hanya approved & rejected yang boleh revisi
+                                        @endphp
 
-                                        <button type="button" class="btn btn-outline-warning btn-sm edit-doc-btn px-2 py-1 rounded text-xs"
+                                        <button type="button"
+                                            class="btn btn-outline-warning btn-sm edit-doc-btn px-2 py-1 rounded text-xs"
                                             data-doc-id="{{ $doc->id }}" data-notes="{{ $doc->notes }}"
                                             data-route="{{ route('document-review.revise', $doc->id) }}"
-                                            data-files='@json($fileList)' title="Edit Document">
+                                            data-files='@json($fileList)' title="Edit Document"
+                                            @if (!in_array(strtolower($doc->status?->name ?? ''), ['approved', 'rejected'])) disabled @endif>
                                             <i class="bi bi-pencil"></i>
                                         </button>
+
+
                                     </td>
                                 </tr>
                             @endforeach

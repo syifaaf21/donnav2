@@ -88,4 +88,6 @@ class PartNumberController extends Controller
 
         return redirect()->back()->with('success', 'Part Number deleted successfully.');
     }
+
+
 }

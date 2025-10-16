@@ -14,7 +14,7 @@ class DocumentUpdatedNotification extends Notification
     protected $updatedBy;
     // protected $context; // misalnya 'Review' atau 'Control'
 
-    public function __construct($documentNumber, $updatedBy = 'Dokumen')
+    public function __construct($documentNumber, $updatedBy)
     {
         $this->documentNumber = $documentNumber;
         $this->updatedBy = $updatedBy;

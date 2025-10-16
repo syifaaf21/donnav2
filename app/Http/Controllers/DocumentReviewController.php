@@ -8,68 +8,72 @@ use App\Models\DocumentMapping;
 use App\Models\PartNumber;
 use App\Models\ProductModel;
 use App\Models\Status;
+use App\Models\User;
+use App\Notifications\DocumentRevisedNotification;
+use App\Notifications\DocumentStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 
 class DocumentReviewController extends Controller
 {
     public function index(Request $request)
-{
-    $plants = $this->getEnumValues('part_numbers', 'plant');
-    $processes = $this->getEnumValues('part_numbers', 'process');
+    {
+        $plants = $this->getEnumValues('part_numbers', 'plant');
+        $processes = $this->getEnumValues('part_numbers', 'process');
 
-    $documentsMaster = Document::with('childrenRecursive')
-        ->where('type', 'review')
-        ->get();
+        $documentsMaster = Document::with('childrenRecursive')
+            ->where('type', 'review')
+            ->get();
 
-    $departments = Department::all();
-    $partNumbers = PartNumber::all();
-    $models = ProductModel::all();
+        $departments = Department::all();
+        $partNumbers = PartNumber::all();
+        $models = ProductModel::all();
 
-    $documentMappings = DocumentMapping::with([
-        'document',
-        'files',
-        'partNumber.product',
-        'partNumber.productModel',
-        'user',
-        'status',
-        'department',
-    ])
-    ->whereHas('document', fn($q) => $q->where('type', 'review'))
-    ->get();
+        $documentMappings = DocumentMapping::with([
+            'document',
+            'files',
+            'partNumber.product',
+            'partNumber.productModel',
+            'user',
+            'status',
+            'department',
+        ])
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->get();
 
-    // Tambahkan properti url ke setiap file
-    $documentMappings->each(function ($mapping) {
-        $mapping->files->transform(function ($file) {
-            $file->url = asset('storage/' . $file->file_path);
-            return $file;
-        });
-    });
-
-    $groupedByPlant = $documentMappings
-        ->groupBy(fn($item) => $item->partNumber?->plant ?? 'Unknown')
-        ->map(function ($items) {
-            return $items->groupBy(function ($item) {
-                $partNumber = $item->partNumber?->part_number ?? 'unknown';
-                $model = $item->partNumber?->productModel?->name ?? 'unknown';
-                $process = $item->partNumber?->process ?? 'unknown';
-                return "{$partNumber}-{$model}-{$process}";
+        // Tambahkan properti url ke setiap file
+        $documentMappings->each(function ($mapping) {
+            $mapping->files->transform(function ($file) {
+                $file->url = asset('storage/' . $file->file_path);
+                return $file;
             });
         });
 
-    return view('contents.document-review.index', compact(
-        'plants',
-        'processes',
-        'departments',
-        'partNumbers',
-        'models',
-        'documentsMaster',
-        'groupedByPlant'
-    ));
-}
+        $groupedByPlant = $documentMappings
+            ->groupBy(fn($item) => $item->partNumber?->plant ?? 'Unknown')
+            ->map(function ($items) {
+                return $items->groupBy(function ($item) {
+                    $partNumber = $item->partNumber?->part_number ?? 'unknown';
+                    $model = $item->partNumber?->productModel?->name ?? 'unknown';
+                    $process = $item->partNumber?->process ?? 'unknown';
+                    return "{$partNumber}-{$model}-{$process}";
+                });
+            });
+
+        return view('contents.document-review.index', compact(
+            'plants',
+            'processes',
+            'departments',
+            'partNumbers',
+            'models',
+            'documentsMaster',
+            'groupedByPlant'
+        ));
+    }
 
     public function liveSearch(Request $request)
     {
@@ -164,87 +168,104 @@ class DocumentReviewController extends Controller
         return view('contents.document-review.show', compact('document'));
     }
 
-    public function revise(Request $request, DocumentMapping $mapping)
-{
-    if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
-        abort(403);
-    }
-
-    $request->validate([
-        'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
-        'notes' => 'required|string|max:500',
-    ]);
-
-    $mapping->load('document');
-
-    // Jika file ada yg diupload, proses simpan file baru dan hapus file lama
-    $files = $request->file('files', []);
-
-    foreach ($files as $fileId => $uploadedFile) {
-        if (!$uploadedFile) continue;
-
-        $oldFile = $mapping->files()->where('id', $fileId)->first();
-        if (!$oldFile) continue;
-
-        // Hapus file lama jika ada
-        if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
-            Storage::disk('public')->delete($oldFile->file_path);
+    public function revise(Request $request, $id)
+    {
+        $mapping = DocumentMapping::with('document')->findOrFail($id);
+        if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
+            abort(403);
         }
 
-        // Simpan file baru
-        $folder = $mapping->document && $mapping->document->type === 'control'
-            ? 'document-controls'
-            : 'document-reviews';
-
-        $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
-        $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
-
-        $oldFile->update([
-            'file_path' => $newPath,
-            'original_name' => $uploadedFile->getClientOriginalName(),
-            'file_type' => $uploadedFile->getClientMimeType(),
-            'uploaded_by' => Auth::id(),
+        $request->validate([
+            'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
+            'notes' => 'required|string|max:500',
         ]);
-    }
 
-    // Update notes
-    $mapping->notes = $request->notes;
+        $mapping->load('document');
 
-    // Kalau user bukan admin dan statusnya bukan approved, ubah jadi Need Review
-    if (Auth::user()->role->name !== 'Admin') {
-        $approvedStatus = Status::where('name', 'Approved')->first();
-        $needReviewStatus = Status::where('name', 'Need Review')->first();
+        // Jika file ada yg diupload, proses simpan file baru dan hapus file lama
+        $files = $request->file('files', []);
 
-        if ($mapping->status_id != $approvedStatus->id) {
-            $mapping->status_id = $needReviewStatus->id;
+        foreach ($files as $fileId => $uploadedFile) {
+            if (!$uploadedFile) continue;
+
+            $oldFile = $mapping->files()->where('id', $fileId)->first();
+            if (!$oldFile) continue;
+
+            // Hapus file lama jika ada
+            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
+                Storage::disk('public')->delete($oldFile->file_path);
+            }
+
+            // Simpan file baru
+            $folder = $mapping->document && $mapping->document->type === 'control'
+                ? 'document-controls'
+                : 'document-reviews';
+
+            $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
+            $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+            $oldFile->update([
+                'file_path' => $newPath,
+                'original_name' => $uploadedFile->getClientOriginalName(),
+                'file_type' => $uploadedFile->getClientMimeType(),
+                'uploaded_by' => Auth::id(),
+            ]);
         }
+
+        // Update notes
+        $mapping->notes = $request->notes;
+
+        // Setelah update file dan notes
+        // $needReviewStatus = Status::where('name', 'Need Review')->first();
+        // $mapping->status_id = $needReviewStatus->id;
+        $needReviewStatus = Status::where('name', 'Need Review')->first();
+        if (!$needReviewStatus) {
+            throw new \Exception("Status 'Need Review' tidak ditemukan.");
+        }
+        $mapping->status_id = $needReviewStatus->id;
+
+
+        $mapping->user_id = Auth::id();
+        if (!$mapping->document_id) {
+            throw new \Exception("Missing document_id on this document mapping.");
+        }
+
+        $mapping->save();
+
+        $allUsers = \App\Models\User::all();
+        Notification::send($allUsers, new DocumentRevisedNotification($mapping->document_number, auth()->user()->name));
+
+
+        return redirect()->back()->with('success', 'Document revised successfully!');
     }
-
-    $mapping->user_id = Auth::id();
-    $mapping->save();
-
-    return redirect()->back()->with('success', 'Document revised successfully!');
-}
 
     public function approveWithDates(Request $request, $id)
     {
-        // ✅ Validasi input
+        // Validasi input
         $validated = $request->validate([
             'reminder_date' => 'required|date',
             'deadline' => 'required|date|after_or_equal:reminder_date',
         ]);
 
-        // ✅ Ambil data mapping berdasarkan ID
         $mapping = DocumentMapping::findOrFail($id);
 
-        // ✅ Update status dan tanggal
+        $approvedStatus = Status::where('name', 'Approved')->first();
+
         $mapping->update([
-            'status_id'     => Status::where('name', 'Approved')->first()->id ?? $mapping->status_id,
+            'status_id'     => $approvedStatus->id ?? $mapping->status_id,
             'reminder_date' => $validated['reminder_date'],
             'deadline'      => $validated['deadline'],
             'updated_at'    => now(),
-            'user_id'       => auth()->id(), // siapa yang approve
+            'user_id'       => auth()->id(),
         ]);
+
+        // Kirim notifikasi ke semua user
+        $allUsers = User::all();
+        Notification::send($allUsers, new DocumentStatusNotification(
+            $mapping->document_number,
+            'Approved',
+            auth()->user()->name
+        ));
 
         // ✅ (Opsional) Catat log activity
         // ActivityLog::create([
@@ -254,23 +275,33 @@ class DocumentReviewController extends Controller
         //     'details' => json_encode($validated),
         // ]);
 
-        // ✅ Redirect dengan pesan sukses
         return redirect()->route('document-review.index')
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
 
+
+
     public function reject(Request $request, $id)
-{
-    $mapping = DocumentMapping::findOrFail($id);
+    {
+        $mapping = DocumentMapping::findOrFail($id);
 
-    $mapping->update([
-        'status_id' => Status::where('name', 'Rejected')->first()->id ?? $mapping->status_id,
-        'updated_at' => now(),
-        'user_id' => auth()->id(),
-    ]);
+        $rejectedStatus = Status::where('name', 'Rejected')->first();
 
-    return redirect()->route('document-review.index')
-        ->with('success', "Document '{$mapping->document_number}' has been rejected.");
-}
+        $mapping->update([
+            'status_id' => $rejectedStatus->id ?? $mapping->status_id,
+            'updated_at' => now(),
+            'user_id' => auth()->id(),
+        ]);
 
+        // Kirim notifikasi ke semua user
+        $allUsers = User::all();
+        Notification::send($allUsers, new DocumentStatusNotification(
+            $mapping->document_number,
+            'Rejected',
+            auth()->user()->name
+        ));
+
+        return redirect()->route('document-review.index')
+            ->with('success', "Document '{$mapping->document_number}' has been rejected.");
+    }
 }

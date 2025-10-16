@@ -131,4 +131,11 @@ Route::middleware(['auth'])->group(function () {
     // Route::post('/bulk-destroy', [DocumentControlController::class, 'bulkDestroy'])
     //     ->name('bulkDestroy');
 
+    // AJAX for Select2 (Product & Model inside Part Number)
+Route::get('/ajax/products', [PartNumberController::class, 'ajaxProductIndex']);
+Route::post('/ajax/products', [PartNumberController::class, 'ajaxProductStore']);
+
+Route::get('/ajax/models', [PartNumberController::class, 'ajaxModelIndex']);
+Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
+
 });

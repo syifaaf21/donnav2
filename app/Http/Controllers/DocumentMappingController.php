@@ -141,6 +141,7 @@ class DocumentMappingController extends Controller
                 $path = $file->storeAs('document-reviews', $filename, 'public');
 
                 $mapping->files()->create([
+                    'document_id' => $mapping->document_id,
                     'file_path' => $path,
                     'original_name' => $file->getClientOriginalName(),
                     'file_type' => $file->getClientMimeType(),

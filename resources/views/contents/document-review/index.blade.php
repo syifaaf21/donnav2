@@ -169,11 +169,10 @@
             </div>
         </div>
     </div>
-@endsection
-@push('scripts')
     @include('contents.document-review.partials.modal-approve')
     @include('contents.document-review.partials.modal-edit')
-
+@endsection
+@push('scripts')
     <script>
         // Capitalize words
         function ucwords(str) {
@@ -404,33 +403,57 @@
             if (iframe) iframe.src = '';
         });
 
-        document.querySelectorAll('.edit-doc-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            const dataRoute = button.getAttribute('data-route');
-            const dataFiles = JSON.parse(button.getAttribute('data-files'));
-            const dataNotes = button.getAttribute('data-notes');
+        document.addEventListener('DOMContentLoaded', function () {
+    const reviseModalEl = document.getElementById('reviseModal');
+    const reviseForm = document.getElementById('reviseForm');
+    const fileContainer = document.querySelector('.existing-files-container');
 
-            // set action form di modal revise
-            document.getElementById('reviseForm').action = dataRoute;
-            document.querySelector('input[name="notes"]').value = dataNotes;
+    // Buat instance modal sekali
+    const reviseModalInstance = new bootstrap.Modal(reviseModalEl);
 
-            // generate input file untuk setiap file lama
-            const container = document.querySelector('.existing-files-container');
-            if (dataFiles.length === 0) {
-                container.innerHTML = '<p class="text-muted">No files available for revision.</p>';
+    // Bind tombol edit document
+    document.querySelectorAll('.edit-doc-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const route = button.getAttribute('data-route');
+            const files = JSON.parse(button.getAttribute('data-files'));
+            const notes = button.getAttribute('data-notes') || '';
+
+            // Set action form dan nilai input notes
+            reviseForm.setAttribute('action', route);
+            reviseForm.querySelector('input[name="notes"]').value = notes;
+
+            // Isi daftar file
+            if (files.length > 0) {
+                let html = '';
+                files.forEach(file => {
+                    html += `
+                        <div class="mb-2">
+                            <label class="form-label">Revisi: ${file.name}</label>
+                            <input type="file" name="files[${file.id}]" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                        </div>
+                    `;
+                });
+                fileContainer.innerHTML = html;
             } else {
-                container.innerHTML = dataFiles.map(file => `
-                    <div class="mb-3">
-                        <label for="file-${file.id}" class="form-label">Replace file: ${file.name}</label>
-                        <input type="file" name="files[${file.id}]" id="file-${file.id}" class="form-control" />
-                    </div>
-                `).join('');
+                fileContainer.innerHTML = '<p class="text-muted">No files available for revision.</p>';
             }
 
-            // buka modal (Bootstrap)
-            const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
-            reviseModal.show();
+            // Tampilkan modal
+            reviseModalInstance.show();
         });
     });
+
+    // Bersihkan backdrop jika modal sudah tertutup (mengatasi backdrop hitam stuck)
+    reviseModalEl.addEventListener('hidden.bs.modal', function () {
+        // Pastikan kelas modal-open dan style overflow hilang
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        // Hapus backdrop jika ada
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+        // Blur fokus
+        if (document.activeElement) document.activeElement.blur();
+    });
+});
     </script>
 @endpush

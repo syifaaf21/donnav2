@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\DocumentMapping;
 use App\Models\Status;
+use App\Models\User;
+use App\Notifications\DocumentStatusNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
+
 
 class DocumentControlController extends Controller
 {
@@ -109,7 +113,6 @@ class DocumentControlController extends Controller
 
     public function approve(DocumentMapping $mapping)
     {
-        // hanya admin yang bisa approve
         if (Auth::user()->role->name != 'Admin') {
             abort(403, 'Only admin can approve documents.');
         }
@@ -121,12 +124,19 @@ class DocumentControlController extends Controller
             'user_id' => Auth::id(),
         ]);
 
+        // Notifikasi ke semua user bahwa dokumen di-approve
+        $allUsers = User::all();
+        Notification::send($allUsers, new DocumentStatusNotification(
+            $mapping->document->name,
+            'approved',
+            Auth::user()->name
+        ));
+
         return back()->with('success', 'Document approved successfully.');
     }
 
     public function reject(DocumentMapping $mapping)
     {
-        // hanya admin yang bisa reject
         if (Auth::user()->role->name != 'Admin') {
             abort(403, 'Only admin can reject documents.');
         }
@@ -137,6 +147,14 @@ class DocumentControlController extends Controller
             'status_id' => $statusRejected->id,
             'user_id' => Auth::id(),
         ]);
+
+        // Notifikasi ke semua user bahwa dokumen di-reject
+        $allUsers = User::all();
+        Notification::send($allUsers, new DocumentStatusNotification(
+            $mapping->document->name,
+            'rejected',
+            Auth::user()->name
+        ));
 
         return back()->with('success', 'Document rejected successfully.');
     }
