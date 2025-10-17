@@ -9,6 +9,10 @@ class Product extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'name',
+    ];
+
     protected $table = 'products'; // sesuaikan kalau nama tabel beda
 
     public function partNumber()

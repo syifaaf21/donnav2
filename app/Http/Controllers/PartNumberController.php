@@ -37,8 +37,8 @@ class PartNumberController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'part_number' => 'required|string|max:255|unique:part_numbers,part_number',
-            'product_id' => 'required|exists:products,id',
-            'model_id' => 'required|exists:models,id',
+            'product_id' => 'required|string|max:255',
+            'model_id' => 'required|string|max:255',
             'process' => 'required|in:injection,painting,assembling body,die casting,machining,assembling unit,electric',
             'plant' => 'required|in:body,unit,electric'
         ]);
@@ -47,13 +47,27 @@ class PartNumberController extends Controller
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput()
-                ->with('_form', 'add'); // flag untuk modal tambah tetap terbuka
+                ->with('_form', 'add');
         }
 
-        PartNumber::create($request->only('part_number', 'product_id', 'model_id', 'process', 'plant'));
+        // Cek atau buat product
+        $product = Product::firstOrCreate(['name' => $request->product_id]);
+
+        // Cek atau buat model
+        $model = ProductModel::firstOrCreate(['name' => $request->model_id]);
+
+        // Simpan Part Number
+        PartNumber::create([
+            'part_number' => $request->part_number,
+            'product_id' => $product->id,
+            'model_id' => $model->id,
+            'process' => $request->process,
+            'plant' => $request->plant
+        ]);
 
         return redirect()->back()->with('success', 'Part Number added successfully.');
     }
+
 
     public function update(Request $request, PartNumber $partNumber)
     {
@@ -88,6 +102,4 @@ class PartNumberController extends Controller
 
         return redirect()->back()->with('success', 'Part Number deleted successfully.');
     }
-
-
 }

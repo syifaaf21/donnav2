@@ -8,10 +8,7 @@
     <td class="px-4 py-2">
         <div class="flex items-center" style="margin-left: {{ $level * 20 }}px">
             @if ($document->children->isNotEmpty())
-                <button
-                    type="button"
-                    class="toggle-children mr-1"
-                    data-target="child-of-{{ $document->id }}">
+                <button type="button" class="toggle-children mr-1" data-target="child-of-{{ $document->id }}">
                     <i data-feather="chevron-right" class="w-4 h-4 transition-transform"></i>
                 </button>
             @else
@@ -36,21 +33,16 @@
     {{-- Actions --}}
     <td class="px-4 py-2">
         <div class="flex gap-2">
-            <button type="button"
-                    class="text-blue-500 hover:text-blue-700"
-                    data-bs-toggle="modal"
-                    data-bs-target="#editDocumentModal-{{ $document->id }}">
+            <button type="button" class="text-blue-500 hover:text-blue-700" data-bs-toggle="modal"
+                data-bs-target="#editDocumentModal-{{ $document->id }}">
                 <i data-feather="edit-2" class="w-4 h-4"></i>
             </button>
 
-            <form method="POST"
-                  action="{{ route('master.hierarchy.destroy', $document->id) }}"
-                  class="inline delete-form">
+            <form method="POST" action="{{ route('master.hierarchy.destroy', $document->id) }}"
+                class="inline delete-form">
                 @csrf
                 @method('DELETE')
-                <button type="submit"
-                        class="text-red-500 hover:text-red-700"
-                        onclick="return confirm('Are you sure?')">
+                <button type="submit" class="text-red-500 hover:text-red-700">
                     <i data-feather="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>

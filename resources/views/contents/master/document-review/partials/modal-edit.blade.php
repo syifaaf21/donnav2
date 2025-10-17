@@ -23,13 +23,11 @@
                         {{-- Document Name --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Document Name <span class="text-danger">*</span></label>
-                            <select name="document_id" class="form-select border-1 shadow-sm" required>
-                                @foreach ($documentsMaster as $doc)
-                                    <option value="{{ $doc->id }}"
-                                        @if ($mapping->document_id == $doc->id) selected @endif>
-                                        {{ $doc->name }}
-                                    </option>
-                                @endforeach
+                            <select name="document_id" id="editDocumentSelect{{ $mapping->id }}" class="form-select"
+                                required>
+                                <option value="{{ $mapping->document->id }}" selected>
+                                    {{ $mapping->document->name }}
+                                </option>
                             </select>
                             <div class="invalid-feedback">
                                 Document Name is required.
@@ -50,15 +48,13 @@
                         {{-- Part Number --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Part Number <span class="text-danger">*</span></label>
-                            <select id="editPartNumberSelect{{ $mapping->id }}" name="part_number_id"
-                                class="form-select border-1 shadow-sm" required>
-                                @foreach ($partNumbers as $part)
-                                    <option value="{{ $part->id }}" data-plant="{{ $part->plant }}"
-                                        @if ($mapping->part_number_id == $part->id) selected @endif>
-                                        {{ $part->part_number }}
-                                    </option>
-                                @endforeach
+                            <select name="part_number_id" id="editPartNumberSelect{{ $mapping->id }}"
+                                class="form-select" required>
+                                <option value="{{ $mapping->partNumber->id }}" selected>
+                                    {{ $mapping->partNumber->part_number }}
+                                </option>
                             </select>
+
                             <div class="invalid-feedback">
                                 Part Number is required.
                             </div>
@@ -68,37 +64,16 @@
                         {{-- Department --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
-                            <select name="department_id" class="form-select border-1 shadow-sm" required>
-                                <option value="">-- Select Department --</option>
-                                @foreach ($departments as $dept)
-                                    <option value="{{ $dept->id }}"
-                                        @if ($mapping->department_id == $dept->id) selected @endif>
-                                        {{ $dept->name }}
-                                    </option>
-                                @endforeach
+                            <select name="department_id" id="editDepartmentSelect{{ $mapping->id }}"
+                                class="form-select" required>
+                                <option value="{{ $mapping->department->id }}" selected>
+                                    {{ $mapping->department->name }}
+                                </option>
                             </select>
                             <div class="invalid-feedback">
                                 Department is required.
                             </div>
                         </div>
-
-                        {{-- Reminder Date --}}
-                        {{-- <div class="col-md-6">
-                            <label class="form-label fw-medium">Reminder Date</label>
-                            <input type="date" name="reminder_date" class="form-control border-1 shadow-sm"
-                                value="{{ $mapping->reminder_date?->format('Y-m-d') }}"
-                                @if ($mapping->status->name != 'Approved') readonly @endif>
-                        </div> --}}
-
-                        {{-- Deadline --}}
-                        {{-- <div class="col-md-6">
-                            <label class="form-label fw-medium">Deadline</label>
-                            <input type="date" name="deadline" class="form-control border-1 shadow-sm"
-                                value="{{ $mapping->deadline?->format('Y-m-d') }}"
-                                @if ($mapping->status->name != 'Approved') readonly @endif>
-                        </div> --}}
-
-
                     </div>
                 </div>
 
@@ -116,3 +91,60 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        @foreach ($documentMappings as $mapping)
+            // Document Select
+            new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
+                create: false,
+                preload: true,
+                load: function(query, callback) {
+                    fetch(`/api/documents?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            callback(data.map(item => ({
+                                value: item.id,
+                                text: item.text
+                            })));
+                        })
+                        .catch(() => callback());
+                }
+            });
+
+            // Part Number Select
+            new TomSelect('#editPartNumberSelect{{ $mapping->id }}', {
+                create: false,
+                preload: true,
+                load: function(query, callback) {
+                    fetch(`/api/part-numbers?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            callback(data.map(item => ({
+                                value: item.id,
+                                text: item.text
+                            })));
+                        })
+                        .catch(() => callback());
+                }
+            });
+
+            // Department Select
+            new TomSelect('#editDepartmentSelect{{ $mapping->id }}', {
+                create: false,
+                preload: true,
+                load: function(query, callback) {
+                    fetch(`/api/departments?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            callback(data.map(item => ({
+                                value: item.id,
+                                text: item.text
+                            })));
+                        })
+                        .catch(() => callback());
+                }
+            });
+        @endforeach
+    });
+</script>

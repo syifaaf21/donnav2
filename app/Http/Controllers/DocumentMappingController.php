@@ -89,13 +89,20 @@ class DocumentMappingController extends Controller
 
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
         }
+        
+        $documentMappings = collect();
+
+        foreach ($groupedByPlant as $plantMappings) {
+            $documentMappings = $documentMappings->merge($plantMappings);
+        }
 
         return view('contents.master.document-review.index', compact(
             'groupedByPlant',
             'documentsMaster',
             'partNumbers',
             'statuses',
-            'departments'
+            'departments',
+            'documentMappings'
         ));
     }
 

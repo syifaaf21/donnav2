@@ -19,14 +19,12 @@
                     </li>
                 </ol>
             </nav>
-            {{-- Tombol Add Part Number --}}
-            <button
-                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold btn btn-primary rounded-md shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                data-bs-toggle="modal" data-bs-target="#createPartNumberModal">
+            {{-- Tombol Add User --}}
+            <button class="... btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
                 <i class="bi bi-plus-circle"></i> Add User
             </button>
-        </div>
 
+        </div>
 
         <div class="card shadow-sm border-0">
             <div class="card-body">
@@ -67,7 +65,8 @@
                             <tbody>
                                 @forelse ($users as $user)
                                     <tr>
-                                        <td class="px-4 py-3">{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
+                                        <td class="px-4 py-3">
+                                            {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
                                         <td class="px-4 py-3">{{ $user->name }}</td>
                                         <td class="px-4 py-3">{{ $user->npk }}</td>
                                         <td class="px-4 py-3">{{ $user->email }}</td>
@@ -190,7 +189,7 @@
                                 <!-- Role -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Role</label>
-                                    <select name="role_id"
+                                    <select name="role_id" id="role_select_edit_{{ $user->id }}"
                                         class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
                                         <option value="">Select Role</option>
                                         @foreach ($roles as $role)
@@ -200,6 +199,7 @@
                                             </option>
                                         @endforeach
                                     </select>
+
                                     @error('role_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -208,7 +208,7 @@
                                 <!-- Department -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Department</label>
-                                    <select name="department_id"
+                                    <select name="department_id" id="department_select_edit_{{ $user->id }}"
                                         class="form-select rounded-3 @error('department_id') is-invalid @enderror"
                                         required>
                                         <option value="">Select Department</option>
@@ -321,11 +321,10 @@
                             <!-- Role -->
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Role</label>
-                                <select name="role_id"
+                                <select id="role_select" name="role_id"
                                     class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
-                                    <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>
-                                        -- Select Role --
-                                    </option>
+                                    <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>-- Select Role
+                                        --</option>
                                     @foreach ($roles as $role)
                                         <option value="{{ $role->id }}"
                                             {{ old('role_id') == $role->id ? 'selected' : '' }}>
@@ -341,7 +340,7 @@
                             <!-- Department -->
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Department</label>
-                                <select name="department_id"
+                                <select id="department_select" name="department_id"
                                     class="form-select rounded-3 @error('department_id') is-invalid @enderror" required>
                                     <option value="" disabled {{ old('department_id') ? '' : 'selected' }}>
                                         -- Select Department --
@@ -438,5 +437,84 @@
             });
         </script>
     @endif
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // TomSelect untuk modal Add - Role
+            new TomSelect('#role_select', {
+                create: true,
+                maxItems: 1,
+                valueField: 'id',
+                labelField: 'text',
+                searchField: 'text',
+                preload: true,
+                placeholder: 'Select or create a role',
+                load: function(query, callback) {
+                    let url = '/api/roles?q=' + encodeURIComponent(query);
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(json => callback(json))
+                        .catch(() => callback());
+                }
+            });
+
+            // TomSelect untuk modal Add - Department
+            new TomSelect('#department_select', {
+                create: true,
+                maxItems: 1,
+                valueField: 'id',
+                labelField: 'text',
+                searchField: 'text',
+                preload: true,
+                placeholder: 'Select or create a department',
+                load: function(query, callback) {
+                    let url = '/api/departments?q=' + encodeURIComponent(query);
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(json => callback(json))
+                        .catch(() => callback());
+                }
+            });
+
+            // TomSelect untuk modal Edit (semua modal edit role select)
+            document.querySelectorAll('select[id^="role_select_edit_"]').forEach(function(el) {
+                new TomSelect(el, {
+                    create: false, // TIDAK boleh create baru
+                    maxItems: 1,
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: 'text',
+                    preload: true,
+                    placeholder: 'Select a role',
+                    load: function(query, callback) {
+                        let url = '/api/roles?q=' + encodeURIComponent(query);
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(json => callback(json))
+                            .catch(() => callback());
+                    }
+                });
+            });
+
+            // TomSelect untuk modal Edit (semua modal edit department select)
+            document.querySelectorAll('select[id^="department_select_edit_"]').forEach(function(el) {
+                new TomSelect(el, {
+                    create: false, // TIDAK boleh create baru
+                    maxItems: 1,
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: 'text',
+                    preload: true,
+                    placeholder: 'Select a department',
+                    load: function(query, callback) {
+                        let url = '/api/departments?q=' + encodeURIComponent(query);
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(json => callback(json))
+                            .catch(() => callback());
+                    }
+                });
+            });
+        });
+    </script>
 
 @endpush

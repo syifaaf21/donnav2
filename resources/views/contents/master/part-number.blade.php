@@ -5,21 +5,21 @@
     <div class="container py-2">
         <div class="d-flex justify-between items-center mb-3">
             {{-- Breadcrumbs --}}
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
-                                <i class="bi bi-house-door me-1"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="breadcrumb-item">
-                            <a href="#" class="text-decoration-none text-secondary">Master</a>
-                        </li>
-                        <li class="breadcrumb-item">
-                            <a href="#" class="text-decoration-none text-secondary">Part Number</a>
-                        </li>
-                    </ol>
-                </nav>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Master</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Part Number</a>
+                    </li>
+                </ol>
+            </nav>
             {{-- Tombol Add Part Number --}}
             <button
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold btn btn-primary rounded-md shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -80,7 +80,7 @@
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
                                             <form action="{{ route('master.part_numbers.destroy', $part->id) }}"
-                                                method="POST" class="inline delete-form">
+                                                method="POST" class="delete-form inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-700">
@@ -130,7 +130,7 @@
 
                                 <div class="mb-3">
                                     <label class="block font-medium">Product</label>
-                                    <select name="product_id"
+                                    <select name="product_id" id="product_id_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Product</option>
@@ -145,7 +145,7 @@
 
                                 <div class="mb-3">
                                     <label class="block font-medium">Model</label>
-                                    <select name="model_id"
+                                    <select name="model_id" id="model_id_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Model</option>
@@ -160,7 +160,7 @@
 
                                 <div class="mb-3">
                                     <label class="block font-medium">Process</label>
-                                    <select name="process"
+                                    <select name="process" id="process_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Process</option>
@@ -175,7 +175,7 @@
 
                                 <div class="mb-3">
                                     <label class="block font-medium">Plant</label>
-                                    <select name="plant"
+                                    <select name="plant" id="plant_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Plant</option>
@@ -204,82 +204,73 @@
             </div>
         @endforeach
 
-
         {{-- Modal Create --}}
         <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
-                <form action="{{ route('master.part_numbers.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="_form" value="add">
-                    <div class="modal-content border-0 shadow-lg rounded-4">
-                        <div class="modal-header bg-gray-100 text-gray-800 rounded-t-lg">
-                            <h5 class="modal-title flex items-center gap-2 font-semibold" id="createPartNumberModalLabel">
-                                <i class="bi bi-gear-fill"></i> Add Part Number
+                <div class="modal-content">
+                    <form action="{{ route('master.part_numbers.store') }}" method="POST" novalidate>
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title flex items-center gap-2 font-semibold"
+                                id="editPartNumberModalLabel-{{ $part->id }}">
+                                <i class="bi bi-nut-fill"></i> Add New Part Number
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
                         </div>
-                        <div class="modal-body p-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block font-medium">Part Number</label>
-                                    <input type="text" name="part_number"
-                                        class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        value="{{ old('part_number') }}" required>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="part_number" class="form-label fw-semibold">Part Number</label>
+                                    <input type="text" id="part_number" name="part_number"
+                                        class="form-control @error('part_number') is-invalid @enderror" required autofocus
+                                        placeholder="Enter part number" value="{{ old('part_number') }}">
+                                    @error('part_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div>
-                                    <label class="block font-medium">Product</label>
-                                    <select name="product_id"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">-- Select Product --</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}"
-                                                {{ old('product_id') == $product->id ? 'selected' : '' }}>
-                                                {{ $product->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                <div class="col-md-6">
+                                    <label for="product_id" class="form-label fw-semibold">Product</label>
+                                    <select id="product_id" name="product_id"
+                                        class="form-select @error('product_id') is-invalid @enderror"
+                                        placeholder="Search or create product..." required></select>
+                                    @error('product_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div>
-                                    <label class="block font-medium">Model</label>
-                                    <select name="model_id"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">-- Select Model --</option>
-                                        @foreach ($models as $model)
-                                            <option value="{{ $model->id }}"
-                                                {{ old('model_id') == $model->id ? 'selected' : '' }}>
-                                                {{ $model->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                <div class="col-md-6">
+                                    <label for="model_id" class="form-label fw-semibold">Model</label>
+                                    <select id="model_id" name="model_id"
+                                        class="form-select @error('model_id') is-invalid @enderror"
+                                        placeholder="Search or create model..." required></select>
+                                    @error('model_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div>
-                                    <label class="block font-medium">Process</label>
-                                    <select name="process"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">-- Select Process --</option>
-                                        @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'mounting', 'assembling electric', 'inspection'] as $process)
+                                <div class="col-md-6">
+                                    <label for="process" class="form-label fw-semibold">Process</label>
+                                    <select id="process" name="process"
+                                        class="form-select @error('process') is-invalid @enderror" required>
+                                        <option value="" disabled selected>-- Select Process --</option>
+                                        @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric'] as $process)
                                             <option value="{{ $process }}"
                                                 {{ old('process') == $process ? 'selected' : '' }}>
                                                 {{ ucfirst($process) }}
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('process')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div>
-                                    <label class="block font-medium">Plant</label>
-                                    <select name="plant"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">-- Select Plant --</option>
+                                <div class="col-md-6">
+                                    <label for="plant" class="form-label fw-semibold">Plant</label>
+                                    <select id="plant" name="plant"
+                                        class="form-select @error('plant') is-invalid @enderror" required>
+                                        <option value="" disabled selected>-- Select Plant --</option>
                                         @foreach (['body', 'unit', 'electric'] as $plant)
                                             <option value="{{ $plant }}"
                                                 {{ old('plant') == $plant ? 'selected' : '' }}>
@@ -287,84 +278,130 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('plant')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer border-0 p-3 justify-between bg-gray-100 rounded-b-lg">
-                            <button type="button" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-md"
-                                data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle"></i> Cancel
+
+                        <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
                             </button>
-                            <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                                <i class="bi bi-save2"></i> Save Part Number
+                            <button type="submit" class="btn btn-outline-primary px-4">
+                                <i class="bi bi-save me-1"></i> Save Part Number
                             </button>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-
+        <x-sweetalert-confirm />
     @endsection
-
     @push('scripts')
         <script>
-            document.querySelectorAll('.delete-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        text: 'This action cannot be undone.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.submit();
+            document.addEventListener('DOMContentLoaded', function() {
+                // --- Inisialisasi TomSelect untuk Create Modal ---
+                new TomSelect("#product_id", {
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: 'text',
+                    preload: true,
+                    load: function(query, callback) {
+                        let url = '/api/products';
+                        if (query.length) {
+                            url += '?q=' + encodeURIComponent(query);
+                        }
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(callback)
+                            .catch(() => callback());
+                    },
+                    create: true,
+                    maxOptions: 50,
+                    persist: false
+                });
+
+                new TomSelect("#model_id", {
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: 'text',
+                    preload: true,
+                    load: function(query, callback) {
+                        let url = '/api/models';
+                        if (query.length) {
+                            url += '?q=' + encodeURIComponent(query);
+                        }
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(callback)
+                            .catch(() => callback());
+                    },
+                    create: true,
+                    maxOptions: 50,
+                    persist: false
+                });
+
+                // --- Edit Modal: Product & Model (tidak bisa create) ---
+                document.querySelectorAll('select[id^="product_id_edit_"]').forEach(function(el) {
+                    new TomSelect(el, {
+                        valueField: 'id',
+                        labelField: 'text',
+                        searchField: 'text',
+                        preload: true,
+                        create: false,
+                        load: function(query, callback) {
+                            let url = '/api/products';
+                            if (query.length) {
+                                url += '?q=' + encodeURIComponent(query);
+                            }
+                            fetch(url)
+                                .then(response => response.json())
+                                .then(callback)
+                                .catch(() => callback());
                         }
                     });
                 });
-            });
 
-            // Clear Search functionality
-            document.addEventListener("DOMContentLoaded", function() {
-                const clearBtn = document.getElementById("clearSearch");
-                const searchInput = document.getElementById("searchInput");
-                const searchForm = document.getElementById("searchForm");
-
-                if (clearBtn && searchInput && searchForm) {
-                    clearBtn.addEventListener("click", function() {
-                        searchInput.value = "";
-                        searchForm.submit();
+                document.querySelectorAll('select[id^="model_id_edit_"]').forEach(function(el) {
+                    new TomSelect(el, {
+                        valueField: 'id',
+                        labelField: 'text',
+                        searchField: 'text',
+                        preload: true,
+                        create: false,
+                        load: function(query, callback) {
+                            let url = '/api/models';
+                            if (query.length) {
+                                url += '?q=' + encodeURIComponent(query);
+                            }
+                            fetch(url)
+                                .then(response => response.json())
+                                .then(callback)
+                                .catch(() => callback());
+                        }
                     });
-                }
-            });
+                });
 
-            document.addEventListener('DOMContentLoaded', function() {
-                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-                tooltipTriggerList.map(function(el) {
-                    return new bootstrap.Tooltip(el, {
-                        title: el.getAttribute('data-bs-title'),
-                        placement: 'top',
-                        trigger: 'hover'
+                // --- Edit Modal: Process & Plant (fixed options) ---
+                document.querySelectorAll('select[id^="process_edit_"]').forEach(function(el) {
+                    new TomSelect(el, {
+                        create: false,
+                        maxItems: 1,
+                        searchField: 'text',
+                        allowEmptyOption: false,
+                    });
+                });
+
+                document.querySelectorAll('select[id^="plant_edit_"]').forEach(function(el) {
+                    new TomSelect(el, {
+                        create: false,
+                        maxItems: 1,
+                        searchField: 'text',
+                        allowEmptyOption: false,
                     });
                 });
             });
         </script>
-        @if ($errors->any() && session('edit_modal'))
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    new bootstrap.Modal(document.getElementById("editPartNumberModal-{{ session('edit_modal') }}")).show();
-                });
-            </script>
-        @endif
-
-        @if ($errors->any() && old('_form') === 'add')
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    new bootstrap.Modal(document.getElementById("createPartNumberModal")).show();
-                });
-            </script>
-        @endif
     @endpush
