@@ -5,23 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\PartNumber;
 use App\Models\Product;
 use App\Models\ProductModel;
+use App\Models\Process;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class PartNumberController extends Controller
 {
+    // jangan lupa import model Process di atas
+
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $query = PartNumber::with(['product', 'productModel']);
+        $query = PartNumber::with(['product', 'productModel', 'process']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('part_number', 'like', "%{$search}%")
                     ->orWhereHas('product', fn($p) => $p->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('productModel', fn($m) => $m->where('name', 'like', "%{$search}%"))
-                    ->orWhere('process', 'like', "%{$search}%")
+                    ->orWhereHas('process', fn($q) => $q->where('name', 'like', "%{$search}%"))
                     ->orWhere('plant', 'like', "%{$search}%");
             });
         }
@@ -29,17 +32,18 @@ class PartNumberController extends Controller
         $partNumbers = $query->paginate(10)->appends($request->query());
         $products = Product::all();
         $models = ProductModel::all();
+        $processes = Process::all(); // <--- tambah ini
 
-        return view('contents.master.part-number', compact('partNumbers', 'products', 'models'));
+        return view('contents.master.part-number', compact('partNumbers', 'products', 'models', 'processes'));
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'part_number' => 'required|string|max:255|unique:part_numbers,part_number',
-            'product_id' => 'required|string|max:255',
-            'model_id' => 'required|string|max:255',
-            'process' => 'required|in:injection,painting,assembling body,die casting,machining,assembling unit,electric',
+            'product_id' => 'required|exists:products,id',
+            'model_id' => 'required|exists:models,id',
+            'process_id' => 'required|exists:processes,id',
             'plant' => 'required|in:body,unit,electric'
         ]);
 
@@ -50,18 +54,15 @@ class PartNumberController extends Controller
                 ->with('_form', 'add');
         }
 
-        // Cek atau buat product
-        $product = Product::firstOrCreate(['name' => $request->product_id]);
+        // ⬇️ pastikan ini pakai findOrFail, bukan get()
+        $product = Product::findOrFail($request->product_id);
+        $model = ProductModel::findOrFail($request->model_id);
 
-        // Cek atau buat model
-        $model = ProductModel::firstOrCreate(['name' => $request->model_id]);
-
-        // Simpan Part Number
         PartNumber::create([
             'part_number' => $request->part_number,
             'product_id' => $product->id,
             'model_id' => $model->id,
-            'process' => $request->process,
+            'process_id' => $request->process_id,
             'plant' => $request->plant
         ]);
 
@@ -80,7 +81,7 @@ class PartNumberController extends Controller
             ],
             'product_id' => 'required|exists:products,id',
             'model_id' => 'required|exists:models,id',
-            'process' => 'required|in:injection,painting,assembling body,die casting,machining,assembling unit,electric',
+            'process_id' => 'required|exists:processes,id',
             'plant' => 'required|in:body,unit,electric'
         ]);
 
@@ -91,7 +92,7 @@ class PartNumberController extends Controller
                 ->with('edit_modal', $partNumber->id); // flag modal edit yang mau dibuka
         }
 
-        $partNumber->update($request->only('part_number', 'product_id', 'model_id', 'process', 'plant'));
+        $partNumber->update($request->only('part_number', 'product_id', 'model_id', 'process_id', 'plant'));
 
         return redirect()->back()->with('success', 'Part Number updated successfully.');
     }

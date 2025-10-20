@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Document;
 use App\Models\DocumentMapping;
 use App\Models\PartNumber;
+use App\Models\Process;
 use App\Models\ProductModel;
 use App\Models\Status;
 use App\Models\User;
@@ -23,7 +24,7 @@ class DocumentReviewController extends Controller
     public function index(Request $request)
     {
         $plants = $this->getEnumValues('part_numbers', 'plant');
-        $processes = $this->getEnumValues('part_numbers', 'process');
+        $processes = \App\Models\Process::pluck('name', 'id');
 
         $documentsMaster = Document::with('childrenRecursive')
             ->where('type', 'review')
@@ -59,7 +60,7 @@ class DocumentReviewController extends Controller
                 return $items->groupBy(function ($item) {
                     $partNumber = $item->partNumber?->part_number ?? 'unknown';
                     $model = $item->partNumber?->productModel?->name ?? 'unknown';
-                    $process = $item->partNumber?->process ?? 'unknown';
+                    $process = $item->partNumber?->process?->code ?? 'unknown';
                     return "{$partNumber}-{$model}-{$process}";
                 });
             });
@@ -83,6 +84,7 @@ class DocumentReviewController extends Controller
             'document',
             'partNumber.product',
             'partNumber.productModel',
+            'partNumber.process', // pastikan relasi ini ikut di-load
             'user',
             'status',
             'files'
@@ -93,7 +95,10 @@ class DocumentReviewController extends Controller
                     $q->whereHas('partNumber', function ($q2) use ($keyword) {
                         $q2->where('part_number', 'like', "%{$keyword}%")
                             ->orWhere('plant', 'like', "%{$keyword}%")
-                            ->orWhere('process', 'like', "%{$keyword}%");
+                            ->orWhereHas('process', function ($q3) use ($keyword) {
+                                $q3->where('name', 'like', "%{$keyword}%")
+                                    ->orWhere('code', 'like', "%{$keyword}%");
+                            });
                     })
                         ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
                             $q2->where('name', 'like', "%{$keyword}%");
@@ -117,13 +122,14 @@ class DocumentReviewController extends Controller
         $groupedData = $documentMappings->groupBy(function ($item) {
             $partNumber = $item->partNumber?->part_number ?? 'unknown';
             $model = $item->partNumber?->productModel?->name ?? 'unknown';
-            $process = $item->partNumber?->process ?? 'unknown';
+            $process = $item->partNumber?->process?->code ?? 'unknown';
             return "{$partNumber}-{$model}-{$process}";
         });
 
         // render partial yang hanya menerima $groupedData
         return view('contents.document-review.partials.table', compact('groupedData'))->render();
     }
+
 
     private function getEnumValues($table, $column)
     {
@@ -144,22 +150,22 @@ class DocumentReviewController extends Controller
     {
         $plant = $request->plant;
 
+        // Ambil part numbers berdasarkan plant
         $partNumbers = PartNumber::where('plant', $plant)
             ->orderBy('part_number')
             ->get(['id', 'part_number']);
 
-        Log::info('Plant selected: ' . $plant);
+        // Ambil proses yang terkait dengan part numbers tersebut
+        $processIds = $partNumbers->pluck('process_id')->unique();
 
-        $processes = PartNumber::where('plant', $plant)
-            ->select('process')
-            ->distinct()
-            ->pluck('process');
+        $processes = Process::whereIn('id', $processIds)->pluck('name');
 
         return response()->json([
             'part_numbers' => $partNumbers,
             'processes' => $processes,
         ]);
     }
+
 
     public function show($id)
     {

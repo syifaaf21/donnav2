@@ -6,9 +6,14 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\ModelController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartNumberController;
+use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UserController;
+use App\Models\Department;
 use App\Models\Document;
 use Illuminate\Routing\RouteRegistrar;
 use Illuminate\Support\Facades\Auth;
@@ -66,6 +71,14 @@ Route::middleware(['auth'])->group(function () {
         // Document Management Routes
         Route::resource('hierarchy', DocumentController::class);
         Route::get('/hierarchy', [DocumentController::class, 'index'])->name('hierarchy.index');
+
+        Route::resource('processes', ProcessController::class);
+
+        Route::resource('departments', DepartmentController::class);
+
+        Route::resource('products', ProductController::class);
+
+        Route::resource('models', ModelController::class);
 
         Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
             Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');

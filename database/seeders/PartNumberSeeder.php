@@ -7,6 +7,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\Model as CarModel; // Rename to avoid conflict with base PHP Model
+use App\Models\Process;
 use Illuminate\Support\Str;
 
 class PartNumberSeeder extends Seeder
@@ -31,14 +32,6 @@ class PartNumberSeeder extends Seeder
                 'models' => ['889F/D81F', 'D72F/D73F', 'D41E', '922F'],
                 'processes' => ['die casting', 'machining'],
             ],
-            'WP' => [
-                'models' => ['NR', '1SZ', 'K3'],
-                'processes' => ['assembling unit'],
-            ],
-            'OP' => [
-                'models' => ['1SZ', '3SZ'],
-                'processes' => ['assembling unit'],
-            ],
             'Handle1' => [
                 'models' => ['4L45W', 'YHA', '660A', '230B', '560B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
                 'processes' => ['injection', 'painting', 'assembling body'],
@@ -46,10 +39,6 @@ class PartNumberSeeder extends Seeder
             'Handle2' => [
                 'models' => ['4L45W', 'YHA', '660A', '230B', '560B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
                 'processes' => ['injection', 'assembling body'],
-            ],
-            'CAP' => [
-                'models' => ['4L45W', 'YHA', '660A', '230B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
-                'processes' => ['injection', 'painting', 'assembling body'],
             ],
             'Frame' => [
                 'models' => ['4L45W', 'YHA', '660A', '230B', '560B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
@@ -77,19 +66,26 @@ class PartNumberSeeder extends Seeder
                     continue;
                 }
 
-                foreach ($info['processes'] as $process) {
+                foreach ($info['processes'] as $processName) {
                     // cari plant berdasarkan process
                     $plant = null;
                     foreach ($plantMapping as $plantName => $processes) {
-                        if (in_array($process, $processes)) {
+                        if (in_array($processName, $processes)) {
                             $plant = $plantName;
                             break;
                         }
                     }
 
-                    // Kalau plant tidak ditemukan, bisa kasih nilai default atau skip
                     if (!$plant) {
-                        echo "Plant not found for process: $process\n";
+                        echo "Plant not found for process: $processName\n";
+                        continue;
+                    }
+
+                    // Cari process_id dari tabel processes
+                    $process = Process::where('name', $processName)->first();
+
+                    if (!$process) {
+                        echo "Process not found: $processName\n";
                         continue;
                     }
 
@@ -97,8 +93,8 @@ class PartNumberSeeder extends Seeder
                         'part_number' => strtoupper(Str::random(10)),
                         'product_id' => $product->id,
                         'model_id' => $model->id,
-                        'process' => $process,
-                        'plant' => $plant,  // <- tambah kolom plant di sini
+                        'process_id' => $process->id, // <- pakai process_id
+                        'plant' => $plant,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);

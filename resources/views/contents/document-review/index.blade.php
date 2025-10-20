@@ -112,13 +112,13 @@
                                 <select name="process" id="process" class="form-select select2">
                                     <option value="">All Processes</option>
                                     @foreach ($processes as $proc)
-                                        <option value="{{ $proc }}"
-                                            {{ request('process') == $proc ? 'selected' : '' }}>
-                                            {{ ucwords($proc) }}</option>
+                                        <option value="{{ $proc->id }}"
+                                            {{ request('process') == $proc->id ? 'selected' : '' }}>
+                                            {{ ucwords($proc->name) }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
-
                         </div>
                     </div>
 
@@ -172,135 +172,133 @@
     @include('contents.document-review.partials.modal-approve')
     @include('contents.document-review.partials.modal-edit')
 @endsection
-@push('scripts')
-    <script>
-        // Capitalize words
-        function ucwords(str) {
-            return str.replace(/\b\w/g, function(char) {
-                return char.toUpperCase();
-            });
-        }
+@@push('scripts')
+<script>
+    // Capitalize words
+    function ucwords(str) {
+        return str.replace(/\b\w/g, function(char) {
+            return char.toUpperCase();
+        });
+    }
 
-        // Init Select2
-        $(document).ready(function() {
-            // Initialize select2 on modal selects
-            $('.select2').select2({
-                width: '100%',
-                placeholder: 'Select an option',
-                allowClear: true,
-                dropdownParent: $('#filterModal') // important for bootstrap modal
-            });
-
-            // Load part numbers and processes when plant changes
-            $('#plant').on('change', function() {
-                let selectedPlant = $(this).val();
-                let $partNumberSelect = $('#part_number');
-                let $processSelect = $('#process');
-
-                // Reset selects first
-                $partNumberSelect.empty().append('<option value="">Loading...</option>');
-                $processSelect.empty().append('<option value="">Loading...</option>');
-
-                // Destroy select2 before update
-                if ($.fn.select2 && $partNumberSelect.hasClass("select2-hidden-accessible")) {
-                    $partNumberSelect.select2('destroy');
-                }
-                if ($.fn.select2 && $processSelect.hasClass("select2-hidden-accessible")) {
-                    $processSelect.select2('destroy');
-                }
-
-                if (selectedPlant) {
-                    $.ajax({
-                        url: '{{ route('document-review.getDataByPlant') }}',
-                        type: 'GET',
-                        data: {
-                            plant: selectedPlant
-                        },
-                        success: function(response) {
-                            $partNumberSelect.empty().append(
-                                '<option value="">Select Part Number</option>');
-                            if (response.part_numbers.length > 0) {
-                                response.part_numbers.forEach(function(item) {
-                                    $partNumberSelect.append(
-                                        `<option value="${item.id}">${item.part_number}</option>`
-                                    );
-                                });
-                            } else {
-                                $partNumberSelect.append(
-                                    '<option disabled>No part numbers found</option>');
-                            }
-
-                            $processSelect.empty().append(
-                                '<option value="">Select Process</option>');
-                            if (response.processes.length > 0) {
-                                response.processes.forEach(function(proc) {
-                                    $processSelect.append(
-                                        `<option value="${proc}">${ucwords(proc)}</option>`
-                                    );
-                                });
-                            } else {
-                                $processSelect.append(
-                                    '<option disabled>No processes found</option>');
-                            }
-
-                            $partNumberSelect.select2({
-                                width: '100%',
-                                placeholder: 'Select an option',
-                                allowClear: true,
-                                dropdownParent: $('#filterModal')
-                            });
-                            $processSelect.select2({
-                                width: '100%',
-                                placeholder: 'Select an option',
-                                allowClear: true,
-                                dropdownParent: $('#filterModal')
-                            });
-                        },
-                        error: function() {
-                            alert('Failed to fetch data by plant.');
-                            $partNumberSelect.empty().append(
-                                '<option value="">Select Part Number</option>');
-                            $processSelect.empty().append(
-                                '<option value="">Select Process</option>');
-                        }
-                    });
-                } else {
-                    // Reset selects if no plant selected
-                    $partNumberSelect.empty().append('<option value="">Select Part Number</option>');
-                    $processSelect.empty().append('<option value="">Select Process</option>');
-
-                    $partNumberSelect.select2({
-                        width: '100%',
-                        placeholder: 'Select an option',
-                        allowClear: true,
-                        dropdownParent: $('#filterModal')
-                    });
-                    $processSelect.select2({
-                        width: '100%',
-                        placeholder: 'Select an option',
-                        allowClear: true,
-                        dropdownParent: $('#filterModal')
-                    });
-                }
-            });
+    $(document).ready(function() {
+        // Initialize select2 on modal selects
+        $('.select2').select2({
+            width: '100%',
+            placeholder: 'Select an option',
+            allowClear: true,
+            dropdownParent: $('#filterModal') // important for bootstrap modal
         });
 
-        // view detail
+        // Load part numbers and processes when plant changes
+        $('#plant').on('change', function() {
+            let selectedPlant = $(this).val();
+            let $partNumberSelect = $('#part_number');
+            let $processSelect = $('#process');
+
+            // Reset selects first
+            $partNumberSelect.empty().append('<option value="">Loading...</option>');
+            $processSelect.empty().append('<option value="">Loading...</option>');
+
+            // Destroy select2 before update if initialized
+            if ($.fn.select2 && $partNumberSelect.hasClass("select2-hidden-accessible")) {
+                $partNumberSelect.select2('destroy');
+            }
+            if ($.fn.select2 && $processSelect.hasClass("select2-hidden-accessible")) {
+                $processSelect.select2('destroy');
+            }
+
+            if (selectedPlant) {
+                $.ajax({
+                    url: '{{ route('document-review.getDataByPlant') }}',
+                    type: 'GET',
+                    data: {
+                        plant: selectedPlant
+                    },
+                    success: function(response) {
+                        // Part Number
+                        $partNumberSelect.empty().append(
+                            '<option value="">Select Part Number</option>');
+                        if (response.part_numbers.length > 0) {
+                            response.part_numbers.forEach(function(item) {
+                                $partNumberSelect.append(
+                                    `<option value="${item.id}">${item.part_number}</option>`
+                                );
+                            });
+                        } else {
+                            $partNumberSelect.append(
+                                '<option disabled>No part numbers found</option>');
+                        }
+
+                        // Process
+                        $processSelect.empty().append(
+                            '<option value="">Select Process</option>');
+                        if (response.processes.length > 0) {
+                            response.processes.forEach(function(proc) {
+                                $processSelect.append(
+                                    `<option value="${proc.id}">${ucwords(proc.name)}</option>`
+                                );
+                            });
+                        } else {
+                            $processSelect.append(
+                                '<option disabled>No processes found</option>');
+                        }
+
+                        // Re-init select2
+                        $partNumberSelect.select2({
+                            width: '100%',
+                            placeholder: 'Select an option',
+                            allowClear: true,
+                            dropdownParent: $('#filterModal')
+                        });
+                        $processSelect.select2({
+                            width: '100%',
+                            placeholder: 'Select an option',
+                            allowClear: true,
+                            dropdownParent: $('#filterModal')
+                        });
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading data:', xhr);
+                        $partNumberSelect.empty().append(
+                            '<option disabled>Error loading part numbers</option>');
+                        $processSelect.empty().append(
+                            '<option disabled>Error loading processes</option>');
+                    }
+                });
+            } else {
+                // If no plant selected, clear selects and reinit select2
+                $partNumberSelect.empty().append('<option value="">Select Part Number</option>')
+                    .select2({
+                        width: '100%',
+                        placeholder: 'Select an option',
+                        allowClear: true,
+                        dropdownParent: $('#filterModal')
+                    });
+                $processSelect.empty().append('<option value="">Select Process</option>').select2({
+                    width: '100%',
+                    placeholder: 'Select an option',
+                    allowClear: true,
+                    dropdownParent: $('#filterModal')
+                });
+            }
+        });
+
+        // View detail toggle
         $(document).on('click', '.toggle-detail', function() {
             const target = $(this).data('target');
             const escapedTarget = target.replace(/ /g, '\\ ');
             $(escapedTarget).toggleClass('hidden');
         });
 
-
-        // 1) global setup
+        // Global AJAX setup for CSRF token
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
 
-        // 2) search handler (tetap pakai yang sudah ada)
+        // Live search handler
         $('#live-search').on('keyup', function() {
             let keyword = $(this).val();
 
@@ -313,7 +311,7 @@
                 success: function(data) {
                     $('#search-results').html(data);
 
-                    // reinit Alpine/feather jika perlu (lihat diskusi sebelumnya)
+                    // Reinit feather and Alpine if necessary
                     if (typeof feather !== 'undefined') feather.replace();
                     if (typeof Alpine !== 'undefined') {
                         document.querySelectorAll('[x-data]').forEach(el => {
@@ -324,13 +322,12 @@
                 },
                 error: function(xhr) {
                     console.error('AJAX error', xhr);
-                    // tampilkan pesan error + server response (berguna debugging)
                     $('#search-results').html('<p class="text-red-500">Search failed.</p>');
                 }
             });
         });
 
-
+        // View file button click handler
         $(document).on('click', '.view-file-btn', function() {
             const fileUrl = $(this).data('file');
             const status = $(this).data('status');
@@ -338,29 +335,31 @@
 
             $('#fileViewer').attr('src', fileUrl);
 
-            // Atur tombol berdasarkan status
+            // Determine if approve/reject buttons are enabled
             const isActionable = status === 'need review';
 
-            // Update tombol Approve (di dalam modal)
+            // Approve and reject buttons inside modal
             const $approveBtn = $('#viewFileModal .open-approve-modal');
-            const $rejectBtn = $('#viewFileModal form:has(button[type="submit"]) button[type="submit"]');
+            const $rejectBtn = $(
+            '#viewFileModal form:has(button[type="submit"]) button[type="submit"]');
 
-            // Set data-doc-id juga kalau diperlukan
+            // Set data-doc-id and form action for reject
             $approveBtn.attr('data-doc-id', docId);
             $('#rejectForm').attr('action', `/document-review/${docId}/reject`);
 
-            // Enable/Disable
+            // Enable or disable buttons based on status
             $approveBtn.prop('disabled', !isActionable);
             $rejectBtn.prop('disabled', !isActionable);
         });
 
-        // ✅ Approve Modal Handler
+        // Approve modal open handler
         $(document).on('click', '.open-approve-modal', function() {
             const docId = $(this).data('doc-id');
             const actionUrl = `/document-review/${docId}/approve-with-dates`;
             $('#approveForm').attr('action', actionUrl);
         });
 
+        // Reject form confirmation with Swal
         document.addEventListener('submit', function(e) {
             if (e.target && e.target.classList.contains('reject-form')) {
                 e.preventDefault();
@@ -378,7 +377,7 @@
             }
         });
 
-        // ✅ Validasi tanggal sebelum submit
+        // Validate reminder and deadline dates before approving
         $('#approveForm').on('submit', function(e) {
             const reminderDate = new Date($('#reminder_date').val());
             const deadlineDate = new Date($('#deadline').val());
@@ -396,64 +395,57 @@
             if (!valid) e.preventDefault();
         });
 
-
-        // Kosongkan iframe saat modal ditutup (optional)
+        // Clear iframe src when modal closed to stop file loading
         document.getElementById('viewFileModal').addEventListener('hidden.bs.modal', function() {
             const iframe = document.getElementById('fileViewer');
             if (iframe) iframe.src = '';
         });
 
-        document.addEventListener('DOMContentLoaded', function () {
-    const reviseModalEl = document.getElementById('reviseModal');
-    const reviseForm = document.getElementById('reviseForm');
-    const fileContainer = document.querySelector('.existing-files-container');
+        // Revise modal functionality
+        const reviseModalEl = document.getElementById('reviseModal');
+        const reviseForm = document.getElementById('reviseForm');
+        const fileContainer = document.querySelector('.existing-files-container');
 
-    // Buat instance modal sekali
-    const reviseModalInstance = new bootstrap.Modal(reviseModalEl);
+        if (reviseModalEl) {
+            const reviseModalInstance = new bootstrap.Modal(reviseModalEl);
 
-    // Bind tombol edit document
-    document.querySelectorAll('.edit-doc-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            const route = button.getAttribute('data-route');
-            const files = JSON.parse(button.getAttribute('data-files'));
-            const notes = button.getAttribute('data-notes') || '';
+            document.querySelectorAll('.edit-doc-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const route = button.getAttribute('data-route');
+                    const files = JSON.parse(button.getAttribute('data-files'));
+                    const notes = button.getAttribute('data-notes') || '';
 
-            // Set action form dan nilai input notes
-            reviseForm.setAttribute('action', route);
-            reviseForm.querySelector('input[name="notes"]').value = notes;
+                    reviseForm.setAttribute('action', route);
+                    reviseForm.querySelector('input[name="notes"]').value = notes;
 
-            // Isi daftar file
-            if (files.length > 0) {
-                let html = '';
-                files.forEach(file => {
-                    html += `
-                        <div class="mb-2">
-                            <label class="form-label">Revisi: ${file.name}</label>
-                            <input type="file" name="files[${file.id}]" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
-                        </div>
-                    `;
+                    if (files.length > 0) {
+                        let html = '';
+                        files.forEach(file => {
+                            html += `
+                                <div class="mb-2">
+                                    <label class="form-label">Revisi: ${file.name}</label>
+                                    <input type="file" name="files[${file.id}]" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                </div>
+                            `;
+                        });
+                        fileContainer.innerHTML = html;
+                    } else {
+                        fileContainer.innerHTML =
+                            '<p class="text-muted">No files available for revision.</p>';
+                    }
+
+                    reviseModalInstance.show();
                 });
-                fileContainer.innerHTML = html;
-            } else {
-                fileContainer.innerHTML = '<p class="text-muted">No files available for revision.</p>';
-            }
+            });
 
-            // Tampilkan modal
-            reviseModalInstance.show();
-        });
+            reviseModalEl.addEventListener('hidden.bs.modal', function() {
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+                if (document.activeElement) document.activeElement.blur();
+            });
+        }
     });
-
-    // Bersihkan backdrop jika modal sudah tertutup (mengatasi backdrop hitam stuck)
-    reviseModalEl.addEventListener('hidden.bs.modal', function () {
-        // Pastikan kelas modal-open dan style overflow hilang
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
-        // Hapus backdrop jika ada
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) backdrop.remove();
-        // Blur fokus
-        if (document.activeElement) document.activeElement.blur();
-    });
-});
-    </script>
+</script>
 @endpush

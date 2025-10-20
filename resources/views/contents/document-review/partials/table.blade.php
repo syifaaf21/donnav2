@@ -17,8 +17,9 @@
                 <td class="px-4 py-2">{{ $loop->iteration }}</td>
                 <td class="px-4 py-2">{{ $first->partNumber?->part_number ?? '-' }}</td>
                 <td class="px-4 py-2">{{ $first->partNumber?->productModel?->name ?? '-' }}</td>
-                <td class="px-4 py-2">{{ ucwords($first->partNumber?->process ?? '-') }}</td>
-
+                <td class="px-4 py-2">
+                    {{ ucwords($first->partNumber?->process?->name ?? '-') }}
+                </td>
                 <td class="px-4 py-2 text-center space-x-1">
                     <!-- 👁 Toggle Detail -->
                     @if ($group->count() > 0)

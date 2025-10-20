@@ -72,8 +72,8 @@
                                         <td class="px-4 py-2">{{ $part->part_number }}</td>
                                         <td class="px-4 py-2">{{ $part->product->name ?? '-' }}</td>
                                         <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ ucfirst($part->process) }}</td>
-                                        <td class="px-4 py-2">{{ ucfirst($part->plant) }}</td>
+                                        <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
+                                        <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
                                         <td class="px-4 py-2 flex gap-2">
                                             <button class="text-blue-600 hover:text-blue-700" data-bs-toggle="modal"
                                                 data-bs-target="#editPartNumberModal-{{ $part->id }}">
@@ -160,14 +160,14 @@
 
                                 <div class="mb-3">
                                     <label class="block font-medium">Process</label>
-                                    <select name="process" id="process_edit_{{ $part->id }}"
+                                    <select name="process_id" id="process_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
-                                        <option value="">Select Process</option>
-                                        @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric'] as $process)
-                                            <option value="{{ $process }}"
-                                                {{ $part->process == $process ? 'selected' : '' }}>
-                                                {{ ucfirst($process) }}
+                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>-- Select Process --</option>
+                                        @foreach ($processes as $process)
+                                            <option value="{{ $process->id }}"
+                                                {{ $part->process_id == $process->id ? 'selected' : '' }}>
+                                                {{ ucwords($process->name) }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -251,17 +251,17 @@
 
                                 <div class="col-md-6">
                                     <label for="process" class="form-label fw-semibold">Process</label>
-                                    <select id="process" name="process"
-                                        class="form-select @error('process') is-invalid @enderror" required>
-                                        <option value="" disabled selected>-- Select Process --</option>
-                                        @foreach (['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'electric'] as $process)
-                                            <option value="{{ $process }}"
-                                                {{ old('process') == $process ? 'selected' : '' }}>
-                                                {{ ucfirst($process) }}
+                                    <select id="process" name="process_id"
+                                        class="form-select @error('process_id') is-invalid @enderror" required>
+                                        <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>-- Select Process --</option>
+                                        @foreach ($processes as $process)
+                                            <option value="{{ $process->id }}"
+                                                {{ old('process_id') == $process->id ? 'selected' : '' }}>
+                                                {{ ucfirst($process->name) }}
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('process')
+                                    @error('process_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -302,6 +302,16 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                const clearBtn = document.getElementById("clearSearch");
+                const searchInput = document.getElementById("searchInput");
+                const searchForm = document.getElementById("searchForm");
+
+                if (clearBtn && searchInput && searchForm) {
+                    clearBtn.addEventListener("click", function() {
+                        searchInput.value = "";
+                        searchForm.submit();
+                    });
+                }
                 // --- Inisialisasi TomSelect untuk Create Modal ---
                 new TomSelect("#product_id", {
                     valueField: 'id',
@@ -339,6 +349,26 @@
                             .catch(() => callback());
                     },
                     create: true,
+                    maxOptions: 50,
+                    persist: false
+                });
+
+                new TomSelect("#process", {
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: 'name',
+                    preload: true,
+                    load: function(query, callback) {
+                        let url = '/api/processes'; // endpoint API yang mengembalikan daftar proses
+                        if (query.length) {
+                            url += '?q=' + encodeURIComponent(query);
+                        }
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(callback)
+                            .catch(() => callback());
+                    },
+                    create: false,
                     maxOptions: 50,
                     persist: false
                 });
