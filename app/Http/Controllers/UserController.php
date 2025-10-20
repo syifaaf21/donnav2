@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -51,22 +52,34 @@ class UserController extends Controller
             'role_id' => 'required',
             'department_id' => 'required',
         ], [
-            // Optional: custom error messages in English
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 6 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
         ]);
 
+        // Cek Role: apakah existing ID atau teks baru
+        $roleId = is_numeric($request->role_id)
+            ? $request->role_id
+            : Role::firstOrCreate(['name' => $request->role_id])->id;
+
+        // Cek Department: apakah existing ID atau teks baru
+        $departmentId = is_numeric($request->department_id)
+            ? $request->department_id
+            : Department::firstOrCreate(['name' => $request->department_id])->id;
+
+        // Simpan user
         User::create([
             'name' => $request->name,
             'npk' => $request->npk,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $request->role_id,
-            'department_id' => $request->department_id,
+            'role_id' => $roleId,
+            'department_id' => $departmentId,
         ]);
+
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
     }
+
 
     public function edit(User $user)
     {

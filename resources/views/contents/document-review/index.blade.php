@@ -5,6 +5,8 @@
 @section('content')
     <div class="p-6 bg-gray-100 min-h-screen space-y-6">
 
+        <x-flash-message />
+        <x-sweetalert-confirm />
         <!-- Search + Filter bar -->
         <div class="flex justify-end items-center mb-4 space-x-3">
             <input type="text" id="live-search" placeholder="Search..."
@@ -148,15 +150,14 @@
                             </form>
 
                             <!-- Reject Button -->
-                            <form action="/reject-url" method="POST">
+                            <form id="rejectForm" action="" method="POST" class="reject-form">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-danger btn-sm"
-                                    onclick="return confirm('Reject this document?')">
+                                <button type="submit" class="btn btn-outline-danger btn-sm reject-button"
+                                    data-doc-id="{{ $mapping->id ?? '' }}">
                                     <i class="bi bi-x-circle me-1"></i> Reject
                                 </button>
                             </form>
                         @endif
-
                         <!-- Close Button -->
                         <button type="button" class="btn-close ms-2" data-bs-dismiss="modal"
                             aria-label="Close"></button>
@@ -168,8 +169,9 @@
             </div>
         </div>
     </div>
+    @include('contents.document-review.partials.modal-approve')
+    @include('contents.document-review.partials.modal-edit')
 @endsection
-
 @push('scripts')
     <script>
         // Capitalize words
@@ -283,7 +285,7 @@
             });
         });
 
-        // Di luar $(document).ready juga boleh
+        // view detail
         $(document).on('click', '.toggle-detail', function() {
             const target = $(this).data('target');
             const escapedTarget = target.replace(/ /g, '\\ ');
@@ -331,67 +333,49 @@
 
         $(document).on('click', '.view-file-btn', function() {
             const fileUrl = $(this).data('file');
+            const status = $(this).data('status');
+            const docId = $(this).data('doc-id');
+
             $('#fileViewer').attr('src', fileUrl);
-        });
 
-        // Kosongkan iframe saat modal ditutup (optional)
-        document.getElementById('viewFileModal').addEventListener('hidden.bs.modal', function() {
-            const iframe = document.getElementById('fileViewer');
-            if (iframe) iframe.src = '';
-        });
+            // Atur tombol berdasarkan status
+            const isActionable = status === 'need review';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const reviseModal = document.getElementById('reviseModal');
-            const docNameDisplay = reviseModal.querySelector('.docNameDisplay');
-            const filesContainer = reviseModal.querySelector('.existing-files-container');
-            const reviseForm = document.getElementById('reviseForm');
+            // Update tombol Approve (di dalam modal)
+            const $approveBtn = $('#viewFileModal .open-approve-modal');
+            const $rejectBtn = $('#viewFileModal form:has(button[type="submit"]) button[type="submit"]');
 
-            // Saat tombol revisi diklik
-            document.querySelectorAll('.revise-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const docId = this.dataset.docId;
-                    const docName = this.dataset.docName || '-';
-                    const docNumber = this.dataset.docNumber || '-';
-                    const files = JSON.parse(this.dataset.files || '[]');
+            // Set data-doc-id juga kalau diperlukan
+            $approveBtn.attr('data-doc-id', docId);
+            $('#rejectForm').attr('action', `/document-review/${docId}/reject`);
 
-                    // Update judul modal
-                    docNameDisplay.textContent = `${docName} (${docNumber})`;
-
-                    // Update form action
-                    reviseForm.action = `/document-review/${docId}/revise`;
-
-                    // Isi daftar file
-                    if (files.length > 0) {
-                        filesContainer.innerHTML = `
-                    <label class="form-label fw-semibold">Existing Files:</label>
-                    <ul class="list-group mb-2">
-                        ${files.map(f => `
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span class="text-truncate" style="max-width: 300px;">${f.name}</span>
-                                                    <a href="${f.url}" class="btn btn-outline-success btn-sm" download>
-                                                        <i class="bi bi-download"></i>
-                                                    </a>
-                                                </li>
-                                            `).join('')}
-                    </ul>
-                    <div class="mt-3">
-                        <label class="form-label">Upload Revisi File</label>
-                        <input type="file" name="new_files[]" multiple class="form-control border-1 shadow-sm">
-                    </div>
-                `;
-                    } else {
-                        filesContainer.innerHTML =
-                            `<p class="text-muted">No files available for revision.</p>`;
-                    }
-                });
-            });
+            // Enable/Disable
+            $approveBtn.prop('disabled', !isActionable);
+            $rejectBtn.prop('disabled', !isActionable);
         });
 
         // ✅ Approve Modal Handler
         $(document).on('click', '.open-approve-modal', function() {
             const docId = $(this).data('doc-id');
-            const actionUrl = `/master/document-review/${docId}/approve-with-dates`;
+            const actionUrl = `/document-review/${docId}/approve-with-dates`;
             $('#approveForm').attr('action', actionUrl);
+        });
+
+        document.addEventListener('submit', function(e) {
+            if (e.target && e.target.classList.contains('reject-form')) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Reject this document?',
+                    text: 'Rejected document will need revision.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, reject it!'
+                }).then(result => {
+                    if (result.isConfirmed) e.target.submit();
+                });
+            }
         });
 
         // ✅ Validasi tanggal sebelum submit
@@ -411,53 +395,65 @@
 
             if (!valid) e.preventDefault();
         });
+
+
+        // Kosongkan iframe saat modal ditutup (optional)
+        document.getElementById('viewFileModal').addEventListener('hidden.bs.modal', function() {
+            const iframe = document.getElementById('fileViewer');
+            if (iframe) iframe.src = '';
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+    const reviseModalEl = document.getElementById('reviseModal');
+    const reviseForm = document.getElementById('reviseForm');
+    const fileContainer = document.querySelector('.existing-files-container');
+
+    // Buat instance modal sekali
+    const reviseModalInstance = new bootstrap.Modal(reviseModalEl);
+
+    // Bind tombol edit document
+    document.querySelectorAll('.edit-doc-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const route = button.getAttribute('data-route');
+            const files = JSON.parse(button.getAttribute('data-files'));
+            const notes = button.getAttribute('data-notes') || '';
+
+            // Set action form dan nilai input notes
+            reviseForm.setAttribute('action', route);
+            reviseForm.querySelector('input[name="notes"]').value = notes;
+
+            // Isi daftar file
+            if (files.length > 0) {
+                let html = '';
+                files.forEach(file => {
+                    html += `
+                        <div class="mb-2">
+                            <label class="form-label">Revisi: ${file.name}</label>
+                            <input type="file" name="files[${file.id}]" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                        </div>
+                    `;
+                });
+                fileContainer.innerHTML = html;
+            } else {
+                fileContainer.innerHTML = '<p class="text-muted">No files available for revision.</p>';
+            }
+
+            // Tampilkan modal
+            reviseModalInstance.show();
+        });
+    });
+
+    // Bersihkan backdrop jika modal sudah tertutup (mengatasi backdrop hitam stuck)
+    reviseModalEl.addEventListener('hidden.bs.modal', function () {
+        // Pastikan kelas modal-open dan style overflow hilang
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        // Hapus backdrop jika ada
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+        // Blur fokus
+        if (document.activeElement) document.activeElement.blur();
+    });
+});
     </script>
-    <!-- ✅ Modal Approve (Global) -->
-    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-md">
-            <div class="modal-content border-0 rounded-4 shadow-lg">
-                <div class="modal-header bg-light text-dark">
-                    <h5 class="modal-title d-flex align-items-center" id="approveModalLabel">
-                        <i class="bi bi-check-circle-fill me-2"></i> Approve Document
-                    </h5>
-                </div>
-
-                <form id="approveForm" method="POST">
-                    @csrf
-                    <div class="modal-body p-4">
-                        {{-- Reminder Date --}}
-                        <div class="mb-3">
-                            <label for="reminder_date" class="form-label fw-semibold">
-                                Reminder Date <span class="text-danger">*</span>
-                            </label>
-                            <input type="date" name="reminder_date" id="reminder_date" class="form-control" required>
-                            <div id="reminderError" class="text-danger small mt-1" style="display:none;">
-                                Reminder Date must be earlier than or equal to Deadline.
-                            </div>
-                        </div>
-
-                        {{-- Deadline --}}
-                        <div class="mb-3">
-                            <label for="deadline" class="form-label fw-semibold">
-                                Deadline <span class="text-danger">*</span>
-                            </label>
-                            <input type="date" name="deadline" id="deadline" class="form-control" required>
-                            <div id="deadlineError" class="text-danger small mt-1" style="display:none;">
-                                Deadline must be later than or equal to Reminder Date.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-1"></i> Cancel
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check2-circle me-1"></i> Approve
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 @endpush

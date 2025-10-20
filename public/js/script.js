@@ -136,19 +136,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// DataTables
-document.addEventListener("DOMContentLoaded", function () {
-    const table = new simpleDatatables.DataTable("#documentTable", {
-        searchable: true,
-        fixedHeight: true,
-        perPage: 10,
-        labels: {
-            placeholder: "Search...",
-            perPage: "{select} rows per page",
-            noRows: "No data found",
-            info: "Showing {start} to {end} of {rows} entries",
-        }
-    });
-});
 
 

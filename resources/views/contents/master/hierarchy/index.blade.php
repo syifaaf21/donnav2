@@ -2,9 +2,6 @@
 @section('title', 'Document Hierarchy')
 
 @section('content')
-    @php
-        use Illuminate\Support\Str;
-    @endphp
     <div class="container py-4">
         {{-- Header: Title + Action Buttons --}}
         <div class="flex items-center justify-between mb-4">
@@ -107,7 +104,8 @@
                                 {{-- Document Type --}}
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Type</label>
-                                    <select name="type" class="form-select rounded-3 @error('type') is-invalid @enderror"
+                                    <select name="type"
+                                        class="form-select rounded-3 type-select @error('type') is-invalid @enderror"
                                         required>
                                         <option value="">Select Type</option>
                                         @foreach (\App\Models\Document::getTypes() as $value => $label)
@@ -165,12 +163,13 @@
                             {{-- Document Type --}}
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Type</label>
-                                <select name="type" class="form-select rounded-3 @error('type') is-invalid @enderror"
-                                    required>
-                                    <option value="">Select Type</option>
+                                <select id="type_select" name="type"
+                                    class="form-select rounded-3 @error('type') is-invalid @enderror" required>
+                                    <option value="" disabled {{ old('type') ? '' : 'selected' }}>-- Select Type --
+                                    </option>
                                     @foreach (\App\Models\Document::getTypes() as $value => $label)
                                         <option value="{{ $value }}"
-                                            {{ old('type') === $value ? 'selected' : '' }}>
+                                            {{ old('type') == $value ? 'selected' : '' }}>
                                             {{ $label }}
                                         </option>
                                     @endforeach
@@ -193,32 +192,12 @@
             </div>
         </div>
     @endsection
-
     @push('scripts')
-        <x-sweetalert-confirm />
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <x-sweetalert-confirm />
         <script>
-            document.querySelectorAll('.delete-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        text: "This action cannot be undone.",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.submit();
-                        }
-                    });
-                });
-            });
 
-            // Clear Search functionality
-            document.addEventListener("DOMContentLoaded", function() {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Clear Search functionality
                 const clearBtn = document.getElementById("clearSearch");
                 const searchInput = document.getElementById("searchInput");
                 const searchForm = document.getElementById("searchForm");
@@ -229,10 +208,8 @@
                         searchForm.submit();
                     });
                 }
-            });
 
-            //Tooltip
-            document.addEventListener('DOMContentLoaded', function() {
+                //Tooltip
                 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
                 tooltipTriggerList.map(function(el) {
                     return new bootstrap.Tooltip(el, {
@@ -241,10 +218,8 @@
                         trigger: 'hover'
                     });
                 });
-            });
 
-            // Toggle visibility of child documents
-            document.addEventListener('DOMContentLoaded', function() {
+                // Toggle visibility of child documents
                 feather.replace();
 
                 document.querySelectorAll('.toggle-children').forEach(button => {
@@ -259,6 +234,34 @@
                         icon.classList.toggle('rotate-90');
                         // re-replace feather icons (so icons tetap muncul)
                         feather.replace();
+                    });
+                });
+
+                new TomSelect('#type_select', {
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: 'text',
+                    preload: true,
+                    load: function(query, callback) {
+                        fetch('/api/document-types')
+                            .then(res => res.json())
+                            .then(callback)
+                            .catch(() => callback());
+                    }
+                });
+
+                document.querySelectorAll('.type-select').forEach(el => {
+                    new TomSelect(el, {
+                        valueField: 'id',
+                        labelField: 'text',
+                        searchField: 'text',
+                        preload: true,
+                        load: function(query, callback) {
+                            fetch('/api/document-types')
+                                .then(res => res.json())
+                                .then(callback)
+                                .catch(() => callback());
+                        }
                     });
                 });
             });

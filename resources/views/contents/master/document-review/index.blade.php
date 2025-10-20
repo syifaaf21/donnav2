@@ -175,10 +175,8 @@
             });
 
             feather.replace();
-        });
-        // in form message
-        document.addEventListener('DOMContentLoaded', function() {
-            // Ambil semua form yang butuh validasi
+
+            // in form message
             const forms = document.querySelectorAll('.needs-validation');
 
             Array.from(forms).forEach(function(form) {
@@ -191,46 +189,8 @@
                     form.classList.add('was-validated'); // Tambahkan class validasi Bootstrap
                 }, false);
             });
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const plantSelect = document.getElementById('addPlantSelect');
-            const partNumberSelect = document.getElementById('addPartNumberSelect');
-
-            function filterPartNumbersByPlant(plantValue) {
-                const options = partNumberSelect.querySelectorAll('option');
-
-                options.forEach(option => {
-                    const dataPlant = option.dataset.plant;
-
-                    // Tampilkan semua jika belum pilih plant
-                    if (!plantValue || option.value === '') {
-                        option.style.display = '';
-                    } else {
-                        option.style.display = (dataPlant === plantValue) ? '' : 'none';
-                    }
-                });
-
-                // Reset value jika tidak cocok
-                if (![...partNumberSelect.options].some(opt => opt.value === partNumberSelect.value && opt.style
-                        .display !== 'none')) {
-                    partNumberSelect.value = '';
-                }
-            }
-
-            // Saat plant berubah
-            plantSelect?.addEventListener('change', function() {
-                filterPartNumbersByPlant(this.value);
-            });
-
-            // Filter saat modal dibuka (jaga-jaga)
-            if (plantSelect?.value) {
-                filterPartNumbersByPlant(plantSelect.value);
-            }
-        });
-
-        //View File in tab
-        document.addEventListener('DOMContentLoaded', function() {
+            //View File in tab
             const modal = document.getElementById('viewFileModal');
             const iframe = document.getElementById('fileViewer');
 
@@ -244,9 +204,7 @@
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
             document.body.addEventListener('click', function(e) {
                 const btn = e.target.closest('.toggle-children');
                 if (!btn) return;
@@ -272,9 +230,7 @@
                     }
                 }
             });
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
             // Deteksi posisi dropdown saat akan dibuka
             document.querySelectorAll('.dropdown').forEach(drop => {
                 drop.addEventListener('show.bs.dropdown', function() {
@@ -295,6 +251,7 @@
                     drop.classList.remove('dropup');
                 });
             });
+
         });
     </script>
 @endpush

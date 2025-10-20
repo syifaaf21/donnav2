@@ -21,11 +21,13 @@
 
                 <td class="px-4 py-2 text-center space-x-1">
                     <!-- 👁 Toggle Detail -->
-                    <button type="button"
-                        class="toggle-detail bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded text-xs"
-                        data-target="#detail-{{ $index }}" title="View Details">
-                        <i class="bi bi-eye"></i>
-                    </button>
+                    @if ($group->count() > 0)
+                        <button type="button"
+                            class="toggle-detail bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded text-xs"
+                            data-target="#detail-{{ $index }}" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    @endif
                 </td>
             </tr>
 
@@ -62,7 +64,25 @@
                                         {{ $doc->updated_at ? $doc->updated_at->format('Y-m-d') : '-' }}
                                     </td>
                                     <td class="px-2 py-1">{{ $doc->user?->name ?? '-' }}</td>
-                                    <td class="px-2 py-1">{{ $doc->status?->name ?? '-' }}</td>
+                                    @php
+                                        $statusName = strtolower($doc->status?->name ?? '');
+                                        $statusClass = match ($statusName) {
+                                            'approved'
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                                            'rejected'
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                                            'need review'
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
+                                            default
+                                                => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
+                                        };
+                                    @endphp
+
+                                    <td class="px-2 py-1">
+                                        <span class="{{ $statusClass }}">
+                                            {{ ucfirst($statusName ?: '-') }}
+                                        </span>
+                                    </td>
                                     <td class="px-2 py-1 text-center">
                                         <div class="dropdown d-inline">
                                             <button type="button"
@@ -104,7 +124,10 @@
                                                                         class="btn btn-outline-primary btn-sm view-file-btn"
                                                                         data-bs-toggle="modal"
                                                                         data-bs-target="#viewFileModal"
-                                                                        data-file="{{ $viewerUrl }}" title="View">
+                                                                        data-file="{{ $viewerUrl }}"
+                                                                        data-status="{{ strtolower($doc->status?->name) }}"
+                                                                        data-doc-id="{{ $doc->id }}"
+                                                                        title="View">
                                                                         <i class="bi bi-eye"></i>
                                                                     </button>
                                                                 @else
@@ -132,68 +155,35 @@
                                                 @endforelse
                                             </ul>
                                         </div>
-                                        <!-- ✏️ Revisi -->
+                                        @php
+                                            $fileList = $doc->files->map(function ($f) {
+                                                return [
+                                                    'id' => $f->id,
+                                                    'name' => $f->file_name ?? basename($f->file_path),
+                                                    'url' => asset('storage/' . $f->file_path),
+                                                ];
+                                            });
+                                        @endphp
+                                        @php
+                                            $statusName = strtolower($doc->status?->name ?? '');
+                                            $canRevise = in_array($statusName, ['approved', 'rejected']); // hanya approved & rejected yang boleh revisi
+                                        @endphp
+
                                         <button type="button"
-                                            class="btn btn-warning hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs revise-btn"
-                                            title="Revisi" data-bs-toggle="modal" data-bs-target="#reviseModal"
-                                            data-doc-id="{{ $doc->id }}"
-                                            data-doc-name="{{ $doc->document?->name }}"
-                                            data-doc-number="{{ $doc->document_number }}"
-                                            data-files='@json(
-                                                $doc->files->map(fn($f) => [
-                                                        'name' => $f->file_name ?? basename($f->file_path),
-                                                        'url' => asset('storage/' . $f->file_path),
-                                                    ]))'>
-                                            <i class="bi bi-pencil-square"></i>
+                                            class="btn btn-outline-warning btn-sm edit-doc-btn px-2 py-1 rounded text-xs"
+                                            data-doc-id="{{ $doc->id }}" data-notes="{{ $doc->notes }}"
+                                            data-route="{{ route('document-review.revise', $doc->id) }}"
+                                            data-files='@json($fileList)' title="Edit Document"
+                                            @if (!in_array(strtolower($doc->status?->name ?? ''), ['approved', 'rejected'])) disabled @endif>
+                                            <i class="bi bi-pencil"></i>
                                         </button>
+
+
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                    {{-- ✅ Modal Revise Document --}}
-                    <div class="modal fade" id="reviseModal" tabindex="-1" aria-labelledby="reviseModalLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <form method="POST" action="" enctype="multipart/form-data" id="reviseForm">
-                                @csrf
-                                <div class="modal-content border-0 rounded-4 shadow-lg">
-                                    <div class="modal-header bg-light text-dark rounded-top-4">
-                                        <h5 class="modal-title fw-semibold">
-                                            <i class="bi bi-arrow-clockwise me-2"></i> Revisi Dokumen
-                                            <span class="docNameDisplay text-primary"></span>
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-
-                                    <div class="modal-body p-4"
-                                        style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
-                                        {{-- List Files --}}
-                                        <div class="existing-files-container mb-3"></div>
-
-                                        {{-- Notes revisi --}}
-                                        <div>
-                                            <label class="form-label">Notes</label>
-                                            <input type="text" name="notes"
-                                                class="form-control border-1 shadow-sm"
-                                                placeholder="Catatan revisi untuk file ini..." required>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                                        <button type="button" class="btn btn-outline-secondary px-4"
-                                            data-bs-dismiss="modal">
-                                            <i class="bi bi-x-circle me-1"></i> Close
-                                        </button>
-                                        <button type="submit" class="btn btn-warning px-4">
-                                            <i class="bi bi-save2 me-1"></i> Submit Revisi
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
                 </td>
             </tr>
             @empty
@@ -205,13 +195,3 @@
             @endforelse
         </tbody>
     </table>
-
-    {{-- toggle-detail JS (pastikan hanya dipanggil sekali di index) --}}
-    <script>
-        document.querySelectorAll('.toggle-detail').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const target = document.querySelector(this.dataset.target);
-                if (target) target.classList.toggle('hidden');
-            });
-        });
-    </script>

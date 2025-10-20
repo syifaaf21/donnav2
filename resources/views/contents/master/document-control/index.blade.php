@@ -43,6 +43,7 @@
                             <th class="px-6 py-3">Department</th>
                             <th class="px-6 py-3">Obsolete</th>
                             <th class="px-6 py-3">Reminder Date</th>
+                            <th class="px-6 py-3">Notes</th>
                             <th class="px-6 py-3">Action</th>
                         </tr>
                     </thead>
