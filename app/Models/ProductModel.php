@@ -11,6 +11,7 @@ class ProductModel extends Model
 
     protected $fillable = [
         'name',
+        'plant',
     ];
 
     protected $table = 'models'; // sesuaikan

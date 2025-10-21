@@ -17,23 +17,29 @@ class ProcessController extends Controller
         // Handle search
         if ($request->has('search') && $request->search !== null) {
             $query->where('name', 'like', '%' . $request->search . '%')
-                ->orWhere('code', 'like', '%' . $request->search . '%');
+                ->orWhere('code', 'like', '%' . $request->search . '%')
+                ->orWhere('plant', 'like', '%' . $request->search . '%');
         }
 
-        $processes = $query->orderBy('name')->paginate(10)->appends($request->query());
+        $processes = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
 
 
         return view('contents.master.process', compact('processes'));
     }
 
+
+
     /**
      * Store a newly created process.
      */
+
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
+            'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
 
@@ -50,6 +56,7 @@ class ProcessController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
+            'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
         $process->update($validated);

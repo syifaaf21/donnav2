@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\ProductModel;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\Product;
-use App\Models\Model as CarModel; // Rename to avoid conflict with base PHP Model
-use App\Models\Process;
 use Illuminate\Support\Str;
+use App\Models\Product;
+use App\Models\ProductModel;
+use App\Models\Process;
 
 class PartNumberSeeder extends Seeder
 {
@@ -19,6 +18,7 @@ class PartNumberSeeder extends Seeder
             'unit' => ['die casting', 'machining', 'assembling unit'],
             'electric' => ['mounting', 'assembling electric', 'inspection'],
         ];
+
         $data = [
             'Timing Chain Cover' => [
                 'models' => ['D98E', '889F/D81F', 'D72F/D73F', 'D05E', '4A91', 'D18E', 'D41E', 'D13E'],
@@ -45,29 +45,25 @@ class PartNumberSeeder extends Seeder
                 'processes' => ['injection', 'assembling body'],
             ],
             'Antenna' => [
-                'models' => ['4WD 5F00', 'EF160 105E', 'EF160 123E', 'EF160 Z12E', 'GA35', 'T431', '4WD IMV', 'PBD', 'ANTENNA ASSY',],
+                'models' => ['4WD 5F00', 'EF160 105E', 'EF160 123E', 'EF160 Z12E', 'GA35', 'T431', '4WD IMV', 'PBD', 'ANTENNA ASSY'],
                 'processes' => ['mounting', 'assembling electric', 'inspection'],
-            ]
+            ],
         ];
 
         foreach ($data as $productName => $info) {
             $product = Product::where('name', $productName)->first();
-
-            if (!$product) {
-                echo "Product not found: $productName\n";
-                continue;
-            }
+            if (!$product) continue;
 
             foreach ($info['models'] as $modelName) {
                 $model = ProductModel::where('name', $modelName)->first();
-
-                if (!$model) {
-                    echo "Model not found: $modelName\n";
-                    continue;
-                }
+                if (!$model) continue;
 
                 foreach ($info['processes'] as $processName) {
-                    // cari plant berdasarkan process
+                    // Cek apakah proses ada
+                    $process = Process::where('name', $processName)->first();
+                    if (!$process) continue;
+
+                    // Tentukan plant berdasarkan process
                     $plant = null;
                     foreach ($plantMapping as $plantName => $processes) {
                         if (in_array($processName, $processes)) {
@@ -76,24 +72,13 @@ class PartNumberSeeder extends Seeder
                         }
                     }
 
-                    if (!$plant) {
-                        echo "Plant not found for process: $processName\n";
-                        continue;
-                    }
-
-                    // Cari process_id dari tabel processes
-                    $process = Process::where('name', $processName)->first();
-
-                    if (!$process) {
-                        echo "Process not found: $processName\n";
-                        continue;
-                    }
+                    if (!$plant) continue;
 
                     DB::table('part_numbers')->insert([
                         'part_number' => strtoupper(Str::random(10)),
                         'product_id' => $product->id,
                         'model_id' => $model->id,
-                        'process_id' => $process->id, // <- pakai process_id
+                        'process_id' => $process->id,
                         'plant' => $plant,
                         'created_at' => now(),
                         'updated_at' => now(),

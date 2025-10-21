@@ -17,7 +17,7 @@ class DepartmentController extends Controller
                   ->orWhere('code', 'like', '%' . $request->search . '%');
         }
 
-        $departments = $query->orderBy('name')->paginate(10)->withQueryString();
+        $departments = $query->orderBy('created_at')->paginate(10)->withQueryString();
 
         return view('contents.master.department', compact('departments'));
     }

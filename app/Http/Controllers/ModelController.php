@@ -10,7 +10,8 @@ class ModelController extends Controller
     public function index(Request $request)
     {
         $models = ProductModel::when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%");
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('plant', 'like', "%{$search}%");
             })
             ->orderBy('created_at', 'desc')
             ->paginate(10)
@@ -22,7 +23,8 @@ class ModelController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:model_products,name',
+            'name' => 'required|string|max:100|unique:models,name',
+            'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
         ProductModel::create($validated);
@@ -33,7 +35,8 @@ class ModelController extends Controller
     public function update(Request $request, ProductModel $model)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:model_products,name,' . $model->id,
+            'name' => 'required|string|max:100|unique:models,name,' . $model->id,
+            'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
         $model->update($validated);

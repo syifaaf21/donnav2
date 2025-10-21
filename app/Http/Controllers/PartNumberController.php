@@ -29,7 +29,7 @@ class PartNumberController extends Controller
             });
         }
 
-        $partNumbers = $query->paginate(10)->appends($request->query());
+        $partNumbers = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
         $products = Product::all();
         $models = ProductModel::all();
         $processes = Process::all(); // <--- tambah ini
@@ -95,6 +95,25 @@ class PartNumberController extends Controller
         $partNumber->update($request->only('part_number', 'product_id', 'model_id', 'process_id', 'plant'));
 
         return redirect()->back()->with('success', 'Part Number updated successfully.');
+    }
+
+    public function getOptionsByPlant(Request $request)
+    {
+        $plant = ucfirst($request->query('plant'));
+
+        $processes = Process::where('plant', $plant)->get(['id', 'name'])->map(function ($item) {
+            $item->name = ucwords($item->name);
+            return $item;
+        });
+
+        $products = Product::where('plant', $plant)->get(['id', 'name']);
+        $models = ProductModel::where('plant', $plant)->get(['id', 'name']);
+
+        return response()->json([
+            'processes' => $processes,
+            'products' => $products,
+            'models' => $models,
+        ]);
     }
 
     public function destroy(PartNumber $partNumber)

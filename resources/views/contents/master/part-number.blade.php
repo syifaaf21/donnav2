@@ -163,7 +163,8 @@
                                     <select name="process_id" id="process_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
-                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>-- Select Process --</option>
+                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>--
+                                            Select Process --</option>
                                         @foreach ($processes as $process)
                                             <option value="{{ $process->id }}"
                                                 {{ $part->process_id == $process->id ? 'selected' : '' }}>
@@ -230,43 +231,6 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="product_id" class="form-label fw-semibold">Product</label>
-                                    <select id="product_id" name="product_id"
-                                        class="form-select @error('product_id') is-invalid @enderror"
-                                        placeholder="Search or create product..." required></select>
-                                    @error('product_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="model_id" class="form-label fw-semibold">Model</label>
-                                    <select id="model_id" name="model_id"
-                                        class="form-select @error('model_id') is-invalid @enderror"
-                                        placeholder="Search or create model..." required></select>
-                                    @error('model_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="process" class="form-label fw-semibold">Process</label>
-                                    <select id="process" name="process_id"
-                                        class="form-select @error('process_id') is-invalid @enderror" required>
-                                        <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>-- Select Process --</option>
-                                        @foreach ($processes as $process)
-                                            <option value="{{ $process->id }}"
-                                                {{ old('process_id') == $process->id ? 'selected' : '' }}>
-                                                {{ ucfirst($process->name) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('process_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <div class="col-md-6">
                                     <label for="plant" class="form-label fw-semibold">Plant</label>
                                     <select id="plant" name="plant"
                                         class="form-select @error('plant') is-invalid @enderror" required>
@@ -279,6 +243,55 @@
                                         @endforeach
                                     </select>
                                     @error('plant')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="product_id" class="form-label fw-semibold">Product</label>
+                                    <select id="product_id" name="product_id"
+                                        class="form-select @error('product_id') is-invalid @enderror"
+                                        placeholder="Search or create product..." required disabled>
+                                        @if (old('product_id'))
+                                            <option value="{{ old('product_id') }}" selected>
+                                                {{ old('product_name', 'Selected Product') }}</option>
+                                        @endif
+                                    </select>
+                                    @error('product_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="model_id" class="form-label fw-semibold">Model</label>
+                                    <select id="model_id" name="model_id"
+                                        class="form-select @error('model_id') is-invalid @enderror"
+                                        placeholder="Search or create model..." required disabled>
+                                        @if (old('model_id'))
+                                            <option value="{{ old('model_id') }}" selected>
+                                                {{ old('model_name', 'Selected Model') }}</option>
+                                        @endif
+                                    </select>
+                                    @error('model_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="process" class="form-label fw-semibold">Process</label>
+                                    <select id="process_id" name="process_id"
+                                        class="form-select @error('process_id') is-invalid @enderror"
+                                        placeholder="Search or create process..." required disabled>
+                                        <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>--
+                                            Select Process --</option>
+                                        @foreach ($processes as $process)
+                                            <option value="{{ $process->id }}"
+                                                {{ old('process_id') == $process->id ? 'selected' : '' }}>
+                                                {{ ucfirst($process->name) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('process_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -297,140 +310,163 @@
                 </div>
             </div>
         </div>
-        <x-sweetalert-confirm />
     @endsection
     @push('scripts')
+        <x-sweetalert-confirm />
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const clearBtn = document.getElementById("clearSearch");
-                const searchInput = document.getElementById("searchInput");
-                const searchForm = document.getElementById("searchForm");
-
-                if (clearBtn && searchInput && searchForm) {
-                    clearBtn.addEventListener("click", function() {
-                        searchInput.value = "";
-                        searchForm.submit();
-                    });
-                }
-                // --- Inisialisasi TomSelect untuk Create Modal ---
-                new TomSelect("#product_id", {
-                    valueField: 'id',
-                    labelField: 'text',
-                    searchField: 'text',
-                    preload: true,
-                    load: function(query, callback) {
-                        let url = '/api/products';
-                        if (query.length) {
-                            url += '?q=' + encodeURIComponent(query);
-                        }
-                        fetch(url)
-                            .then(response => response.json())
-                            .then(callback)
-                            .catch(() => callback());
-                    },
-                    create: true,
-                    maxOptions: 50,
-                    persist: false
-                });
-
-                new TomSelect("#model_id", {
-                    valueField: 'id',
-                    labelField: 'text',
-                    searchField: 'text',
-                    preload: true,
-                    load: function(query, callback) {
-                        let url = '/api/models';
-                        if (query.length) {
-                            url += '?q=' + encodeURIComponent(query);
-                        }
-                        fetch(url)
-                            .then(response => response.json())
-                            .then(callback)
-                            .catch(() => callback());
-                    },
-                    create: true,
-                    maxOptions: 50,
-                    persist: false
-                });
-
-                new TomSelect("#process", {
+                const productTomSelect = new TomSelect("#product_id", {
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
-                    preload: true,
-                    load: function(query, callback) {
-                        let url = '/api/processes'; // endpoint API yang mengembalikan daftar proses
-                        if (query.length) {
-                            url += '?q=' + encodeURIComponent(query);
-                        }
-                        fetch(url)
-                            .then(response => response.json())
-                            .then(callback)
-                            .catch(() => callback());
-                    },
+                    create: true,
+                    maxOptions: 50,
+                    persist: false,
+                });
+
+                const modelTomSelect = new TomSelect("#model_id", {
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: 'name',
+                    create: true,
+                    maxOptions: 50,
+                    persist: false,
+                });
+
+                const processTomSelect = new TomSelect("#process_id", {
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: 'name',
                     create: false,
                     maxOptions: 50,
-                    persist: false
+                    persist: false,
                 });
 
-                // --- Edit Modal: Product & Model (tidak bisa create) ---
-                document.querySelectorAll('select[id^="product_id_edit_"]').forEach(function(el) {
-                    new TomSelect(el, {
-                        valueField: 'id',
-                        labelField: 'text',
-                        searchField: 'text',
-                        preload: true,
-                        create: false,
-                        load: function(query, callback) {
-                            let url = '/api/products';
-                            if (query.length) {
-                                url += '?q=' + encodeURIComponent(query);
+                // Awalnya dropdown di-disable
+                productTomSelect.disable();
+                modelTomSelect.disable();
+                processTomSelect.disable();
+
+                const plantSelect = document.getElementById('plant');
+
+                plantSelect.addEventListener('change', function() {
+                    const plant = this.value;
+
+                    if (!plant) {
+                        productTomSelect.disable();
+                        modelTomSelect.disable();
+                        processTomSelect.disable();
+                        return;
+                    }
+
+                    fetch(`/api/get-options-by-plant?plant=${plant}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            productTomSelect.clearOptions();
+                            modelTomSelect.clearOptions();
+                            processTomSelect.clearOptions();
+
+                            if (data.products && data.products.length) {
+                                data.products.forEach(prod => {
+                                    productTomSelect.addOption({
+                                        id: prod.id,
+                                        name: prod.name
+                                    });
+                                });
+                                productTomSelect.enable();
+                            } else {
+                                productTomSelect.disable();
                             }
-                            fetch(url)
-                                .then(response => response.json())
-                                .then(callback)
-                                .catch(() => callback());
-                        }
-                    });
-                });
 
-                document.querySelectorAll('select[id^="model_id_edit_"]').forEach(function(el) {
-                    new TomSelect(el, {
-                        valueField: 'id',
-                        labelField: 'text',
-                        searchField: 'text',
-                        preload: true,
-                        create: false,
-                        load: function(query, callback) {
-                            let url = '/api/models';
-                            if (query.length) {
-                                url += '?q=' + encodeURIComponent(query);
+                            if (data.models && data.models.length) {
+                                data.models.forEach(mod => {
+                                    modelTomSelect.addOption({
+                                        id: mod.id,
+                                        name: mod.name
+                                    });
+                                });
+                                modelTomSelect.enable();
+                            } else {
+                                modelTomSelect.disable();
                             }
-                            fetch(url)
-                                .then(response => response.json())
-                                .then(callback)
-                                .catch(() => callback());
+
+                            if (data.processes && data.processes.length) {
+                                data.processes.forEach(proc => {
+                                    processTomSelect.addOption({
+                                        id: proc.id,
+                                        name: proc.name
+                                    });
+                                });
+                                processTomSelect.enable();
+                            } else {
+                                processTomSelect.disable();
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error fetching options:', err);
+                            productTomSelect.disable();
+                            modelTomSelect.disable();
+                            processTomSelect.disable();
+                        });
+                });
+                @if ($errors->any())
+                    var myModal = new bootstrap.Modal(document.getElementById('createPartNumberModal'));
+                    myModal.show();
+                @endif
+
+                const cancelButton = document.querySelector('#createPartNumberModal button[data-bs-dismiss="modal"]');
+                const form = document.querySelector('#createPartNumberModal form');
+
+                cancelButton.addEventListener('click', function() {
+                    form.reset();
+
+                    // Jika kamu menggunakan TomSelect atau select custom lainnya, jangan lupa clear juga:
+                    if (window.productTomSelect) productTomSelect.clear();
+                    if (window.modelTomSelect) modelTomSelect.clear();
+                    if (window.processTomSelect) processTomSelect.clear();
+                });
+
+                const modal = document.getElementById('editPartNumberModal');
+                const form = modal.querySelector('form');
+                const cancelButton = modal.querySelector('button[data-bs-dismiss="modal"]');
+
+                let originalFormData = {};
+
+                // Fungsi untuk simpan data form saat modal dibuka
+                function saveOriginalFormData() {
+                    originalFormData = {};
+                    const elements = form.elements;
+                    for (let i = 0; i < elements.length; i++) {
+                        const el = elements[i];
+                        if (el.name) {
+                            originalFormData[el.name] = el.value;
                         }
-                    });
-                });
+                    }
+                }
 
-                // --- Edit Modal: Process & Plant (fixed options) ---
-                document.querySelectorAll('select[id^="process_edit_"]').forEach(function(el) {
-                    new TomSelect(el, {
-                        create: false,
-                        maxItems: 1,
-                        searchField: 'text',
-                        allowEmptyOption: false,
-                    });
-                });
+                // Fungsi untuk reset form ke data lama
+                function resetFormToOriginal() {
+                    for (const name in originalFormData) {
+                        if (originalFormData.hasOwnProperty(name)) {
+                            const el = form.elements[name];
+                            if (el) {
+                                el.value = originalFormData[name];
+                            }
+                        }
+                    }
 
-                document.querySelectorAll('select[id^="plant_edit_"]').forEach(function(el) {
-                    new TomSelect(el, {
-                        create: false,
-                        maxItems: 1,
-                        searchField: 'text',
-                        allowEmptyOption: false,
-                    });
+                    // Jika pakai TomSelect, set juga nilai mereka:
+                    if (window.productTomSelect) productTomSelect.setValue(originalFormData['product_id'] || '');
+                    if (window.modelTomSelect) modelTomSelect.setValue(originalFormData['model_id'] || '');
+                    if (window.processTomSelect) processTomSelect.setValue(originalFormData['process_id'] || '');
+                }
+
+                // Saat modal dibuka, simpan data awal
+                modal.addEventListener('show.bs.modal', saveOriginalFormData);
+
+                // Saat klik cancel, reset form
+                cancelButton.addEventListener('click', function() {
+                    resetFormToOriginal();
                 });
             });
         </script>

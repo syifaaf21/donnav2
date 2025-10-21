@@ -16,12 +16,10 @@ class ProductController extends Controller
                     ->orWhere('code', 'like', "%{$search}%")
                     ->orWhere('plant', 'like', "%{$search}%");
             });
-        })
-            ->paginate(10);
+        })->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
         return view('contents.master.product', compact('products'));
     }
-
 
     public function store(Request $request)
     {

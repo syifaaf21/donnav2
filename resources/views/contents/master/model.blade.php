@@ -1,119 +1,245 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Model List</h5>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModelModal">
-            <i class="bi bi-plus-circle"></i> Add Model
-        </button>
-    </div>
+    <div class="container py-3">
+        <div class="flex justify-between items-center mb-3">
+            {{-- Breadcrumbs --}}
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Master</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-decoration-none text-secondary">Model</a>
+                    </li>
+                </ol>
+            </nav>
 
-    {{-- Search --}}
-    <form method="GET" class="mb-3">
-        <div class="input-group">
-            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search model...">
-            <button class="btn btn-outline-secondary" type="submit">Search</button>
+            {{-- Add Model Button --}}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModelModal">
+                <i class="bi bi-plus-circle"></i> Add Model
+            </button>
         </div>
-    </form>
 
-    {{-- Table --}}
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>No</th>
-                            <th>Name</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($models as $model)
-                            <tr>
-                                <td>{{ ($models->currentPage() - 1) * $models->perPage() + $loop->iteration }}</td>
-                                <td>{{ $model->name }}</td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                                        data-bs-target="#editModelModal-{{ $model->id }}">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </button>
-                                    <form action="{{ route('master.models.destroy', $model->id) }}" method="POST" class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-
-                            {{-- Edit Modal --}}
-                            <div class="modal fade" id="editModelModal-{{ $model->id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <form action="{{ route('master.models.update', $model->id) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-light">
-                                                <h5 class="modal-title">Edit Model</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Name</label>
-                                                    <input type="text" name="name" value="{{ $model->name }}" class="form-control" required>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer bg-light">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success">Save</button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center text-muted">No models found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-3">
-                {{ $models->links() }}
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Add Modal --}}
-<div class="modal fade" id="addModelModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ route('master.models.store') }}" method="POST">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header bg-light">
-                    <h5 class="modal-title">Add New Model</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                {{-- Search Bar --}}
+                <div class="flex justify-content-end mb-3">
+                    <form method="GET" id="searchForm" class="flex items-center gap-2 flex-wrap">
+                        <div class="relative max-w-md w-full">
+                            <input type="text" name="search" id="searchInput"
+                                class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Search..." value="{{ request('search') }}">
+                            <button type="submit" title="Search"
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            <button type="button" id="clearSearch" title="Clear"
+                                class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Model Name</label>
-                        <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
-                        @error('name')
-                            <small class="text-danger d-block">{{ $message }}</small>
-                        @enderror
+
+                {{-- Table --}}
+                <div class="table-wrapper mb-3">
+                    <div class="table-responsive">
+                        <table class="min-w-full table-auto text-sm text-left text-gray-600">
+                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                                <tr>
+                                    <th class="px-4 py-3">No</th>
+                                    <th class="px-4 py-3">Name</th>
+                                    <th class="px-4 py-3">Plant</th>
+                                    <th class="px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($models as $model)
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            {{ ($models->currentPage() - 1) * $models->perPage() + $loop->iteration }}
+                                        </td>
+                                        <td class="px-4 py-3">{{ $model->name }}</td>
+                                        <td class="px-4 py-3">{{ $model->plant }}</td>
+                                        <td class="px-4 py-3">
+                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                                data-bs-target="#editModelModal-{{ $model->id }}">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <form action="{{ route('master.models.destroy', $model->id) }}" method="POST"
+                                                class="d-inline delete-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">No models found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    {{-- Pagination --}}
+                    <div class="p-3">
+                        {{ $models->withQueryString()->links() }}
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Model</button>
+            </div>
+        </div>
+        @foreach ($models as $model)
+            {{-- Edit Modal --}}
+            <div class="modal fade" id="editModelModal-{{ $model->id }}" tabindex="-1"
+                aria-labelledby="editModelModalLabel-{{ $model->id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form action="{{ route('master.models.update', $model->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-content border-0 shadow-lg rounded-4">
+                            <div class="modal-header bg-light text-dark rounded-top-4">
+                                <h5 class="modal-title fw-semibold" id="editModelModalLabel-{{ $model->id }}">
+                                    <i class="bi bi-pencil-square me-2"></i>Edit Model
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-medium">Model Name</label>
+                                    <input type="text" name="name"
+                                        class="form-control @error('name') is-invalid @enderror"
+                                        value="{{ $model->name }}" required>
+                                    @error('name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Plant --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Plant</label>
+                                    <select name="plant" class="form-select" required>
+                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                            <option value="{{ $plant }}" @selected($model->plant === $plant)>
+                                                {{ $plant }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                </button>
+                                <button type="submit" class="btn btn-outline-success px-4">
+                                    <i class="bi bi-check-circle me-1"></i>Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </form>
+        @endforeach
+
+        {{-- Add Modal --}}
+        <div class="modal fade" id="addModelModal" tabindex="-1" aria-labelledby="addModelModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form action="{{ route('master.models.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        {{-- Header --}}
+                        <div class="modal-header bg-light text-dark rounded-top-4">
+                            <h5 class="modal-title fw-semibold" id="addModelModalLabel">
+                                <i class="bi bi-plus-circle me-2"></i>Add New Model
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+
+                        {{-- Body --}}
+                        <div class="modal-body p-4">
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Model Name</label>
+                                <input type="text" name="name"
+                                    class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}"
+                                    required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            {{-- Plant --}}
+                            <div class="mb-3">
+                                <label class="form-label">Plant</label>
+                                <select name="plant" class="form-select" required>
+                                    <option value="">-- Select Plant --</option>
+                                    @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                        <option value="{{ $plant }}" @selected(old('plant') === $plant)>
+                                            {{ $plant }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Footer --}}
+                        <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
+                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </button>
+                            <button type="submit" class="btn btn-outline-primary px-4">
+                                <i class="bi bi-save2 me-1"></i>Add Model
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-</div>
 @endsection
+@push('scripts')
+    <x-sweetalert-confirm />
+
+    @if ($errors->any() && session('edit_modal'))
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                new bootstrap.Modal(document.getElementById("editModelModal-{{ session('edit_modal') }}")).show();
+            });
+        </script>
+    @endif
+
+    @if ($errors->any() && old('_form') === 'add')
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                new bootstrap.Modal(document.getElementById("addModelModal")).show();
+            });
+        </script>
+    @endif
+    <script>
+        // Clear Search functionality
+        document.addEventListener("DOMContentLoaded", function() {
+            const clearBtn = document.getElementById("clearSearch");
+            const searchInput = document.getElementById("searchInput");
+            const searchForm = document.getElementById("searchForm");
+
+            if (clearBtn && searchInput && searchForm) {
+                clearBtn.addEventListener("click", function() {
+                    searchInput.value = "";
+                    searchForm.submit();
+                });
+            }
+        });
+    </script>
+@endpush

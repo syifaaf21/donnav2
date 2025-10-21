@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\ProductModel;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ModelSeeder extends Seeder
@@ -14,53 +13,27 @@ class ModelSeeder extends Seeder
     public function run(): void
     {
         $models = [
-            'D98E',
-            '889F/D81F',
-            'D72F/D73F',
-            'D05E',
-            '4A91',
-            'D18E',
-            'D41E',
-            'D13E',
-            '922F',
-            'NR',
-            '1SZ',
-            '3SZ',
-            'K3',
-            '4L45W',
-            'YHA',
-            '660A',
-            '800A',
-            '230B',
-            '560B',
-            'YL8',
-            'IMV',
-            '810A',
-            '700A',
-            '913L',
-            'YTB',
-            '4J45',
-            '5D45W',
-            '5H45',
-            '655B',
-            'D30D',
-            'D23H',
-            '640A',
-            '4WD 5F00',
-            'EF160 105E',
-            'EF160 123E',
-            'EF160 Z12E',
-            'GA35',
-            'T431',
-            '4WD IMV',
-            'PBD',
-            'ANTENNA ASSY',
+            ['name' => '5D45W', 'plant' => 'Body'],
+            ['name' => '5H45', 'plant' => 'Body'],
+            ['name' => '655B', 'plant' => 'Body'],
+            ['name' => 'D30D', 'plant' => 'Body'],
+            ['name' => 'D23H', 'plant' => 'Body'],
+
+            ['name' => 'D98E', 'plant' => 'Unit'],
+            ['name' => '889F', 'plant' => 'Unit'],
+            ['name' => 'D72F', 'plant' => 'Unit'],
+            ['name' => 'D05E', 'plant' => 'Unit'],
+            ['name' => '4A91', 'plant' => 'Unit'],
+
+            ['name' => '4WD 5F00', 'plant' => 'Electric'],
+            ['name' => 'EF160 105E', 'plant' => 'Electric'],
+            ['name' => 'GA35', 'plant' => 'Electric'],
+            ['name' => 'T431', 'plant' => 'Electric'],
+            ['name' => '4WD IMV', 'plant' => 'Electric'],
         ];
 
         foreach ($models as $model) {
-            ProductModel::create([
-                'name' => $model
-            ]);
+            ProductModel::create($model);
         }
     }
 }

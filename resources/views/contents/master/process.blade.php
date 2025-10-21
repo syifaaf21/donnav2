@@ -55,6 +55,7 @@
                                     <th class="px-4 py-3">No</th>
                                     <th class="px-4 py-3">Name</th>
                                     <th class="px-4 py-3">Code</th>
+                                    <th class="px-4 py-3">Plant</th>
                                     <th class="px-4 py-3">Action</th>
                                 </tr>
                             </thead>
@@ -66,6 +67,7 @@
                                         </td>
                                         <td class="px-4 py-3">{{ ucwords($process->name) }}</td>
                                         <td class="px-4 py-3">{{ $process->code }}</td>
+                                        <td class="px-4 py-3">{{ $process->plant }}</td>
                                         <td class="px-4 py-3">
                                             <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
                                                 data-bs-target="#editProcessModal-{{ $process->id }}"
@@ -142,6 +144,18 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+
+                                {{-- Plant --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Plant</label>
+                                    <select name="plant" class="form-select" required>
+                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                            <option value="{{ $plant }}" @selected($process->plant === $plant)>
+                                                {{ $plant }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -200,6 +214,19 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            {{-- Plant --}}
+                            <div class="mb-3">
+                                <label class="form-label">Plant</label>
+                                <select name="plant" class="form-select" required>
+                                    <option value="">-- Select Plant --</option>
+                                    @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                        <option value="{{ $plant }}" @selected(old('plant') === $plant)>
+                                            {{ $plant }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -221,9 +248,8 @@
 
 
 @push('scripts')
-<x-sweetalert-confirm />
+    <x-sweetalert-confirm />
     <script>
-
         // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
             const clearBtn = document.getElementById("clearSearch");
