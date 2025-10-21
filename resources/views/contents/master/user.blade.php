@@ -375,27 +375,8 @@
 @endsection
 
 @push('scripts')
+<x-sweetalert-confirm />
     <script>
-        // SweetAlert for delete confirmation
-        document.querySelectorAll('.delete-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'This action cannot be undone.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        this.submit();
-                    }
-                });
-            });
-        });
-
         // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
             const clearBtn = document.getElementById("clearSearch");

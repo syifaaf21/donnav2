@@ -3,62 +3,51 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ProductModel;
 
 class ModelController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        return view('models.index');
+        $models = ProductModel::when($request->search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('plant', 'like', "%{$search}%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('contents.master.model', compact('models'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:models,name',
+            'plant' => 'required|in:Body,Unit,Electric',
+        ]);
+
+        ProductModel::create($validated);
+
+        return redirect()->back()->with('success', 'Model created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(Request $request, ProductModel $model)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:models,name,' . $model->id,
+            'plant' => 'required|in:Body,Unit,Electric',
+        ]);
+
+        $model->update($validated);
+
+        return redirect()->back()->with('success', 'Model updated successfully.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function destroy(ProductModel $model)
     {
-        //
-    }
+        $model->delete();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return redirect()->back()->with('success', 'Model deleted successfully.');
     }
 }

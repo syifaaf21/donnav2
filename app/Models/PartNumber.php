@@ -13,7 +13,7 @@ class PartNumber extends Model
         'part_number',
         'product_id',
         'model_id',
-        'process',
+        'process_id',
         'plant',
     ];
 
@@ -31,5 +31,9 @@ class PartNumber extends Model
     public function documentMappings()
     {
         return $this->hasMany(DocumentMapping::class);
+    }
+    public function process()
+    {
+        return $this->belongsTo(Process::class, 'process_id', 'id');
     }
 }

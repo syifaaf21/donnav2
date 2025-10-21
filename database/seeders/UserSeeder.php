@@ -49,12 +49,6 @@ class UserSeeder extends Seeder
             ['npk' => '000015', 'name' => 'Jaka', 'department_id' => 15],
             ['npk' => '000016', 'name' => 'Yanto', 'department_id' => 16],
             ['npk' => '000017', 'name' => 'Fina', 'department_id' => 17],
-            ['npk' => '000018', 'name' => 'Aji', 'department_id' => 18],
-            ['npk' => '000019', 'name' => 'Fauzan', 'department_id' => 19],
-            ['npk' => '000020', 'name' => 'Fauji', 'department_id' => 20],
-            ['npk' => '000021', 'name' => 'Surya', 'department_id' => 21],
-            ['npk' => '000022', 'name' => 'Hasan', 'department_id' => 22],
-            ['npk' => '000023', 'name' => 'Komang', 'department_id' => 23],
         ];
 
         foreach ($users as $index => $data) {

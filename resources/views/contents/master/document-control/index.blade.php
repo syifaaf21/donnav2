@@ -193,6 +193,8 @@
     <x-sweetalert-confirm />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+
             const selectAll = document.getElementById('selectAll');
             const snackbar = document.getElementById('snackbar');
             const selectedCount = document.getElementById('selectedCount');
@@ -295,12 +297,18 @@
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
+
+            const clearBtn = document.getElementById("clearSearch");
+            const searchInput = document.getElementById("searchInput");
+            const searchForm = document.getElementById("searchForm");
+
+            if (clearBtn && searchInput && searchForm) {
+                clearBtn.addEventListener("click", function() {
+                    searchInput.value = "";
+                    searchForm.submit();
+                });
+            }
         });
 
-        document.getElementById('clearSearch').addEventListener('click', function() {
-            const input = document.querySelector('input[name="search"]');
-            input.value = '';
-            document.getElementById('filterForm').submit();
-        });
     </script>
 @endpush

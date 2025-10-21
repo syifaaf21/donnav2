@@ -60,7 +60,7 @@
                             <div class="relative max-w-md w-full">
                                 <input type="text" name="search" id="searchInput"
                                     class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Search by part number" value="{{ request('search') }}">
+                                    placeholder="Search.." value="{{ request('search') }}">
                                 <button
                                     class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
                                     type="submit" title="Search">
@@ -169,10 +169,16 @@
             });
 
             // Clear Search only
-            document.getElementById('clearSearch')?.addEventListener('click', function() {
-                document.querySelector('input[name="search"]').value = '';
-                document.getElementById('filterForm').submit();
-            });
+            const clearBtn = document.getElementById("clearSearch");
+            const searchInput = document.getElementById("searchInput");
+            const searchForm = document.getElementById("searchForm");
+
+            if (clearBtn && searchInput && searchForm) {
+                clearBtn.addEventListener("click", function() {
+                    searchInput.value = "";
+                    searchForm.submit();
+                });
+            }
 
             feather.replace();
 
