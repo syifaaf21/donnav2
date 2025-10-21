@@ -45,13 +45,7 @@
 
         <!-- Submenu -->
         <ul id="masterDataMenu" class="ml-2 mt-1 hidden space-y-1">
-            <li>
-                <a href="{{ route('master.users.index') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm {{ Route::is('users.*') ? 'bg-blue-100 text-gray-800' : 'text-gray-800' }}">
-                    <i data-feather="user" class="w-4 h-4 text-gray-800"></i>
-                    <span class="sidebar-text text-gray-800">Users</span>
-                </a>
-            </li>
+
             <li>
                 <a href="{{ route('master.part_numbers.index') }}"
                     class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm {{ Route::is('part_numbers.*') ? 'bg-blue-100 text-gray-800' : 'text-gray-800' }}">
@@ -94,6 +88,13 @@
                         </a>
                     </li>
                 </ul>
+            </li>
+            <li>
+                <a href="{{ route('master.users.index') }}"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-sm {{ Route::is('users.*') ? 'bg-blue-100 text-gray-800' : 'text-gray-800' }}">
+                    <i data-feather="user" class="w-4 h-4 text-gray-800"></i>
+                    <span class="sidebar-text text-gray-800">Users</span>
+                </a>
             </li>
         </ul>
     </li>

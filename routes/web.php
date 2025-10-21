@@ -6,8 +6,10 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ModelController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartNumberController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Models\Document;
 use Illuminate\Routing\RouteRegistrar;
@@ -94,6 +96,12 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])
             ->name('bulkDestroy');
+
+        Route::resource('products', ProductController::class);
+        Route::get('/products', [ProductController::class, 'productIndex'])->name('products.index');
+
+        Route::resource('models', ModelController::class);
+        Route::get('/models', [ModelController::class, 'modelIndex'])->name('models.index');
     });
 
     Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
