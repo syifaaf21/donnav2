@@ -89,7 +89,7 @@ class DocumentMappingController extends Controller
 
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
         }
-        
+
         $documentMappings = collect();
 
         foreach ($groupedByPlant as $plantMappings) {
@@ -201,6 +201,50 @@ class DocumentMappingController extends Controller
 
         return redirect()->back()->with('success', 'Document metadata updated!');
     }
+
+
+
+public function generateDocumentNumber(Request $request)
+{
+    $request->validate([
+        'document_id' => 'required|exists:documents,id',
+        'department_id' => 'required|exists:departments,id',
+        'part_number_id' => 'required|exists:part_numbers,id',
+    ]);
+
+    $document = Document::findOrFail($request->document_id);
+    $department = Department::findOrFail($request->department_id);
+    $partNumber = PartNumber::with(['product', 'productModel', 'process'])->findOrFail($request->part_number_id);
+
+    $docCode = $document->code;
+    $deptCode = $department->code;
+    $productCode = $partNumber->product->code ?? '';
+    $processCode = $partNumber->process->code ?? '';
+    $modelName = $partNumber->productModel->name ?? '';
+
+    // ========================
+    // Nomor urut berdasarkan kombinasi
+    // ========================
+    $existingCount = DocumentMapping::where('document_id', $document->id)
+        ->where('department_id', $department->id)
+        ->whereHas('partNumber', function ($q) use ($partNumber) {
+            $q->where('product_id', $partNumber->product_id)
+              ->where('process_id', $partNumber->process_id)
+              ->where('model_id', $partNumber->model_id);
+        })
+        ->count();
+
+    $noUrut = str_pad($existingCount + 1, 3, '0', STR_PAD_LEFT);
+    $noRevisi = '01';
+
+    $generatedNumber = "{$docCode}-{$deptCode}-{$productCode}_{$processCode}_{$modelName}-{$noUrut}-{$noRevisi}";
+
+    return response()->json([
+        'document_number' => $generatedNumber
+    ]);
+}
+
+
 
     // ================= Revisi Review (User) =================
     //     public function revise(Request $request, DocumentMapping $mapping)
@@ -374,7 +418,7 @@ class DocumentMappingController extends Controller
     public function storeControl(Request $request)
     {
         $validated = $request->validate([
-            'document_id' => 'required|exists:documents,id',
+            'document_name' => 'required|string|max:255',
             'department' => 'required|exists:departments,id',
             'document_number' => 'required|string|max:100',
             'obsolete_date' => 'nullable|date',
@@ -390,10 +434,16 @@ class DocumentMappingController extends Controller
             return redirect()->back()->with('error', 'Status "Need Review" not found!');
         }
 
+        // ✅ Buat record Document baru dengan type "control"
+        $newDocument = Document::create([
+            'name' => $validated['document_name'],
+            'parent_id' => null, // kalau memang berdiri sendiri
+            'type' => 'control',
+        ]);
 
-        // buat record document_mapping dulu
+        // ✅ Buat record DocumentMapping
         $mapping = DocumentMapping::create([
-            'document_id' => $validated['document_id'],
+            'document_id' => $newDocument->id,
             'document_number' => $validated['document_number'],
             'status_id' => $status->id,
             'obsolete_date' => $validated['obsolete_date'] ?? null,
@@ -405,7 +455,7 @@ class DocumentMappingController extends Controller
             'notes' => null,
         ]);
 
-        // simpan file ke tabel document_files
+        // ✅ Simpan file ke tabel document_files
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
                 $extension = $file->getClientOriginalExtension();
@@ -421,6 +471,7 @@ class DocumentMappingController extends Controller
             }
         }
 
+        // ✅ Kirim notifikasi ke semua user
         $users = \App\Models\User::all();
         foreach ($users as $user) {
             $user->notify(new \App\Notifications\DocumentUpdatedNotification(
@@ -429,6 +480,7 @@ class DocumentMappingController extends Controller
                 'Control'
             ));
         }
+
         return redirect()->route('master.document-control.index')
             ->with('success', 'Document Control berhasil ditambahkan!');
     }

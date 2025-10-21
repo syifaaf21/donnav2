@@ -25,9 +25,8 @@
         </div>
     </td>
 
-    {{-- Type dengan ucwords --}}
     <td class="px-4 py-2 text-gray-500">
-        {{ ucwords($document->type) }}
+        {{ ucwords($document->code) ?: '-' }}
     </td>
 
     {{-- Actions --}}

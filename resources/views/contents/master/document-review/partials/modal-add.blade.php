@@ -26,7 +26,9 @@
                                     required>
                                     <option value="">-- Select Document --</option>
                                     @foreach ($documentsMaster as $doc)
-                                        <option value="{{ $doc->id }}">{{ $doc->name }}</option>
+                                        <option value="{{ $doc->id }}" data-code="{{ strtoupper($doc->code) }}">
+                                            {{ $doc->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                                 <div class="invalid-feedback">Document Name is required.</div>
@@ -34,11 +36,9 @@
 
                             {{-- Document Number --}}
                             <div class="col-md-4">
-                                <label class="form-label fw-medium">Document Number <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" name="document_number" class="form-control border-1 shadow-sm"
-                                    placeholder="Input Document Number" required>
-                                <div class="invalid-feedback">Document Number is required.</div>
+                                <label class="form-label fw-medium">Document Number</label>
+                                <input type="text" name="document_number" id="document_number"
+                                    class="form-control border-1 shadow-sm" readonly>
                             </div>
 
                             {{-- Plant --}}
@@ -79,7 +79,9 @@
                                     class="form-select border-1 shadow-sm" required>
                                     <option value="">-- Select Department --</option>
                                     @foreach ($departments as $dept)
-                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                        <option value="{{ $dept->id }}" data-code="{{ strtoupper($dept->code) }}">
+                                            {{ $dept->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                                 <div class="invalid-feedback">Department is required.</div>
@@ -234,6 +236,71 @@
                 tsDepartment.clearOptions();
             }
         });
+
+        // Auto Generate Doc No
+        const plantSelect = document.getElementById('plant_select');
+        const partNumberSelect = document.getElementById('partNumber_select');
+        const departmentSelect = document.getElementById('department_select');
+        const documentSelect = document.getElementById('document_select');
+        const documentNumberInput = document.getElementById('document_number');
+
+        function canGenerate() {
+            return documentSelect.value && departmentSelect.value && partNumberSelect.value;
+        }
+
+        async function generateDocumentNumber() {
+            if (!canGenerate()) {
+                documentNumberInput.value = '';
+                return;
+            }
+
+            const params = new URLSearchParams({
+                document_id: documentSelect.value,
+                department_id: departmentSelect.value,
+                part_number_id: partNumberSelect.value,
+            });
+
+            try {
+                const response = await fetch(`/api/generate-document-number?${params.toString()}`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                const data = await response.json();
+                documentNumberInput.value = data.document_number || '';
+            } catch (error) {
+                console.error('Error generating document number:', error);
+                documentNumberInput.value = '';
+            }
+        }
+
+        // Filter Part Number options based on selected Plant
+        plantSelect.addEventListener('change', () => {
+            const selectedPlant = plantSelect.value;
+
+            // Reset part number and document number
+            partNumberSelect.value = '';
+            documentNumberInput.value = '';
+
+            // Enable/disable Part Number and Department select
+            const enableControls = selectedPlant !== '';
+            partNumberSelect.disabled = !enableControls;
+            departmentSelect.disabled = !enableControls;
+
+            // Show/hide Part Number options based on plant
+            Array.from(partNumberSelect.options).forEach(option => {
+                if (option.value === '') {
+                    option.style.display = 'block'; // keep default option visible
+                } else if (option.dataset.plant === selectedPlant) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        });
+
+        // Event listeners to generate document number on change
+        documentSelect.addEventListener('change', generateDocumentNumber);
+        departmentSelect.addEventListener('change', generateDocumentNumber);
+        partNumberSelect.addEventListener('change', generateDocumentNumber);
+
     });
 
     document.addEventListener("DOMContentLoaded", function() {

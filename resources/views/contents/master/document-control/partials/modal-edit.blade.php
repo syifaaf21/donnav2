@@ -33,14 +33,6 @@
                             </select>
                         </div>
 
-                        {{-- Document Number --}}
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Document Number <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" name="document_number" class="form-control border-1 shadow-sm"
-                                value="{{ $mapping->document_number }}" required>
-                        </div>
-
                         {{-- Department --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>

@@ -39,7 +39,6 @@
                             </th>
                             <th class="px-6 py-3">No.</th>
                             <th class="px-6 py-3">Document Name</th>
-                            <th class="px-6 py-3">Document Number</th>
                             <th class="px-6 py-3">Department</th>
                             <th class="px-6 py-3">Obsolete</th>
                             <th class="px-6 py-3">Reminder Date</th>
@@ -55,7 +54,6 @@
                                 </td>
                                 <td class="px-6 py-4">{{ $loop->iteration }}</td>
                                 <td class="px-6 py-4">{{ $mapping->document->name ?? '-' }}</td>
-                                <td class="px-6 py-4">{{ $mapping->document_number }}</td>
                                 <td class="px-6 py-4">{{ $mapping->department->name ?? '-' }}</td>
                                 <td class="px-6 py-4">
                                     {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}

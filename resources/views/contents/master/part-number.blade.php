@@ -108,99 +108,101 @@
         @foreach ($partNumbers as $part)
             <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
                 aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
-                <div class="modal-dialog">
-                    <form action="{{ route('master.part_numbers.update', $part->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="_form" value="edit">
-                        <div class="modal-content border-0 rounded-4 shadow-lg">
-                            <div class="modal-header bg-gray-100 text-gray-800 rounded-t-lg">
-                                <h5 class="modal-title flex items-center gap-2 font-semibold"
-                                    id="editPartNumberModalLabel-{{ $part->id }}">
-                                    <i class="bi bi-nut-fill"></i> Edit Part Number
-                                </h5>
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <form action="{{ route('master.part_numbers.update', $part->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="_form" value="edit">
+
+                                <div class="modal-header bg-gray-100 text-gray-800 rounded-t-lg">
+                                    <h5 class="modal-title flex items-center gap-2 font-semibold"
+                                        id="editPartNumberModalLabel-{{ $part->id }}">
+                                        <i class="bi bi-nut-fill"></i> Edit Part Number
+                                    </h5>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="mb-3">
+                                        <label class="block font-medium">Part Number</label>
+                                        <input type="text" name="part_number"
+                                            class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            value="{{ $part->part_number }}" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="block font-medium">Plant</label>
+                                        <select name="plant" id="plant_edit_{{ $part->id }}"
+                                            class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            required>
+                                            <option value="">Select Plant</option>
+                                            @foreach (['body', 'unit', 'electric'] as $plant)
+                                                <option value="{{ $plant }}"
+                                                    {{ $part->plant == $plant ? 'selected' : '' }}>
+                                                    {{ ucfirst($plant) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="block font-medium">Product</label>
+                                        <select name="product_id" id="product_id_edit_{{ $part->id }}"
+                                            class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            required>
+                                            <option value="">Select Product</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}"
+                                                    {{ $part->product_id == $product->id ? 'selected' : '' }}>
+                                                    {{ $product->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="block font-medium">Model</label>
+                                        <select name="model_id" id="model_id_edit_{{ $part->id }}"
+                                            class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            required>
+                                            <option value="">Select Model</option>
+                                            @foreach ($models as $model)
+                                                <option value="{{ $model->id }}"
+                                                    {{ $part->model_id == $model->id ? 'selected' : '' }}>
+                                                    {{ $model->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="block font-medium">Process</label>
+                                        <select name="process_id" id="process_edit_{{ $part->id }}"
+                                            class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            required>
+                                            <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>--
+                                                Select Process --</option>
+                                            @foreach ($processes as $process)
+                                                <option value="{{ $process->id }}"
+                                                    {{ $part->process_id == $process->id ? 'selected' : '' }}>
+                                                    {{ ucwords($process->name) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-0 p-3 justify-between bg-gray-100 rounded-b-lg">
+                                    <button type="button" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-md"
+                                        data-bs-dismiss="modal">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </button>
+                                    <button type="submit"
+                                        class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                        <i class="bi bi-check-circle"></i> Save Changes
+                                    </button>
+                                </div>
                             </div>
-                            <div class="modal-body p-4">
-                                <div class="mb-3">
-                                    <label class="block font-medium">Part Number</label>
-                                    <input type="text" name="part_number"
-                                        class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        value="{{ $part->part_number }}" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="block font-medium">Product</label>
-                                    <select name="product_id" id="product_id_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">Select Product</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}"
-                                                {{ $part->product_id == $product->id ? 'selected' : '' }}>
-                                                {{ $product->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="block font-medium">Model</label>
-                                    <select name="model_id" id="model_id_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">Select Model</option>
-                                        @foreach ($models as $model)
-                                            <option value="{{ $model->id }}"
-                                                {{ $part->model_id == $model->id ? 'selected' : '' }}>
-                                                {{ $model->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="block font-medium">Process</label>
-                                    <select name="process_id" id="process_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>--
-                                            Select Process --</option>
-                                        @foreach ($processes as $process)
-                                            <option value="{{ $process->id }}"
-                                                {{ $part->process_id == $process->id ? 'selected' : '' }}>
-                                                {{ ucwords($process->name) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="block font-medium">Plant</label>
-                                    <select name="plant" id="plant_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">Select Plant</option>
-                                        @foreach (['body', 'unit', 'electric'] as $plant)
-                                            <option value="{{ $plant }}"
-                                                {{ $part->plant == $plant ? 'selected' : '' }}>
-                                                {{ ucfirst($plant) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer border-0 p-3 justify-between bg-gray-100 rounded-b-lg">
-                                <button type="button" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-md"
-                                    data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle"></i> Cancel
-                                </button>
-                                <button type="submit"
-                                    class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                                    <i class="bi bi-check-circle"></i> Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         @endforeach
@@ -315,11 +317,12 @@
         <x-sweetalert-confirm />
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                // Inisialisasi TomSelect untuk Create Modal (1 instance)
                 const productTomSelect = new TomSelect("#product_id", {
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
-                    create: true,
+                    create: false,
                     maxOptions: 50,
                     persist: false,
                 });
@@ -328,7 +331,7 @@
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
-                    create: true,
+                    create: false,
                     maxOptions: 50,
                     persist: false,
                 });
@@ -342,16 +345,15 @@
                     persist: false,
                 });
 
-                // Awalnya dropdown di-disable
+                // Awalnya disable
                 productTomSelect.disable();
                 modelTomSelect.disable();
                 processTomSelect.disable();
 
+                // Event plant untuk create modal
                 const plantSelect = document.getElementById('plant');
-
                 plantSelect.addEventListener('change', function() {
                     const plant = this.value;
-
                     if (!plant) {
                         productTomSelect.disable();
                         modelTomSelect.disable();
@@ -409,65 +411,123 @@
                             processTomSelect.disable();
                         });
                 });
+
+                // Cancel button create modal
+                const cancelCreateBtn = document.querySelector(
+                    '#createPartNumberModal button[data-bs-dismiss="modal"]');
+                const formCreate = document.querySelector('#createPartNumberModal form');
+                cancelCreateBtn.addEventListener('click', function() {
+                    formCreate.reset();
+                    productTomSelect.clear();
+                    modelTomSelect.clear();
+                    processTomSelect.clear();
+                });
+
+
+                // === EDIT MODALS ===
+                const editModals = document.querySelectorAll('[id^="editPartNumberModal-"]');
+                const tomSelectInstances = {};
+
+                editModals.forEach(modalEl => {
+                    const modalId = modalEl.id;
+                    const form = modalEl.querySelector('form');
+                    const cancelButton = modalEl.querySelector('button[data-bs-dismiss="modal"]');
+
+                    // Extract partId
+                    const partId = modalId.split('-')[1];
+
+                    // Select element IDs inside this modal
+                    const productSelectId = `product_id_edit_${partId}`;
+                    const modelSelectId = `model_id_edit_${partId}`;
+                    const processSelectId = `process_edit_${partId}`;
+
+                    const productSelectEl = document.getElementById(productSelectId);
+                    const modelSelectEl = document.getElementById(modelSelectId);
+                    const processSelectEl = document.getElementById(processSelectId);
+
+                    // Initialize TomSelect for this modal
+                    tomSelectInstances[modalId] = {
+                        productTomSelect: productSelectEl ? new TomSelect(productSelectEl, {
+                            valueField: 'value',
+                            labelField: 'text',
+                            searchField: 'text',
+                            create: true,
+                            maxOptions: 50,
+                            persist: false,
+                        }) : null,
+
+                        modelTomSelect: modelSelectEl ? new TomSelect(modelSelectEl, {
+                            valueField: 'value',
+                            labelField: 'text',
+                            searchField: 'text',
+                            create: true,
+                            maxOptions: 50,
+                            persist: false,
+                        }) : null,
+
+                        processTomSelect: processSelectEl ? new TomSelect(processSelectEl, {
+                            valueField: 'value',
+                            labelField: 'text',
+                            searchField: 'text',
+                            create: false,
+                            maxOptions: 50,
+                            persist: false,
+                        }) : null,
+                    };
+
+                    let originalFormData = {};
+
+                    function saveOriginalFormData() {
+                        originalFormData = {};
+                        const elements = form.elements;
+                        for (let i = 0; i < elements.length; i++) {
+                            const el = elements[i];
+                            if (el.name) {
+                                originalFormData[el.name] = el.value;
+                            }
+                        }
+                    }
+
+                    function resetFormToOriginal() {
+                        for (const name in originalFormData) {
+                            if (originalFormData.hasOwnProperty(name)) {
+                                const el = form.elements[name];
+                                if (el) el.value = originalFormData[name];
+                            }
+                        }
+
+                        const ts = tomSelectInstances[modalId];
+                        if (ts.productTomSelect) ts.productTomSelect.setValue(originalFormData['product_id'] ||
+                            '');
+                        if (ts.modelTomSelect) ts.modelTomSelect.setValue(originalFormData['model_id'] || '');
+                        if (ts.processTomSelect) ts.processTomSelect.setValue(originalFormData['process_id'] ||
+                            '');
+                    }
+
+                    modalEl.addEventListener('show.bs.modal', saveOriginalFormData);
+
+                    cancelButton.addEventListener('click', function() {
+                        resetFormToOriginal();
+                    });
+                });
+
+                // Jika ada error validation, show create modal
                 @if ($errors->any())
                     var myModal = new bootstrap.Modal(document.getElementById('createPartNumberModal'));
                     myModal.show();
                 @endif
 
-                const cancelButton = document.querySelector('#createPartNumberModal button[data-bs-dismiss="modal"]');
-                const form = document.querySelector('#createPartNumberModal form');
+                //Clear Seacrh
+                const clearBtn = document.getElementById("clearSearch");
+                const searchInput = document.getElementById("searchInput");
+                const searchForm = document.getElementById("searchForm");
 
-                cancelButton.addEventListener('click', function() {
-                    form.reset();
-
-                    // Jika kamu menggunakan TomSelect atau select custom lainnya, jangan lupa clear juga:
-                    if (window.productTomSelect) productTomSelect.clear();
-                    if (window.modelTomSelect) modelTomSelect.clear();
-                    if (window.processTomSelect) processTomSelect.clear();
-                });
-
-                const modal = document.getElementById('editPartNumberModal');
-                const form = modal.querySelector('form');
-                const cancelButton = modal.querySelector('button[data-bs-dismiss="modal"]');
-
-                let originalFormData = {};
-
-                // Fungsi untuk simpan data form saat modal dibuka
-                function saveOriginalFormData() {
-                    originalFormData = {};
-                    const elements = form.elements;
-                    for (let i = 0; i < elements.length; i++) {
-                        const el = elements[i];
-                        if (el.name) {
-                            originalFormData[el.name] = el.value;
-                        }
-                    }
+                if (clearBtn && searchInput && searchForm) {
+                    clearBtn.addEventListener("click", function() {
+                        searchInput.value = "";
+                        searchForm.submit();
+                    });
                 }
-
-                // Fungsi untuk reset form ke data lama
-                function resetFormToOriginal() {
-                    for (const name in originalFormData) {
-                        if (originalFormData.hasOwnProperty(name)) {
-                            const el = form.elements[name];
-                            if (el) {
-                                el.value = originalFormData[name];
-                            }
-                        }
-                    }
-
-                    // Jika pakai TomSelect, set juga nilai mereka:
-                    if (window.productTomSelect) productTomSelect.setValue(originalFormData['product_id'] || '');
-                    if (window.modelTomSelect) modelTomSelect.setValue(originalFormData['model_id'] || '');
-                    if (window.processTomSelect) processTomSelect.setValue(originalFormData['process_id'] || '');
-                }
-
-                // Saat modal dibuka, simpan data awal
-                modal.addEventListener('show.bs.modal', saveOriginalFormData);
-
-                // Saat klik cancel, reset form
-                cancelButton.addEventListener('click', function() {
-                    resetFormToOriginal();
-                });
             });
         </script>
     @endpush

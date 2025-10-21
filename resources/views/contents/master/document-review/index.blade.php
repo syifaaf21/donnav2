@@ -257,8 +257,8 @@
                     drop.classList.remove('dropup');
                 });
             });
-
         });
+
     </script>
 @endpush
 @push('styles')

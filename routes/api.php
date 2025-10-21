@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\PartNumberController;
 use App\Models\Department;
 use App\Models\Document;
@@ -101,6 +102,9 @@ Route::get('/part-numbers', function(Request $request) {
 });
 
 Route::get('/get-options-by-plant', [PartNumberController::class, 'getOptionsByPlant'])->name('master.get.options.by.plant');
+
+// routes/api.php
+Route::get('/generate-document-number', [DocumentMappingController::class, 'generateDocumentNumber']);
 
 // Route::get('/plants', function() {
 //     $plants = ['body' => 'Body', 'unit' => 'Unit', 'electric' => 'Electric'];

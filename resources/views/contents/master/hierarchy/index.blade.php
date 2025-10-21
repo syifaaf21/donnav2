@@ -54,7 +54,7 @@
                     <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
                         <tr>
                             <th class="px-4 py-2">Document Name</th>
-                            <th class="px-4 py-2">Type</th>
+                            <th class="px-4 py-2">Code</th>
                             <th class="px-4 py-2">Action</th>
                         </tr>
                     </thead>
@@ -69,7 +69,6 @@
                             ])
                         @endforeach
                     </tbody>
-
                 </table>
             </div>
         </div>
@@ -101,24 +100,40 @@
                                     @enderror
                                 </div>
 
-                                {{-- Document Type --}}
+                                {{-- Parent Document --}}
                                 <div class="mb-3">
-                                    <label class="form-label fw-semibold">Type</label>
-                                    <select name="type"
-                                        class="form-select rounded-3 type-select @error('type') is-invalid @enderror"
-                                        required>
-                                        <option value="">Select Type</option>
-                                        @foreach (\App\Models\Document::getTypes() as $value => $label)
-                                            <option value="{{ $value }}"
-                                                {{ old('type', $document->type) === $value ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
+                                    <label class="form-label fw-semibold">Parent Document</label>
+                                    <select name="parent_id"
+                                        class="form-select rounded-3 @error('parent_id') is-invalid @enderror">
+                                        <option value="">-- No Parent (Top Level) --</option>
+                                        @foreach ($parents as $parentDoc)
+                                            @if (!isset($document) || $parentDoc->id !== $document->id)
+                                                <option value="{{ $parentDoc->id }}"
+                                                    {{ old('parent_id', $document->parent_id ?? null) == $parentDoc->id ? 'selected' : '' }}>
+                                                    {{ $parentDoc->name }}
+                                                </option>
+                                            @endif
                                         @endforeach
                                     </select>
-                                    @error('type')
+                                    @error('parent_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+
+                                {{-- Hidden field: type default ke review --}}
+                                <input type="hidden" name="type" value="review">
+
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-medium">Code</label>
+                                    <input type="text" name="code"
+                                        class="form-control rounded-3 @error('code') is-invalid @enderror"
+                                        value="{{ $document->code }}" required>
+                                    @error('code')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
                             </div>
 
                             <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
@@ -160,21 +175,33 @@
                                 @enderror
                             </div>
 
-                            {{-- Document Type --}}
+                            {{-- Parent Document --}}
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Type</label>
-                                <select id="type_select" name="type"
-                                    class="form-select rounded-3 @error('type') is-invalid @enderror" required>
-                                    <option value="" disabled {{ old('type') ? '' : 'selected' }}>-- Select Type --
-                                    </option>
-                                    @foreach (\App\Models\Document::getTypes() as $value => $label)
-                                        <option value="{{ $value }}"
-                                            {{ old('type') == $value ? 'selected' : '' }}>
-                                            {{ $label }}
+                                <label class="form-label fw-semibold">Parent Document</label>
+                                <select name="parent_id"
+                                    class="form-select rounded-3 @error('parent_id') is-invalid @enderror">
+                                    <option value="">-- No Parent (Top Level) --</option>
+                                    @foreach ($parents as $parentDoc)
+                                        <option value="{{ $parentDoc->id }}"
+                                            {{ old('parent_id') == $parentDoc->id ? 'selected' : '' }}>
+                                            {{ $parentDoc->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('type')
+                                @error('parent_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            {{-- Hidden field: type default ke review --}}
+                            <input type="hidden" name="type" value="review">
+
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Code</label>
+                                <input type="text" name="code"
+                                    class="form-control rounded-3 @error('code') is-invalid @enderror"
+                                    value="{{ old('code') }}" required>
+                                @error('code')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -193,9 +220,8 @@
         </div>
     @endsection
     @push('scripts')
-    <x-sweetalert-confirm />
+        <x-sweetalert-confirm />
         <script>
-
             document.addEventListener('DOMContentLoaded', function() {
                 // Clear Search functionality
                 const clearBtn = document.getElementById("clearSearch");

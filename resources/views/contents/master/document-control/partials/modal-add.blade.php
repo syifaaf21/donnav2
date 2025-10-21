@@ -10,19 +10,14 @@
             </div>
             <div class="modal-body">
                 <!-- Paste form Anda di sini -->
-                <form action="{{ route('master.document-control.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('master.document-control.store') }}" method="POST"
+                    enctype="multipart/form-data">
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label for="document_name" class="form-label">Document Name</label>
-                            <select class="form-select" id="document_id" name="document_id" required>
-                                <option value="">-- Select Document --</option>
-                                @foreach ($documents as $doc)
-                                    @if ($doc->type === 'control')
-                                        <option value="{{ $doc->id }}">{{ $doc->name }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
+                            <input type="text" class="form-control" id="document_name" name="document_name"
+                                placeholder="Enter document name" required>
                         </div>
                         <div class="col-md-4">
                             <label for="department" class="form-label">Department</label>
@@ -32,11 +27,6 @@
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="document_number" class="form-label">Document Number</label>
-                            <input type="text" class="form-control" id="document_number" name="document_number"
-                                required>
                         </div>
                     </div>
                     <div class="row g-2 mt-2">
@@ -49,6 +39,16 @@
                             <input type="date" class="form-control" id="reminder_date" name="reminder_date">
                         </div>
                     </div>
+                    {{-- Notes --}}
+                    {{-- <div class="col-12 mb-3">
+                        <label class="form-label fw-medium">Notes</label>
+                        <input type="hidden" name="notes" id="notes_input_add">
+                        <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"
+                            style="min-height: 80px; max-height: 100px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; width: 100%;">
+                        </div>
+                        <small class="text-muted">You can format your notes with bold, italic, underline,
+                            colors, and more.</small>
+                    </div> --}}
                     <div class="row g-2 mt-2" id="file-fields">
                         <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
                             <input type="file" class="form-control" name="files[]" required>
@@ -85,7 +85,7 @@
             // Buat group baru
             let group = document.createElement("div");
             group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
-            "file-input-group");
+                "file-input-group");
 
             group.innerHTML = `
             <input type="file" class="form-control" name="files[]" required>
@@ -105,3 +105,24 @@
         });
     });
 </script>
+{{-- <style>
+    #quill_editor {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    #quill_editor .ql-editor {
+        word-wrap: break-word !important;
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    }
+
+    #quill_editor .ql-editor span {
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+</style> --}}
