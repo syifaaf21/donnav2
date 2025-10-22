@@ -40,10 +40,10 @@
     </td>
 
     <!-- Other Columns -->
-    <td class="px-3 py-2">{{ $doc->name ?? '-' }}</td>
+    <td class="px-3 py-2">{{ $doc->code ?? '-' }}</td>
     <td class="px-3 py-2">{{ $mapping->document_number ?? '-' }}</td>
     <td class="px-3 py-2">{{ optional($mapping->partNumber)->part_number ?? '-' }}</td>
-    <td class="px-3 py-2">{{ optional($mapping->department)->name ?? '-' }}</td>
+    <td class="px-3 py-2">{{ optional($mapping->partNumber)->product->name ?? '-' }}</td>
     <td class="px-3 py-2 text-nowrap">
         @include('contents.master.document-review.partials.action-buttons', ['mapping' => $mapping])
     </td>

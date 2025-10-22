@@ -117,8 +117,6 @@
                             <h5 class="modal-title fw-semibold" id="editProcessModalLabel-{{ $process->id }}">
                                 <i class="bi bi-person-lines-fill me-2"></i>Edit Process
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
                         </div>
 
                         <div class="modal-body p-4">
@@ -187,7 +185,6 @@
                         <h5 class="modal-title fw-semibold" id="addProcessModalLabel">
                             <i class="bi bi-person-plus-fill me-2"></i>Create New Process
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
 
                     <!-- Body -->
@@ -293,80 +290,37 @@
     @endif
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // TomSelect untuk modal Add - Role
-            new TomSelect('#role_select', {
-                create: true,
-                maxItems: 1,
-                valueField: 'id',
-                labelField: 'text',
-                searchField: 'text',
-                preload: true,
-                placeholder: 'Select or create a role',
-                load: function(query, callback) {
-                    let url = '/api/roles?q=' + encodeURIComponent(query);
-                    fetch(url)
-                        .then(response => response.json())
-                        .then(json => callback(json))
-                        .catch(() => callback());
-                }
-            });
 
-            // TomSelect untuk modal Add - Department
-            new TomSelect('#department_select', {
-                create: true,
-                maxItems: 1,
-                valueField: 'id',
-                labelField: 'text',
-                searchField: 'text',
-                preload: true,
-                placeholder: 'Select or create a department',
-                load: function(query, callback) {
-                    let url = '/api/departments?q=' + encodeURIComponent(query);
-                    fetch(url)
-                        .then(response => response.json())
-                        .then(json => callback(json))
-                        .catch(() => callback());
-                }
-            });
+            //Cancel button modal
+            const addDepartmentModal = document.getElementById("addProcessModal");
+            const formAdd = addDepartmentModal.querySelector("form");
 
-            // TomSelect untuk modal Edit (semua modal edit role select)
-            document.querySelectorAll('select[id^="role_select_edit_"]').forEach(function(el) {
-                new TomSelect(el, {
-                    create: false, // TIDAK boleh create baru
-                    maxItems: 1,
-                    valueField: 'id',
-                    labelField: 'text',
-                    searchField: 'text',
-                    preload: true,
-                    placeholder: 'Select a role',
-                    load: function(query, callback) {
-                        let url = '/api/roles?q=' + encodeURIComponent(query);
-                        fetch(url)
-                            .then(response => response.json())
-                            .then(json => callback(json))
-                            .catch(() => callback());
-                    }
+            if (addDepartmentModal && formAdd) {
+                // Reset form ketika modal ditutup
+                addDepartmentModal.addEventListener('hidden.bs.modal', function() {
+                    formAdd.reset();
+
+                    // Hapus is-invalid dan error message
+                    formAdd.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                        'is-invalid'));
+                    formAdd.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
                 });
-            });
+            }
 
-            // TomSelect untuk modal Edit (semua modal edit department select)
-            document.querySelectorAll('select[id^="department_select_edit_"]').forEach(function(el) {
-                new TomSelect(el, {
-                    create: false, // TIDAK boleh create baru
-                    maxItems: 1,
-                    valueField: 'id',
-                    labelField: 'text',
-                    searchField: 'text',
-                    preload: true,
-                    placeholder: 'Select a department',
-                    load: function(query, callback) {
-                        let url = '/api/departments?q=' + encodeURIComponent(query);
-                        fetch(url)
-                            .then(response => response.json())
-                            .then(json => callback(json))
-                            .catch(() => callback());
-                    }
-                });
+            const editModals = document.querySelectorAll('[id^="editProcessModal-"]');
+            editModals.forEach(modal => {
+                const form = modal.querySelector("form");
+
+                if (form) {
+                    modal.addEventListener('hidden.bs.modal', function() {
+                        form.reset();
+
+                        // Hapus class is-invalid dan error feedback
+                        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                            'is-invalid'));
+                        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+                    });
+                }
             });
         });
     </script>

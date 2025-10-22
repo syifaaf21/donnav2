@@ -34,6 +34,7 @@ class DocumentController extends Controller
                     });
             })
             ->whereNull('parent_id')
+            ->where('type', 'review')
             ->get();
 
         // Ambil semua dokumen bertipe review untuk jadi opsi parent

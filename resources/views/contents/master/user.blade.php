@@ -375,7 +375,7 @@
 @endsection
 
 @push('scripts')
-<x-sweetalert-confirm />
+    <x-sweetalert-confirm />
     <script>
         // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
@@ -495,6 +495,8 @@
                     }
                 });
             });
+
+
         });
     </script>
 

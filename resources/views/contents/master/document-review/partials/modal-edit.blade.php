@@ -94,57 +94,5 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        @foreach ($documentMappings as $mapping)
-            // Document Select
-            new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
-                create: false,
-                preload: true,
-                load: function(query, callback) {
-                    fetch(`/api/documents?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            callback(data.map(item => ({
-                                value: item.id,
-                                text: item.text
-                            })));
-                        })
-                        .catch(() => callback());
-                }
             });
-
-            // Part Number Select
-            new TomSelect('#editPartNumberSelect{{ $mapping->id }}', {
-                create: false,
-                preload: true,
-                load: function(query, callback) {
-                    fetch(`/api/part-numbers?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            callback(data.map(item => ({
-                                value: item.id,
-                                text: item.text
-                            })));
-                        })
-                        .catch(() => callback());
-                }
-            });
-
-            // Department Select
-            new TomSelect('#editDepartmentSelect{{ $mapping->id }}', {
-                create: false,
-                preload: true,
-                load: function(query, callback) {
-                    fetch(`/api/departments?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            callback(data.map(item => ({
-                                value: item.id,
-                                text: item.text
-                            })));
-                        })
-                        .catch(() => callback());
-                }
-            });
-        @endforeach
-    });
 </script>

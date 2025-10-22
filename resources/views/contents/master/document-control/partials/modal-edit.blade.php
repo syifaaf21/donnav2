@@ -23,20 +23,14 @@
                         {{-- Document Name --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Document Name <span class="text-danger">*</span></label>
-                            <select name="document_id" class="form-select border-1 shadow-sm" required>
-                                @foreach ($documents as $doc)
-                                    <option value="{{ $doc->id }}"
-                                        @if ($mapping->document_id == $doc->id) selected @endif>
-                                        {{ $doc->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input type="text" name="document_name" class="form-control border-1 shadow-sm"
+                                value="{{ old('document_name', $mapping->document->name ?? '') }}" required>
                         </div>
 
                         {{-- Department --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
-                            <select name="department_id" class="form-select border-1 shadow-sm" required>
+                            <select name="department_id" class="form-select tomselect border-1 shadow-sm" required>
                                 <option value="">-- Select Department --</option>
                                 @foreach ($departments as $dept)
                                     <option value="{{ $dept->id }}"
@@ -51,7 +45,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Reminder Date</label>
                             <input type="date" name="reminder_date" class="form-control border-1 shadow-sm"
-                                value="{{ \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') }}" >
+                                value="{{ \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') }}">
                         </div>
 
                         {{-- Obsolete --}}
@@ -78,3 +72,4 @@
         </form>
     </div>
 </div>
+

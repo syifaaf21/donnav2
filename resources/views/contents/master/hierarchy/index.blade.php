@@ -72,83 +72,6 @@
                 </table>
             </div>
         </div>
-        {{-- Modal Edit Document --}}
-        @foreach ($documents as $document)
-            <div class="modal fade" id="editDocumentModal-{{ $document->id }}" tabindex="-1"
-                aria-labelledby="editDocumentModalLabel-{{ $document->id }}" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <form action="{{ route('master.hierarchy.update', $document->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <div class="modal-content shadow-lg border-0 rounded-4">
-                            <div class="modal-header bg-light text-dark rounded-top-4">
-                                <h5 class="modal-title fw-semibold">
-                                    <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Document
-                                </h5>
-                            </div>
-
-                            <div class="modal-body px-4 py-3">
-                                {{-- Document Name --}}
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Name</label>
-                                    <input type="text" name="name"
-                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                        value="{{ old('name', $document->name) }}" placeholder="Enter document name"
-                                        required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                {{-- Parent Document --}}
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Parent Document</label>
-                                    <select name="parent_id"
-                                        class="form-select rounded-3 @error('parent_id') is-invalid @enderror">
-                                        <option value="">-- No Parent (Top Level) --</option>
-                                        @foreach ($parents as $parentDoc)
-                                            @if (!isset($document) || $parentDoc->id !== $document->id)
-                                                <option value="{{ $parentDoc->id }}"
-                                                    {{ old('parent_id', $document->parent_id ?? null) == $parentDoc->id ? 'selected' : '' }}>
-                                                    {{ $parentDoc->name }}
-                                                </option>
-                                            @endif
-                                        @endforeach
-                                    </select>
-                                    @error('parent_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                {{-- Hidden field: type default ke review --}}
-                                <input type="hidden" name="type" value="review">
-
-
-                                <div class="mb-3">
-                                    <label class="form-label fw-medium">Code</label>
-                                    <input type="text" name="code"
-                                        class="form-control rounded-3 @error('code') is-invalid @enderror"
-                                        value="{{ $document->code }}" required>
-                                    @error('code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                            </div>
-
-                            <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle me-1"></i> Cancel
-                                </button>
-                                <button type="submit" class="btn btn-outline-success px-4">
-                                    <i class="bi bi-check-circle me-1"></i> Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        @endforeach
 
         {{-- 📄 Create Document Modal --}}
         <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
@@ -179,7 +102,7 @@
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Parent Document</label>
                                 <select name="parent_id"
-                                    class="form-select rounded-3 @error('parent_id') is-invalid @enderror">
+                                    class="form-select rounded-3 tomselect @error('parent_id') is-invalid @enderror">
                                     <option value="">-- No Parent (Top Level) --</option>
                                     @foreach ($parents as $parentDoc)
                                         <option value="{{ $parentDoc->id }}"
@@ -235,7 +158,7 @@
                     });
                 }
 
-                //Tooltip
+                // Tooltip initialization
                 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
                 tooltipTriggerList.map(function(el) {
                     return new bootstrap.Tooltip(el, {
@@ -245,9 +168,10 @@
                     });
                 });
 
-                // Toggle visibility of child documents
+                // Feather icons initialization
                 feather.replace();
 
+                // Toggle visibility of child documents (expand/collapse)
                 document.querySelectorAll('.toggle-children').forEach(button => {
                     button.addEventListener('click', function() {
                         const targetClass = this.dataset.target;
@@ -255,40 +179,46 @@
                         children.forEach(row => {
                             row.classList.toggle('hidden');
                         });
-                        // rotate icon
+                        // Rotate the chevron icon
                         const icon = this.querySelector('i');
                         icon.classList.toggle('rotate-90');
-                        // re-replace feather icons (so icons tetap muncul)
+                        // Re-replace feather icons to keep icons visible
                         feather.replace();
                     });
                 });
 
-                new TomSelect('#type_select', {
-                    valueField: 'id',
-                    labelField: 'text',
-                    searchField: 'text',
-                    preload: true,
-                    load: function(query, callback) {
-                        fetch('/api/document-types')
-                            .then(res => res.json())
-                            .then(callback)
-                            .catch(() => callback());
+                // Initialize TomSelect for dropdowns with class .tomselect
+                new TomSelect('.tomselect', {
+                    create: false,
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
                     }
                 });
 
-                document.querySelectorAll('.type-select').forEach(el => {
-                    new TomSelect(el, {
-                        valueField: 'id',
-                        labelField: 'text',
-                        searchField: 'text',
-                        preload: true,
-                        load: function(query, callback) {
-                            fetch('/api/document-types')
-                                .then(res => res.json())
-                                .then(callback)
-                                .catch(() => callback());
-                        }
-                    });
+                // Reset form and clear TomSelect & validation on modal cancel for all edit modals
+                document.querySelectorAll('[id^="editDocumentModal-"]').forEach(modalEl => {
+                    const form = modalEl.querySelector('form');
+                    const cancelBtn = modalEl.querySelector('button[data-bs-dismiss="modal"]');
+
+                    if (cancelBtn && form) {
+                        cancelBtn.addEventListener('click', function() {
+                            form.reset();
+
+                            // Clear TomSelects inside this modal only
+                            modalEl.querySelectorAll('.ts-wrapper').forEach(wrapper => {
+                                const select = wrapper.previousElementSibling;
+                                if (select && select.tomselect) {
+                                    select.tomselect.clear();
+                                }
+                            });
+
+                            // Remove error classes and feedback messages
+                            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                                'is-invalid'));
+                            form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+                        });
+                    }
                 });
             });
         </script>

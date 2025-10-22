@@ -42,7 +42,7 @@
                             <th class="px-6 py-3">Department</th>
                             <th class="px-6 py-3">Obsolete</th>
                             <th class="px-6 py-3">Reminder Date</th>
-                            <th class="px-6 py-3">Notes</th>
+                            {{-- <th class="px-6 py-3">Notes</th> --}}
                             <th class="px-6 py-3">Action</th>
                         </tr>
                     </thead>
@@ -61,6 +61,13 @@
                                 <td class="px-6 py-4">
                                     {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
                                 </td>
+                                {{-- <td class="px-6 py-4">
+                                    @if ($mapping->notes)
+                                        {!! $mapping->notes !!}
+                                    @else
+                                        -
+                                    @endif
+                                </td> --}}
                                 <td class="px-6 py-4 flex space-x-2">
                                     @if ($mapping->files->count())
                                         <div class="relative">
@@ -188,6 +195,35 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
+            // Fungsi untuk inisialisasi TomSelect di dalam sebuah container/modal
+            function initTomSelect(container) {
+                container.querySelectorAll('.tomselect').forEach(selectEl => {
+                    if (!selectEl.tomselect) {
+                        new TomSelect(selectEl, {
+                            create: false,
+                            sortField: {
+                                field: "text",
+                                direction: "asc"
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Modal Add
+            const addModal = document.getElementById('addDocumentControlModal');
+            if (addModal) {
+                addModal.addEventListener('shown.bs.modal', function() {
+                    initTomSelect(addModal);
+                });
+            }
+
+            // Modal Edit - karena bisa banyak modal edit dengan id unik
+            document.querySelectorAll('[id^="editModal"]').forEach(modal => {
+                modal.addEventListener('shown.bs.modal', function() {
+                    initTomSelect(modal);
+                });
+            });
 
             const selectAll = document.getElementById('selectAll');
             const snackbar = document.getElementById('snackbar');
@@ -304,5 +340,99 @@
             }
         });
 
+        // FILE FIELD DYNAMIC ADD/REMOVE
+        const container = document.getElementById("file-fields");
+        const addBtn = document.getElementById("add-file");
+
+        addBtn.addEventListener("click", function() {
+            let group = document.createElement("div");
+            group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
+                "file-input-group");
+            group.innerHTML = `
+            <input type="file" class="form-control" name="files[]" required>
+            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+            container.appendChild(group);
+        });
+
+        container.addEventListener("click", function(e) {
+            if (e.target.closest(".remove-file")) {
+                e.target.closest(".file-input-group").remove();
+            }
+        });
+
+        // QUILL EDITOR INIT
+        const quill = new Quill('#quill_editor', {
+            theme: 'snow',
+            placeholder: 'Write your notes here...',
+            modules: {
+                toolbar: [
+                    [{
+                        'font': []
+                    }, {
+                        'size': []
+                    }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{
+                        'color': []
+                    }, {
+                        'background': []
+                    }],
+                    [{
+                        'list': 'ordered'
+                    }, {
+                        'list': 'bullet'
+                    }],
+                    [{
+                        'align': []
+                    }],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Ambil nilai old notes dari hidden input
+        const oldNotes = document.getElementById('notes_input_add').value;
+
+        // Jika ada old notes, isi Quill editor dengan HTML tersebut
+        if (oldNotes) {
+            quill.root.innerHTML = oldNotes;
+        }
+
+        // Saat submit form, sinkronkan isi Quill ke hidden input
+        const form = document.querySelector('#addDocumentControlModal form');
+        form.addEventListener('submit', function() {
+            document.getElementById('notes_input_add').value = quill.root.innerHTML;
+        });
+        // Tampilkan modal otomatis jika ada error validasi
+        @if ($errors->any())
+            const modal = new bootstrap.Modal(document.getElementById('addDocumentControlModal'));
+            modal.show();
+        @endif
     </script>
+@endpush
+@push('styles')
+    <style>
+        #quill_editor {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        #quill_editor .ql-editor {
+            word-wrap: break-word !important;
+            white-space: pre-wrap !important;
+            overflow-wrap: break-word !important;
+            max-width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        #quill_editor .ql-editor span {
+            white-space: normal !important;
+            word-break: break-word !important;
+        }
+    </style>
 @endpush
