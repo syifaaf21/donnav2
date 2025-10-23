@@ -55,6 +55,7 @@
                                     <th class="px-4 py-3">No</th>
                                     <th class="px-4 py-3">Name</th>
                                     <th class="px-4 py-3">Code</th>
+                                    <th class="px-4 py-3">Plant</th>
                                     <th class="px-4 py-3">Actions</th>
                                 </tr>
                             </thead>
@@ -66,6 +67,7 @@
                                         </td>
                                         <td class="px-4 py-3">{{ $department->name }}</td>
                                         <td class="px-4 py-3">{{ $department->code }}</td>
+                                        <td class="px-4 py-3">{{ $department->plant }}</td>
                                         <td class="px-4 py-3">
                                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                                 data-bs-target="#editDepartmentModal-{{ $department->id }}">
@@ -137,6 +139,28 @@
                                     @enderror
                                 </div>
                             </div>
+                            {{-- Plant --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Plant</label>
+                                <select name="plant" class="form-select rounded-3 @error('plant') is-invalid @enderror"
+                                    required>
+                                    <option value="" disabled
+                                        {{ old('plant', $department->plant) ? '' : 'selected' }}>-- Select Plant --
+                                    </option>
+                                    <option value="Unit"
+                                        {{ old('plant', $department->plant) == 'Unit' ? 'selected' : '' }}>Unit</option>
+                                    <option value="Body"
+                                        {{ old('plant', $department->plant) == 'Body' ? 'selected' : '' }}>Body</option>
+                                    <option value="Electric"
+                                        {{ old('plant', $department->plant) == 'Electric' ? 'selected' : '' }}>Electric
+                                    </option>
+                                    <option value="All"
+                                        {{ old('plant', $department->plant) == 'All' ? 'selected' : '' }}>All</option>
+                                </select>
+                                @error('plant')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                         <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
                             <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
@@ -187,6 +211,24 @@
                                     class="form-control rounded-3 @error('code') is-invalid @enderror"
                                     value="{{ old('code') }}" required>
                                 @error('code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            {{-- Plant --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Plant</label>
+                                <select name="plant" class="form-select rounded-3 @error('plant') is-invalid @enderror"
+                                    required>
+                                    <option value="" disabled {{ old('plant') ? '' : 'selected' }}>-- Select Plant
+                                        --</option>
+                                    <option value="Unit" {{ old('plant') == 'Unit' ? 'selected' : '' }}>Unit</option>
+                                    <option value="Body" {{ old('plant') == 'Body' ? 'selected' : '' }}>Body</option>
+                                    <option value="Electric" {{ old('plant') == 'Electric' ? 'selected' : '' }}>Electric
+                                    </option>
+                                    <option value="All" {{ old('plant') == 'All' ? 'selected' : '' }}>All</option>
+                                </select>
+                                @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

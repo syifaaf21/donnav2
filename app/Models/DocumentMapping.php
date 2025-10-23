@@ -13,6 +13,7 @@ class DocumentMapping extends Model
         'document_id',
         'document_number',
         'part_number_id',
+        'parent_id',
         'department_id',
         'reminder_date',
         'deadline',

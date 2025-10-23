@@ -106,6 +106,7 @@ Route::get('/get-options-by-plant', [PartNumberController::class, 'getOptionsByP
 
 Route::get('/generate-document-number', [DocumentMappingController::class, 'generateDocumentNumber']);
 Route::get('/generate-document-number-from-parent', [DocumentMappingController::class, 'generateChildDocumentNumber']);
+Route::get('/departments/filter', [DocumentMappingController::class, 'getDepartmentsByDocumentAndPlant'])->name('departments.filter');
 
 // Route::get('/plants', function() {
 //     $plants = ['body' => 'Body', 'unit' => 'Unit', 'electric' => 'Electric'];

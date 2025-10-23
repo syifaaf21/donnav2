@@ -90,7 +90,9 @@ class DocumentMappingController extends Controller
                 $query->whereDate('deadline', $deadline);
             }
 
-            $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
+            $groupedByPlant[$plant] = $query
+                ->orderBy('created_at', 'asc')
+                ->get();
         }
 
         $documentMappings = collect();
@@ -135,6 +137,7 @@ class DocumentMappingController extends Controller
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
 
+        // Cek existing document_number
         $existing = DocumentMapping::where('document_number', $request->document_number)->exists();
         if ($existing) {
             return redirect()->back()->withErrors([
@@ -142,6 +145,22 @@ class DocumentMappingController extends Controller
             ])->withInput();
         }
 
+        // 3. Validasi kecocokan parent document dengan part number
+        if ($request->filled('parent_document_id')) {
+            $parent = DocumentMapping::find($request->parent_document_id);
+
+            if (!$parent) {
+                return redirect()->back()->withErrors([
+                    'parent_document_id' => 'Parent Document tidak ditemukan.'
+                ])->withInput();
+            }
+
+            if ($parent->part_number_id != $request->part_number_id) {
+                return redirect()->back()->withErrors([
+                    'parent_document_id' => 'Parent Document tidak cocok dengan Part Number yang dipilih.'
+                ])->withInput();
+            }
+        }
 
         // Simpan DocumentMapping dulu
         $mapping = DocumentMapping::create([
@@ -264,8 +283,7 @@ class DocumentMappingController extends Controller
 
     public function searchParentDocuments(Request $request)
     {
-        $query = DocumentMapping::with('partNumber.product', 'partNumber.process', 'partNumber.productModel', 'document', 'department')
-            ->whereNull('parent_id'); // hanya ambil dokumen induk
+        $query = DocumentMapping::with('partNumber.product', 'partNumber.process', 'partNumber.productModel', 'document', 'department');
 
         if ($request->filled('q')) {
             $q = strtolower($request->input('q'));
@@ -286,11 +304,63 @@ class DocumentMappingController extends Controller
         return response()->json($parents->map(function ($doc) {
             return [
                 'value' => $doc->id,
-                'text' => $doc->document_number
+                'text' => $doc->document_number,
             ];
         }));
     }
 
+    public function getDepartmentsByDocumentAndPlant(Request $request)
+    {
+        $documentId = $request->input('document_id');
+        $plant = $request->input('plant');
+
+        if (!$documentId || !$plant) {
+            return response()->json(['departments' => []]);
+        }
+
+        $document = Document::find($documentId);
+        if (!$document) {
+            return response()->json(['departments' => []]);
+        }
+
+        // Mapping document name ke kode department
+        $documentToDeptCode = [
+            'FMEA' => 'ENG',
+            'QCPC' => 'ENG',
+            'Q-COMPO' => 'ENG',
+            'C/S PARAMETER' => 'ENG',
+
+            'QCWIS' => 'QAS',
+            'C/S QCWIS' => 'QAS',
+            'PIS' => 'QAS',
+
+            'C/S PRD' => 'PRD',
+            'WIS' => 'PRD',
+        ];
+
+        // Normalisasi nama document dari DB
+        $docCodeRaw = $document->code;
+        $docCode = strtoupper(trim($docCodeRaw));
+
+        // Ubah keys mapping juga jadi uppercase agar case-insensitive
+        $documentToDeptCodeUpper = [];
+        foreach ($documentToDeptCode as $key => $value) {
+            $documentToDeptCodeUpper[strtoupper($key)] = $value;
+        }
+
+        $deptCode = $documentToDeptCodeUpper[$docCode] ?? null;
+
+        if (!$deptCode) {
+            return response()->json(['departments' => []]);
+        }
+
+        // Filter department berdasarkan kode dan plant (pastikan kolom plant ada di tabel department)
+        $departments = Department::where('code', $deptCode)
+            ->where('plant', $plant)
+            ->get();
+
+        return response()->json(['departments' => $departments]);
+    }
 
     // ================= Update Review (Admin) =================
     public function updateReview(Request $request, DocumentMapping $mapping)

@@ -2,29 +2,36 @@
     $doc = $mapping->document;
     $docId = $doc->id ?? 'unknown';
     $partKey = $mapping->part_number_id;
-    $parentDocId = $doc->parent_id; // parent document id (nullable)
+    $parentId = $mapping->parent_id; // Parent dari mapping, relasi nyata antar dokumen (mapping.parent_id)
 
     // Apakah ini baris anak (depth > 0)
     $isChild = ($depth ?? 0) > 0;
 
-    // Jika anak, tambahkan class yang menunjuk ke parent + part key (unique per part)
-    $rowClass = $isChild ? 'child-row children-of-' . ($parentDocId ?? 'root') . '-' . $partKey . ' d-none' : '';
+    // Class untuk row anak, harus sama dengan data-target tombol expand
+    // Format: children-of-{parentMappingId} (gunakan parent_id dari mapping)
+    $rowClass = $isChild ? "child-row children-of-{$parentId} d-none" : '';
+
+    // Cari children berdasarkan mapping.parent_id = current mapping id
+    $children = $documents->filter(function ($d) use ($mapping) {
+        return $d->parent_id == $mapping->id;
+    });
+
 @endphp
 
-@php
-    // cari anak langsung (document parent_id == $docId) dan untuk part_number yang sama
-    $children = $documents->filter(function ($d) use ($docId, $partKey) {
-        return optional($d->document)->parent_id === $docId && $d->part_number_id == $partKey;
-    });
-@endphp
+{{-- @if ($children->count() === 0)
+    <tr>
+        <td colspan="7" style="color: red; padding-left: {{ ($depth ?? 0) * 20 }}px;">
+            No children found for parent ID: {{ $mapping->id }}
+        </td>
+    </tr>
+@endif --}}
 
 <tr class="{{ $rowClass }} align-middle">
     <!-- Expand Button -->
     <td class="px-2 py-2">
         @if ($children->count() > 0)
-            {{-- data-target harus unik: children-of-{docId}-{partKey} --}}
             <button type="button" class="btn btn-sm btn-link toggle-children"
-                data-target="children-of-{{ $docId }}-{{ $partKey }}">
+                data-target="children-of-{{ $mapping->id }}">
                 <i class="bi bi-plus-square"></i>
             </button>
         @else
@@ -49,7 +56,6 @@
     </td>
 </tr>
 
-{{-- Render children (rekursif). Anak sudah diberi class d-none default, dan tombol parent akan toggle class tersebut --}}
 @if ($children->count())
     @foreach ($children as $index => $child)
         @include('contents.master.document-review.partials.nested-row-recursive', [

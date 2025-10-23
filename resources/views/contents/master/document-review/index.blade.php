@@ -87,9 +87,11 @@
 
                                     <tbody>
                                         @php
-                                            $parents = $documents->filter(
-                                                fn($doc) => $doc->document && is_null($doc->document->parent_id),
-                                            );
+                                            $parents = $documents->filter(function ($doc) {
+                                                // Dokumen nyata tanpa parent nyata (mapping.parent_id)
+                                                // tapi tetap bisa punya template parent (document.parent_id)
+                                                return is_null($doc->parent_id);
+                                            });
                                         @endphp
 
                                         @if ($parents->isEmpty())
@@ -313,8 +315,16 @@
             const tsParentDocument = new TomSelect('#parent_document_select', {
                 create: false,
                 preload: true,
+                persist: true,
+                valueField: 'value',
+                labelField: 'text',
+                searchField: 'text',
+                shouldLoad: function(query) {
+                    // Jangan reload otomatis saat submit
+                    return true;
+                },
                 load: debounce(function(query, callback) {
-                    const plant = tsPlant.getValue(); // ambil nilai plant saat ini
+                    const plant = tsPlant.getValue();
                     const params = new URLSearchParams();
                     if (query) params.append('q', query);
                     if (plant) params.append('plant', plant);
@@ -325,7 +335,6 @@
                         .catch(() => callback());
                 }, 500)
             });
-
             const tsPlant = new TomSelect('#plant_select', {
                 create: false
             });
@@ -339,6 +348,44 @@
                 create: false,
                 options: []
             });
+
+            // Fungsi untuk fetch dan update options department berdasarkan document dan plant
+            function updateDepartmentsByDocumentAndPlant() {
+                const documentId = tsDocument.getValue();
+                const plant = tsPlant.getValue();
+
+                if (!documentId || !plant) {
+                    tsDepartment.clearOptions();
+                    tsDepartment.disable();
+                    return;
+                }
+
+                fetch(
+                        `/api/departments/filter?document_id=${encodeURIComponent(documentId)}&plant=${encodeURIComponent(plant)}`
+                    )
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.departments && data.departments.length > 0) {
+                            const options = data.departments.map(dept => ({
+                                value: dept.id,
+                                text: dept.name
+                            }));
+                            tsDepartment.clearOptions();
+                            tsDepartment.addOptions(options);
+                            tsDepartment.enable();
+                        } else {
+                            tsDepartment.clearOptions();
+                            tsDepartment.disable();
+                        }
+                    })
+                    .catch(() => {
+                        tsDepartment.clearOptions();
+                        tsDepartment.disable();
+                    });
+            }
+
+            // Pasang event listener pada change untuk tsDocument dan tsPlant
+            tsDocument.on('change', updateDepartmentsByDocumentAndPlant);
 
             // Disable Part Number dan Department sampai plant dipilih
             tsPartNumber.disable();
@@ -359,10 +406,13 @@
 
             // Event saat Plant berubah, load Part Number sesuai plant dan enable Part Number & Department
             tsPlant.on('change', function(value) {
-                if (value) {
-                    tsPartNumber.enable();
-                    tsPartNumber.clearOptions();
+                tsPartNumber.clearOptions();
+                tsPartNumber.disable();
 
+                tsDepartment.clearOptions();
+                tsDepartment.disable();
+
+                if (value) {
                     fetch(`/api/part-numbers?plant=${encodeURIComponent(value)}`)
                         .then(res => res.json())
                         .then(data => {
@@ -371,29 +421,32 @@
                                 text: item.text
                             }));
                             tsPartNumber.addOptions(mapped);
+                            tsPartNumber.enable();
                         })
-                        .catch(() => tsPartNumber.clearOptions());
+                        .catch(() => {
+                            tsPartNumber.clearOptions();
+                            tsPartNumber.disable();
+                        });
 
-                    tsDepartment.enable();
+                    tsParentDocument.clearOptions();
+                    tsParentDocument.clear(true);
+                    tsParentDocument.load();
 
-                    tsParentDocument.clearOptions(); // hapus opsi sebelumnya
-                    tsParentDocument.clear(true); // reset nilai select
-                    tsParentDocument.load(); // panggil ulang API dengan plant baru
+                    // Panggil updateDepartmentsByDocumentAndPlant di sini supaya department ikut update
+                    updateDepartmentsByDocumentAndPlant();
 
                 } else {
+                    tsPartNumber.clear(true);
                     tsPartNumber.disable();
-                    tsPartNumber.clearOptions();
 
+                    tsDepartment.clear(true);
                     tsDepartment.disable();
-                    tsDepartment.clearOptions();
-                }
 
-                // Reset selects dan nomor dokumen saat plant berubah
-                tsPartNumber.clear(true);
-                tsDepartment.clear(true);
-                tsParentDocument.clear(true);
-                documentNumberInput.value = '';
+                    tsParentDocument.clear(true);
+                    documentNumberInput.value = '';
+                }
             });
+
 
             // Fungsi cek apakah input kunci sudah lengkap untuk generate nomor dokumen
             function canGenerate() {
@@ -513,60 +566,72 @@
             // Saat submit form, isi hidden input dengan html dari Quill
             form.addEventListener('submit', function() {
                 hiddenInput.value = quill.root.innerHTML;
+                console.log('Parent selected:', parentDocumentSelect.value);
             });
 
             @foreach ($documentMappings as $mapping)
-            // Document Select
-            new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
-                create: false,
-                preload: true,
-                load: function(query, callback) {
-                    fetch(`/api/documents?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            callback(data.map(item => ({
-                                value: item.id,
-                                text: item.text
-                            })));
-                        })
-                        .catch(() => callback());
-                }
-            });
+                // Document Select
+                new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
+                    create: false,
+                    preload: true,
+                    load: function(query, callback) {
+                        fetch(`/api/documents?q=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                callback(data.map(item => ({
+                                    value: item.id,
+                                    text: item.text
+                                })));
+                            })
+                            .catch(() => callback());
+                    }
+                });
 
-            // Part Number Select
-            new TomSelect('#editPartNumberSelect{{ $mapping->id }}', {
-                create: false,
-                preload: true,
-                load: function(query, callback) {
-                    fetch(`/api/part-numbers?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            callback(data.map(item => ({
-                                value: item.id,
-                                text: item.text
-                            })));
-                        })
-                        .catch(() => callback());
-                }
-            });
+                // Part Number Select
+                new TomSelect('#editPartNumberSelect{{ $mapping->id }}', {
+                    create: false,
+                    preload: true,
+                    load: function(query, callback) {
+                        fetch(`/api/part-numbers?q=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                callback(data.map(item => ({
+                                    value: item.id,
+                                    text: item.text
+                                })));
+                            })
+                            .catch(() => callback());
+                    }
+                });
 
-            // Department Select
-            new TomSelect('#editDepartmentSelect{{ $mapping->id }}', {
-                create: false,
-                preload: true,
-                load: function(query, callback) {
-                    fetch(`/api/departments?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            callback(data.map(item => ({
-                                value: item.id,
-                                text: item.text
-                            })));
-                        })
-                        .catch(() => callback());
-                }
+                // Department Select
+                new TomSelect('#editDepartmentSelect{{ $mapping->id }}', {
+                    create: false,
+                    preload: true,
+                    load: function(query, callback) {
+                        fetch(`/api/departments?q=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                callback(data.map(item => ({
+                                    value: item.id,
+                                    text: item.text
+                                })));
+                            })
+                            .catch(() => callback());
+                    }
+                });
+            @endforeach
+
+            // Pastikan nilai parent document tidak dihapus saat form submit
+            form.addEventListener('submit', function() {
+                // Ambil value aktif dari TomSelect langsung (lebih aman)
+                const selectedParent = tsParentDocument.getValue();
+
+                // Pastikan value-nya tetap di <select>
+                parentDocumentSelect.value = selectedParent;
+
+                console.log('Final parent sent:', selectedParent);
             });
-        @endforeach
 
         });
     </script>
