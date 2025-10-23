@@ -1,42 +1,93 @@
-document.addEventListener('DOMContentLoaded', function () {
-  const sidebar = document.getElementById('bsbSidebar'); // Sidebar element
-  const toggleBtn = document.getElementById('sidebarToggleBtn'); // Tombol untuk toggle sidebar
-  const toggleIcon = document.getElementById('sidebarToggleIcon'); // Ikon untuk toggle
-  const navbar = document.getElementById('mainNavbar'); // Navbar element
-  const mainContent = document.getElementById('mainContent'); // Konten utama
-  const datetimeEl = document.getElementById('datetime'); // Elemen waktu (jika ada)
+document.addEventListener("DOMContentLoaded", () => {
+    feather.replace();
 
-  // Fungsi untuk menangani tombol toggle
-  toggleBtn.addEventListener('click', function () {
-    sidebar.classList.toggle('collapsed'); // Toggle class "collapsed" pada sidebar
-    document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('collapsed')); // Menambahkan class ke body agar konten ikut bergerak
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("toggleSidebar");
+    const sidebarTexts = document.querySelectorAll(".sidebar-text");
+    const logo = document.getElementById("sidebarLogo");
+    const documentDropdown = document.getElementById("documentsDropdown");
+    const profileIcon = document.getElementById("profileIcon");
 
-    // Ganti ikon tombol berdasarkan status sidebar
-    if (sidebar.classList.contains('collapsed')) {
-      toggleIcon.classList.remove('bi-layout-sidebar-inset'); // Hapus ikon sidebar-inset
-      toggleIcon.classList.add('bi-layout-sidebar-reverse'); // Tambahkan ikon sidebar-reverse
+    const collapsedWidth = "w-20";
+    const expandedWidth = "w-64";
 
-      // Geser navbar dan konten
-      navbar.style.left = '100px'; // Geser navbar ke kiri
-      mainContent.style.marginLeft = '100px'; // Geser konten ke kiri
-    } else {
-      toggleIcon.classList.remove('bi-layout-sidebar-reverse'); // Hapus ikon sidebar-reverse
-      toggleIcon.classList.add('bi-layout-sidebar-inset'); // Tambahkan ikon sidebar-inset
-
-      // Kembalikan posisi navbar dan konten
-      navbar.style.left = '250px'; // Posisi navbar kembali
-      mainContent.style.marginLeft = '250px'; // Posisi konten kembali
+    // preload logo icon
+    if (logo && logo.dataset && logo.dataset.icon) {
+        const imgPre = new Image();
+        imgPre.src = logo.dataset.icon;
     }
-  });
 
-  // Fungsi untuk update waktu (jika ada elemen waktu di halaman)
-  function updateTime() {
-    const now = new Date();
-    datetimeEl.textContent = now.toLocaleString(); // Update waktu dengan format lokal
-  }
+    function collapseSidebar() {
+        if (sidebar.classList.contains(expandedWidth)) {
+            sidebar.classList.replace(expandedWidth, collapsedWidth);
+        } else {
+            sidebar.classList.add(collapsedWidth);
+        }
 
-  if (datetimeEl) {
-    updateTime();
-    setInterval(updateTime, 1000); // Update waktu setiap detik
-  }
+        sidebarTexts.forEach(t => t.classList.add("hidden"));
+
+        // ganti logo ke icon
+        if (logo && logo.dataset && logo.dataset.icon) {
+            logo.src = logo.dataset.icon;
+            logo.style.width = "32px";
+            logo.style.height = "32px";
+            logo.style.margin = "0 auto";
+        }
+
+        if (profileIcon) profileIcon.classList.add("scale-90");
+
+        // Tutup dropdown dokumen kalau ada
+        if (documentDropdown) documentDropdown.classList.add("hidden");
+
+        // tetap chevron-left (tidak diubah ke kanan)
+        const iconEl = toggleBtn && toggleBtn.querySelector("i");
+        if (iconEl) iconEl.setAttribute("data-feather", "chevron-left");
+
+        feather.replace();
+    }
+
+    function expandSidebar() {
+        if (sidebar.classList.contains(collapsedWidth)) {
+            sidebar.classList.replace(collapsedWidth, expandedWidth);
+        } else {
+            sidebar.classList.add(expandedWidth);
+        }
+
+        sidebarTexts.forEach(t => t.classList.remove("hidden"));
+
+        // ganti logo ke versi penuh
+        if (logo && logo.dataset && logo.dataset.full) {
+            logo.src = logo.dataset.full;
+            logo.style.width = "150px";
+            logo.style.height = "auto";
+            logo.style.margin = "0";
+        }
+
+        if (profileIcon) profileIcon.classList.remove("scale-90");
+
+        // tetap chevron-left
+        const iconEl = toggleBtn && toggleBtn.querySelector("i");
+        if (iconEl) iconEl.setAttribute("data-feather", "chevron-left");
+
+        feather.replace();
+    }
+
+    // event toggle sidebar
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            if (sidebar.classList.contains(expandedWidth)) collapseSidebar();
+            else expandSidebar();
+        });
+    }
+
+    // handle dropdown menu (tanpa rotasi / ubah icon)
+    document.querySelectorAll("[data-collapse]").forEach(btn => {
+        const target = document.getElementById(btn.dataset.collapse);
+
+        btn.addEventListener("click", () => {
+            if (sidebar.classList.contains(collapsedWidth)) expandSidebar();
+            if (target) target.classList.toggle("hidden");
+            btn.classList.toggle("active");
+        });
+    });
 });

@@ -32,6 +32,7 @@ class DocumentController extends Controller
                     });
             })
             ->whereNull('parent_id')
+            ->where('type', 'review')
             ->get();
 
         return view('contents.master.hierarchy.index', compact('documents'));

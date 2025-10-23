@@ -15,7 +15,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- ✅ Custom Style  -->
-    <link href="{{ asset('css/style2.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/sidebar.css') }}" rel="stylesheet">
 
     {{-- ✅ Feather Icons --}}
     <script src="https://unpkg.com/feather-icons"></script>
@@ -35,12 +35,12 @@
     @stack('styles')
 </head>
 
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-sidebar text-gray-800">
 
     @include('layouts.partials.sidebar')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64">
+    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-white rounded-xl mt-2">
         @include('layouts.partials.navbar')
 
         <!-- Content -->
@@ -54,7 +54,7 @@
     {{-- <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script> --}}
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <!-- ✅ Custom Script  -->
-    <script src="{{ asset('js/script.js') }}"></script>
+    <script src="{{ asset('js/sidebar.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>

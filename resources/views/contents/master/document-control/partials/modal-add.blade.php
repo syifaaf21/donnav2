@@ -10,19 +10,14 @@
             </div>
             <div class="modal-body">
                 <!-- Paste form Anda di sini -->
-                <form action="{{ route('master.document-control.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('master.document-control.store') }}" method="POST"
+                    enctype="multipart/form-data">
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label for="document_name" class="form-label">Document Name</label>
-                            <select class="form-select" id="document_id" name="document_id" required>
-                                <option value="">-- Select Document --</option>
-                                @foreach ($documents as $doc)
-                                    @if ($doc->type === 'control')
-                                        <option value="{{ $doc->id }}">{{ $doc->name }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
+                            <input type="text" class="form-control" id="document_name" name="document_name"
+                                placeholder="Enter document name" required>
                         </div>
                         <div class="col-md-4">
                             <label for="department" class="form-label">Department</label>
@@ -85,7 +80,7 @@
             // Buat group baru
             let group = document.createElement("div");
             group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
-            "file-input-group");
+                "file-input-group");
 
             group.innerHTML = `
             <input type="file" class="form-control" name="files[]" required>

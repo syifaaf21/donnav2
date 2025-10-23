@@ -19,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot()
-{
-    Paginator::useBootstrap(); // Tambahkan ini
-}
+    {
+        Paginator::useTailwind(); // Tambahkan ini
+    }
 }

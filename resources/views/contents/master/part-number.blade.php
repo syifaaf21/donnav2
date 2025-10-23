@@ -2,22 +2,21 @@
 @section('title', 'Part Number')
 
 @section('content')
-    <div class="container py-2">
-        <div class="d-flex justify-between items-center mb-3">
-            {{-- Breadcrumbs --}}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+    <div class="container mx-auto px-4 py-2 ">
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-3">
+            <!-- Breadcrumb -->
+            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
                             <i class="bi bi-house-door me-1"></i> Dashboard
                         </a>
                     </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Master</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Part Number</a>
-                    </li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li class="text-gray-700">Part Number</li>
                 </ol>
             </nav>
             {{-- Tombol Add Part Number --}}
@@ -75,15 +74,15 @@
                                         <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
                                         <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
                                         <td class="px-4 py-2 flex gap-2">
-                                            <button class="text-blue-600 hover:text-blue-700" data-bs-toggle="modal"
+                                            <button class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded" data-bs-toggle="modal"
                                                 data-bs-target="#editPartNumberModal-{{ $part->id }}">
-                                                <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                <i data-feather="edit" class="w-4 h-4"></i>
                                             </button>
                                             <form action="{{ route('master.part_numbers.destroy', $part->id) }}"
                                                 method="POST" class="delete-form inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-700">
+                                                <button type="submit" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                                                     <i data-feather="trash-2" class="w-4 h-4"></i>
                                                 </button>
                                             </form>
@@ -99,7 +98,7 @@
 
                     </div>
                     <div class="mt-3">
-                        {{ $partNumbers->withQueryString()->links() }}
+                        {{ $partNumbers->withQueryString()->links('vendor.pagination.tailwind') }}
                     </div>
                 </div>
             </div>

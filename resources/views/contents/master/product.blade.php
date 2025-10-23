@@ -1,101 +1,102 @@
 @extends('layouts.app')
+@section('title', 'Product')
 
 @section('content')
-    <div class="container py-3">
-        <div class="flex justify-between items-center mb-3">
+    <div class="container mx-auto px-4 py-2 ">
+        {{-- Header --}}
+        <div class="flex items-center justify-between mb-6">
             {{-- Breadcrumbs --}}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
-                            <i class="bi bi-house-door me-1"></i> Dashboard
+            <nav class="text-sm text-gray-500">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
+                            <i class="bi bi-house-door"></i> Dashboard
                         </a>
                     </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Master</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Product</a>
-                    </li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">Product</li>
                 </ol>
             </nav>
 
-            {{-- Add Product Button --}}
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                <i class="bi bi-plus-circle"></i> Add Product
+            {{-- Add Button --}}
+            <button type="button"
+                data-bs-toggle="modal" data-bs-target="#addProductModal"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add Product</span>
             </button>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                {{-- Search Bar --}}
-                <div class="flex justify-content-end mb-3">
-                    <form method="GET" id="searchForm" class="flex items-center gap-2 flex-wrap">
-                        <div class="relative max-w-md w-full">
-                            <input type="text" name="search" id="searchInput"
-                                class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Search..." value="{{ request('search') }}">
-                            <button type="submit" title="Search"
-                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
-                                <i class="bi bi-search"></i>
-                            </button>
-                            <button type="button" id="clearSearch" title="Clear"
-                                class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
-                                <i class="bi bi-x-circle"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+        {{-- Card --}}
+        <div class="bg-white rounded-xl shadow-lg p-4">
+            {{-- Search Bar --}}
+            <div class="flex justify-end mb-4">
+                <form method="GET" id="searchForm" class="relative w-full max-w-xs">
+                    <input type="text" name="search" id="searchInput"
+                        class="w-full border border-gray-300 rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search..." value="{{ request('search') }}">
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" id="clearSearch"
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
 
-                {{-- Table --}}
-                <div class="table-wrapper mb-3">
-                    <div class="table-responsive">
-                        <table class="min-w-full table-auto text-sm text-left text-gray-600">
-                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                                <tr>
-                                    <th class="px-4 py-3">No</th>
-                                    <th class="px-4 py-3">Name</th>
-                                    <th class="px-4 py-3">Code</th>
-                                    <th class="px-4 py-3">Plant</th>
-                                    <th class="px-4 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($products as $product)
-                                    <tr>
-                                        <td class="px-4 py-3">
-                                            {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}
-                                        </td>
-                                        <td class="px-4 py-3">{{ $product->name }}</td>
-                                        <td class="px-4 py-3">{{ $product->code }}</td>
-                                        <td class="px-4 py-3">{{ $product->plant }}</td>
-                                        <td class="px-4 py-3">
-                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                                                data-bs-target="#editProductModal-{{ $product->id }}">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <form action="{{ route('master.products.destroy', $product->id) }}"
-                                                method="POST" class="d-inline delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">No products found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+            {{-- Table --}}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                        <tr>
+                            <th class="px-4 py-2">No</th>
+                            <th class="px-4 py-2">Name</th>
+                            <th class="px-4 py-2">Code</th>
+                            <th class="px-4 py-2">Plant</th>
+                            <th class="px-4 py-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse ($products as $product)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-2">
+                                    {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}</td>
+                                <td class="px-4 py-2 font-medium text-gray-800">{{ $product->name }}</td>
+                                <td class="px-4 py-2">{{ $product->code }}</td>
+                                <td class="px-4 py-2">{{ $product->plant }}</td>
+                                <td class="px-4 py-2 flex gap-2">
+                                    <button data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}"
+                                        data-bs-title="Edit Product"
+                                        class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    <form action="{{ route('master.products.destroy', $product->id) }}" method="POST"
+                                        class="delete-form inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" data-bs-title="Delete Product"
+                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-gray-500">No products found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-                        {{-- Pagination --}}
-                        {{ $products->withQueryString()->links() }}
-                    </div>
-                </div>
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
             </div>
         </div>
 
@@ -112,7 +113,7 @@
                         <div class="modal-content border-0 shadow-lg rounded-4">
                             <div class="modal-header bg-light text-dark rounded-top-4">
                                 <h5 class="modal-title fw-semibold" id="editProductModalLabel-{{ $product->id }}">
-                                    <i class="bi bi-person-lines-fill me-2"></i>Edit Product
+                                    <i class="bi bi-pencil-square me-2"></i>Edit Product
                                 </h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
@@ -156,12 +157,15 @@
                                 </div>
                             </div>
 
-                            <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                            <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
+                                <button type="button"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                                    data-bs-dismiss="modal">
+                                    Cancel
                                 </button>
-                                <button type="submit" class="btn btn-outline-success px-4">
-                                    <i class="bi bi-check-circle me-1"></i>Save Changes
+                                <button type="submit"
+                                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                                    Save
                                 </button>
                             </div>
                         </div>
@@ -182,7 +186,7 @@
                         {{-- Header --}}
                         <div class="modal-header bg-light text-dark rounded-top-4">
                             <h5 class="modal-title fw-semibold" id="addProductModalLabel">
-                                <i class="bi bi-person-plus-fill me-2"></i>Create New Product
+                                <i class="bi bi-plus-circle me-2"></i>Create New Product
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
@@ -229,12 +233,15 @@
                         </div>
 
                         {{-- Footer --}}
-                        <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle me-1"></i>Cancel
+                        <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
+                            <button type="button"
+                                class="px-4 py-2 border border-gray-700 rounded-lg text-gray-700 hover:bg-gray-200"
+                                data-bs-dismiss="modal">
+                                Cancel
                             </button>
-                            <button type="submit" class="btn btn-outline-primary px-4">
-                                <i class="bi bi-save2 me-1"></i>Save Product
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                                Save
                             </button>
                         </div>
                     </div>
@@ -276,6 +283,17 @@
                     searchForm.submit();
                 });
             }
+        });
+        //Tooltip
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el, {
+                    title: el.getAttribute('data-bs-title'),
+                    placement: 'top',
+                    trigger: 'hover'
+                });
+            });
         });
     </script>
 @endpush

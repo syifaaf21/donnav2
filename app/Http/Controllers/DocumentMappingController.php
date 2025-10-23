@@ -89,7 +89,7 @@ class DocumentMappingController extends Controller
 
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
         }
-        
+
         $documentMappings = collect();
 
         foreach ($groupedByPlant as $plantMappings) {
@@ -374,7 +374,7 @@ class DocumentMappingController extends Controller
     public function storeControl(Request $request)
     {
         $validated = $request->validate([
-            'document_id' => 'required|exists:documents,id',
+            'document_name' => 'required|string|max:255',
             'department' => 'required|exists:departments,id',
             'document_number' => 'required|string|max:100',
             'obsolete_date' => 'nullable|date',
@@ -390,10 +390,16 @@ class DocumentMappingController extends Controller
             return redirect()->back()->with('error', 'Status "Need Review" not found!');
         }
 
+        // ✅ Buat record Document baru dengan type "control"
+        $newDocument = Document::create([
+            'name' => $validated['document_name'],
+            'parent_id' => null, // kalau memang berdiri sendiri
+            'type' => 'control',
+        ]);
 
-        // buat record document_mapping dulu
+        // ✅ Buat record DocumentMapping
         $mapping = DocumentMapping::create([
-            'document_id' => $validated['document_id'],
+            'document_id' => $newDocument->id,
             'document_number' => $validated['document_number'],
             'status_id' => $status->id,
             'obsolete_date' => $validated['obsolete_date'] ?? null,
@@ -405,7 +411,7 @@ class DocumentMappingController extends Controller
             'notes' => null,
         ]);
 
-        // simpan file ke tabel document_files
+        // ✅ Simpan file ke tabel document_files
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
                 $extension = $file->getClientOriginalExtension();
@@ -421,6 +427,7 @@ class DocumentMappingController extends Controller
             }
         }
 
+        // ✅ Kirim notifikasi ke semua user
         $users = \App\Models\User::all();
         foreach ($users as $user) {
             $user->notify(new \App\Notifications\DocumentUpdatedNotification(
@@ -429,6 +436,7 @@ class DocumentMappingController extends Controller
                 'Control'
             ));
         }
+
         return redirect()->route('master.document-control.index')
             ->with('success', 'Document Control berhasil ditambahkan!');
     }
