@@ -111,10 +111,10 @@
                                 <label for="process" class="form-label">Process</label>
                                 <select name="process" id="process" class="form-select select2">
                                     <option value="">All Processes</option>
-                                    @foreach ($processes as $proc)
-                                        <option value="{{ $proc->id }}"
-                                            {{ request('process') == $proc->id ? 'selected' : '' }}>
-                                            {{ ucwords($proc->name) }}
+                                    @foreach ($processes as $id => $proc)
+                                        <option value="{{ $proc }}"
+                                            {{ request('process') == $proc ? 'selected' : '' }}>
+                                            {{ ucwords($proc) }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -172,7 +172,7 @@
     @include('contents.document-review.partials.modal-approve')
     @include('contents.document-review.partials.modal-edit')
 @endsection
-@@push('scripts')
+@push('scripts')
 <script>
     // Capitalize words
     function ucwords(str) {
@@ -341,7 +341,7 @@
             // Approve and reject buttons inside modal
             const $approveBtn = $('#viewFileModal .open-approve-modal');
             const $rejectBtn = $(
-            '#viewFileModal form:has(button[type="submit"]) button[type="submit"]');
+                '#viewFileModal form:has(button[type="submit"]) button[type="submit"]');
 
             // Set data-doc-id and form action for reject
             $approveBtn.attr('data-doc-id', docId);

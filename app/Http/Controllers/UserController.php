@@ -47,7 +47,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users',
-            'email' => 'required|email|unique:users',
+            'email' => 'nullable|email|unique:users',
             'password' => 'required|min:6|confirmed',
             'role_id' => 'required',
             'department_id' => 'required',
@@ -92,7 +92,7 @@ class UserController extends Controller
         $rules = [
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users,npk,' . $user->id,
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
             'role_id' => 'required',
             'department_id' => 'required',
         ];

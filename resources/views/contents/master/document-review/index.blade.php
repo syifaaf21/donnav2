@@ -566,72 +566,142 @@
             // Saat submit form, isi hidden input dengan html dari Quill
             form.addEventListener('submit', function() {
                 hiddenInput.value = quill.root.innerHTML;
-                console.log('Parent selected:', parentDocumentSelect.value);
             });
 
+            // === EDIT MODAL JS ===
             @foreach ($documentMappings as $mapping)
-                // Document Select
-                new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
-                    create: false,
-                    preload: true,
-                    load: function(query, callback) {
-                        fetch(`/api/documents?q=${encodeURIComponent(query)}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                callback(data.map(item => ({
-                                    value: item.id,
-                                    text: item.text
-                                })));
-                            })
-                            .catch(() => callback());
-                    }
-                });
+                $('#editModal{{ $mapping->id }}').on('shown.bs.modal', function() {
 
-                // Part Number Select
-                new TomSelect('#editPartNumberSelect{{ $mapping->id }}', {
-                    create: false,
-                    preload: true,
-                    load: function(query, callback) {
-                        fetch(`/api/part-numbers?q=${encodeURIComponent(query)}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                callback(data.map(item => ({
-                                    value: item.id,
-                                    text: item.text
-                                })));
-                            })
-                            .catch(() => callback());
-                    }
-                });
+                    // === Inisialisasi TomSelect ===
+                    const tsEditDoc = new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
+                        create: false,
+                        preload: true,
+                        load: debounce((query, callback) => {
+                            fetch('/api/documents?q=' + encodeURIComponent(query))
+                                .then(res => res.json())
+                                .then(callback)
+                                .catch(() => callback());
+                        }, 500)
+                    });
 
-                // Department Select
-                new TomSelect('#editDepartmentSelect{{ $mapping->id }}', {
-                    create: false,
-                    preload: true,
-                    load: function(query, callback) {
-                        fetch(`/api/departments?q=${encodeURIComponent(query)}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                callback(data.map(item => ({
-                                    value: item.id,
-                                    text: item.text
-                                })));
-                            })
-                            .catch(() => callback());
+                    const tsEditPlant = new TomSelect('#editPlantSelect{{ $mapping->id }}', {
+                        create: false
+                    });
+                    const tsEditDept = new TomSelect('#editDepartmentSelect{{ $mapping->id }}', {
+                        create: false
+                    });
+                    const tsEditPart = new TomSelect('#editPartNumberSelect{{ $mapping->id }}', {
+                        create: false
+                    });
+                    const tsEditParent = new TomSelect('#editParentDocumentSelect{{ $mapping->id }}', {
+                        create: false
+                    });
+
+                    const docNumberInput = document.getElementById(
+                        'editDocumentNumber{{ $mapping->id }}');
+
+                    // kode auto-generate
+                    async function generateDocumentNumber() {
+                        const docId = tsEditDoc.getValue();
+                        const deptId = tsEditDept.getValue();
+                        const partId = tsEditPart.getValue();
+                        const parentId = tsEditParent.getValue();
+
+                        // Pastikan semua terisi
+                        if (!docId || !deptId || !partId) return;
+
+                        const params = new URLSearchParams({
+                            document_id: docId,
+                            department_id: deptId,
+                            part_number_id: partId
+                        });
+
+                        if (parentId) params.append('parent_id', parentId);
+
+                        try {
+                            const res = await fetch(
+                                `/api/generate-document-number?${params.toString()}`);
+                            if (!res.ok) throw new Error('Failed');
+                            const data = await res.json();
+
+                            // Isi otomatis field Document Number (readonly)
+                            docNumberInput.value = data.document_number || '';
+                        } catch (err) {
+                            console.error('Error generating number:', err);
+                        }
                     }
+
+                    const debouncedGenerate = debounce(generateDocumentNumber, 500);
+
+                    // Jalankan ulang generate kalau field ini berubah
+                    tsEditDoc.on('change', debouncedGenerate);
+                    tsEditDept.on('change', debouncedGenerate);
+                    tsEditPart.on('change', debouncedGenerate);
+                    tsEditParent.on('change', debouncedGenerate);
+
+                    const quill = new Quill('#quill_editor_edit{{ $mapping->id }}', {
+                        theme: 'snow',
+                        placeholder: 'Write your notes here...',
+                        modules: {
+                            toolbar: [
+                                [{
+                                    font: []
+                                }, {
+                                    size: []
+                                }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{
+                                    color: []
+                                }, {
+                                    background: []
+                                }],
+                                [{
+                                    list: 'ordered'
+                                }, {
+                                    list: 'bullet'
+                                }],
+                                [{
+                                    align: []
+                                }],
+                                ['clean']
+                            ]
+                        }
+                    });
+
+                    quill.root.innerHTML = document.getElementById('notes_input_edit{{ $mapping->id }}')
+                        .value;
+
+                    $(this).find('form').on('submit', function() {
+                        document.getElementById('notes_input_edit{{ $mapping->id }}').value =
+                            quill.root.innerHTML;
+                    });
+
+                    // ===============================
+                    // 🔹 File Input Dinamis (tidak berubah)
+                    // ===============================
+                    const container = document.getElementById("editFileFields{{ $mapping->id }}");
+                    const addBtn = document.getElementById("editAddFile{{ $mapping->id }}");
+
+                    addBtn?.addEventListener("click", function() {
+                        const group = document.createElement("div");
+                        group.classList.add("col-12", "d-flex", "align-items-center", "mb-2",
+                            "file-input-group");
+                        group.innerHTML = `
+            <input type="file" class="form-control border-1 shadow-sm" name="files[]" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+                        container.appendChild(group);
+                    });
+
+                    container?.addEventListener("click", function(e) {
+                        if (e.target.closest(".remove-file")) {
+                            e.target.closest(".file-input-group").remove();
+                        }
+                    });
                 });
             @endforeach
-
-            // Pastikan nilai parent document tidak dihapus saat form submit
-            form.addEventListener('submit', function() {
-                // Ambil value aktif dari TomSelect langsung (lebih aman)
-                const selectedParent = tsParentDocument.getValue();
-
-                // Pastikan value-nya tetap di <select>
-                parentDocumentSelect.value = selectedParent;
-
-                console.log('Final parent sent:', selectedParent);
-            });
 
         });
     </script>

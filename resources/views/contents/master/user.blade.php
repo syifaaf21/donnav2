@@ -292,7 +292,7 @@
                                     class="form-control rounded-3 @error('email') is-invalid @enderror"
                                     pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                                     title="Please enter a valid email address (e.g. user@example.com)"
-                                    value="{{ old('email') }}" required>
+                                    value="{{ old('email') }}">
                                 @error('email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

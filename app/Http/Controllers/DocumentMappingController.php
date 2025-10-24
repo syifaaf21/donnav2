@@ -114,7 +114,7 @@ class DocumentMappingController extends Controller
             'statuses',
             'departments',
             'documentMappings',
-            'existingDocuments'
+            'existingDocuments',
         ));
     }
 
@@ -365,24 +365,31 @@ class DocumentMappingController extends Controller
     // ================= Update Review (Admin) =================
     public function updateReview(Request $request, DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin')
+        if (Auth::user()->role->name != 'Admin') {
             abort(403);
+        }
 
         $request->validate([
             'document_id' => 'required|exists:documents,id',
             'document_number' => 'required|string|max:255',
             'part_number_id' => 'required|exists:part_numbers,id',
             'department_id' => 'required|exists:departments,id',
+            'notes' => 'nullable|string|max:500',
             'reminder_date' => 'nullable|date',
             'deadline' => 'nullable|date',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+        ], [
+            'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
 
+        // Update metadata
         $mapping->timestamps = false;
         $mapping->update([
             'document_id' => $request->document_id,
             'document_number' => $request->document_number,
             'part_number_id' => $request->part_number_id,
             'department_id' => $request->department_id,
+            'notes' => $request->notes ?? $mapping->notes,
             'reminder_date' => optional($mapping->status)->name === 'approved'
                 ? $request->reminder_date
                 : $mapping->reminder_date,
@@ -392,7 +399,35 @@ class DocumentMappingController extends Controller
         ]);
         $mapping->timestamps = true;
 
-        $users = \App\Models\User::all();
+        // Upload files baru jika ada
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $index => $file) {
+                $extension = $file->getClientOriginalExtension();
+                $filename = $request->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+
+                $path = $file->storeAs('document-reviews', $filename, 'public');
+
+                $mapping->files()->create([
+                    'document_id' => $mapping->document_id,
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientMimeType(),
+                    'uploaded_by' => Auth::id(),
+                ]);
+            }
+        }
+
+        $mapping = DocumentMapping::with([
+            'document',
+            'department',
+            'part_number',
+            'parent_document',
+            'files'
+        ])->find($mapping->id);
+
+
+        // Notify users
+        $users = User::all();
         foreach ($users as $user) {
             $user->notify(new \App\Notifications\DocumentUpdatedNotification(
                 $mapping->document_number,
@@ -401,9 +436,8 @@ class DocumentMappingController extends Controller
             ));
         }
 
-        return redirect()->back()->with('success', 'Document metadata updated!');
+        return redirect()->back()->with('success', 'Document updated successfully!');
     }
-
 
     // ================= Delete Review (Admin) =================
     public function destroy(DocumentMapping $mapping)
