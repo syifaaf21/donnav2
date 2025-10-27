@@ -14,10 +14,11 @@ class DepartmentController extends Controller
         // Optional: filter by search
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('code', 'like', '%' . $request->search . '%');
+                  ->orWhere('code', 'like', '%' . $request->search . '%')
+                  ->orWhere('plant', 'like', '%' . $request->search . '%');
         }
 
-        $departments = $query->orderBy('created_at')->paginate(10)->withQueryString();
+        $departments = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
         return view('contents.master.department', compact('departments'));
     }
@@ -27,6 +28,7 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10',
+            'plant' => 'required|string|max:10',
         ]);
 
         Department::create($validated);
@@ -39,6 +41,7 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10',
+            'plant' => 'required|string|max:10',
         ]);
 
         $department->update($validated);

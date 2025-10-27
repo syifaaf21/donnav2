@@ -115,8 +115,6 @@
                                 <h5 class="modal-title fw-semibold" id="editProductModalLabel-{{ $product->id }}">
                                     <i class="bi bi-pencil-square me-2"></i>Edit Product
                                 </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
                             </div>
 
                             <div class="modal-body p-4">
@@ -188,8 +186,6 @@
                             <h5 class="modal-title fw-semibold" id="addProductModalLabel">
                                 <i class="bi bi-plus-circle me-2"></i>Create New Product
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
                         </div>
 
                         {{-- Body --}}
@@ -283,6 +279,38 @@
                     searchForm.submit();
                 });
             }
+
+            //Cancel button modal
+            const addDepartmentModal = document.getElementById("addProductModal");
+            const formAdd = addDepartmentModal.querySelector("form");
+
+            if (addDepartmentModal && formAdd) {
+                // Reset form ketika modal ditutup
+                addDepartmentModal.addEventListener('hidden.bs.modal', function() {
+                    formAdd.reset();
+
+                    // Hapus is-invalid dan error message
+                    formAdd.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                        'is-invalid'));
+                    formAdd.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+                });
+            }
+
+            const editModals = document.querySelectorAll('[id^="editProductModal-"]');
+            editModals.forEach(modal => {
+                const form = modal.querySelector("form");
+
+                if (form) {
+                    modal.addEventListener('hidden.bs.modal', function() {
+                        form.reset();
+
+                        // Hapus class is-invalid dan error feedback
+                        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                            'is-invalid'));
+                        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+                    });
+                }
+            });
         });
         //Tooltip
         document.addEventListener('DOMContentLoaded', function() {

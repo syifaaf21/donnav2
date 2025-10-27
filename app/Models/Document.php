@@ -14,7 +14,9 @@ class Document extends Model
     protected $fillable = [
         'name',
         'parent_id',
-        'type'
+        'type',
+        'code',
+        'department_id',
     ];
 
     public function parent()
@@ -22,7 +24,7 @@ class Document extends Model
         return $this->belongsTo(Document::class, 'parent_id');
     }
 
-     public function children()
+    public function children()
     {
         return $this->hasMany(Document::class, 'parent_id'); // recursive
     }
@@ -37,6 +39,11 @@ class Document extends Model
         return $this->hasMany(DocumentMapping::class);
     }
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public static function getTypes()
     {
         return [
@@ -44,5 +51,4 @@ class Document extends Model
             'review' => 'Review',
         ];
     }
-
 }

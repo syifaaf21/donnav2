@@ -14,9 +14,10 @@ class Department extends Model
     protected $fillable = [
         'name',
         'code',
+        'plant',
     ];
 
-    public function user ()
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
@@ -24,5 +25,10 @@ class Department extends Model
     public function mapping()
     {
         return $this->hasMany(DocumentMapping::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
     }
 }

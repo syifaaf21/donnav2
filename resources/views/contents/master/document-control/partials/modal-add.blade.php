@@ -16,40 +16,73 @@
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label for="document_name" class="form-label">Document Name</label>
-                            <input type="text" class="form-control" id="document_name" name="document_name"
-                                placeholder="Enter document name" required>
+                            <input type="text" class="form-control @error('document_name') is-invalid @enderror"
+                                id="document_name" name="document_name" value="{{ old('document_name') }}" required>
+                            @error('document_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-4">
                             <label for="department" class="form-label">Department</label>
-                            <select class="form-select" id="department" name="department" required>
+                            <select class="form-select tomselect @error('department') is-invalid @enderror"
+                                id="department" name="department" required>
                                 <option value="">-- Select Department --</option>
                                 @foreach ($departments as $dept)
-                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    <option value="{{ $dept->id }}"
+                                        {{ old('department') == $dept->id ? 'selected' : '' }}>
+                                        {{ $dept->name }}
+                                    </option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="document_number" class="form-label">Document Number</label>
-                            <input type="text" class="form-control" id="document_number" name="document_number"
-                                required>
+                            @error('department')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
                             <label for="obsolete_date" class="form-label">Obsolete Date</label>
-                            <input type="date" class="form-control" id="obsolete_date" name="obsolete_date">
+                            <input type="date" class="form-control @error('obsolete_date') is-invalid @enderror"
+                                id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}">
+                            @error('obsolete_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-6">
                             <label for="reminder_date" class="form-label">Reminder Date</label>
-                            <input type="date" class="form-control" id="reminder_date" name="reminder_date">
+                            <input type="date" class="form-control @error('reminder_date') is-invalid @enderror"
+                                id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}">
+                            @error('reminder_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
+                    {{-- Notes --}}
+                    <div class="col-12 mb-3">
+                        <label class="form-label fw-medium">Notes</label>
+                        <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
+                        <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"
+                            style="min-height: 80px; max-height: 100px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; width: 100%;">
+                        </div>
+                        <small class="text-muted">You can format your notes with bold, italic, underline, colors, and
+                            more.</small>
+                    </div>
+                    {{-- File --}}
                     <div class="row g-2 mt-2" id="file-fields">
                         <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
-                            <input type="file" class="form-control" name="files[]" required>
+                            <input type="file"
+                                class="form-control @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror"
+                                name="files[]" required>
                             <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
                                 <i class="bi bi-trash"></i>
                             </button>
+                            @error('files')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+
+                            @error('files.*')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
 
@@ -71,32 +104,4 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const container = document.getElementById("file-fields");
-        const addBtn = document.getElementById("add-file");
 
-        addBtn.addEventListener("click", function() {
-            // Buat group baru
-            let group = document.createElement("div");
-            group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
-                "file-input-group");
-
-            group.innerHTML = `
-            <input type="file" class="form-control" name="files[]" required>
-            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
-                <i class="bi bi-trash"></i>
-            </button>
-        `;
-
-            container.appendChild(group);
-        });
-
-        // Event delegation untuk tombol remove
-        container.addEventListener("click", function(e) {
-            if (e.target.closest(".remove-file")) {
-                e.target.closest(".file-input-group").remove();
-            }
-        });
-    });
-</script>
