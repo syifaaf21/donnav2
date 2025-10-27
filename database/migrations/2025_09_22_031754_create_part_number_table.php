@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('part_numbers', function (Blueprint $table) {
+        Schema::create('tm_part_numbers', function (Blueprint $table) {
             $table->id();
             $table->string('part_number')->nullable()->unique();
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-            $table->foreignId('model_id')->constrained('models')->onDelete('cascade');
-            $table->enum('process', ['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'mounting', 'assembling electric', 'inspection']);
+            $table->foreignId('product_id')->constrained('tm_products')->onDelete('cascade');
+            $table->foreignId('model_id')->constrained('tm_models')->onDelete('cascade');
+            // $table->enum('process', ['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'mounting', 'assembling electric', 'inspection']);
             $table->enum('plant', ['body', 'unit', 'electric']);
             $table->timestamps();
         });
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('part_numbers');
+        Schema::dropIfExists('tm_part_numbers');
     }
 };

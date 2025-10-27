@@ -10,12 +10,14 @@ class DocumentFile extends Model
     use HasFactory;
 
     protected $fillable = [
-    'document_mapping_id',
-    'file_path',
-    'original_name',
-];
+        'document_mapping_id',
+        'file_path',
+        'original_name',
+    ];
 
-     public function mapping()
+    protected $table = 'tt_document_files';
+
+    public function mapping()
     {
         return $this->belongsTo(DocumentMapping::class);
     }

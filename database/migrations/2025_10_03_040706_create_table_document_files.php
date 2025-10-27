@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('document_files', function (Blueprint $table) {
+        Schema::create('tt_document_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('document_mapping_id')->constrained('document_mappings')->onDelete('cascade');
+            $table->foreignId('document_mapping_id')->constrained('tt_document_mappings')->onDelete('cascade');
             $table->string('file_path');
             $table->timestamps();
         });
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('document_files');
+        Schema::dropIfExists('tt_document_files');
     }
 };

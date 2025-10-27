@@ -74,7 +74,7 @@ class PartNumberSeeder extends Seeder
 
                     if (!$plant) continue;
 
-                    DB::table('part_numbers')->insert([
+                    DB::table('tm_part_numbers')->insert([
                         'part_number' => strtoupper(Str::random(10)),
                         'product_id' => $product->id,
                         'model_id' => $model->id,

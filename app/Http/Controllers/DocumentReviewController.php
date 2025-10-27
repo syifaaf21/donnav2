@@ -23,7 +23,7 @@ class DocumentReviewController extends Controller
 {
     public function index(Request $request)
     {
-        $plants = $this->getEnumValues('part_numbers', 'plant');
+        $plants = $this->getEnumValues('tm_part_numbers', 'plant');
         $processes = \App\Models\Process::pluck('name', 'id');
 
         $documentsMaster = Document::with('childrenRecursive')

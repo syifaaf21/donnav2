@@ -9,6 +9,8 @@ class Document extends Model
 {
     use HasFactory;
 
+    protected $table = 'tm_documents';
+
     protected $fillable = [
         'name',
         'parent_id',

@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tm_documents', function (Blueprint $table) {
+        Schema::create('tt_why_causes', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->foreign('parent_id')->references('id')->on('tm_documents')->onDelete('cascade');
-            $table->enum('type', ['control','review']);
+            $table->foreignId('auditee_action_id')->constrained('tt_auditee_actions')->onDelete('cascade');
+            $table->string('why_description');
+            $table->string('cause_description');
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tm_documents');
+        Schema::dropIfExists('tt_why_causes');
     }
 };

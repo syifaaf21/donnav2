@@ -27,7 +27,7 @@ class DocumentMapping extends Model
     'deadline' => 'date',
     ];
 
-
+    protected $table = 'tt_document_mappings';
 
     public function document()
     {

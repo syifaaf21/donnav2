@@ -14,7 +14,7 @@ class ProductModel extends Model
         'plant',
     ];
 
-    protected $table = 'models'; // sesuaikan
+    protected $table = 'tm_models'; // sesuaikan
 
     public function partNumber()
     {
