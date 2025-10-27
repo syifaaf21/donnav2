@@ -98,53 +98,6 @@
         </div>
     </div>
 
-    <!-- Add Modal -->
-    <div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <form action="{{ route('master.departments.store') }}" method="POST" class="modal-content rounded-xl">
-                @csrf
-                <input type="hidden" name="_form" value="add">
-
-                <div class="modal-header bg-gray-100 rounded-t-xl">
-                    <h5 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                        <i class="bi bi-plus-circle"></i>
-                        Create New Department
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body p-5 space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Name</label>
-                            <input type="text" name="name"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                value="{{ old('name') }}" required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Code</label>
-                            <input type="text" name="code"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                value="{{ old('code') }}" required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-700 rounded-lg text-gray-700 hover:bg-gray-200"
-                        data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                        Save
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Edit Modals -->
     @foreach ($departments as $department)
         <div class="modal fade" id="editDepartmentModal-{{ $department->id }}" tabindex="-1"
@@ -295,7 +248,6 @@
                 </form>
             </div>
         </div>
-    @endforeach
 @endsection
 
 @push('scripts')

@@ -126,10 +126,10 @@ class DocumentMappingController extends Controller
         }
 
         $request->validate([
-            'document_id' => 'required|exists:documents,id',
+            'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255',
-            'part_number_id' => 'required|exists:part_numbers,id',
-            'department_id' => 'required|exists:departments,id',
+            'part_number_id' => 'required|exists:tm_part_numbers,id',
+            'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
             'files' => 'required',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
@@ -201,9 +201,9 @@ class DocumentMappingController extends Controller
     public function generateDocumentNumber(Request $request)
     {
         $request->validate([
-            'document_id' => 'required|exists:documents,id',
-            'department_id' => 'required|exists:departments,id',
-            'part_number_id' => 'required|exists:part_numbers,id',
+            'document_id' => 'required|exists:tm_documents,id',
+            'department_id' => 'required|exists:tm_departments,id',
+            'part_number_id' => 'required|exists:tm_part_numbers,id',
         ]);
 
         $document = Document::findOrFail($request->document_id);
@@ -241,10 +241,10 @@ class DocumentMappingController extends Controller
     public function generateChildDocumentNumber(Request $request)
     {
         $request->validate([
-            'parent_id' => 'required|exists:document_mappings,id',
-            'document_id' => 'required|exists:documents,id',
-            'department_id' => 'required|exists:departments,id',
-            'part_number_id' => 'required|exists:part_numbers,id',
+            'parent_id' => 'required|exists:tt_document_mappings,id',
+            'document_id' => 'required|exists:tm_documents,id',
+            'department_id' => 'required|exists:tm_departments,id',
+            'part_number_id' => 'required|exists:tm_part_numbers,id',
         ]);
 
         $parent = DocumentMapping::with('document')->findOrFail($request->parent_id);
@@ -370,10 +370,10 @@ class DocumentMappingController extends Controller
         }
 
         $request->validate([
-            'document_id' => 'required|exists:documents,id',
+            'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255',
-            'part_number_id' => 'required|exists:part_numbers,id',
-            'department_id' => 'required|exists:departments,id',
+            'part_number_id' => 'required|exists:tm_part_numbers,id',
+            'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
             'reminder_date' => 'nullable|date',
             'deadline' => 'nullable|date',
@@ -559,7 +559,7 @@ class DocumentMappingController extends Controller
     {
         $validated = $request->validate([
             'document_name' => 'required|string|max:255',
-            'department' => 'required|exists:departments,id',
+            'department' => 'required|exists:tm_departments,id',
             'obsolete_date' => 'required|date',
             'reminder_date' => 'required|date|before_or_equal:obsolete_date',
             'notes' => 'nullable|string',
@@ -634,8 +634,8 @@ class DocumentMappingController extends Controller
         }
 
         $validated = $request->validate([
-            'document_id' => 'required|exists:documents,id',
-            'department_id' => 'required|exists:departments,id',
+            'document_id' => 'required|exists:tm_documents,id',
+            'department_id' => 'required|exists:tm_departments,id',
             'obsolete_date' => 'nullable|date',
             'reminder_date' => 'nullable|date',
         ]);
@@ -672,7 +672,7 @@ class DocumentMappingController extends Controller
         // validasi
         $data = $request->validate([
             'ids' => 'required|array',
-            'ids.*' => 'integer|exists:document_mappings,id',
+            'ids.*' => 'integer|exists:tt_document_mappings,id',
         ]);
 
         $ids = $data['ids'];

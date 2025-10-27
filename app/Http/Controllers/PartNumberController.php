@@ -40,10 +40,10 @@ class PartNumberController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'part_number' => 'required|string|max:255|unique:part_numbers,part_number',
-            'product_id' => 'required|exists:products,id',
-            'model_id' => 'required|exists:models,id',
-            'process_id' => 'required|exists:processes,id',
+            'part_number' => 'required|string|max:255|unique:tm_part_numbers,part_number',
+            'product_id' => 'required|exists:tm_products,id',
+            'model_id' => 'required|exists:tm_models,id',
+            'process_id' => 'required|exists:tm_processes,id',
             'plant' => 'required|in:body,unit,electric'
         ]);
 
@@ -77,11 +77,11 @@ class PartNumberController extends Controller
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('part_numbers', 'part_number')->ignore($partNumber->id),
+                Rule::unique('tm_part_numbers', 'part_number')->ignore($partNumber->id),
             ],
-            'product_id' => 'required|exists:products,id',
-            'model_id' => 'required|exists:models,id',
-            'process_id' => 'required|exists:processes,id',
+            'product_id' => 'required|exists:tm_products,id',
+            'model_id' => 'required|exists:tm_models,id',
+            'process_id' => 'required|exists:tm_processes,id',
             'plant' => 'required|in:body,unit,electric'
         ]);
 
