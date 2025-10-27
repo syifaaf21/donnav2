@@ -42,6 +42,7 @@ class DocumentMappingController extends Controller
                 'status',
                 'user',
                 'files',
+                'parent',
             ])
                 ->whereHas('document', function ($q) {
                     $q->where('type', 'review');
@@ -101,7 +102,13 @@ class DocumentMappingController extends Controller
             $documentMappings = $documentMappings->merge($plantMappings);
         }
 
-        $existingDocuments = DocumentMapping::with(['partNumber.product', 'partNumber.process', 'partNumber.productModel'])
+        $existingDocuments = DocumentMapping::with([
+            'document',
+            'parent', // 🔹 ini juga perlu
+            'partNumber.product',
+            'partNumber.process',
+            'partNumber.productModel',
+        ])
             ->whereHas('partNumber', function ($q) use ($plant) {
                 $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
             })
@@ -146,18 +153,18 @@ class DocumentMappingController extends Controller
         }
 
         // 3. Validasi kecocokan parent document dengan part number
-        if ($request->filled('parent_document_id')) {
-            $parent = DocumentMapping::find($request->parent_document_id);
+        if ($request->filled('parent_id')) {
+            $parent = DocumentMapping::find($request->parent_id);
 
             if (!$parent) {
                 return redirect()->back()->withErrors([
-                    'parent_document_id' => 'Parent Document tidak ditemukan.'
+                    'parent_id' => 'Parent Document tidak ditemukan.'
                 ])->withInput();
             }
 
             if ($parent->part_number_id != $request->part_number_id) {
                 return redirect()->back()->withErrors([
-                    'parent_document_id' => 'Parent Document tidak cocok dengan Part Number yang dipilih.'
+                    'parent_id' => 'Parent Document tidak cocok dengan Part Number yang dipilih.'
                 ])->withInput();
             }
         }
@@ -166,7 +173,7 @@ class DocumentMappingController extends Controller
         $mapping = DocumentMapping::create([
             'document_id' => $request->document_id,
             'document_number' => $request->document_number,
-            'parent_id' => $request->parent_document_id,
+            'parent_id' => $request->parent_id,
             'part_number_id' => $request->part_number_id,
             'department_id' => $request->department_id,
             'reminder_date' => null,
@@ -388,6 +395,7 @@ class DocumentMappingController extends Controller
             'document_id' => $request->document_id,
             'document_number' => $request->document_number,
             'part_number_id' => $request->part_number_id,
+            'parent_id' => $request->parent_id,
             'department_id' => $request->department_id,
             'notes' => $request->notes ?? $mapping->notes,
             'reminder_date' => optional($mapping->status)->name === 'approved'
@@ -420,8 +428,8 @@ class DocumentMappingController extends Controller
         $mapping = DocumentMapping::with([
             'document',
             'department',
-            'part_number',
-            'parent_document',
+            'partNumber',
+            'parent',
             'files'
         ])->find($mapping->id);
 

@@ -389,6 +389,19 @@
                     searchForm.submit();
                 });
             }
+
+            const forms = document.querySelectorAll('.needs-validation');
+
+            Array.from(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault(); // Stop form submit
+                        event.stopPropagation();
+                    }
+
+                    form.classList.add('was-validated'); // Tambahkan class validasi Bootstrap
+                }, false);
+            });
         });
 
         //Tooltip

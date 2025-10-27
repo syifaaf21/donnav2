@@ -48,10 +48,15 @@
                             <select name="plant" id="editPlantSelect{{ $mapping->id }}"
                                 class="form-select border-1 shadow-sm @error('plant') is-invalid @enderror" required>
                                 <option value="">-- Select Plant --</option>
-                                <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>Body</option>
-                                <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>Unit</option>
-                                <option value="electric" {{ $mapping->plant == 'electric' ? 'selected' : '' }}>Electric
+                                <option value="body"
+                                    {{ strtolower($mapping->partNumber->plant ?? '') == 'body' ? 'selected' : '' }}>Body
                                 </option>
+                                <option value="unit"
+                                    {{ strtolower($mapping->partNumber->plant ?? '') == 'unit' ? 'selected' : '' }}>
+                                    Unit</option>
+                                <option value="electric"
+                                    {{ strtolower($mapping->partNumber->plant ?? '') == 'electric' ? 'selected' : '' }}>
+                                    Electric</option>
                             </select>
                             @error('plant')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -70,16 +75,13 @@
                             </select>
                         </div>
 
+                        {{-- {{ dd($mapping->parent_document_id, $mapping->parent_document->document_number ?? 'null')  }} --}}
                         {{-- Parent Document --}}
                         <div class="col-md-4">
                             <label class="form-label fw-medium">Parent Document</label>
-                            <select id="editParentDocumentSelect{{ $mapping->id }}" name="parent_document_id"
-                                class="form-select border-1 shadow-sm">
-                                @if ($mapping->parent_document)
-                                    <option value="{{ $mapping->parent_document_id }}" selected>
-                                        {{ $mapping->parent_document->document_number }}
-                                    </option>
-                                @endif
+                            <select id="editParentSelect{{ $mapping->id }}" name="parent_id"
+                                class="form-select border-1 shadow-sm" data-selected="{{ $mapping->parent_id ?? '' }}">
+                                {{-- kosongkan option di sini --}}
                             </select>
                         </div>
 
@@ -88,10 +90,9 @@
                             <label class="form-label fw-medium">Part Number</label>
                             <select id="editPartNumberSelect{{ $mapping->id }}" name="part_number_id"
                                 class="form-select border-1 shadow-sm" required>
-                                 <option value="">-- Select Part Number --</option>
                                 @foreach ($partNumbers as $part)
                                     <option value="{{ $part->id }}" data-plant="{{ $part->plant }}"
-                                        {{ old('part_number_id') == $part->id ? 'selected' : '' }}>
+                                        {{ $mapping->part_number_id == $part->id ? 'selected' : '' }}>
                                         {{ $part->part_number }}
                                     </option>
                                 @endforeach

@@ -572,7 +572,15 @@
             @foreach ($documentMappings as $mapping)
                 $('#editModal{{ $mapping->id }}').on('shown.bs.modal', function() {
 
-                    // === Inisialisasi TomSelect ===
+                    // ===============================
+                    // 🔹 Inisialisasi Flag
+                    // ===============================
+                    let isInitializing = true;
+                    let lastParentValue = null;
+
+                    // ===============================
+                    // 🔹 Inisialisasi TomSelect
+                    // ===============================
                     const tsEditDoc = new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
                         create: false,
                         preload: true,
@@ -593,21 +601,117 @@
                     const tsEditPart = new TomSelect('#editPartNumberSelect{{ $mapping->id }}', {
                         create: false
                     });
-                    const tsEditParent = new TomSelect('#editParentDocumentSelect{{ $mapping->id }}', {
-                        create: false
+                    const tsEditParent = new TomSelect('#editParentSelect{{ $mapping->id }}', {
+                        create: false,
+                        valueField: 'value',
+                        labelField: 'text',
+                        searchField: ['text'],
                     });
 
+                    window['tsEditParent{{ $mapping->id }}'] = tsEditParent;
+                    window['tsEditPlant{{ $mapping->id }}'] = tsEditPlant;
+
+                    // ===============================
+                    // 🔹 Load Parent Documents
+                    // ===============================
+                    function loadParentDocuments(plant) {
+                        return new Promise((resolve) => {
+                            const selectedParent = $('#editParentSelect{{ $mapping->id }}').data(
+                                'selected');
+                            tsEditParent.clearOptions();
+
+                            if (!plant) return resolve();
+
+                            fetch(`/api/parent-documents?plant=${encodeURIComponent(plant)}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    const options = data.map(doc => ({
+                                        value: doc.value,
+                                        text: doc.text
+                                    }));
+                                    tsEditParent.addOptions(options);
+
+                                    if (selectedParent) tsEditParent.setValue(selectedParent);
+                                    lastParentValue = tsEditParent.getValue();
+                                    resolve();
+                                })
+                                .catch(() => {
+                                    tsEditParent.clearOptions();
+                                    resolve();
+                                });
+                        });
+                    }
+
+                    // ===============================
+                    // 🔹 Load Initial Part Numbers
+                    // ===============================
+                    function loadInitialPartNumbers(plant = null) {
+                        let url = '/api/part-numbers';
+                        if (plant) url += `?plant=${encodeURIComponent(plant)}`;
+                        return fetch(url)
+                            .then(res => res.json())
+                            .then(data => {
+                                const options = data.map(item => ({
+                                    value: item.id,
+                                    text: item.text
+                                }));
+                                tsEditPart.addOptions(options);
+
+                                const selectedPart = $('#editPartNumberSelect{{ $mapping->id }}')
+                                    .val();
+                                if (selectedPart) tsEditPart.setValue(selectedPart);
+                            });
+                    }
+
+                    // ===============================
+                    // 🔹 Update Departments
+                    // ===============================
+                    function updateEditDepartments() {
+                        const documentId = tsEditDoc.getValue();
+                        const plant = tsEditPlant.getValue();
+
+                        if (!documentId || !plant) {
+                            tsEditDept.clearOptions();
+                            tsEditDept.disable();
+                            return;
+                        }
+
+                        fetch(
+                                `/api/departments/filter?document_id=${encodeURIComponent(documentId)}&plant=${encodeURIComponent(plant)}`
+                                )
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.departments && data.departments.length) {
+                                    const options = data.departments.map(dept => ({
+                                        value: dept.id,
+                                        text: dept.name
+                                    }));
+                                    tsEditDept.clearOptions();
+                                    tsEditDept.addOptions(options);
+                                    tsEditDept.enable();
+                                } else {
+                                    tsEditDept.clearOptions();
+                                    tsEditDept.disable();
+                                }
+                            })
+                            .catch(() => {
+                                tsEditDept.clearOptions();
+                                tsEditDept.disable();
+                            });
+                    }
+
+                    // ===============================
+                    // 🔹 Auto-generate Document Number
+                    // ===============================
                     const docNumberInput = document.getElementById(
                         'editDocumentNumber{{ $mapping->id }}');
 
-                    // kode auto-generate
                     async function generateDocumentNumber() {
                         const docId = tsEditDoc.getValue();
                         const deptId = tsEditDept.getValue();
                         const partId = tsEditPart.getValue();
                         const parentId = tsEditParent.getValue();
 
-                        // Pastikan semua terisi
                         if (!docId || !deptId || !partId) return;
 
                         const params = new URLSearchParams({
@@ -616,15 +720,13 @@
                             part_number_id: partId
                         });
 
-                        if (parentId) params.append('parent_id', parentId);
+                        if (parentId && parentId !== "") params.append('parent_id', parentId);
 
                         try {
                             const res = await fetch(
                                 `/api/generate-document-number?${params.toString()}`);
                             if (!res.ok) throw new Error('Failed');
                             const data = await res.json();
-
-                            // Isi otomatis field Document Number (readonly)
                             docNumberInput.value = data.document_number || '';
                         } catch (err) {
                             console.error('Error generating number:', err);
@@ -633,12 +735,57 @@
 
                     const debouncedGenerate = debounce(generateDocumentNumber, 500);
 
-                    // Jalankan ulang generate kalau field ini berubah
-                    tsEditDoc.on('change', debouncedGenerate);
-                    tsEditDept.on('change', debouncedGenerate);
-                    tsEditPart.on('change', debouncedGenerate);
-                    tsEditParent.on('change', debouncedGenerate);
+                    // ===============================
+                    // 🔹 Event Listeners
+                    // ===============================
+                    tsEditDoc.on('change', () => {
+                        if (!isInitializing) debouncedGenerate();
+                    });
+                    tsEditDept.on('change', () => {
+                        if (!isInitializing) debouncedGenerate();
+                    });
+                    tsEditPart.on('change', () => {
+                        if (!isInitializing) debouncedGenerate();
+                    });
+                    tsEditParent.on('change', (newValue) => {
+                        if (!isInitializing && newValue !== lastParentValue) {
+                            lastParentValue = newValue;
+                            debouncedGenerate();
+                        }
+                    });
 
+                    tsEditPlant.on('change', function(value) {
+                        tsEditPart.clearOptions();
+                        tsEditPart.disable();
+                        tsEditDept.clearOptions();
+                        tsEditDept.disable();
+                        tsEditParent.clearOptions();
+
+                        if (value) {
+                            loadInitialPartNumbers(value).then(() => tsEditPart.enable());
+                            loadParentDocuments(value);
+                            updateEditDepartments();
+                        }
+                    });
+
+                    tsEditDoc.on('change', updateEditDepartments);
+                    tsEditPlant.on('change', updateEditDepartments);
+
+                    // ===============================
+                    // 🔹 Initialize Modal Values
+                    // ===============================
+                    const initialPlant = tsEditPlant.getValue();
+
+                    Promise.all([
+                        loadParentDocuments(initialPlant),
+                        loadInitialPartNumbers(initialPlant)
+                    ]).finally(() => {
+                        isInitializing = false; // semua selesai
+                    });
+
+                    // ===============================
+                    // 🔹 Quill Editor
+                    // ===============================
                     const quill = new Quill('#quill_editor_edit{{ $mapping->id }}', {
                         theme: 'snow',
                         placeholder: 'Write your notes here...',
@@ -677,7 +824,7 @@
                     });
 
                     // ===============================
-                    // 🔹 File Input Dinamis (tidak berubah)
+                    // 🔹 File Input Dinamis
                     // ===============================
                     const container = document.getElementById("editFileFields{{ $mapping->id }}");
                     const addBtn = document.getElementById("editAddFile{{ $mapping->id }}");
@@ -687,11 +834,11 @@
                         group.classList.add("col-12", "d-flex", "align-items-center", "mb-2",
                             "file-input-group");
                         group.innerHTML = `
-            <input type="file" class="form-control border-1 shadow-sm" name="files[]" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
-            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
-                <i class="bi bi-trash"></i>
-            </button>
-        `;
+                <input type="file" class="form-control border-1 shadow-sm" name="files[]" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
                         container.appendChild(group);
                     });
 
@@ -700,11 +847,26 @@
                             e.target.closest(".file-input-group").remove();
                         }
                     });
+
                 });
             @endforeach
 
         });
     </script>
+    {{-- Script to open modal automatically if there are validation errors --}}
+    @if ($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var modal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
+                modal.show();
+
+                // Load old notes value into Quill editor
+                if (window.quill) {
+                    window.quill.root.innerHTML = {!! json_encode(old('notes', '')) !!};
+                }
+            });
+        </script>
+    @endif
 @endpush
 @push('styles')
     <style>
