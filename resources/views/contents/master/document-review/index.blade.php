@@ -1,152 +1,141 @@
 @extends('layouts.app')
-@section('title', 'Document Review')
+@section('title', 'Master Document Review')
 
 @section('content')
-    <div class="container">
-        <div x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
-            {{-- 🔹 Header: Breadcrumbs + Add Button --}}
-            <div class="flex items-center justify-between mb-4">
-                {{-- Breadcrumbs --}}
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
-                                <i class="bi bi-house-door me-1"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="breadcrumb-item">
-                            <a href="#" class="text-decoration-none text-secondary">Master</a>
-                        </li>
-                        <li class="breadcrumb-item">
-                            <a href="#" class="text-decoration-none text-secondary">Documents</a>
-                        </li>
-                        <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
-                            Review
-                        </li>
-                    </ol>
-                </nav>
+    <div class="container mx-auto px-4 py-2" x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
+        {{-- Header: Breadcrumbs + Add Button --}}
+        <div class="flex justify-between items-center mb-3">
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li>Documents</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">Review</li>
+                </ol>
+            </nav>
 
-                {{-- Add Document Button --}}
-                <button class="btn btn-primary btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal"
-                    data-bs-target="#addDocumentModal">
-                    <i class="bi bi-plus-circle"></i> Add Document
-                </button>
-                @include('contents.master.document-review.partials.modal-add')
-            </div>
+            {{-- Add Document Button --}}
+            <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add Document</span>
+            </button>
+            @include('contents.master.document-review.partials.modal-add')
+        </div>
 
-            {{-- 🔹 Tabs + Search + Table --}}
-            <div class="card border-0 shadow-sm">
-                {{-- Header Tabs + Search --}}
-                <div class="d-flex flex-wrap align-items-center justify-content-between border-bottom px-3 pt-3 pb-2">
-                    {{-- Tabs --}}
-                    <div class="flex flex-wrap">
-                        @foreach ($groupedByPlant as $plant => $documents)
-                            @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                            <button type="button" @click="setActiveTab('{{ $slug }}')"
-                                :class="activeTab === '{{ $slug }}'
-                                    ?
-                                    'bg-gray-100 text-gray-800 border-gray-100' :
-                                    'bg-white text-gray-600 hover:bg-gray-100'"
-                                class="px-4 py-2 rounded-t-lg border border-gray-200 text-sm font-medium transition">
-                                <i data-feather="settings" class="inline w-4 h-4 me-1"></i>
-                                {{ ucfirst(strtolower($plant)) }}
-                            </button>
-                        @endforeach
-                    </div>
-
-                    {{-- Search Bar --}}
-                    <div class="d-flex justify-content-end mb-3">
-                        <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
-                            <div class="relative max-w-md w-full">
-                                <input type="text" name="search" id="searchInput"
-                                    class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Search.." value="{{ request('search') }}">
-                                <button
-                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                                    type="submit" title="Search">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                                <button type="button"
-                                    class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                                    id="clearSearch" title="Clear">
-                                    <i class="bi bi-x-circle"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                {{-- Table --}}
-                <div class="card-body p-0">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
+            {{-- Tabs + Search --}}
+            <div class="flex flex-wrap justify-between items-center border-b border-gray-100 p-4">
+                {{-- Tabs --}}
+                <div class="flex flex-wrap gap-2">
                     @foreach ($groupedByPlant as $plant => $documents)
                         @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                        <div x-show="activeTab === '{{ $slug }}'" x-transition>
-                            <div class="overflow-auto rounded-bottom-lg h-[60vh]">
-                                <table class="min-w-full text-sm text-left text-gray-700">
-                                    @include('contents.master.document-review.partials.table-header')
-
-                                    <tbody>
-                                        @php
-                                            $parents = $documents->filter(function ($doc) {
-                                                // Dokumen nyata tanpa parent nyata (mapping.parent_id)
-                                                // tapi tetap bisa punya template parent (document.parent_id)
-                                                return is_null($doc->parent_id);
-                                            });
-                                        @endphp
-
-                                        @if ($parents->isEmpty())
-                                            <tr>
-                                                <td colspan="14" class="text-center py-8 text-gray-400">
-                                                    <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-1"></i>
-                                                    No Document found for this tab.
-                                                </td>
-                                            </tr>
-                                        @else
-                                            @foreach ($parents as $index => $parent)
-                                                @include(
-                                                    'contents.master.document-review.partials.nested-row-recursive',
-                                                    [
-                                                        'mapping' => $parent,
-                                                        'documents' => $documents,
-                                                        'loopIndex' => 'parent-' . $index,
-                                                        'rowNumber' => $loop->iteration,
-                                                        'depth' => 0,
-                                                        'numbering' => $loop->iteration . '',
-                                                    ]
-                                                )
-                                            @endforeach
-                                        @endif
-                                    </tbody>
-                                </table>
-
-                                @foreach ($documents as $doc)
-                                    @include('contents.master.document-review.partials.modal-edit', [
-                                        'mapping' => $doc,
-                                    ])
-                                @endforeach
-                            </div>
-                        </div>
+                        <button type="button" @click="setActiveTab('{{ $slug }}')"
+                            :class="activeTab === '{{ $slug }}'
+                                ?
+                                'bg-gray-100 text-gray-800 border-gray-100' :
+                                'bg-white text-gray-600 hover:bg-gray-100'"
+                            class="px-4 py-2 rounded-t-lg border border-gray-200 text-sm font-medium transition">
+                            <i data-feather="settings" class="inline w-4 h-4 me-1"></i>
+                            {{ ucfirst(strtolower($plant)) }}
+                        </button>
                     @endforeach
                 </div>
-            </div>
-        </div>
-        <!-- 📄 Modal Fullscreen View File -->
-        <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-fullscreen">
-                <div class="modal-content border-0 rounded-0 shadow-none">
-                    <div class="modal-header bg-light border-bottom">
-                        <h5 class="modal-title fw-semibold">
-                            <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
 
-                    <div class="modal-body p-0">
-                        <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
+                {{-- Search Bar --}}
+                <form method="GET" class="flex items-center w-full max-w-sm relative">
+                    <input type="text" name="search" id="searchInput"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search..." value="{{ request('search') }}">
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" id="clearSearch"
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
+
+            {{-- Table --}}
+            <div class="overflow-x-auto overflow-y-auto">
+                @foreach ($groupedByPlant as $plant => $documents)
+                    @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
+                    <div x-show="activeTab === '{{ $slug }}'" x-transition>
+                        <div class="overflow-auto rounded-bottom-lg h-[60vh]">
+                            <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+                                {{-- Header partial --}}
+                                @include('contents.master.document-review.partials.table-header')
+
+                                <tbody>
+                                    @php
+                                        $parents = $documents->filter(fn($doc) => is_null($doc->parent_id));
+                                    @endphp
+
+                                    @if ($parents->isEmpty())
+                                        <tr>
+                                            <td colspan="7" class="text-center text-gray-500 py-4">
+                                                <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-1"></i>
+                                                No Document found for this tab.
+                                            </td>
+                                        </tr>
+                                    @else
+                                        @foreach ($parents as $index => $parent)
+                                            @include(
+                                                'contents.master.document-review.partials.nested-row-recursive',
+                                                [
+                                                    'mapping' => $parent,
+                                                    'documents' => $documents,
+                                                    'loopIndex' => 'parent-' . $index,
+                                                    'rowNumber' => $loop->iteration,
+                                                    'depth' => 0,
+                                                    'numbering' => $loop->iteration . '',
+                                                ]
+                                            )
+                                        @endforeach
+                                    @endif
+                                </tbody>
+                            </table>
+
+                            @foreach ($documents as $doc)
+                                @include('contents.master.document-review.partials.modal-edit', [
+                                    'mapping' => $doc,
+                                ])
+                            @endforeach
+                        </div>
                     </div>
+                @endforeach
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 📄 Modal Fullscreen View File -->
+    <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content border-0 rounded-0 shadow-none">
+                <div class="modal-header bg-light border-bottom">
+                    <h5 class="modal-title fw-semibold">
+                        <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 @endsection
 
@@ -678,7 +667,7 @@
 
                         fetch(
                                 `/api/departments/filter?document_id=${encodeURIComponent(documentId)}&plant=${encodeURIComponent(plant)}`
-                                )
+                            )
                             .then(res => res.json())
                             .then(data => {
                                 if (data.departments && data.departments.length) {

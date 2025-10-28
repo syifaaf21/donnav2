@@ -25,28 +25,30 @@
         </div>
     </td>
 
-    <td class="px-4 py-2 text-gray-500">
-        {{ ucwords($document->code) ?: '-' }}
-    </td>
+    <td class="px-4 py-2 text-gray-500">{{ ucwords($document->code) ?: '-' }}</td>
 
     {{-- Actions --}}
     <td class="px-4 py-2">
         <div class="flex gap-2">
-            <button type="button" class="text-blue-500 hover:text-blue-700" data-bs-toggle="modal"
-                data-bs-target="#editDocumentModal-{{ $document->id }}">
-                <i data-feather="edit-2" class="w-4 h-4"></i>
+            {{-- Edit Button --}}
+            <button type="button" data-bs-toggle="modal" data-bs-target="#editDocumentModal-{{ $document->id }}"
+                data-bs-title="Edit Document" class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
+                <i data-feather="edit" class="w-4 h-4"></i>
             </button>
 
+            {{-- Delete Button --}}
             <form method="POST" action="{{ route('master.hierarchy.destroy', $document->id) }}"
-                class="inline delete-form">
+                class="d-inline delete-form">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="text-red-500 hover:text-red-700">
+                <button type="submit" data-bs-title="Delete Document"
+                    class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                     <i data-feather="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>
         </div>
     </td>
+
 </tr>
 
 {{-- Modal Edit --}}
@@ -121,7 +123,6 @@
         </form>
     </div>
 </div>
-
 
 @if ($document->children->isNotEmpty())
     @foreach ($document->children as $child)

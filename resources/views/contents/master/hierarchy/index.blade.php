@@ -2,76 +2,83 @@
 @section('title', 'Document Hierarchy')
 
 @section('content')
-    <div class="container py-4">
-        {{-- Header: Title + Action Buttons --}}
-        <div class="flex items-center justify-between mb-4">
-            {{-- Breadcrumbs --}}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
-                            <i class="bi bi-house-door me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Master</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Hieararchy</a>
-                    </li>
-                </ol>
-            </nav>
+<div class="container mx-auto px-4 py-2">
+    {{-- Header --}}
+    <div class="flex justify-between items-center mb-3">
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li>Master</li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">Hierarchy</li>
+            </ol>
+        </nav>
 
-            {{-- Add Document Button --}}
-            <button class="btn btn-primary btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal"
-                data-bs-target="#createDocumentModal">
-                <i class="bi bi-plus-circle"></i> Add Document
-            </button>
+        {{-- Add Button --}}
+        <button type="button" data-bs-toggle="modal" data-bs-target="#createDocumentModal"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <i class="bi bi-plus-circle"></i>
+            <span>Add Document</span>
+        </button>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
+        {{-- Search Bar --}}
+        <div class="p-4 border-b border-gray-100 flex justify-end">
+            <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
+                <input type="text" name="search" id="searchInput"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search..." value="{{ request('search') }}">
+                <button type="submit"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button type="button" id="clearSearch"
+                    class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </form>
         </div>
-        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-            <div class="d-flex justify-content-end m-3">
-                <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
-                    <div class="relative max-w-md w-full">
-                        <input type="text" name="search" id="searchInput"
-                            class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Search..." value="{{ request('search') }}">
-                        <button
-                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                            type="submit" title="Search">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <button type="button"
-                            class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                            id="clearSearch" title="Clear">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-            {{-- Table Wrapper --}}
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 border-b border-gray-200">
-                        <tr>
-                            <th class="px-4 py-2">Document Name</th>
-                            <th class="px-4 py-2">Code</th>
-                            <th class="px-4 py-2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="documentTableBody">
-                        @php $number = 1; @endphp
-                        @foreach ($documents as $document)
-                            @include('contents.master.hierarchy.partials.tree-node', [
-                                'document' => $document,
-                                'level' => 0,
-                                'number' => $number++,
-                                'parent_id' => null,
-                            ])
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+
+        {{-- Table --}}
+        <div class="overflow-x-auto overflow-y-auto max-h-96">
+            <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
+                    <tr>
+                        <th class="px-4 py-2">Document Name</th>
+                        <th class="px-4 py-2">Code</th>
+                        <th class="px-4 py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="documentTableBody">
+                    @php $number = 1; @endphp
+                    @foreach ($documents as $document)
+                        @include('contents.master.hierarchy.partials.tree-node', [
+                            'document' => $document,
+                            'level' => 0,
+                            'number' => $number++,
+                            'parent_id' => null,
+                        ])
+                    @endforeach
+                </tbody>
+            </table>
         </div>
+
+        {{-- Pagination --}}
+        @if(method_exists($documents, 'links'))
+        <div class="mt-4">
+            {{ $documents->withQueryString()->links('vendor.pagination.tailwind') }}
+        </div>
+        @endif
+    </div>
+</div>
+
 
         {{-- 📄 Create Document Modal --}}
         <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"

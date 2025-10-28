@@ -2,10 +2,10 @@
 @section('title', 'Department')
 
 @section('content')
-    <div class="container mx-auto px-4 py-2 ">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-            <!-- Breadcrumb -->
+    <div class="container mx-auto px-4 py-2">
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-3">
+            {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -16,11 +16,11 @@
                     <li>/</li>
                     <li>Master</li>
                     <li>/</li>
-                    <li class="text-gray-700">Department</li>
+                    <li class="text-gray-700 font-medium">Department</li>
                 </ol>
             </nav>
 
-            <!-- Add Button -->
+            {{-- Add Button --}}
             <button type="button" data-bs-toggle="modal" data-bs-target="#addDepartmentModal"
                 class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 <i class="bi bi-plus-circle"></i>
@@ -28,10 +28,9 @@
             </button>
         </div>
 
-        <!-- Table Card -->
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
+            {{-- Search Bar --}}
             <div class="p-4 border-b border-gray-100 flex justify-end">
-                <!-- Search -->
                 <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -47,57 +46,59 @@
                 </form>
             </div>
 
-                <div class="table-wrapper mb-3">
-                    <div class="table-responsive">
-                        <table class="min-w-full table-auto text-sm text-left text-gray-600">
-                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                                <tr>
-                                    <th class="px-4 py-3">No</th>
-                                    <th class="px-4 py-3">Name</th>
-                                    <th class="px-4 py-3">Code</th>
-                                    <th class="px-4 py-3">Plant</th>
-                                    <th class="px-4 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($departments as $department)
-                                    <tr>
-                                        <td class="px-4 py-3">
-                                            {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
-                                        </td>
-                                        <td class="px-4 py-3">{{ $department->name }}</td>
-                                        <td class="px-4 py-3">{{ $department->code }}</td>
-                                        <td class="px-4 py-3">{{ $department->plant }}</td>
-                                        <td class="px-4 py-3">
-                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                                                data-bs-target="#editDepartmentModal-{{ $department->id }}">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <form action="{{ route('master.departments.destroy', $department->id) }}"
-                                                method="POST" class="d-inline delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted">No departments found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-            <div class="p-4 border-t">
-                {{ $departments->links('vendor.pagination.tailwind') }}
+            {{-- Table --}}
+            <div class="overflow-x-auto overflow-y-auto max-h-96">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-2">No</th>
+                            <th class="px-4 py-2">Name</th>
+                            <th class="px-4 py-2">Code</th>
+                            <th class="px-4 py-2">Plant</th>
+                            <th class="px-4 py-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($departments as $department)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-4 py-2">
+                                    {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
+                                </td>
+                                <td class="px-4 py-2">{{ $department->name }}</td>
+                                <td class="px-4 py-2">{{ $department->code }}</td>
+                                <td class="px-4 py-2">{{ $department->plant }}</td>
+                                <td class="px-4 py-2 flex gap-2">
+                                    <button data-bs-toggle="modal"
+                                        data-bs-target="#editDepartmentModal-{{ $department->id }}"
+                                        data-bs-title="Edit Department"
+                                        class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    <form action="{{ route('master.departments.destroy', $department->id) }}" method="POST"
+                                        class="d-inline delete-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" data-bs-title="Delete Department"
+                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-gray-500 py-4">No departments found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $departments->withQueryString()->links('vendor.pagination.tailwind') }}
             </div>
         </div>
     </div>
-
     <!-- Edit Modals -->
     @foreach ($departments as $department)
         <div class="modal fade" id="editDepartmentModal-{{ $department->id }}" tabindex="-1"
@@ -245,9 +246,9 @@
                             Save
                         </button>
                     </div>
-                </form>
-            </div>
+            </form>
         </div>
+    </div>
 @endsection
 
 @push('scripts')

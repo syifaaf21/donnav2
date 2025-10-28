@@ -2,103 +2,104 @@
 @section('title', 'Product')
 
 @section('content')
-    <div class="container mx-auto px-4 py-2 ">
-        {{-- Header --}}
-        <div class="flex items-center justify-between mb-6">
-            {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500">
-                <ol class="flex items-center space-x-2">
-                    <li>
-                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
-                            <i class="bi bi-house-door"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>/</li>
-                    <li>Master</li>
-                    <li>/</li>
-                    <li class="text-gray-700 font-medium">Product</li>
-                </ol>
-            </nav>
+<div class="container mx-auto px-4 py-2">
+    {{-- Header --}}
+    <div class="flex justify-between items-center mb-3">
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li>Master</li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">Product</li>
+            </ol>
+        </nav>
 
-            {{-- Add Button --}}
-            <button type="button"
-                data-bs-toggle="modal" data-bs-target="#addProductModal"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add Product</span>
-            </button>
+        {{-- Add Button --}}
+        <button type="button" data-bs-toggle="modal" data-bs-target="#addProductModal"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <i class="bi bi-plus-circle"></i>
+            <span>Add Product</span>
+        </button>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
+        {{-- Search Bar --}}
+        <div class="p-4 border-b border-gray-100 flex justify-end">
+            <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
+                <input type="text" name="search" id="searchInput"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search..." value="{{ request('search') }}">
+                <button type="submit"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button type="button" id="clearSearch"
+                    class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </form>
         </div>
 
-        {{-- Card --}}
-        <div class="bg-white rounded-xl shadow-lg p-4">
-            {{-- Search Bar --}}
-            <div class="flex justify-end mb-4">
-                <form method="GET" id="searchForm" class="relative w-full max-w-xs">
-                    <input type="text" name="search" id="searchInput"
-                        class="w-full border border-gray-300 rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Search..." value="{{ request('search') }}">
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
-                </form>
-            </div>
-
-            {{-- Table --}}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Name</th>
-                            <th class="px-4 py-2">Code</th>
-                            <th class="px-4 py-2">Plant</th>
-                            <th class="px-4 py-2">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse ($products as $product)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-2">
-                                    {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}</td>
-                                <td class="px-4 py-2 font-medium text-gray-800">{{ $product->name }}</td>
-                                <td class="px-4 py-2">{{ $product->code }}</td>
-                                <td class="px-4 py-2">{{ $product->plant }}</td>
-                                <td class="px-4 py-2 flex gap-2">
-                                    <button data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}"
-                                        data-bs-title="Edit Product"
-                                        class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
-                                        <i data-feather="edit" class="w-4 h-4"></i>
+        {{-- Table --}}
+        <div class="overflow-x-auto overflow-y-auto max-h-96">
+            <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
+                    <tr>
+                        <th class="px-4 py-2">No</th>
+                        <th class="px-4 py-2">Name</th>
+                        <th class="px-4 py-2">Code</th>
+                        <th class="px-4 py-2">Plant</th>
+                        <th class="px-4 py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($products as $product)
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-2">
+                                {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}
+                            </td>
+                            <td class="px-4 py-2">{{ $product->name }}</td>
+                            <td class="px-4 py-2">{{ $product->code }}</td>
+                            <td class="px-4 py-2">{{ $product->plant }}</td>
+                            <td class="px-4 py-2">
+                                <button data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}"
+                                    data-bs-title="Edit Product"
+                                    class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
+                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                </button>
+                                <form action="{{ route('master.products.destroy', $product->id) }}" method="POST"
+                                    class="d-inline delete-form">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" data-bs-title="Delete Product"
+                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                        <i data-feather="trash-2" class="w-4 h-4"></i>
                                     </button>
-                                    <form action="{{ route('master.products.destroy', $product->id) }}" method="POST"
-                                        class="delete-form inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" data-bs-title="Delete Product"
-                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-4 text-gray-500">No products found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- Pagination --}}
-            <div class="mt-4">
-                {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
-            </div>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center text-gray-500 py-4">No products found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        {{-- Pagination --}}
+        <div class="mt-4">
+            {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
+        </div>
+    </div>
+</div>
+
 
         {{-- Edit Modals --}}
         @foreach ($products as $product)
