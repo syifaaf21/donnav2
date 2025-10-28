@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tm_audits', function (Blueprint $table) {
+        Schema::create('tm_audit_types', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->timestamps();
@@ -23,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tm_audits');
+        Schema::dropIfExists('tm_audit_types');
     }
 };

@@ -13,7 +13,7 @@ class AuditSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('tm_audits')->insert([
+        DB::table('tm_audit_types')->insert([
             ['name' => 'System Management LK3'],
             ['name' => 'System Management Mutu'],
         ]);

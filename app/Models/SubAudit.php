@@ -9,7 +9,7 @@ class SubAudit extends Model
 {
     use HasFactory;
 
-    protected $table = 'tm_sub_audits';
+    protected $table = 'tm_sub_audit_types';
 
     protected $fillable =
     [

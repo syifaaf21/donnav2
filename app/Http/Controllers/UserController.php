@@ -34,7 +34,7 @@ class UserController extends Controller
         $roles = Role::all();
         $departments = Department::all();
 
-        return view('contents.master.user', compact('users', 'roles', 'departments'));
+        return view('contents.master.user.user', compact('users', 'roles', 'departments'));
     }
 
     public function create()

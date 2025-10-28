@@ -7,6 +7,7 @@ use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\FtppMasterController;
 use App\Http\Controllers\ModelController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\NotificationController;
@@ -111,6 +112,12 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])
             ->name('bulkDestroy');
+
+        // Master FTPP
+        Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
+            Route::get('/', [FtppMasterController::class, 'index'])->name('index');
+            Route::get('/load/{section}', [FtppMasterController::class, 'loadSection'])->name('load');
+        });
     });
 
     Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
@@ -120,21 +127,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])
-    ->name('approveWithDates');
-    Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
+            ->name('approveWithDates');
+        Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
 
 
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
-
-        // Admin routes
-        // Route::post('/store', [DocumentReviewController::class, 'storeReview'])->name('store');
-        // Route::put('/update/{mapping}', [DocumentReviewController::class, 'updateReview'])->name('update');
-        // Route::delete('/destroy/{mapping}', [DocumentReviewController::class, 'destroy'])->name('destroy');
-        // Route::post('/reject/{mapping}', [DocumentReviewController::class, 'reject'])->name('reject');
-        // Route::post('{mapping}/approve', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
-
-        // User route
-        // Route::post('/revise/{mapping}', [DocumentReviewController::class, 'revise'])->name('revise');
     });
 
     Route::prefix('document-control')->name('document-control.')->middleware('auth')->group(function () {
@@ -144,15 +141,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
     });
 
-
-    // Route::post('/bulk-destroy', [DocumentControlController::class, 'bulkDestroy'])
-    //     ->name('bulkDestroy');
-
     // AJAX for Select2 (Product & Model inside Part Number)
-Route::get('/ajax/products', [PartNumberController::class, 'ajaxProductIndex']);
-Route::post('/ajax/products', [PartNumberController::class, 'ajaxProductStore']);
+    Route::get('/ajax/products', [PartNumberController::class, 'ajaxProductIndex']);
+    Route::post('/ajax/products', [PartNumberController::class, 'ajaxProductStore']);
 
-Route::get('/ajax/models', [PartNumberController::class, 'ajaxModelIndex']);
-Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
+    Route::get('/ajax/models', [PartNumberController::class, 'ajaxModelIndex']);
+    Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
 
 });

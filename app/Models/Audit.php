@@ -9,7 +9,7 @@ class Audit extends Model
 {
     use HasFactory;
 
-    protected $table = 'tm_audits';
+    protected $table = 'tm_audit_types';
 
     protected $fillable = [
         'name',
@@ -17,6 +17,6 @@ class Audit extends Model
 
     public function subAudit()
     {
-        return $this->hasMany(SubAudit::class);
+        return $this->hasMany(SubAudit::class, 'audit_type_id');
     }
 }
