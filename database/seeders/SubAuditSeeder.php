@@ -13,11 +13,11 @@ class SubAuditSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('tm_sub_audits')->insert([
-            ['audit_id' => 2, 'name' => 'Product'],
-            ['audit_id' => 2, 'name' => 'Process'],
-            ['audit_id' => 2, 'name' => 'System'],
-            ['audit_id' => 2, 'name' => 'Kalibrasi'],
+        DB::table('tm_sub_audit_types')->insert([
+            ['audit_type_id' => 2, 'name' => 'Product'],
+            ['audit_type_id' => 2, 'name' => 'Process'],
+            ['audit_type_id' => 2, 'name' => 'System'],
+            ['audit_type_id' => 2, 'name' => 'Kalibrasi'],
         ]);
     }
 }

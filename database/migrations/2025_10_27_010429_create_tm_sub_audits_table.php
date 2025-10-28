@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tm_sub_audits', function (Blueprint $table) {
+        Schema::create('tm_sub_audit_types', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('audit_id')->constrained('tm_audits')->onDelete('cascade');
+            $table->foreignId('audit_type_id')->constrained('tm_audit_types')->onDelete('cascade');
             $table->string('name');
             $table->timestamps();
         });

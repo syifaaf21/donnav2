@@ -68,11 +68,12 @@
                             <td class="px-4 py-2">{{ $product->code }}</td>
                             <td class="px-4 py-2">{{ $product->plant }}</td>
                             <td class="px-4 py-2">
-                                <button data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}"
-                                    data-bs-title="Edit Product"
-                                    class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
-                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                </button>
+                                <button type="button" data-bs-toggle="modal"
+                                        data-bs-target="#editProductModal-{{ $product->id }}"
+                                        data-bs-title="Edit Product"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
                                 <form action="{{ route('master.products.destroy', $product->id) }}" method="POST"
                                     class="d-inline delete-form">
                                     @csrf
@@ -156,7 +157,7 @@
                                 </div>
                             </div>
 
-                            <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
+                            <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
                                 <button type="button"
                                     class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                                     data-bs-dismiss="modal">
@@ -173,84 +174,84 @@
             </div>
         @endforeach
 
-        {{-- Add Modal --}}
-        <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <form action="{{ route('master.products.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="_form" value="add">
-
-                    <div class="modal-content border-0 shadow-lg rounded-4">
-                        {{-- Header --}}
-                        <div class="modal-header bg-light text-dark rounded-top-4">
-                            <h5 class="modal-title fw-semibold" id="addProductModalLabel">
-                                <i class="bi bi-plus-circle me-2"></i>Create New Product
-                            </h5>
-                        </div>
-
-                        {{-- Body --}}
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                {{-- Name --}}
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Name</label>
-                                    <input type="text" name="name"
-                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                        value="{{ old('name') }}" required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                {{-- Code --}}
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Code</label>
-                                    <input type="text" name="code"
-                                        class="form-control rounded-3 @error('code') is-invalid @enderror"
-                                        value="{{ old('code') }}" required>
-                                    @error('code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                {{-- Plant --}}
-                                <div class="mb-3">
-                                    <label class="form-label">Plant</label>
-                                    <select name="plant" class="form-select" required>
-                                        <option value="">-- Select Plant --</option>
-                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                            <option value="{{ $plant }}" @selected(old('plant') === $plant)>
-                                                {{ $plant }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Footer --}}
-                        <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
-                            <button type="button"
-                                class="px-4 py-2 border border-gray-700 rounded-lg text-gray-700 hover:bg-gray-200"
-                                data-bs-dismiss="modal">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </form>
+{{-- Add Modal --}}
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('master.products.store') }}" method="POST" class="modal-content border-0 shadow-lg rounded-4">
+            @csrf
+            <input type="hidden" name="_form" value="add">
+            {{-- Header --}}
+            <div class="modal-header bg-light text-dark rounded-top-4 py-3 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-semibold" id="addProductModalLabel">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Product
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
+
+            {{-- Body --}}
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    {{-- Name --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Name</label>
+                        <input type="text" name="name"
+                            class="form-control rounded-3 @error('name') is-invalid @enderror"
+                            placeholder="Enter product name" value="{{ old('name') }}" required>
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- Code --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Code</label>
+                        <input type="text" name="code"
+                            class="form-control rounded-3 @error('code') is-invalid @enderror"
+                            placeholder="Enter product code" value="{{ old('code') }}" required>
+                        @error('code')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- Plant --}}
+                    <div class="col-md-12">
+                        <label class="form-label fw-medium">Plant</label>
+                        <select name="plant"
+                            class="form-select rounded-3 @error('plant') is-invalid @enderror"
+                            required>
+                            <option value="">-- Select Plant --</option>
+                            @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                <option value="{{ $plant }}" @selected(old('plant') === $plant)>
+                                    {{ $plant }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('plant')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="modal-footer bg-light rounded-bottom-4 d-flex justify-content-between align-items-center p-4">
+                <button type="button"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-200"
+                    data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    Submit
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 @endsection
 
 @push('scripts')
     <x-sweetalert-confirm />
-
     @if ($errors->any() && session('edit_modal'))
         <script>
             document.addEventListener("DOMContentLoaded", function() {
@@ -266,7 +267,6 @@
             });
         </script>
     @endif
-
     <script>
         // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {

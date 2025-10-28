@@ -11,7 +11,7 @@
                 {{-- Modal Header --}}
                 <div class="modal-header bg-light text-dark rounded-top-4">
                     <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;">
-                        <i class="bi bi-pencil-square me-2"></i> Edit Metadata Document
+                        <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Metadata Document
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -60,14 +60,13 @@
 
                 {{-- Modal Footer --}}
                 <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i> Close
+                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200" data-bs-dismiss="modal">
+                         Close
                     </button>
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="bi bi-save2 me-1"></i> Save Changes
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                         Save Changes
                     </button>
                 </div>
-
             </div>
         </form>
     </div>

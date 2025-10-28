@@ -68,10 +68,10 @@
                             <td class="px-4 py-2">{{ $process->code }}</td>
                             <td class="px-4 py-2">{{ $process->plant }}</td>
                             <td class="px-4 py-2">
-                                <button data-bs-toggle="modal"
-                                    data-bs-target="#editProcessModal-{{ $process->id }}" data-bs-title="Edit Process"
-                                    class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
-                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                <button type="button" data-bs-toggle="modal"
+                                        data-bs-target="#editProcessModal-{{ $process->id }}" data-bs-title="Edit Process"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
                                 </button>
                                 <form action="{{ route('master.processes.destroy', $process->id) }}" method="POST"
                                     class="d-inline delete-form">
@@ -92,7 +92,6 @@
                 </tbody>
             </table>
         </div>
-
         {{-- Pagination --}}
         <div class="mt-4">
             {{ $processes->withQueryString()->links('vendor.pagination.tailwind') }}
@@ -114,7 +113,7 @@
                     <div class="modal-content border-0 shadow-lg rounded-4">
                         <div class="modal-header bg-light text-dark rounded-top-4">
                             <h5 class="modal-title fw-semibold" id="editProcessModalLabel-{{ $process->id }}">
-                                <i class="bi bi-pencil-square"></i>
+                                <i class="bi bi-pencil-square text-primary"></i>
                                 Edit Process
                             </h5>
                         </div>
@@ -156,8 +155,7 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
+                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
                             <button type="button"
                                 class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                                 data-bs-dismiss="modal">
@@ -165,7 +163,7 @@
                             </button>
                             <button type="submit"
                                 class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                                Save
+                                Save Changes
                             </button>
                         </div>
                     </div>
@@ -186,7 +184,7 @@
                     <!-- Header -->
                     <div class="modal-header bg-light text-dark rounded-top-4">
                         <h5 class="modal-title fw-semibold" id="addProcessModalLabel">
-                            <i class="bi bi-plus-circle me-2"></i>Create New Process
+                            <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Process
                         </h5>
                     </div>
 
@@ -231,14 +229,14 @@
                     </div>
 
                     <!-- Footer (dikeluarkan dari row g-3!) -->
-                    <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
+                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
                         <button type="button"
                             class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
                         <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                            Save
+                            Submit
                         </button>
                     </div>
                 </div> <!-- modal-content -->

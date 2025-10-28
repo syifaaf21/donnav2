@@ -30,11 +30,11 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->paginate(10)->appends($request->query());
+        $users = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
         $roles = Role::all();
         $departments = Department::all();
 
-        return view('contents.master.user', compact('users', 'roles', 'departments'));
+        return view('contents.master.user.user', compact('users', 'roles', 'departments'));
     }
 
     public function create()

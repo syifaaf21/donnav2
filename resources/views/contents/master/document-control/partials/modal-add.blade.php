@@ -5,7 +5,7 @@
         <div class="modal-content border-0 rounded-4 shadow-lg">
             <div class="modal-header bg-light text-dark">
                 <h5 class="modal-title" id="addDocumentControlModalLabel">
-                    <i class="bi bi-plus-circle me-2"></i>Add Document Control
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>Add Document Control
                 </h5>
             </div>
             <div class="modal-body">
@@ -15,7 +15,7 @@
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-4">
-                            <label for="document_name" class="form-label">Document Name</label>
+                            <label for="document_name" class="form-label">Document Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('document_name') is-invalid @enderror"
                                 id="document_name" name="document_name" value="{{ old('document_name') }}" required>
                             @error('document_name')
@@ -23,7 +23,7 @@
                             @enderror
                         </div>
                         <div class="col-md-4">
-                            <label for="department" class="form-label">Department</label>
+                            <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select tomselect @error('department') is-invalid @enderror"
                                 id="department" name="department" required>
                                 <option value="">-- Select Department --</option>
@@ -41,17 +41,17 @@
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
-                            <label for="obsolete_date" class="form-label">Obsolete Date</label>
+                            <label for="obsolete_date" class="form-label">Obsolete Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('obsolete_date') is-invalid @enderror"
-                                id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}">
+                                id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}" required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="col-md-6">
-                            <label for="reminder_date" class="form-label">Reminder Date</label>
+                            <label for="reminder_date" class="form-label">Reminder Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('reminder_date') is-invalid @enderror"
-                                id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}">
+                                id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}" required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -59,7 +59,7 @@
                     </div>
                     {{-- Notes --}}
                     <div class="col-12 mb-3">
-                        <label class="form-label fw-medium">Notes</label>
+                        <label class="form-label">Notes</label>
                         <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
                         <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"
                             style="min-height: 80px; max-height: 100px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; width: 100%;">
@@ -69,17 +69,15 @@
                     </div>
                     {{-- File --}}
                     <div class="row g-2 mt-2" id="file-fields">
+                        <label for="reminder_date" class="form-label">Upload File <span class="text-danger">*</span></label>
                         <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
+                            <label class="form-label visually-hidden">Upload File <span class="text-danger">*</span></label>
                             <input type="file"
                                 class="form-control @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror"
                                 name="files[]" required>
                             <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
                                 <i class="bi bi-trash"></i>
                             </button>
-                            @error('files')
-                                <div class="text-danger small">{{ $message }}</div>
-                            @enderror
-
                             @error('files.*')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -91,12 +89,14 @@
                     </button>
 
                     {{-- Modal Footer --}}
-                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-1"></i> Close
+                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                        <button type="button"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                            data-bs-dismiss="modal">
+                            Cancel
                         </button>
-                        <button type="submit" class="btn btn-warning px-4">
-                            <i class="bi bi-save2 me-1"></i> Submit
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Submit
                         </button>
                     </div>
                 </form>
@@ -104,4 +104,3 @@
         </div>
     </div>
 </div>
-

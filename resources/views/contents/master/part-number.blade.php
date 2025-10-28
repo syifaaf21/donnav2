@@ -2,132 +2,136 @@
 @section('title', 'Part Number')
 
 @section('content')
-<div class="container mx-auto px-4 py-2">
-    {{-- Header --}}
-    <div class="flex justify-between items-center mb-3">
-        {{-- Breadcrumbs --}}
-        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li>Master</li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">Part Number</li>
-            </ol>
-        </nav>
+    <div class="container mx-auto px-4 py-2">
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-3">
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">Part Number</li>
+                </ol>
+            </nav>
 
-        {{-- Add Button --}}
-        <button type="button" data-bs-toggle="modal" data-bs-target="#createPartNumberModal"
-            class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-            <i class="bi bi-plus-circle"></i>
-            <span>Add Part Number</span>
-        </button>
-    </div>
-
-    <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
-        {{-- Search Bar --}}
-        <div class="p-4 border-b border-gray-100 flex justify-end">
-            <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
-                <input type="text" name="search" id="searchInput"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Search..." value="{{ request('search') }}">
-                <button type="submit"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <i class="bi bi-search"></i>
-                </button>
-                <button type="button" id="clearSearch"
-                    class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <i class="bi bi-x-circle"></i>
-                </button>
-            </form>
+            {{-- Add Button --}}
+            <button type="button" data-bs-toggle="modal" data-bs-target="#createPartNumberModal"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add Part Number</span>
+            </button>
         </div>
 
-        {{-- Table --}}
-        <div class="overflow-x-auto overflow-y-auto max-h-96">
-            <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                    <tr>
-                        <th class="px-4 py-2">No</th>
-                        <th class="px-4 py-2">Part Number</th>
-                        <th class="px-4 py-2">Product</th>
-                        <th class="px-4 py-2">Model</th>
-                        <th class="px-4 py-2">Process</th>
-                        <th class="px-4 py-2">Plant</th>
-                        <th class="px-4 py-2">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($partNumbers as $part)
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-2">
-                                {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
-                            </td>
-                            <td class="px-4 py-2">{{ $part->part_number }}</td>
-                            <td class="px-4 py-2">{{ $part->product->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
-                            <td class="px-4 py-2">
-                                <button class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded" data-bs-toggle="modal"
-                                    data-bs-target="#editPartNumberModal-{{ $part->id }}">
-                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                </button>
-                                <form action="{{ route('master.part_numbers.destroy', $part->id) }}"
-                                    method="POST" class="d-inline delete-form">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                        <i data-feather="trash-2" class="w-4 h-4"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
+            {{-- Search Bar --}}
+            <div class="p-4 border-b border-gray-100 flex justify-end">
+                <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
+                    <input type="text" name="search" id="searchInput"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search..." value="{{ request('search') }}">
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" id="clearSearch"
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
+
+            {{-- Table --}}
+            <div class="overflow-x-auto overflow-y-auto max-h-96">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
                         <tr>
-                            <td colspan="7" class="text-center text-gray-500 py-4">No part numbers found.</td>
+                            <th class="px-4 py-2">No</th>
+                            <th class="px-4 py-2">Part Number</th>
+                            <th class="px-4 py-2">Product</th>
+                            <th class="px-4 py-2">Model</th>
+                            <th class="px-4 py-2">Process</th>
+                            <th class="px-4 py-2">Plant</th>
+                            <th class="px-4 py-2">Actions</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @forelse ($partNumbers as $part)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-4 py-2">
+                                    {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
+                                </td>
+                                <td class="px-4 py-2">{{ $part->part_number }}</td>
+                                <td class="px-4 py-2">{{ $part->product->name ?? '-' }}</td>
+                                <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
+                                <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
+                                <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
+                                <td class="px-4 py-2">
+                                    <button type="button" data-bs-toggle="modal"
+                                        data-bs-target="#editPartNumberModal-{{ $part->id }}"
+                                        data-bs-title="Edit Part Number"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    <form action="{{ route('master.part_numbers.destroy', $part->id) }}" method="POST"
+                                        class="d-inline delete-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded"
+                                            data-bs-title="Delete Part Number">
+                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-gray-500 py-4">No part numbers found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-        {{-- Pagination --}}
-        <div class="mt-4">
-            {{ $partNumbers->withQueryString()->links('vendor.pagination.tailwind') }}
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $partNumbers->withQueryString()->links('vendor.pagination.tailwind') }}
+            </div>
         </div>
     </div>
-</div>
 
-        {{-- Modals Edit --}}
-        @foreach ($partNumbers as $part)
-            <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
-                aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <form action="{{ route('master.part_numbers.update', $part->id) }}" method="POST">
-                            @csrf
-                            @method('PUT')
-                            <input type="hidden" name="_form" value="edit">
+    {{-- Modals Edit --}}
+    @foreach ($partNumbers as $part)
+        <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
+            aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form action="{{ route('master.part_numbers.update', $part->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="_form" value="edit">
 
-                            <div class="modal-header bg-gray-100 text-gray-800 rounded-t-lg">
-                                <h5 class="modal-title flex items-center gap-2 font-semibold"
-                                    id="editPartNumberModalLabel-{{ $part->id }}">
-                                    <i class="bi bi-nut-fill"></i> Edit Part Number
-                                </h5>
-                            </div>
-                            <div class="modal-body p-4">
-                                <div class="mb-3">
+                        <div class="modal-header bg-light text-gray-800 rounded-t-lg">
+                            <h5 class="modal-title flex items-center gap-2 font-semibold"
+                                id="editPartNumberModalLabel-{{ $part->id }}">
+                                <i class="bi bi-pencil-square text-primary"></i> Edit Part Number
+                            </h5>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
                                     <label class="block font-medium">Part Number</label>
                                     <input type="text" name="part_number"
                                         class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         value="{{ $part->part_number }}" required>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="col-md-6">
                                     <label class="block font-medium">Plant</label>
                                     <select name="plant" id="plant_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -142,7 +146,7 @@
                                     </select>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="col-md-6">
                                     <label class="block font-medium">Product</label>
                                     <select name="product_id" id="product_id_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -157,7 +161,7 @@
                                     </select>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="col-md-6">
                                     <label class="block font-medium">Model</label>
                                     <select name="model_id" id="model_id_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -172,7 +176,7 @@
                                     </select>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="col-md-6">
                                     <label class="block font-medium">Process</label>
                                     <select name="process_id" id="process_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -188,21 +192,22 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="modal-footer border-0 p-3 justify-between bg-gray-100 rounded-b-lg">
-                                <button type="button" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-md"
-                                    data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle"></i> Cancel
-                                </button>
-                                <button type="submit"
-                                    class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                                    <i class="bi bi-check-circle"></i> Save Changes
-                                </button>
-                            </div>
-                    </div>
+                        </div>
+                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                            <button type="button"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                                data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                                Save Changes
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
-    </div>
+        </div>
     @endforeach
 
     {{-- Modal Create --}}
@@ -212,9 +217,9 @@
             <div class="modal-content">
                 <form action="{{ route('master.part_numbers.store') }}" method="POST" novalidate>
                     @csrf
-                    <div class="modal-header">
+                    <div class="modal-header bg-light text-dark rounded-top-4">
                         <h5 class="modal-title flex items-center gap-2 font-semibold" id="createPartNumberModalLabel">
-                            <i class="bi bi-nut-fill"></i> Add New Part Number
+                            <i class="bi bi-plus-circle me-2 text-primary"></i> Add New Part Number
                         </h5>
                     </div>
                     <div class="modal-body">
@@ -253,7 +258,8 @@
                                     placeholder="Search or create product..." required disabled>
                                     @if (old('product_id'))
                                         <option value="{{ old('product_id') }}" selected>
-                                            {{ old('product_name', 'Selected Product') }}</option>
+                                            {{ old('product_name', 'Selected Product') }}
+                                        </option>
                                     @endif
                                 </select>
                                 @error('product_id')
@@ -297,12 +303,14 @@
                         </div>
                     </div>
 
-                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-1"></i> Cancel
+                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                        <button type="button"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                            data-bs-dismiss="modal">
+                            Cancel
                         </button>
-                        <button type="submit" class="btn btn-outline-primary px-4">
-                            <i class="bi bi-save me-1"></i> Save Part Number
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Submit
                         </button>
                     </div>
                 </form>
@@ -314,6 +322,14 @@
     <x-sweetalert-confirm />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el, {
+                    title: el.getAttribute('data-bs-title'),
+                    placement: 'top',
+                    trigger: 'hover'
+                });
+            });
             // Inisialisasi TomSelect untuk Create Modal (1 instance)
             const productTomSelect = new TomSelect("#product_id", {
                 valueField: 'id',

@@ -145,15 +145,15 @@
 
                                     <div class="flex items-center gap-2">
                                         @if (auth()->user()->role->name == 'Admin')
-                                            <button type="button" class="text-blue-500 hover:text-blue-700"
+                                            <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
                                                 data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
-                                                <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                <i data-feather="edit" class="w-4 h-4"></i>
                                             </button>
                                             <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
                                                 method="POST" class="inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-700">
+                                                <button type="submit" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                                                     <i data-feather="trash-2" class="w-4 h-4"></i>
                                                 </button>
                                             </form>
