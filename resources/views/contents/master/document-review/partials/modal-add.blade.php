@@ -71,21 +71,21 @@
                         {{-- Parent Document --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Parent Document (Optional)</label>
-                            <select id="parent_document_select" name="parent_document_id"
-                                class="form-select border-1 shadow-sm @error('parent_document_id') is-invalid @enderror">
+                            <select id="parent_document_select" name="parent_id"
+                                class="form-select border-1 shadow-sm @error('parent_id') is-invalid @enderror">
                                 <option value="">-- Select Parent Document --</option>
                                 @foreach ($existingDocuments as $docMap)
                                     <option value="{{ $docMap->id }}"
                                         data-product="{{ $docMap->partNumber->product->code ?? '' }}"
                                         data-process="{{ $docMap->partNumber->process->code ?? '' }}"
                                         data-model="{{ $docMap->partNumber->productModel->name ?? '' }}"
-                                        {{ old('parent_document_id') == $docMap->id ? 'selected' : '' }}>
+                                        {{ old('parent_id') == $docMap->id ? 'selected' : '' }}>
                                         {{ $docMap->document_number }}
                                     </option>
                                 @endforeach
                             </select>
                             <small class="text-muted">Only required for child documents.</small>
-                            @error('parent_document_id')
+                            @error('parent_id')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
@@ -191,18 +191,3 @@
     </div>
 </div>
 @endif
-{{-- Script to open modal automatically if there are validation errors --}}
-@if ($errors->any())
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var modal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
-            modal.show();
-
-            // Load old notes value into Quill editor
-            if (window.quill) {
-                window.quill.root.innerHTML = {!! json_encode(old('notes', '')) !!};
-            }
-        });
-    </script>
-@endif
-
