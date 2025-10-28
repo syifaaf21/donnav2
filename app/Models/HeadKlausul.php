@@ -19,11 +19,11 @@ class HeadKlausul extends Model
 
     public function klausul()
     {
-        return $this->belongsTo(Klausul::class);
+        return $this->belongsTo(Klausul::class, 'klausul_id', 'id');
     }
 
     public function subKlausul()
     {
-        return $this->hasMany(SubKlausul::class);
+        return $this->hasMany(SubKlausul::class, 'head_klausul_id', 'id');
     }
 }

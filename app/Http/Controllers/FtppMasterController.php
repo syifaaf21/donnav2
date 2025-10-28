@@ -11,36 +11,11 @@ class FtppMasterController extends Controller
 {
     public function index()
     {
-        return view('contents.master.ftpp.header');
+        // Load semua data (biar tidak perlu reload ketika ganti tab)
+        $audits = Audit::with('subAudit')->get();
+        $findingCategories = FindingCategory::all();
+        $klausuls = Klausul::with('headKlausul.subKlausul')->get();
+
+        return view('contents.master.ftpp.index', compact('audits', 'findingCategories', 'klausuls'));
     }
-
-    public function loadSection($section)
-    {
-        $views = [
-            'audit' => 'contents.master.ftpp.partials.audit',
-            'finding_category' => 'contents.master.ftpp.partials.finding_category',
-            'klausul' => 'contents.master.ftpp.partials.klausul',
-        ];
-
-        if (!isset($views[$section])) {
-            abort(404);
-        }
-
-        switch ($section) {
-            case 'audit':
-                $data = ['audits' => Audit::with('subAudit')->get()];
-                break;
-            case 'finding_category':
-                $data = ['findingCategories' => FindingCategory::all()];
-                break;
-            case 'klausul':
-                $data = ['klausuls' => Klausul::with(['headKlausul.subKlausul'])->get()];
-                break;
-            default:
-                $data = [];
-        }
-
-        return view($views[$section], $data);
-    }
-
 }

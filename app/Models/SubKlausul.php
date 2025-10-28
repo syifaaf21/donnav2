@@ -19,7 +19,7 @@ class SubKlausul extends Model
 
     public function headKlausul()
     {
-        return $this->belongsTo(HeadKlausul::class);
+        return $this->belongsTo(HeadKlausul::class, 'head_klausul_id', 'id');
     }
 
     public function auditFinding()

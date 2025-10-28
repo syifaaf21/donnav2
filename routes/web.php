@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditTypeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentControlController;
 use App\Http\Controllers\DocumentController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\FtppMasterController;
 use App\Http\Controllers\ModelController;
 use App\Http\Controllers\ProductController;
@@ -116,7 +118,22 @@ Route::middleware(['auth'])->group(function () {
         // Master FTPP
         Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
             Route::get('/', [FtppMasterController::class, 'index'])->name('index');
-            Route::get('/load/{section}', [FtppMasterController::class, 'loadSection'])->name('load');
+            Route::get('/load/{section}/{id?}', [FtppMasterController::class, 'loadSection'])->name('load');
+
+            Route::prefix('audit')->name('audit.')->middleware('auth')->group(function () {
+                Route::get('/{id}', [AuditTypeController::class, 'show']);
+                Route::post('/store', [AuditTypeController::class, 'store'])->name('store');
+                Route::put('/update/{id}', [AuditTypeController::class, 'update'])->name('update');
+                Route::delete('/{id}', [AuditTypeController::class, 'destroy'])->name('destroy');
+            });
+
+            Route::prefix('finding-category')->name('finding-category.')->middleware('auth')->group(function () {
+                Route::get('/{id}', [FindingCategoryController::class, 'show']);
+                Route::post('/', [FindingCategoryController::class, 'store'])->name('store');
+                Route::put('/update/{id}', [FindingCategoryController::class, 'update'])->name('update');
+                Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
+            });
+
         });
     });
 

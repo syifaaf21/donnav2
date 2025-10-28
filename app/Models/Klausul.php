@@ -18,6 +18,6 @@ class Klausul extends Model
 
     public function headKlausul()
     {
-        return $this->hasMany(HeadKlausul::class);
+        return $this->hasMany(HeadKlausul::class, 'klausul_id', 'id');
     }
 }
