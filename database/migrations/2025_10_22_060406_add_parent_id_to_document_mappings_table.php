@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('document_mappings', function (Blueprint $table) {
+        Schema::table('tt_document_mappings', function (Blueprint $table) {
             $table->unsignedBigInteger('parent_id')->nullable()->after('id');
-            $table->foreign('parent_id')->references('id')->on('document_mappings')->onDelete('set null');
+            $table->foreign('parent_id')->references('id')->on('tt_document_mappings')->onDelete('set null');
         });
     }
 
     public function down()
     {
-        Schema::table('document_mappings', function (Blueprint $table) {
+        Schema::table('tt_document_mappings', function (Blueprint $table) {
             $table->dropForeign(['parent_id']);
             $table->dropColumn('parent_id');
         });

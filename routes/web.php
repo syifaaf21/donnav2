@@ -73,12 +73,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/hierarchy', [DocumentController::class, 'index'])->name('hierarchy.index');
 
         Route::resource('processes', ProcessController::class);
+        Route::get('/processes', [ProcessController::class, 'index'])->name('processes.index');
 
         Route::resource('departments', DepartmentController::class);
+        Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
 
         Route::resource('products', ProductController::class);
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 
         Route::resource('models', ModelController::class);
+        Route::get('/models', [ModelController::class, 'index'])->name('models.index');
 
         Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
             Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');

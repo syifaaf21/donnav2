@@ -23,7 +23,7 @@ class ModelController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:models,name',
+            'name' => 'required|string|max:100|unique:tm_models,name',
             'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
@@ -35,7 +35,7 @@ class ModelController extends Controller
     public function update(Request $request, ProductModel $model)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:models,name,' . $model->id,
+            'name' => 'required|string|max:100|unique:tm_models,name,' . $model->id,
             'plant' => 'required|in:Body,Unit,Electric',
         ]);
 

@@ -14,7 +14,7 @@ class Product extends Model
         'code'
     ];
 
-    protected $table = 'products'; // sesuaikan kalau nama tabel beda
+    protected $table = 'tm_products'; // sesuaikan kalau nama tabel beda
 
     public function partNumber()
     {

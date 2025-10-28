@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('document_mappings', function (Blueprint $table) {
+        Schema::create('tt_document_mappings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('document_id')->constrained('documents')->onDelete('cascade');
-            $table->foreignId('part_number_id')->nullable()->constrained('part_numbers')->onDelete('cascade');
-            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+            $table->foreignId('document_id')->constrained('tm_documents')->onDelete('cascade');
+            $table->foreignId('part_number_id')->nullable()->constrained('tm_part_numbers')->onDelete('cascade');
+            $table->foreignId('status_id')->constrained('tm_statuses')->onDelete('cascade');
             $table->string('document_number');
             $table->text('notes')->nullable();
             $table->date('obsolete_date')->nullable();
             $table->date('reminder_date')->nullable();
             $table->date('deadline')->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
+            $table->foreignId('department_id')->constrained('tm_departments')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -32,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('document_mappings');
+        Schema::dropIfExists('tt_document_mappings');
     }
 };

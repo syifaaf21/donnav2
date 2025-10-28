@@ -125,20 +125,24 @@
                                     @else
                                         <span class="text-gray-500">No File</span>
                                     @endif
-                                    @if (auth()->user()->role->name == 'Admin')
-                                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#editModal{{ $mapping->id }}">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                        <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
-                                            method="POST" class="inline delete-form">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                <i class="bi bi-trash"></i>
+
+                                    <!-- Flex Container for Actions -->
+                                    <div class="flex items-center gap-2">
+                                        @if (auth()->user()->role->name == 'Admin')
+                                            <button type="button" class="text-blue-500 hover:text-blue-700"
+                                                data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
+                                                <i data-feather="edit-2" class="w-4 h-4"></i>
                                             </button>
-                                        </form>
-                                    @endif
+                                            <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
+                                                method="POST" class="inline delete-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-500 hover:text-red-700">
+                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                             @include('contents.master.document-control.partials.modal-edit')
@@ -164,8 +168,8 @@
             {{-- container untuk input hidden ids[] yang akan dibuat oleh JS --}}
             <div id="bulkIdsContainer"></div>
 
-            <button id="bulkDeleteBtn" type="submit" class="btn btn-outline-danger btn-sm" disabled>
-                <i class="bi bi-trash"></i> Delete Selected
+            <button id="bulkDeleteBtn" type="submit" class="text-red-500 hover:text-red-700" disabled>
+                <i data-feather="trash-2" class="w-4 h-4"></i> Delete Selected
             </button>
         </form>
     </div>

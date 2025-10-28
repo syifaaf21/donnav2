@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('departments', function (Blueprint $table) {
+        Schema::table('tm_departments', function (Blueprint $table) {
             $table->string('plant')->nullable()->after('code');  // kolom plant nullable tanpa default, di posisi setelah code
         });
     }
 
     public function down()
     {
-        Schema::table('departments', function (Blueprint $table) {
+        Schema::table('tm_departments', function (Blueprint $table) {
             $table->dropColumn('plant');
         });
     }

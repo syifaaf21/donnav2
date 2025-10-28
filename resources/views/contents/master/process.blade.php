@@ -1,103 +1,97 @@
 @extends('layouts.app')
+@section('title', 'Process')
 
 @section('content')
-    <div class="container py-2">
+    <div class="container mx-auto px-4 py-2 ">
+        {{-- Header --}}
         <div class="flex justify-between items-center mb-3">
-            {{-- Breadcrumbs --}}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+            <!-- Breadcrumb -->
+            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
                             <i class="bi bi-house-door me-1"></i> Dashboard
                         </a>
                     </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Master</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Process</a>
-                    </li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li class="text-gray-700">Process</li>
                 </ol>
             </nav>
             {{-- Tombol Add Process --}}
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProcessModal">
-                <i class="bi bi-plus-circle"></i> Add Process
+            <button type="button" data-bs-toggle="modal" data-bs-target="#addProcessModal"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add Process</span>
             </button>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <div class="flex justify-content-end mb-3">
-                    <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
-                        <div class="relative max-w-md w-full">
-                            <input type="text" name="search" id="searchInput"
-                                class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Search..." value="{{ request('search') }}">
-                            <button
-                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                                type="submit" title="Search">
-                                <i class="bi bi-search"></i>
-                            </button>
-                            <button type="button"
-                                class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                                id="clearSearch" title="Clear">
-                                <i class="bi bi-x-circle"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-end">
+                <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
+                    <input type="text" name="search" id="searchInput"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search..." value="{{ request('search') }}">
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" id="clearSearch"
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
 
-                <div class="table-wrapper mb-3">
-                    <div class="table-responsive">
-                        <table class="min-w-full table-auto text-sm text-left text-gray-600">
-                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                                <tr>
-                                    <th class="px-4 py-3">No</th>
-                                    <th class="px-4 py-3">Name</th>
-                                    <th class="px-4 py-3">Code</th>
-                                    <th class="px-4 py-3">Plant</th>
-                                    <th class="px-4 py-3">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($processes as $process)
-                                    <tr>
-                                        <td class="px-4 py-3">
-                                            {{ ($processes->currentPage() - 1) * $processes->perPage() + $loop->iteration }}
-                                        </td>
-                                        <td class="px-4 py-3">{{ ucwords($process->name) }}</td>
-                                        <td class="px-4 py-3">{{ $process->code }}</td>
-                                        <td class="px-4 py-3">{{ $process->plant }}</td>
-                                        <td class="px-4 py-3">
-                                            <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
-                                                data-bs-target="#editProcessModal-{{ $process->id }}"
-                                                data-bs-title="Edit Process">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <form action="{{ route('master.processes.destroy', $process->id) }}"
-                                                method="POST" class="d-inline delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                    data-bs-title="Delete Process">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center text-gray-500 py-4">No process found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Pagination -->
-                    <div class="mt-3">
-                        {{ $processes->withQueryString()->links() }}
-                    </div>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-gray-700">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                        <tr>
+                            <th class="px-4 py-2">No</th>
+                            <th class="px-4 py-2">Name</th>
+                            <th class="px-4 py-2">Code</th>
+                            <th class="px-4 py-2">Plant</th>
+                            <th class="px-4 py-2">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($processes as $process)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-4 py-2">
+                                    {{ ($processes->currentPage() - 1) * $processes->perPage() + $loop->iteration }}
+                                </td>
+                                <td class="px-4 py-2">{{ ucwords($process->name) }}</td>
+                                <td class="px-4 py-2">{{ $process->code }}</td>
+                                <td class="px-4 py-2">{{ $process->plant }}</td>
+                                <td class="px-4 py-2">
+                                    <button data-bs-toggle="modal"
+                                        data-bs-target="#editProcessModal-{{ $process->id }}" data-bs-title="Edit Process"
+                                        class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    <form action="{{ route('master.processes.destroy', $process->id) }}" method="POST"
+                                        class="d-inline delete-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            data-bs-title="Delete Process" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-gray-500 py-4">No process found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="mt-3">
+                {{ $processes->withQueryString()->links('vendor.pagination.tailwind') }}
             </div>
         </div>
     </div>
@@ -115,7 +109,8 @@
                     <div class="modal-content border-0 shadow-lg rounded-4">
                         <div class="modal-header bg-light text-dark rounded-top-4">
                             <h5 class="modal-title fw-semibold" id="editProcessModalLabel-{{ $process->id }}">
-                                <i class="bi bi-person-lines-fill me-2"></i>Edit Process
+                                <i class="bi bi-pencil-square"></i>
+                                Edit Process
                             </h5>
                         </div>
 
@@ -157,12 +152,15 @@
                             </div>
                         </div>
 
-                        <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle me-1"></i>Cancel
+                        <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
+                            <button type="button"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                                data-bs-dismiss="modal">
+                                Cancel
                             </button>
-                            <button type="submit" class="btn btn-outline-success px-4">
-                                <i class="bi bi-check-circle me-1"></i>Save Changes
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                                Save
                             </button>
                         </div>
                     </div>
@@ -183,7 +181,7 @@
                     <!-- Header -->
                     <div class="modal-header bg-light text-dark rounded-top-4">
                         <h5 class="modal-title fw-semibold" id="addProcessModalLabel">
-                            <i class="bi bi-person-plus-fill me-2"></i>Create New Process
+                            <i class="bi bi-plus-circle me-2"></i>Create New Process
                         </h5>
                     </div>
 
@@ -228,12 +226,14 @@
                     </div>
 
                     <!-- Footer (dikeluarkan dari row g-3!) -->
-                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-1"></i>Cancel
+                    <div class="modal-footer bg-gray-100 rounded-b-xl flex justify-between p-4">
+                        <button type="button"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                            data-bs-dismiss="modal">
+                            Cancel
                         </button>
-                        <button type="submit" class="btn btn-outline-primary px-4">
-                            <i class="bi bi-save2 me-1"></i>Save Process
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Save
                         </button>
                     </div>
                 </div> <!-- modal-content -->
@@ -321,6 +321,18 @@
                         form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
                     });
                 }
+            });
+        });
+
+        //Tooltip
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el, {
+                    title: el.getAttribute('data-bs-title'),
+                    placement: 'top',
+                    trigger: 'hover'
+                });
             });
         });
     </script>

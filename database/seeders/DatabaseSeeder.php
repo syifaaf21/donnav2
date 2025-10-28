@@ -30,6 +30,12 @@ class DatabaseSeeder extends Seeder
         StatusSeeder::class,
         DocumentSeeder::class,
         // DocumentMappingSeeder::class,
+        AuditSeeder::class,
+        SubAuditSeeder::class,
+        FindingCategoriesSeeder::class,
+        KlausulsSeeder::class,
+        HeadKlausulsSeeder::class,
+        SubKlausulsSeeder::class,
         ]);
 
     }

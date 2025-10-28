@@ -73,10 +73,10 @@
                                         <td class="px-4 py-3">{{ $user->role->name ?? '-' }}</td>
                                         <td class="px-4 py-3">{{ $user->department->name ?? '-' }}</td>
                                         <td class="px-4 py-3">
-                                            <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
+                                            <button type="button" class="text-blue-500 hover:text-blue-700" data-bs-toggle="modal"
                                                 data-bs-target="#editUserModal-{{ $user->id }}"
                                                 data-bs-title="Edit User">
-                                                <i class="bi bi-pencil-square"></i>
+                                                <i data-feather="edit-2" class="w-4 h-4"></i>
                                             </button>
 
                                             @if ($user->role_id !== 1)
@@ -84,9 +84,9 @@
                                                     class="d-inline delete-form">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    <button type="submit" class="text-red-500 hover:text-red-700"
                                                         data-bs-title="Delete User">
-                                                        <i class="bi bi-trash3"></i>
+                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
                                                     </button>
                                                 </form>
                                             @endif

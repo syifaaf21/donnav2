@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Process extends Model
 {
     use HasFactory;
+
+    protected $table = 'tm_processes';
+
     protected $fillable = ['name', 'code', 'plant'];
 
     public function partNumbers()
