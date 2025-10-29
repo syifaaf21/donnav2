@@ -145,7 +145,8 @@
 
                                     <div class="flex items-center gap-2">
                                         @if (auth()->user()->role->name == 'Admin')
-                                            <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
+                                            <button type="button"
+                                                class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
                                                 data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
                                                 <i data-feather="edit" class="w-4 h-4"></i>
                                             </button>
@@ -153,7 +154,8 @@
                                                 method="POST" class="inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                <button type="submit"
+                                                    class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                                                     <i data-feather="trash-2" class="w-4 h-4"></i>
                                                 </button>
                                             </form>
@@ -221,7 +223,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            // Fungsi untuk inisialisasi TomSelect di dalam sebuah container/modal
+            /** =======================
+             * FUNCTION: Initialize TomSelect
+             * ======================= */
             function initTomSelect(container) {
                 container.querySelectorAll('.tomselect').forEach(selectEl => {
                     if (!selectEl.tomselect) {
@@ -236,21 +240,231 @@
                 });
             }
 
-            // Modal Add
-            const addModal = document.getElementById('addDocumentControlModal');
-            if (addModal) {
-                addModal.addEventListener('shown.bs.modal', function() {
-                    initTomSelect(addModal);
+            /** =======================
+             * FUNCTION: Initialize Quill Editor
+             * ======================= */
+            function initQuill(editorDiv, hiddenInput) {
+                if (!editorDiv || editorDiv.classList.contains('quill-initialized')) return;
+
+                const quill = new Quill(editorDiv, {
+                    theme: 'snow',
+                    placeholder: 'Write your notes here...',
+                    modules: {
+                        toolbar: [
+                            [{
+                                'font': []
+                            }, {
+                                'size': []
+                            }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{
+                                'color': []
+                            }, {
+                                'background': []
+                            }],
+                            [{
+                                'list': 'ordered'
+                            }, {
+                                'list': 'bullet'
+                            }],
+                            [{
+                                'align': []
+                            }],
+                            ['clean']
+                        ]
+                    }
+                });
+
+                // Set nilai awal dari hidden input
+                quill.root.innerHTML = hiddenInput.value || '';
+
+                // Sinkron saat submit
+                const form = editorDiv.closest('form');
+                if (form) {
+                    form.addEventListener('submit', () => {
+                        let content = quill.root.innerHTML;
+
+                        // Hapus konten kosong <p><br></p>
+                        if (content === '<p><br></p>') content = '';
+                        hiddenInput.value = content;
+                    });
+                }
+
+                // Optional: sinkron real-time saat user mengetik
+                quill.on('text-change', () => {
+                    let content = quill.root.innerHTML;
+                    hiddenInput.value = (content === '<p><br></p>') ? '' : content;
+                });
+
+                editorDiv.classList.add('quill-initialized');
+            }
+
+
+            /** =======================
+             * MODAL: Add Document
+             * ======================= */
+            const addModalEl = document.getElementById('addDocumentControlModal');
+            if (addModalEl) {
+                addModalEl.addEventListener('shown.bs.modal', () => {
+                    initTomSelect(addModalEl);
+
+                    // ✅ Perbaikan utama: tambahkan delay sebelum inisialisasi Quill
+                    setTimeout(() => {
+                        const editorDiv = document.getElementById('quill_editor_add');
+                        const hiddenInput = document.getElementById('notes_input_add');
+                        initQuill(editorDiv, hiddenInput);
+                    }, 100);
+                });
+
+                // ===== RESET MODAL ADD saat ditutup =====
+                addModalEl.addEventListener('hidden.bs.modal', () => {
+                    const form = addModalEl.querySelector('form');
+                    form.reset();
+
+                    // Reset Quill
+                    const editorDiv = document.getElementById('quill_editor_add');
+                    const hiddenInput = document.getElementById('notes_input_add');
+                    const quill = Quill.find(editorDiv);
+                    if (quill) {
+                        quill.root.innerHTML = '';
+                        hiddenInput.value = '';
+                    }
+
+                    // Reset TomSelect
+                    addModalEl.querySelectorAll('.tomselect').forEach(sel => sel.tomselect.clear());
+
+                    // Reset file fields
+                    const fileContainer = document.getElementById("file-fields");
+                    if (fileContainer) {
+                        fileContainer.innerHTML = `
+                    <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
+                        <input type="file" class="form-control" name="files[]" required>
+                        <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                    }
+
+                    // Remove error classes
+                    addModalEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                        'is-invalid'));
                 });
             }
 
-            // Modal Edit - karena bisa banyak modal edit dengan id unik
+            /** =======================
+             * MODAL: Edit Document
+             * ======================= */
             document.querySelectorAll('[id^="editModal"]').forEach(modal => {
                 modal.addEventListener('shown.bs.modal', function() {
                     initTomSelect(modal);
+
+                    const mappingId = modal.dataset.mappingId;
+                    if (!mappingId) return;
+
+                    setTimeout(() => {
+                        const editorDiv = document.getElementById(
+                            `quill_editor_edit${mappingId}`);
+                        const hiddenInput = document.getElementById(
+                            `notes_input_edit${mappingId}`);
+
+                        initQuill(editorDiv, hiddenInput);
+                    }, 50);
+                    // Tambah validasi error display
+                    modal.querySelectorAll('input, select, textarea').forEach(el => {
+                        const errorDiv = el.closest('.col-md-6, .col-12')?.querySelector(
+                            '.invalid-feedback');
+                        if (errorDiv && errorDiv.textContent.trim() !== '') {
+                            el.classList.add('is-invalid');
+                        }
+                    });
+                });
+
+                modal.addEventListener('hidden.bs.modal', () => {
+                    modal.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                        'is-invalid'));
                 });
             });
 
+            /** =======================
+             * SEARCH CLEAR BUTTON
+             * ======================= */
+            const clearBtn = document.getElementById("clearSearch");
+            const searchInput = document.getElementById("searchInput");
+            const searchForm = document.getElementById("searchForm");
+
+            if (clearBtn && searchInput && searchForm) {
+                clearBtn.addEventListener("click", () => {
+                    searchInput.value = "";
+                    searchForm.submit();
+                });
+            }
+
+            /** =======================
+             * SHOW MODAL IF VALIDATION ERRORS
+             * ======================= */
+            @if ($errors->any())
+                @if (session('editModalId'))
+                    const editModalEl = document.getElementById('editModal{{ session('editModalId') }}');
+                    if (editModalEl) {
+                        const modal = new bootstrap.Modal(editModalEl);
+                        modal.show();
+                    }
+                @else
+                    const addModalElShow = document.getElementById('addDocumentControlModal');
+                    if (addModalElShow) {
+                        const modal = new bootstrap.Modal(addModalElShow);
+                        modal.show();
+                    }
+                @endif
+            @endif
+
+            /** =======================
+             * CANCEL BUTTON (Add Modal)
+             * ======================= */
+            if (addModalEl) {
+                const cancelBtn = addModalEl.querySelector('[data-bs-dismiss="modal"]');
+                const form = addModalEl.querySelector('form');
+
+                if (cancelBtn && form) {
+                    cancelBtn.addEventListener('click', () => {
+                        form.reset();
+
+                        // Reset Quill
+                        const editorDiv = document.getElementById('quill_editor_add');
+                        const hiddenInput = document.getElementById('notes_input_add');
+                        const quill = Quill.find(editorDiv);
+                        if (quill) {
+                            quill.root.innerHTML = '';
+                            hiddenInput.value = '';
+                        }
+
+                        // Reset TomSelect
+                        addModalEl.querySelectorAll('.tomselect').forEach(sel => sel.tomselect.clear());
+
+                        // Reset file fields
+                        const fileContainer = document.getElementById("file-fields");
+                        if (fileContainer) {
+                            fileContainer.innerHTML = `
+                        <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
+                            <input type="file" class="form-control" name="files[]" required>
+                            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                        }
+
+                        addModalEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                            'is-invalid'));
+                    });
+                }
+            }
+
+            /** =======================
+             * BULK DELETE (Snackbar)
+             * =======================
+             */
             const selectAll = document.getElementById('selectAll');
             const snackbar = document.getElementById('snackbar');
             const selectedCount = document.getElementById('selectedCount');
@@ -276,7 +490,7 @@
                 }
             }
 
-            // master checkbox handler
+            // ✅ Checkbox select all
             if (selectAll) {
                 selectAll.addEventListener('change', function() {
                     getRowCheckboxes().forEach(cb => cb.checked = this.checked);
@@ -284,168 +498,89 @@
                 });
             }
 
-            // listen perubahan pada checkbox (event delegation)
+            // ✅ Checkbox per-row
             document.addEventListener('change', function(e) {
-                if (e.target && e.target.classList && e.target.classList.contains('row-checkbox')) {
-                    // if any manual uncheck, uncheck master
+                if (e.target.classList.contains('row-checkbox')) {
                     if (!e.target.checked && selectAll) selectAll.checked = false;
 
-                    // if all are checked, set master checked
                     const all = getRowCheckboxes();
-                    if (selectAll && all.length > 0) {
-                        selectAll.checked = all.every(cb => cb.checked);
-                    }
+                    if (selectAll) selectAll.checked = all.every(cb => cb.checked);
 
                     updateSnackbar();
                 }
             });
 
-            bulkDeleteForm.addEventListener('submit', function(e) {
-                e.preventDefault(); // hentikan default form submit
+            // ✅ Handler submit bulk delete
+            if (bulkDeleteForm) {
+                bulkDeleteForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
 
-                const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
-                if (checkedBoxes.length === 0) return;
+                    const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
+                    if (!checkedBoxes.length) return;
 
-                // Ambil semua id yang dicentang
-                bulkIdsContainer.innerHTML = '';
-                checkedBoxes.forEach(cb => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'ids[]';
-                    input.value = cb.value;
-                    bulkIdsContainer.appendChild(input);
+                    // isi ulang kontainer id
+                    bulkIdsContainer.innerHTML = '';
+                    checkedBoxes.forEach(cb => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = cb.value;
+                        bulkIdsContainer.appendChild(input);
+                    });
+
+                    // SweetAlert konfirmasi
+                    Swal.fire({
+                        title: 'Delete selected documents?',
+                        text: `You are about to delete ${checkedBoxes.length} document(s). This action cannot be undone.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete them'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Submit via fetch biar tetap smooth
+                            fetch(bulkDeleteForm.action, {
+                                    method: 'POST',
+                                    body: new FormData(bulkDeleteForm),
+                                })
+                                .then(response => {
+                                    if (response.redirected) {
+                                        // Redirect (Laravel redirect()->route()) akan tetap jalan
+                                        window.location.href = response.url;
+                                    } else {
+                                        throw new Error('Unexpected response');
+                                    }
+                                })
+                                .catch(() => {
+                                    Swal.fire({
+                                        title: 'Error',
+                                        text: 'Failed to delete documents. Please try again.',
+                                        icon: 'error',
+                                    });
+                                });
+                        }
+                    });
                 });
+            }
 
-                // SweetAlert konfirmasi
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: `You are about to delete ${checkedBoxes.length} document(s)!`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Submit form jika user konfirmasi
-                        bulkDeleteForm.submit();
-                    }
-                });
-            });
-
-            // init
+            // Inisialisasi pertama
             updateSnackbar();
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('viewFileModal');
-            const iframe = document.getElementById('fileViewer');
 
             document.querySelectorAll('.view-file-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const fileUrl = this.dataset.file;
-                    const extension = fileUrl.split('.').pop().toLowerCase();
-
-                    // Cek format file
-                    if (extension === 'pdf') {
-                        iframe.src = fileUrl;
-                    } else if (['doc', 'docx', 'xls', 'xlsx'].includes(extension)) {
-                        iframe.src =
-                            `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
-                    } else {
-                        iframe.src = '';
-                        alert('File format not supported for preview.');
-                    }
+                    const iframe = document.getElementById('fileViewer');
+                    iframe.src = fileUrl;
                 });
             });
 
+            // Optional: reset src saat modal ditutup supaya tidak tetap loaded
+            const modal = document.getElementById('viewFileModal');
             modal.addEventListener('hidden.bs.modal', () => {
-                iframe.src = '';
+                document.getElementById('fileViewer').src = '';
             });
-
-            const clearBtn = document.getElementById("clearSearch");
-            const searchInput = document.getElementById("searchInput");
-            const searchForm = document.getElementById("searchForm");
-
-            if (clearBtn && searchInput && searchForm) {
-                clearBtn.addEventListener("click", function() {
-                    searchInput.value = "";
-                    searchForm.submit();
-                });
-            }
         });
-
-        // FILE FIELD DYNAMIC ADD/REMOVE
-        const container = document.getElementById("file-fields");
-        const addBtn = document.getElementById("add-file");
-
-        addBtn.addEventListener("click", function() {
-            let group = document.createElement("div");
-            group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
-                "file-input-group");
-            group.innerHTML = `
-            <input type="file" class="form-control" name="files[]" required>
-            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
-                <i class="bi bi-trash"></i>
-            </button>
-        `;
-            container.appendChild(group);
-        });
-
-        container.addEventListener("click", function(e) {
-            if (e.target.closest(".remove-file")) {
-                e.target.closest(".file-input-group").remove();
-            }
-        });
-
-        // QUILL EDITOR INIT
-        const quill = new Quill('#quill_editor', {
-            theme: 'snow',
-            placeholder: 'Write your notes here...',
-            modules: {
-                toolbar: [
-                    [{
-                        'font': []
-                    }, {
-                        'size': []
-                    }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{
-                        'color': []
-                    }, {
-                        'background': []
-                    }],
-                    [{
-                        'list': 'ordered'
-                    }, {
-                        'list': 'bullet'
-                    }],
-                    [{
-                        'align': []
-                    }],
-                    ['clean']
-                ]
-            }
-        });
-
-        // Ambil nilai old notes dari hidden input
-        const oldNotes = document.getElementById('notes_input_add').value;
-
-        // Jika ada old notes, isi Quill editor dengan HTML tersebut
-        if (oldNotes) {
-            quill.root.innerHTML = oldNotes;
-        }
-
-        // Saat submit form, sinkronkan isi Quill ke hidden input
-        const form = document.querySelector('#addDocumentControlModal form');
-        form.addEventListener('submit', function() {
-            document.getElementById('notes_input_add').value = quill.root.innerHTML;
-        });
-        // Tampilkan modal otomatis jika ada error validasi
-        @if ($errors->any())
-            const modal = new bootstrap.Modal(document.getElementById('addDocumentControlModal'));
-            modal.show();
-        @endif
     </script>
 @endpush
 @push('styles')

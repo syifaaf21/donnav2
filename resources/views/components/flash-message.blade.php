@@ -34,6 +34,6 @@
             let bsAlert = new bootstrap.Alert(flash);
             bsAlert.close();
         });
-    }, 10000);
+    }, 5000);
 </script>
 

@@ -61,8 +61,8 @@
                     <div class="col-12 mb-3">
                         <label class="form-label">Notes</label>
                         <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
-                        <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"
-                            style="min-height: 80px; max-height: 100px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; width: 100%;">
+                        <div id="quill_editor_add" class="bg-white border-1 shadow-sm rounded"
+                            style="min-height: 100px; max-height: 80px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; width: 100%;">
                         </div>
                         <small class="text-muted">You can format your notes with bold, italic, underline, colors, and
                             more.</small>
