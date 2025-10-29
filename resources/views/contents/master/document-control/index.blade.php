@@ -1,38 +1,58 @@
 @extends('layouts.app')
 @section('title', 'Document Control')
+
 @section('content')
-    <div class="container mx-auto my-2">
-        <div class="flex justify-end p-2">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal">
-                <i class="bi bi-plus-lg"></i> Add Document
+    <div class="container mx-auto px-4 py-2">
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-3">
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">Document Control</li>
+                </ol>
+            </nav>
+
+            {{-- Add Button --}}
+            <button type="button" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add Document</span>
             </button>
             @include('contents.master.document-control.partials.modal-add')
         </div>
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <!-- Search Bar -->
-            <div class="d-flex justify-content-end m-3">
-                <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
-                    <div class="relative max-w-md w-full">
-                        <input type="text" name="search" id="searchInput"
-                            class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Search..." value="{{ request('search') }}">
-                        <button
-                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                            type="submit" title="Search">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <button type="button"
-                            class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                            id="clearSearch" title="Clear">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </div>
+
+        {{-- Card --}}
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            {{-- Search Bar --}}
+            <div class="p-4 border-b border-gray-100 flex justify-end">
+                <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
+                    <input type="text" name="search" id="searchInput"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search..." value="{{ request('search') }}">
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" id="clearSearch"
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
                 </form>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full table-auto text-sm text-gray-700">
-                    <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-semibold">
+            {{-- Table --}}
+            <div class="overflow-auto rounded-bottom-lg h-[60vh]">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+                    {{-- Header tetap sama --}}
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
                         <tr>
                             <th class="px-6 py-3">
                                 <input type="checkbox" id="selectAll" class="form-checkbox">
@@ -42,7 +62,6 @@
                             <th class="px-6 py-3">Department</th>
                             <th class="px-6 py-3">Obsolete</th>
                             <th class="px-6 py-3">Reminder Date</th>
-                            {{-- <th class="px-6 py-3">Notes</th> --}}
                             <th class="px-6 py-3">Action</th>
                         </tr>
                     </thead>
@@ -95,10 +114,8 @@
                                                                 urlencode($fileUrl) .
                                                                 '&embedded=true';
                                                     @endphp
-
                                                     <li class="px-3 small text-muted text-truncate">
-                                                        {{ $file->file_name ?? basename($file->file_path) }}
-                                                    </li>
+                                                        {{ $file->file_name ?? basename($file->file_path) }}</li>
                                                     <li>
                                                         @if ($isPdf || $isOffice)
                                                             <button type="button" class="dropdown-item view-file-btn"
@@ -126,18 +143,17 @@
                                         <span class="text-gray-500">No File</span>
                                     @endif
 
-                                    <!-- Flex Container for Actions -->
                                     <div class="flex items-center gap-2">
                                         @if (auth()->user()->role->name == 'Admin')
-                                            <button type="button" class="text-blue-500 hover:text-blue-700"
+                                            <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
                                                 data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
-                                                <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                <i data-feather="edit" class="w-4 h-4"></i>
                                             </button>
                                             <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
                                                 method="POST" class="inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-700">
+                                                <button type="submit" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                                                     <i data-feather="trash-2" class="w-4 h-4"></i>
                                                 </button>
                                             </form>
@@ -148,7 +164,7 @@
                             @include('contents.master.document-control.partials.modal-edit')
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">No Data</td>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No Data</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -158,9 +174,11 @@
     </div>
 
     {{-- Snackbar Bulk Action --}}
-    <div id="snackbar" class="snackbar shadow-lg d-flex justify-content-between align-items-center">
-        <div>
-            <span id="selectedCount">0 selected</span>
+    <div id="snackbar"
+        class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-lg p-3 flex items-center justify-between space-x-4 w-full max-w-lg z-50 transition-all duration-300 opacity-0 pointer-events-none">
+        <div class="flex items-center gap-2">
+            <i class="bi bi-check-circle text-green-500"></i>
+            <span id="selectedCount" class="text-gray-700 font-medium">0 selected</span>
         </div>
 
         <form id="bulkDeleteForm" action="{{ route('master.bulkDestroy') }}" method="POST" class="mb-0">
@@ -168,11 +186,15 @@
             {{-- container untuk input hidden ids[] yang akan dibuat oleh JS --}}
             <div id="bulkIdsContainer"></div>
 
-            <button id="bulkDeleteBtn" type="submit" class="text-red-500 hover:text-red-700" disabled>
-                <i data-feather="trash-2" class="w-4 h-4"></i> Delete Selected
+            <button id="bulkDeleteBtn" type="submit"
+                class="flex items-center gap-1 px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+                <i data-feather="trash-2" class="w-4 h-4"></i>
+                Delete Selected
             </button>
         </form>
     </div>
+
 
     <!-- 📄 Modal Fullscreen View File -->
     <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
@@ -243,8 +265,15 @@
             function updateSnackbar() {
                 const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
                 selectedCount.textContent = `${checkedBoxes.length} selected`;
-                snackbar.classList.toggle('show', checkedBoxes.length > 0);
                 bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+
+                if (checkedBoxes.length > 0) {
+                    snackbar.classList.remove('opacity-0', 'pointer-events-none');
+                    snackbar.classList.add('opacity-100', 'pointer-events-auto');
+                } else {
+                    snackbar.classList.remove('opacity-100', 'pointer-events-auto');
+                    snackbar.classList.add('opacity-0', 'pointer-events-none');
+                }
             }
 
             // master checkbox handler
@@ -271,25 +300,14 @@
                 }
             });
 
-            // on submit: build hidden inputs ids[] then submit
             bulkDeleteForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+                e.preventDefault(); // hentikan default form submit
 
                 const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
-                if (checkedBoxes.length === 0) {
-                    alert('No documents selected.');
-                    return;
-                }
+                if (checkedBoxes.length === 0) return;
 
-                if (!confirm(
-                        `Are you sure you want to delete ${checkedBoxes.length} selected document(s)?`)) {
-                    return;
-                }
-
-                // clear previous inputs
+                // Ambil semua id yang dicentang
                 bulkIdsContainer.innerHTML = '';
-
-                // create hidden inputs ids[]
                 checkedBoxes.forEach(cb => {
                     const input = document.createElement('input');
                     input.type = 'hidden';
@@ -298,8 +316,21 @@
                     bulkIdsContainer.appendChild(input);
                 });
 
-                // submit native
-                bulkDeleteForm.submit();
+                // SweetAlert konfirmasi
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: `You are about to delete ${checkedBoxes.length} document(s)!`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Submit form jika user konfirmasi
+                        bulkDeleteForm.submit();
+                    }
+                });
             });
 
             // init

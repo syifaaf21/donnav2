@@ -69,7 +69,7 @@
                         </div> {{-- Tutup col-md-4 untuk Plant --}}
 
                         {{-- Parent Document --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-medium">Parent Document (Optional)</label>
                             <select id="parent_document_select" name="parent_id"
                                 class="form-select border-1 shadow-sm @error('parent_id') is-invalid @enderror">
@@ -84,7 +84,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Only required for child documents.</small>
+                            <small class="text-muted fst-italic">Only required for child documents.</small>
                             @error('parent_id')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
@@ -177,15 +177,16 @@
                 </div>
 
                 {{-- Modal Footer --}}
-                <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i> Close
-                    </button>
-                    <button type="submit" class="btn btn-outline-primary px-4">
-                        <i class="bi bi-save2 me-1"></i> Save Document
-                    </button>
-                </div>
-
+                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                        <button type="button"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                            data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Submit
+                        </button>
+                    </div>
             </div>
         </form>
     </div>

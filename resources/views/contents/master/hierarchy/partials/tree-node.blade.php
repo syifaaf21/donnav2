@@ -25,34 +25,37 @@
         </div>
     </td>
 
-    <td class="px-4 py-2 text-gray-500">
-        {{ ucwords($document->code) ?: '-' }}
-    </td>
+    <td class="px-4 py-2 text-gray-500">{{ ucwords($document->code) ?: '-' }}</td>
 
     {{-- Actions --}}
     <td class="px-4 py-2">
         <div class="flex gap-2">
-            <button type="button" class="text-blue-500 hover:text-blue-700" data-bs-toggle="modal"
-                data-bs-target="#editDocumentModal-{{ $document->id }}">
-                <i data-feather="edit-2" class="w-4 h-4"></i>
+            {{-- Edit Button --}}
+            <button type="button" data-bs-toggle="modal" data-bs-target="#editDocumentModal-{{ $document->id }}"
+                data-bs-title="Edit Document"
+                class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                <i data-feather="edit" class="w-4 h-4"></i>
             </button>
 
+            {{-- Delete Button --}}
             <form method="POST" action="{{ route('master.hierarchy.destroy', $document->id) }}"
-                class="inline delete-form">
+                class="d-inline delete-form">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="text-red-500 hover:text-red-700">
+                <button type="submit" data-bs-title="Delete Document"
+                    class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                     <i data-feather="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>
         </div>
     </td>
+
 </tr>
 
 {{-- Modal Edit --}}
 <div class="modal fade" id="editDocumentModal-{{ $document->id }}" tabindex="-1"
     aria-labelledby="editDocumentModalLabel-{{ $document->id }}" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered">
         <form action="{{ route('master.hierarchy.update', $document->id) }}" method="POST">
             @csrf
             @method('PUT')
@@ -109,19 +112,20 @@
                     </div>
                 </div>
 
-                <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i> Cancel
+                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                    <button type="button"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                        data-bs-dismiss="modal">
+                        Cancel
                     </button>
-                    <button type="submit" class="btn btn-outline-success px-4">
-                        <i class="bi bi-check-circle me-1"></i> Save Changes
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        Save Changes
                     </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
-
 
 @if ($document->children->isNotEmpty())
     @foreach ($document->children as $child)

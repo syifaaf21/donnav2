@@ -188,7 +188,8 @@ class DocumentMappingController extends Controller
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
                 $extension = $file->getClientOriginalExtension();
-                $filename = $request->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+                // Gunakan document_number dari mapping, bukan request
+                $filename = $mapping->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
 
                 $path = $file->storeAs('document-reviews', $filename, 'public');
 
@@ -411,7 +412,8 @@ class DocumentMappingController extends Controller
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
                 $extension = $file->getClientOriginalExtension();
-                $filename = $request->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+                // Gunakan document_number dari mapping, bukan request
+                $filename = $mapping->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
 
                 $path = $file->storeAs('document-reviews', $filename, 'public');
 
@@ -450,10 +452,14 @@ class DocumentMappingController extends Controller
     // ================= Delete Review (Admin) =================
     public function destroy(DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin')
+        if (Auth::user()->role->name !== 'Admin') {
             abort(403);
+        }
 
-        // Hapus semua file yang berelasi
+        // Pastikan relasi 'files' dimuat
+        $mapping->load('files');
+
+        // === 1️⃣ Hapus semua file di tabel relasi (document_files) ===
         foreach ($mapping->files as $file) {
             if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
                 Storage::disk('public')->delete($file->file_path);
@@ -461,16 +467,19 @@ class DocumentMappingController extends Controller
             $file->delete(); // Hapus record dari tabel document_files
         }
 
-        // Hapus file utama (jika ada)
+        // === 2️⃣ Hapus file utama jika disimpan di kolom 'file_path' DocumentMapping ===
         if ($mapping->file_path && Storage::disk('public')->exists($mapping->file_path)) {
             Storage::disk('public')->delete($mapping->file_path);
         }
 
+        // === 3️⃣ Hapus data DocumentMapping ===
         $mapping->delete();
+
+        // === 4️⃣ (Opsional) Hapus anak-anak jika ini parent ===
+        DocumentMapping::where('parent_id', $mapping->id)->update(['parent_id' => null]);
 
         return redirect()->back()->with('success', 'Document and associated files deleted successfully!');
     }
-
     // ================= Approve / Reject Review (Admin) =================
     public function approveWithDates(Request $request, DocumentMapping $mapping)
     {

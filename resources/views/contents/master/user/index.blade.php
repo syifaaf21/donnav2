@@ -2,7 +2,8 @@
 @section('title', 'User')
 
 @section('content')
-    <div class="container py-2">
+    <div class="container mx-auto px-4 py-2">
+        {{-- Header --}}
         <div class="flex justify-between items-center mb-3">
             {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500">
@@ -16,96 +17,104 @@
                     <li>Master</li>
                     <li>/</li>
                     <li class="text-gray-700 font-medium">User</li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">User</li>
                 </ol>
             </nav>
-            {{-- Tombol Add User --}}
-            <button class="... btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                <i class="bi bi-plus-circle"></i> Add User
+
+            {{-- Add User Button --}}
+            <button type="button" data-bs-toggle="modal" data-bs-target="#addUserModal"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="bi bi-plus-circle"></i>
+                <span>Add User</span>
             </button>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <div class="flex justify-content-end mb-3">
-                    <form method="GET" class="flex items-center gap-2 flex-wrap" id="searchForm">
-                        <div class="relative max-w-md w-full">
-                            <input type="text" name="search" id="searchInput"
-                                class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Search..." value="{{ request('search') }}">
-                            <button
-                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                                type="submit" title="Search">
-                                <i class="bi bi-search"></i>
-                            </button>
-                            <button type="button"
-                                class="absolute right-8 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-                                id="clearSearch" title="Clear">
-                                <i class="bi bi-x-circle"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+        {{-- Card --}}
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
+            {{-- Search Bar --}}
+            <div class="p-4 border-b border-gray-100 flex justify-end">
+                <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
+                    <input type="text" name="search" id="searchInput"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search..." value="{{ request('search') }}">
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" id="clearSearch"
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
 
-                <div class="table-wrapper mb-3">
-                    <div class="table-responsive">
-                        <table class="min-w-full table-auto text-sm text-left text-gray-600">
-                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                                <tr>
-                                    <th class="px-4 py-3">No</th>
-                                    <th class="px-4 py-3">Name</th>
-                                    <th class="px-4 py-3">NPK</th>
-                                    <th class="px-4 py-3">Email</th>
-                                    <th class="px-4 py-3">Role</th>
-                                    <th class="px-4 py-3">Department</th>
-                                    <th class="px-4 py-3">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($users as $user)
-                                    <tr>
-                                        <td class="px-4 py-3">
-                                            {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
-                                        <td class="px-4 py-3">{{ $user->name }}</td>
-                                        <td class="px-4 py-3">{{ $user->npk }}</td>
-                                        <td class="px-4 py-3">{{ $user->email }}</td>
-                                        <td class="px-4 py-3">{{ $user->role->name ?? '-' }}</td>
-                                        <td class="px-4 py-3">{{ $user->department->name ?? '-' }}</td>
-                                        <td class="px-4 py-3">
-                                            <button type="button" class="text-blue-500 hover:text-blue-700" data-bs-toggle="modal"
-                                                data-bs-target="#editUserModal-{{ $user->id }}"
-                                                data-bs-title="Edit User">
-                                                <i data-feather="edit-2" class="w-4 h-4"></i>
+            {{-- Table --}}
+            <div class="overflow-x-auto overflow-y-auto max-h-96">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-2">No</th>
+                            <th class="px-4 py-2">Name</th>
+                            <th class="px-4 py-2">NPK</th>
+                            <th class="px-4 py-2">Email</th>
+                            <th class="px-4 py-2">Role</th>
+                            <th class="px-4 py-2">Department</th>
+                            <th class="px-4 py-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($users as $user)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-4 py-2">
+                                    {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
+                                </td>
+                                <td class="px-4 py-2">{{ $user->name }}</td>
+                                <td class="px-4 py-2">{{ $user->npk }}</td>
+                                <td class="px-4 py-2">{{ $user->email }}</td>
+                                <td class="px-4 py-2">{{ $user->role->name ?? '-' }}</td>
+                                <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
+                                <td class="px-4 py-2 flex gap-2">
+                                    {{-- Edit Button --}}
+                                    <button type="button" data-bs-toggle="modal"
+                                       data-bs-target="#editUserModal-{{ $user->id }}"
+                                        data-bs-title="Edit User"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    {{-- Delete Button --}}
+                                    @if (auth()->user()->role->name == 'Admin')
+                                        <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
+                                            class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded"
+                                                data-bs-title="Delete User">
+                                                <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
+                                        </form>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-gray-500 py-4">No users found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-                                            @if ($user->role_id !== 1)
-                                                <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
-                                                    class="d-inline delete-form">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-500 hover:text-red-700"
-                                                        data-bs-title="Delete User">
-                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center text-gray-500 py-4">No users found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Pagination -->
-                    <div class="mt-3">
-                        {{ $users->withQueryString()->links() }}
-                    </div>
-                </div>
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $users->withQueryString()->links('vendor.pagination.tailwind') }}
             </div>
         </div>
     </div>
+
 
     {{-- Edit User Modals --}}
     @foreach ($users as $user)
@@ -120,7 +129,7 @@
                     <div class="modal-content border-0 shadow-lg rounded-4">
                         <div class="modal-header bg-light text-dark rounded-top-4">
                             <h5 class="modal-title fw-semibold" id="editUserModalLabel-{{ $user->id }}">
-                                <i class="bi bi-person-lines-fill me-2"></i>Edit User
+                                 <i class="bi bi-pencil-square text-primary"> </i>Edit User
                             </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
@@ -224,12 +233,15 @@
                             </div>
                         </div>
 
-                        <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle me-1"></i>Cancel
+                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                            <button type="button"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                                data-bs-dismiss="modal">
+                                Cancel
                             </button>
-                            <button type="submit" class="btn btn-outline-success px-4">
-                                <i class="bi bi-check-circle me-1"></i>Save Changes
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                                Save Changes
                             </button>
                         </div>
                     </div>
@@ -250,7 +262,7 @@
                     <!-- Header -->
                     <div class="modal-header bg-light text-dark rounded-top-4">
                         <h5 class="modal-title fw-semibold" id="addUserModalLabel">
-                            <i class="bi bi-person-plus-fill me-2"></i>Create New User
+                            <i class="bi bi-plus-circle me-2 text-primary"></i>Create New User
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
@@ -261,7 +273,7 @@
                         <div class="row g-3">
                             <!-- Name -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Name</label>
+                                <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name"
                                     class="form-control rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ old('name') }}" required>
@@ -272,7 +284,7 @@
 
                             <!-- NPK -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">NPK</label>
+                                <label class="form-label fw-medium">NPK <span class="text-danger">*</span></label>
                                 <input type="number" name="npk"
                                     class="form-control rounded-3 @error('npk') is-invalid @enderror"
                                     value="{{ old('npk') }}" pattern="\d{6}" maxlength="6"
@@ -285,12 +297,12 @@
 
                             <!-- Email -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Email</label>
+                                <label class="form-label fw-medium">Email <span class="text-danger">*</span></label>
                                 <input type="email" name="email"
                                     class="form-control rounded-3 @error('email') is-invalid @enderror"
                                     pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                                     title="Please enter a valid email address (e.g. user@example.com)"
-                                    value="{{ old('email') }}">
+                                    value="{{ old('email') }}" required>
                                 @error('email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -298,7 +310,7 @@
 
                             <!-- Password -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Password</label>
+                                <label class="form-label fw-medium">Password <span class="text-danger">*</span></label>
                                 <input type="password" name="password"
                                     class="form-control rounded-3 @error('password') is-invalid @enderror" pattern=".{6,}"
                                     minlength="6" title="Password must be at least 6 characters"
@@ -310,7 +322,8 @@
 
                             <!-- Confirm Password -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Confirm Password</label>
+                                <label class="form-label fw-medium">Confirm Password <span
+                                        class="text-danger">*</span></label>
                                 <input type="password" name="password_confirmation" id="password_confirmation"
                                     class="form-control rounded-3" minlength="6" autocomplete="new-password" required
                                     title="Please retype the same password">
@@ -318,7 +331,7 @@
 
                             <!-- Role -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Role</label>
+                                <label class="form-label fw-medium">Role <span class="text-danger">*</span></label>
                                 <select id="role_select" name="role_id"
                                     class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
                                     <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>-- Select Role
@@ -337,7 +350,7 @@
 
                             <!-- Department -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Department</label>
+                                <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
                                 <select id="department_select" name="department_id"
                                     class="form-select rounded-3 @error('department_id') is-invalid @enderror" required>
                                     <option value="" disabled {{ old('department_id') ? '' : 'selected' }}>
@@ -358,12 +371,14 @@
                     </div>
 
                     <!-- Footer -->
-                    <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-1"></i>Cancel
+                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                        <button type="button"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                            data-bs-dismiss="modal">
+                            Cancel
                         </button>
-                        <button type="submit" class="btn btn-outline-primary px-4">
-                            <i class="bi bi-save2 me-1"></i>Save User
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Submit
                         </button>
                     </div>
                 </div>
@@ -433,13 +448,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             // TomSelect untuk modal Add - Role
             new TomSelect('#role_select', {
-                create: true,
+                create: false,
                 maxItems: 1,
                 valueField: 'id',
                 labelField: 'text',
                 searchField: 'text',
                 preload: true,
-                placeholder: 'Select or create a role',
+                placeholder: 'Select or search a role',
                 load: function(query, callback) {
                     let url = '/api/roles?q=' + encodeURIComponent(query);
                     fetch(url)
@@ -451,13 +466,13 @@
 
             // TomSelect untuk modal Add - Department
             new TomSelect('#department_select', {
-                create: true,
+                create: false,
                 maxItems: 1,
                 valueField: 'id',
                 labelField: 'text',
                 searchField: 'text',
                 preload: true,
-                placeholder: 'Select or create a department',
+                placeholder: 'Select or search a department',
                 load: function(query, callback) {
                     let url = '/api/departments?q=' + encodeURIComponent(query);
                     fetch(url)

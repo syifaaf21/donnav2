@@ -20,7 +20,7 @@
                     <div class="row g-3">
                         {{-- Document Name --}}
                         <div class="col-md-4">
-                            <label class="form-label fw-medium">Document Name</label>
+                            <label class="form-label fw-medium">Document Name <span class="text-danger">*</span></label>
                             <select id="editDocumentSelect{{ $mapping->id }}" name="document_id" class="form-select"
                                 required>
                                 @foreach ($documentsMaster as $doc)
@@ -66,7 +66,7 @@
 
                         {{-- Department --}}
                         <div class="col-md-4">
-                            <label class="form-label fw-medium">Department</label>
+                            <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
                             <select id="editDepartmentSelect{{ $mapping->id }}" name="department_id"
                                 class="form-select border-1 shadow-sm" required>
                                 <option value="{{ $mapping->department_id }}" selected>
@@ -75,7 +75,6 @@
                             </select>
                         </div>
 
-                        {{-- {{ dd($mapping->parent_document_id, $mapping->parent_document->document_number ?? 'null')  }} --}}
                         {{-- Parent Document --}}
                         <div class="col-md-4">
                             <label class="form-label fw-medium">Parent Document</label>
@@ -83,11 +82,12 @@
                                 class="form-select border-1 shadow-sm" data-selected="{{ $mapping->parent_id ?? '' }}">
                                 {{-- kosongkan option di sini --}}
                             </select>
+                            <small class="text-muted fst-italic">Leave blank if it doesn't have parent</small>
                         </div>
 
                         {{-- Part Number --}}
                         <div class="col-md-4">
-                            <label class="form-label fw-medium">Part Number</label>
+                            <label class="form-label fw-medium">Part Number <span class="text-danger">*</span></label>
                             <select id="editPartNumberSelect{{ $mapping->id }}" name="part_number_id"
                                 class="form-select border-1 shadow-sm" required>
                                 @foreach ($partNumbers as $part)
@@ -112,11 +112,11 @@
                         </div>
 
                         {{-- File Upload --}}
-                        <div class="col-12">
-                            <label class="form-label fw-medium">Upload File</label>
+                        {{-- <div class="col-12">
+                            <label class="form-label fw-medium">Upload File <span class="text-danger">*</span></label>
 
                             @if ($mapping->files->count())
-                                <p>Existing file:
+                                <p class="mb-2">Existing file:
                                     @foreach ($mapping->files as $file)
                                         <a href="{{ Storage::url($file->file_path) }}" target="_blank"
                                             style="color: blue;">
@@ -142,17 +142,19 @@
                                 id="editAddFile{{ $mapping->id }}">
                                 <i class="bi bi-plus"></i> Add File
                             </button>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i> Close
+                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                    <button type="button"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                        data-bs-dismiss="modal">
+                        Cancel
                     </button>
-                    <button type="submit" class="btn btn-outline-primary px-4">
-                        <i class="bi bi-save2 me-1"></i> Save Changes
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        Save Changes
                     </button>
                 </div>
             </div>
