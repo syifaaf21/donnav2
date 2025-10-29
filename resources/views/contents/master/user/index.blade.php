@@ -1,29 +1,27 @@
 @extends('layouts.app')
+@section('title', 'User')
 
 @section('content')
     <div class="container py-2">
         <div class="flex justify-between items-center mb-3">
             {{-- Breadcrumbs --}}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
-                            <i class="bi bi-house-door me-1"></i> Dashboard
+            <nav class="text-sm text-gray-500">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
+                            <i class="bi bi-house-door"></i> Dashboard
                         </a>
                     </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">Master</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="#" class="text-decoration-none text-secondary">User</a>
-                    </li>
+                    <li>/</li>
+                    <li>Master</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">User</li>
                 </ol>
             </nav>
             {{-- Tombol Add User --}}
             <button class="... btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
                 <i class="bi bi-plus-circle"></i> Add User
             </button>
-
         </div>
 
         <div class="card shadow-sm border-0">

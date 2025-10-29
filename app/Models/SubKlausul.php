@@ -13,7 +13,8 @@ class SubKlausul extends Model
 
     protected $fillable =
     [
-        'klausul_id',
+        'head_klausul_id',
+        'code',
         'name',
     ];
 

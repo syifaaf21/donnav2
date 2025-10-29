@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\FtppMasterController;
+use App\Http\Controllers\KlausulController;
 use App\Http\Controllers\ModelController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\NotificationController;
@@ -132,6 +133,13 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/', [FindingCategoryController::class, 'store'])->name('store');
                 Route::put('/update/{id}', [FindingCategoryController::class, 'update'])->name('update');
                 Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
+            });
+
+            Route::prefix('klausul')->name('klausul.')->middleware('auth')->group(function() {
+                Route::get('/{id}', [KlausulController::class, 'show']);
+                Route::post('/', [KlausulController::class, 'store'])->name('store');
+                Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
+                Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
             });
 
         });

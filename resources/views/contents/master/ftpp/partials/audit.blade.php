@@ -36,16 +36,17 @@
                             <span class="text-gray-400">-</span>
                         @endif
                     </td>
-                    <td class="text-center py-2 px-3 border-b border-gray-200">
+                    <td class="px-3 py-2 border-b text-center">
                         <div class="flex justify-center gap-2">
-                            <button data-id="{{ $audit->id }}" data-name="{{ $audit->name }}"
-                                class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
-                                <i data-feather="edit" class="w-4 h-4"></i>
-                            </button>
-                            <button data-id="{{ $audit->id }}"
-                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                <i data-feather="trash-2" class="w-4 h-4"></i>
-                            </button>
+                        <button data-id="{{ $audit->id }}" data-name="{{ $audit->name }}"
+                            class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
+                            <i data-feather="edit" class="w-4 h-4"></i>
+                        </button>
+                        |
+                        <button data-id="{{ $audit->id }}"
+                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                        </button>
                         </div>
                     </td>
                 </tr>

@@ -14,6 +14,7 @@ class HeadKlausul extends Model
     protected $fillable =
     [
         'klausul_id',
+        'code',
         'name',
     ];
 

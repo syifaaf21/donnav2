@@ -22,14 +22,17 @@
                     <td class="px-3 py-2 border-b">{{ $index + 1 }}</td>
                     <td class="px-3 py-2 border-b">{{ $category->name }}</td>
                     <td class="px-3 py-2 border-b text-center">
+                        <div class="flex justify-center gap-2">
                         <button data-id="{{ $category->id }}"
                             class="btn-edit bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
                             <i data-feather="edit" class="w-4 h-4"></i>
                         </button>
+                        |
                         <button data-id="{{ $category->id }}"
                             class="btn-delete bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                             <i data-feather="trash-2" class="w-4 h-4"></i>
                         </button>
+                        </div>
                     </td>
                 </tr>
             @empty

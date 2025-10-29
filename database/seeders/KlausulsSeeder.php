@@ -15,8 +15,8 @@ class KlausulsSeeder extends Seeder
     {
         DB::table('tm_klausuls')->insert([
             ['name' => 'IATF'],
-            ['name' => 'ISO 140001:2015'],
-            ['name' => 'ISO 140001:2018'],
+            ['name' => 'ISO 14001:2015'],
+            ['name' => 'ISO 45001:2018'],
         ]);
     }
 }

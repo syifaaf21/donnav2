@@ -5,6 +5,8 @@ use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\PartNumberController;
 use App\Models\Department;
 use App\Models\Document;
+use App\Models\HeadKlausul;
+use App\Models\Klausul;
 use App\Models\PartNumber;
 use App\Models\Product;
 use App\Models\ProductModel;
@@ -108,7 +110,18 @@ Route::get('/generate-document-number', [DocumentMappingController::class, 'gene
 Route::get('/generate-document-number-from-parent', [DocumentMappingController::class, 'generateChildDocumentNumber']);
 Route::get('/departments/filter', [DocumentMappingController::class, 'getDepartmentsByDocumentAndPlant'])->name('departments.filter');
 
-// Route::get('/plants', function() {
-//     $plants = ['body' => 'Body', 'unit' => 'Unit', 'electric' => 'Electric'];
-//     return collect($plants)->map(fn($label, $value) => ['id' => $value, 'text' => $label])->values();
-// });
+Route::get('/klausuls', function(Request $request) {
+    $q = $request->query('q');
+    $query = Klausul::query();
+    if ($q) $query->where('name', 'like', "%{$q}%");
+    return $query->select('id','name')->orderBy('name')->get();
+});
+
+Route::get('/head-klausuls', function(Request $request) {
+    $klausulId = $request->query('klausul_id');
+    $q = $request->query('q');
+    $query = HeadKlausul::query();
+    if ($klausulId) $query->where('klausul_id', $klausulId);
+    if ($q) $query->where('name', 'like', "%{$q}%");
+    return $query->select('id','name','code')->orderBy('name')->get();
+});
