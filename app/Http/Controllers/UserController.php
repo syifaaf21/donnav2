@@ -30,7 +30,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+        $users = $query->orderBy('created_at', 'asc')->paginate(10)->appends($request->query());
         $roles = Role::all();
         $departments = Department::all();
 

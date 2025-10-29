@@ -4,19 +4,12 @@
 @section('content')
     <div class="container mx-auto px-4 py-2">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-3">
-            {{-- Breadcrumbs --}}
+        <div class="flex justify-between items-center mb-4">
             <nav class="text-sm text-gray-500">
                 <ol class="flex items-center space-x-2">
-                    <li>
-                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
-                            <i class="bi bi-house-door"></i> Dashboard
-                        </a>
+                    <li><a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
+                            <i class="bi bi-house-door"></i> Dashboard</a>
                     </li>
-                    <li>/</li>
-                    <li>Master</li>
-                    <li>/</li>
-                    <li class="text-gray-700 font-medium">User</li>
                     <li>/</li>
                     <li>Master</li>
                     <li>/</li>
@@ -32,361 +25,46 @@
             </button>
         </div>
 
-        {{-- Card --}}
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
-            {{-- Search Bar --}}
-            <div class="p-4 border-b border-gray-100 flex justify-end">
-                <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
-                    <input type="text" name="search" id="searchInput"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Search..." value="{{ request('search') }}">
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
-                </form>
+        {{-- Tabs --}}
+        <ul class="nav nav-tabs mb-3" id="userTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane"
+                    type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">
+                    All Users
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="depthead-tab" data-bs-toggle="tab" data-bs-target="#depthead-tab-pane"
+                    type="button" role="tab" aria-controls="depthead-tab-pane" aria-selected="false">
+                    Department Heads
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="auditor-tab" data-bs-toggle="tab" data-bs-target="#auditor-tab-pane"
+                    type="button" role="tab" aria-controls="auditor-tab-pane" aria-selected="false">
+                    Auditors
+                </button>
+            </li>
+        </ul>
+        {{-- Tab Contents --}}
+        <div class="tab-content" id="userTabsContent">
+            <div class="tab-pane fade show active" id="all-tab-pane" role="tabpanel" aria-labelledby="all-tab">
+                @include('contents.master.user.partials.all')
             </div>
-
-            {{-- Table --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Name</th>
-                            <th class="px-4 py-2">NPK</th>
-                            <th class="px-4 py-2">Email</th>
-                            <th class="px-4 py-2">Role</th>
-                            <th class="px-4 py-2">Department</th>
-                            <th class="px-4 py-2">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($users as $user)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-4 py-2">
-                                    {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
-                                </td>
-                                <td class="px-4 py-2">{{ $user->name }}</td>
-                                <td class="px-4 py-2">{{ $user->npk }}</td>
-                                <td class="px-4 py-2">{{ $user->email }}</td>
-                                <td class="px-4 py-2">{{ $user->role->name ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
-                                <td class="px-4 py-2 flex gap-2">
-                                    {{-- Edit Button --}}
-                                    <button type="button" data-bs-toggle="modal"
-                                       data-bs-target="#editUserModal-{{ $user->id }}"
-                                        data-bs-title="Edit User"
-                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                    </button>
-                                    {{-- Delete Button --}}
-                                    @if (auth()->user()->role->name == 'Admin')
-                                        <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
-                                            class="d-inline delete-form">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded"
-                                                data-bs-title="Delete User">
-                                                <i data-feather="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-gray-500 py-4">No users found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="tab-pane fade" id="depthead-tab-pane" role="tabpanel" aria-labelledby="depthead-tab">
+                @include('contents.master.user.partials.dept-head')
             </div>
-
-            {{-- Pagination --}}
-            <div class="mt-4">
-                {{ $users->withQueryString()->links('vendor.pagination.tailwind') }}
+            <div class="tab-pane fade" id="auditor-tab-pane" role="tabpanel" aria-labelledby="auditor-tab">
+                @include('contents.master.user.partials.auditor')
             </div>
         </div>
+
     </div>
 
-
-    {{-- Edit User Modals --}}
-    @foreach ($users as $user)
-        <div class="modal fade" id="editUserModal-{{ $user->id }}" tabindex="-1"
-            aria-labelledby="editUserModalLabel-{{ $user->id }}" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <form action="{{ route('master.users.update', $user->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" name="_form" value="edit">
-
-                    <div class="modal-content border-0 shadow-lg rounded-4">
-                        <div class="modal-header bg-light text-dark rounded-top-4">
-                            <h5 class="modal-title fw-semibold" id="editUserModalLabel-{{ $user->id }}">
-                                 <i class="bi bi-pencil-square text-primary"> </i>Edit User
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
-                        </div>
-
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                <!-- Name -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Name</label>
-                                    <input type="text" name="name"
-                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                        value="{{ $user->name }}" required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- NPK -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">NPK</label>
-                                    <input type="text" name="npk"
-                                        class="form-control rounded-3 @error('npk') is-invalid @enderror"
-                                        value="{{ $user->npk }}" required pattern="\d{6}" maxlength="6"
-                                        title="NPK must be exactly 6 digits of number" inputmode="numeric">
-                                    @error('npk')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- Email -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Email</label>
-                                    <input type="email" name="email"
-                                        class="form-control rounded-3 @error('email') is-invalid @enderror"
-                                        pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                                        title="Please enter a valid email address (e.g. user@example.com)"
-                                        value="{{ $user->email }}" required>
-                                    @error('email')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- Password -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Password</label>
-                                    <input type="password" name="password"
-                                        class="form-control rounded-3 @error('password') is-invalid @enderror"
-                                        pattern=".{6,}" minlength="6" title="Password must be at least 6 characters"
-                                        value="">
-                                    <small class="text-muted fst-italic">Leave blank if not changing password</small>
-                                    @error('password')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- Confirm Password -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Confirm Password</label>
-                                    <input type="password" name="password_confirmation" class="form-control rounded-3"
-                                        value="">
-                                </div>
-
-                                <!-- Role -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Role</label>
-                                    <select name="role_id" id="role_select_edit_{{ $user->id }}"
-                                        class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
-                                        <option value="">Select Role</option>
-                                        @foreach ($roles as $role)
-                                            <option value="{{ $role->id }}"
-                                                {{ $user->role_id == $role->id ? 'selected' : '' }}>
-                                                {{ $role->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-
-                                    @error('role_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- Department -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Department</label>
-                                    <select name="department_id" id="department_select_edit_{{ $user->id }}"
-                                        class="form-select rounded-3 @error('department_id') is-invalid @enderror"
-                                        required>
-                                        <option value="">Select Department</option>
-                                        @foreach ($departments as $department)
-                                            <option value="{{ $department->id }}"
-                                                {{ $user->department_id == $department->id ? 'selected' : '' }}>
-                                                {{ $department->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('department_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                            <button type="button"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                                data-bs-dismiss="modal">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endforeach
-
-
-    <!-- Add User Modal -->
-    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form action="{{ route('master.users.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="_form" value="add">
-
-                <div class="modal-content border-0 shadow-lg rounded-4">
-                    <!-- Header -->
-                    <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" id="addUserModalLabel">
-                            <i class="bi bi-plus-circle me-2 text-primary"></i>Create New User
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-
-                    <!-- Body -->
-                    <div class="modal-body p-4">
-                        <div class="row g-3">
-                            <!-- Name -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name"
-                                    class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                    value="{{ old('name') }}" required>
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <!-- NPK -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">NPK <span class="text-danger">*</span></label>
-                                <input type="number" name="npk"
-                                    class="form-control rounded-3 @error('npk') is-invalid @enderror"
-                                    value="{{ old('npk') }}" pattern="\d{6}" maxlength="6"
-                                    oninput="this.value = this.value.slice(0, 6);"
-                                    title="NPK must be exactly 6 digits of number" inputmode="numeric" required>
-                                @error('npk')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <!-- Email -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Email <span class="text-danger">*</span></label>
-                                <input type="email" name="email"
-                                    class="form-control rounded-3 @error('email') is-invalid @enderror"
-                                    pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                                    title="Please enter a valid email address (e.g. user@example.com)"
-                                    value="{{ old('email') }}" required>
-                                @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <!-- Password -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Password <span class="text-danger">*</span></label>
-                                <input type="password" name="password"
-                                    class="form-control rounded-3 @error('password') is-invalid @enderror" pattern=".{6,}"
-                                    minlength="6" title="Password must be at least 6 characters"
-                                    value="{{ old('password') }}" required>
-                                @error('password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <!-- Confirm Password -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Confirm Password <span
-                                        class="text-danger">*</span></label>
-                                <input type="password" name="password_confirmation" id="password_confirmation"
-                                    class="form-control rounded-3" minlength="6" autocomplete="new-password" required
-                                    title="Please retype the same password">
-                            </div>
-
-                            <!-- Role -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Role <span class="text-danger">*</span></label>
-                                <select id="role_select" name="role_id"
-                                    class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
-                                    <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>-- Select Role
-                                        --</option>
-                                    @foreach ($roles as $role)
-                                        <option value="{{ $role->id }}"
-                                            {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                                            {{ $role->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('role_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <!-- Department -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
-                                <select id="department_select" name="department_id"
-                                    class="form-select rounded-3 @error('department_id') is-invalid @enderror" required>
-                                    <option value="" disabled {{ old('department_id') ? '' : 'selected' }}>
-                                        -- Select Department --
-                                    </option>
-                                    @foreach ($departments as $department)
-                                        <option value="{{ $department->id }}"
-                                            {{ old('department_id') == $department->id ? 'selected' : '' }}>
-                                            {{ $department->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('department_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                        <button type="button"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                            data-bs-dismiss="modal">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                            Submit
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    {{-- Include modal Add/Edit (sama seperti kode kamu sebelumnya) --}}
+    @include('contents.master.user.partials.modal-add')
+    @include('contents.master.user.partials.modal-edit')
 @endsection
-
 @push('scripts')
     <x-sweetalert-confirm />
     <script>

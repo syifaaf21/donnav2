@@ -36,11 +36,11 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
                     <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
                         <i class="bi bi-search"></i>
                     </button>
                     <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
                         <i class="bi bi-x-circle"></i>
                     </button>
                 </form>
@@ -57,7 +57,7 @@
                             <th class="px-4 py-2">Model</th>
                             <th class="px-4 py-2">Process</th>
                             <th class="px-4 py-2">Plant</th>
-                            <th class="px-4 py-2">Actions</th>
+                            <th class="px-4 py-2 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -71,7 +71,7 @@
                                 <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
                                 <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
                                 <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
-                                <td class="px-4 py-2">
+                                <td class="px-4 py-2 text-center">
                                     <button type="button" data-bs-toggle="modal"
                                         data-bs-target="#editPartNumberModal-{{ $part->id }}"
                                         data-bs-title="Edit Part Number"
