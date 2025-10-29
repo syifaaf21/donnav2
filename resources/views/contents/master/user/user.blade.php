@@ -75,13 +75,12 @@
                                 <td class="px-4 py-2 flex gap-2">
                                     {{-- Edit Button --}}
                                     <button type="button" data-bs-toggle="modal"
-                                       data-bs-target="#editUserModal-{{ $user->id }}"
-                                        data-bs-title="Edit User"
+                                        data-bs-target="#editUserModal-{{ $user->id }}" data-bs-title="Edit User"
                                         class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
                                         <i data-feather="edit" class="w-4 h-4"></i>
                                     </button>
                                     {{-- Delete Button --}}
-                                    @if (auth()->user()->role->name == 'Admin')
+                                    @if ($user->role->name != 'Admin')
                                         <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
                                             class="d-inline delete-form">
                                             @csrf
@@ -125,7 +124,7 @@
                     <div class="modal-content border-0 shadow-lg rounded-4">
                         <div class="modal-header bg-light text-dark rounded-top-4">
                             <h5 class="modal-title fw-semibold" id="editUserModalLabel-{{ $user->id }}">
-                                 <i class="bi bi-pencil-square text-primary"> </i>Edit User
+                                <i class="bi bi-pencil-square text-primary"> </i>Edit User
                             </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
@@ -411,37 +410,7 @@
                     form.classList.add('was-validated'); // Tambahkan class validasi Bootstrap
                 }, false);
             });
-        });
 
-        //Tooltip
-        document.addEventListener('DOMContentLoaded', function() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-            tooltipTriggerList.map(function(el) {
-                return new bootstrap.Tooltip(el, {
-                    title: el.getAttribute('data-bs-title'),
-                    placement: 'top',
-                    trigger: 'hover'
-                });
-            });
-        });
-    </script>
-    @if ($errors->any() && session('edit_modal'))
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                new bootstrap.Modal(document.getElementById("editUserModal-{{ session('edit_modal') }}")).show();
-            });
-        </script>
-    @endif
-
-    @if ($errors->any() && old('_form') === 'add')
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                new bootstrap.Modal(document.getElementById("addUserModal")).show();
-            });
-        </script>
-    @endif
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
             // TomSelect untuk modal Add - Role
             new TomSelect('#role_select', {
                 create: false,
@@ -454,13 +423,12 @@
                 load: function(query, callback) {
                     let url = '/api/roles?q=' + encodeURIComponent(query);
                     fetch(url)
-                        .then(response => response.json())
+                        .ten(response => response.json())
                         .then(json => callback(json))
                         .catch(() => callback());
                 }
             });
 
-            // TomSelect untuk modal Add - Department
             new TomSelect('#department_select', {
                 create: false,
                 maxItems: 1,
@@ -519,7 +487,30 @@
             });
 
 
+            //Tooltip
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el, {
+                    title: el.getAttribute('data-bs-title'),
+                    placement: 'top',
+                    trigger: 'hover'
+                });
+            });
         });
     </script>
+    @if ($errors->any() && session('edit_modal'))
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                new bootstrap.Modal(document.getElementById("editUserModal-{{ session('edit_modal') }}")).show();
+            });
+        </script>
+    @endif
 
+    @if ($errors->any() && old('_form') === 'add')
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                new bootstrap.Modal(document.getElementById("addUserModal")).show();
+            });
+        </script>
+    @endif
 @endpush

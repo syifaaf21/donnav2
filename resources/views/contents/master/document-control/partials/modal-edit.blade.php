@@ -1,6 +1,6 @@
 {{-- ✅ Modal Edit Document Review (Modern + Department Dropdown) --}}
-<div class="modal fade" id="editModal{{ $mapping->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $mapping->id }}"
-    aria-hidden="true">
+<div class="modal fade" id="editModal{{ $mapping->id }}" data-mapping-id="{{ $mapping->id }}" tabindex="-1"
+    aria-labelledby="editModalLabel{{ $mapping->id }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <form action="{{ route('master.document-control.update', $mapping->id) }}" method="POST" class="needs-validation"
             novalidate>
@@ -24,7 +24,10 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Document Name <span class="text-danger">*</span></label>
                             <input type="text" name="document_name" class="form-control border-1 shadow-sm"
-                                value="{{ old('document_name', $mapping->document->name ?? '') }}" required>
+                                value="{{ session('editOldInputs.'.$mapping->id.'.document_name', $mapping->document->name ?? '') }}" required>
+                            @error('document_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         {{-- Department --}}
@@ -34,25 +37,47 @@
                                 <option value="">-- Select Department --</option>
                                 @foreach ($departments as $dept)
                                     <option value="{{ $dept->id }}"
-                                        @if ($mapping->department_id == $dept->id) selected @endif>
+                                        {{ (session('editOldInputs.'.$mapping->id.'.department_id', $mapping->department_id) == $dept->id) ? 'selected' : '' }}>
                                         {{ $dept->name }}
                                     </option>
                                 @endforeach
                             </select>
+                            @error('department_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         {{-- Reminder Date --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Reminder Date</label>
+                            <label class="form-label fw-medium">Reminder Date <span class="text-danger">*</span></label>
                             <input type="date" name="reminder_date" class="form-control border-1 shadow-sm"
-                                value="{{ \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d') }}">
+                                value="{{ session('editOldInputs.'.$mapping->id.'.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}">
+                            @error('reminder_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         {{-- Obsolete --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Obsolete Date</label>
-                            <input type="date" name="deadline" class="form-control border-1 shadow-sm"
-                                value="{{ \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d') }}">
+                            <label class="form-label fw-medium">Obsolete Date <span class="text-danger">*</span></label>
+                            <input type="date" name="obsolete_date" class="form-control border-1 shadow-sm"
+                                value="{{ session('editOldInputs.'.$mapping->id.'.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}">
+                            @error('obsolete_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Notes (Quill editable) --}}
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-medium">Notes</label>
+                            <input type="hidden" name="notes" id="notes_input_edit{{ $mapping->id }}"
+                                value="{{ session('editOldInputs.'.$mapping->id.'.notes', $mapping->notes) }}">
+                            <div id="quill_editor_edit{{ $mapping->id }}" class="bg-white border-1 shadow-sm rounded"
+                                style="min-height: 100px; max-height: 130px; overflow-y: auto;"></div>
+                            @error('notes')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">You can format your notes with bold, italic, colors, and more.</small>
                         </div>
 
                     </div>
@@ -60,15 +85,17 @@
 
                 {{-- Modal Footer --}}
                 <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200" data-bs-dismiss="modal">
-                         Close
+                    <button type="button"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                        data-bs-dismiss="modal">
+                        Close
                     </button>
                     <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                         Save Changes
+                        Save Changes
                     </button>
                 </div>
+
             </div>
         </form>
     </div>
 </div>
-

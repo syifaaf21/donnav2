@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 
 class DocumentMappingController extends Controller
@@ -128,6 +129,7 @@ class DocumentMappingController extends Controller
     // ================= Store Review (Admin) =================
     public function storeReview(Request $request)
     {
+        session()->forget('openModal');
         if (Auth::user()->role->name != 'Admin') {
             abort(403, 'Unauthorized action.');
         }
@@ -143,6 +145,12 @@ class DocumentMappingController extends Controller
         ], [
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
+
+        // ✅ Bersihkan notes dari <p><br></p>
+        $cleanNotes = trim($validated['notes'] ?? '');
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
+            $cleanNotes = null;
+        }
 
         // Cek existing document_number
         $existing = DocumentMapping::where('document_number', $request->document_number)->exists();
@@ -169,6 +177,13 @@ class DocumentMappingController extends Controller
             }
         }
 
+        if ($request->fails()) {
+            return back()
+                ->withErrors($request)
+                ->withInput()
+                ->with('openModal', 'add'); // 🔥 ini penting
+        }
+
         // Simpan DocumentMapping dulu
         $mapping = DocumentMapping::create([
             'document_id' => $request->document_id,
@@ -180,7 +195,7 @@ class DocumentMappingController extends Controller
             'deadline' => null,
             'obsolete_date' => null,
             'status_id' => Status::where('name', 'Need Review')->first()->id,
-            'notes' => $request->notes ?? '',
+            'notes' => $cleanNotes,
             'user_id' => Auth::id(),
         ]);
 
@@ -203,7 +218,7 @@ class DocumentMappingController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Document review created!');
+        return redirect()->back()->with('success', 'Document review created successfully!');
     }
 
     public function generateDocumentNumber(Request $request)
@@ -373,11 +388,12 @@ class DocumentMappingController extends Controller
     // ================= Update Review (Admin) =================
     public function updateReview(Request $request, DocumentMapping $mapping)
     {
+        session()->forget('openModal');
         if (Auth::user()->role->name != 'Admin') {
             abort(403);
         }
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255',
             'part_number_id' => 'required|exists:tm_part_numbers,id',
@@ -389,6 +405,13 @@ class DocumentMappingController extends Controller
         ], [
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('openModal', 'edit-' . $mapping->id); // 🔥 pastikan pakai $mapping->id
+        }
 
         // Update metadata
         $mapping->timestamps = false;
@@ -412,9 +435,7 @@ class DocumentMappingController extends Controller
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
                 $extension = $file->getClientOriginalExtension();
-                // Gunakan document_number dari mapping, bukan request
                 $filename = $mapping->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
-
                 $path = $file->storeAs('document-reviews', $filename, 'public');
 
                 $mapping->files()->create([
@@ -426,15 +447,6 @@ class DocumentMappingController extends Controller
                 ]);
             }
         }
-
-        $mapping = DocumentMapping::with([
-            'document',
-            'department',
-            'partNumber',
-            'parent',
-            'files'
-        ])->find($mapping->id);
-
 
         // Notify users
         $users = User::all();
@@ -579,7 +591,7 @@ class DocumentMappingController extends Controller
             'department' => 'required|exists:tm_departments,id',
             'obsolete_date' => 'required|date',
             'reminder_date' => 'required|date|before_or_equal:obsolete_date',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:500',
             'files' => 'required|array',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
         ], [
@@ -640,29 +652,60 @@ class DocumentMappingController extends Controller
         }
 
         return redirect()->route('master.document-control.index')
-            ->with('success', 'Document Control berhasil ditambahkan!');
+            ->with('success', 'Document created successfully!');
     }
 
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)
-    {
-        if (Auth::user()->role->name != 'Admin') {
-            abort(403);
-        }
-
-        $validated = $request->validate([
-            'document_id' => 'required|exists:tm_documents,id',
-            'department_id' => 'required|exists:tm_departments,id',
-            'obsolete_date' => 'nullable|date',
-            'reminder_date' => 'nullable|date',
-        ]);
-
-        $validated['user_id'] = Auth::id();
-
-        $mapping->update($validated);
-
-        return redirect()->route('master.document-control.index')->with('success', 'Document Control berhasil diupdate!');
+{
+    if (Auth::user()->role->name != 'Admin') {
+        abort(403);
     }
+
+    // Validasi input
+    $validator = Validator::make($request->all(), [
+        'document_name' => 'required|string|max:255',
+        'department_id' => 'required|exists:tm_departments,id',
+        'obsolete_date' => 'nullable|date',
+        'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
+        'notes' => 'nullable|string|max:500',
+    ], [
+        'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
+    ]);
+
+    // ❗ Kalau gagal validasi, langsung return back — jangan lanjut ke bawah
+    if ($validator->fails()) {
+        // Hapus old input bawaan Laravel supaya tidak mengisi modal Add
+        $request->session()->forget('_old_input');
+
+        // Simpan error dan input khusus untuk modal Edit tertentu
+        return back()
+            ->withErrors($validator)
+            ->with('editModalId', $mapping->id)
+            ->with('editOldInputs.' . $mapping->id, $request->all());
+    }
+
+    $validated = $validator->validated();
+
+    // Update document name
+    if ($mapping->document) {
+        $mapping->document->update([
+            'name' => $validated['document_name'],
+        ]);
+    }
+
+    // Update mapping
+    $mapping->update([
+        'department_id' => $validated['department_id'],
+        'obsolete_date' => $validated['obsolete_date'],
+        'reminder_date' => $validated['reminder_date'],
+        'notes' => $validated['notes'] ?? null,
+        'user_id' => Auth::id(),
+    ]);
+
+    return redirect()->route('master.document-control.index')
+        ->with('success', 'Document updated successfully!');
+}
 
     // Approve Document Control
     public function approveControl(DocumentMapping $mapping)

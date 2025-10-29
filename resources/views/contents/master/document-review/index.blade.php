@@ -51,7 +51,7 @@
                 </div>
 
                 {{-- Search Bar --}}
-                <form method="GET" class="flex items-center w-full max-w-sm relative">
+                <form id="searchForm" method="GET" class="flex items-center w-full max-w-sm relative">
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
@@ -209,6 +209,34 @@
             modal.addEventListener('hidden.bs.modal', () => {
                 iframe.src = '';
             });
+
+            // Script to open modal automatically if there are validation errors
+            const modalKey = "{{ session('openModal') }}";
+
+            if (modalKey) {
+                let modalId = '';
+
+                if (modalKey === 'add') {
+                    modalId = 'addDocumentModal';
+                } else if (modalKey.startsWith('edit-')) {
+                    modalId = `editModal${modalKey.replace('edit-', '')}`;
+
+                    // Pastikan modal Add tertutup dulu
+                    const addModalEl = document.getElementById('addDocumentModal');
+                    if (addModalEl) {
+                        const addModalInstance = bootstrap.Modal.getOrCreateInstance(addModalEl);
+                        addModalInstance.hide(); // Pastikan selalu tertutup, instance akan dibuat jika belum ada
+                    }
+                }
+
+                if (modalId) {
+                    const modalEl = document.getElementById(modalId);
+                    if (modalEl) {
+                        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modalInstance.show();
+                    }
+                }
+            }
 
             document.body.addEventListener('click', function(e) {
                 const btn = e.target.closest('.toggle-children');
@@ -529,23 +557,23 @@
                 modules: {
                     toolbar: [
                         [{
-                            font: []
+                            'font': []
                         }, {
-                            size: []
+                            'size': []
                         }],
                         ['bold', 'italic', 'underline', 'strike'],
                         [{
-                            color: []
+                            'color': []
                         }, {
-                            background: []
+                            'background': []
                         }],
                         [{
-                            list: 'ordered'
+                            'list': 'ordered'
                         }, {
-                            list: 'bullet'
+                            'list': 'bullet'
                         }],
                         [{
-                            align: []
+                            'align': []
                         }],
                         ['clean']
                     ]
@@ -560,16 +588,10 @@
             // === EDIT MODAL JS ===
             @foreach ($documentMappings as $mapping)
                 $('#editModal{{ $mapping->id }}').on('shown.bs.modal', function() {
-
-                    // ===============================
-                    // 🔹 Inisialisasi Flag
-                    // ===============================
                     let isInitializing = true;
                     let lastParentValue = null;
 
-                    // ===============================
-                    // 🔹 Inisialisasi TomSelect
-                    // ===============================
+                    // Inisialisasi TomSelect
                     const tsEditDoc = new TomSelect('#editDocumentSelect{{ $mapping->id }}', {
                         create: false,
                         preload: true,
@@ -600,9 +622,7 @@
                     window['tsEditParent{{ $mapping->id }}'] = tsEditParent;
                     window['tsEditPlant{{ $mapping->id }}'] = tsEditPlant;
 
-                    // ===============================
-                    // 🔹 Load Parent Documents
-                    // ===============================
+                    // Load Parent Documents
                     function loadParentDocuments(plant) {
                         return new Promise((resolve) => {
                             const selectedParent = $('#editParentSelect{{ $mapping->id }}').data(
@@ -631,9 +651,7 @@
                         });
                     }
 
-                    // ===============================
-                    // 🔹 Load Initial Part Numbers
-                    // ===============================
+                    // Load Initial Part Numbers
                     function loadInitialPartNumbers(plant = null) {
                         let url = '/api/part-numbers';
                         if (plant) url += `?plant=${encodeURIComponent(plant)}`;
@@ -652,9 +670,7 @@
                             });
                     }
 
-                    // ===============================
-                    // 🔹 Update Departments
-                    // ===============================
+                    // Update Departments
                     function updateEditDepartments() {
                         const documentId = tsEditDoc.getValue();
                         const plant = tsEditPlant.getValue();
@@ -689,9 +705,7 @@
                             });
                     }
 
-                    // ===============================
-                    // 🔹 Auto-generate Document Number
-                    // ===============================
+                    // Auto-generate Document Number
                     const docNumberInput = document.getElementById(
                         'editDocumentNumber{{ $mapping->id }}');
 
@@ -724,9 +738,7 @@
 
                     const debouncedGenerate = debounce(generateDocumentNumber, 500);
 
-                    // ===============================
-                    // 🔹 Event Listeners
-                    // ===============================
+                    // Event Listeners
                     tsEditDoc.on('change', () => {
                         if (!isInitializing) debouncedGenerate();
                     });
@@ -760,9 +772,7 @@
                     tsEditDoc.on('change', updateEditDepartments);
                     tsEditPlant.on('change', updateEditDepartments);
 
-                    // ===============================
-                    // 🔹 Initialize Modal Values
-                    // ===============================
+                    // Initialize Modal Values
                     const initialPlant = tsEditPlant.getValue();
 
                     Promise.all([
@@ -772,9 +782,7 @@
                         isInitializing = false; // semua selesai
                     });
 
-                    // ===============================
-                    // 🔹 Quill Editor
-                    // ===============================
+                    // Quill Editor
                     const quill = new Quill('#quill_editor_edit{{ $mapping->id }}', {
                         theme: 'snow',
                         placeholder: 'Write your notes here...',
@@ -812,9 +820,7 @@
                             quill.root.innerHTML;
                     });
 
-                    // ===============================
-                    // 🔹 File Input Dinamis
-                    // ===============================
+                    // File Input Dinamis
                     const container = document.getElementById("editFileFields{{ $mapping->id }}");
                     const addBtn = document.getElementById("editAddFile{{ $mapping->id }}");
 
@@ -839,23 +845,8 @@
 
                 });
             @endforeach
-
         });
     </script>
-    {{-- Script to open modal automatically if there are validation errors --}}
-    @if ($errors->any())
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var modal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
-                modal.show();
-
-                // Load old notes value into Quill editor
-                if (window.quill) {
-                    window.quill.root.innerHTML = {!! json_encode(old('notes', '')) !!};
-                }
-            });
-        </script>
-    @endif
 @endpush
 @push('styles')
     <style>
