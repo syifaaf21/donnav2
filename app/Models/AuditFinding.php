@@ -13,8 +13,8 @@ class AuditFinding extends Model
 
     protected $fillable =
         [
-            'audit_id',
-            'sub_audit_id',
+            'audit_type_id',
+            'sub_audit_type_id',
             'finding_category_id',
             'sub_klausul_id',
             'department_id',
@@ -79,5 +79,10 @@ class AuditFinding extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+
+    public function file()
+    {
+        return $this->hasMany(DocumentFile::class);
     }
 }

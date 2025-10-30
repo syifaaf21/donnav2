@@ -29,7 +29,7 @@
     </li>
 
     <li>
-        <a href="{{ route('document-review.index') }}"
+        <a href="{{ route('ftpp.index') }}"
             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all {{ Route::is('ftpp*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100'}}">
             <i data-feather="alert-octagon" class="w-4 h-4 text-gray-100"></i>
             <span class="sidebar-text text-gray-100">FTPP</span>
@@ -127,7 +127,7 @@
             <li>
                 <a href="{{ route('master.ftpp.index') }}"
                     class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-sm {{ Route::is('master.ftpp.*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
-                    <i data-feather="git-branch" class="w-4 h-4 text-gray-100"></i>
+                    <i data-feather="alert-circle" class="w-4 h-4 text-gray-100"></i>
                     <span class="sidebar-text text-gray-100">FTPP</span>
                 </a>
             </li>

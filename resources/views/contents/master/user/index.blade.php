@@ -49,13 +49,19 @@
         {{-- Tab Contents --}}
         <div class="tab-content" id="userTabsContent">
             <div class="tab-pane fade show active" id="all-tab-pane" role="tabpanel" aria-labelledby="all-tab">
-                @include('contents.master.user.partials.all')
+                <div id="ajaxUserTableAll">
+                    @include('contents.master.user.partials.all')
+                </div>
             </div>
             <div class="tab-pane fade" id="depthead-tab-pane" role="tabpanel" aria-labelledby="depthead-tab">
-                @include('contents.master.user.partials.dept-head')
+                <div id="ajaxUserTableDeptHead">
+                    @include('contents.master.user.partials.dept-head')
+                </div>
             </div>
             <div class="tab-pane fade" id="auditor-tab-pane" role="tabpanel" aria-labelledby="auditor-tab">
-                @include('contents.master.user.partials.auditor')
+                <div id="ajaxUserTableAuditor">
+                    @include('contents.master.user.partials.auditor')
+                </div>
             </div>
         </div>
 
@@ -199,8 +205,106 @@
                     }
                 });
             });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
 
+            // Utility: ambil active tab key (all | depthead | auditor)
+            function getActiveTabKey() {
+                const id = $('.nav-link.active').attr('id') || 'all-tab';
+                return id.replace('-tab', '');
+            }
 
+            // Trigger when bootstrap tab becomes visible -> load page 1 untuk tab itu
+            $(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"]', function(e) {
+                const tabKey = getActiveTabKey();
+                const perPage = $('#perPageSelect').val() || 10;
+                const url = "{{ route('master.users.index') }}" + "?tab=" + tabKey + "&per_page=" + perPage;
+                fetchUserData(url);
+            });
+
+            // Clear search (delegated) -> langsung fetch tab page 1 with empty search
+            $(document).on('click', '.clearSearch', function() {
+                const $form = $(this).closest('form');
+                $form.find('.searchInput').val('');
+                const tabKey = getActiveTabKey();
+                const perPage = $('#perPageSelect').val() || 10;
+                const url = "{{ route('master.users.index') }}" + "?tab=" + tabKey + "&per_page=" +
+                    perPage + "&search=";
+                fetchUserData(url);
+            });
+
+            // Search form submit -> AJAX (ke page 1)
+            $(document).on('submit', '.searchForm', function(e) {
+                e.preventDefault();
+                const $form = $(this);
+                const query = $form.find('.searchInput').val();
+                const tabKey = getActiveTabKey();
+                const perPage = $('#perPageSelect').val() || 10;
+                const url = "{{ route('master.users.index') }}" + "?tab=" + tabKey + "&per_page=" +
+                    perPage + "&search=" + encodeURIComponent(query);
+                fetchUserData(url);
+            });
+
+            // per-page dropdown change
+            $(document).on('change', '#perPageSelect', function() {
+                const perPage = $(this).val();
+                const tabKey = getActiveTabKey();
+                const url = "{{ route('master.users.index') }}" + "?tab=" + tabKey + "&per_page=" + perPage;
+                fetchUserData(url);
+            });
+
+            // Pagination link click (delegated)
+            $(document).on('click', '#pagination-links a', function(e) {
+                e.preventDefault();
+                let url = $(this).attr('href'); // might include ?page=2
+                // ensure tab & per_page ada
+                const tabKey = getActiveTabKey();
+                const perPage = $('#perPageSelect').val() || 10;
+                const sep = url.includes('?') ? '&' : '?';
+                url = url + sep + 'tab=' + tabKey + '&per_page=' + perPage;
+                fetchUserData(url);
+            });
+
+            // Central AJAX function
+            function fetchUserData(url) {
+                const activeTabPane = $('.tab-pane.active').find('[id^="ajaxUserTable"]');
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    dataType: 'html',
+                    beforeSend: function() {
+                        activeTabPane.html(
+                            '<div class="text-center py-4 text-gray-500">Loading...</div>');
+                    },
+                    success: function(data) {
+                        // replace content of the active tab container with returned partial HTML
+                        activeTabPane.html(data);
+
+                        // reinitialize icons / tooltip / tomselect for any elements in returned HTML if needed
+                        if (typeof feather !== 'undefined') feather.replace();
+
+                        // reinit tooltips for newly injected elements
+                        const tooltipList = [].slice.call(activeTabPane.find('[data-bs-title]'));
+                        tooltipList.map(function(el) {
+                            return new bootstrap.Tooltip(el, {
+                                title: el.getAttribute('data-bs-title'),
+                                placement: 'top',
+                                trigger: 'hover'
+                            });
+                        });
+                    },
+                    error: function(xhr) {
+                        console.error('AJAX error:', xhr.responseText || xhr.statusText);
+                        activeTabPane.html(
+                            '<div class="text-center py-4 text-red-500">Failed to load data.</div>');
+                    }
+                });
+            }
+
+            // initial: ensure perPageSelect exists; if not, default behavior still works
         });
     </script>
 
