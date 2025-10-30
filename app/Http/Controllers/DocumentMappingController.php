@@ -177,12 +177,12 @@ class DocumentMappingController extends Controller
             }
         }
 
-        if ($request->fails()) {
-            return back()
-                ->withErrors($request)
-                ->withInput()
-                ->with('openModal', 'add'); // 🔥 ini penting
-        }
+        // if ($request->fails()) {
+        //     return back()
+        //         ->withErrors($request)
+        //         ->withInput()
+        //         ->with('openModal', 'add');
+        // }
 
         // Simpan DocumentMapping dulu
         $mapping = DocumentMapping::create([
