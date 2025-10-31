@@ -47,9 +47,9 @@ class AuditFinding extends Model
         return $this->belongsTo(FindingCategory::class);
     }
 
-    public function subKlausul()
+    public function subKlausuls()
     {
-        return $this->belongsTo(SubKlausul::class);
+        return $this->belongsToMany(SubKlausul::class, 'tt_audit_finding_sub_klausul', 'audit_finding_id', 'sub_klausul_id');
     }
 
     public function department()
@@ -85,4 +85,5 @@ class AuditFinding extends Model
     {
         return $this->hasMany(DocumentFile::class);
     }
+
 }

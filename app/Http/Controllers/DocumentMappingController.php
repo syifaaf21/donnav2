@@ -177,13 +177,6 @@ class DocumentMappingController extends Controller
             }
         }
 
-        if ($request->fails()) {
-            return back()
-                ->withErrors($request)
-                ->withInput()
-                ->with('openModal', 'add'); // 🔥 ini penting
-        }
-
         // Simpan DocumentMapping dulu
         $mapping = DocumentMapping::create([
             'document_id' => $request->document_id,

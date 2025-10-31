@@ -177,9 +177,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
-        Route::post('/', [FtppController::class, 'store'])->name('store');
+        Route::post('/', [FtppController::class, 'storeHeader'])->name('store-header');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
-        Route::get('/api/klausul', [KlausulController::class, 'getAll']);
+        Route::get('/get-all', [FtppController::class, 'getAll']);
     });
 
 });

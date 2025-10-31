@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'FTPP')
 @section('content')
-
     <div x-data="ftppApp()" class="container mx-auto my-2 px-4">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
@@ -43,6 +42,8 @@
                         {{-- HEADER --}}
                         <div class="text-center font-bold text-lg mb-2">FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
                         </div>
+
+                        {{-- AUDITOR INPUT --}}
                         <table class="w-full border border-black text-sm">
                             <tr>
                                 <td class="border border-black p-1 w-1/3 align-top">
@@ -60,7 +61,7 @@
                                     }">
                                         <!-- Level 1: Audit Type -->
                                         <div class="space-y-2">
-                                            <template x-for="type in auditTypes" :key="type.id">
+                                            <template x-for="type in @js($auditTypes)" :key="type.id">
                                                 <label class="block">
                                                     <input type="checkbox" :value="type.id"
                                                         @change="
@@ -96,9 +97,29 @@
                                     <div x-data="{
                                         form: {
                                             department_id: '',
-                                            process_id: '',
                                             auditee_id: '',
-                                            auditor_id: ''
+                                            // ... field lainnya
+                                        },
+                                        departments: @js($departments),
+                                        auditeeList: [],
+
+                                        async loadAuditeeByDept() {
+                                            if (!this.form.department_id) {
+                                                this.auditeeList = [];
+                                                this.form.auditee_id = '';
+                                                return;
+                                            }
+
+                                            try {
+                                                const res = await fetch(`/ftpp/get-all?department_id=${this.form.department_id}`, {
+                                                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                                                });
+                                                this.auditeeList = await res.json();
+                                                this.form.auditee_id = '';
+                                            } catch (err) {
+                                                console.error(err);
+                                                alert('Gagal memuat data auditee');
+                                            }
                                         }
                                     }">
                                         {{-- Department --}}
@@ -106,12 +127,11 @@
                                             <label class="block text-sm text-gray-700 mb-1">Department /
                                                 Proces:</label>
                                             <div class="flex items-center">
-                                                <select x-model="form.department_id"
-                                                    class="border-b border-gray-400 w-2/3 focus:outline-none" required>
-                                                    <option value="">-- Choose Department --</option>
-                                                    @foreach ($departments as $dept)
-                                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                                                    @endforeach
+                                                <select x-model="form.department_id" @change="loadAuditeeByDept">
+                                                    <option value="">-- Select Department --</option>
+                                                    <template x-for="dept in departments" :key="dept.id">
+                                                        <option :value="dept.id" x-text="dept.name"></option>
+                                                    </template>
                                                 </select>
                                                 <span>/</span>
                                                 <select x-model="form.process_id"
@@ -128,12 +148,11 @@
                                         <div class="flex">
                                             <label class="block text-sm text-gray-700 mb-1">Auditee
                                                 (PIC):</label>
-                                            <select x-model="form.auditee_id"
-                                                class="border-b border-gray-400 w-2/3 focus:outline-none ml-2" required>
-                                                <option value="">-- Choose Auditee --</option>
-                                                @foreach ($auditees as $auditee)
-                                                    <option value="{{ $auditee->id }}">{{ $auditee->name }}</option>
-                                                @endforeach
+                                            <select x-model="form.auditee_id">
+                                                <option value="">-- Select Auditee --</option>
+                                                <template x-for="auditee in auditeeList" :key="auditee.id">
+                                                    <option :value="auditee.id" x-text="auditee.name"></option>
+                                                </template>
                                             </select>
                                         </div>
 
@@ -170,6 +189,13 @@
                                 </td>
                             </tr>
                         </table>
+                        <!-- Tombol Save Header -->
+                        <div class="mt-3 text-right">
+                            <button type="button" @click="saveHeader"
+                                class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+                                Save Header
+                            </button>
+                        </div>
 
                         {{-- TEMUAN --}}
                         <table class="w-full border border-black text-sm mt-2">
@@ -188,11 +214,11 @@
                                                 required>
                                         </div>
                                         <div x-data="klausulForm({ klausuls: klausulData, parentForm: form })" x-init="init()" class="mt-2">
-                                            <template x-for="(item, index) in form.klausul_list" :key="index">
+                                            <template x-for="(item, index) in klausulList" :key="index">
                                                 <div class="flex items-center gap-2 mb-1">
                                                     <!-- Dropdown Klausul -->
-                                                    <select x-model="item.klausul_id" @change="updateSubKlausul(index)"
-                                                        class="border border-gray-400 rounded px-1 py-0.5 text-sm w-1/3">
+                                                    <select x-model="klausulList[index].klausul_id"
+                                                        @change="updateSubKlausul(index)">
                                                         <option value="">-- Select Clause --</option>
                                                         <template x-for="k in filteredKlausuls" :key="k.id">
                                                             <option :value="k.id" x-text="k.name"></option>
@@ -200,12 +226,11 @@
                                                     </select>
 
                                                     <!-- Dropdown Sub Klausul -->
-                                                    <select x-model="item.sub_klausul_id"
-                                                        class="border border-gray-400 rounded px-1 py-0.5 text-sm w-2/3">
+                                                    <select x-model="klausulList[index].sub_klausul_id">
                                                         <option value="">-- Select Sub Clause --</option>
-                                                        <template x-for="sk in item.filteredSubKlausul"
-                                                            :key="sk.id">
-                                                            <option :value="sk.id" x-text="sk.name"></option>
+                                                        <template x-for="sub in klausulList[index].filteredSubKlausul"
+                                                            :key="sub.id">
+                                                            <option :value="sub.id" x-text="sub.name"></option>
                                                         </template>
                                                     </select>
 
@@ -227,7 +252,9 @@
                                 </td>
                             </tr>
                         </table>
+                        {{-- END AUDITOR INPUT --}}
 
+                        {{-- AUDITEE INPUT --}}
                         {{-- 5 WHY --}}
                         <table class="w-full border border-black text-sm mt-2">
                             <tr class="bg-gray-100 font-semibold">
@@ -319,6 +346,7 @@
                                     <textarea x-show="form.yokoten == 1" x-model="form.finding_description"
                                         class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
                                 </td>
+                                {{-- LDR, SPV, DEPT HEAD --}}
                                 <td class="border border-black p-2">
                                     <input type="file" @change="uploadSignature($event, 'dept_head_signature')"
                                         accept="image/*" class="text-xs">
@@ -336,6 +364,7 @@
                             </tr>
                         </table>
 
+                        {{-- AUDITOR VERIFY --}}
                         {{-- TANDA TANGAN --}}
                         <table class="w-full border border-black text-sm mt-2 text-center">
                             <tr>
@@ -359,6 +388,7 @@
                                 </td>
                             </tr>
                         </table>
+                        {{-- END AUDITOR VERIFY --}}
 
                         {{-- STATUS --}}
                         <div class="flex justify-between mt-3">
@@ -372,7 +402,6 @@
                                 Simpan
                             </button>
                         </div>
-
                     </form>
                 </template>
             </div>
@@ -389,142 +418,109 @@
             return {
                 formLoaded: false,
                 selectedId: null,
-                form: {},
+                form: {
+                    status_id: 1,
+                    klausul_list: []
+                },
+
+                get selectedType() {
+                    return this.form.audit_type_id ?
+                        this.auditTypes.find(a => a.id == this.form.audit_type_id) :
+                        null;
+                },
 
                 createNew() {
                     this.selectedId = null;
                     this.form = {
-                        status_id: 1
+                        status_id: 1,
+                        klausul_list: []
                     };
                     this.formLoaded = true;
                 },
 
                 async loadForm(id) {
-                    this.selectedId = id;
                     const res = await fetch(`/ftpp/${id}`);
-                    const data = await res.json();
-                    this.form = data;
+                    this.form = await res.json();
                     this.formLoaded = true;
                 },
-
-                async saveForm() {
-                    const method = this.selectedId ? 'PUT' : 'POST';
-                    const url = this.selectedId ? `/ftpp/${this.selectedId}` : '/ftpp';
-                    const res = await fetch(url, {
-                        method,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify(this.form),
-                    });
-                    const result = await res.json();
-                    if (result.success) {
-                        alert('Data berhasil disimpan');
-                        window.location.reload();
-                    } else {
-                        alert('Gagal menyimpan: ' + result.message);
-                    }
-                },
-
-                async uploadSignature(event, field) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    const formData = new FormData();
-                    formData.append('signature', file);
-
-                    const res = await fetch(`/api/upload-signature`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: formData,
-                    });
-                    const data = await res.json();
-                    this.form[field] = data.path;
-
-                    // otomatis close jika auditor sudah tanda tangan
-                    if (field === 'auditor_signature') {
-                        this.form.status_id = 2; // closed
-                    }
-                }
             }
         }
 
-        function klausulForm({ klausuls, parentForm }) {
-        return {
+        function klausulForm({
             klausuls,
-            parentForm,
-            form: {
-                klausul_list: [{
-                    klausul_id: '',
-                    sub_klausul_id: '',
-                    filteredSubKlausul: []
-                }],
-            },
+            parentForm
+        }) {
+            return {
+                klausuls,
+                parentForm,
 
-            get filteredKlausuls() {
-                const auditTypeId = Number(this.parentForm.audit_type_id);
-                if (!auditTypeId) return [];
+                // klausul_list akan selalu diambil dari parentForm
+                get klausulList() {
+                    // pastikan parentForm.klausul_list selalu ada
+                    if (!Array.isArray(this.parentForm.klausul_list)) {
+                        this.parentForm.klausul_list = [{
+                            klausul_id: '',
+                            sub_klausul_id: '',
+                            filteredSubKlausul: []
+                        }];
+                    }
+                    return this.parentForm.klausul_list;
+                },
 
-                // Audit Type = Sistem Manajemen LK3
-                if (auditTypeId === 1) {
-                    return this.klausuls.filter(k => [2, 3].includes(k.id));
-                }
+                // 🔹 Klausul difilter sesuai Audit Type di parent form
+                get filteredKlausuls() {
+                    const type = Number(this.parentForm.audit_type_id);
+                    if (!type) return [];
 
-                // Audit Type = Sistem Manajemen Mutu
-                if (auditTypeId === 2) {
-                    return this.klausuls.filter(k => k.id === 1);
-                }
+                    // Mapping: audit type id → klausul id yg boleh muncul
+                    switch (type) {
+                        case 1: // Sistem Manajemen LK3
+                            return this.klausuls.filter(k => [2, 3].includes(k.id));
+                        case 2: // Sistem Manajemen Mutu
+                            return this.klausuls.filter(k => k.id === 1);
+                        default:
+                            return [];
+                    }
+                },
 
-                return [];
-            },
+                // 🔹 Update sub klausul berdasarkan klausul yang dipilih
+                updateSubKlausul(index) {
+                    const klausulId = this.klausulList[index].klausul_id;
+                    const selected = this.klausuls.find(k => k.id == klausulId);
 
-            updateSubKlausul(index) {
-                const klausulId = this.form.klausul_list[index].klausul_id;
-                const selected = this.klausuls.find(k => k.id == klausulId);
+                    if (selected && selected.head_klausul) {
+                        this.klausulList[index].filteredSubKlausul =
+                            selected.head_klausul.flatMap(h => h.sub_klausul || []);
+                    } else {
+                        this.klausulList[index].filteredSubKlausul = [];
+                    }
 
-                if (selected && selected.head_klausul) {
-                    this.form.klausul_list[index].filteredSubKlausul =
-                        selected.head_klausul.flatMap(h => h.sub_klausul || []);
-                } else if (selected && selected.headKlausul) {
-                    // cadangan jika JSON pakai camelCase
-                    this.form.klausul_list[index].filteredSubKlausul =
-                        selected.headKlausul.flatMap(h => h.subKlausul || []);
-                } else {
-                    this.form.klausul_list[index].filteredSubKlausul = [];
-                }
+                    this.klausulList[index].sub_klausul_id = '';
+                },
 
-                this.form.klausul_list[index].sub_klausul_id = '';
-            },
-
-            addRow() {
-                this.form.klausul_list.push({
-                    klausul_id: '',
-                    sub_klausul_id: '',
-                    filteredSubKlausul: [],
-                });
-            },
-
-            removeRow(index) {
-                this.form.klausul_list.splice(index, 1);
-            },
-
-            init() {
-                // gunakan data dari blade langsung, tanpa fetch ulang
-                if (!this.klausuls || this.klausuls.length === 0) {
-                    console.warn('⚠️ klausulData kosong!');
-                }
-
-                this.$watch('parentForm.audit_type_id', () => {
-                    this.form.klausul_list = [{
+                addRow() {
+                    this.klausulList.push({
                         klausul_id: '',
                         sub_klausul_id: '',
-                        filteredSubKlausul: []
-                    }];
-                });
-            }
-        };
-    }
+                        filteredSubKlausul: [],
+                    });
+                },
+
+                removeRow(index) {
+                    this.klausulList.splice(index, 1);
+                },
+
+                init() {
+                    // 🔄 reset klausul_list setiap kali audit type berubah
+                    this.$watch('parentForm.audit_type_id', () => {
+                        this.parentForm.klausul_list = [{
+                            klausul_id: '',
+                            sub_klausul_id: '',
+                            filteredSubKlausul: []
+                        }];
+                    });
+                }
+            };
+        }
     </script>
 @endpush
