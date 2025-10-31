@@ -21,4 +21,14 @@ class DocumentFile extends Model
     {
         return $this->belongsTo(DocumentMapping::class);
     }
+
+    public function auditFinding()
+    {
+        return $this->belongsTo(AuditFinding::class);
+    }
+
+    public function auditeeAction()
+    {
+        return $this->belongsTo(AuditeeAction::class);
+    }
 }

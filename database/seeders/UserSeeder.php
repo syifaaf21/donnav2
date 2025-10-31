@@ -18,10 +18,12 @@ class UserSeeder extends Seeder
         // Ambil role
         $adminRole = Role::where('name', 'admin')->first();
         $userRole = Role::where('name', 'user')->first();
-        $deptHeadRoleId = 4; // Dept Head
+        $deptHeadRoleId = 5; // Dept Head
         $superAdminRoleId = 1;
         $userRoleId = 3;
-        $auditorRoleId = 5;
+        $auditorRoleId = 4;
+        $leaderRoleId = 6;
+        $spvRoleId = 7;
 
         // Ambil satu department default untuk user global (misal Engineering Body)
         $defaultDept = Department::find(24); // sesuaikan dengan ID dept yang aman
@@ -37,7 +39,7 @@ class UserSeeder extends Seeder
         ]);
 
         // === ADMIN ===
-        $adminDept = Department::find(17);
+        $adminDept = Department::find(24);
         User::create([
             'npk' => '111111',
             'name' => 'Admin',
@@ -65,6 +67,26 @@ class UserSeeder extends Seeder
             'password' => Hash::make('audit123'),
             'role_id' => $auditorRoleId,
             'department_id' => $defaultDept->id,
+        ]);
+
+        // === SUPERVISOR ===
+        User::create([
+            'npk' => '444444',
+            'name' => 'Supervisor User',
+            'email' => 'spv@example.com',
+            'password' => Hash::make('aiia123'),
+            'role_id' => $spvRoleId,
+            'department_id' => 20,
+        ]);
+
+        // === LEADER ===
+        User::create([
+            'npk' => '555555',
+            'name' => 'Leader User',
+            'email' => 'leader@example.com',
+            'password' => Hash::make('aiia123'),
+            'role_id' => $leaderRoleId,
+            'department_id' => 20,
         ]);
 
         // === DEPT HEADS ===

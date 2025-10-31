@@ -1,18 +1,19 @@
+{{-- Auditor --}}
 <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
     {{-- Search Bar --}}
         <div class="p-2 border-b border-gray-100 flex justify-end">
-            <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
-                <input type="text" name="search" id="searchInput"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Search..." value="{{ request('search') }}">
-                <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                    <i class="bi bi-search"></i>
-                </button>
-                <button type="button" id="clearSearch"
-                    class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                    <i class="bi bi-x-circle"></i>
-                </button>
-            </form>
+            <form method="GET" class="searchForm flex items-center w-full max-w-sm relative">
+            <input type="text" name="search"
+                class="searchInput w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search..." value="{{ request('search') }}">
+            <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
+                <i class="bi bi-search"></i>
+            </button>
+            <button type="button"
+                class="clearSearch absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </form>
         </div>
     <div class="overflow-x-auto overflow-y-auto max-h-96">
         <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
@@ -29,7 +30,7 @@
                 @forelse ($users as $user)
                     @if ($user->role->name === 'Auditor')
                         <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-2">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-2">{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
                             <td class="px-4 py-2">{{ $user->name }}</td>
                             <td class="px-4 py-2">{{ $user->email }}</td>
                             <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
@@ -66,3 +67,7 @@
     </div>
 </div>
 
+{{-- Pagination --}}
+<div class="mt-4" id="pagination-links">
+    {{ $users->withQueryString()->links('vendor.pagination.tailwind') }}
+</div>

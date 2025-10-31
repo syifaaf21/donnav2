@@ -13,7 +13,7 @@ class SubAudit extends Model
 
     protected $fillable =
     [
-        'audi_id',
+        'audit_type_id',
         'name',
     ];
 

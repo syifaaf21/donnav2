@@ -14,15 +14,15 @@ return new class extends Migration
         Schema::create('tt_auditee_actions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('audit_finding_id')->constrained('tt_audit_findings')->onDelete('cascade');
-            $table->foreignId('status_id')->constrained('tm_statuses')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('pic');
             $table->string('root_cause');
             $table->boolean('yokoten')->default(false);
             $table->string('yokoten_area')->nullable();
             $table->boolean('verified_by_auditor')->default(false);
-            $table->string('auditee_signature')->nullable();
+            $table->string('ldr_spv_signature')->nullable();
             $table->string('dept_head_signature')->nullable();
             $table->string('auditor_signature')->nullable();
+            $table->string('lead_auditor_signature')->nullable();
             $table->timestamps();
         });
     }

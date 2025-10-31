@@ -9,6 +9,7 @@ use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
+use App\Http\Controllers\FtppController;
 use App\Http\Controllers\FtppMasterController;
 use App\Http\Controllers\KlausulController;
 use App\Http\Controllers\ModelController;
@@ -135,7 +136,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
             });
 
-            Route::prefix('klausul')->name('klausul.')->middleware('auth')->group(function() {
+            Route::prefix('klausul')->name('klausul.')->middleware('auth')->group(function () {
                 Route::get('/{id}', [KlausulController::class, 'show']);
                 Route::post('/', [KlausulController::class, 'store'])->name('store');
                 Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
@@ -172,5 +173,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/ajax/models', [PartNumberController::class, 'ajaxModelIndex']);
     Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
+
+    Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
+        Route::get('/', [FtppController::class, 'index'])->name('index');
+        Route::get('/{id}', [FtppController::class, 'show'])->name('show');
+        Route::post('/', [FtppController::class, 'store'])->name('store');
+        Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        Route::get('/api/klausul', [KlausulController::class, 'getAll']);
+    });
 
 });

@@ -16,7 +16,7 @@ class AuditeeAction extends Model
     [
         'audit_finding_id',
         'status_id',
-        'user_id',
+        'pic',
         'root_cause',
         'yokoten',
         'yokoten_area',
@@ -34,5 +34,25 @@ class AuditeeAction extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+
+    public function whyCauses()
+    {
+        return $this->hasMany(WhyCauses::class);
+    }
+
+    public function correctiveAction()
+    {
+        return $this->hasMany(CorrectiveAction::class);
+    }
+
+    public function preventiveAction()
+    {
+        return $this->hasMany(PreventiveAction::class);
+    }
+
+    public function file()
+    {
+        return $this->hasMany(DocumentFile::class);
     }
 }
