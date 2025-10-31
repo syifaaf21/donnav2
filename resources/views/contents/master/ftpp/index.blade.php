@@ -70,12 +70,12 @@
                     const target = tab.getAttribute("data-section");
 
                     // hilangkan highlight tab lain
-                    tabs.forEach(t => t.classList.remove("bg-blue-500", "text-white"));
+                    tabs.forEach(t => t.classList.remove("bg-blue-500", "text-white", "shadow"));
                     tabs.forEach(t => t.classList.add("bg-gray-200", "text-gray-700"));
 
                     // aktifkan tab ini
                     tab.classList.remove("bg-gray-200", "text-gray-700");
-                    tab.classList.add("bg-blue-500", "text-white");
+                    tab.classList.add("bg-blue-500", "text-white", "shadow");
 
                     // sembunyikan semua, tampilkan target
                     Object.values(sections).forEach(section => section.classList.add("hidden"));

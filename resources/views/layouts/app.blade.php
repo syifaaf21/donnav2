@@ -41,7 +41,7 @@
     @include('components.flash-message')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-white rounded-xl mt-2">
+    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-gray-50 rounded-xl mt-2">
         @include('layouts.partials.navbar')
 
         <!-- Content -->
@@ -53,7 +53,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script> --}}
-    {{-- <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script> --}}
     <!-- ✅ Custom Script  -->
     <script src="{{ asset('js/sidebar.js') }}"></script>
 

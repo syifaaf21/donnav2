@@ -67,7 +67,6 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('master')->name('master.')->middleware('auth')->group(function () {
         // Part Number Management Routes
         Route::resource('part_numbers', PartNumberController::class);
-        Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
 
         // User Management Routes
         Route::resource('users', UserController::class);

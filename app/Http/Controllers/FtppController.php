@@ -32,7 +32,6 @@ class FtppController extends Controller
             ->select('id', 'name')->get();
 
         $auditTypes = Audit::with('subAudit')->get();
-        $subAuditTypes = SubAudit::all();
         $findingCategories = FindingCategory::all();
 
         $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
@@ -41,7 +40,7 @@ class FtppController extends Controller
             ->get();
 
 
-        return view('contents.ftpp.index', compact('findings', 'departments', 'processes', 'auditees', 'auditors', 'klausuls', 'auditTypes', 'subAuditTypes', 'findingCategories'));
+        return view('contents.ftpp.index', compact('findings', 'departments', 'processes', 'auditees', 'auditors', 'klausuls', 'auditTypes', 'findingCategories'));
     }
 
     public function storeHeader(Request $request)

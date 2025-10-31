@@ -38,15 +38,21 @@
                     </td>
                     <td class="px-3 py-2 border-b text-center">
                         <div class="flex justify-center gap-2">
-                        <button data-id="{{ $audit->id }}" data-name="{{ $audit->name }}"
-                            class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
-                            <i data-feather="edit" class="w-4 h-4"></i>
-                        </button>
-                        |
-                        <button data-id="{{ $audit->id }}"
-                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                        </button>
+                            <button data-id="{{ $audit->id }}" data-name="{{ $audit->name }}"
+                                class="btn-edit bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
+                            |
+                            <form action="{{ route('master.ftpp.audit.destroy', $audit->id) }}" method="POST"
+                                class="inline-block delete-form"
+                                onsubmit="return confirm('Are you sure you want to delete this data?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="bg-red-600 hover:bg-red-700 text-white p-2 rounded transition">
+                                    <i data-feather="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>
@@ -163,11 +169,6 @@
         </div>
     </div>
 </div>
-{{-- Hidden Delete Form --}}
-<form id="form-delete" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
 
 @push('scripts')
     <script>
@@ -292,22 +293,5 @@
             });
         });
 
-        // delete handler
-        document.addEventListener("DOMContentLoaded", function() {
-            const deleteButtons = document.querySelectorAll('.btn-delete');
-            const formDelete = document.getElementById('form-delete');
-
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const id = this.dataset.id;
-
-                    if (confirm('Apakah kamu yakin ingin menghapus data ini?')) {
-                        // Set action URL ke form
-                        formDelete.action = `/master/ftpp/audit/${id}`;
-                        formDelete.submit();
-                    }
-                });
-            });
-        });
     </script>
 @endpush

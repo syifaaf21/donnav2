@@ -24,7 +24,7 @@
                     <td class="px-3 py-2 border-b text-center">
                         <div class="flex justify-center gap-2">
                         <button data-id="{{ $category->id }}"
-                            class="btn-edit bg-blue-600 text-white hover:bg-blue-700 p-2 rounded">
+                            class="btn-edit bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
                             <i data-feather="edit" class="w-4 h-4"></i>
                         </button>
                         |
@@ -114,7 +114,7 @@
 </div>
 
 {{-- HIDDEN DELETE FORM --}}
-<form id="form-delete-category" method="POST" style="display: none;">
+<form class="delete-form" id="form-delete-category" method="POST" style="display: none;">
     @csrf
     @method('DELETE')
 </form>
@@ -152,7 +152,7 @@
         document.querySelectorAll('.btn-delete').forEach(button => {
             button.addEventListener('click', () => {
                 const id = button.dataset.id;
-                if (confirm('Are you sure you want to delete this category?')) {
+                if (confirm('Are you sure you want to delete this data?')) {
                     const form = document.getElementById('form-delete-category');
                     form.action = `/master/ftpp/finding-category/${id}`;
                     form.submit();

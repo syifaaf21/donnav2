@@ -88,9 +88,9 @@ class AuditTypeController extends Controller
             // Hapus audit utama
             $audit->delete();
 
-            return redirect()->back()->with('success', 'Audit dan Sub Audit berhasil dihapus.');
+            return redirect()->back()->with('success', 'Deleted successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Fail to delete: ' . $e->getMessage());
         }
     }
 }
