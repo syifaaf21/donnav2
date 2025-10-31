@@ -15,7 +15,8 @@
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-4">
-                            <label for="document_name" class="form-label">Document Name <span class="text-danger">*</span></label>
+                            <label for="document_name" class="form-label">Document Name <span
+                                    class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('document_name') is-invalid @enderror"
                                 id="document_name" name="document_name" value="{{ old('document_name') }}" required>
                             @error('document_name')
@@ -23,7 +24,8 @@
                             @enderror
                         </div>
                         <div class="col-md-4">
-                            <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                            <label for="department" class="form-label">Department <span
+                                    class="text-danger">*</span></label>
                             <select class="form-select tomselect @error('department') is-invalid @enderror"
                                 id="department" name="department" required>
                                 <option value="">-- Select Department --</option>
@@ -41,7 +43,8 @@
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
-                            <label for="obsolete_date" class="form-label">Obsolete Date <span class="text-danger">*</span></label>
+                            <label for="obsolete_date" class="form-label">Obsolete Date <span
+                                    class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('obsolete_date') is-invalid @enderror"
                                 id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}" required>
                             @error('obsolete_date')
@@ -49,7 +52,8 @@
                             @enderror
                         </div>
                         <div class="col-md-6">
-                            <label for="reminder_date" class="form-label">Reminder Date <span class="text-danger">*</span></label>
+                            <label for="reminder_date" class="form-label">Reminder Date <span
+                                    class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('reminder_date') is-invalid @enderror"
                                 id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}" required>
                             @error('reminder_date')
@@ -58,7 +62,7 @@
                         </div>
                     </div>
                     {{-- Notes --}}
-                    <div class="col-12 mb-3">
+                    <div class="col-12 mt-3">
                         <label class="form-label">Notes</label>
                         <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
                         <div id="quill_editor_add" class="bg-white border-1 shadow-sm rounded"
@@ -69,9 +73,11 @@
                     </div>
                     {{-- File --}}
                     <div class="row g-2 mt-2" id="file-fields">
-                        <label for="reminder_date" class="form-label">Upload File <span class="text-danger">*</span></label>
+                        <label for="reminder_date" class="form-label">Upload File <span
+                                class="text-danger">*</span></label>
                         <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
-                            <label class="form-label visually-hidden">Upload File <span class="text-danger">*</span></label>
+                            <label class="form-label visually-hidden">Upload File <span
+                                    class="text-danger">*</span></label>
                             <input type="file"
                                 class="form-control @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror"
                                 name="files[]" required>
@@ -84,18 +90,19 @@
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-file">
-                        <i class="bi bi-plus-square"></i>
+                    <button type="button" class="btn btn-outline-success btn-sm mt-2" id="add-file">
+                        <i class="bi bi-plus"></i> Add File
                     </button>
 
                     {{-- Modal Footer --}}
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4 mt-3">
                         <button type="button"
                             class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
                             Submit
                         </button>
                     </div>

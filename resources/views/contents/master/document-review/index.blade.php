@@ -44,7 +44,6 @@
                                 'bg-gray-100 text-gray-800 border-gray-100' :
                                 'bg-white text-gray-600 hover:bg-gray-100'"
                             class="px-4 py-2 rounded-t-lg border border-gray-200 text-sm font-medium transition">
-                            <i data-feather="settings" class="inline w-4 h-4 me-1"></i>
                             {{ ucfirst(strtolower($plant)) }}
                         </button>
                     @endforeach

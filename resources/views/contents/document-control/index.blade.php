@@ -143,16 +143,16 @@
                     <div id="actionButtons" class="hidden flex items-center gap-2">
                         <button id="btnRevise"
                             class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-yellow-200 text-yellow-700 hover:bg-yellow-50"
-                            onclick="openReviseModal({{ $mapping->id ?? 'null' }})" disabled>
+                            onclick="openReviseModal()">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6"></path>
                             </svg>
                             Revise
                         </button>
 
-                        <button id="btnApprove" type="button" data-docid="{{ $mapping->id }}"
+                        <button id="btnApprove" type="button"
                             class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-green-200 text-green-700 hover:bg-green-50 btn-approve"
-                            data-bs-toggle="modal" data-bs-target="#approveModal" disabled>
+                            data-bs-toggle="modal" data-bs-target="#approveModal">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
                                 </path>
@@ -163,8 +163,7 @@
                         <form id="rejectForm" method="POST" class="inline" action="#">
                             @csrf
                             <button id="btnReject" type="submit"
-                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
-                                disabled>
+                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12"></path>
@@ -276,75 +275,79 @@
                 });
 
                 // =======================
-                // Preview / View File
+                // Preview / View File with Delegation
                 // =======================
-                document.querySelectorAll('.view-file-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const fileUrl = btn.dataset.file;
-                        const docId = btn.dataset.docid;
-                        const docTitle = btn.dataset.docTitle || 'File Preview';
+                document.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.view-file-btn');
+                    if (!btn) return;
 
-                        const previewContainer = document.getElementById('previewContainer');
-                        const actionButtons = document.getElementById('actionButtons');
-                        const previewTitle = document.getElementById('previewTitle');
+                    const fileUrl = btn.dataset.file;
+                    const docId = btn.dataset.docid;
+                    const docTitle = btn.dataset.docTitle || 'File Preview';
 
-                        if (!previewContainer) return;
+                    const previewContainer = document.getElementById('previewContainer');
+                    const actionButtons = document.getElementById('actionButtons');
+                    const previewTitle = document.getElementById('previewTitle');
+                    const btnApprove = document.getElementById('btnApprove');
+                    btnApprove.dataset.docid = docId;
 
-                        document.getElementById('currentDocId').value = docId;
-                        if (actionButtons) actionButtons.classList.remove('hidden');
-                        if (previewTitle) previewTitle.textContent = docTitle;
+                    // Enable tombol Approve
+                    btnApprove.disabled = false;
 
-                        previewContainer.innerHTML = '';
-                        const iframe = document.createElement('iframe');
-                        iframe.src = fileUrl;
-                        iframe.style.width = '100%';
-                        iframe.style.height = '100%';
-                        iframe.style.border = 'none';
-                        previewContainer.appendChild(iframe);
+                    if (!previewContainer) return;
 
-                        const status = btn.dataset.status;
-                        const reviseBtn = document.getElementById('btnRevise');
-                        const approveBtn = document.getElementById('btnApprove');
-                        const rejectBtn = document.getElementById('btnReject');
+                    document.getElementById('currentDocId').value = docId;
+                    if (actionButtons) actionButtons.classList.remove('hidden');
+                    if (previewTitle) previewTitle.textContent = docTitle;
 
-                        // Reset semua dulu ke kondisi disabled
-                        [reviseBtn, approveBtn, rejectBtn].forEach(b => {
-                            if (!b) return;
-                            b.disabled = true;
-                            b.classList.add('opacity-50', 'cursor-not-allowed',
+                    previewContainer.innerHTML = '';
+                    const iframe = document.createElement('iframe');
+                    iframe.src = fileUrl;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    previewContainer.appendChild(iframe);
+
+                    const status = btn.dataset.status;
+                    const reviseBtn = document.getElementById('btnRevise');
+                    const approveBtn = document.getElementById('btnApprove');
+                    const rejectBtn = document.getElementById('btnReject');
+
+                    // Reset semua dulu ke kondisi disabled
+                    [reviseBtn, approveBtn, rejectBtn].forEach(b => {
+                        if (!b) return;
+                        b.disabled = true;
+                        b.classList.add('opacity-50', 'cursor-not-allowed', 'hover:bg-transparent');
+                    });
+
+                    // Aktifkan tombol sesuai status
+                    if (['Active', 'Rejected', 'Obsolete'].includes(status)) {
+                        reviseBtn.disabled = false;
+                        reviseBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'hover:bg-transparent');
+                    } else if (status === 'Need Review') {
+                        [approveBtn, rejectBtn].forEach(b => {
+                            b.disabled = false;
+                            b.classList.remove('opacity-50', 'cursor-not-allowed',
                                 'hover:bg-transparent');
                         });
+                    }
 
-                        // Aktifkan tombol sesuai status
-                        if (['Active', 'Rejected', 'Obsolete'].includes(status)) {
-                            // ✅ Revise aktif
-                            reviseBtn.disabled = false;
-                            reviseBtn.classList.remove('opacity-50', 'cursor-not-allowed',
-                                'hover:bg-transparent');
-                        } else if (status === 'Need Review') {
-                            // ✅ Approve & Reject aktif
-                            [approveBtn, rejectBtn].forEach(b => {
-                                b.disabled = false;
-                                b.classList.remove('opacity-50', 'cursor-not-allowed',
-                                    'hover:bg-transparent');
-                            });
-                        }
+                    // ✅ Simpan current mapping files khusus untuk button ini
+                    try {
+                        const files = JSON.parse(btn.getAttribute('data-files') || '[]');
+                        btn.dataset.currentMappingFiles = JSON.stringify(files); // simpan di button sendiri
+                        window.currentMappingFiles = files; // optional, untuk modal
+                    } catch {
+                        window.currentMappingFiles = [];
+                    }
 
-                        // Save current mapping files safely
-                        try {
-                            window.currentMappingFiles = JSON.parse(btn.getAttribute('data-files') ||
-                                '[]');
-                        } catch {
-                            window.currentMappingFiles = [];
-                        }
-
-                        // Update approve/reject form actions
-                        const approveForm = document.getElementById('approveForm');
-                        const rejectForm = document.getElementById('rejectForm');
-                        if (approveForm) approveForm.action = `${baseUrl}/${docId}/approve`;
-                        if (rejectForm) rejectForm.action = `${baseUrl}/${docId}/reject`;
-                    });
+                    // Update approve/reject form actions
+                    const approveForm = document.getElementById('approveForm');
+                    const rejectForm = document.getElementById('rejectForm');
+                    if (approveForm) approveForm.action = `${baseUrl}/${docId}/approve`;
+                    if (rejectForm) rejectForm.action = `${baseUrl}/${docId}/reject`;
                 });
+
 
                 // =======================
                 // Approve Buttons
@@ -373,10 +376,62 @@
                 // =======================
                 // Revise Modal
                 // =======================
-                function populateReviseModal() {
-                    const docIdInput = document.getElementById('currentDocId');
-                    if (!docIdInput) return;
+                function populateReviseModal(btn) {
+                    const files = JSON.parse(btn.dataset.files || '[]'); // langsung dari button
+                    const container = document.getElementById('reviseFilesContainer');
+                    if (!container) return;
+                    container.innerHTML = '';
 
+                    if (!files.length) {
+                        container.innerHTML = '<p class="text-gray-500">No file available</p>';
+                        return;
+                    }
+
+                    files.forEach(f => {
+                        const div = document.createElement('div');
+                        div.className = 'mb-4 border rounded p-3 bg-gray-50';
+                        div.innerHTML = `
+                            <div class="flex justify-between items-center mb-2">
+                                <strong>${f.document_name}</strong>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <a href="${f.url}" target="_blank" class="text-sm px-3 py-1.5 rounded border border-gray-200">
+                                    ${f.name}
+                                </a>
+                                <button type="button" class="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded replace-file">Replace</button>
+                            </div>
+                            <input type="hidden" name="revision_file_ids[]" value="${f.id}">
+                            <div class="mt-2 hidden file-input-wrapper">
+                                <input type="file" name="revision_files[]">
+                            </div>
+                        `;
+                        container.appendChild(div);
+
+                        const replaceBtn = div.querySelector('.replace-file');
+                        if (replaceBtn) {
+                            replaceBtn.addEventListener('click', () => {
+                                const wrapper = div.querySelector('.file-input-wrapper');
+                                if (wrapper) wrapper.classList.remove('hidden');
+                                const input = wrapper.querySelector('input[type="file"]');
+                                if (input) input.required = true;
+                            });
+                        }
+                    });
+                }
+
+                // open modal
+                window.openReviseModal = function() {
+                    const modal = document.getElementById('modal-revise');
+                    const form = document.getElementById('reviseFormDynamic');
+                    if (!modal || !form) return;
+
+                    modal.classList.remove('hidden');
+
+                    // mappingId sekarang diambil dari currentDocId (yang sudah diset saat view file)
+                    const mappingId = document.getElementById('currentDocId').value;
+                    form.action = `${baseUrl}/${mappingId}/revise`;
+
+                    // Populate modal dengan files dari global state
                     const files = window.currentMappingFiles || [];
                     const container = document.getElementById('reviseFilesContainer');
                     if (!container) return;
@@ -391,21 +446,20 @@
                         const div = document.createElement('div');
                         div.className = 'mb-4 border rounded p-3 bg-gray-50';
                         div.innerHTML = `
-                                <div class="flex justify-between items-center mb-2">
-                                    <strong>${f.document_name}</strong>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <a href="${f.url}" target="_blank" class="text-sm px-3 py-1.5 rounded border border-gray-200">
-                                        ${f.name}
-                                    </a>
-                                    <button type="button" class="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded replace-file">Replace</button>
-                                </div>
-                                <input type="hidden" name="revision_file_ids[]" value="${f.id}">
-                                <div class="mt-2 hidden file-input-wrapper">
-                                    <input type="file" name="revision_files[]">
-
-                                </div>
-                            `;
+            <div class="flex justify-between items-center mb-2">
+                <strong>${f.document_name}</strong>
+            </div>
+            <div class="flex items-center justify-between">
+                <a href="${f.url}" target="_blank" class="text-sm px-3 py-1.5 rounded border border-gray-200">
+                    ${f.name}
+                </a>
+                <button type="button" class="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded replace-file">Replace</button>
+            </div>
+            <input type="hidden" name="revision_file_ids[]" value="${f.id}">
+            <div class="mt-2 hidden file-input-wrapper">
+                <input type="file" name="revision_files[]">
+            </div>
+        `;
                         container.appendChild(div);
 
                         const replaceBtn = div.querySelector('.replace-file');
@@ -413,19 +467,22 @@
                             replaceBtn.addEventListener('click', () => {
                                 const wrapper = div.querySelector('.file-input-wrapper');
                                 if (wrapper) wrapper.classList.remove('hidden');
+                                const input = wrapper.querySelector('input[type="file"]');
+                                if (input) input.required = true;
                             });
                         }
                     });
+                };
 
-                }
 
-                window.openReviseModal = function(mappingId) {
-                    const modal = document.getElementById('modal-revise');
-                    const form = document.getElementById('reviseFormDynamic');
-                    if (modal) modal.classList.remove('hidden');
-                    if (form) form.action = `${baseUrl}/${mappingId}/revise`;
-                    populateReviseModal();
-                }
+
+                // window.openReviseModal = function(mappingId) {
+                //     const modal = document.getElementById('modal-revise');
+                //     const form = document.getElementById('reviseFormDynamic');
+                //     if (modal) modal.classList.remove('hidden');
+                //     if (form) form.action = `${baseUrl}/${mappingId}/revise`;
+                //     populateReviseModal();
+                // }
 
                 window.closeReviseModal = function() {
                     const modal = document.getElementById('modal-revise');

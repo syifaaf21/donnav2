@@ -75,42 +75,61 @@ class DocumentControlController extends Controller
         foreach ($uploadedFiles as $index => $uploadedFile) {
             $replaceId = $revisionFileIds[$index] ?? null;
 
+            // Ambil base name dan extension
+            $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $uploadedFile->getClientOriginalExtension();
+
+            // Generate timestamp string, misal format: 20251031_093000
+            $timestamp = now()->format('Ymd_His');
+
             if ($replaceId) {
-                // 🔹 Kalau ada ID berarti ini REPLACE file lama
+                // REPLACE file lama
                 $oldFile = $mapping->files()->find($replaceId);
                 if ($oldFile) {
-                    // Hapus file fisik lama
+                    // Hapus file lama
                     if (Storage::disk('public')->exists($oldFile->file_path)) {
                         Storage::disk('public')->delete($oldFile->file_path);
                     }
 
-                    // Simpan file baru
-                    $filename = $mapping->document_number . '_rev_' . time() . "_{$index}." . $uploadedFile->getClientOriginalExtension();
+                    // Gunakan nama revisi dengan tambahan timestamp dan _revX
+                    $existingRevisions = $mapping->files()
+                        ->where('original_name', 'like', $baseName . '_rev%')
+                        ->count();
+                    $revisionNumber = $existingRevisions + 1;
+
+                    $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
+
                     $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
                     // Update file lama
                     $oldFile->update([
                         'file_path' => $newPath,
-                        'original_name' => $uploadedFile->getClientOriginalName(),
+                        'original_name' => $filename,
                         'file_type' => $uploadedFile->getClientMimeType(),
                         'uploaded_by' => Auth::id(),
                     ]);
                 }
             } else {
-                // 🔹 Kalau nggak ada ID berarti ini file baru (ADD)
-                $filename = $mapping->document_number . '_rev_' . time() . "_{$index}." . $uploadedFile->getClientOriginalExtension();
+                // ADD file baru
+                $existingRevisions = $mapping->files()
+                    ->where('original_name', 'like', $baseName . '_rev%')
+                    ->count();
+                $revisionNumber = $existingRevisions + 1;
+
+                $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
+
                 $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
                 $mapping->files()->create([
                     'file_path' => $newPath,
-                    'original_name' => $uploadedFile->getClientOriginalName(),
+                    'original_name' => $filename,
                     'file_type' => $uploadedFile->getClientMimeType(),
                     'uploaded_by' => Auth::id(),
                 ]);
             }
         }
 
-        // 🔹 Update status dan info revisi
+        // Update status dan info revisi
         $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
         $mapping->update([
             'status_id' => $needReviewStatus->id,
@@ -119,7 +138,6 @@ class DocumentControlController extends Controller
 
         return redirect()->back()->with('success', 'Document revised successfully!');
     }
-
 
 
     public function approve(Request $request, DocumentMapping $mapping)

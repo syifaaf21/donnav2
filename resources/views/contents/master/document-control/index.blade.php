@@ -462,6 +462,47 @@
             }
 
             /** =======================
+             * ADD FILE INPUT DYNAMICALLY
+             * ======================= */
+            const addFileBtn = document.getElementById('add-file');
+            const fileContainer = document.getElementById('file-fields');
+
+            if (addFileBtn && fileContainer) {
+                addFileBtn.addEventListener('click', function() {
+                    const newFileGroup = document.createElement('div');
+                    newFileGroup.classList.add('col-md-12', 'd-flex', 'align-items-center', 'mb-2',
+                        'file-input-group');
+                    newFileGroup.innerHTML = `
+                    <input type="file" class="form-control" name="files[]" required>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+                    fileContainer.appendChild(newFileGroup);
+                    updateRemoveButtons();
+                });
+
+                // Fungsi untuk aktifkan tombol "hapus file"
+                function updateRemoveButtons() {
+                    const fileGroups = fileContainer.querySelectorAll('.file-input-group');
+                    fileGroups.forEach((group, index) => {
+                        const removeBtn = group.querySelector('.remove-file');
+                        if (removeBtn) {
+                            removeBtn.classList.toggle('d-none', fileGroups.length === 1);
+                            removeBtn.onclick = () => {
+                                group.remove();
+                                updateRemoveButtons();
+                            };
+                        }
+                    });
+                }
+
+                // Inisialisasi pertama
+                updateRemoveButtons();
+            }
+
+
+            /** =======================
              * BULK DELETE (Snackbar)
              * =======================
              */

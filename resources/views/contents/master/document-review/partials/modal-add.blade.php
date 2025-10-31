@@ -1,8 +1,6 @@
 @if (auth()->user()->role->name == 'Admin')
 
-    <div class="modal fade @if ($errors->any()) show @endif" id="addDocumentModal" tabindex="-1"
-        aria-labelledby="addDocumentModalLabel" aria-hidden="{{ $errors->any() ? 'false' : 'true' }}"
-        style="{{ $errors->any() ? 'display: block;' : '' }}">
+    <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <form action="{{ route('master.document-review.store') }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
@@ -170,7 +168,7 @@
                             </div>
 
                             {{-- File Upload --}}
-                            <div class="col-12">
+                            <div class="col-12 mt-5">
                                 <label class="form-label fw-medium">Upload File <span
                                         class="text-danger">*</span></label>
                                 <div id="file-fields">
