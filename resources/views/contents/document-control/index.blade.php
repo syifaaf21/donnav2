@@ -3,6 +3,7 @@
 @section('title', 'Document Control')
 
 @section('content')
+<pre>{{ isset($document) ? print_r($document, true) : 'No $document variable' }}</pre>
     <div class="container mx-auto my-2 px-4">
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -162,8 +163,9 @@
 
                         <form id="rejectForm" method="POST" class="inline" action="#">
                             @csrf
-                            <button id="btnReject" type="submit"
-                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50">
+                            <button id="btnReject" type="button"
+                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50"
+                                onclick="openRejectModal({{ $mapping->id }}, '{{ addslashes($mapping->notes) }}')">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12"></path>
@@ -232,16 +234,16 @@
                 const addFileBtn = document.getElementById('add-file');
                 if (addFileBtn) {
                     addFileBtn.addEventListener('click', function() {
-                        const container = document.getElementById('file-fields');
-                        if (!container) return;
+                        const wrapper = document.getElementById('new-files-container'); // <-- ubah ini
+                        if (!wrapper) return;
 
                         const group = document.createElement('div');
-                        group.className = 'flex items-center mb-2 file-input-group';
+                        group.className = 'flex items-center gap-2 mb-2';
                         group.innerHTML = `
-                <input type="file" name="files[]" class="form-control border rounded px-2 py-1 text-sm" required accept=".pdf,.doc,.docx,.xls,.xlsx">
-                <button type="button" class="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded remove-file">✕</button>
-            `;
-                        container.appendChild(group);
+                            <input type="file" name="revision_files[]" class="form-control" required>
+                            <button type="button" class="px-2 py-1 bg-red-100 text-red-700 rounded remove-file">✕</button>
+                        `;
+                        wrapper.appendChild(group);
 
                         const removeBtn = group.querySelector('.remove-file');
                         if (removeBtn) {
@@ -249,13 +251,6 @@
                         }
                     });
                 }
-
-                // Remove existing file buttons
-                document.querySelectorAll('.remove-file').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        btn.parentElement.remove();
-                    });
-                });
 
                 // =======================
                 // Accordion Toggle
@@ -446,20 +441,20 @@
                         const div = document.createElement('div');
                         div.className = 'mb-4 border rounded p-3 bg-gray-50';
                         div.innerHTML = `
-            <div class="flex justify-between items-center mb-2">
-                <strong>${f.document_name}</strong>
-            </div>
-            <div class="flex items-center justify-between">
-                <a href="${f.url}" target="_blank" class="text-sm px-3 py-1.5 rounded border border-gray-200">
-                    ${f.name}
-                </a>
-                <button type="button" class="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded replace-file">Replace</button>
-            </div>
-            <input type="hidden" name="revision_file_ids[]" value="${f.id}">
-            <div class="mt-2 hidden file-input-wrapper">
-                <input type="file" name="revision_files[]">
-            </div>
-        `;
+                            <div class="flex justify-between items-center mb-2">
+                                <strong>${f.document_name}</strong>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <a href="${f.url}" target="_blank" class="text-sm px-3 py-1.5 rounded border border-gray-200">
+                                    ${f.name}
+                                </a>
+                                <button type="button" class="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded replace-file">Replace</button>
+                            </div>
+                            <input type="hidden" name="revision_file_ids[]" value="${f.id}">
+                            <div class="mt-2 hidden file-input-wrapper">
+                                <input type="file" name="revision_files[]">
+                            </div>
+                        `;
                         container.appendChild(div);
 
                         const replaceBtn = div.querySelector('.replace-file');
@@ -473,8 +468,6 @@
                         }
                     });
                 };
-
-
 
                 // window.openReviseModal = function(mappingId) {
                 //     const modal = document.getElementById('modal-revise');

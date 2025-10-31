@@ -19,7 +19,7 @@
             <!-- Add New Files -->
             <div class="mb-4">
                 <div id="new-files-container"></div>
-                <button type="button" class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded" id="add-file-btn">+ Add File</button>
+                <button type="button" class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded" id="add-file">+ Add File</button>
                 <p class="text-xs text-gray-500 mt-1">Allowed formats: PDF, DOCX, EXCEL</p>
             </div>
 

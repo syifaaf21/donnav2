@@ -76,3 +76,4 @@
     <div class="mt-4" id="pagination-links">
         {{ $users->withQueryString()->links('vendor.pagination.tailwind') }}
     </div>
+<x-sweetalert-confirm />

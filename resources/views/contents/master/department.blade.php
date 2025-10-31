@@ -123,7 +123,7 @@
                         <div class="row g-3">
                             <!-- Name -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Name</label>
+                                <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name"
                                     class="form-control rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ old('name', $department->name) }}" required>
@@ -134,7 +134,7 @@
 
                             <!-- Code -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Code</label>
+                                <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
                                 <input type="text" name="code"
                                     class="form-control rounded-3 @error('code') is-invalid @enderror"
                                     value="{{ old('code', $department->code) }}" required>
@@ -145,7 +145,7 @@
 
                             <!-- Plant -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Plant</label>
+                                <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                                 <select name="plant" class="form-select rounded-3 @error('plant') is-invalid @enderror"
                                     required>
                                     <option value="" disabled
@@ -198,21 +198,21 @@
                 <div class="modal-body p-5">
                     <div class="row g-3">
                         <!-- Name -->
-                        <div class="col-md-6"> <label class="form-label fw-medium">Name</label> <input type="text"
+                        <div class="col-md-6"> <label class="form-label fw-medium">Name <span class="text-danger">*</span></label> <input type="text"
                                 name="name" class="form-control rounded-3 @error('name') is-invalid @enderror"
                                 value="{{ old('name') }}" required> @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <!-- Code -->
-                        <div class="col-md-6"> <label class="form-label fw-medium">Code</label> <input type="text"
+                        <div class="col-md-6"> <label class="form-label fw-medium">Code <span class="text-danger">*</span></label> <input type="text"
                                 name="code" class="form-control rounded-3 @error('code') is-invalid @enderror"
                                 value="{{ old('code') }}" required> @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <!-- Plant -->
-                        <div class="col-md-6"> <label class="form-label fw-medium">Plant</label> <select name="plant"
+                        <div class="col-md-6"> <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label> <select name="plant"
                                 class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
                                 <option value="" disabled {{ old('plant') ? '' : 'selected' }}>-- Select Plant --
                                 </option>

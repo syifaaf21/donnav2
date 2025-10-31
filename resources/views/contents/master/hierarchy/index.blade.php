@@ -95,7 +95,7 @@
                     <div class="modal-body px-4 py-3">
                         {{-- Document Name --}}
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Name</label>
+                            <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name"
                                 class="form-control rounded-3 @error('name') is-invalid @enderror"
                                 value="{{ old('name') }}" placeholder="Enter document name" required>
@@ -126,7 +126,7 @@
 
 
                         <div class="mb-3">
-                            <label class="form-label fw-medium">Code</label>
+                            <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
                             <input type="text" name="code"
                                 class="form-control rounded-3 @error('code') is-invalid @enderror"
                                 value="{{ old('code') }}" required>

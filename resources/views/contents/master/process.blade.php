@@ -122,7 +122,7 @@
                             <div class="row g-3">
                                 <!-- Name -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-medium">Name</label>
+                                    <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
                                     <input type="text" name="name"
                                         class="form-control rounded-3 @error('name') is-invalid @enderror"
                                         value="{{ ucwords($process->name) }}" required>
@@ -133,7 +133,7 @@
 
                                 <!-- Code -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-medium">Code</label>
+                                    <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
                                     <input type="text" name="code"
                                         class="form-control rounded-3 @error('code') is-invalid @enderror"
                                         value="{{ $process->code }}" required>
@@ -144,7 +144,7 @@
 
                                 {{-- Plant --}}
                                 <div class="col-md-6">
-                                    <label class="form-label fw-medium">Plant</label>
+                                    <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                                     <select name="plant" class="form-select" required>
                                         @foreach (['Body', 'Unit', 'Electric'] as $plant)
                                             <option value="{{ $plant }}" @selected($process->plant === $plant)>
@@ -193,7 +193,7 @@
                         <div class="row g-3">
                             <!-- Name -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Name</label>
+                                <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name"
                                     class="form-control rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ old('name') }}" required>
@@ -204,7 +204,7 @@
 
                             <!-- Code -->
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Code</label>
+                                <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
                                 <input type="text" name="code"
                                     class="form-control rounded-3 @error('code') is-invalid @enderror"
                                     value="{{ old('code') }}" required>
@@ -215,7 +215,7 @@
 
                             {{-- Plant --}}
                             <div class="mb-3">
-                                <label class="form-label">Plant</label>
+                                <label class="form-label">Plant <span class="text-danger">*</span></label>
                                 <select name="plant" class="form-select" required>
                                     <option value="">-- Select Plant --</option>
                                     @foreach (['Body', 'Unit', 'Electric'] as $plant)

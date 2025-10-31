@@ -59,7 +59,6 @@ class DocumentControlController extends Controller
         ));
     }
 
-
     public function revise(Request $request, DocumentMapping $mapping)
     {
         $request->validate([
@@ -139,7 +138,6 @@ class DocumentControlController extends Controller
         return redirect()->back()->with('success', 'Document revised successfully!');
     }
 
-
     public function approve(Request $request, DocumentMapping $mapping)
     {
         if (Auth::user()->role->name != 'Admin') {
@@ -176,17 +174,25 @@ class DocumentControlController extends Controller
         return back()->with('success', 'Document approved successfully.');
     }
 
-    public function reject(DocumentMapping $mapping)
+    public function reject(Request $request, DocumentMapping $mapping)
     {
         if (Auth::user()->role->name != 'Admin') {
             abort(403, 'Only admin can reject documents.');
         }
 
-        $statusRejected = Status::firstOrCreate(['name' => 'Rejected'], ['description' => 'Document has been rejected']);
+        $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        $statusRejected = Status::firstOrCreate(
+            ['name' => 'Rejected'],
+            ['description' => 'Document has been rejected']
+        );
 
         $mapping->update([
             'status_id' => $statusRejected->id,
             'user_id' => Auth::id(),
+            'notes' => $request->input('notes'), // <-- simpan notes
         ]);
 
         // Notifikasi ke semua user bahwa dokumen di-reject
@@ -197,6 +203,6 @@ class DocumentControlController extends Controller
             Auth::user()->name
         ));
 
-        return back()->with('success', 'Document rejected successfully.');
+        return response()->json(['status' => 'success']);
     }
 }
