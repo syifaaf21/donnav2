@@ -1,3 +1,4 @@
+
 {{-- Auditor --}}
 <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
     {{-- Search Bar --}}
@@ -37,10 +38,11 @@
                             <td class="px-4 py-2 flex gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal"
-                                    data-bs-target="#editUserModal-{{ $user->id }}" data-bs-title="Edit User"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                </button>
+                                data-id="{{ $user->id }}"
+                                data-bs-title="Edit User"
+                                class="btn-edit-user bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
                                 {{-- Delete Button --}}
                                 @if (auth()->user()->role->name == 'Admin')
                                     <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"

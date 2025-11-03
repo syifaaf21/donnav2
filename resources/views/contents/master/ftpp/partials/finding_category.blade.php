@@ -23,15 +23,15 @@
                     <td class="px-3 py-2 border-b">{{ $category->name }}</td>
                     <td class="px-3 py-2 border-b text-center">
                         <div class="flex justify-center gap-2">
-                        <button data-id="{{ $category->id }}"
-                            class="btn-edit bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                            <i data-feather="edit" class="w-4 h-4"></i>
-                        </button>
-                        |
-                        <button data-id="{{ $category->id }}"
-                            class="btn-delete bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                        </button>
+                            <button data-id="{{ $category->id }}"
+                                class="btn-edit bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
+                            |
+                            <button data-id="{{ $category->id }}"
+                                class="btn-delete bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -120,46 +120,53 @@
 </form>
 
 @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // === Show Add Modal ===
-        document.getElementById('btnAddCategory').addEventListener('click', () => {
-            const modal = new bootstrap.Modal(document.getElementById('modalAddCategory'));
-            modal.show();
-        });
-
-        // === Show Edit Modal ===
-        document.querySelectorAll('.btn-edit').forEach(button => {
-            button.addEventListener('click', async () => {
-                const id = button.dataset.id;
-                const response = await fetch(`/master/ftpp/finding-category/${id}`);
-                if (!response.ok) {
-                    alert('Failed to fetch category data.');
-                    return;
-                }
-                const data = await response.json();
-
-                document.getElementById('edit_category_name').value = data.name;
-                document.getElementById('formEditCategory').action =
-                    `/master/ftpp/finding-category/update/${id}`;
-
-                const modal = new bootstrap.Modal(document.getElementById('modalEditCategory'));
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // === Show Add Modal ===
+            document.getElementById('btnAddCategory').addEventListener('click', () => {
+                const modal = new bootstrap.Modal(document.getElementById('modalAddCategory'));
                 modal.show();
             });
-        });
 
-        // === Delete Action ===
-        document.querySelectorAll('.btn-delete').forEach(button => {
-            button.addEventListener('click', () => {
-                const id = button.dataset.id;
-                if (confirm('Are you sure you want to delete this data?')) {
-                    const form = document.getElementById('form-delete-category');
-                    form.action = `/master/ftpp/finding-category/${id}`;
-                    form.submit();
-                }
+            // === Show Edit Modal ===
+            document.querySelectorAll('.btn-edit').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const id = button.dataset.id;
+                    const response = await fetch(`/master/ftpp/finding-category/${id}`);
+                    if (!response.ok) {
+                        alert('Failed to fetch category data.');
+                        return;
+                    }
+                    const data = await response.json();
+
+                    document.getElementById('edit_category_name').value = data.name;
+                    document.getElementById('formEditCategory').action =
+                        `/master/ftpp/finding-category/update/${id}`;
+
+                    const modal = new bootstrap.Modal(document.getElementById(
+                        'modalEditCategory'));
+                    modal.show();
+                });
+            });
+
+            // === Delete Action ===
+            document.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', () => {
+                    const id = button.dataset.id;
+                    if (confirm('Are you sure you want to delete this data?')) {
+                        const form = document.getElementById('form-delete-category');
+                        form.action = `/master/ftpp/finding-category/${id}`;
+                        form.submit();
+                    }
+                });
             });
         });
-    });
-</script>
-@endpush
 
+        document.addEventListener('hidden.bs.modal', function() {
+            // Hapus semua backdrop yang masih tersisa
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = ''; // biar bisa scroll lagi
+        });
+    </script>
+@endpush

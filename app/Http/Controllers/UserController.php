@@ -108,9 +108,14 @@ class UserController extends Controller
     }
 
 
-    public function edit(User $user)
+    public function edit($id)
     {
-        //
+        $user = User::findOrFail($id);
+        $roles = Role::all();
+        $departments = Department::all();
+
+        // Kembalikan partial Blade khusus isi modal
+        return view('contents.master.user.partials.form-edit', compact('user', 'roles', 'departments'));
     }
 
     public function update(Request $request, User $user)

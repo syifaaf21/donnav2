@@ -66,11 +66,11 @@
         </div>
 
     </div>
-
-    {{-- Include modal Add/Edit (sama seperti kode kamu sebelumnya) --}}
-    @include('contents.master.user.partials.modal-add')
-    @include('contents.master.user.partials.modal-edit')
+{{-- Include modal Add/Edit (sama seperti kode kamu sebelumnya) --}}
+@include('contents.master.user.partials.modal-add')
+@include('contents.master.user.partials.modal-edit2')
 @endsection
+
 @push('scripts')
     <x-sweetalert-confirm />
     <script>
@@ -305,6 +305,46 @@
             }
 
             // initial: ensure perPageSelect exists; if not, default behavior still works
+        });
+
+        // Modal Edit Handler (delegated)
+        $(document).on('click', '.btn-edit-user', function() {
+            const userId = $(this).data('id');
+            const modalEl = document.getElementById(`editUserModal`);
+            const modal = new bootstrap.Modal(modalEl);
+            const modalContent = $('#editUserModalContent');
+
+            modalContent.html('<div class="p-5 text-center text-gray-500">Loading...</div>');
+            modal.show();
+
+            // Tambahkan sedikit delay untuk memastikan modal siap tampil di tab nonaktif
+            setTimeout(() => {
+                $.ajax({
+                    url: `/master/users/${userId}/edit`,
+                    type: 'GET',
+                    success: function(response) {
+                        modalContent.html(response);
+
+                        // Reinit TomSelect untuk select di dalam modal edit
+                        new TomSelect(`#role_select_edit_${userId}`, {
+                            create: false,
+                            maxItems: 1
+                        });
+                        new TomSelect(`#department_select_edit_${userId}`, {
+                            create: false,
+                            maxItems: 1
+                        });
+
+                        if (typeof feather !== 'undefined') feather.replace();
+                    },
+                    error: function(xhr) {
+                        modalContent.html(
+                            '<div class="p-5 text-center text-red-500">Failed to load edit form.</div>'
+                        );
+                        console.error(xhr.responseText);
+                    }
+                });
+            }, 150); // ← delay 150ms, cukup supaya modal benar-benar muncul
         });
     </script>
 
