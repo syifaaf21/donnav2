@@ -80,13 +80,6 @@
                                 <td class="px-6 py-4">
                                     {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
                                 </td>
-                                {{-- <td class="px-6 py-4">
-                                    @if ($mapping->notes)
-                                        {!! $mapping->notes !!}
-                                    @else
-                                        -
-                                    @endif
-                                </td> --}}
                                 <td class="px-6 py-4 flex space-x-2">
                                     @if ($mapping->files->count())
                                         <div class="relative">

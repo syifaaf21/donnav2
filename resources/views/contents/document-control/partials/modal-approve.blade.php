@@ -1,4 +1,3 @@
-<!-- resources/views/contents/document-review/partials/modal-approve.blade.php -->
 <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
         <div class="modal-content border-0 rounded-4 shadow-lg">

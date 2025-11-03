@@ -589,14 +589,14 @@ class DocumentMappingController extends Controller
         $validated = $request->validate([
             'document_name' => 'required|string|max:255',
             'department' => 'required|exists:tm_departments,id',
-            'obsolete_date' => 'required|date',
-            'reminder_date' => 'required|date|before_or_equal:obsolete_date',
+            'obsolete_date' => 'nullable|date',
+            'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
             'notes' => 'nullable|string|max:500',
-            'files' => 'required|array',
+            'files' => 'nullable|array',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
         ], [
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
-            'files.required' => 'File must be uploaded.',
+            'files.nullable' => 'File must be uploaded.',
             'files.array' => 'Invalid file format.',
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
@@ -657,55 +657,59 @@ class DocumentMappingController extends Controller
 
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)
-{
-    if (Auth::user()->role->name != 'Admin') {
-        abort(403);
-    }
+    {
+        if (Auth::user()->role->name != 'Admin') {
+            abort(403);
+        }
 
-    // Validasi input
-    $validator = Validator::make($request->all(), [
-        'document_name' => 'required|string|max:255',
-        'department_id' => 'required|exists:tm_departments,id',
-        'obsolete_date' => 'nullable|date',
-        'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
-        'notes' => 'nullable|string|max:500',
-    ], [
-        'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
-    ]);
-
-    // ❗ Kalau gagal validasi, langsung return back — jangan lanjut ke bawah
-    if ($validator->fails()) {
-        // Hapus old input bawaan Laravel supaya tidak mengisi modal Add
-        $request->session()->forget('_old_input');
-
-        // Simpan error dan input khusus untuk modal Edit tertentu
-        return back()
-            ->withErrors($validator)
-            ->with('editModalId', $mapping->id)
-            ->with('editOldInputs.' . $mapping->id, $request->all());
-    }
-
-    $validated = $validator->validated();
-
-    // Update document name
-    if ($mapping->document) {
-        $mapping->document->update([
-            'name' => $validated['document_name'],
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'document_name' => 'required|string|max:255',
+            'department_id' => 'required|exists:tm_departments,id',
+            'obsolete_date' => 'nullable|date',
+            'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
+            'notes' => 'nullable|string|max:500',
+        ], [
+            'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
+        // ❗ Kalau gagal validasi, langsung return back — jangan lanjut ke bawah
+        if ($validator->fails()) {
+            // Hapus old input bawaan Laravel supaya tidak mengisi modal Add
+            $request->session()->forget('_old_input');
+
+            // Simpan error dan input khusus untuk modal Edit tertentu
+            return back()
+                ->withErrors($validator)
+                ->with('editModalId', $mapping->id)
+                ->with('editOldInputs.' . $mapping->id, $request->all());
+        }
+
+        $validated = $validator->validated();
+
+        // Update document name
+        if ($mapping->document) {
+            $mapping->document->update([
+                'name' => $validated['document_name'],
+            ]);
+        }
+
+        $cleanNotes = trim($validated['notes'] ?? '');
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
+            $cleanNotes = null;
+        }
+        // Update mapping
+        $mapping->update([
+            'department_id' => $validated['department_id'],
+            'obsolete_date' => $validated['obsolete_date'],
+            'reminder_date' => $validated['reminder_date'],
+            'notes' => $validated['notes'] ?? null,
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->route('master.document-control.index')
+            ->with('success', 'Document updated successfully!');
     }
-
-    // Update mapping
-    $mapping->update([
-        'department_id' => $validated['department_id'],
-        'obsolete_date' => $validated['obsolete_date'],
-        'reminder_date' => $validated['reminder_date'],
-        'notes' => $validated['notes'] ?? null,
-        'user_id' => Auth::id(),
-    ]);
-
-    return redirect()->route('master.document-control.index')
-        ->with('success', 'Document updated successfully!');
-}
 
     // Approve Document Control
     public function approveControl(DocumentMapping $mapping)

@@ -25,6 +25,35 @@ class DocumentControlController extends Controller
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
+        // 🔹 Search global
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->whereHas(
+                    'document',
+                    fn($q2) =>
+                    $q2->where('name', 'like', "%$search%")
+                )
+                    ->orWhereHas(
+                        'status',
+                        fn($q2) =>
+                        $q2->where('name', 'like', "%$search%")
+                    )
+                    ->orWhereHas(
+                        'department',
+                        fn($q2) =>
+                        $q2->where('name', 'like', "%$search%")
+                    )
+                    ->orWhereHas(
+                        'user',
+                        fn($q2) =>
+                        $q2->where('name', 'like', "%$search%")
+                    )
+                    ->orWhere('notes', 'like', "%$search%");
+            });
+        }
+
 
         // 🔹 Update status otomatis jadi "Obsolete" kalau sudah lewat tanggal
         $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
@@ -203,6 +232,6 @@ class DocumentControlController extends Controller
             Auth::user()->name
         ));
 
-        return response()->json(['status' => 'success']);
+        return redirect()->back()->with('success', 'Document rejected successfully');
     }
 }
