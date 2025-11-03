@@ -50,23 +50,33 @@ class AuditTypeController extends Controller
         $audit = Audit::findOrFail($id);
         $audit->update(['name' => $request->name]);
 
-        // 1️⃣ Update existing sub audit
+        // 🔁 Hapus semua sub audit lama terlebih dahulu
+        $audit->subAudit()->delete();
+
+        // 🧩 Gabungkan semua sub audit baru dari existing dan tambahan baru
+        $allSubAudits = [];
+
+        // Ambil sub audit existing (yang diubah)
         if ($request->has('sub_audit_existing')) {
-            foreach ($request->sub_audit_existing as $subId => $subName) {
-                $sub = $audit->subAudit()->find($subId);
-                if ($sub) {
-                    $sub->update(['name' => $subName]);
+            foreach ($request->sub_audit_existing as $subName) {
+                if (!empty($subName)) {
+                    $allSubAudits[] = $subName;
                 }
             }
         }
 
-        // 2️⃣ Tambahkan sub audit baru (jika ada)
+        // Ambil sub audit baru
         if ($request->has('sub_audit')) {
             foreach ($request->sub_audit as $newSub) {
                 if (!empty($newSub)) {
-                    $audit->subAudit()->create(['name' => $newSub]);
+                    $allSubAudits[] = $newSub;
                 }
             }
+        }
+
+        // 💾 Simpan ulang semua sub audit
+        foreach ($allSubAudits as $name) {
+            $audit->subAudit()->create(['name' => $name]);
         }
 
         return redirect()->back()->with('success', 'Audit Type updated successfully!');
