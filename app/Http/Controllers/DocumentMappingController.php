@@ -11,6 +11,7 @@ use App\Models\PartNumber;
 use App\Models\Status;
 use App\Models\User;
 use App\Notifications\DocumentUpdatedNotification;
+use App\Notifications\DocumentCreatedNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -130,13 +131,16 @@ class DocumentMappingController extends Controller
     public function storeReview(Request $request)
     {
         session()->forget('openModal');
-        if (Auth::user()->role->name != 'Admin') {
+
+        // 1️⃣ Pastikan hanya Admin yang bisa akses
+        if (Auth::user()->role->name !== 'Admin') {
             abort(403, 'Unauthorized action.');
         }
 
-        $request->validate([
+        // 2️⃣ Validasi input
+        $validated = $request->validate([
             'document_id' => 'required|exists:tm_documents,id',
-            'document_number' => 'required|string|max:255',
+            'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
             'part_number_id' => 'required|exists:tm_part_numbers,id',
             'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
@@ -146,51 +150,32 @@ class DocumentMappingController extends Controller
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
 
-        // ✅ Bersihkan notes dari <p><br></p>
+        // 3️⃣ Bersihkan notes kosong seperti <p><br></p>
         $cleanNotes = trim($validated['notes'] ?? '');
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
             $cleanNotes = null;
         }
 
-        // Cek existing document_number
-        $existing = DocumentMapping::where('document_number', $request->document_number)->exists();
-        if ($existing) {
-            return redirect()->back()->withErrors([
-                'document_number' => 'Document number already exists.'
-            ])->withInput();
-        }
-
-        // 3. Validasi kecocokan parent document dengan part number
+        // 4️⃣ Validasi parent document (jika ada)
         if ($request->filled('parent_id')) {
             $parent = DocumentMapping::find($request->parent_id);
 
             if (!$parent) {
-                return redirect()->back()->withErrors([
-                    'parent_id' => 'Parent Document tidak ditemukan.'
-                ])->withInput();
+                return back()->withErrors(['parent_id' => 'Parent document not found.'])->withInput();
             }
 
             if ($parent->part_number_id != $request->part_number_id) {
-                return redirect()->back()->withErrors([
-                    'parent_id' => 'Parent Document tidak cocok dengan Part Number yang dipilih.'
-                ])->withInput();
+                return back()->withErrors(['parent_id' => 'Parent document does not match selected part number.'])->withInput();
             }
         }
 
-        // if ($request->fails()) {
-        //     return back()
-        //         ->withErrors($request)
-        //         ->withInput()
-        //         ->with('openModal', 'add');
-        // }
-
-        // Simpan DocumentMapping dulu
+        // 5️⃣ Simpan ke tabel document_mappings
         $mapping = DocumentMapping::create([
-            'document_id' => $request->document_id,
-            'document_number' => $request->document_number,
+            'document_id' => $validated['document_id'],
+            'document_number' => $validated['document_number'],
             'parent_id' => $request->parent_id,
-            'part_number_id' => $request->part_number_id,
-            'department_id' => $request->department_id,
+            'part_number_id' => $validated['part_number_id'],
+            'department_id' => $validated['department_id'],
             'reminder_date' => null,
             'deadline' => null,
             'obsolete_date' => null,
@@ -199,12 +184,11 @@ class DocumentMappingController extends Controller
             'user_id' => Auth::id(),
         ]);
 
-        // Simpan file seperti di storeControl
+        // 6️⃣ Upload file & simpan ke tabel relasi files
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
                 $extension = $file->getClientOriginalExtension();
-                // Gunakan document_number dari mapping, bukan request
-                $filename = $mapping->document_number . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+                $filename = "{$mapping->document_number}_v{$mapping->version}_" . time() . "_{$index}." . $extension;
 
                 $path = $file->storeAs('document-reviews', $filename, 'public');
 
@@ -218,8 +202,23 @@ class DocumentMappingController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Document review created successfully!');
+        // 7️⃣ Kirim notifikasi ke semua user di departemen yang dipilih
+        $users = User::where('department_id', $request['department_id'])->get();
+
+        foreach ($users as $user) {
+            $user->notify(new DocumentCreatedNotification(
+                Auth::user()->name,
+                $mapping->document_number,
+                null,
+                route('document-review.index')
+            ));
+        }
+
+
+        // 8️⃣ Redirect dengan pesan sukses
+        return back()->with('success', 'Document review created successfully!');
     }
+
 
     public function generateDocumentNumber(Request $request)
     {
@@ -449,14 +448,14 @@ class DocumentMappingController extends Controller
         }
 
         // Notify users
-        $users = User::all();
-        foreach ($users as $user) {
-            $user->notify(new \App\Notifications\DocumentUpdatedNotification(
-                $mapping->document_number,
-                Auth::user()->name,
-                'Review'
-            ));
-        }
+        // $users = User::all();
+        // foreach ($users as $user) {
+        //     $user->notify(new DocumentUpdatedNotification(
+        //         $mapping->document_number,
+        //         Auth::user()->name,
+        //         'Review'
+        //     ));
+        // }
 
         return redirect()->back()->with('success', 'Document updated successfully!');
     }
@@ -586,6 +585,7 @@ class DocumentMappingController extends Controller
     // ================= Store Control (Admin) =================
     public function storeControl(Request $request)
     {
+        // Validasi
         $validated = $request->validate([
             'document_name' => 'required|string|max:255',
             'department' => 'required|array',
@@ -599,6 +599,7 @@ class DocumentMappingController extends Controller
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
 
+        // Simpan Document
         $newDocument = Document::create([
             'name' => $validated['document_name'],
             'parent_id' => null,
@@ -610,10 +611,12 @@ class DocumentMappingController extends Controller
             $cleanNotes = null;
         }
 
+        // Status default
         $status = $request->hasFile('files')
             ? Status::firstOrCreate(['name' => 'Need Review'], ['description' => 'Document uploaded and waiting for review'])
             : Status::firstOrCreate(['name' => 'Uncomplete'], ['description' => 'Document created without any file']);
 
+        // Loop tiap departemen
         foreach ($validated['department'] as $deptId) {
             $mapping = DocumentMapping::create([
                 'document_id' => $newDocument->id,
@@ -642,12 +645,22 @@ class DocumentMappingController extends Controller
                     ]);
                 }
             }
+
+            // Kirim notifikasi ke semua user di departemen terkait
+            $users = User::where('department_id', $deptId)->get();
+            foreach ($users as $user) {
+                $user->notify(new DocumentCreatedNotification(
+                    Auth::user()->name,       // createdBy
+                    null,                     // documentNumber tidak ada untuk control
+                    $newDocument->name,       // documentName
+                    route('document-control.index') // url
+                ));
+            }
         }
 
         return redirect()->route('master.document-control.index')
-            ->with('success', 'Document created successfully for selected departments!');
+            ->with('success', 'Document created successfully!');
     }
-
 
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)

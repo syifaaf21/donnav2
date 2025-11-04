@@ -6,6 +6,8 @@ use App\Models\Department;
 use App\Models\DocumentMapping;
 use App\Models\Status;
 use App\Models\User;
+use App\Notifications\DocumentActionNotification;
+use App\Notifications\DocumentRevisedNotification;
 use App\Notifications\DocumentStatusNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -56,6 +58,7 @@ class DocumentControlController extends Controller
 
 
         // 🔹 Update status otomatis jadi "Obsolete" kalau sudah lewat tanggal
+
         $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
 
         DocumentMapping::whereHas('status', fn($q) => $q->where('name', 'Active'))
@@ -64,7 +67,23 @@ class DocumentControlController extends Controller
                 'status_id' => $obsoleteStatus->id,
             ]);
 
-        // ✅ Ambil data (JANGAN tambahkan with() lagi karena akan menimpa eager load di atas)
+        // 🔹 Kirim notifikasi untuk dokumen yang tanggal obsolete-nya hari ini
+        $todayMappings = DocumentMapping::whereHas('status', fn($q) => $q->where('name', 'Active'))
+            ->whereDate('obsolete_date', now()->today())
+            ->get();
+
+        foreach ($todayMappings as $mapping) {
+            $users = User::where('department_id', $mapping->department_id)->get();
+            foreach ($users as $user) {
+                $user->notify(new DocumentStatusNotification(
+                    $mapping->document->name,    // documentName
+                    'obsolete',
+                    Auth::user()->name ?? 'System' // bisa pakai 'System' jika otomatis
+                ));
+            }
+        }
+
+        // ✅ Ambil data
         $documentsMapping = $query->get();
 
         // 🔹 Hitung statistik
@@ -164,7 +183,25 @@ class DocumentControlController extends Controller
             'user_id' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'Document revised successfully!');
+        // Ambil role pengupload
+        $uploader = Auth::user();
+
+        // Jika pengupload bukan admin, kirim notifikasi ke admin
+        if ($uploader->role->name !== 'Admin') {
+            $admins = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+
+            foreach ($admins as $admin) {
+                $admin->notify(new DocumentActionNotification(
+                    'revised',                   // action
+                    $uploader->name,             // siapa yang upload
+                    null,                        // documentNumber, untuk review bisa null
+                    $mapping->document->name,    // documentName, untuk document control
+                    route('document-control.index') // url
+                ));
+            }
+        }
+
+        return redirect()->back()->with('success', 'Document Uploaded successfully!');
     }
 
     public function approve(Request $request, DocumentMapping $mapping)
@@ -193,11 +230,13 @@ class DocumentControlController extends Controller
         ]);
 
         // Kirim notifikasi
-        $allUsers = User::all();
-        Notification::send($allUsers, new DocumentStatusNotification(
-            $mapping->document->name,
+        $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+        Notification::send($departmentUsers, new DocumentActionNotification(
             'approved',
-            Auth::user()->name
+            Auth::user()->name,
+            null,
+            $mapping->document->name,
+            route('document-control.index') // url
         ));
 
         return back()->with('success', 'Document approved successfully.');
@@ -225,11 +264,13 @@ class DocumentControlController extends Controller
         ]);
 
         // Notifikasi ke semua user bahwa dokumen di-reject
-        $allUsers = User::all();
-        Notification::send($allUsers, new DocumentStatusNotification(
-            $mapping->document->name,
+        $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+        Notification::send($departmentUsers, new DocumentActionNotification(
             'rejected',
-            Auth::user()->name
+            Auth::user()->name,
+            null,
+            $mapping->document->name,
+            route('document-control.index')
         ));
 
         return redirect()->back()->with('success', 'Document rejected successfully');

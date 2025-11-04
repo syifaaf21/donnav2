@@ -7,6 +7,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\FtppController;
@@ -43,7 +44,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('login');
 });
-
+Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('register', [RegisterController::class, 'register']);
 // Login & Logout Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -67,27 +69,20 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('master')->name('master.')->middleware('auth')->group(function () {
         // Part Number Management Routes
         Route::resource('part_numbers', PartNumberController::class);
-        Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
 
         // User Management Routes
         Route::resource('users', UserController::class);
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
 
         // Document Management Routes
         Route::resource('hierarchy', DocumentController::class);
-        Route::get('/hierarchy', [DocumentController::class, 'index'])->name('hierarchy.index');
 
         Route::resource('processes', ProcessController::class);
-        Route::get('/processes', [ProcessController::class, 'index'])->name('processes.index');
 
         Route::resource('departments', DepartmentController::class);
-        Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
 
         Route::resource('products', ProductController::class);
-        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 
         Route::resource('models', ModelController::class);
-        Route::get('/models', [ModelController::class, 'index'])->name('models.index');
 
         Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
             Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
