@@ -10,23 +10,26 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         // Ambil role
         $adminRole = Role::where('name', 'admin')->first();
-        $userRole = Role::where('name', 'user')->first();
-        $deptHeadRoleId = 5; // Dept Head
+        $userRoleId = 3; // user biasa
+        $deptHeadRoleId = 5;
         $superAdminRoleId = 1;
-        $userRoleId = 3;
         $auditorRoleId = 4;
         $leaderRoleId = 6;
         $spvRoleId = 7;
 
-        // Ambil satu department default untuk user global (misal Engineering Body)
-        $defaultDept = Department::find(24); // sesuaikan dengan ID dept yang aman
+        // Ambil department berdasarkan nama
+        $superAdminDept = Department::where('name', 'Engineering Body')->first();
+        $adminDept      = Department::where('name', 'Engineering Body')->first();
+        $defaultDept    = Department::where('name', 'Engineering Body')->first();
+
+        if (!$superAdminDept || !$adminDept || !$defaultDept) {
+            $this->command->error("Department Engineering Body tidak ditemukan. Jalankan DepartmentSeeder dulu!");
+            return;
+        }
 
         // === SUPER ADMIN ===
         User::create([
@@ -35,11 +38,10 @@ class UserSeeder extends Seeder
             'email' => 'superadmin@example.com',
             'password' => Hash::make('super123'),
             'role_id' => $superAdminRoleId,
-            'department_id' => 23,
+            'department_id' => $superAdminDept->id,
         ]);
 
         // === ADMIN ===
-        $adminDept = Department::find(24);
         User::create([
             'npk' => '111111',
             'name' => 'Admin',
@@ -70,23 +72,25 @@ class UserSeeder extends Seeder
         ]);
 
         // === SUPERVISOR ===
+        $spvDept = Department::where('name', 'Maintenance')->first();
         User::create([
             'npk' => '444444',
             'name' => 'Supervisor User',
             'email' => 'spv@example.com',
             'password' => Hash::make('aiia123'),
             'role_id' => $spvRoleId,
-            'department_id' => 20,
+            'department_id' => $spvDept ? $spvDept->id : $defaultDept->id,
         ]);
 
         // === LEADER ===
+        $leaderDept = Department::where('name', 'Maintenance')->first();
         User::create([
             'npk' => '555555',
             'name' => 'Leader User',
             'email' => 'leader@example.com',
             'password' => Hash::make('aiia123'),
             'role_id' => $leaderRoleId,
-            'department_id' => 20,
+            'department_id' => $leaderDept ? $leaderDept->id : $defaultDept->id,
         ]);
 
         // === DEPT HEADS ===
@@ -110,7 +114,6 @@ class UserSeeder extends Seeder
         foreach ($users as $userData) {
             foreach ($userData['departments'] as $deptName) {
 
-                // Map nama ke department_id
                 $department = match (true) {
                     str_contains($deptName, 'QA BODY') => Department::where('name', 'Quality Body')->first(),
                     str_contains($deptName, 'QA UNIT') => Department::where('name', 'Quality Unit')->first(),
@@ -118,7 +121,7 @@ class UserSeeder extends Seeder
                     str_contains($deptName, 'ENG BODY') => Department::where('name', 'Engineering Body')->first(),
                     str_contains($deptName, 'ENG UNIT') => Department::where('name', 'Engineering Unit')->first(),
                     str_contains($deptName, 'ENG ELECTRIC') => Department::where('name', 'Engineering Electric')->first(),
-                    str_contains($deptName, 'MAINTENANCE') => Department::where('name', 'Maintenance Body')->first(),
+                    str_contains($deptName, 'MAINTENANCE') => Department::where('name', 'Maintenance')->first(),
                     str_contains($deptName, 'PRD BODY') => Department::where('name', 'Production Body')->first(),
                     str_contains($deptName, 'PRD UNIT') => Department::where('name', 'Production Unit')->first(),
                     str_contains($deptName, 'PRD ELECTRIC') => Department::where('name', 'Production Electric')->first(),

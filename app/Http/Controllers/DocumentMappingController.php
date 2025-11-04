@@ -588,7 +588,8 @@ class DocumentMappingController extends Controller
     {
         $validated = $request->validate([
             'document_name' => 'required|string|max:255',
-            'department' => 'required|exists:tm_departments,id',
+            'department' => 'required|array',
+            'department.*' => 'exists:tm_departments,id',
             'obsolete_date' => 'nullable|date',
             'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
             'notes' => 'nullable|string|max:500',
@@ -596,64 +597,57 @@ class DocumentMappingController extends Controller
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
         ], [
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
-            'files.nullable' => 'File must be uploaded.',
-            'files.array' => 'Invalid file format.',
-            'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
 
-
-        $status = Status::where('name', 'Need Review')->first();
-        if (!$status) {
-            return redirect()->back()->with('error', 'Status "Need Review" not found!');
-        }
-
-        // ✅ Bersihkan notes dari <p><br></p>
-        $cleanNotes = trim($validated['notes'] ?? '');
-        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
-            $cleanNotes = null;
-        }
-
-        // ✅ Buat record Document baru
         $newDocument = Document::create([
             'name' => $validated['document_name'],
             'parent_id' => null,
             'type' => 'control',
         ]);
 
-        // ✅ Buat DocumentMapping dengan notes yang sudah dibersihkan
-        $mapping = DocumentMapping::create([
-            'document_id' => $newDocument->id,
-            'status_id' => $status->id,
-            'obsolete_date' => $validated['obsolete_date'],
-            'reminder_date' => $validated['reminder_date'],
-            'deadline' => null,
-            'user_id' => Auth::id(),
-            'department_id' => $validated['department'],
-            'version' => 0,
-            'notes' => $cleanNotes,
-        ]);
+        $cleanNotes = trim($validated['notes'] ?? '');
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
+            $cleanNotes = null;
+        }
 
-        // ✅ Simpan file
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $index => $file) {
-                $extension = $file->getClientOriginalExtension();
+        $status = $request->hasFile('files')
+            ? Status::firstOrCreate(['name' => 'Need Review'], ['description' => 'Document uploaded and waiting for review'])
+            : Status::firstOrCreate(['name' => 'Uncomplete'], ['description' => 'Document created without any file']);
 
-                $safeName = Str::slug($validated['document_name'], '_');
-                $filename = $safeName . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+        foreach ($validated['department'] as $deptId) {
+            $mapping = DocumentMapping::create([
+                'document_id' => $newDocument->id,
+                'status_id' => $status->id,
+                'obsolete_date' => $validated['obsolete_date'],
+                'reminder_date' => $validated['reminder_date'],
+                'deadline' => null,
+                'user_id' => Auth::id(),
+                'department_id' => $deptId,
+                'version' => 0,
+                'notes' => $cleanNotes,
+            ]);
 
-                $path = $file->storeAs('document-controls', $filename, 'public');
+            // Simpan file
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $index => $file) {
+                    $extension = $file->getClientOriginalExtension();
+                    $safeName = Str::slug($validated['document_name'], '_');
+                    $filename = $safeName . '_v' . $mapping->version . '_' . time() . '_' . $index . '.' . $extension;
+                    $path = $file->storeAs('document-controls', $filename, 'public');
 
-                $mapping->files()->create([
-                    'file_path' => $path,
-                    'original_name' => $file->getClientOriginalName(),
-                    'file_type' => $file->getClientMimeType(),
-                ]);
+                    $mapping->files()->create([
+                        'file_path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'file_type' => $file->getClientMimeType(),
+                    ]);
+                }
             }
         }
 
         return redirect()->route('master.document-control.index')
-            ->with('success', 'Document created successfully!');
+            ->with('success', 'Document created successfully for selected departments!');
     }
+
 
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)

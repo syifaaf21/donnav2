@@ -19,6 +19,7 @@ class StatusSeeder extends Seeder
             ['name' => 'Approved'],
             ['name' => 'Rejected'],
             ['name' => 'Need Review'],
+            ['name' => 'Uncomplete'],
             ['name' => 'Open'],
             ['name' => 'Submitted'],
             ['name' => 'Checked by Dept Head'],

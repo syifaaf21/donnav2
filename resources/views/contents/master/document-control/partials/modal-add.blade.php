@@ -27,11 +27,11 @@
                             <label for="department" class="form-label">Department <span
                                     class="text-danger">*</span></label>
                             <select class="form-select tomselect @error('department') is-invalid @enderror"
-                                id="department" name="department" required>
+                                id="department" name="department[]" multiple required>
                                 <option value="">-- Select Department --</option>
-                                @foreach ($departments as $dept)
+                                 @foreach ($departments as $dept)
                                     <option value="{{ $dept->id }}"
-                                        {{ old('department') == $dept->id ? 'selected' : '' }}>
+                                        {{ (collect(old('department'))->contains($dept->id)) ? 'selected' : '' }}>
                                         {{ $dept->name }}
                                     </option>
                                 @endforeach
