@@ -9,13 +9,18 @@ class DocumentStatusNotification extends Notification
 {
     use Queueable;
 
-    protected $documentNumber;
+    protected $documentName;
     protected $status;
     protected $updatedBy;
 
-    public function __construct($documentNumber, $status, $updatedBy)
+    /**
+     * @param string $documentName
+     * @param string $status
+     * @param string $updatedBy
+     */
+    public function __construct($documentName, $status, $updatedBy)
     {
-        $this->documentNumber = $documentNumber;
+        $this->documentName = $documentName;
         $this->status = $status;
         $this->updatedBy = $updatedBy;
     }
@@ -28,7 +33,7 @@ class DocumentStatusNotification extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'message' => "Document {$this->documentNumber} has been {$this->status} by {$this->updatedBy}.",
+            'message' => "Document '{$this->documentName}' has been marked as {$this->status} by {$this->updatedBy}.",
             'url' => route('document-review.index'),
         ];
     }

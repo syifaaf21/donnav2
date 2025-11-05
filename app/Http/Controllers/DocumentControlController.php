@@ -7,7 +7,6 @@ use App\Models\DocumentMapping;
 use App\Models\Status;
 use App\Models\User;
 use App\Notifications\DocumentActionNotification;
-use App\Notifications\DocumentRevisedNotification;
 use App\Notifications\DocumentStatusNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -17,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 
 class DocumentControlController extends Controller
 {
+
     public function index(Request $request)
     {
         // 🔹 Ambil semua data dengan relasi yang dibutuhkan
@@ -27,63 +27,61 @@ class DocumentControlController extends Controller
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
+
         // 🔹 Search global
         if ($request->filled('search')) {
             $search = $request->search;
-
             $query->where(function ($q) use ($search) {
-                $q->whereHas(
-                    'document',
-                    fn($q2) =>
-                    $q2->where('name', 'like', "%$search%")
-                )
-                    ->orWhereHas(
-                        'status',
-                        fn($q2) =>
-                        $q2->where('name', 'like', "%$search%")
-                    )
-                    ->orWhereHas(
-                        'department',
-                        fn($q2) =>
-                        $q2->where('name', 'like', "%$search%")
-                    )
-                    ->orWhereHas(
-                        'user',
-                        fn($q2) =>
-                        $q2->where('name', 'like', "%$search%")
-                    )
+                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('status', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%$search%"))
                     ->orWhere('notes', 'like', "%$search%");
             });
         }
 
-
-        // 🔹 Update status otomatis jadi "Obsolete" kalau sudah lewat tanggal
-
+        // 🔹 Ambil atau buat status "Obsolete"
         $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
 
-        DocumentMapping::whereHas('status', fn($q) => $q->where('name', 'Active'))
-            ->whereDate('obsolete_date', '<', now()->today())
-            ->update([
-                'status_id' => $obsoleteStatus->id,
-            ]);
+        // // 🔹 Ambil semua dokumen aktif yang tanggal obsolete-nya sudah sampai atau lewat hari ini
+        // $toBeObsoleted = DocumentMapping::whereHas('status', fn($q) => $q->where('name', 'Active'))
+        //     ->whereDate('obsolete_date', '<=', now()->today())
+        //     ->get();
 
-        // 🔹 Kirim notifikasi untuk dokumen yang tanggal obsolete-nya hari ini
-        $todayMappings = DocumentMapping::whereHas('status', fn($q) => $q->where('name', 'Active'))
-            ->whereDate('obsolete_date', now()->today())
-            ->get();
+        // foreach ($toBeObsoleted as $mapping) {
 
-        foreach ($todayMappings as $mapping) {
-            $users = User::where('department_id', $mapping->department_id)->get();
-            foreach ($users as $user) {
-                $user->notify(new DocumentStatusNotification(
-                    $mapping->document->name,    // documentName
-                    'obsolete',
-                    Auth::user()->name ?? 'System' // bisa pakai 'System' jika otomatis
-                ));
-            }
-        }
+        //     // 🔹 Ambil user department terkait
+        //     $departmentUsers = User::where('department_id', $mapping->department_id)->get();
 
-        // ✅ Ambil data
+        //     // 🔹 Ambil semua admin
+        //     $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+
+        //     // 🔹 Gabungkan keduanya dan hapus duplikat
+        //     $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
+
+        //     foreach ($notifiableUsers as $user) {
+
+        //         // 🔹 Cek dulu apakah notif untuk dokumen ini sudah dikirim hari ini
+        //         $alreadyNotified = $user->notifications()
+        //             ->where('type', DocumentStatusNotification::class)
+        //             ->whereDate('created_at', now()->today())
+        //             ->whereJsonContains('data->message', $mapping->document->name)
+        //             ->exists();
+
+        //         if (!$alreadyNotified) {
+        //             $user->notify(new DocumentStatusNotification(
+        //                 $mapping->document->name,
+        //                 'obsolete',
+        //                 Auth::user()->name ?? 'System'
+        //             ));
+        //         }
+        //     }
+
+        //     // 🔹 Update status menjadi Obsolete
+        //     $mapping->update(['status_id' => $obsoleteStatus->id]);
+        // }
+
+        // ✅ Ambil data untuk tampilan
         $documentsMapping = $query->get();
 
         // 🔹 Hitung statistik
@@ -106,6 +104,7 @@ class DocumentControlController extends Controller
             'obsoleteDocuments'
         ));
     }
+
 
     public function revise(Request $request, DocumentMapping $mapping)
     {
@@ -228,6 +227,8 @@ class DocumentControlController extends Controller
             'obsolete_date' => $request->obsolete_date,
             'reminder_date' => $request->reminder_date,
         ]);
+        $mapping->refresh();
+        dd($mapping->status->name, $mapping->obsolete_date);
 
         // Kirim notifikasi
         $departmentUsers = User::where('department_id', $mapping->department_id)->get();
