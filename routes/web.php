@@ -178,7 +178,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
         Route::post('/department', [FtppController::class, 'storeDept'])->name('store-dept');
-        Route::post('/', [FtppController::class, 'storeHeader'])->name('store-header');
+        Route::post('/', [FtppController::class, 'store'])->name('store');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
     });
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);

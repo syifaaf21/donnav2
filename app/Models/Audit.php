@@ -19,4 +19,9 @@ class Audit extends Model
     {
         return $this->hasMany(SubAudit::class, 'audit_type_id');
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'audit_type_id');
+    }
 }

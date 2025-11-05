@@ -61,4 +61,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(AuditFinding::class, 'tt_audit_finding_auditee', 'auditee_id', 'audit_finding_id');
     }
+
+    public function auditType()
+    {
+        return $this->belongsTo(Audit::class, 'audit_type_id');
+    }
 }

@@ -1,4 +1,5 @@
 {{-- 5 WHY --}}
+
 <table class="w-full border border-black text-sm mt-2">
     <tr class="bg-gray-100 font-semibold">
         <td class="border border-black p-1">AUDITEE</td>
@@ -16,7 +17,7 @@
             </template>
             <div class="mt-1">
                 Root Cause: <span class="text-danger">*</span>
-                <textarea x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1" required></textarea>
+                <textarea x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1"></textarea>
             </div>
         </td>
     </tr>

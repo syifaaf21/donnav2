@@ -24,6 +24,7 @@
                     <th class="px-4 py-2">Name</th>
                     <th class="px-4 py-2">Email</th>
                     <th class="px-4 py-2">Department</th>
+                    <th>Audit Type</th>
                     <th class="px-4 py-2">Action</th>
                 </tr>
             </thead>
@@ -35,6 +36,7 @@
                             <td class="px-4 py-2">{{ $user->name }}</td>
                             <td class="px-4 py-2">{{ $user->email }}</td>
                             <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $user->auditType->name ?? '-' }}</td>
                             <td class="px-4 py-2 flex gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal"

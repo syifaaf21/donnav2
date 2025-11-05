@@ -1,3 +1,4 @@
+{{-- auditor-input blade --}}
 <table class="w-full border border-black text-sm">
     <tr>
         <td class="border border-black p-1 w-1/3 align-top">
@@ -33,25 +34,16 @@
                         <div id="plantDeptDisplay" class="mt-1 text-gray-700"></div>
                     </td>
                 </tr>
-
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Auditee:</td>
                     <td class="py-2">
-                        <div class="flex items-center gap-2 mb-2">
-                            <select id="auditeeSelect" class="border-b border-gray-400 w-full focus:outline-none">
-                                <option value="">-- Select Auditee --</option>
-                            </select>
-                            <button type="button" onclick="addAuditee()"
-                                class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                                Add
-                            </button>
-                        </div>
+                        <button type="button" onclick="openAuditeeSidebar()"
+                            class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
+                            Select Auditee
+                        </button>
 
-                        <!-- Tempat tampil list auditee -->
-                        <div id="auditeeContainer" class="flex flex-wrap gap-2"></div>
-
-                        <!-- Data final yang dikirim ke backend -->
-                        <input type="hidden" name="auditee_id" id="auditeeHidden">
+                        <!-- Hasil pilihan -->
+                        <div id="selectedAuditees" class="flex flex-wrap gap-2 mt-2"></div>
                     </td>
                 </tr>
 
@@ -97,7 +89,6 @@
             @endforeach
         </td>
     </tr>
-
 </table>
 
 {{-- TEMUAN --}}
@@ -109,12 +100,12 @@
         <td class="border border-black p-2">
             <div>
                 <label class="font-semibold">Finding / Issue:</label>
-                <textarea class="w-full border border-gray-400 rounded p-1 h-24" required></textarea>
+                <textarea name="finding_description" class="w-full border border-gray-400 rounded p-1 h-24" required></textarea>
             </div>
             <div class="flex justify-between mt-2">
                 <div class="mr-8">
                     <span class="font-semibold">Duedate:</span>
-                    <input type="date" class="border-b border-gray-400" required>
+                    <input type="date" name="due_date" class="border-b border-gray-400" required>
                 </div>
                 <div class="mt-2">
                     <div class="flex items-end gap-2 mb-1">
@@ -127,8 +118,8 @@
                         </div>
                     </div>
                     <input type="hidden" id="selectedSub" name="sub_klausul_id" class="">
-                    <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-2"></div>
 
+                    <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-2 justify-end"></div>
                 </div>
             </div>
             <!-- Preview containers (sesuaikan posisi di form) -->
@@ -176,6 +167,9 @@
     </tr>
 </table>
 
+<div class="flex justify-end mt-2">
+    <button type="button" onclick="saveHeaderOnly()" class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save Header</button>
+</div>
 <!-- Sidebar Klausul -->
 <div id="sidebarKlausul"
     class="fixed top-0 right-0 w-full md:w-1/4 h-full bg-white shadow-lg p-5 hidden overflow-y-auto">
@@ -236,8 +230,8 @@
 
     <!-- Department -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Department:</label>
-    <select id="sidebarDepartment" class="border border-gray-300 p-2 w-full rounded mb-4" disabled>
-        <option value="">-- Select Department --</option>
+    <select id="sidebarDepartment" class="tom-select w-full border rounded p-2"
+        placeholder="Search or select department..." disabled>
         @foreach ($departments as $dept)
             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
         @endforeach
@@ -245,8 +239,8 @@
 
     <!-- Process -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Process:</label>
-    <select id="sidebarProcess" class="border border-gray-300 p-2 w-full rounded mb-4" disabled>
-        <option value="">-- Select Process --</option>
+    <select id="sidebarProcess" class="tom-select w-full border rounded p-2"
+        placeholder="Search or select process..." disabled>
         @foreach ($processes as $proc)
             <option value="{{ $proc->id }}">{{ $proc->name }}</option>
         @endforeach
@@ -254,16 +248,38 @@
 
     <!-- Product -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Product:</label>
-    <select id="sidebarProduct" class="border border-gray-300 p-2 w-full rounded mb-4" disabled>
-        <option value="">-- Select Product --</option>
+    <select id="sidebarProduct" class="tom-select w-full border rounded p-2"
+        placeholder="Search or select product..." disabled>
         @foreach ($products as $product)
             <option value="{{ $product->id }}">{{ $product->name }}</option>
         @endforeach
     </select>
 
     <!-- Submit -->
-    <button onclick="submitSidebarPlant()" class="bg-blue-500 text-white px-4 py-2 w-full rounded hover:bg-green-600">
+    <button onclick="submitSidebarPlant()"
+        class="bg-blue-500 text-white mt-2 px-4 py-2 w-2/3 rounded hover:bg-blue-600">
         Submit
+    </button>
+</div>
+
+{{-- Sidebar select auditee --}}
+<div id="auditeeSidebar"
+    class="fixed top-0 right-0 w-full md:w-1/4 h-full bg-white shadow-lg p-5 hidden overflow-y-auto">
+
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-700">Select Auditee</h2>
+        <button onclick="closeAuditeeSidebar()" class="text-gray-600 hover:text-red-500">
+            <i data-feather="x"></i>
+        </button>
+    </div>
+
+    <!-- ✅ Select untuk Tom Select -->
+    <select id="auditeeSelect" multiple placeholder="Search or select auditee..."
+        class="w-full border rounded p-2"></select>
+
+    <button onclick="saveAuditeeSelection()"
+        class="mt-4 bg-blue-500 text-white px-4 py-2 w-full rounded hover:bg-green-600">
+        Save
     </button>
 </div>
 
@@ -290,19 +306,27 @@
                         .then(data => {
                             console.log("✅ Data diterima:", data);
 
-                            // Tampilkan nomor registrasi
                             document.getElementById('reg_number').value = data.reg_number;
 
-                            // Tampilkan Sub Audit Type
+                            // Sub Audit Type
                             let subContainer = document.getElementById('subAuditType');
                             subContainer.innerHTML = '';
                             data.sub_audit.forEach(item => {
                                 subContainer.innerHTML += `
-                            <label class="block">
-                                <input type="radio" name="sub_audit_type_id" value="${item.id}">
-                                ${item.name}
-                            </label>
-                        `;
+                                    <label class="block">
+                                        <input type="radio" name="sub_audit_type_id" value="${item.id}">
+                                        ${item.name}
+                                    </label>
+                                `;
+                            });
+
+                            // ✅ Filter Auditor berdasarkan audit type
+                            let auditorSelect = document.querySelector('select[name="auditor_id"]');
+                            auditorSelect.innerHTML = '<option value="">-- Choose Auditor --</option>';
+                            data.auditors.forEach(auditor => {
+                                auditorSelect.innerHTML += `
+                                    <option value="${auditor.id}">${auditor.name}</option>
+                                `;
                             });
                         })
                         .catch(error => console.error("❌ Error:", error));
@@ -546,119 +570,86 @@
         }
 
         // Handle select Department/Process/Product by plant
+        let tsDept, tsProc, tsProd; // biar tidak double init
+
         function openPlantSidebar() {
             document.getElementById('sidebarPlant').classList.remove('hidden');
 
-            // reset selects
             const plantSelect = document.getElementById('plantSelect');
             const deptSelect = document.getElementById('sidebarDepartment');
             const procSelect = document.getElementById('sidebarProcess');
             const prodSelect = document.getElementById('sidebarProduct');
 
-            deptSelect.innerHTML = '<option value="">-- Select Department --</option>';
-            procSelect.innerHTML = '<option value="">-- Select Process --</option>';
-            prodSelect.innerHTML = '<option value="">-- Select Product --</option>';
+            deptSelect.innerHTML = '<option value=""></option>';
+            procSelect.innerHTML = '<option value=""></option>';
+            prodSelect.innerHTML = '<option value=""></option>';
 
-            // unbind existing bound flag if any (safe)
-            if (plantSelect.dataset.bound !== 'true') {
-                plantSelect.addEventListener('change', async function() {
-                    const plant = this.value;
-                    // reset
-                    deptSelect.innerHTML = '<option value="">-- Select Department --</option>';
-                    procSelect.innerHTML = '<option value="">-- Select Process --</option>';
-                    prodSelect.innerHTML = '<option value="">-- Select Product --</option>';
-                    deptSelect.disabled = true;
-                    procSelect.disabled = true;
-                    prodSelect.disabled = true;
+            // ✅ Destroy Tom Select lama biar tidak conflict
+            if (tsDept) tsDept.destroy();
+            if (tsProc) tsProc.destroy();
+            if (tsProd) tsProd.destroy();
 
-                    if (!plant) return;
+            plantSelect.addEventListener('change', async function() {
+                const plant = this.value;
+                deptSelect.disabled = true;
+                procSelect.disabled = true;
+                prodSelect.disabled = true;
 
-                    try {
-                        // Ambil departments, processes, products berdasarkan plant
-                        const [dRes, pRes, prRes] = await Promise.all([
-                            fetch(`/get-departments/${encodeURIComponent(plant)}`),
-                            fetch(`/get-processes/${encodeURIComponent(plant)}`),
-                            fetch(`/get-products/${encodeURIComponent(plant)}`)
-                        ]);
+                if (!plant) return;
 
-                        if (!dRes.ok || !pRes.ok || !prRes.ok) {
-                            console.error('One of the requests failed', dRes, pRes, prRes);
-                            // kalau mau, tampilkan message ke user
-                        }
+                try {
+                    const [dRes, pRes, prRes] = await Promise.all([
+                        fetch(`/get-departments/${plant}`),
+                        fetch(`/get-processes/${plant}`),
+                        fetch(`/get-products/${plant}`)
+                    ]);
 
-                        const [depts, procs, prods] = await Promise.all([
-                            dRes.json(),
-                            pRes.json(),
-                            prRes.json()
-                        ]);
+                    const [depts, procs, prods] = await Promise.all([
+                        dRes.json(),
+                        pRes.json(),
+                        prRes.json()
+                    ]);
 
-                        // safety: pastikan array
-                        if (Array.isArray(depts)) {
-                            depts.forEach(item => {
-                                deptSelect.insertAdjacentHTML('beforeend',
-                                    `<option value="${item.id}">${item.name}</option>`);
-                            });
-                            deptSelect.disabled = false;
-                        }
+                    // ✅ Isi ulang dan aktifkan Tom Select
+                    depts?.forEach(d => deptSelect.insertAdjacentHTML('beforeend',
+                        `<option value="${d.id}">${d.name}</option>`));
+                    procs?.forEach(p => procSelect.insertAdjacentHTML('beforeend',
+                        `<option value="${p.id}">${p.name}</option>`));
+                    prods?.forEach(p => prodSelect.insertAdjacentHTML('beforeend',
+                        `<option value="${p.id}">${p.name}</option>`));
 
-                        if (Array.isArray(procs)) {
-                            procs.forEach(item => {
-                                procSelect.insertAdjacentHTML('beforeend',
-                                    `<option value="${item.id}">${item.name}</option>`);
-                            });
-                            procSelect.disabled = false;
-                        }
+                    // ✅ Aktifin Tom Select baru
+                    tsDept = new TomSelect('#sidebarDepartment', {
+                        allowEmptyOption: true,
+                        placeholder: "Search Department...",
+                        searchField: ['text'],
+                    });
 
-                        if (Array.isArray(prods)) {
-                            prods.forEach(item => {
-                                prodSelect.insertAdjacentHTML('beforeend',
-                                    `<option value="${item.id}">${item.name}</option>`);
-                            });
-                            prodSelect.disabled = false;
-                        }
+                    tsProc = new TomSelect('#sidebarProcess', {
+                        allowEmptyOption: true,
+                        placeholder: "Search Process...",
+                        searchField: ['text'],
+                    });
 
-                    } catch (err) {
-                        console.error("❌ Error loading plant data", err);
-                    }
-                });
+                    tsProd = new TomSelect('#sidebarProduct', {
+                        allowEmptyOption: true,
+                        placeholder: "Search Product...",
+                        searchField: ['text'],
+                    });
 
-                plantSelect.dataset.bound = "true";
-            }
+                    // ✅ Enable Tom Select (hapus disabled)
+                    tsDept.enable();
+                    tsProc.enable();
+                    tsProd.enable();
+
+                } catch (e) {
+                    console.error(e);
+                }
+            });
         }
 
         function closePlantSidebar() {
             document.getElementById('sidebarPlant').classList.add('hidden');
-        }
-
-        function submitSidebarPlant() {
-            const plant = document.getElementById('plantSelect').value;
-            const deptSelect = document.getElementById('sidebarDepartment');
-            const procSelect = document.getElementById('sidebarProcess');
-            const prodSelect = document.getElementById('sidebarProduct');
-
-            const dept = deptSelect.value;
-            const proc = procSelect.value;
-            const prod = prodSelect.value;
-
-            if (!plant) {
-                return alert("Please choose plant first");
-            }
-
-            // pilihan dept/proc/prod optional? kalau wajib, cek semua
-            // contoh: require all
-            if (!dept || !proc || !prod) {
-                return alert("Please select department, process and product.");
-            }
-
-            document.getElementById('selectedPlant').value = plant;
-            document.getElementById('selectedDepartment').value = dept;
-            document.getElementById('selectedProcess').value = proc;
-            document.getElementById('selectedProduct').value = prod;
-
-            document.getElementById('plantDeptDisplay').innerText =
-                `${deptSelect.selectedOptions[0]?.text || '-'} / ${procSelect.selectedOptions[0]?.text || '-'} / ${prodSelect.selectedOptions[0]?.text || '-'}`;
-
-            closePlantSidebar();
         }
 
         async function submitSidebarPlant() {
@@ -675,71 +666,107 @@
                 return alert("Please choose plant first");
             }
 
-            if (!dept || !proc || !prod) {
-                return alert("Please select department, process and product.");
+            // ✅ Minimal pilih 1 dari department/process/product
+            if (!dept && !proc && !prod) {
+                return alert("Please select at least one: Department or Process or Product.");
             }
 
-            // isi input hidden
+            // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
             document.getElementById('selectedPlant').value = plant;
-            document.getElementById('selectedDepartment').value = dept;
-            document.getElementById('selectedProcess').value = proc;
-            document.getElementById('selectedProduct').value = prod;
+            document.getElementById('selectedDepartment').value = dept || "";
+            document.getElementById('selectedProcess').value = proc || "";
+            document.getElementById('selectedProduct').value = prod || "";
 
-            // tampilkan teks
+            // Tampilkan teks di halaman
+            // tampilkan teks sesuai yang dipilih
+            let displayText = [];
+
+            if (deptSelect.value) {
+                displayText.push(deptSelect.selectedOptions[0]?.text);
+            }
+            if (procSelect.value) {
+                displayText.push(procSelect.selectedOptions[0]?.text);
+            }
+            if (prodSelect.value) {
+                displayText.push(prodSelect.selectedOptions[0]?.text);
+            }
+
+            // kalau tidak ada yang dipilih, kasih "-"
             document.getElementById('plantDeptDisplay').innerText =
-                `${deptSelect.selectedOptions[0]?.text || '-'} / ${procSelect.selectedOptions[0]?.text || '-'} / ${prodSelect.selectedOptions[0]?.text || '-'}`;
+                displayText.length > 0 ? displayText.join(' / ') : '-';
 
             closePlantSidebar();
 
-            // === ⬇️ FILTER AUDITEE BERDASARKAN DEPARTMENT YANG DIPILIH
+        }
+
+        let auditeeSelect;
+
+        async function loadAuditeeOptions(dept) {
             try {
                 const res = await fetch(`/get-auditee/${dept}`);
                 const data = await res.json();
 
-                const auditeeSelect = document.querySelector('select[name="auditee_id"]') ||
-                    document.querySelector('select:has(option:contains("-- Select Auditee --"))');
+                const select = document.getElementById('auditeeSelect');
+                select.innerHTML = ''; // kosongkan dulu
 
-                if (auditeeSelect) {
-                    auditeeSelect.innerHTML = '<option value="">-- Select Auditee --</option>';
-                    data.forEach(a => {
-                        auditeeSelect.insertAdjacentHTML('beforeend',
-                            `<option value="${a.id}">${a.name}</option>`);
+                // masukkan data ke <select>
+                data.forEach(a => {
+                    const option = document.createElement('option');
+                    option.value = a.id;
+                    option.textContent = a.name;
+                    select.appendChild(option);
+                });
+
+                // aktifkan TomSelect kalau belum
+                if (!auditeeSelect) {
+                    auditeeSelect = new TomSelect('#auditeeSelect', {
+                        plugins: ['remove_button'],
+                        persist: false,
+                        create: false,
+                        maxItems: null,
+                        placeholder: "Select or search auditee...",
                     });
+                } else {
+                    auditeeSelect.clear();
+                    auditeeSelect.clearOptions();
+                    auditeeSelect.addOptions(data.map(a => ({
+                        value: a.id,
+                        text: a.name
+                    })));
                 }
+
             } catch (err) {
-                console.error("❌ Error loading auditee:", err);
+                console.error("Error loading auditee:", err);
             }
-
-            let selectedAuditees = [];
-
-        function addAuditee() {
-            const select = document.getElementById('auditeeSelect');
-            const id = select.value;
-            const text = select.selectedOptions[0]?.text;
-
-            if (!id) return alert("Please select an auditee");
-            if (selectedAuditees.includes(id)) return alert("Already added");
-
-            selectedAuditees.push(id);
-            document.getElementById('auditeeHidden').value = JSON.stringify(selectedAuditees);
-
-            const container = document.getElementById('auditeeContainer');
-            const tag = document.createElement('span');
-            tag.className = "flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded";
-            tag.dataset.id = id;
-            tag.innerHTML = `${text}
-        <button type="button" class="text-red-500 font-bold" onclick="removeAuditee('${id}', this)">
-            &times;
-        </button>`;
-
-            container.appendChild(tag);
         }
 
-        function removeAuditee(id, btn) {
-            selectedAuditees = selectedAuditees.filter(x => x !== id);
-            document.getElementById('auditeeHidden').value = JSON.stringify(selectedAuditees);
-            btn.parentElement.remove();
+        function openAuditeeSidebar() {
+            const dept = document.getElementById('selectedDepartment').value;
+            if (!dept) return alert("Please choose department/plant first!");
+            loadAuditeeOptions(dept);
+            document.getElementById('auditeeSidebar').classList.remove('hidden');
         }
+
+        function closeAuditeeSidebar() {
+            document.getElementById('auditeeSidebar').classList.add('hidden');
+        }
+
+        function saveAuditeeSelection() {
+            const selected = auditeeSelect.getValue(); // array of selected IDs
+            const selectedContainer = document.getElementById('selectedAuditees');
+            selectedContainer.innerHTML = ''; // reset tampilan
+
+            selected.forEach(id => {
+                const name = auditeeSelect.options[id].text;
+                selectedContainer.insertAdjacentHTML('beforeend', `
+            <span class="bg-blue-100 text-gray-700 px-2 py-1 rounded-full text-sm flex items-center gap-1">
+                ${name}
+                <input type="hidden" name="auditee_id[]" value="${id}">
+            </span>
+        `);
+            });
+
+            closeAuditeeSidebar();
         }
     </script>
 @endpush
@@ -821,7 +848,7 @@
             name.textContent = file.name;
 
             const btn = document.createElement('button');
-            btn.innerHTML = '<i data-feather="x"></i>';
+            btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
             btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
             btn.onclick = () => {
                 const newFiles = Array.from(fileInput.files);
@@ -870,4 +897,26 @@
     attachImages.addEventListener('click', () => photoInput.click());
     attachDocs.addEventListener('click', () => fileInput.click());
     attachBoth.addEventListener('click', () => combinedInput.click());
+</script>
+
+<script>
+    function saveHeaderOnly() {
+    let formData = new FormData();
+    formData.append('audit_type_id', document.querySelector('input[name="audit_type_id"]:checked')?.value || '');
+    formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value);
+    formData.append('created_at', document.querySelector('input[name="created_at"]').value);
+    formData.append('registration_number', document.querySelector('input[name="reg_number"]').value);
+    formData.append('finding_category_id', document.querySelector('input[name="finding_category"]:checked')?.value || '');
+    formData.append('finding_description', document.querySelector('input[name="finding_description"]').value);
+    formData.append('due_date', document.querySelector('input[name="due_date"]').value);
+    formData.append('action', 'save_header');
+    formData.append('_token', '{{ csrf_token() }}');
+
+    fetch('{{ route('ftpp.store') }}', {
+        method: 'POST',
+        body: formData
+    }).then(res => res.json())
+    .then(res => alert('✅ Header saved successfully'))
+    .catch(err => alert('❌ Failed to save header'));
+}
 </script>

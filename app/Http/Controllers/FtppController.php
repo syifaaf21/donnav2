@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Audit;
 use App\Models\AuditFinding;
 use App\Models\AuditeeAction;
+use App\Models\AuditFindingSubKlausul;
 use App\Models\Department;
+use App\Models\DocumentFile;
 use App\Models\FindingCategory;
 use App\Models\HeadKlausul;
 use App\Models\Klausul;
@@ -52,9 +54,14 @@ class FtppController extends Controller
         $prefix = ($auditTypeId == 1) ? 'MR' : 'MS'; // sesuaikan id audit
         $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/{$revisionNuber}";
 
+        $auditors = User::where('role_id', 4) // Role auditor
+            ->where('audit_type_id', $auditTypeId)
+            ->get();
+
         return response()->json([
             'reg_number' => $code,
             'sub_audit' => $auditType->subAudit,
+            'auditors' => $auditors,
         ]);
     }
 
@@ -83,9 +90,8 @@ class FtppController extends Controller
 
     public function getDepartments($plant)
     {
-        $departments = Department::when($plant !== 'All', function ($q) use ($plant) {
-            $q->where('plant', $plant)
-                ->orWhere('plant', 'All');
+        $departments = Department::when($plant, function ($q) use ($plant) {
+            $q->where('plant', $plant);
         }, function ($q) {
             // jika plant == 'All', tampilkan semua department (atau sesuai kebijakan)
             $q;
@@ -99,9 +105,8 @@ class FtppController extends Controller
     public function getProcesses($plant)
     {
         try {
-            $processes = Process::when($plant !== 'All', function ($q) use ($plant) {
-                $q->where('plant', $plant)
-                    ->orWhere('plant', 'All');
+            $processes = Process::when($plant, function ($q) use ($plant) {
+                $q->where('plant', $plant);
             }, function ($q) {
                 $q;
             })
@@ -117,9 +122,8 @@ class FtppController extends Controller
     // sebelumnya getProduct -> sekarang getProducts
     public function getProducts($plant)
     {
-        $products = Product::when($plant !== 'All', function ($q) use ($plant) {
-            $q->where('plant', $plant)
-                ->orWhere('plant', 'All');
+        $products = Product::when($plant, function ($q) use ($plant) {
+            $q->where('plant', $plant);
         }, function ($q) {
             $q;
         })
@@ -136,69 +140,70 @@ class FtppController extends Controller
         return response()->json($auditees);
     }
 
-    public function storeHeader(Request $request)
+    public function store(Request $request)
     {
-        // 🔹 1. Validasi input
-        $validated = $request->validate([
-            'audit_type_id' => 'required|integer',
-            'sub_audit_type_id' => 'nullable|integer',
-            'department_id' => 'required|integer',
-            'process_id' => 'nullable|integer',
-            'auditee_id' => 'required|integer',
-            'auditor_id' => 'required|integer',
-            'finding_category_id' => 'required|string|in:major,minor,observation',
-            'finding_description' => 'required|string|max:255',
-            'sub_klausul_id' => 'required|integer',
-            'due_date' => 'nullable|date',
-        ]);
+        $action = $request->action;
+        DB::beginTransaction();
+        try {
 
-        // 🔹 2. Generate nomor temuan (berdasarkan urutan ID)
-        $last = AuditFinding::latest('id')->first();
-        $nextNumber = $last ? $last->id + 1 : 1;
-        $formattedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT); // contoh: 001
+            if ($action === 'save_header') {
+                $validated = $request->validate([
+                    'audit_type_id' => 'required|exists:tm_audit_types,id',
+                    'sub_audit_type_id' => 'nullable|exists:tm_sub_audit_types,id',
+                    'finding_category_id' => 'required|exists:tm_finding_categories,id',
+                    'sub_klausul_id' => 'required|array',           // <- multiple
+                    'sub_klausul_id.*' => 'exists:tm_sub_klausuls,id',
+                    'department_id' => 'required|exists:tm_departments,id',
+                    'process_id' => 'nullable|exists:tm_processes,id',
+                    'auditor_id' => 'required|exists:users,id',
+                    'auditee_id' => 'required|exists:users,id',
+                    'registration_number' => 'nullable|string|max:100',
+                    'finding_description' => 'required|string',
+                    'due_date' => 'required|date',
+                    'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                ]);
 
-        // 🔹 3. Tentukan prefix berdasarkan audit type
-        $prefix = match ($validated['audit_type_id']) {
-            1 => 'MS', // Management LK3
-            2 => 'MR', // Management Mutu
-            default => 'XX', // default fallback
-        };
+                // 1. Simpan ke tt_audit_findings
+                $auditFinding = AuditFinding::create([
+                    'audit_type_id' => $validated['audit_type_id'],
+                    'sub_audit_type_id' => $validated['sub_audit_type_id'] ?? null,
+                    'finding_category_id' => $validated['finding_category_id'],
+                    'department_id' => $validated['department_id'],
+                    'process_id' => $validated['process_id'] ?? null,
+                    'auditor_id' => $validated['auditor_id'],
+                    'auditee_id' => $validated['auditee_id'],
+                    'registration_number' => $validated['registration_number'] ?? null,
+                    'finding_description' => $validated['finding_description'],
+                    'status_id' => 6, // ✅ Default OPEN
+                    'due_date' => $validated['due_date'],
+                ]);
 
-        // 🔹 4. Format nomor revisi (default: 00)
-        $revision = '00';
+                // 2. Simpan Sub Klausul ke pivot tt_audit_finding_sub_klausul
+                foreach ($validated['sub_klausul_id'] as $subId) {
+                    AuditFindingSubKlausul::create([
+                        'audit_finding_id' => $auditFinding->id,
+                        'sub_klausul_id' => $subId,
+                    ]);
+                }
 
-        // 🔹 5. Bentuk nomor registrasi akhir
-        // contoh: MS/FTPP/2025/001/00
-        $regNumber = sprintf(
-            '%s/FTPP/%s/%s/%s',
-            $prefix,
-            now()->format('Y'),
-            $formattedNumber,
-            $revision
-        );
+                // 3. Upload file jika ada
+                if ($request->hasFile('file')) {
+                    $file = $request->file('file');
+                    $path = $file->store('audit_finding_files', 'public');
 
-        // 🔹 6. Simpan data
-        $finding = AuditFinding::create([
-            'registration_number' => $regNumber,
-            'audit_type_id' => $validated['audit_type_id'],
-            'sub_audit_type_id' => $validated['sub_audit_type_id'] ?? null,
-            'department_id' => $validated['department_id'],
-            'process_id' => $validated['process_id'] ?? null,
-            'auditee_id' => $validated['auditee_id'],
-            'auditor_id' => $validated['auditor_id'],
-            'finding_category_id' => $validated['finding_category_id'],
-            'finding_description',
-            'sub_klausul_id',
-            'due_date' => $validated['due_date'] ?? null,
-            'status_id' => 1, // default OPEN
-        ]);
-
-        // 🔹 7. Return response ke Alpine.js
-        return response()->json([
-            'success' => true,
-            'message' => 'Header FTPP berhasil disimpan.',
-            'data' => $finding,
-        ]);
+                    DocumentFile::create([
+                        'audit_finding_id' => $auditFinding->id,
+                        'file_path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                    ]);
+                }
+            }
+            DB::commit();
+            return back()->with('success', 'Audit Finding berhasil disimpan!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error: ' . $e->getMessage());
+        }
     }
 
     public function auditeeActionStore()

@@ -43,7 +43,8 @@ class UserController extends Controller
                     ->orWhere('npk', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('role', fn($r) => $r->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));;
             });
         }
 

@@ -37,7 +37,8 @@
                 </template>
 
                 <template x-if="formLoaded">
-                    <form @submit.prevent="saveForm" enctype="multipart/form-data">
+                    <form action="{{ route('ftpp.store') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
 
                         {{-- HEADER --}}
                         <div class="text-center font-bold text-lg mb-2">FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
@@ -83,8 +84,7 @@
                 formLoaded: false,
                 selectedId: null,
                 form: {
-                    status_id: 1,
-                    klausul_list: []
+                    status_id: 6,
                 },
 
                 createNew() {

@@ -61,12 +61,24 @@ class UserSeeder extends Seeder
 
         // === AUDITOR ===
         User::create([
-            'npk' => '333333',
-            'name' => 'Auditor User',
+            'npk' => '333332',
+            'name' => 'Auditor LK3 User',
             'email' => 'auditor@example.com',
             'password' => Hash::make('audit123'),
             'role_id' => $auditorRoleId,
             'department_id' => $defaultDept->id,
+            'audit_type_id' => 1,
+        ]);
+
+        // === AUDITOR ===
+        User::create([
+            'npk' => '333333',
+            'name' => 'Auditor Mutu User',
+            'email' => 'auditor@example.com',
+            'password' => Hash::make('audit123'),
+            'role_id' => $auditorRoleId,
+            'department_id' => $defaultDept->id,
+            'audit_type_id' => 2,
         ]);
 
         // === SUPERVISOR ===
