@@ -76,7 +76,7 @@
                         <div class="text-center mt-4 space-y-2">
                             <p class="text-sm">
                                 Forgot your password?
-                                <a href="https://wa.me/082328591267" class="text-blue-600 hover:underline">Contact
+                                <a href="https://wa.me/081399949961" class="text-blue-600 hover:underline">Contact
                                     ITD</a>
                             </p>
                             <p class="text-sm">

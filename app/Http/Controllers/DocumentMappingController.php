@@ -133,7 +133,7 @@ class DocumentMappingController extends Controller
         session()->forget('openModal');
 
         // 1️⃣ Pastikan hanya Admin yang bisa akses
-        if (Auth::user()->role->name !== 'Admin') {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -202,18 +202,21 @@ class DocumentMappingController extends Controller
             }
         }
 
-        // 7️⃣ Kirim notifikasi ke semua user di departemen yang dipilih
-        $users = User::where('department_id', $request['department_id'])->get();
+        // 7️⃣ Kirim notifikasi ke semua user di departemen yang dipilih (kecuali Admin & Super Admin)
+        $users = User::where('department_id', $validated['department_id'])
+            ->whereHas('role', function ($q) {
+                $q->whereNotIn('name', ['Admin', 'Super Admin']);
+            })
+            ->get();
 
         foreach ($users as $user) {
             $user->notify(new DocumentCreatedNotification(
                 Auth::user()->name,
-                $mapping->document_number,
-                null,
+                $mapping->document_number,   // documentNumber
+                null,                        // documentName bisa null karena ini review
                 route('document-review.index')
             ));
         }
-
 
         // 8️⃣ Redirect dengan pesan sukses
         return back()->with('success', 'Document review created successfully!');
@@ -388,7 +391,7 @@ class DocumentMappingController extends Controller
     public function updateReview(Request $request, DocumentMapping $mapping)
     {
         session()->forget('openModal');
-        if (Auth::user()->role->name != 'Admin') {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403);
         }
 
@@ -447,23 +450,13 @@ class DocumentMappingController extends Controller
             }
         }
 
-        // Notify users
-        // $users = User::all();
-        // foreach ($users as $user) {
-        //     $user->notify(new DocumentUpdatedNotification(
-        //         $mapping->document_number,
-        //         Auth::user()->name,
-        //         'Review'
-        //     ));
-        // }
-
         return redirect()->back()->with('success', 'Document updated successfully!');
     }
 
     // ================= Delete Review (Admin) =================
     public function destroy(DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name !== 'Admin') {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403);
         }
 
@@ -491,35 +484,10 @@ class DocumentMappingController extends Controller
 
         return redirect()->back()->with('success', 'Document and associated files deleted successfully!');
     }
-    // ================= Approve / Reject Review (Admin) =================
-    public function approveWithDates(Request $request, DocumentMapping $mapping)
-    {
-        if (Auth::user()->role->name != 'Admin')
-            abort(403);
-
-        $request->validate([
-            'reminder_date' => 'required|date|before_or_equal:deadline',
-            'deadline' => 'required|date|after_or_equal:reminder_date',
-        ]);
-
-        $statusApproved = Status::where('name', 'approved')->first();
-        if (!$statusApproved) {
-            return redirect()->back()->with('error', 'Status "approved" not found!');
-        }
-
-        $mapping->update([
-            'status_id' => $statusApproved->id,
-            'reminder_date' => $request->reminder_date,
-            'deadline' => $request->deadline,
-            'user_id' => Auth::id(),
-        ]);
-
-        return redirect()->back()->with('success', 'Document approved and dates set successfully!');
-    }
 
     public function reject(DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin') {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403);
         }
 
@@ -556,17 +524,17 @@ class DocumentMappingController extends Controller
         $documentMappings = $query->get();
 
         // 🔁 Update status Obsolete otomatis
-        $statusObsolete = Status::where('name', 'Obsolete')->first();
-        $now = now();
+        // $statusObsolete = Status::where('name', 'Obsolete')->first();
+        // $now = now();
 
-        foreach ($documentMappings as $mapping) {
-            if ($mapping->obsolete_date && $mapping->obsolete_date < $now) {
-                if ($mapping->status_id !== $statusObsolete?->id) {
-                    $mapping->status_id = $statusObsolete?->id;
-                    $mapping->save();
-                }
-            }
-        }
+        // foreach ($documentMappings as $mapping) {
+        //     if ($mapping->obsolete_date && $mapping->obsolete_date < $now) {
+        //         if ($mapping->status_id !== $statusObsolete?->id) {
+        //             $mapping->status_id = $statusObsolete?->id;
+        //             $mapping->save();
+        //         }
+        //     }
+        // }
 
         $documents = Document::where('type', 'control')->get();
         $statuses = Status::all();
@@ -647,13 +615,18 @@ class DocumentMappingController extends Controller
             }
 
             // Kirim notifikasi ke semua user di departemen terkait
-            $users = User::where('department_id', $deptId)->get();
+            $users = User::where('department_id', $deptId)
+                ->whereHas('role', function ($q) {
+                    $q->whereNotIn('name', ['Admin', 'Super Admin']);
+                })
+                ->get();
+
             foreach ($users as $user) {
                 $user->notify(new DocumentCreatedNotification(
-                    Auth::user()->name,       // createdBy
-                    null,                     // documentNumber tidak ada untuk control
-                    $newDocument->name,       // documentName
-                    route('document-control.index') // url
+                    Auth::user()->name,
+                    null,
+                    $newDocument->name,
+                    route('document-control.index')
                 ));
             }
         }
@@ -665,7 +638,7 @@ class DocumentMappingController extends Controller
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin') {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403);
         }
 
@@ -718,25 +691,6 @@ class DocumentMappingController extends Controller
             ->with('success', 'Document updated successfully!');
     }
 
-    // Approve Document Control
-    public function approveControl(DocumentMapping $mapping)
-    {
-        if (Auth::user()->role->name != 'Admin') {
-            abort(403);
-        }
-
-        $statusActive = Status::where('name', 'active')->first();
-        if (!$statusActive) {
-            return redirect()->back()->with('error', 'Status "active" not found!');
-        }
-
-        $mapping->update([
-            'status_id' => $statusActive->id,
-            'user_id' => Auth::id(),
-        ]);
-
-        return redirect()->route('master.document-control.index')->with('success', 'Document Control approved and status set to active!');
-    }
 
     public function bulkDestroy(Request $request)
     {

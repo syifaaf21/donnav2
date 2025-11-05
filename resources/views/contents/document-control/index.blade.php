@@ -26,21 +26,23 @@
                 <div class="flex flex-col gap-3">
                     {{-- Filter Department --}}
                     <form method="GET" id="filterForm" class="flex flex-col gap-3 mb-4 w-full">
-                        {{-- Filter Department --}}
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Filter Department</label>
-                            <select id="departmentSelect" name="department_id"
-                                class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                                onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Departments</option>
-                                @foreach ($departments as $dept)
-                                    <option value="{{ $dept->id }}"
-                                        {{ request('department_id') == $dept->id ? 'selected' : '' }}>
-                                        {{ $dept->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        @if (auth()->user()->role->name == 'Admin' || auth()->user()->role->name == 'Super Admin')
+                            {{-- Filter Department --}}
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Filter Department</label>
+                                <select id="departmentSelect" name="department_id"
+                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                                    onchange="document.getElementById('filterForm').submit()">
+                                    <option value="">All Departments</option>
+                                    @foreach ($departments as $dept)
+                                        <option value="{{ $dept->id }}"
+                                            {{ request('department_id') == $dept->id ? 'selected' : '' }}>
+                                            {{ $dept->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
 
                         {{-- Search Bar --}}
                         <div class="flex items-center w-full relative">
@@ -140,50 +142,6 @@
                                                 {{-- 🔹 Action Buttons --}}
                                                 <div
                                                     class="flex items-center justify-start gap-2 pt-2 border-t border-gray-100 mt-2 flex-wrap">
-                                                    {{-- View Button / Dropdown --}}
-                                                    @if (count($mapping->files_for_modal) > 1)
-                                                        <div class="relative">
-                                                            <button type="button"
-                                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 focus:outline-none"
-                                                                id="viewDropdownButton-{{ $mapping->id }}"
-                                                                data-dropdown-toggle="viewDropdown-{{ $mapping->id }}">
-                                                                View
-                                                                <svg class="w-3 h-3 ml-1" fill="none"
-                                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                                </svg>
-                                                            </button>
-
-                                                            <div id="viewDropdown-{{ $mapping->id }}"
-                                                                class="hidden absolute mt-1 w-56 left-0 origin-top bg-white border border-gray-100 rounded-md shadow-lg z-10">
-                                                                <div class="py-1 text-xs">
-                                                                    @foreach ($mapping->files_for_modal as $file)
-                                                                        <button type="button"
-                                                                            class="w-full text-left px-3 py-1.5 hover:bg-gray-50 view-file-btn break-words"
-                                                                            data-file="{{ $file['url'] }}"
-                                                                            data-docid="{{ $mapping->id }}"
-                                                                            data-doc-title="{{ $mapping->document->name }}"
-                                                                            data-status="{{ $mapping->status->name }}"
-                                                                            data-files='@json($mapping->files_for_modal)'>
-                                                                            📄 {{ $file['name'] }}
-                                                                        </button>
-                                                                    @endforeach
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @elseif(count($mapping->files_for_modal) === 1)
-                                                        @php $file = $mapping->files_for_modal[0]; @endphp
-                                                        <button type="button"
-                                                            class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
-                                                            data-file="{{ $file['url'] }}"
-                                                            data-docid="{{ $mapping->id }}"
-                                                            data-doc-title="{{ $mapping->document->name }}"
-                                                            data-status="{{ $mapping->status->name }}"
-                                                            data-files='@json($mapping->files_for_modal)'>
-                                                            View
-                                                        </button>
-                                                    @endif
 
                                                     {{-- Upload --}}
                                                     <button type="button"
@@ -196,25 +154,75 @@
                                                         Upload
                                                     </button>
 
-                                                    {{-- Approve --}}
-                                                    <button type="button"
-                                                        class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600 btn-approve"
-                                                        data-bs-toggle="modal" data-bs-target="#approveModal"
-                                                        data-docid="{{ $mapping->id }}"
-                                                        data-doc-title="{{ $mapping->document->name }}"
-                                                        data-status="{{ $mapping->status->name }}">
-                                                        Approve
-                                                    </button>
+                                                    @if (auth()->user()->role->name == 'Admin' || auth()->user()->role->name == 'Super Admin')
+                                                        {{-- Approve --}}
+                                                        <button type="button"
+                                                            class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600 btn-approve"
+                                                            data-bs-toggle="modal" data-bs-target="#approveModal"
+                                                            data-docid="{{ $mapping->id }}"
+                                                            data-doc-title="{{ $mapping->document->name }}"
+                                                            data-status="{{ $mapping->status->name }}">
+                                                            Approve
+                                                        </button>
 
-                                                    {{-- Reject --}}
-                                                    <button type="button"
-                                                        class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 btn-reject"
-                                                        data-docid="{{ $mapping->id }}"
-                                                        data-doc-title="{{ $mapping->document->name }}"
-                                                        data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
-                                                        data-status="{{ $mapping->status->name }}">
-                                                        Reject
-                                                    </button>
+                                                        {{-- Reject --}}
+                                                        <button type="button"
+                                                            class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 btn-reject"
+                                                            data-docid="{{ $mapping->id }}"
+                                                            data-doc-title="{{ $mapping->document->name }}"
+                                                            data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
+                                                            data-status="{{ $mapping->status->name }}">
+                                                            Reject
+                                                        </button>
+                                                    @endif
+                                                    {{-- View Button seperti notifikasi --}}
+                                                    <div class="relative inline-block overflow-visible">
+                                                        @if (count($mapping->files_for_modal) > 1)
+                                                            {{-- Tombol dengan badge jumlah file --}}
+                                                            <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
+                                                                class="relative focus:outline-none text-gray-700 hover:text-blue-600">
+                                                                <i data-feather="file-text" class="w-5 h-5"></i>
+                                                                <span
+                                                                    class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4
+                                                                    text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                                    {{ count($mapping->files_for_modal) }}
+                                                                </span>
+                                                            </button>
+
+                                                            {{-- Dropdown --}}
+                                                            <div id="viewFilesDropdown-{{ $mapping->id }}"
+                                                                class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200
+                                                                rounded-md shadow-lg z-50 origin-bottom-right translate-x-2">
+                                                                <div class="py-1 text-sm max-h-48 overflow-y-auto">
+                                                                    @foreach ($mapping->files_for_modal as $file)
+                                                                        <button type="button"
+                                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
+                                                                            data-file="{{ $file['url'] }}"
+                                                                            data-docid="{{ $mapping->id }}"
+                                                                            data-doc-title="{{ $mapping->document->name }}"
+                                                                            data-status="{{ $mapping->status->name }}"
+                                                                            data-files='@json($mapping->files_for_modal)'>
+                                                                            📄 {{ $file['name'] }}
+                                                                        </button>
+                                                                    @endforeach
+                                                                </div>
+                                                            </div>
+                                                        @elseif (count($mapping->files_for_modal) === 1)
+                                                            {{-- Hanya 1 file → langsung tampil tombol View biasa --}}
+                                                            @php $file = $mapping->files_for_modal[0]; @endphp
+                                                            <button type="button"
+                                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md
+                   border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                                data-file="{{ $file['url'] }}"
+                                                                data-docid="{{ $mapping->id }}"
+                                                                data-doc-title="{{ $mapping->document->name }}"
+                                                                data-status="{{ $mapping->status->name }}"
+                                                                data-files='@json($mapping->files_for_modal)'>
+                                                                <i data-feather="file-text" class="w-4 h-4"></i> View
+                                                            </button>
+                                                        @endif
+                                                    </div>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -286,17 +294,26 @@
                 // =======================
                 // Dropdown toggle
                 // =======================
-                document.addEventListener('click', function(e) {
-                    const toggleBtn = e.target.closest('[data-dropdown-toggle]');
-                    if (toggleBtn) {
-                        const targetId = toggleBtn.getAttribute('data-dropdown-toggle');
-                        const dropdown = document.getElementById(targetId);
-                        if (dropdown) dropdown.classList.toggle('hidden');
-                    } else {
-                        document.querySelectorAll('[id^="viewDropdown-"]').forEach(d => d.classList.add(
-                            'hidden'));
+
+                document.querySelectorAll('[id^="viewFilesBtn-"]').forEach(btn => {
+                    const id = btn.id.replace('viewFilesBtn-', '');
+                    const dropdown = document.getElementById(`viewFilesDropdown-${id}`);
+
+                    if (dropdown) {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            dropdown.classList.toggle('hidden');
+                        });
                     }
+
+                    document.addEventListener('click', (e) => {
+                        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
                 });
+
+
 
                 document.getElementById('clearSearch')?.addEventListener('click', function() {
                     const input = document.getElementById('searchInput');

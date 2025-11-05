@@ -58,7 +58,7 @@
     </div>
 
     {{-- Admin Actions --}}
-    @if (auth()->user()->role->name == 'Admin')
+    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
         {{-- Edit --}}
         <button type="button" data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}"
             data-bs-title="Edit Document"

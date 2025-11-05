@@ -17,10 +17,10 @@ class CheckObsoleteDocuments extends Command
     {
         $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
 
-        // Ambil semua dokumen yang statusnya belum Obsolete dan tanggal obsolete <= hari ini
-        $toBeObsoleted = DocumentMapping::whereHas('status', fn($q) => $q->where('name', '!=', 'Obsolete'))
+        $toBeObsoleted = DocumentMapping::whereHas('status', fn($q) => $q->where('name', 'Active'))
             ->whereDate('obsolete_date', '<=', now()->today())
             ->get();
+
 
         if ($toBeObsoleted->isEmpty()) {
             $this->info('No documents to mark as obsolete today.');

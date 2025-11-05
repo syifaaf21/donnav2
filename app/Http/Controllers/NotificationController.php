@@ -4,7 +4,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
@@ -16,15 +16,52 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications'));
     }
 
-    public function markAsRead($id)
+    public function markAllRead(Request $request)
     {
-        $notification = Auth::user()->notifications()->where('id', $id)->first();
+        auth()->user()->unreadNotifications->markAsRead();
 
-        if ($notification) {
-            $notification->markAsRead();
-            return response()->json(['status' => 'success']);
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
         }
 
-        return response()->json(['status' => 'error'], 404);
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
+    public function markRead(Request $request, $id)
+    {
+        $notification = auth()->user()->notifications()->find($id);
+
+        if ($notification && is_null($notification->read_at)) {
+            $notification->markAsRead();
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('success', 'Notification marked as read.');
+    }
+    public function redirectAndMarkRead($id)
+    {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+
+        // Tandai sebagai sudah dibaca
+        if (is_null($notification->read_at)) {
+            $notification->markAsRead();
+        }
+
+        // Cek apakah URL terkait masih valid
+        $url = $notification->data['url'] ?? '/';
+
+        // Contoh untuk document: cek apakah document masih ada
+        if (isset($notification->data['document_id'])) {
+            $documentExists = \App\Models\Document::find($notification->data['document_id']);
+            if (!$documentExists) {
+                return redirect()->route('document-control.index')
+                    ->with('error', 'The document no longer exists.');
+            }
+        }
+
+        return redirect($url);
     }
 }

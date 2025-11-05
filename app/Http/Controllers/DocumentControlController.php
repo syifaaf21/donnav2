@@ -23,6 +23,16 @@ class DocumentControlController extends Controller
         $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
             ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
+        // 🔹 Filter department kalau bukan Admin atau Super Admin
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            $query->where('department_id', Auth::user()->department_id);
+        }
+
+        // 🔹 Filter department kalau Admin atau Super Admin pilih
+        if (in_array(Auth::user()->role->name, ['Admin', 'Super Admin']) && $request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
         // 🔹 Filter department kalau ada
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
@@ -43,43 +53,43 @@ class DocumentControlController extends Controller
         // 🔹 Ambil atau buat status "Obsolete"
         $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
 
-        // // 🔹 Ambil semua dokumen aktif yang tanggal obsolete-nya sudah sampai atau lewat hari ini
-        // $toBeObsoleted = DocumentMapping::whereHas('status', fn($q) => $q->where('name', 'Active'))
-        //     ->whereDate('obsolete_date', '<=', now()->today())
-        //     ->get();
+        // 🔹 Ambil semua dokumen aktif yang tanggal obsolete-nya sudah sampai atau lewat hari ini
+        $toBeObsoleted = DocumentMapping::whereDate('obsolete_date', '<=', now()->today())
+            ->whereHas('status', fn($q) => $q->where('name', 'Active'))
+            ->get();
+        foreach ($toBeObsoleted as $mapping) {
 
-        // foreach ($toBeObsoleted as $mapping) {
+            // 🔹 Ambil user department terkait
+            $departmentUsers = User::where('department_id', $mapping->department_id)->get();
 
-        //     // 🔹 Ambil user department terkait
-        //     $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+            // 🔹 Ambil semua admin
+            $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
 
-        //     // 🔹 Ambil semua admin
-        //     $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+            // 🔹 Gabungkan keduanya dan hapus duplikat
+            $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
 
-        //     // 🔹 Gabungkan keduanya dan hapus duplikat
-        //     $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
+            foreach ($notifiableUsers as $user) {
 
-        //     foreach ($notifiableUsers as $user) {
+                // 🔹 Cek dulu apakah notif untuk dokumen ini sudah dikirim hari ini
+                $alreadyNotified = $user->notifications()
+                    ->where('type', DocumentStatusNotification::class)
+                    ->whereDate('created_at', now()->today())
+                    ->whereJsonContains('data->message', $mapping->document->name)
+                    ->exists();
 
-        //         // 🔹 Cek dulu apakah notif untuk dokumen ini sudah dikirim hari ini
-        //         $alreadyNotified = $user->notifications()
-        //             ->where('type', DocumentStatusNotification::class)
-        //             ->whereDate('created_at', now()->today())
-        //             ->whereJsonContains('data->message', $mapping->document->name)
-        //             ->exists();
+                if (!$alreadyNotified) {
+                    $user->notify(new DocumentStatusNotification(
+                        $mapping->document->name,
+                        'obsolete',
+                        Auth::user()->name ?? 'System',
+                        route('document-control.index')
+                    ));
+                }
+            }
 
-        //         if (!$alreadyNotified) {
-        //             $user->notify(new DocumentStatusNotification(
-        //                 $mapping->document->name,
-        //                 'obsolete',
-        //                 Auth::user()->name ?? 'System'
-        //             ));
-        //         }
-        //     }
-
-        //     // 🔹 Update status menjadi Obsolete
-        //     $mapping->update(['status_id' => $obsoleteStatus->id]);
-        // }
+            // 🔹 Update status menjadi Obsolete
+            $mapping->update(['status_id' => $obsoleteStatus->id]);
+        }
 
         // ✅ Ambil data untuk tampilan
         $documentsMapping = $query->get();
@@ -109,8 +119,9 @@ class DocumentControlController extends Controller
     public function revise(Request $request, DocumentMapping $mapping)
     {
         $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx|max:20480',
+            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ]);
+
 
         $mapping->load('document');
         $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
@@ -185,9 +196,9 @@ class DocumentControlController extends Controller
         // Ambil role pengupload
         $uploader = Auth::user();
 
-        // Jika pengupload bukan admin, kirim notifikasi ke admin
-        if ($uploader->role->name !== 'Admin') {
-            $admins = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+        // Jika pengupload bukan admin dan super admin, kirim notifikasi ke admin
+        if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
+            $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
 
             foreach ($admins as $admin) {
                 $admin->notify(new DocumentActionNotification(
@@ -205,9 +216,10 @@ class DocumentControlController extends Controller
 
     public function approve(Request $request, DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin') {
-            abort(403, 'Only admin can approve documents.');
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            abort(403, 'Only admin or super admin can approve documents.');
         }
+
 
         $request->validate([
             'obsolete_date' => 'required|date',
@@ -227,11 +239,13 @@ class DocumentControlController extends Controller
             'obsolete_date' => $request->obsolete_date,
             'reminder_date' => $request->reminder_date,
         ]);
-        $mapping->refresh();
-        dd($mapping->status->name, $mapping->obsolete_date);
+
+        // Ambil semua user di department terkait, kecuali user yang melakukan approve
+        $departmentUsers = User::where('department_id', $mapping->department_id)
+            ->whereNotIn('id', [Auth::id()]) // kecuali user yang approve
+            ->get();
 
         // Kirim notifikasi
-        $departmentUsers = User::where('department_id', $mapping->department_id)->get();
         Notification::send($departmentUsers, new DocumentActionNotification(
             'approved',
             Auth::user()->name,
@@ -240,12 +254,13 @@ class DocumentControlController extends Controller
             route('document-control.index') // url
         ));
 
+
         return back()->with('success', 'Document approved successfully.');
     }
 
     public function reject(Request $request, DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin') {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403, 'Only admin can reject documents.');
         }
 
@@ -265,7 +280,9 @@ class DocumentControlController extends Controller
         ]);
 
         // Notifikasi ke semua user bahwa dokumen di-reject
-        $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+        $departmentUsers = User::where('department_id', $mapping->department_id)
+            ->whereNotIn('id', [Auth::id()]) // kecuali user yang approve
+            ->get();
         Notification::send($departmentUsers, new DocumentActionNotification(
             'rejected',
             Auth::user()->name,

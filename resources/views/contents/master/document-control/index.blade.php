@@ -137,7 +137,7 @@
                                     @endif
 
                                     <div class="flex items-center gap-2">
-                                        @if (auth()->user()->role->name == 'Admin')
+                                        @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
                                             <button type="button"
                                                 class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
                                                 data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
@@ -224,10 +224,16 @@
                     if (!selectEl.tomselect) {
                         new TomSelect(selectEl, {
                             create: false,
+                            plugins: {
+                                remove_button: {
+                                    title: 'Remove this item'
+                                }
+                            },
                             sortField: {
                                 field: "text",
                                 direction: "asc"
-                            }
+                            },
+                            persist: false
                         });
                     }
                 });

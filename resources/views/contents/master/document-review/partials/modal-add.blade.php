@@ -1,4 +1,4 @@
-@if (auth()->user()->role->name == 'Admin')
+@if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
 
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">

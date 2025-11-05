@@ -12,17 +12,20 @@ class DocumentStatusNotification extends Notification
     protected $documentName;
     protected $status;
     protected $updatedBy;
+    protected $url; // 🔹 Tambahkan properti URL
 
     /**
      * @param string $documentName
      * @param string $status
      * @param string $updatedBy
+     * @param string|null $url
      */
-    public function __construct($documentName, $status, $updatedBy)
+    public function __construct($documentName, $status, $updatedBy, $url = null)
     {
         $this->documentName = $documentName;
         $this->status = $status;
         $this->updatedBy = $updatedBy;
+        $this->url = $url; // 🔹 Simpan URL
     }
 
     public function via($notifiable)
@@ -34,7 +37,7 @@ class DocumentStatusNotification extends Notification
     {
         return [
             'message' => "Document '{$this->documentName}' has been marked as {$this->status} by {$this->updatedBy}.",
-            'url' => route('document-review.index'),
+            'url' => $this->url ?? route('document-control.index'), // 🔹 Gunakan $this->url, fallback ke document control
         ];
     }
 }
