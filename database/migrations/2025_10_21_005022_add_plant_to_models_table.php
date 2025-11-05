@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('tm_models', function (Blueprint $table) {
-            $table->enum('plant', ['Body', 'Unit', 'Electric'])->after('name')->nullable();
+            $table->enum('plant', ['All', 'Body', 'Unit', 'Electric'])->after('name')->nullable();
         });
     }
 

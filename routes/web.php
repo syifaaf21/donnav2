@@ -174,11 +174,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
 
     Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
+        Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
+        Route::post('/department', [FtppController::class, 'storeDept'])->name('store-dept');
         Route::post('/', [FtppController::class, 'storeHeader'])->name('store-header');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
-        Route::get('/get-all', [FtppController::class, 'getAll']);
     });
+    Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
+    Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);
+    Route::get('/sub-klausul/{headId}', [FtppController::class, 'getSubKlausul']);
+
+    Route::get('/get-departments/{plant}', [FtppController::class, 'getDepartments']);
+    Route::get('/get-processes/{plant}', [FtppController::class, 'getProcesses']);
+    Route::get('/get-products/{plant}', [FtppController::class, 'getProducts']);
+
+    Route::get('/get-auditee/{departmentId}', [FtppController::class, 'getAuditee']);
 
 });

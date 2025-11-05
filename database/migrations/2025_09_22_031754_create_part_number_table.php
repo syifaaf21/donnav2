@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('tm_products')->onDelete('cascade');
             $table->foreignId('model_id')->constrained('tm_models')->onDelete('cascade');
             // $table->enum('process', ['injection', 'painting', 'assembling body', 'die casting', 'machining', 'assembling unit', 'mounting', 'assembling electric', 'inspection']);
-            $table->enum('plant', ['body', 'unit', 'electric']);
+            $table->enum('plant', ['All', 'Body', 'Unit', 'Electric']);
             $table->timestamps();
         });
     }

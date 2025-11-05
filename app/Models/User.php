@@ -47,13 +47,18 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime'
     ];
 
-    public function role ()
+    public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-    public function department ()
+    public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function auditFindingsAsAuditee()
+    {
+        return $this->belongsToMany(AuditFinding::class, 'tt_audit_finding_auditee', 'auditee_id', 'audit_finding_id');
     }
 }

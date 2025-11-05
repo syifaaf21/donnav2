@@ -86,4 +86,8 @@ class AuditFinding extends Model
         return $this->hasMany(DocumentFile::class);
     }
 
+    public function auditees()
+    {
+        return $this->belongsToMany(User::class, 'tt_audit_finding_auditee', 'audit_finding_id', 'auditee_id');
+    }
 }

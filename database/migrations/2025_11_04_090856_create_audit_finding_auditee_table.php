@@ -4,17 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('tm_products', function (Blueprint $table) {
+        Schema::create('tt_audit_finding_auditee', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->enum('plant', ['All', 'Body', 'Unit', 'Electric']);
+            $table->foreignId('audit_finding_id')->constrained('tt_audit_findings')->onDelete('cascade');
+            $table->foreignId('auditee_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -24,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tm_products');
+        Schema::dropIfExists('tt_audit_finding_auditee');
     }
 };

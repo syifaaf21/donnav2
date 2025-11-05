@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Audit;
+use App\Models\HeadKlausul;
+use App\Models\Klausul;
+use App\Models\SubKlausul;
 use Illuminate\Http\Request;
 
 class AuditTypeController extends Controller

@@ -19,7 +19,6 @@ return new class extends Migration
             $table->foreignId('department_id')->constrained('tm_departments')->onDelete('cascade');
             $table->foreignId('process_id')->nullable()->constrained('tm_processes')->onDelete('cascade');
             $table->foreignId('auditor_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('auditee_id')->constrained('users')->onDelete('cascade');
             $table->string('registration_number');
             $table->text('finding_description');
             $table->foreignId('status_id')->default(6)->constrained('tm_statuses')->onDelete('cascade');

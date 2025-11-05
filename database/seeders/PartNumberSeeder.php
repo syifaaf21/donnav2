@@ -14,9 +14,9 @@ class PartNumberSeeder extends Seeder
     public function run(): void
     {
         $plantMapping = [
-            'body' => ['injection', 'painting', 'assembling body'],
-            'unit' => ['die casting', 'machining', 'assembling unit'],
-            'electric' => ['mounting', 'assembling electric', 'inspection'],
+            'Body' => ['injection', 'painting', 'assembling body'],
+            'Unit' => ['die casting', 'machining', 'assembling unit'],
+            'Electric' => ['mounting', 'assembling electric', 'inspection'],
         ];
 
         $data = [
