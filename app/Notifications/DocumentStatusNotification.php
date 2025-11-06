@@ -36,7 +36,7 @@ class DocumentStatusNotification extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'message' => "Document '{$this->documentName}' has been marked as {$this->status} by {$this->updatedBy}.",
+            'message' => "Document '{$this->documentName}' has been marked as {$this->status}.",
             'url' => $this->url ?? route('document-control.index'), // 🔹 Gunakan $this->url, fallback ke document control
         ];
     }

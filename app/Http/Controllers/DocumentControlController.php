@@ -19,26 +19,26 @@ class DocumentControlController extends Controller
 
     public function index(Request $request)
     {
-        // 🔹 Ambil semua data dengan relasi yang dibutuhkan
+        // Ambil semua data dengan relasi yang dibutuhkan
         $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
             ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
-        // 🔹 Filter department kalau bukan Admin atau Super Admin
+        // Filter department kalau bukan Admin atau Super Admin
         if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             $query->where('department_id', Auth::user()->department_id);
         }
 
-        // 🔹 Filter department kalau Admin atau Super Admin pilih
+        // Filter department kalau Admin atau Super Admin pilih
         if (in_array(Auth::user()->role->name, ['Admin', 'Super Admin']) && $request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        // 🔹 Filter department kalau ada
+        // Filter department kalau ada
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        // 🔹 Search global
+        // Search global
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -50,27 +50,27 @@ class DocumentControlController extends Controller
             });
         }
 
-        // 🔹 Ambil atau buat status "Obsolete"
+        // Ambil atau buat status "Obsolete"
         $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
 
-        // 🔹 Ambil semua dokumen aktif yang tanggal obsolete-nya sudah sampai atau lewat hari ini
+        // Ambil semua dokumen aktif yang tanggal obsolete-nya sudah sampai atau lewat hari ini
         $toBeObsoleted = DocumentMapping::whereDate('obsolete_date', '<=', now()->today())
             ->whereHas('status', fn($q) => $q->where('name', 'Active'))
             ->get();
         foreach ($toBeObsoleted as $mapping) {
 
-            // 🔹 Ambil user department terkait
+            // Ambil user department terkait
             $departmentUsers = User::where('department_id', $mapping->department_id)->get();
 
-            // 🔹 Ambil semua admin
+            // Ambil semua admin
             $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
 
-            // 🔹 Gabungkan keduanya dan hapus duplikat
+            // Gabungkan keduanya dan hapus duplikat
             $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
 
             foreach ($notifiableUsers as $user) {
 
-                // 🔹 Cek dulu apakah notif untuk dokumen ini sudah dikirim hari ini
+                // Cek dulu apakah notif untuk dokumen ini sudah dikirim hari ini
                 $alreadyNotified = $user->notifications()
                     ->where('type', DocumentStatusNotification::class)
                     ->whereDate('created_at', now()->today())
@@ -87,22 +87,22 @@ class DocumentControlController extends Controller
                 }
             }
 
-            // 🔹 Update status menjadi Obsolete
+            // Update status menjadi Obsolete
             $mapping->update(['status_id' => $obsoleteStatus->id]);
         }
 
         // ✅ Ambil data untuk tampilan
         $documentsMapping = $query->get();
 
-        // 🔹 Hitung statistik
+        // Hitung statistik
         $totalDocuments = $documentsMapping->count();
         $activeDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Active')->count();
         $obsoleteDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Obsolete')->count();
 
-        // 🔹 Group by department untuk accordion
+        // Group by department untuk accordion
         $groupedDocuments = $documentsMapping->groupBy(fn($d) => $d->department->name ?? 'Unknown Department');
 
-        // 🔹 Dropdown filter department
+        // Dropdown filter department
         $departments = Department::all();
 
         return view('contents.document-control.index', compact(
@@ -118,47 +118,45 @@ class DocumentControlController extends Controller
 
     public function revise(Request $request, DocumentMapping $mapping)
     {
+        $uploadedFiles = $request->file('revision_files', []);
+
+        // Jika tidak ada file yang diupload, jangan ubah status atau file
+        if (empty($uploadedFiles)) {
+            return redirect()->back()->with('info', 'No files uploaded, document unchanged.');
+        }
+
+        // Validasi file hanya jika ada yang diupload
         $request->validate([
             'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ]);
 
-
         $mapping->load('document');
         $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
 
-        $uploadedFiles = $request->file('revision_files', []);
         $revisionFileIds = $request->input('revision_file_ids', []);
 
         foreach ($uploadedFiles as $index => $uploadedFile) {
             $replaceId = $revisionFileIds[$index] ?? null;
 
-            // Ambil base name dan extension
             $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $uploadedFile->getClientOriginalExtension();
-
-            // Generate timestamp string, misal format: 20251031_093000
             $timestamp = now()->format('Ymd_His');
 
             if ($replaceId) {
-                // REPLACE file lama
                 $oldFile = $mapping->files()->find($replaceId);
                 if ($oldFile) {
-                    // Hapus file lama
                     if (Storage::disk('public')->exists($oldFile->file_path)) {
                         Storage::disk('public')->delete($oldFile->file_path);
                     }
 
-                    // Gunakan nama revisi dengan tambahan timestamp dan _revX
                     $existingRevisions = $mapping->files()
                         ->where('original_name', 'like', $baseName . '_rev%')
                         ->count();
                     $revisionNumber = $existingRevisions + 1;
 
                     $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
-
                     $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
-                    // Update file lama
                     $oldFile->update([
                         'file_path' => $newPath,
                         'original_name' => $filename,
@@ -167,14 +165,12 @@ class DocumentControlController extends Controller
                     ]);
                 }
             } else {
-                // ADD file baru
                 $existingRevisions = $mapping->files()
                     ->where('original_name', 'like', $baseName . '_rev%')
                     ->count();
                 $revisionNumber = $existingRevisions + 1;
 
                 $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
-
                 $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
                 $mapping->files()->create([
@@ -186,27 +182,24 @@ class DocumentControlController extends Controller
             }
         }
 
-        // Update status dan info revisi
+        // Update status hanya jika ada file baru
         $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
         $mapping->update([
             'status_id' => $needReviewStatus->id,
             'user_id' => Auth::id(),
         ]);
 
-        // Ambil role pengupload
+        // Notifikasi admin
         $uploader = Auth::user();
-
-        // Jika pengupload bukan admin dan super admin, kirim notifikasi ke admin
         if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
             $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
-
             foreach ($admins as $admin) {
                 $admin->notify(new DocumentActionNotification(
-                    'revised',                   // action
-                    $uploader->name,             // siapa yang upload
-                    null,                        // documentNumber, untuk review bisa null
-                    $mapping->document->name,    // documentName, untuk document control
-                    route('document-control.index') // url
+                    'revised',
+                    $uploader->name,
+                    null,
+                    $mapping->document->name,
+                    route('document-control.index')
                 ));
             }
         }

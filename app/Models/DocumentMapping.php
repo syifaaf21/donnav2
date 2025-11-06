@@ -23,6 +23,7 @@ class DocumentMapping extends Model
         'status_id',
         'notes',
         'user_id',
+        'last_reminder_date',
     ];
 
     protected $casts = [
