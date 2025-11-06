@@ -16,11 +16,11 @@ class AuditFinding extends Model
             'audit_type_id',
             'sub_audit_type_id',
             'finding_category_id',
-            'sub_klausul_id',
             'department_id',
             'process_id',
-            'auditor_id',
+            'product_id',
             'auditee_id',
+            'auditor_id',
             'registration_number',
             'finding_description',
             'status_id',
@@ -62,17 +62,15 @@ class AuditFinding extends Model
         return $this->belongsTo(Process::class);
     }
 
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     public function auditor()
     {
         return $this->belongsTo(User::class, 'auditor_id')->whereHas('role', function ($q) {
             $q->where('name', 'auditor');
-        });
-    }
-
-    public function auditee()
-    {
-        return $this->belongsTo(User::class, 'auditee_id')->whereHas('role', function ($q) {
-            $q->where('name', 'auditee');
         });
     }
 
@@ -86,7 +84,7 @@ class AuditFinding extends Model
         return $this->hasMany(DocumentFile::class);
     }
 
-    public function auditees()
+    public function auditee()
     {
         return $this->belongsToMany(User::class, 'tt_audit_finding_auditee', 'audit_finding_id', 'auditee_id');
     }

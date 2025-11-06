@@ -37,9 +37,8 @@
                 </template>
 
                 <template x-if="formLoaded">
-                    <form action="{{ route('ftpp.store') }}" method="POST" enctype="multipart/form-data">
+                    <form @submit.prevent action="{{ route('ftpp.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-
                         {{-- HEADER --}}
                         <div class="text-center font-bold text-lg mb-2">FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
                         </div>
@@ -63,9 +62,7 @@
                                     <span x-text="form.status_id == 1 ? 'OPEN' : 'CLOSE'"></span>
                                 </span>
                             </div>
-                            <button type="submit" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">
-                                Simpan
-                            </button>
+
                         </div>
                     </form>
                 </template>
@@ -90,16 +87,27 @@
                 createNew() {
                     this.selectedId = null;
                     this.form = {
-                        status_id: 1,
+                        status_id: 6,
                         klausul_list: []
                     };
                     this.formLoaded = true;
                 },
 
                 async loadForm(id) {
-                    const res = await fetch(`/ftpp/${id}`);
-                    this.form = await res.json();
-                    this.formLoaded = true;
+                    try {
+                        const res = await fetch(`/ftpp/${id}`);
+
+                        if (!res.ok) {
+                            throw new Error('Failed to fetch data');
+                        }
+
+                        this.form = await res.json();
+                        this.selectedId = id;
+                        this.formLoaded = true;
+                    } catch (error) {
+                        console.error(error);
+                        alert('Gagal mengambil data FTPP');
+                    }
                 },
             }
         }

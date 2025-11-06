@@ -48,11 +48,17 @@ class FtppController extends Controller
         $auditType = Audit::with('subAudit')->findOrFail($auditTypeId);
 
         $year = now()->year;
-        $lastCount = AuditFinding::whereYear('created_at', $year)->count() + 1;
-        $findingNumber = str_pad($lastCount, 3, '0', STR_PAD_LEFT);
-        $revisionNuber = str_pad($lastCount, 2, '0', STR_PAD_LEFT);
         $prefix = ($auditTypeId == 1) ? 'MR' : 'MS'; // sesuaikan id audit
-        $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/{$revisionNuber}";
+
+        // Hitung berdasarkan prefix + tahun
+        $lastCount = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
+            ->count() + 1;
+
+        // Format nomor 3 digit, misal 001, 002, dst
+        $findingNumber = str_pad($lastCount, 3, '0', STR_PAD_LEFT);
+
+        // Generate kode lengkap
+        $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/01";
 
         $auditors = User::where('role_id', 4) // Role auditor
             ->where('audit_type_id', $auditTypeId)
@@ -140,45 +146,69 @@ class FtppController extends Controller
         return response()->json($auditees);
     }
 
+    public function edit($id)
+    {
+        $finding = AuditFinding::with([
+            'audit',
+            'subAudit',
+            'findingCategory',
+            'auditor',
+            'auditee',
+            'department',
+            'process',
+            'product',
+            'subKlausuls',
+            'file',
+            'status',
+        ])->findOrFail($id);
+
+        return response()->json($finding);
+    }
+
     public function store(Request $request)
     {
         $action = $request->action;
         DB::beginTransaction();
-        try {
 
+        try {
             if ($action === 'save_header') {
                 $validated = $request->validate([
                     'audit_type_id' => 'required|exists:tm_audit_types,id',
                     'sub_audit_type_id' => 'nullable|exists:tm_sub_audit_types,id',
                     'finding_category_id' => 'required|exists:tm_finding_categories,id',
-                    'sub_klausul_id' => 'required|array',           // <- multiple
+                    'sub_klausul_id' => 'required|array',
                     'sub_klausul_id.*' => 'exists:tm_sub_klausuls,id',
                     'department_id' => 'required|exists:tm_departments,id',
                     'process_id' => 'nullable|exists:tm_processes,id',
+                    'product_id' => 'nullable|exists:tm_products,id',
                     'auditor_id' => 'required|exists:users,id',
-                    'auditee_id' => 'required|exists:users,id',
+                    'auditee_id' => 'required|array',
+                    'auditee_id.*' => 'exists:users,id',
                     'registration_number' => 'nullable|string|max:100',
                     'finding_description' => 'required|string',
                     'due_date' => 'required|date',
                     'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
                 ]);
 
-                // 1. Simpan ke tt_audit_findings
                 $auditFinding = AuditFinding::create([
                     'audit_type_id' => $validated['audit_type_id'],
                     'sub_audit_type_id' => $validated['sub_audit_type_id'] ?? null,
                     'finding_category_id' => $validated['finding_category_id'],
                     'department_id' => $validated['department_id'],
                     'process_id' => $validated['process_id'] ?? null,
+                    'product_id' => $validated['product_id'] ?? null,
                     'auditor_id' => $validated['auditor_id'],
-                    'auditee_id' => $validated['auditee_id'],
                     'registration_number' => $validated['registration_number'] ?? null,
                     'finding_description' => $validated['finding_description'],
-                    'status_id' => 6, // ✅ Default OPEN
+                    'status_id' => 6,
                     'due_date' => $validated['due_date'],
                 ]);
 
-                // 2. Simpan Sub Klausul ke pivot tt_audit_finding_sub_klausul
+                // ✅ Simpan auditee ke tabel pivot
+                if (!empty($validated['auditee_id'])) {
+                    $auditFinding->auditees()->attach($validated['auditee_id']);
+                }
+
                 foreach ($validated['sub_klausul_id'] as $subId) {
                     AuditFindingSubKlausul::create([
                         'audit_finding_id' => $auditFinding->id,
@@ -186,7 +216,6 @@ class FtppController extends Controller
                     ]);
                 }
 
-                // 3. Upload file jika ada
                 if ($request->hasFile('file')) {
                     $file = $request->file('file');
                     $path = $file->store('audit_finding_files', 'public');
@@ -197,11 +226,32 @@ class FtppController extends Controller
                         'original_name' => $file->getClientOriginalName(),
                     ]);
                 }
+
+                DB::commit();
+
+                // ✅ Jika request dari AJAX, balas JSON
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Header saved successfully',
+                        'id' => $auditFinding->id,
+                    ]);
+                }
+
+                // fallback biasa
+                return back()->with('success', 'Audit Finding berhasil disimpan!');
             }
-            DB::commit();
-            return back()->with('success', 'Audit Finding berhasil disimpan!');
+
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 500);
+            }
+
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
     }

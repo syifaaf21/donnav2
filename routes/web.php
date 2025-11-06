@@ -176,10 +176,10 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
         Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
         Route::get('/', [FtppController::class, 'index'])->name('index');
-        Route::get('/{id}', [FtppController::class, 'show'])->name('show');
+        Route::get('/{id}', [FtppController::class, 'edit'])->name('edit');
         Route::post('/department', [FtppController::class, 'storeDept'])->name('store-dept');
         Route::post('/', [FtppController::class, 'store'])->name('store');
-        Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        // Route::put('/{id}', [FtppController::class, 'update'])->name('update');
     });
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
     Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);

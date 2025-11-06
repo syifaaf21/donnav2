@@ -117,7 +117,7 @@
                             </button>
                         </div>
                     </div>
-                    <input type="hidden" id="selectedSub" name="sub_klausul_id" class="">
+                    <input type="hidden" id="selectedSub" name="sub_klausul_id[]" class="">
 
                     <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-2 justify-end"></div>
                 </div>
@@ -168,8 +168,10 @@
 </table>
 
 <div class="flex justify-end mt-2">
-    <button type="button" onclick="saveHeaderOnly()" class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save Header</button>
+    <button type="button" onclick="saveHeaderOnly()"
+        class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save Header</button>
 </div>
+
 <!-- Sidebar Klausul -->
 <div id="sidebarKlausul"
     class="fixed top-0 right-0 w-full md:w-1/4 h-full bg-white shadow-lg p-5 hidden overflow-y-auto">
@@ -313,11 +315,12 @@
                             subContainer.innerHTML = '';
                             data.sub_audit.forEach(item => {
                                 subContainer.innerHTML += `
-                                    <label class="block">
-                                        <input type="radio" name="sub_audit_type_id" value="${item.id}">
-                                        ${item.name}
-                                    </label>
-                                `;
+                                        <label class="block">
+                                            <input type="radio" name="sub_audit_type_id" value="${item.id}"
+                                            {{ request('audit_type_id') == $type->id ? 'checked' : '' }}>
+                                            ${item.name}
+                                        </label>
+                                    `;
                             });
 
                             // ✅ Filter Auditor berdasarkan audit type
@@ -325,8 +328,8 @@
                             auditorSelect.innerHTML = '<option value="">-- Choose Auditor --</option>';
                             data.auditors.forEach(auditor => {
                                 auditorSelect.innerHTML += `
-                                    <option value="${auditor.id}">${auditor.name}</option>
-                                `;
+                                        <option value="${auditor.id}">${auditor.name}</option>
+                                    `;
                             });
                         })
                         .catch(error => console.error("❌ Error:", error));
@@ -380,11 +383,11 @@
                             if (data.sub_audit?.length) {
                                 data.sub_audit.forEach(s => {
                                     subContainer.insertAdjacentHTML('beforeend', `
-                                <label class="block">
-                                    <input type="radio" name="sub_audit_type_id" value="${s.id}">
-                                    ${s.name}
-                                </label>
-                            `);
+                                    <label class="block">
+                                        <input type="radio" name="sub_audit_type_id" value="${s.id}">
+                                        ${s.name}
+                                    </label>
+                                `);
                                 });
                             } else {
                                 subContainer.innerHTML =
@@ -666,9 +669,9 @@
                 return alert("Please choose plant first");
             }
 
-            // ✅ Minimal pilih 1 dari department/process/product
-            if (!dept && !proc && !prod) {
-                return alert("Please select at least one: Department or Process or Product.");
+            // ✅ harus pilih department
+            if (!dept) {
+                return alert("Please select Department.");
             }
 
             // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
@@ -752,19 +755,24 @@
         }
 
         function saveAuditeeSelection() {
-            const selected = auditeeSelect.getValue(); // array of selected IDs
-            const selectedContainer = document.getElementById('selectedAuditees');
-            selectedContainer.innerHTML = ''; // reset tampilan
+            let selected = Array.from(document.getElementById('auditeeSelect').selectedOptions)
+                .map(option => ({
+                    id: option.value,
+                    name: option.text
+                }));
 
-            selected.forEach(id => {
-                const name = auditeeSelect.options[id].text;
-                selectedContainer.insertAdjacentHTML('beforeend', `
-            <span class="bg-blue-100 text-gray-700 px-2 py-1 rounded-full text-sm flex items-center gap-1">
-                ${name}
-                <input type="hidden" name="auditee_id[]" value="${id}">
-            </span>
-        `);
+            // Tampilkan di UI
+            const container = document.getElementById('selectedAuditees');
+            container.innerHTML = '';
+            selected.forEach(item => {
+                container.innerHTML += `
+                    <span class="px-2 py-1 bg-blue-100 rounded">${item.name}</span>
+                    <input type="hidden" name="auditee_id[]" value="${item.id}">
+                `;
             });
+
+            // Ambil semua checkbox auditee yang dipilih
+            const selectedAuditees = document.querySelectorAll('input[name="auditee_id[]"]:checked');
 
             closeAuditeeSidebar();
         }
@@ -898,25 +906,63 @@
     attachDocs.addEventListener('click', () => fileInput.click());
     attachBoth.addEventListener('click', () => combinedInput.click());
 </script>
-
 <script>
-    function saveHeaderOnly() {
-    let formData = new FormData();
-    formData.append('audit_type_id', document.querySelector('input[name="audit_type_id"]:checked')?.value || '');
-    formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value);
-    formData.append('created_at', document.querySelector('input[name="created_at"]').value);
-    formData.append('registration_number', document.querySelector('input[name="reg_number"]').value);
-    formData.append('finding_category_id', document.querySelector('input[name="finding_category"]:checked')?.value || '');
-    formData.append('finding_description', document.querySelector('input[name="finding_description"]').value);
-    formData.append('due_date', document.querySelector('input[name="due_date"]').value);
-    formData.append('action', 'save_header');
-    formData.append('_token', '{{ csrf_token() }}');
+    async function saveHeaderOnly() {
+        const formData = new FormData();
+        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    fetch('{{ route('ftpp.store') }}', {
-        method: 'POST',
-        body: formData
-    }).then(res => res.json())
-    .then(res => alert('✅ Header saved successfully'))
-    .catch(err => alert('❌ Failed to save header'));
-}
+        formData.append('_token', token);
+        formData.append('department_id', document.querySelector('input[name="department_id"]').value);
+        formData.append('process_id', document.querySelector('input[name="process_id"]').value);
+        formData.append('product_id', document.querySelector('input[name="product_id"]').value);
+        formData.append('audit_type_id', document.querySelector('input[name="audit_type_id"]:checked')?.value ||
+            '');
+        formData.append('sub_audit_type_id', document.querySelector('input[name="sub_audit_type_id"]:checked')
+            ?.value ||
+            '');
+        // formData.append('auditee[]', document.querySelector('input[name="auditee_id[]"]').value);
+        formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value);
+        formData.append('created_at', document.querySelector('input[name="created_at"]').value);
+        formData.append('registration_number', document.querySelector('input[name="reg_number"]').value);
+        formData.append('finding_category_id', document.querySelector('input[name="finding_category"]:checked')
+            ?.value || '');
+        formData.append('finding_description', document.querySelector('textarea[name="finding_description"]')
+            .value);
+        formData.append('due_date', document.querySelector('input[name="due_date"]').value);
+        formData.append('action', 'save_header');
+
+        selectedAuditees.forEach(auditee => {
+            formData.append('auditee_id[]', auditee.value);
+        });
+
+        // ✅ tambahkan sub klausul yang dipilih dari array
+        selectedSubIds.forEach(id => {
+            formData.append('sub_klausul_id[]', id);
+        });
+
+        try {
+            const res = await fetch('{{ route('ftpp.store') }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+
+            console.log('Response status:', res.status);
+            const text = await res.text();
+            console.log('Raw response:', text);
+
+            if (!res.ok) throw new Error(text);
+            const data = JSON.parse(text);
+
+            alert('✅ Header saved successfully');
+            console.log('Parsed JSON:', data);
+        } catch (err) {
+            console.error('Fetch error:', err);
+            alert('❌ Failed to save header:\n' + err.message);
+        }
+    }
 </script>

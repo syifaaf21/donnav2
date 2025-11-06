@@ -20,4 +20,9 @@ class Product extends Model
     {
         return $this->hasMany(PartNumber::class, 'product_id', 'id');
     }
+
+    public function auditFinding()
+    {
+        return $this->hasMany(AuditFinding::class);
+    }
 }

@@ -17,4 +17,9 @@ class Process extends Model
     {
         return $this->hasMany(PartNumber::class);
     }
+
+    public function auditFinding()
+    {
+        return $this->hasMany(AuditFinding::class);
+    }
 }

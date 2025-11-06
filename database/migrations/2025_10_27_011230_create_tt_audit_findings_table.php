@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('finding_category_id')->constrained('tm_finding_categories')->onDelete('cascade');
             $table->foreignId('department_id')->constrained('tm_departments')->onDelete('cascade');
             $table->foreignId('process_id')->nullable()->constrained('tm_processes')->onDelete('cascade');
+            $table->foreignId('product_id')->nullable()->constrained('tm_products')->onDelete('cascade');
             $table->foreignId('auditor_id')->constrained('users')->onDelete('cascade');
             $table->string('registration_number');
             $table->text('finding_description');
