@@ -1,4 +1,4 @@
-<header class="flex items-center justify-between px-24 py-3">
+<header class="flex items-center justify-between mx-12 py-3">
     <div class="flex items-center gap-3">
         <button id="openSidebarBtn" class="md:hidden">
             <i data-feather="menu"></i>
@@ -6,7 +6,7 @@
         <h1 class="text-lg font-semibold">@yield('title', 'Dashboard')</h1>
     </div>
 
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4 ml-auto ">
         <!-- Notification Dropdown -->
         <div class="relative">
             <button id="notificationBtn" class="relative focus:outline-none">

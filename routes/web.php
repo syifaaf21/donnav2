@@ -133,6 +133,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
+        Route::get('/get-filters', [DocumentReviewController::class, 'getFiltersByPlant'])->name('getFiltersByPlant');
+
     });
 
     // Document Control

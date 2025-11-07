@@ -70,7 +70,7 @@
                 @foreach ($groupedByPlant as $plant => $documents)
                     @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
                     <div x-show="activeTab === '{{ $slug }}'" x-transition>
-                        <div class="overflow-auto rounded-bottom-lg h-[60vh]">
+                        <div class="overflow-auto rounded-bottom-lg ">
                             <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
                                 {{-- Header partial --}}
                                 @include('contents.master.document-review.partials.table-header')
@@ -264,23 +264,26 @@
             });
 
             // Deteksi posisi dropdown saat akan dibuka
-            document.querySelectorAll('.dropdown').forEach(drop => {
-                drop.addEventListener('show.bs.dropdown', function() {
-                    const rect = drop.getBoundingClientRect();
+            document.querySelectorAll('.dropdown-toggle').forEach(btn => {
+                btn.addEventListener('show.bs.dropdown', function() {
+                    const rect = btn.getBoundingClientRect();
                     const spaceBelow = window.innerHeight - rect.bottom;
                     const spaceAbove = rect.top;
 
-                    // Kalau ruang di bawah sempit dan di atas lebih luas → ubah jadi dropup
-                    if (spaceBelow < 200 && spaceAbove > spaceBelow) {
-                        drop.classList.add('dropup');
-                    } else {
-                        drop.classList.remove('dropup');
-                    }
-                });
+                    const dropdownMenu = btn.nextElementSibling;
+                    if (!dropdownMenu) return;
 
-                // Hapus class dropup saat dropdown ditutup
-                drop.addEventListener('hidden.bs.dropdown', function() {
-                    drop.classList.remove('dropup');
+                    const dropdown = bootstrap.Dropdown.getInstance(btn) || new bootstrap.Dropdown(
+                        btn);
+
+                    dropdown._config.popperConfig = (original) => {
+                        const placement = (spaceBelow < 200 && spaceAbove > spaceBelow) ?
+                            'top-end' : 'bottom-end';
+                        return {
+                            ...original,
+                            placement: placement
+                        };
+                    };
                 });
             });
 

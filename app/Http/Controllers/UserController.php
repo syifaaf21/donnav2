@@ -75,13 +75,19 @@ class UserController extends Controller
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users',
             'email' => 'nullable|email|unique:users',
-            'password' => 'required|min:6|confirmed',
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ],
             'role_id' => 'required',
             'department_id' => 'required',
         ], [
             'password.required' => 'Password is required.',
-            'password.min' => 'Password must be at least 6 characters.',
+            'password.min' => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
+            'password.regex' => 'Password must contain uppercase, lowercase, number, and special character.',
         ]);
 
         // Cek Role: apakah existing ID atau teks baru
@@ -106,6 +112,7 @@ class UserController extends Controller
 
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
     }
+
 
 
     public function edit(User $user)

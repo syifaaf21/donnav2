@@ -1,6 +1,6 @@
 <div class="flex items-center gap-2">
     {{-- File Viewer Dropdown --}}
-    <div class="dropdown">
+    <div class="dropdown d-inline">
         <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
             data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-paperclip"></i> Files

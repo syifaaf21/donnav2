@@ -30,7 +30,7 @@ class DocumentReviewController extends Controller
             ->where('type', 'review')
             ->get();
 
-        $departments = Department::all();
+        $departments = Department::whereIn('plant', ['body', 'unit', 'electric'])->get();
         $partNumbers = PartNumber::all();
         $models = ProductModel::all();
 
@@ -45,6 +45,16 @@ class DocumentReviewController extends Controller
             'department',
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->when($request->plant, fn($q, $plant) => $q->whereHas('partNumber', fn($q2) => $q2->where('plant', $plant)))
+            ->when($request->department, fn($q, $dept) => $q->where('department_id', $dept))
+            ->when($request->document_id, fn($q, $docId) => $q->where('document_id', $docId))
+            ->when($request->part_number, fn($q, $partId) => $q->where('part_number_id', $partId))
+            ->when(
+                $request->process,
+                fn($q, $procId) =>
+                $q->whereHas('partNumber.process', fn($q2) => $q2->where('id', $procId))
+            )
+
             ->get();
 
         // Tambahkan properti url ke setiap file
@@ -76,6 +86,36 @@ class DocumentReviewController extends Controller
             'groupedByPlant'
         ));
     }
+    public function getFiltersByPlant(Request $request)
+    {
+        $plant = $request->get('plant');
+
+        // Departments
+        $departments = $plant
+            ? Department::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
+            : Department::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('name')->get(['id', 'name']);
+
+        // Part Numbers
+        $partNumbers = $plant
+            ? PartNumber::where('plant', $plant)->orderBy('part_number')->get(['id', 'part_number'])
+            : PartNumber::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('part_number')->get(['id', 'part_number']);
+
+        // Processes → tampilkan berdasarkan plant, tanpa peduli PartNumber
+        $processes = $plant
+            ? Process::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
+            : Process::orderBy('name')->get(['id', 'name']);
+
+        $processes = $processes->map(fn($p) => ['id' => $p->id, 'name' => ucwords($p->name)]);
+
+        return response()->json([
+            'departments' => $departments,
+            'part_numbers' => $partNumbers,
+            'processes' => $processes,
+        ]);
+    }
+
+
+
 
     public function liveSearch(Request $request)
     {
@@ -146,27 +186,6 @@ class DocumentReviewController extends Controller
 
         return $enum;
     }
-
-    public function getDataByPlant(Request $request)
-    {
-        $plant = $request->plant;
-
-        // Ambil part numbers berdasarkan plant
-        $partNumbers = PartNumber::where('plant', $plant)
-            ->orderBy('part_number')
-            ->get(['id', 'part_number']);
-
-        // Ambil proses yang terkait dengan part numbers tersebut
-        $processIds = $partNumbers->pluck('process_id')->unique();
-
-        $processes = Process::whereIn('id', $processIds)->pluck('name');
-
-        return response()->json([
-            'part_numbers' => $partNumbers,
-            'processes' => $processes,
-        ]);
-    }
-
 
     public function show($id)
     {
