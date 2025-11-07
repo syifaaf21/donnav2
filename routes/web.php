@@ -180,6 +180,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/department', [FtppController::class, 'storeDept'])->name('store-dept');
         Route::post('/', [FtppController::class, 'store'])->name('store');
         // Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        // routes/web.php
+        Route::get('/{audit_finding}', [FtppController::class, 'create']);
     });
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
     Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);

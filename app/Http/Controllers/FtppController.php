@@ -6,16 +6,19 @@ use App\Models\Audit;
 use App\Models\AuditFinding;
 use App\Models\AuditeeAction;
 use App\Models\AuditFindingSubKlausul;
+use App\Models\CorrectiveAction;
 use App\Models\Department;
 use App\Models\DocumentFile;
 use App\Models\FindingCategory;
 use App\Models\HeadKlausul;
 use App\Models\Klausul;
+use App\Models\PreventiveAction;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\SubAudit;
 use App\Models\SubKlausul;
 use App\Models\User;
+use App\Models\WhyCauses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,8 +42,9 @@ class FtppController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $user = auth()->user();
 
-        return view('contents.ftpp.index', compact('findings', 'departments', 'processes', 'products', 'auditors', 'klausuls', 'auditTypes', 'findingCategories'));
+        return view('contents.ftpp.index', compact('findings', 'departments', 'processes', 'products', 'auditors', 'klausuls', 'auditTypes', 'findingCategories', 'user'));
     }
 
     public function getData($auditTypeId)
@@ -146,6 +150,13 @@ class FtppController extends Controller
         return response()->json($auditees);
     }
 
+    public function create(AuditFinding $audit_finding)
+    {
+        return view('auditee.action-form', [
+            'auditFinding' => $audit_finding
+        ]);
+    }
+
     public function edit($id)
     {
         $finding = AuditFinding::with([
@@ -172,6 +183,11 @@ class FtppController extends Controller
 
         try {
             if ($action === 'save_header') {
+
+                // 🔹 Ubah auditee_ids dari string menjadi array sebelum validasi
+                // $auditeeIds = json_decode($request->auditee_ids, true) ?? [];
+                // $request->merge(['auditee_id' => $auditeeIds]); // agar validasi berjalan
+
                 $validated = $request->validate([
                     'audit_type_id' => 'required|exists:tm_audit_types,id',
                     'sub_audit_type_id' => 'nullable|exists:tm_sub_audit_types,id',
@@ -182,8 +198,8 @@ class FtppController extends Controller
                     'process_id' => 'nullable|exists:tm_processes,id',
                     'product_id' => 'nullable|exists:tm_products,id',
                     'auditor_id' => 'required|exists:users,id',
-                    'auditee_id' => 'required|array',
-                    'auditee_id.*' => 'exists:users,id',
+                    'auditee_ids' => 'required|array',
+                    'auditee_ids.*' => 'exists:users,id', // validasi sekarang sudah pakai array
                     'registration_number' => 'nullable|string|max:100',
                     'finding_description' => 'required|string',
                     'due_date' => 'required|date',
@@ -204,10 +220,8 @@ class FtppController extends Controller
                     'due_date' => $validated['due_date'],
                 ]);
 
-                // ✅ Simpan auditee ke tabel pivot
-                if (!empty($validated['auditee_id'])) {
-                    $auditFinding->auditees()->attach($validated['auditee_id']);
-                }
+                // 🔹 Simpan auditee ke pivot
+                $auditFinding->auditee()->attach($validated['auditee_ids']);
 
                 foreach ($validated['sub_klausul_id'] as $subId) {
                     AuditFindingSubKlausul::create([
@@ -216,20 +230,42 @@ class FtppController extends Controller
                     ]);
                 }
 
-                if ($request->hasFile('file')) {
-                    $file = $request->file('file');
-                    $path = $file->store('audit_finding_files', 'public');
+                // === Upload attachments ===
+                if ($request->hasFile('photos')) {
+                    foreach ($request->file('photos') as $photo) {
+                        $path = $photo->store('audit_finding_files', 'public');
+                        DocumentFile::create([
+                            'audit_finding_id' => $auditFinding->id,
+                            'file_path' => $path,
+                            'original_name' => $photo->getClientOriginalName(),
+                        ]);
+                    }
+                }
 
-                    DocumentFile::create([
-                        'audit_finding_id' => $auditFinding->id,
-                        'file_path' => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                    ]);
+                if ($request->hasFile('files')) {
+                    foreach ($request->file('files') as $file) {
+                        $path = $file->store('audit_finding_files', 'public');
+                        DocumentFile::create([
+                            'audit_finding_id' => $auditFinding->id,
+                            'file_path' => $path,
+                            'original_name' => $file->getClientOriginalName(),
+                        ]);
+                    }
+                }
+
+                if ($request->hasFile('attachments')) {
+                    foreach ($request->file('attachments') as $file) {
+                        $path = $file->store('audit_finding_files', 'public');
+                        DocumentFile::create([
+                            'audit_finding_id' => $auditFinding->id,
+                            'file_path' => $path,
+                            'original_name' => $file->getClientOriginalName(),
+                        ]);
+                    }
                 }
 
                 DB::commit();
 
-                // ✅ Jika request dari AJAX, balas JSON
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => true,
@@ -238,8 +274,115 @@ class FtppController extends Controller
                     ]);
                 }
 
-                // fallback biasa
                 return back()->with('success', 'Audit Finding berhasil disimpan!');
+            } elseif ($action === 'save_auditee_action') {
+                $validated = $request->validate([
+                    'audit_finding_id' => 'required|exists:tt_audit_findings,id',
+                    'root_cause' => 'required|string',
+                    'pic' => 'nullable|string|max:100',
+                    'yokoten' => 'required|boolean',
+                    'yokoten_area' => 'nullable|string',
+                    'dept_head_signature' => 'nullable|file|image|max:2048',
+                    'ldr_spv_signature' => 'nullable|file|image|max:2048',
+                    'attachments.*' => 'nullable|file|max:5120',
+                ]);
+
+                DB::beginTransaction();
+                try {
+                    // 1️⃣ Simpan tt_auditee_actions
+                    $auditeeAction = AuditeeAction::create([
+                        'audit_finding_id' => $validated['audit_finding_id'],
+                        'pic' => $validated['pic'] ?? '-',
+                        'root_cause' => $validated['root_cause'],
+                        'yokoten' => $validated['yokoten'],
+                        'yokoten_area' => $validated['yokoten_area'] ?? null,
+                        'status_id' => 1,
+                    ]);
+
+                    // 2️⃣ Simpan file signature (jika ada)
+                    if ($request->hasFile('dept_head_signature')) {
+                        $path = $request->file('dept_head_signature')->store('signatures', 'public');
+                        $auditeeAction->update(['dept_head_signature' => $path]);
+                    }
+
+                    if ($request->hasFile('ldr_spv_signature')) {
+                        $path = $request->file('ldr_spv_signature')->store('signatures', 'public');
+                        $auditeeAction->update(['ldr_spv_signature' => $path]);
+                    }
+
+                    // 3️⃣ Simpan Why (5 Why)
+                    for ($i = 1; $i <= 5; $i++) {
+                        $why = $request->input('why_' . $i . '_mengapa');
+                        $cause = $request->input('why_' . $i . '_karena');
+                        if ($why || $cause) {
+                            WhyCauses::create([
+                                'auditee_action_id' => $auditeeAction->id,
+                                'why_description' => $why ?? '',
+                                'cause_description' => $cause ?? '',
+                            ]);
+                        }
+                    }
+
+                    // 4️⃣ Simpan Corrective Action
+                    for ($i = 1; $i <= 4; $i++) {
+                        $activity = $request->input('corrective_' . $i . '_activity');
+                        $pic = $request->input('corrective_' . $i . '_pic');
+                        $plan = $request->input('corrective_' . $i . '_planning');
+                        $actual = $request->input('corrective_' . $i . '_actual');
+                        if ($activity) {
+                            CorrectiveAction::create([
+                                'auditee_action_id' => $auditeeAction->id,
+                                'user_id' => $pic,
+                                'activity' => $activity,
+                                'planning_date' => $plan,
+                                'actual_date' => $actual,
+                            ]);
+                        }
+                    }
+
+                    // 5️⃣ Simpan Preventive Action
+                    for ($i = 1; $i <= 4; $i++) {
+                        $activity = $request->input('preventive_' . $i . '_activity');
+                        $pic = $request->input('preventive_' . $i . '_pic');
+                        $plan = $request->input('preventive_' . $i . '_planning');
+                        $actual = $request->input('preventive_' . $i . '_actual');
+                        if ($activity) {
+                            PreventiveAction::create([
+                                'auditee_action_id' => $auditeeAction->id,
+                                'user_id' => $pic,
+                                'activity' => $activity,
+                                'planning_date' => $plan,
+                                'actual_date' => $actual,
+                            ]);
+                        }
+                    }
+
+                    // 6️⃣ Upload Attachments
+                    if ($request->hasFile('attachments')) {
+                        foreach ($request->file('attachments') as $file) {
+                            $path = $file->store('auditee_attachments', 'public');
+                            DocumentFile::create([
+                                'auditee_action_id' => $auditeeAction->id,
+                                'file_path' => $path,
+                                'original_name' => $file->getClientOriginalName(),
+                            ]);
+                        }
+                    }
+
+                    DB::commit();
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Auditee Action saved successfully',
+                        'auditee_action_id' => $auditeeAction->id
+                    ]);
+                } catch (\Throwable $e) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ], 500);
+                }
             }
 
         } catch (\Exception $e) {
@@ -254,11 +397,6 @@ class FtppController extends Controller
 
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
-    }
-
-    public function auditeeActionStore()
-    {
-        //
     }
 
     public function ldrSpvSign()
@@ -277,11 +415,6 @@ class FtppController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        //
-    }
-
-    public function updateAuditeeAction(Request $request, $id)
     {
         //
     }

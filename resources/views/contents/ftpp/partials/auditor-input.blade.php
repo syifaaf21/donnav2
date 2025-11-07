@@ -6,15 +6,22 @@
             <div class="mt-2 space-y-2">
                 @foreach ($auditTypes as $type)
                     <label class="block">
-                        <input type="radio" name="audit_type_id" value="{{ $type->id }}"
-                            {{ request('audit_type_id') == $type->id ? 'checked' : '' }}>
+                        <input type="radio" name="audit_type_id" value="{{ $type->id }}" x-model="form.audit_type_id">
                         {{ $type->name }}
                     </label>
                 @endforeach
             </div>
 
             {{-- Level 2: Sub Audit Type (muncul hanya jika audit type dipilih) --}}
-            <div id="subAuditType" class="mt-2 ml-4 flex flex-wrap gap-2"></div>
+            <div id="subAuditType" class="mt-2 ml-4 flex flex-wrap gap-2">
+                <template x-for="s in form.sub_audit" :key="s.id">
+                    <label class="block">
+                        <input type="radio" name="sub_audit_type_id" :value="s.id"
+                            x-model="form.sub_audit_type_id">
+                        <span x-text="s.name"></span>
+                    </label>
+                </template>
+            </div>
         </td>
 
         <td class="border border-black p-1">
@@ -28,10 +35,10 @@
                             Select Department / Process / Product by Plant
                         </button>
                         <input type="hidden" id="selectedPlant" name="plant">
-                        <input type="hidden" id="selectedDepartment" name="department_id">
-                        <input type="hidden" id="selectedProcess" name="process_id">
-                        <input type="hidden" id="selectedProduct" name="product_id">
-                        <div id="plantDeptDisplay" class="mt-1 text-gray-700"></div>
+                        <input type="hidden" id="selectedDepartment" name="department_id" x-model="form.department_id">
+                        <input type="hidden" id="selectedProcess" name="process_id" x-model="form.process_id">
+                        <input type="hidden" id="selectedProduct" name="product_id" x-model="form.product_id">
+                        <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'" class="mt-1 text-gray-700"></div>
                     </td>
                 </tr>
                 <tr>
@@ -43,14 +50,17 @@
                         </button>
 
                         <!-- Hasil pilihan -->
-                        <div id="selectedAuditees" class="flex flex-wrap gap-2 mt-2"></div>
+                        <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
+                        </div>
+                        <input type="hidden" id="auditee_ids" name="auditee_ids" x-model="form.auditee_ids">
                     </td>
                 </tr>
 
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Auditor / Inisiator:</td>
                     <td class="py-2">
-                        <select name="auditor_id" class="border-b border-gray-400 w-full focus:outline-none" required>
+                        <select name="auditor_id" x-model="form.auditor_id"
+                            class="border-b border-gray-400 w-full focus:outline-none" required>
                             <option value="">-- Choose Auditor --</option>
                             @foreach ($auditors as $auditor)
                                 <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
@@ -62,7 +72,7 @@
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Date:</td>
                     <td class="py-2">
-                        <input type="date" name="created_at"
+                        <input type="date" name="created_at" x-model="form.created_at"
                             class="border-b border-gray-400 w-full focus:outline-none"
                             value="{{ now()->toDateString() }}">
                     </td>
@@ -71,7 +81,8 @@
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Registration Number:</td>
                     <td class="py-2">
-                        <input type="text" id="reg_number" name="reg_number"
+                        <input type="text" id="reg_number" name="registration_number"
+                            x-model="form.registration_number"
                             class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" readonly>
                     </td>
                 </tr>
@@ -83,7 +94,8 @@
             <span class="font-semibold">Finding Category:</span>
             @foreach ($findingCategories as $category)
                 <label class="ml-2">
-                    <input type="radio" name="finding_category" value="{{ $category->id }}">
+                    <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
+                        value="{{ $category->id }}">
                     {{ ucfirst($category->name) }}
                 </label>
             @endforeach
@@ -100,12 +112,14 @@
         <td class="border border-black p-2">
             <div>
                 <label class="font-semibold">Finding / Issue:</label>
-                <textarea name="finding_description" class="w-full border border-gray-400 rounded p-1 h-24" required></textarea>
+                <textarea name="finding_description" x-model="form.finding_description"
+                    class="w-full border border-gray-400 rounded p-1 h-24" required></textarea>
             </div>
             <div class="flex justify-between mt-2">
                 <div class="mr-8">
                     <span class="font-semibold">Duedate:</span>
-                    <input type="date" name="due_date" class="border-b border-gray-400" required>
+                    <input type="date" name="due_date" x-model="form.due_date" class="border-b border-gray-400"
+                        required>
                 </div>
                 <div class="mt-2">
                     <div class="flex items-end gap-2 mb-1">
@@ -117,9 +131,10 @@
                             </button>
                         </div>
                     </div>
-                    <input type="hidden" id="selectedSub" name="sub_klausul_id[]" class="">
+                    <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
 
-                    <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-2 justify-end"></div>
+                    <div id="selectedSubContainer"
+                        class="flex flex-wrap gap-2 mt-2 justify-end"></div>
                 </div>
             </div>
             <!-- Preview containers (sesuaikan posisi di form) -->
@@ -754,27 +769,36 @@
             document.getElementById('auditeeSidebar').classList.add('hidden');
         }
 
+        let selectedAuditees = []; // Simpan id auditee
+
         function saveAuditeeSelection() {
-            let selected = Array.from(document.getElementById('auditeeSelect').selectedOptions)
-                .map(option => ({
-                    id: option.value,
-                    name: option.text
-                }));
+            const auditeeSelect = document.getElementById('auditeeSelect');
+            selectedAuditees = Array.from(auditeeSelect.selectedOptions).map(option => ({
+                id: option.value,
+                name: option.text
+            }));
 
-            // Tampilkan di UI
-            const container = document.getElementById('selectedAuditees');
-            container.innerHTML = '';
-            selected.forEach(item => {
-                container.innerHTML += `
-                    <span class="px-2 py-1 bg-blue-100 rounded">${item.name}</span>
-                    <input type="hidden" name="auditee_id[]" value="${item.id}">
-                `;
-            });
+            // Tampilkan ke UI
+            document.getElementById('selectedAuditees').innerHTML = selectedAuditees.map(a => `
+                <span class="bg-blue-100 px-2 py-1 rounded flex items-center gap-1">
+                    ${a.name}
+                    <button type="button" onclick="removeAuditee('${a.id}')">
+                        <i data-feather="x" class="w-4 h-4 text-red-500"></i>
+                    </button>
+                </span>
+            `).join('');
 
-            // Ambil semua checkbox auditee yang dipilih
-            const selectedAuditees = document.querySelectorAll('input[name="auditee_id[]"]:checked');
+            // Simpan ke input hidden
+            document.getElementById('auditee_ids').value = selectedAuditees.map(a => a.id).join(',');
 
+            feather.replace();
             closeAuditeeSidebar();
+        }
+
+        function removeAuditee(id) {
+            selectedAuditees = selectedAuditees.filter(a => a.id !== id);
+            document.getElementById('auditee_ids').value = selectedAuditees.map(a => a.id).join(',');
+            document.querySelector(`span[data-id="${id}"]`)?.remove();
         }
     </script>
 @endpush
@@ -906,39 +930,50 @@
     attachDocs.addEventListener('click', () => fileInput.click());
     attachBoth.addEventListener('click', () => combinedInput.click());
 </script>
+
+{{-- Store header data handler --}}
 <script>
     async function saveHeaderOnly() {
         const formData = new FormData();
         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         formData.append('_token', token);
-        formData.append('department_id', document.querySelector('input[name="department_id"]').value);
-        formData.append('process_id', document.querySelector('input[name="process_id"]').value);
-        formData.append('product_id', document.querySelector('input[name="product_id"]').value);
+        formData.append('department_id', document.querySelector('input[name="department_id"]').value || '');
+        formData.append('process_id', document.querySelector('input[name="process_id"]').value || '');
+        formData.append('product_id', document.querySelector('input[name="product_id"]').value || '');
         formData.append('audit_type_id', document.querySelector('input[name="audit_type_id"]:checked')?.value ||
             '');
         formData.append('sub_audit_type_id', document.querySelector('input[name="sub_audit_type_id"]:checked')
-            ?.value ||
-            '');
-        // formData.append('auditee[]', document.querySelector('input[name="auditee_id[]"]').value);
-        formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value);
-        formData.append('created_at', document.querySelector('input[name="created_at"]').value);
-        formData.append('registration_number', document.querySelector('input[name="reg_number"]').value);
+            ?.value || '');
+        formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value || '');
+        formData.append('created_at', document.querySelector('input[name="created_at"]').value || '');
+        formData.append('registration_number', document.querySelector('input[name="reg_number"]').value || '');
         formData.append('finding_category_id', document.querySelector('input[name="finding_category"]:checked')
             ?.value || '');
         formData.append('finding_description', document.querySelector('textarea[name="finding_description"]')
-            .value);
-        formData.append('due_date', document.querySelector('input[name="due_date"]').value);
+            .value || '');
+        formData.append('due_date', document.querySelector('input[name="due_date"]').value || '');
         formData.append('action', 'save_header');
 
-        selectedAuditees.forEach(auditee => {
-            formData.append('auditee_id[]', auditee.value);
-        });
+        // Replace this part in saveHeaderOnly()
+        selectedAuditees.forEach(a => formData.append('auditee_ids[]', a.id));
 
-        // ✅ tambahkan sub klausul yang dipilih dari array
+        // 🔹 sub klausul array
         selectedSubIds.forEach(id => {
             formData.append('sub_klausul_id[]', id);
         });
+
+        // Photos
+        const photoInput = document.getElementById('photoInput');
+        Array.from(photoInput.files).forEach(file => formData.append('photos[]', file));
+
+        // Documents
+        const fileInput = document.getElementById('fileInput');
+        Array.from(fileInput.files).forEach(file => formData.append('files[]', file));
+
+        // Combined (optional)
+        const combinedInput = document.getElementById('combinedInput');
+        Array.from(combinedInput.files).forEach(file => formData.append('attachments[]', file));
 
         try {
             const res = await fetch('{{ route('ftpp.store') }}', {
@@ -951,15 +986,15 @@
                 credentials: 'same-origin'
             });
 
-            console.log('Response status:', res.status);
-            const text = await res.text();
-            console.log('Raw response:', text);
+            const data = await res.json(); // langsung parse JSON
 
-            if (!res.ok) throw new Error(text);
-            const data = JSON.parse(text);
+            if (data.success) {
+                alert('✅ Header saved successfully');
+                console.log('Parsed JSON:', data);
+            } else {
+                alert('❌ Failed: ' + data.message);
+            }
 
-            alert('✅ Header saved successfully');
-            console.log('Parsed JSON:', data);
         } catch (err) {
             console.error('Fetch error:', err);
             alert('❌ Failed to save header:\n' + err.message);

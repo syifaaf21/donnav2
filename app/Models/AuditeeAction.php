@@ -15,7 +15,6 @@ class AuditeeAction extends Model
     protected $fillable =
     [
         'audit_finding_id',
-        'status_id',
         'pic',
         'root_cause',
         'yokoten',

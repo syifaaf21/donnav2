@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tt_document_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('document_mapping_id')->constrained('tt_document_mappings')->onDelete('cascade');
+            $table->foreignId('document_mapping_id')->nullable()->constrained('tt_document_mappings')->onDelete('cascade');
             $table->string('file_path');
             $table->timestamps();
         });

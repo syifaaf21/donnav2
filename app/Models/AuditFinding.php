@@ -19,7 +19,6 @@ class AuditFinding extends Model
             'department_id',
             'process_id',
             'product_id',
-            'auditee_id',
             'auditor_id',
             'registration_number',
             'finding_description',

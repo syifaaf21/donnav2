@@ -11,6 +11,8 @@ class DocumentFile extends Model
 
     protected $fillable = [
         'document_mapping_id',
+        'audit_finding_id',
+        'auditee_action_id',
         'file_path',
         'original_name',
     ];
