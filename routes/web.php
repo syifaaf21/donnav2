@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditTypeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentControlController;
 use App\Http\Controllers\DocumentController;
@@ -7,6 +8,10 @@ use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\FindingCategoryController;
+use App\Http\Controllers\FtppController;
+use App\Http\Controllers\FtppMasterController;
+use App\Http\Controllers\KlausulController;
 use App\Http\Controllers\ModelController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\NotificationController;
@@ -62,7 +67,6 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('master')->name('master.')->middleware('auth')->group(function () {
         // Part Number Management Routes
         Route::resource('part_numbers', PartNumberController::class);
-        Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
 
         // User Management Routes
         Route::resource('users', UserController::class);
@@ -73,12 +77,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/hierarchy', [DocumentController::class, 'index'])->name('hierarchy.index');
 
         Route::resource('processes', ProcessController::class);
+        Route::get('/processes', [ProcessController::class, 'index'])->name('processes.index');
 
         Route::resource('departments', DepartmentController::class);
+        Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
 
         Route::resource('products', ProductController::class);
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 
         Route::resource('models', ModelController::class);
+        Route::get('/models', [ModelController::class, 'index'])->name('models.index');
 
         Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
             Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
@@ -107,6 +115,34 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])
             ->name('bulkDestroy');
+
+        // Master FTPP
+        Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
+            Route::get('/', [FtppMasterController::class, 'index'])->name('index');
+            Route::get('/load/{section}/{id?}', [FtppMasterController::class, 'loadSection'])->name('load');
+
+            Route::prefix('audit')->name('audit.')->middleware('auth')->group(function () {
+                Route::get('/{id}', [AuditTypeController::class, 'show']);
+                Route::post('/store', [AuditTypeController::class, 'store'])->name('store');
+                Route::put('/update/{id}', [AuditTypeController::class, 'update'])->name('update');
+                Route::delete('/{id}', [AuditTypeController::class, 'destroy'])->name('destroy');
+            });
+
+            Route::prefix('finding-category')->name('finding-category.')->middleware('auth')->group(function () {
+                Route::get('/{id}', [FindingCategoryController::class, 'show']);
+                Route::post('/', [FindingCategoryController::class, 'store'])->name('store');
+                Route::put('/update/{id}', [FindingCategoryController::class, 'update'])->name('update');
+                Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
+            });
+
+            Route::prefix('klausul')->name('klausul.')->middleware('auth')->group(function () {
+                Route::get('/{id}', [KlausulController::class, 'show']);
+                Route::post('/', [KlausulController::class, 'store'])->name('store');
+                Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
+                Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
+            });
+
+        });
     });
 
     Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
@@ -116,21 +152,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])
-    ->name('approveWithDates');
-    Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
+            ->name('approveWithDates');
+        Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
 
 
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
-
-        // Admin routes
-        // Route::post('/store', [DocumentReviewController::class, 'storeReview'])->name('store');
-        // Route::put('/update/{mapping}', [DocumentReviewController::class, 'updateReview'])->name('update');
-        // Route::delete('/destroy/{mapping}', [DocumentReviewController::class, 'destroy'])->name('destroy');
-        // Route::post('/reject/{mapping}', [DocumentReviewController::class, 'reject'])->name('reject');
-        // Route::post('{mapping}/approve', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
-
-        // User route
-        // Route::post('/revise/{mapping}', [DocumentReviewController::class, 'revise'])->name('revise');
     });
 
     Route::prefix('document-control')->name('document-control.')->middleware('auth')->group(function () {
@@ -140,15 +166,31 @@ Route::middleware(['auth'])->group(function () {
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
     });
 
-
-    // Route::post('/bulk-destroy', [DocumentControlController::class, 'bulkDestroy'])
-    //     ->name('bulkDestroy');
-
     // AJAX for Select2 (Product & Model inside Part Number)
-Route::get('/ajax/products', [PartNumberController::class, 'ajaxProductIndex']);
-Route::post('/ajax/products', [PartNumberController::class, 'ajaxProductStore']);
+    Route::get('/ajax/products', [PartNumberController::class, 'ajaxProductIndex']);
+    Route::post('/ajax/products', [PartNumberController::class, 'ajaxProductStore']);
 
-Route::get('/ajax/models', [PartNumberController::class, 'ajaxModelIndex']);
-Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
+    Route::get('/ajax/models', [PartNumberController::class, 'ajaxModelIndex']);
+    Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
+
+    Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
+        Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
+        Route::get('/', [FtppController::class, 'index'])->name('index');
+        Route::get('/{id}', [FtppController::class, 'edit'])->name('edit');
+        Route::post('/department', [FtppController::class, 'storeDept'])->name('store-dept');
+        Route::post('/', [FtppController::class, 'store'])->name('store');
+        // Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        // routes/web.php
+        Route::get('/{audit_finding}', [FtppController::class, 'create']);
+    });
+    Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
+    Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);
+    Route::get('/sub-klausul/{headId}', [FtppController::class, 'getSubKlausul']);
+
+    Route::get('/get-departments/{plant}', [FtppController::class, 'getDepartments']);
+    Route::get('/get-processes/{plant}', [FtppController::class, 'getProcesses']);
+    Route::get('/get-products/{plant}', [FtppController::class, 'getProducts']);
+
+    Route::get('/get-auditee/{departmentId}', [FtppController::class, 'getAuditee']);
 
 });

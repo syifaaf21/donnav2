@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         RoleSeeder::class,
         ProcessSeeder::class,
         DepartmentSeeder::class,
+        AuditSeeder::class,
         UserSeeder::class,
         ProductSeeder::class,
         ModelSeeder::class,
@@ -30,6 +31,11 @@ class DatabaseSeeder extends Seeder
         StatusSeeder::class,
         DocumentSeeder::class,
         // DocumentMappingSeeder::class,
+        SubAuditSeeder::class,
+        FindingCategoriesSeeder::class,
+        KlausulsSeeder::class,
+        HeadKlausulsSeeder::class,
+        SubKlausulsSeeder::class,
         ]);
 
     }

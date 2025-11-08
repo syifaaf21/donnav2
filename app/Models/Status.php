@@ -9,10 +9,17 @@ class Status extends Model
 {
     use HasFactory;
 
+    protected $table = 'tm_statuses';
+
     protected $fillable = ['name'];
 
     public function mapping()
     {
         return $this->hasMany(DocumentMapping::class);
+    }
+
+    public function auditFinding()
+    {
+        return $this->hasMany(AuditFinding::class);
     }
 }

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('document_mappings', function (Blueprint $table) {
+        Schema::table('tt_document_mappings', function (Blueprint $table) {
             $table->string('revision', 5)->default('01');
         });
     }
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('document_mappings', function (Blueprint $table) {
+        Schema::table('tt_document_mappings', function (Blueprint $table) {
             //
         });
     }

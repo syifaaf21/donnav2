@@ -9,9 +9,12 @@ class Department extends Model
 {
     use HasFactory;
 
+    protected $table = 'tm_departments';
+
     protected $fillable = [
         'name',
         'code',
+        'plant',
     ];
 
     public function user()
@@ -27,5 +30,10 @@ class Department extends Model
     public function documents()
     {
         return $this->hasMany(Document::class);
+    }
+
+    public function auditFinding()
+    {
+        return $this->hasMany(AuditFinding::class);
     }
 }

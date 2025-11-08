@@ -11,17 +11,17 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('part_numbers', function (Blueprint $table) {
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
             $table->unsignedBigInteger('process_id')->nullable()->after('model_id');
 
             // Optional: tambahkan constraint FK
-            $table->foreign('process_id')->references('id')->on('processes')->onDelete('set null');
+            $table->foreign('process_id')->references('id')->on('tm_processes')->onDelete('set null');
         });
     }
 
     public function down()
     {
-        Schema::table('part_numbers', function (Blueprint $table) {
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
             $table->dropForeign(['process_id']);
             $table->dropColumn('process_id');
         });

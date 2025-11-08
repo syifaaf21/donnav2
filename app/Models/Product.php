@@ -14,10 +14,15 @@ class Product extends Model
         'code'
     ];
 
-    protected $table = 'products'; // sesuaikan kalau nama tabel beda
+    protected $table = 'tm_products'; // sesuaikan kalau nama tabel beda
 
     public function partNumber()
     {
         return $this->hasMany(PartNumber::class, 'product_id', 'id');
+    }
+
+    public function auditFinding()
+    {
+        return $this->hasMany(AuditFinding::class);
     }
 }

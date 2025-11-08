@@ -15,12 +15,31 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Ambil role
         $adminRole = Role::where('name', 'admin')->first();
         $userRole = Role::where('name', 'user')->first();
+        $deptHeadRoleId = 5; // Dept Head
+        $superAdminRoleId = 1;
+        $userRoleId = 3;
+        $auditorRoleId = 4;
+        $leaderRoleId = 6;
+        $spvRoleId = 7;
 
-        // Admins
-        $adminDept = Department::find(17);
+        // Ambil satu department default untuk user global (misal Engineering Body)
+        $defaultDept = Department::find(24); // sesuaikan dengan ID dept yang aman
 
+        // === SUPER ADMIN ===
+        User::create([
+            'npk' => '000000',
+            'name' => 'Super Admin',
+            'email' => 'superadmin@example.com',
+            'password' => Hash::make('super123'),
+            'role_id' => $superAdminRoleId,
+            'department_id' => 23,
+        ]);
+
+        // === ADMIN ===
+        $adminDept = Department::find(24);
         User::create([
             'npk' => '111111',
             'name' => 'Admin',
@@ -30,38 +49,113 @@ class UserSeeder extends Seeder
             'department_id' => $adminDept->id,
         ]);
 
-        // Guests (now assigned role: user)
+        // === USER BIASA ===
+        User::create([
+            'npk' => '222222',
+            'name' => 'Regular User',
+            'email' => 'user@example.com',
+            'password' => Hash::make('user123'),
+            'role_id' => $userRoleId,
+            'department_id' => $defaultDept->id,
+        ]);
+
+        // === AUDITOR ===
+        User::create([
+            'npk' => '333332',
+            'name' => 'Auditor LK3 User',
+            'email' => 'auditor@example.com',
+            'password' => Hash::make('audit123'),
+            'role_id' => $auditorRoleId,
+            'department_id' => $defaultDept->id,
+            'audit_type_id' => 1,
+        ]);
+
+        // === AUDITOR ===
+        User::create([
+            'npk' => '333333',
+            'name' => 'Auditor Mutu User',
+            'email' => 'auditor@example.com',
+            'password' => Hash::make('audit123'),
+            'role_id' => $auditorRoleId,
+            'department_id' => $defaultDept->id,
+            'audit_type_id' => 2,
+        ]);
+
+        // === SUPERVISOR ===
+        User::create([
+            'npk' => '444444',
+            'name' => 'Supervisor User',
+            'email' => 'spv@example.com',
+            'password' => Hash::make('aiia123'),
+            'role_id' => $spvRoleId,
+            'department_id' => 20,
+        ]);
+
+        // === LEADER ===
+        User::create([
+            'npk' => '555555',
+            'name' => 'Leader User',
+            'email' => 'leader@example.com',
+            'password' => Hash::make('aiia123'),
+            'role_id' => $leaderRoleId,
+            'department_id' => 20,
+        ]);
+
+        // === DEPT HEADS ===
         $users = [
-            ['npk' => '000001', 'name' => 'Udin', 'department_id' => 1],
-            ['npk' => '000002', 'name' => 'Asep', 'department_id' => 2],
-            ['npk' => '000003', 'name' => 'Joko', 'department_id' => 3],
-            ['npk' => '000004', 'name' => 'Yono', 'department_id' => 4],
-            ['npk' => '000005', 'name' => 'Dika', 'department_id' => 5],
-            ['npk' => '000006', 'name' => 'Budi', 'department_id' => 6],
-            ['npk' => '000007', 'name' => 'Yudi', 'department_id' => 7],
-            ['npk' => '000008', 'name' => 'Ikhsan', 'department_id' => 8],
-            ['npk' => '000009', 'name' => 'Risky', 'department_id' => 9],
-            ['npk' => '000010', 'name' => 'Rates', 'department_id' => 10],
-            ['npk' => '000011', 'name' => 'Fabojo', 'department_id' => 11],
-            ['npk' => '000012', 'name' => 'Umar', 'department_id' => 12],
-            ['npk' => '000013', 'name' => 'Ali', 'department_id' => 13],
-            ['npk' => '000014', 'name' => 'Amin', 'department_id' => 14],
-            ['npk' => '000015', 'name' => 'Jaka', 'department_id' => 15],
-            ['npk' => '000016', 'name' => 'Yanto', 'department_id' => 16],
-            ['npk' => '000017', 'name' => 'Fina', 'department_id' => 17],
+            ['name' => 'JONI FERNANDO', 'departments' => ['QA BODY']],
+            ['name' => 'DANI PURNOMO', 'departments' => ['QA UNIT']],
+            ['name' => 'BONIFASIUS RICKY PURWANTO', 'departments' => ['QA ELECTRIC', 'ENG ELECTRIC']],
+            ['name' => 'LUTFI DAHLAN', 'departments' => ['ENG BODY']],
+            ['name' => 'RICKY PRAMUDITYA', 'departments' => ['ENG UNIT']],
+            ['name' => 'TEGAR AVRILLA KHARISMAWAN', 'departments' => ['MAINTENANCE']],
+            ['name' => 'ARMENDO RACHMAWAN', 'departments' => ['PRD BODY']],
+            ['name' => 'CAHYANA SUHERLAN', 'departments' => ['PRD UNIT']],
+            ['name' => 'ARIF KURNIAWAN DWI HARYADI', 'departments' => ['PRD ELECTRIC', 'PPIC ELECTRIC', 'PSD']],
+            ['name' => 'FERRY AVIANTO', 'departments' => ['IT DEVELOPMENT']],
+            ['name' => 'FAQIH SETYO AJI', 'departments' => ['PPIC']],
+            ['name' => 'JUNJUNAN TRI SETIA', 'departments' => ['MANAGEMENT SYSTEM']],
         ];
 
-        foreach ($users as $index => $data) {
-            $department = Department::find($data['department_id']);
+        $npk = 100001;
 
-            User::create([
-                'npk' => $data['npk'],
-                'name' => $data['name'],
-                'email' => strtolower($data['name']) . '@example.com', // generate email dummy
-                'password' => Hash::make('user123'),
-                'role_id' => $userRole->id,
-                'department_id' => $department->id,
-            ]);
+        foreach ($users as $userData) {
+            foreach ($userData['departments'] as $deptName) {
+
+                // Map nama ke department_id
+                $department = match (true) {
+                    str_contains($deptName, 'QA BODY') => Department::where('name', 'Quality Body')->first(),
+                    str_contains($deptName, 'QA UNIT') => Department::where('name', 'Quality Unit')->first(),
+                    str_contains($deptName, 'QA ELECTRIC') => Department::where('name', 'Quality Electric')->first(),
+                    str_contains($deptName, 'ENG BODY') => Department::where('name', 'Engineering Body')->first(),
+                    str_contains($deptName, 'ENG UNIT') => Department::where('name', 'Engineering Unit')->first(),
+                    str_contains($deptName, 'ENG ELECTRIC') => Department::where('name', 'Engineering Electric')->first(),
+                    str_contains($deptName, 'MAINTENANCE') => Department::where('name', 'Maintenance Body')->first(),
+                    str_contains($deptName, 'PRD BODY') => Department::where('name', 'Production Body')->first(),
+                    str_contains($deptName, 'PRD UNIT') => Department::where('name', 'Production Unit')->first(),
+                    str_contains($deptName, 'PRD ELECTRIC') => Department::where('name', 'Production Electric')->first(),
+                    str_contains($deptName, 'PPIC ELECTRIC') => Department::where('name', 'PPIC Electric')->first(),
+                    str_contains($deptName, 'PPIC') => Department::where('name', 'PPIC-PC')->first(),
+                    str_contains($deptName, 'PSD') => Department::where('name', 'Production System & Development')->first(),
+                    str_contains($deptName, 'IT DEVELOPMENT') => Department::where('name', 'IT Development')->first(),
+                    str_contains($deptName, 'MANAGEMENT SYSTEM') => Department::where('name', 'Management System')->first(),
+                    default => null
+                };
+
+                if (!$department) {
+                    $this->command->warn("Department not found for {$deptName}");
+                    continue;
+                }
+
+                User::create([
+                    'npk' => $npk++,
+                    'name' => $userData['name'],
+                    'email' => null,
+                    'password' => Hash::make('aiia123'),
+                    'role_id' => $deptHeadRoleId,
+                    'department_id' => $department->id,
+                ]);
+            }
         }
     }
 }

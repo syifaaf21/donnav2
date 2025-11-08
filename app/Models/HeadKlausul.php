@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class HeadKlausul extends Model
+{
+    use HasFactory;
+
+    protected $table = 'tm_head_klausuls';
+
+    protected $fillable =
+    [
+        'klausul_id',
+        'code',
+        'name',
+    ];
+
+    public function klausul()
+    {
+        return $this->belongsTo(Klausul::class, 'klausul_id', 'id');
+    }
+
+    public function subKlausul()
+    {
+        return $this->hasMany(SubKlausul::class, 'head_klausul_id', 'id');
+    }
+}

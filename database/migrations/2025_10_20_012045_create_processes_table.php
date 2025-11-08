@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('processes', function (Blueprint $table) {
+        Schema::create('tm_processes', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // e.g. Injection
             $table->string('code'); // e.g. INJ
@@ -21,6 +21,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('processes');
+        Schema::dropIfExists('tm_processes');
     }
 };

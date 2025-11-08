@@ -23,7 +23,7 @@ class DocumentReviewController extends Controller
 {
     public function index(Request $request)
     {
-        $plants = $this->getEnumValues('part_numbers', 'plant');
+        $plants = $this->getEnumValues('tm_part_numbers', 'plant');
         $processes = \App\Models\Process::pluck('name', 'id');
 
         $documentsMaster = Document::with('childrenRecursive')
@@ -39,6 +39,7 @@ class DocumentReviewController extends Controller
             'files',
             'partNumber.product',
             'partNumber.productModel',
+            'partNumber.process',
             'user',
             'status',
             'department',
@@ -60,7 +61,7 @@ class DocumentReviewController extends Controller
                 return $items->groupBy(function ($item) {
                     $partNumber = $item->partNumber?->part_number ?? 'unknown';
                     $model = $item->partNumber?->productModel?->name ?? 'unknown';
-                    $process = $item->partNumber?->process?->code ?? 'unknown';
+                    $process = $item->partNumber?->process?->name ?? 'unknown';
                     return "{$partNumber}-{$model}-{$process}";
                 });
             });

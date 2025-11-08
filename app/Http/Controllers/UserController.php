@@ -14,27 +14,55 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $tab = $request->input('tab', 'all');
+        $perPage = $request->input('per_page', 10); // default 10 per page
+
         $query = User::with(['role', 'department']);
 
+        // Filter berdasarkan tab
+        switch ($tab) {
+            case 'depthead':
+                $query->whereHas('role', fn($q) => $q->where('name', 'Dept Head'));
+                $view = 'contents.master.user.partials.dept-head';
+                break;
+
+            case 'auditor':
+                $query->whereHas('role', fn($q) => $q->where('name', 'Auditor'));
+                $view = 'contents.master.user.partials.auditor';
+                break;
+
+            default:
+                $view = 'contents.master.user.partials.all';
+                break;
+        }
+
+        // Filter pencarian
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('npk', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhereHas('role', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('department', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
+                    ->orWhereHas('role', fn($r) => $r->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));;
             });
         }
 
-        $users = $query->paginate(10)->appends($request->query());
+        $users = $query->orderBy('created_at', 'asc')
+            ->paginate($perPage)
+            ->appends($request->query());
+
         $roles = Role::all();
         $departments = Department::all();
 
-        return view('contents.master.user', compact('users', 'roles', 'departments'));
+        // AJAX → partial
+        if ($request->ajax()) {
+            $html = view($view, compact('users'))->render();
+            return response($html);
+        }
+
+        // Non-AJAX → full view
+        return view('contents.master.user.index', compact('users', 'roles', 'departments'));
     }
 
     public function create()
@@ -47,7 +75,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users',
-            'email' => 'required|email|unique:users',
+            'email' => 'nullable|email|unique:users',
             'password' => 'required|min:6|confirmed',
             'role_id' => 'required',
             'department_id' => 'required',
@@ -81,9 +109,14 @@ class UserController extends Controller
     }
 
 
-    public function edit(User $user)
+    public function edit($id)
     {
-        //
+        $user = User::findOrFail($id);
+        $roles = Role::all();
+        $departments = Department::all();
+
+        // Kembalikan partial Blade khusus isi modal
+        return view('contents.master.user.partials.form-edit', compact('user', 'roles', 'departments'));
     }
 
     public function update(Request $request, User $user)
@@ -92,7 +125,7 @@ class UserController extends Controller
         $rules = [
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users,npk,' . $user->id,
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
             'role_id' => 'required',
             'department_id' => 'required',
         ];

@@ -60,10 +60,10 @@
     {{-- Admin Actions --}}
     @if (auth()->user()->role->name == 'Admin')
         {{-- Edit --}}
-        <button title="Edit Metadata"
-            class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition"
-            data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
-            <i class="bi bi-pencil-square text-base"></i>
+        <button type="button" data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}"
+            data-bs-title="Edit Document"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+            <i data-feather="edit" class="w-4 h-4"></i>
         </button>
 
         {{-- Delete --}}
@@ -72,8 +72,8 @@
             @csrf
             @method('DELETE')
             <button type="submit" title="Delete Document"
-                class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition">
-                <i class="bi bi-trash text-base"></i>
+                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                <i data-feather="trash-2" class="w-4 h-4"></i>
             </button>
         </form>
     @endif

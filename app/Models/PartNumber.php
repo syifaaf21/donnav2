@@ -17,7 +17,7 @@ class PartNumber extends Model
         'plant',
     ];
 
-    protected $table = 'part_numbers'; // sesuaikan
+    protected $table = 'tm_part_numbers'; // sesuaikan
 
     public function product()
     {

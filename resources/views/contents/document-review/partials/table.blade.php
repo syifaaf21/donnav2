@@ -52,9 +52,13 @@
                         <tbody>
                             @foreach ($group as $i => $doc)
                                 <tr class="border-b">
-                                    <td class="px-2 py-1">{{ $doc->document?->name ?? '-' }}</td>
+                                    <td class="px-2 py-1">{{ $doc->document?->code ?? '-' }}</td>
                                     <td class="px-2 py-1">{{ $doc->document_number ?? '-' }}</td>
-                                    <td class="px-2 py-1">{{ $doc->notes ?? '-' }}</td>
+                                    <td class="px-2 py-1">@if ($doc->notes)
+                                                                {!! $doc->notes !!}
+                                                            @else
+                                                                -
+                                                            @endif</td>
                                     <td class="px-2 py-1">
                                         {{ $doc->reminder_date ? $doc->reminder_date->format('Y-m-d') : '-' }}
                                     </td>

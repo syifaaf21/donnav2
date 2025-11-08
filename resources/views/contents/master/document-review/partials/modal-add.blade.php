@@ -1,58 +1,114 @@
 @if (auth()->user()->role->name == 'Admin')
-    <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+
+    <div class="modal fade @if ($errors->any()) show @endif" id="addDocumentModal" tabindex="-1"
+        aria-labelledby="addDocumentModalLabel" aria-hidden="{{ $errors->any() ? 'false' : 'true' }}"
+        style="{{ $errors->any() ? 'display: block;' : '' }}">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <form action="{{ route('master.document-review.store') }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
                 <div class="modal-content border-0 rounded-4 shadow-lg">
+
+
                     {{-- Modal Header --}}
                     <div class="modal-header bg-light text-dark rounded-top-4">
                         <h5 class="modal-title fw-semibold" style="font-family: 'Inter', sans-serif;"
                             id="addDocumentModalLabel">
                             <i class="bi bi-plus-circle me-2"></i> Add Document Review
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-
+                    <div class="d-flex align-items-center px-3 py-1 mb-3"
+                        style="
+            background-color: #fff8dc;
+            border: 1px solid #ffeeba;
+            border-left: 4px solid #ffc107;
+            border-radius: 3px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #856404;
+        ">
+                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning" style="font-size: 1rem;"></i>
+                        <div>
+                            <strong>Notes:</strong> Please create a <b>Parent Document</b> first.
+                            <div class="text-danger ms-1" style="font-size: 0.8rem;">
+                                Child Document cannot be created without Parent Document
+                            </div>
+                        </div>
+                    </div>
 
                     {{-- Modal Body --}}
                     <div class="modal-body p-4" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                         <div class="row g-3">
+
                             {{-- Document Name --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Document Name <span
                                         class="text-danger">*</span></label>
-                                <select id="document_select" name="document_id" class="form-select border-1 shadow-sm"
+                                <select id="document_select" name="document_id"
+                                    class="form-select border-1 shadow-sm @error('document_id') is-invalid @enderror"
                                     required>
                                     <option value="">-- Select Document --</option>
                                     @foreach ($documentsMaster as $doc)
-                                        <option value="{{ $doc->id }}" data-code="{{ strtoupper($doc->code) }}">
+                                        <option value="{{ $doc->id }}" data-code="{{ strtoupper($doc->code) }}"
+                                            {{ old('document_id') == $doc->id ? 'selected' : '' }}>
                                             {{ $doc->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <div class="invalid-feedback">Document Name is required.</div>
+                                @error('document_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @else
+                                    <div class="invalid-feedback">Document Name is required.</div>
+                                @enderror
                             </div>
 
                             {{-- Document Number --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Document Number</label>
                                 <input type="text" name="document_number" id="document_number"
-                                    class="form-control border-1 shadow-sm" readonly>
+                                    class="form-control border-1 shadow-sm @error('document_number') is-invalid @enderror"
+                                    readonly value="{{ old('document_number') }}">
                             </div>
 
                             {{-- Plant --}}
                             <div class="col-md-4">
                                 <label for="addPlantSelect" class="form-label fw-medium">Plant <span
                                         class="text-danger">*</span></label>
-                                <select name="plant" id="plant_select" class="form-select border-1 shadow-sm"
+                                <select name="plant" id="plant_select"
+                                    class="form-select border-1 shadow-sm @error('plant') is-invalid @enderror"
                                     required>
                                     <option value="">-- Select Plant --</option>
                                     <option value="body">Body</option>
                                     <option value="unit">Unit</option>
                                     <option value="electric">Electric</option>
                                 </select>
-                                <div class="invalid-feedback">Plant is required.</div>
+                                @error('plant')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @else
+                                    <div class="invalid-feedback">Plant is required.</div>
+                                @enderror
+                            </div> {{-- Tutup col-md-4 untuk Plant --}}
+
+                            {{-- Parent Document --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">Parent Document (Optional)</label>
+                                <select id="parent_document_select" name="parent_id"
+                                    class="form-select border-1 shadow-sm @error('parent_id') is-invalid @enderror">
+                                    <option value="">-- Select Parent Document --</option>
+                                    @foreach ($existingDocuments as $docMap)
+                                        <option value="{{ $docMap->id }}"
+                                            data-product="{{ $docMap->partNumber->product->code ?? '' }}"
+                                            data-process="{{ $docMap->partNumber->process->code ?? '' }}"
+                                            data-model="{{ $docMap->partNumber->productModel->name ?? '' }}"
+                                            {{ old('parent_id') == $docMap->id ? 'selected' : '' }}>
+                                            {{ $docMap->document_number }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted fst-italic">Only required for child documents.</small>
+                                @error('parent_id')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             {{-- Part Number --}}
@@ -60,15 +116,21 @@
                                 <label class="form-label fw-medium">Part Number <span
                                         class="text-danger">*</span></label>
                                 <select id="partNumber_select" name="part_number_id"
-                                    class="form-select border-1 shadow-sm" required disabled>
+                                    class="form-select border-1 shadow-sm @error('part_number_id') is-invalid @enderror"
+                                    required disabled>
                                     <option value="">-- Select Part Number --</option>
                                     @foreach ($partNumbers as $part)
-                                        <option value="{{ $part->id }}" data-plant="{{ $part->plant }}">
+                                        <option value="{{ $part->id }}" data-plant="{{ $part->plant }}"
+                                            {{ old('part_number_id') == $part->id ? 'selected' : '' }}>
                                             {{ $part->part_number }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <div class="invalid-feedback">Part Number is required.</div>
+                                @error('part_number_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @else
+                                    <div class="invalid-feedback">Part Number is required.</div>
+                                @enderror
                             </div>
 
                             {{-- Department --}}
@@ -76,26 +138,35 @@
                                 <label class="form-label fw-medium">Department <span
                                         class="text-danger">*</span></label>
                                 <select id="department_select" name="department_id"
-                                    class="form-select border-1 shadow-sm" required>
+                                    class="form-select border-1 shadow-sm @error('department_id') is-invalid @enderror"
+                                    required>
                                     <option value="">-- Select Department --</option>
                                     @foreach ($departments as $dept)
-                                        <option value="{{ $dept->id }}" data-code="{{ strtoupper($dept->code) }}">
+                                        <option value="{{ $dept->id }}" data-code="{{ strtoupper($dept->code) }}"
+                                            {{ old('department_id') == $dept->id ? 'selected' : '' }}>
                                             {{ $dept->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <div class="invalid-feedback">Department is required.</div>
+                                @error('department_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @else
+                                    <div class="invalid-feedback">Department is required.</div>
+                                @enderror
                             </div>
 
                             {{-- Notes --}}
                             <div class="col-12 mb-3">
                                 <label class="form-label fw-medium">Notes</label>
-                                <input type="hidden" name="notes" id="notes_input_add">
+                                <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
                                 <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"
-                                    style="min-height: 80px; max-height: 100px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; width: 100%;">
+                                    style="min-height: 100px; max-height: 150px; width: 100%; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; border: 1px solid #ddd; border-radius: 4px; padding: 8px; background-color: #fff;">
                                 </div>
                                 <small class="text-muted">You can format your notes with bold, italic, underline,
                                     colors, and more.</small>
+                                @error('notes')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             {{-- File Upload --}}
@@ -104,7 +175,8 @@
                                         class="text-danger">*</span></label>
                                 <div id="file-fields">
                                     <div class="d-flex align-items-center mb-2 file-input-group">
-                                        <input type="file" name="files[]" class="form-control border-1 shadow-sm"
+                                        <input type="file" name="files[]"
+                                            class="form-control border-1 shadow-sm @error('files') is-invalid @enderror"
                                             required accept=".pdf,.doc,.docx,.xls,.xlsx">
                                         <button type="button"
                                             class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
@@ -112,256 +184,35 @@
                                         </button>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-file">
-                                    <i class="bi bi-plus-square"></i>
+                                <button type="button" class="btn btn-outline-success btn-sm mt-2" id="add-file">
+                                    <i class="bi bi-plus"></i> Add File
                                 </button>
                                 <small class="text-muted d-block mt-1">Allowed Format: PDF, DOCX, EXCEL</small>
-                                <div class="invalid-feedback">Document File is required.</div>
+                                @error('files')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                @error('files.*')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
                             </div>
-                            {{-- Modal Footer --}}
-                            <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle me-1"></i> Close
-                                </button>
-                                <button type="submit" class="btn btn-outline-primary px-4">
-                                    <i class="bi bi-save2 me-1"></i> Save Document
-                                </button>
-                            </div>
+
                         </div>
+                    </div>
+
+                    {{-- Modal Footer --}}
+                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                        <button type="button"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                            data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Submit
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 @endif
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const container = document.getElementById("file-fields");
-        const addBtn = document.getElementById("add-file");
-
-        // Tambah file input
-        addBtn.addEventListener("click", function() {
-            const group = document.createElement("div");
-            group.classList.add("col-md-12", "d-flex", "align-items-center", "mb-2",
-                "file-input-group");
-
-            group.innerHTML = `
-            <input type="file" class="form-control" name="files[]" required accept=".pdf,.doc,.docx,.xls,.xlsx">
-            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
-                <i class="bi bi-trash"></i>
-            </button>
-        `;
-            container.appendChild(group);
-        });
-
-        // Hapus file input
-        container.addEventListener("click", function(e) {
-            if (e.target.closest(".remove-file")) {
-                e.target.closest(".file-input-group").remove();
-            }
-        });
-
-        // Document Name - pakai TomSelect + API
-        new TomSelect('#document_select', {
-            create: false,
-            preload: true,
-            load: function(query, callback) {
-                fetch('/api/documents?q=' + encodeURIComponent(query))
-                    .then(res => res.json())
-                    .then(callback)
-                    .catch(() => callback());
-            }
-        });
-
-        // Plant - statis
-        const tsPlant = new TomSelect('#plant_select', {
-            create: false
-        });
-
-        // Part Number & Department - kosong awal
-        const tsPartNumber = new TomSelect('#partNumber_select', {
-            create: false,
-            options: []
-        });
-
-        const tsDepartment = new TomSelect('#department_select', {
-            create: false,
-            options: []
-        });
-
-        tsPartNumber.disable();
-        tsDepartment.disable();
-
-        // Load Department sekali dari API
-        fetch('/api/departments')
-            .then(res => res.json())
-            .then(data => {
-                const mapped = data.map(item => ({
-                    value: item.id,
-                    text: item.text
-                }));
-                tsDepartment.clearOptions();
-                tsDepartment.addOptions(mapped);
-            })
-            .catch(() => {
-                tsDepartment.clearOptions();
-            });
-
-        // Saat Plant berubah
-        tsPlant.on('change', function(value) {
-            if (value) {
-                tsPartNumber.enable();
-                tsPartNumber.clearOptions();
-
-                fetch(`/api/part-numbers?plant=${encodeURIComponent(value)}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const mapped = data.map(item => ({
-                            value: item.id,
-                            text: item.text
-                        }));
-                        tsPartNumber.addOptions(mapped);
-                    })
-                    .catch(() => {
-                        tsPartNumber.clearOptions();
-                    });
-
-                // Department bisa langsung enable karena tidak tergantung plant
-                tsDepartment.enable();
-            } else {
-                tsPartNumber.disable();
-                tsPartNumber.clearOptions();
-
-                tsDepartment.disable();
-                tsDepartment.clearOptions();
-            }
-        });
-
-        // Auto Generate Doc No
-        const plantSelect = document.getElementById('plant_select');
-        const partNumberSelect = document.getElementById('partNumber_select');
-        const departmentSelect = document.getElementById('department_select');
-        const documentSelect = document.getElementById('document_select');
-        const documentNumberInput = document.getElementById('document_number');
-
-        function canGenerate() {
-            return documentSelect.value && departmentSelect.value && partNumberSelect.value;
-        }
-
-        async function generateDocumentNumber() {
-            if (!canGenerate()) {
-                documentNumberInput.value = '';
-                return;
-            }
-
-            const params = new URLSearchParams({
-                document_id: documentSelect.value,
-                department_id: departmentSelect.value,
-                part_number_id: partNumberSelect.value,
-            });
-
-            try {
-                const response = await fetch(`/api/generate-document-number?${params.toString()}`);
-                if (!response.ok) throw new Error('Failed to fetch');
-                const data = await response.json();
-                documentNumberInput.value = data.document_number || '';
-            } catch (error) {
-                console.error('Error generating document number:', error);
-                documentNumberInput.value = '';
-            }
-        }
-
-        // Filter Part Number options based on selected Plant
-        plantSelect.addEventListener('change', () => {
-            const selectedPlant = plantSelect.value;
-
-            // Reset part number and document number
-            partNumberSelect.value = '';
-            documentNumberInput.value = '';
-
-            // Enable/disable Part Number and Department select
-            const enableControls = selectedPlant !== '';
-            partNumberSelect.disabled = !enableControls;
-            departmentSelect.disabled = !enableControls;
-
-            // Show/hide Part Number options based on plant
-            Array.from(partNumberSelect.options).forEach(option => {
-                if (option.value === '') {
-                    option.style.display = 'block'; // keep default option visible
-                } else if (option.dataset.plant === selectedPlant) {
-                    option.style.display = 'block';
-                } else {
-                    option.style.display = 'none';
-                }
-            });
-        });
-
-        // Event listeners to generate document number on change
-        documentSelect.addEventListener('change', generateDocumentNumber);
-        departmentSelect.addEventListener('change', generateDocumentNumber);
-        partNumberSelect.addEventListener('change', generateDocumentNumber);
-
-    });
-
-    document.addEventListener("DOMContentLoaded", function() {
-        // Inisialisasi Quill
-        const quill = new Quill('#quill_editor', {
-            theme: 'snow',
-            placeholder: 'Write your notes here...',
-            modules: {
-                toolbar: [
-                    [{
-                        'font': []
-                    }, {
-                        'size': []
-                    }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{
-                        'color': []
-                    }, {
-                        'background': []
-                    }],
-                    [{
-                        'list': 'ordered'
-                    }, {
-                        'list': 'bullet'
-                    }],
-                    [{
-                        'align': []
-                    }],
-                    ['clean']
-                ]
-            }
-        });
-
-        // Ambil hidden input
-        const hiddenInput = document.getElementById('notes_input_add');
-
-        // Sync ke hidden input saat submit form
-        const form = document.querySelector('#addDocumentModal form');
-        form.addEventListener('submit', function() {
-            hiddenInput.value = quill.root.innerHTML;
-        });
-    });
-</script>
-<style>
-    #quill_editor {
-        width: 100%;
-        max-width: 100%;
-        overflow-x: hidden;
-    }
-
-    #quill_editor .ql-editor {
-        word-wrap: break-word !important;
-        white-space: pre-wrap !important;
-        overflow-wrap: break-word !important;
-        max-width: 100%;
-        overflow-x: hidden;
-        box-sizing: border-box;
-    }
-
-    #quill_editor .ql-editor span {
-        white-space: normal !important;
-        word-break: break-word !important;
-    }
-</style>

@@ -10,6 +10,8 @@ class Role extends Model
 {
     use HasFactory;
 
+    protected $table = 'tm_roles';
+
     protected $fillable = [
         'name',
     ];
