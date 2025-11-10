@@ -1,8 +1,7 @@
 {{-- 5 WHY --}}
-<input type="hidden" name="audit_finding_id" x-model="selectedId">
+<input type="text" name="audit_finding_id" x-model="selectedId">
 <input type="hidden" name="action" value="save_auditee_action">
-<input type="hidden" name="pic" value="{{ auth()->user()->id }}">
-{{ auth()->user()->name }}
+<input type="text" name="pic" value="{{ auth()->user()->id }}">
 <table class="w-full border border-black text-sm mt-2">
     <tr class="bg-gray-100 font-semibold">
         <td class="border border-black p-1">AUDITEE</td>
@@ -17,12 +16,12 @@
                         x-model="form['why_'+i+'_mengapa']">
                     <label>Cause (Karena):</label>
                     <input type="text" name="cause[]" class="w-full border-b border-gray-400 p-1"
-                        x-model="form['why_'+i+'_karena']">
+                        x-model="form['cause_'+i+'_karena']">
                 </div>
             </template>
             <div class="mt-1">
                 Root Cause: <span class="text-danger">*</span>
-                <textarea name="root_cause" x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1"></textarea>
+                <textarea name="root_cause" x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1" required></textarea>
             </div>
         </td>
     </tr>
@@ -50,7 +49,7 @@
                     x-model="form['corrective_'+i+'_activity']">
             </td>
             <td class="border border-black">
-                <input name="user_id[]" type="text" class="w-full border-none p-1"
+                <input name="pic[]" type="text" class="w-full border-none p-1"
                     x-model="form['corrective_'+i+'_pic']">
             </td>
             <td class="border border-black">
@@ -76,7 +75,7 @@
                     x-model="form['preventive_'+i+'_activity']">
             </td>
             <td class="border border-black">
-                <input name="user_id[]" type="text" class="w-full border-none p-1"
+                <input name="pic[]" type="text" class="w-full border-none p-1"
                     x-model="form['preventive_'+i+'_pic']">
             </td>
             <td class="border border-black">
@@ -96,9 +95,8 @@
     <tr>
         <td class="border border-black p-2 w-2/3">
             <label>Yokoten?<span class="text-danger">*</span></label>
-            <label><input type="radio" value="1" x-model="form.yokoten"> Yes</label>
-            <label><input type="radio" value="0" x-model="form.yokoten"> No</label>
-
+            <label><input type="radio" value="0" x-model="form.yokoten" required> Yes</label>
+            <label><input type="radio" value="1" x-model="form.yokoten" required> No</label>
         </td>
         <td class="border border-black p-1 font-semibold text-center">Dept. Head</td>
         <td class="border border-black p-1 font-semibold text-center">Leader/Spv</td>
@@ -106,7 +104,7 @@
     <tr>
         <td>
             <label>Please specify:</label>
-            <textarea name="yokoten_area" x-show="form.yokoten == 1" x-model="form.finding_description"
+            <textarea name="yokoten_area" x-show="form.yokoten == 0" x-model="form.yokoten_area"
                 class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
         </td>
         {{-- LDR, SPV, DEPT HEAD --}}
@@ -116,6 +114,10 @@
             <template x-if="form.dept_head_signature">
                 <img :src="form.dept_head_signature" class="mx-auto mt-1 h-16 object-contain">
             </template>
+            {{-- <div class="signature-container">
+                <canvas id="signature-pad" width="400" height="200" style="border: 1px solid #000;"></canvas>
+                <button id="clear">Clear</button>
+            </div> --}}
         </td>
         <td class="border border-black p-2">
             <input name="ldr_spv_signature" type="file" @change="uploadSignature($event, 'ldr_spv_signature')"
@@ -197,9 +199,9 @@
     const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
     // 🔹 Helper update file list setelah dihapus
-    function updatefileInput2(input, filesArray) {
+    function updatefileInput2(input, filesArray2) {
         const dt = new DataTransfer();
-        filesArray.forEach(file => dt.items.add(file));
+        filesArray2.forEach(file2 => dt.items.add(file2));
         input.files = dt.files;
     }
 
@@ -215,7 +217,7 @@
     }
 
     // 🔹 Preview Image + tombol delete
-    function displayImages() {
+    function displayImages2() {
         previewImageContainer2.innerHTML = '';
         Array.from(photoInput2.files).forEach((file, index) => {
             const wrapper = document.createElement('div');
@@ -229,10 +231,10 @@
             btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
             btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
             btn.onclick = () => {
-                const newFiles = Array.from(photoInput2.files);
-                newFiles.splice(index, 1);
-                updatefileInput2(photoInput2, newFiles);
-                displayImages();
+                const newFiles2 = Array.from(photoInput2.files);
+                newFiles2.splice(index, 1);
+                updatefileInput2(photoInput2, newFiles2);
+                displayImages2();
                 updateAttachCount2();
             };
 
@@ -244,7 +246,7 @@
     }
 
     // 🔹 Preview File + tombol delete
-    function displayFiles() {
+    function displayFiles2() {
         previewFileContainer2.innerHTML = '';
         Array.from(fileInput2.files).forEach((file, index) => {
             const wrapper = document.createElement('div');
@@ -263,7 +265,7 @@
                 const newFiles = Array.from(fileInput2.files);
                 newFiles.splice(index, 1);
                 updatefileInput2(fileInput2, newFiles);
-                displayFiles();
+                displayFiles2();
                 updateAttachCount2();
             };
 
@@ -275,12 +277,13 @@
 
     // 🔹 Event Listener Input
     photoInput2.addEventListener('change', () => {
-        displayImages();
+        displayImages2();
         updateAttachCount2();
     });
+    attachBoth2
 
     fileInput2.addEventListener('change', () => {
-        displayFiles();
+        displayFiles2();
         updateAttachCount2();
     });
 
@@ -290,8 +293,8 @@
         const docs = Array.from(e.target.files).filter(f => !f.type.startsWith('image/'));
         updatefileInput2(photoInput2, [...Array.from(photoInput2.files), ...images]);
         updatefileInput2(fileInput2, [...Array.from(fileInput2.files), ...docs]);
-        displayImages();
-        displayFiles();
+        displayImages2();
+        displayFiles2();
         updateAttachCount2();
     });
 
@@ -314,6 +317,7 @@
         const token = document.querySelector('meta[name="csrf-token"]').content;
         const formData = new FormData();
         formData.append('_token', token);
+        formData.append('action', 'save_auditee_action');
 
         // Get audit_finding_id
         const selectedIdEl = document.querySelector('input[name="audit_finding_id"]');
@@ -324,7 +328,6 @@
         }
         formData.append('audit_finding_id', selectedId);
         formData.append('pic', document.querySelector('input[name="pic"]').value || '');
-        formData.append('action', 'save_auditee_action');
 
         // Collect 5 WHY inputs
         const whyInputs = document.querySelectorAll('input[name="why[]"]');
@@ -332,7 +335,7 @@
 
         for (let i = 0; i < 5; i++) {
             formData.append(`why_${i+1}_mengapa`, whyInputs[i]?.value || '');
-            formData.append(`why_${i+1}_karena`, causeInputs[i]?.value || '');
+            formData.append(`cause_${i+1}_karena`, causeInputs[i]?.value || '');
         }
 
         // Root cause
@@ -341,7 +344,7 @@
 
         document.querySelectorAll('tr.corrective-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="user_id[]"]')?.value || '';
+            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
 
@@ -353,7 +356,7 @@
 
         document.querySelectorAll('tr.preventive-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="user_id[]"]')?.value || '';
+            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
 

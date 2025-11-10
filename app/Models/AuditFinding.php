@@ -28,7 +28,7 @@ class AuditFinding extends Model
 
     public function auditeeAction()
     {
-        return $this->hasMany(AuditeeAction::class);
+        return $this->hasOne(AuditeeAction::class);
     }
 
     public function audit()

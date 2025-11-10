@@ -13,7 +13,7 @@ class PreventiveAction extends Model
 
     protected $fillable =
     [
-        'user_id',
+        'pic',
         'auditee_action_id',
         'activity',
         'planning_date',

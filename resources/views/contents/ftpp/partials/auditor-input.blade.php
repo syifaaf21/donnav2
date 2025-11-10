@@ -133,51 +133,52 @@
                     </div>
                     <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
 
-                    <div id="selectedSubContainer"
-                        class="flex flex-wrap gap-2 mt-2 justify-end"></div>
+                    <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-2 justify-end"></div>
                 </div>
             </div>
-            <!-- Preview containers (sesuaikan posisi di form) -->
-            <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
-            <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
+            <div>
+                <!-- Preview containers (sesuaikan posisi di form) -->
+                <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
+                <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
 
-            <!-- Attachment button (paperclip) -->
-            <div class="relative inline-block">
-                <button id="attachBtn" type="button"
-                    class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
-                    aria-haspopup="true" aria-expanded="false" title="Attach files">
-                    <i data-feather="paperclip" class="w-4 h-4"></i>
-                    <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
-                </button>
+                <!-- Attachment button (paperclip) -->
+                <div class="relative inline-block">
+                    <button id="attachBtn" type="button"
+                        class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
+                        aria-haspopup="true" aria-expanded="false" title="Attach files">
+                        <i data-feather="paperclip" class="w-4 h-4"></i>
+                        <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                    </button>
 
-                <!-- Small menu seperti email (hidden, muncul saat klik) -->
-                <div id="attachMenu" class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
-                    <button id="attachImages"
-                        class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                        <i data-feather="image" class="w-4 h-4"></i>
-                        <span class="text-sm">Upload Images</span>
-                    </button>
-                    <button id="attachDocs"
-                        class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                        <i data-feather="file-text" class="w-4 h-4"></i>
-                        <span class="text-sm">Upload Documents</span>
-                    </button>
-                    <div class="border-t mt-1"></div>
-                    <button id="attachBoth"
-                        class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                        <i data-feather="upload" class="w-4 h-4"></i>
-                        <span class="text-sm">Open Combined Picker</span>
-                    </button>
+                    <!-- Small menu seperti email (hidden, muncul saat klik) -->
+                    <div id="attachMenu" class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
+                        <button id="attachImages"
+                            class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                            <i data-feather="image" class="w-4 h-4"></i>
+                            <span class="text-sm">Upload Images</span>
+                        </button>
+                        <button id="attachDocs"
+                            class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                            <i data-feather="file-text" class="w-4 h-4"></i>
+                            <span class="text-sm">Upload Documents</span>
+                        </button>
+                        <div class="border-t mt-1"></div>
+                        <button id="attachBoth"
+                            class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                            <i data-feather="upload" class="w-4 h-4"></i>
+                            <span class="text-sm">Open Combined Picker</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Hidden file inputs -->
-            <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
-            <input type="file" id="fileInput" name="files[]" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple
-                class="hidden">
-            <!-- Optional combined input -->
-            <input type="file" id="combinedInput" name="attachments[]"
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
+                <!-- Hidden file inputs -->
+                <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
+                <input type="file" id="fileInput" name="files[]" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple
+                    class="hidden">
+                <!-- Optional combined input -->
+                <input type="file" id="combinedInput" name="attachments[]"
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
+            </div>
         </td>
     </tr>
 </table>
@@ -947,8 +948,9 @@
             ?.value || '');
         formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value || '');
         formData.append('created_at', document.querySelector('input[name="created_at"]').value || '');
-        formData.append('registration_number', document.querySelector('input[name="reg_number"]').value || '');
-        formData.append('finding_category_id', document.querySelector('input[name="finding_category"]:checked')
+        formData.append('registration_number', document.querySelector('input[name="registration_number"]').value ||
+            '');
+        formData.append('finding_category_id', document.querySelector('input[name="finding_category_id"]:checked')
             ?.value || '');
         formData.append('finding_description', document.querySelector('textarea[name="finding_description"]')
             .value || '');

@@ -52,7 +52,7 @@ class FtppController extends Controller
         $auditType = Audit::with('subAudit')->findOrFail($auditTypeId);
 
         $year = now()->year;
-        $prefix = ($auditTypeId == 1) ? 'MR' : 'MS'; // sesuaikan id audit
+        $prefix = ($auditTypeId == 1) ? 'MS' : 'MR'; // sesuaikan id audit
 
         // Hitung berdasarkan prefix + tahun
         $lastCount = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
@@ -157,7 +157,7 @@ class FtppController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function show($id)
     {
         $finding = AuditFinding::with([
             'audit',
@@ -171,6 +171,9 @@ class FtppController extends Controller
             'subKlausuls',
             'file',
             'status',
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
         ])->findOrFail($id);
 
         return response()->json($finding);
@@ -286,8 +289,6 @@ class FtppController extends Controller
                     'ldr_spv_signature' => 'nullable|file|image|max:2048',
                     'attachments.*' => 'nullable|file|max:5120',
                 ]);
-
-                DB::beginTransaction();
                 try {
                     // 1️⃣ Simpan tt_auditee_actions
                     $auditeeAction = AuditeeAction::create([
@@ -296,7 +297,6 @@ class FtppController extends Controller
                         'root_cause' => $validated['root_cause'],
                         'yokoten' => $validated['yokoten'],
                         'yokoten_area' => $validated['yokoten_area'] ?? null,
-                        'status_id' => 1,
                     ]);
 
                     // 2️⃣ Simpan file signature (jika ada)
@@ -313,7 +313,7 @@ class FtppController extends Controller
                     // 3️⃣ Simpan Why (5 Why)
                     for ($i = 1; $i <= 5; $i++) {
                         $why = $request->input('why_' . $i . '_mengapa');
-                        $cause = $request->input('why_' . $i . '_karena');
+                        $cause = $request->input('cause_' . $i . '_karena');
                         if ($why || $cause) {
                             WhyCauses::create([
                                 'auditee_action_id' => $auditeeAction->id,
@@ -332,7 +332,7 @@ class FtppController extends Controller
                         if ($activity) {
                             CorrectiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
-                                'user_id' => $pic,
+                                'pic' => $pic,
                                 'activity' => $activity,
                                 'planning_date' => $plan,
                                 'actual_date' => $actual,
@@ -349,7 +349,7 @@ class FtppController extends Controller
                         if ($activity) {
                             PreventiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
-                                'user_id' => $pic,
+                                'pic' => $pic,
                                 'activity' => $activity,
                                 'planning_date' => $plan,
                                 'actual_date' => $actual,
@@ -367,6 +367,11 @@ class FtppController extends Controller
                                 'original_name' => $file->getClientOriginalName(),
                             ]);
                         }
+                    }
+
+                    $auditFinding = AuditFinding::find($validated['audit_finding_id']);
+                    if ($auditFinding) {
+                        $auditFinding->update(['status_id' => 7]);
                     }
 
                     DB::commit();

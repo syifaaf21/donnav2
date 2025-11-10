@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tt_preventive_actions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('pic');
             $table->foreignId('auditee_action_id')->constrained('tt_auditee_actions')->onDelete('cascade');
             $table->text('activity');
             $table->dateTime('planning_date');
