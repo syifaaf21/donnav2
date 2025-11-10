@@ -1,8 +1,7 @@
 {{-- 5 WHY --}}
-<input type="hidden" name="audit_finding_id" x-model="selectedId">
+<input type="text" name="audit_finding_id" x-model="selectedId">
 <input type="hidden" name="action" value="save_auditee_action">
-<input type="hidden" name="pic" value="{{ auth()->user()->id }}">
-{{ auth()->user()->name }}
+<input type="text" name="pic" value="{{ auth()->user()->id }}">
 <table class="w-full border border-black text-sm mt-2">
     <tr class="bg-gray-100 font-semibold">
         <td class="border border-black p-1">AUDITEE</td>
@@ -17,12 +16,12 @@
                         x-model="form['why_'+i+'_mengapa']">
                     <label>Cause (Karena):</label>
                     <input type="text" name="cause[]" class="w-full border-b border-gray-400 p-1"
-                        x-model="form['why_'+i+'_karena']">
+                        x-model="form['cause_'+i+'_karena']">
                 </div>
             </template>
             <div class="mt-1">
                 Root Cause: <span class="text-danger">*</span>
-                <textarea name="root_cause" x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1"></textarea>
+                <textarea name="root_cause" x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1" required></textarea>
             </div>
         </td>
     </tr>
@@ -50,7 +49,7 @@
                     x-model="form['corrective_'+i+'_activity']">
             </td>
             <td class="border border-black">
-                <input name="user_id[]" type="text" class="w-full border-none p-1"
+                <input name="pic[]" type="text" class="w-full border-none p-1"
                     x-model="form['corrective_'+i+'_pic']">
             </td>
             <td class="border border-black">
@@ -76,7 +75,7 @@
                     x-model="form['preventive_'+i+'_activity']">
             </td>
             <td class="border border-black">
-                <input name="user_id[]" type="text" class="w-full border-none p-1"
+                <input name="pic[]" type="text" class="w-full border-none p-1"
                     x-model="form['preventive_'+i+'_pic']">
             </td>
             <td class="border border-black">
@@ -96,9 +95,8 @@
     <tr>
         <td class="border border-black p-2 w-2/3">
             <label>Yokoten?<span class="text-danger">*</span></label>
-            <label><input type="radio" value="1" x-model="form.yokoten"> Yes</label>
-            <label><input type="radio" value="0" x-model="form.yokoten"> No</label>
-
+            <label><input type="radio" value="0" x-model="form.yokoten" required> Yes</label>
+            <label><input type="radio" value="1" x-model="form.yokoten" required> No</label>
         </td>
         <td class="border border-black p-1 font-semibold text-center">Dept. Head</td>
         <td class="border border-black p-1 font-semibold text-center">Leader/Spv</td>
@@ -106,7 +104,7 @@
     <tr>
         <td>
             <label>Please specify:</label>
-            <textarea name="yokoten_area" x-show="form.yokoten == 1" x-model="form.finding_description"
+            <textarea name="yokoten_area" x-show="form.yokoten == 0" x-model="form.yokoten_area"
                 class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
         </td>
         {{-- LDR, SPV, DEPT HEAD --}}
@@ -314,6 +312,7 @@
         const token = document.querySelector('meta[name="csrf-token"]').content;
         const formData = new FormData();
         formData.append('_token', token);
+        formData.append('action', 'save_auditee_action');
 
         // Get audit_finding_id
         const selectedIdEl = document.querySelector('input[name="audit_finding_id"]');
@@ -324,7 +323,6 @@
         }
         formData.append('audit_finding_id', selectedId);
         formData.append('pic', document.querySelector('input[name="pic"]').value || '');
-        formData.append('action', 'save_auditee_action');
 
         // Collect 5 WHY inputs
         const whyInputs = document.querySelectorAll('input[name="why[]"]');
@@ -332,7 +330,7 @@
 
         for (let i = 0; i < 5; i++) {
             formData.append(`why_${i+1}_mengapa`, whyInputs[i]?.value || '');
-            formData.append(`why_${i+1}_karena`, causeInputs[i]?.value || '');
+            formData.append(`cause_${i+1}_karena`, causeInputs[i]?.value || '');
         }
 
         // Root cause
@@ -341,7 +339,7 @@
 
         document.querySelectorAll('tr.corrective-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="user_id[]"]')?.value || '';
+            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
 
@@ -353,7 +351,7 @@
 
         document.querySelectorAll('tr.preventive-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="user_id[]"]')?.value || '';
+            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
 

@@ -947,8 +947,8 @@
             ?.value || '');
         formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value || '');
         formData.append('created_at', document.querySelector('input[name="created_at"]').value || '');
-        formData.append('registration_number', document.querySelector('input[name="reg_number"]').value || '');
-        formData.append('finding_category_id', document.querySelector('input[name="finding_category"]:checked')
+        formData.append('registration_number', document.querySelector('input[name="registration_number"]').value || '');
+        formData.append('finding_category_id', document.querySelector('input[name="finding_category_id"]:checked')
             ?.value || '');
         formData.append('finding_description', document.querySelector('textarea[name="finding_description"]')
             .value || '');

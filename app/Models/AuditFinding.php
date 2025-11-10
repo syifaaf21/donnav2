@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AuditFinding extends Model
+class  AuditFinding extends Model
 {
     use HasFactory;
 
@@ -28,7 +28,7 @@ class AuditFinding extends Model
 
     public function auditeeAction()
     {
-        return $this->hasMany(AuditeeAction::class);
+        return $this->hasOne(AuditeeAction::class);
     }
 
     public function audit()

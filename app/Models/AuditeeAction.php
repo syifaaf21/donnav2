@@ -40,12 +40,12 @@ class AuditeeAction extends Model
         return $this->hasMany(WhyCauses::class);
     }
 
-    public function correctiveAction()
+    public function correctiveActions()
     {
         return $this->hasMany(CorrectiveAction::class);
     }
 
-    public function preventiveAction()
+    public function preventiveActions()
     {
         return $this->hasMany(PreventiveAction::class);
     }

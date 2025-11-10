@@ -157,7 +157,7 @@ class FtppController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function show($id)
     {
         $finding = AuditFinding::with([
             'audit',
@@ -171,6 +171,9 @@ class FtppController extends Controller
             'subKlausuls',
             'file',
             'status',
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions'
         ])->findOrFail($id);
 
         return response()->json($finding);
@@ -286,8 +289,6 @@ class FtppController extends Controller
                     'ldr_spv_signature' => 'nullable|file|image|max:2048',
                     'attachments.*' => 'nullable|file|max:5120',
                 ]);
-
-                DB::beginTransaction();
                 try {
                     // 1️⃣ Simpan tt_auditee_actions
                     $auditeeAction = AuditeeAction::create([
@@ -296,7 +297,6 @@ class FtppController extends Controller
                         'root_cause' => $validated['root_cause'],
                         'yokoten' => $validated['yokoten'],
                         'yokoten_area' => $validated['yokoten_area'] ?? null,
-                        'status_id' => 1,
                     ]);
 
                     // 2️⃣ Simpan file signature (jika ada)
@@ -332,7 +332,7 @@ class FtppController extends Controller
                         if ($activity) {
                             CorrectiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
-                                'user_id' => $pic,
+                                'pic' => $pic,
                                 'activity' => $activity,
                                 'planning_date' => $plan,
                                 'actual_date' => $actual,
@@ -349,7 +349,7 @@ class FtppController extends Controller
                         if ($activity) {
                             PreventiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
-                                'user_id' => $pic,
+                                'pic' => $pic,
                                 'activity' => $activity,
                                 'planning_date' => $plan,
                                 'actual_date' => $actual,
@@ -360,7 +360,7 @@ class FtppController extends Controller
                     // 6️⃣ Upload Attachments
                     if ($request->hasFile('attachments')) {
                         foreach ($request->file('attachments') as $file) {
-                            $path = $file->store('auditee_attachments', 'public');
+                            $path = $file->store('auditee_action_files', 'public');
                             DocumentFile::create([
                                 'auditee_action_id' => $auditeeAction->id,
                                 'file_path' => $path,

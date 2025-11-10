@@ -118,6 +118,8 @@
 
                         const finding = await res.json();
 
+                        console.log(finding);
+
                         this.form = finding; // isi semua field utama
                         this.selectedId = id;
                         this.formLoaded = true;
@@ -165,50 +167,88 @@
                             finding.attachments.forEach(a => {
                                 if (a.type === 'image') {
                                     previewImageContainer.innerHTML += `
-                <img src="${a.url}" class="w-24 h-24 object-cover border rounded" />
-            `;
+                                        <img src="${a.url}" class="w-24 h-24 object-cover border rounded" />
+                                    `;
                                 } else {
                                     previewFileContainer.innerHTML += `
-                <div class="flex gap-2 text-sm border p-2 rounded">
-                    <i data-feather="file-text"></i> ${a.url.split('/').pop()}
-                </div>`;
+                                    <div class="flex gap-2 text-sm border p-2 rounded">
+                                        <i data-feather="file-text"></i> ${a.url.split('/').pop()}
+                                    </div>`;
                                 }
                             });
 
                             feather.replace();
                         }
 
+                        // Auditee action
+                        if (finding.auditee_action) {
+                            const act = finding.auditee_action;
+
+                            // Root cause & yokoten
+                            this.form.root_cause = act.root_cause || '';
+                            this.form.yokoten = act.yokoten;
+                            this.form.yokoten_area = act.yokoten_area || '';
+
+                            // 5 WHY
+                            if (act.why_causes?.length) {
+                                act.why_causes.forEach((w, i) => {
+                                    const idx = i + 1;
+                                    this.form[`why_${idx}_mengapa`] = w.why_description || '';
+                                    this.form[`cause_${idx}_karena`] = w.cause_description || '';
+                                });
+                            }
+
+                            // Corrective
+                            if (act.corrective_actions?.length) {
+                                act.corrective_actions.forEach((c, i) => {
+                                    const idx = i + 1;
+                                    this.form[`corrective_${idx}_activity`] = c.activity || '';
+                                    this.form[`corrective_${idx}_pic`] = c.pic || '';
+                                    this.form[`corrective_${idx}_planning`] = c.planning_date?.substring(0,
+                                        10) || '';
+                                    this.form[`corrective_${idx}_actual`] = c.actual_date?.substring(0, 10) ||
+                                        '';
+                                });
+                            }
+
+                            // Preventive
+                            if (act.preventive_actions?.length) {
+                                act.preventive_actions.forEach((p, i) => {
+                                    const idx = i + 1;
+                                    this.form[`preventive_${idx}_activity`] = p.activity || '';
+                                    this.form[`preventive_${idx}_pic`] = p.pic || '';
+                                    this.form[`preventive_${idx}_planning`] = p.planning_date?.substring(0,
+                                        10) || '';
+                                    this.form[`preventive_${idx}_actual`] = p.actual_date?.substring(0, 10) ||
+                                        '';
+                                });
+                            }
+
+                            // Signature (jika kamu simpan path di DB)
+                            this.form.dept_head_signature = act.dept_head_signature_url || null;
+                            this.form.ldr_spv_signature = act.ldr_spv_signature_url || null;
+                        } else {
+                            // kosongkan jika belum ada
+                            for (let i = 1; i <= 5; i++) {
+                                this.form[`why_${i}_mengapa`] = '';
+                                this.form[`cause_${i}_karena`] = '';
+                            }
+                            for (let i = 1; i <= 4; i++) {
+                                ['corrective', 'preventive'].forEach(t => {
+                                    this.form[`${t}_${i}_activity`] = '';
+                                    this.form[`${t}_${i}_pic`] = '';
+                                    this.form[`${t}_${i}_planning`] = '';
+                                    this.form[`${t}_${i}_actual`] = '';
+                                });
+                            }
+                            this.form.root_cause = '';
+                            this.form.yokoten = '';
+                            this.form.yokoten_area = '';
+                        }
+
                     } catch (error) {
                         console.error(error);
                         alert('Gagal mengambil data FTPP');
-                    }
-                },
-
-                async saveAuditeeAction() {
-                    const formData = new FormData();
-                    formData.append('_token', '{{ csrf_token() }}');
-                    formData.append('audit_finding_id', this.selectedId);
-                    
-                    formData.append('action', 'save_auditee_action');
-
-                    formData.append('root_cause', this.form.root_cause || '');
-                    formData.append('yokoten', this.form.yokoten || 0);
-                    formData.append('yokoten_area', this.form.yokoten_area || '');
-
-                    try {
-                        const res = await fetch('{{ route('ftpp.store') }}', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        const result = await res.json();
-
-                        if (result.success) {
-                            alert('✅ Data berhasil disimpan!');
-                        } else {
-                            alert('❌ Gagal: ' + (result.message || 'Unknown error'));
-                        }
-                    } catch (error) {
-                        alert('❌ Error: ' + error.message);
                     }
                 },
             }
