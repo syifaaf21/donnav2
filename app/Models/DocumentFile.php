@@ -13,6 +13,8 @@ class DocumentFile extends Model
         'document_mapping_id',
         'file_path',
         'original_name',
+        'is_active',
+        'archived_at',
     ];
 
     protected $table = 'tt_document_files';

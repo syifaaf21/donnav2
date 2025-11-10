@@ -20,9 +20,10 @@
     <div class="w-full max-w-md p-6 bg-white rounded-2xl shadow-2xl overflow-auto">
         <!-- Logo -->
         <div class="flex justify-center mb-6">
-            <img src="{{ asset('images/donna.png') }}" alt="Logo"
-                class="w-32 h-auto mx-auto transform hover:scale-105 transition-transform duration-300">
+            <img src="{{ asset('images/madonna.png') }}" alt="Logo"
+                class="w-full max-w-3xl h-auto rounded-lg shadow-md object-contain transform hover:scale-105 transition-transform duration-300">
         </div>
+
 
         <!-- Title -->
         <h2 class="text-center text-3xl font-bold text-gray-700 mb-6">Sign in to your account</h2>
@@ -56,8 +57,10 @@
 
             <!-- Forgot password & create account -->
             <div class="flex flex-col items-center space-y-2 text-sm text-gray-600">
-                <a href="https://wa.me/081399949961" class="hover:text-blue-600 transition">Forgot your password? Contact ITD</a>
-                <a href="{{ route('register') }}" class="hover:text-blue-600 transition">Don't have an account? Create</a>
+                <a href="https://wa.me/081399949961" class="hover:text-blue-600 transition">Forgot your password?
+                    Contact ITD</a>
+                <a href="{{ route('register') }}" class="hover:text-blue-600 transition">Don't have an account?
+                    Create</a>
             </div>
 
             <!-- Submit Button -->
@@ -71,4 +74,5 @@
     </div>
 
 </body>
+
 </html>

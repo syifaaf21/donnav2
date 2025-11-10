@@ -57,7 +57,7 @@
                     <!-- Email -->
                     <div>
                         <label for="email" class="form-label fw-semibold small">Email</label>
-                        <input type="email" name="email" id="email" value="{{ old('email') }}" required
+                        <input type="email" name="email" id="email" value="{{ old('email') }}"
                             placeholder="Enter your email"
                             class="form-control form-control-sm @error('email') is-invalid @enderror">
                         @error('email')

@@ -54,15 +54,19 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-
                             <!-- Password -->
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Password</label>
                                 <input type="password" name="password"
                                     class="form-control rounded-3 @error('password') is-invalid @enderror"
-                                    pattern=".{6,}" minlength="6" title="Password must be at least 6 characters"
-                                    value="">
-                                <small class="text-muted fst-italic">Leave blank if not changing password</small>
+                                    minlength="8"
+                                    pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                                    title="Password must be at least 8 characters and include uppercase, lowercase, number, and special character.">
+                                <small class="text-muted fst-italic d-block mt-1">
+                                    Leave blank if not changing password.<br>
+                                    Must be at least 8 characters, include uppercase, lowercase, a number, and a special
+                                    character (e.g., @#$%).
+                                </small>
                                 @error('password')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -72,8 +76,14 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Confirm Password</label>
                                 <input type="password" name="password_confirmation" class="form-control rounded-3"
-                                    value="">
+                                    minlength="8"
+                                    pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                                    title="Please retype the same password if changing.">
+                                <small class="text-muted fst-italic d-block mt-1">
+                                    Please retype the same password for confirmation.
+                                </small>
                             </div>
+
 
                             <!-- Role -->
                             <div class="col-md-6">

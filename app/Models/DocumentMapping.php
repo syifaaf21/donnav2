@@ -32,6 +32,12 @@ class DocumentMapping extends Model
     ];
 
     protected $table = 'tt_document_mappings';
+    
+    public function latestFile()
+    {
+        // Mengambil satu file terbaru dari relasi files()
+        return $this->hasOne(DocumentFile::class)->latestOfMany();
+    }
 
     public function getFilesForModalAttribute()
     {

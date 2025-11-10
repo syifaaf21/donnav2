@@ -114,9 +114,6 @@ class DocumentReviewController extends Controller
         ]);
     }
 
-
-
-
     public function liveSearch(Request $request)
     {
         $keyword = $request->keyword;
@@ -304,8 +301,6 @@ class DocumentReviewController extends Controller
         return redirect()->route('document-review.index')
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
-
-
 
     public function reject(Request $request, $id)
     {

@@ -59,9 +59,14 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Password <span class="text-danger">*</span></label>
                             <input type="password" name="password"
-                                class="form-control rounded-3 @error('password') is-invalid @enderror" pattern=".{6,}"
-                                minlength="6" title="Password must be at least 6 characters"
+                                class="form-control rounded-3 @error('password') is-invalid @enderror" minlength="8"
+                                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                                title="Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
                                 value="{{ old('password') }}" required>
+                            <small class="text-muted fst-italic d-block mt-1">
+                                Must be at least 8 characters, include uppercase, lowercase, a number, and a special
+                                character (e.g., @#$%).
+                            </small>
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -72,9 +77,13 @@
                             <label class="form-label fw-medium">Confirm Password <span
                                     class="text-danger">*</span></label>
                             <input type="password" name="password_confirmation" id="password_confirmation"
-                                class="form-control rounded-3" minlength="6" autocomplete="new-password" required
+                                class="form-control rounded-3" minlength="8" autocomplete="new-password" required
                                 title="Please retype the same password">
+                            <small class="text-muted fst-italic d-block mt-1">
+                                Please retype the same password for confirmation.
+                            </small>
                         </div>
+
 
                         <!-- Role -->
                         <div class="col-md-6">
