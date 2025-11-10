@@ -3,224 +3,185 @@
 @section('title', 'Document Review')
 
 @section('content')
-    <div class="p-6 bg-white min-h-screen space-y-6">
-        <x-flash-message />
-        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">Document Review</li>
-            </ol>
-        </nav>
+<div class="p-6 bg-gray-50 min-h-screen space-y-6">
+    <x-flash-message />
 
-        <!-- Search + Filter bar -->
-        <div class="flex justify-end items-center mb-4 space-x-3">
-            <input type="text" id="live-search" placeholder="Search..."
-                class="border border-gray-300 rounded p-2 focus:outline-none focus:ring focus:border-blue-300 w-64" />
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
-                <i class="bi bi-funnel-fill mr-1"></i> Filter
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-medium">Document Review</li>
+        </ol>
+    </nav>
+
+    <!-- Search + Filter (tetap di kanan) -->
+    <div class="flex justify-end items-center mb-4 space-x-3">
+        <input type="text" id="live-search" placeholder="Search..."
+            class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-300 w-64" />
+        <button type="button" class="btn btn-primary flex items-center gap-1" data-bs-toggle="modal" data-bs-target="#filterModal">
+            <i class="bi bi-funnel-fill"></i> Filter
+        </button>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs flex flex-wrap gap-2 border-b border-gray-300 mb-4" role="tablist">
+        @foreach ($groupedByPlant as $plant => $documentsByCode)
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-t-lg px-4 py-2 @if($loop->first) active bg-white border-b-0 font-semibold @else text-gray-600 hover:bg-gray-100 border @endif"
+                id="tab-{{ $plant }}" data-bs-toggle="tab" data-bs-target="#tab-content-{{ $plant }}"
+                type="button" role="tab" aria-controls="tab-content-{{ $plant }}"
+                aria-selected="{{ $loop->first ? 'true' : 'false' }}">
+                {{ ucfirst($plant) }}
             </button>
-        </div>
+        </li>
+        @endforeach
+    </ul>
 
-        <!-- Table card -->
-        <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
-            <!-- Tabs for each Plant tetap di luar #search-results -->
-            <ul class="nav nav-tabs" id="plantTabs" role="tablist">
-                @foreach ($plants as $plant)
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="tab-{{ Str::slug($plant) }}"
-                            data-bs-toggle="tab" data-bs-target="#content-{{ Str::slug($plant) }}" type="button"
-                            role="tab" aria-controls="content-{{ Str::slug($plant) }}"
-                            aria-selected="{{ $loop->first ? 'true' : 'false' }}">
-                            {{ ucwords($plant) }}
+    <!-- Tab Content -->
+    <div class="tab-content" id="plantTabContent">
+        @foreach ($groupedByPlant as $plant => $documentsByCode)
+        <div class="tab-pane fade @if($loop->first) show active @endif" id="tab-content-{{ $plant }}" role="tabpanel" aria-labelledby="tab-{{ $plant }}">
+
+            <div class="accordion space-y-3" id="accordion-{{ $plant }}">
+                @foreach ($documentsByCode as $docCode => $documentMappings)
+                @php
+                    $uniqueId = Str::slug($plant . '-' . $docCode . '-' . $loop->index);
+                    $collapseId = 'collapse-' . $uniqueId;
+                    $headingId = 'heading-' . $uniqueId;
+                @endphp
+
+                <div class="accordion-item border rounded-lg shadow-sm overflow-hidden">
+                    <h2 class="accordion-header" id="{{ $headingId }}">
+                        <button class="accordion-button collapsed bg-white text-gray-800 font-medium" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}" aria-expanded="false" aria-controls="{{ $collapseId }}">
+                            <i class="bi bi-folder-fill me-2 text-blue-500"></i>
+                            {{ $docCode }}
                         </button>
-                    </li>
+                    </h2>
+                    <div id="{{ $collapseId }}" class="accordion-collapse collapse" aria-labelledby="{{ $headingId }}">
+                        <div class="accordion-body bg-gray-50">
+                            @include('contents.document-review.partials.table', [
+                                'groupedData' => $documentMappings->groupBy(fn($item) => $item->id),
+                            ])
+                        </div>
+                    </div>
+                </div>
+
                 @endforeach
-            </ul>
-
-            <!-- Konten tabel dibungkus #search-results -->
-            <div id="search-results">
-                <div class="tab-content mt-3" id="plantTabsContent">
-                    @foreach ($plants as $plant)
-                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
-                            id="content-{{ Str::slug($plant) }}" role="tabpanel"
-                            aria-labelledby="tab-{{ Str::slug($plant) }}">
-
-                            <div class="plant-results">
-                                @if (isset($groupedByPlant[$plant]) && $groupedByPlant[$plant]->count() > 0)
-                                    @include('contents.document-review.partials.table', [
-                                        'groupedData' => $groupedByPlant[$plant],
-                                    ])
-                                @else
-                                    <div class="text-center py-8 text-gray-500">
-                                        <p class="text-sm">No data available for {{ ucwords($plant) }} plant.</p>
-                                    </div>
-                                @endif
-                            </div>
-
-                        </div>
-                    @endforeach
-                </div>
             </div>
         </div>
+        @endforeach
     </div>
+</div>
 
-    <!-- Filter Modal -->
-    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content rounded-lg">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="GET" action="{{ route('document-review.index') }}">
-                    <div class="modal-body">
-                        <div class="row g-3">
-
-                            <!-- Plant -->
-                            <div class="col-md-4">
-                                <label for="plant" class="form-label">Plant</label>
-                                <select name="plant" id="plant" class="form-select select2">
-                                    <option value="">All Plants</option>
-                                    @foreach ($plants as $plant)
-                                        <option value="{{ $plant }}"
-                                            {{ request('plant') == $plant ? 'selected' : '' }}>
-                                            {{ ucwords($plant) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <!-- Department -->
-                            <div class="col-md-4">
-                                <label for="department" class="form-label">Department</label>
-                                <select name="department" id="department" class="form-select select2">
-                                    <option value="">All Departments</option>
-                                    @foreach ($departments as $dept)
-                                        <option value="{{ $dept->id }}"
-                                            {{ request('department') == $dept->id ? 'selected' : '' }}>
-                                            {{ $dept->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <!-- Document -->
-                            <div class="col-md-4">
-                                <label for="document_id" class="form-label">Document</label>
-                                <select name="document_id" id="document_id" class="form-select select2">
-                                    <option value="">All Documents</option>
-                                    @foreach ($documentsMaster as $doc)
-                                        <option value="{{ $doc->id }}"
-                                            {{ request('document_id') == $doc->id ? 'selected' : '' }}>
-                                            {{ $doc->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <!-- Part Number -->
-                            <div class="col-md-6">
-                                <label for="part_number" class="form-label">Part Number</label>
-                                <select name="part_number" id="part_number" class="form-select select2">
-                                    <option value="">Select Part Number</option>
-                                    {{-- Options will be loaded dynamically --}}
-                                </select>
-                            </div>
-
-                            <!-- Process -->
-                            <div class="col-md-6">
-                                <label for="process" class="form-label">Process</label>
-                                <select name="process" id="process" class="form-select select2">
-                                    <option value="">All Processes</option>
-                                    @foreach ($processes as $id => $name)
-                                        <option value="{{ $id }}"
-                                            {{ request('process') == $id ? 'selected' : '' }}>
-                                            {{ ucwords($name) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <a href="{{ route('document-review.index') }}" class="btn btn-secondary">Clear</a>
-                        <button type="submit" class="btn btn-primary">Apply Filter</button>
-                    </div>
-                </form>
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-lg shadow-lg">
+            <div class="modal-header border-b">
+                <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form method="GET" action="{{ route('document-review.index') }}">
+                <div class="modal-body space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+
+                        <div>
+                            <label for="plant" class="form-label">Plant</label>
+                            <select name="plant" id="plant" class="form-select select2">
+                                <option value="">All Plants</option>
+                                @foreach ($plants as $plant)
+                                <option value="{{ $plant }}" {{ request('plant') == $plant ? 'selected' : '' }}>
+                                    {{ ucwords($plant) }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="department" class="form-label">Department</label>
+                            <select name="department" id="department" class="form-select select2">
+                                <option value="">All Departments</option>
+                                @foreach ($departments as $dept)
+                                <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>
+                                    {{ $dept->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="document_id" class="form-label">Document</label>
+                            <select name="document_id" id="document_id" class="form-select select2">
+                                <option value="">All Documents</option>
+                                @foreach ($documentsMaster as $doc)
+                                <option value="{{ $doc->id }}" {{ request('document_id') == $doc->id ? 'selected' : '' }}>
+                                    {{ $doc->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="part_number" class="form-label">Part Number</label>
+                            <select name="part_number" id="part_number" class="form-select select2">
+                                <option value="">Select Part Number</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="process" class="form-label">Process</label>
+                            <select name="process" id="process" class="form-select select2">
+                                <option value="">All Processes</option>
+                                @foreach ($processes as $id => $name)
+                                <option value="{{ $id }}" {{ request('process') == $id ? 'selected' : '' }}>
+                                    {{ ucwords($name) }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer border-t">
+                    <a href="{{ route('document-review.index') }}" class="btn btn-secondary">Clear</a>
+                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                </div>
+            </form>
         </div>
     </div>
-
-    <!-- File Viewer Modal -->
-    <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content d-flex flex-column" style="height: 100vh;">
-                <!-- Modal Header -->
-                <div class="modal-header justify-content-between">
-                    <h5 class="modal-title">File Preview</h5>
-                    @php
-                        $role = auth()->user()?->role?->name;
-                    @endphp
-
-                    @if (in_array($role, ['Admin', 'Super Admin']))
-                        <div class="p-3 d-flex gap-2 bg-light border-bottom">
-                            <!-- Approve Button -->
-                            <form action="/approve-url" method="POST" class="m-0">
-                                @csrf
-                                <button type="button" class="btn btn-outline-success btn-sm open-approve-modal"
-                                    data-doc-id="{{ $mapping->id ?? '' }}" data-bs-toggle="modal"
-                                    data-bs-target="#approveModal">
-                                    <i class="bi bi-check-circle me-1"></i> Approve
-                                </button>
-                            </form>
-
-                            <!-- Reject Button -->
-                            <form id="rejectForm" action="" method="POST" class="reject-form m-0">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-danger btn-sm reject-button"
-                                    data-doc-id="{{ $mapping->id ?? '' }}">
-                                    <i class="bi bi-x-circle me-1"></i> Reject
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <!-- Modal Body -->
-                <div class="modal-body p-0 flex-grow-1 d-flex flex-column">
-
-                    <!-- Toolbar: Approve, Reject, Edit di atas iframe -->
-
-                    <!-- File Viewer Iframe -->
-                    <div class="flex-grow-1">
-                        <iframe id="fileViewer" src="" frameborder="0" width="100%" height="100%"></iframe>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
+</div>
     @include('contents.document-review.partials.modal-approve')
     @include('contents.document-review.partials.modal-edit')
 @endsection
 
+
 @push('scripts')
     <x-sweetalert-confirm />
-    <script>
-        // Capitalize words
-        function ucwords(str) {
-            return str.replace(/\b\w/g, function(char) {
-                return char.toUpperCase();
-            });
-        }
+    {{-- Pastikan Bootstrap JS dimuat --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous">
+    </script>
 
+    {{-- Opsional: smooth scroll ke panel yang baru dibuka --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.accordion-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = document.querySelector(this.dataset.bsTarget);
+                    if (target && !this.classList.contains('collapsed')) {
+                        setTimeout(() => target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        }), 200);
+                    }
+                });
+            });
+        });
         $(document).ready(function() {
             function showTabByFilter() {
                 // Ambil nilai filter dari server (Blade request)
@@ -389,11 +350,11 @@
                 $('.select2').select2('destroy');
             });
 
-            $(document).on('click', '.toggle-detail', function() {
-                const target = $(this).data('target');
-                const escapedTarget = target.replace(/ /g, '\\ ');
-                $(escapedTarget).toggleClass('hidden');
-            });
+            // $(document).on('click', '.toggle-detail', function() {
+            //     const target = $(this).data('target');
+            //     const escapedTarget = target.replace(/ /g, '\\ ');
+            //     $(escapedTarget).toggleClass('hidden');
+            // });
 
             $.ajaxSetup({
                 headers: {
@@ -538,6 +499,34 @@
                     if (document.activeElement) document.activeElement.blur();
                 });
             }
+
+            // Toggle detail
+            $(document).on('click', '.toggle-detail', function(e) {
+                e.preventDefault();
+
+                const $target = $($(this).data('target'));
+                $target.toggleClass('hidden');
+
+                // Jika toggle-detail ada di dalam dropdown, jangan biarkan dropdown menutup
+                const $dropdown = $(this).closest('.dropdown');
+                if ($dropdown.length) {
+                    $dropdown.addClass('show'); // pastikan dropdown tetap terbuka
+                    $dropdown.find('.dropdown-menu').addClass('show');
+                }
+            });
+
+            // Cegah dropdown auto-close ketika klik di dalam dropdown-menu
+            $(document).on('click', '.dropdown-menu', function(e) {
+                e.stopPropagation();
+            });
+
+            // Tambahan: jika dropdown ingin tetap open ketika klik toggle-detail
+            $('.dropdown').on('hide.bs.dropdown', function(e) {
+                if ($(e.clickEvent?.target).closest('.toggle-detail').length) {
+                    e.preventDefault(); // cegah dropdown menutup
+                }
+            });
+
         });
     </script>
 @endpush
