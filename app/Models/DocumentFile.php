@@ -15,6 +15,8 @@ class DocumentFile extends Model
         'auditee_action_id',
         'file_path',
         'original_name',
+        'is_active',
+        'archived_at',
     ];
 
     protected $table = 'tt_document_files';

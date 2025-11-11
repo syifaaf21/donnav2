@@ -1,6 +1,6 @@
 <div class="flex items-center gap-2">
     {{-- File Viewer Dropdown --}}
-    <div class="dropdown">
+    <div class="dropdown d-inline">
         <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
             data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-paperclip"></i> Files
@@ -58,7 +58,7 @@
     </div>
 
     {{-- Admin Actions --}}
-    @if (auth()->user()->role->name == 'Admin')
+    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
         {{-- Edit --}}
         <button type="button" data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}"
             data-bs-title="Edit Document"

@@ -80,13 +80,6 @@
                                 <td class="px-6 py-4">
                                     {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
                                 </td>
-                                {{-- <td class="px-6 py-4">
-                                    @if ($mapping->notes)
-                                        {!! $mapping->notes !!}
-                                    @else
-                                        -
-                                    @endif
-                                </td> --}}
                                 <td class="px-6 py-4 flex space-x-2">
                                     @if ($mapping->files->count())
                                         <div class="relative">
@@ -144,7 +137,7 @@
                                     @endif
 
                                     <div class="flex items-center gap-2">
-                                        @if (auth()->user()->role->name == 'Admin')
+                                        @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
                                             <button type="button"
                                                 class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
                                                 data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
@@ -231,10 +224,16 @@
                     if (!selectEl.tomselect) {
                         new TomSelect(selectEl, {
                             create: false,
+                            plugins: {
+                                remove_button: {
+                                    title: 'Remove this item'
+                                }
+                            },
                             sortField: {
                                 field: "text",
                                 direction: "asc"
-                            }
+                            },
+                            persist: false
                         });
                     }
                 });
@@ -460,6 +459,47 @@
                     });
                 }
             }
+
+            /** =======================
+             * ADD FILE INPUT DYNAMICALLY
+             * ======================= */
+            const addFileBtn = document.getElementById('add-file');
+            const fileContainer = document.getElementById('file-fields');
+
+            if (addFileBtn && fileContainer) {
+                addFileBtn.addEventListener('click', function() {
+                    const newFileGroup = document.createElement('div');
+                    newFileGroup.classList.add('col-md-12', 'd-flex', 'align-items-center', 'mb-2',
+                        'file-input-group');
+                    newFileGroup.innerHTML = `
+                    <input type="file" class="form-control" name="files[]" required>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+                    fileContainer.appendChild(newFileGroup);
+                    updateRemoveButtons();
+                });
+
+                // Fungsi untuk aktifkan tombol "hapus file"
+                function updateRemoveButtons() {
+                    const fileGroups = fileContainer.querySelectorAll('.file-input-group');
+                    fileGroups.forEach((group, index) => {
+                        const removeBtn = group.querySelector('.remove-file');
+                        if (removeBtn) {
+                            removeBtn.classList.toggle('d-none', fileGroups.length === 1);
+                            removeBtn.onclick = () => {
+                                group.remove();
+                                updateRemoveButtons();
+                            };
+                        }
+                    });
+                }
+
+                // Inisialisasi pertama
+                updateRemoveButtons();
+            }
+
 
             /** =======================
              * BULK DELETE (Snackbar)

@@ -6,13 +6,22 @@
         <h1 class="text-lg font-semibold">@yield('title', 'Dashboard')</h1>
     </div>
 
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4 ml-auto ">
         <!-- Notification Dropdown -->
         <div class="relative">
             <button id="notificationBtn" class="relative focus:outline-none">
-                <i data-feather="bell"></i>
-                @if (auth()->user()->unreadNotifications->count() > 0)
-                    <span class="absolute top-0 right-0 inline-block w-3 h-3 bg-red-600 rounded-full"></span>
+                <i data-feather="bell" class="w-6 h-6"></i>
+
+                @php
+                    $unreadCount = auth()->user()->unreadNotifications->count();
+                @endphp
+
+                @if ($unreadCount > 0)
+                    <span
+                        class="absolute -top-1 -right-1 inline-flex items-center justify-center
+                       w-4 h-4 text-[10px] font-bold text-white bg-red-600 rounded-full">
+                        {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                    </span>
                 @endif
             </button>
 
@@ -20,9 +29,15 @@
                 class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 flex flex-col max-h-64">
                 <div class="overflow-y-auto flex-grow">
                     @forelse(auth()->user()->notifications->take(5) as $notification)
-                        <div class="p-2 border-b border-gray-200">
-                            <div class="text-sm text-gray-800">{{ $notification->data['message'] ?? 'No message' }}</div>
-                            <div class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</div>
+                        <div
+                            class="p-2 border-b border-gray-200
+                    {{ $notification->read_at ? 'bg-white' : 'bg-blue-50' }}">
+                            <div class="text-sm text-gray-800">
+                                {{ $notification->data['message'] ?? 'No message' }}
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                {{ $notification->created_at->diffForHumans() }}
+                            </div>
                         </div>
                     @empty
                         <div class="p-2 text-gray-500">No notifications</div>
@@ -30,7 +45,8 @@
                 </div>
 
                 <div class="text-center p-2 border-t border-gray-200">
-                    <a href="{{ route('notifications.index') }}" class="text-blue-600 hover:underline text-sm">View All</a>
+                    <a href="{{ route('notifications.index') }}" class="text-blue-600 hover:underline text-sm">View
+                        All</a>
                 </div>
             </div>
         </div>

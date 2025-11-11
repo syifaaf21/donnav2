@@ -43,7 +43,7 @@
                                 <i data-feather="edit" class="w-4 h-4"></i>
                             </button>
                                 {{-- Delete Button --}}
-                                @if (auth()->user()->role->name == 'Admin')
+                                @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
                                     <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
                                         class="d-inline delete-form">
                                         @csrf

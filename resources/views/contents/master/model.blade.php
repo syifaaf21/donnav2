@@ -124,7 +124,7 @@
                         <div class="row g-4">
                             {{-- Model Name --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Model Name</label>
+                                <label class="form-label fw-medium">Model Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name"
                                     class="form-control rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ $model->name }}" required>
@@ -135,7 +135,7 @@
 
                             {{-- Plant --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Plant</label>
+                                <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                                 <select name="plant"
                                     class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
                                     <option value="">-- Select Plant --</option>
@@ -191,7 +191,7 @@
                     <div class="row g-4">
                         {{-- Model Name --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Model Name</label>
+                            <label class="form-label fw-medium">Model Name <span class="text-danger">*</span></label>
                             <input type="text" name="name"
                                 class="form-control rounded-3 @error('name') is-invalid @enderror"
                                 value="{{ old('name') }}" required>
@@ -202,7 +202,7 @@
 
                         {{-- Plant --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Plant</label>
+                            <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                             <select name="plant"
                                 class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
                                 <option value="">-- Select Plant --</option>

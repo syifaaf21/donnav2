@@ -123,7 +123,7 @@
                                 <div class="row g-3">
                                     {{-- Name --}}
                                     <div class="col-md-6">
-                                        <label class="form-label fw-medium">Name</label>
+                                        <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
                                         <input type="text" name="name"
                                             class="form-control rounded-3 @error('name') is-invalid @enderror"
                                             value="{{ ucwords($product->name) }}" required>
@@ -134,7 +134,7 @@
 
                                     {{-- Code --}}
                                     <div class="col-md-6">
-                                        <label class="form-label fw-medium">Code</label>
+                                        <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
                                         <input type="text" name="code"
                                             class="form-control rounded-3 @error('code') is-invalid @enderror"
                                             value="{{ $product->code }}" required>
@@ -145,7 +145,7 @@
 
                                     {{-- Plant --}}
                                     <div class="col-md-6">
-                                        <label class="form-label fw-medium">Plant</label>
+                                        <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                                         <select name="plant" class="form-select" required>
                                             @foreach (['Body', 'Unit', 'Electric'] as $plant)
                                                 <option value="{{ $plant }}" @selected($product->plant === $plant)>
@@ -204,7 +204,7 @@
 
                     {{-- Code --}}
                     <div class="col-md-6">
-                        <label class="form-label fw-medium">Code</label>
+                        <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
                         <input type="text" name="code"
                             class="form-control rounded-3 @error('code') is-invalid @enderror"
                             placeholder="Enter product code" value="{{ old('code') }}" required>
@@ -215,7 +215,7 @@
 
                     {{-- Plant --}}
                     <div class="col-md-12">
-                        <label class="form-label fw-medium">Plant</label>
+                        <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                         <select name="plant"
                             class="form-select rounded-3 @error('plant') is-invalid @enderror"
                             required>

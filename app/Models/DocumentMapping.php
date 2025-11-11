@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+
 
 class DocumentMapping extends Model
 {
@@ -21,6 +23,7 @@ class DocumentMapping extends Model
         'status_id',
         'notes',
         'user_id',
+        'last_reminder_date',
     ];
 
     protected $casts = [
@@ -29,6 +32,24 @@ class DocumentMapping extends Model
     ];
 
     protected $table = 'tt_document_mappings';
+    
+    public function latestFile()
+    {
+        // Mengambil satu file terbaru dari relasi files()
+        return $this->hasOne(DocumentFile::class)->latestOfMany();
+    }
+
+    public function getFilesForModalAttribute()
+    {
+        return $this->files->map(function ($file) {
+            return [
+                'id' => $file->id,
+                'name' => $file->original_name,
+                'document_name' => $this->document->name,
+                'url' => Storage::url($file->file_path),
+            ];
+        });
+    }
 
     public function document()
     {

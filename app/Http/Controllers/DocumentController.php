@@ -68,7 +68,7 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
-            'parent_id' => 'nullable|exists:documents,id',
+            'parent_id' => 'nullable|exists:tm_documents,id',
         ]);
 
         $validated['type'] = 'review';
@@ -83,7 +83,7 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
-            'parent_id' => 'nullable|exists:documents,id',
+            'parent_id' => 'nullable|exists:tm_documents,id',
         ]);
 
         $validated['type'] = 'review';

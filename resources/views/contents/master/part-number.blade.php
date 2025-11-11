@@ -125,14 +125,14 @@
                         <div class="modal-body">
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <label class="block font-medium">Part Number</label>
+                                    <label class="block font-medium">Part Number <span class="text-danger">*</span></label>
                                     <input type="text" name="part_number"
                                         class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         value="{{ $part->part_number }}" required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="block font-medium">Plant</label>
+                                    <label class="block font-medium">Plant <span class="text-danger">*</span></label>
                                     <select name="plant" id="plant_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
@@ -147,7 +147,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="block font-medium">Product</label>
+                                    <label class="block font-medium">Product <span class="text-danger">*</span></label>
                                     <select name="product_id" id="product_id_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
@@ -162,7 +162,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="block font-medium">Model</label>
+                                    <label class="block font-medium">Model <span class="text-danger">*</span></label>
                                     <select name="model_id" id="model_id_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
@@ -177,7 +177,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="block font-medium">Process</label>
+                                    <label class="block font-medium">Process <span class="text-danger">*</span></label>
                                     <select name="process_id" id="process_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
@@ -225,7 +225,7 @@
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label for="part_number" class="form-label fw-semibold">Part Number</label>
+                                <label for="part_number" class="form-label fw-semibold">Part Number <span class="text-danger">*</span></label>
                                 <input type="text" id="part_number" name="part_number"
                                     class="form-control @error('part_number') is-invalid @enderror" required autofocus
                                     placeholder="Enter part number" value="{{ old('part_number') }}">
@@ -235,7 +235,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="plant" class="form-label fw-semibold">Plant</label>
+                                <label for="plant" class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
                                 <select id="plant" name="plant"
                                     class="form-select @error('plant') is-invalid @enderror" required>
                                     <option value="" disabled selected>-- Select Plant --</option>
@@ -252,7 +252,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="product_id" class="form-label fw-semibold">Product</label>
+                                <label for="product_id" class="form-label fw-semibold">Product <span class="text-danger">*</span></label>
                                 <select id="product_id" name="product_id"
                                     class="form-select @error('product_id') is-invalid @enderror"
                                     placeholder="Search or create product..." required disabled>
@@ -268,7 +268,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="model_id" class="form-label fw-semibold">Model</label>
+                                <label for="model_id" class="form-label fw-semibold">Model <span class="text-danger">*</span></label>
                                 <select id="model_id" name="model_id"
                                     class="form-select @error('model_id') is-invalid @enderror"
                                     placeholder="Search or create model..." required disabled>
@@ -283,7 +283,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="process" class="form-label fw-semibold">Process</label>
+                                <label for="process" class="form-label fw-semibold">Process <span class="text-danger">*</span></label>
                                 <select id="process_id" name="process_id"
                                     class="form-select @error('process_id') is-invalid @enderror"
                                     placeholder="Search or create process..." required disabled>

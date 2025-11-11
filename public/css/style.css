@@ -355,6 +355,13 @@ a:hover {
     border: none;
 }
 
+.dropup .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: .125rem;
+}
+
+
 /* Optional: Gradient background for main content
 #mainContent {
      background: linear-gradient(180deg, #030c3f, #e3e9f7);

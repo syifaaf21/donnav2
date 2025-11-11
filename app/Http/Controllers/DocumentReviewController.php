@@ -24,13 +24,9 @@ class DocumentReviewController extends Controller
     public function index(Request $request)
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
-        $processes = \App\Models\Process::pluck('name', 'id');
-
-        $documentsMaster = Document::with('childrenRecursive')
-            ->where('type', 'review')
-            ->get();
-
-        $departments = Department::all();
+        $processes = Process::pluck('name', 'id');
+        $documentsMaster = Document::where('type', 'review')->get(); // Master dokumen
+        $departments = Department::whereIn('plant', ['body', 'unit', 'electric'])->get();
         $partNumbers = PartNumber::all();
         $models = ProductModel::all();
 
@@ -45,9 +41,14 @@ class DocumentReviewController extends Controller
             'department',
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->when(
+                $request->plant,
+                fn($q, $plant) =>
+                $q->whereHas('partNumber', fn($q2) => $q2->where('plant', $plant))
+            )
             ->get();
 
-        // Tambahkan properti url ke setiap file
+        // Tambahkan URL file
         $documentMappings->each(function ($mapping) {
             $mapping->files->transform(function ($file) {
                 $file->url = asset('storage/' . $file->file_path);
@@ -55,16 +56,26 @@ class DocumentReviewController extends Controller
             });
         });
 
-        $groupedByPlant = $documentMappings
-            ->groupBy(fn($item) => $item->partNumber?->plant ?? 'Unknown')
-            ->map(function ($items) {
-                return $items->groupBy(function ($item) {
-                    $partNumber = $item->partNumber?->part_number ?? 'unknown';
-                    $model = $item->partNumber?->productModel?->name ?? 'unknown';
-                    $process = $item->partNumber?->process?->name ?? 'unknown';
-                    return "{$partNumber}-{$model}-{$process}";
-                });
+        // --- Grup berdasarkan plant, lalu berdasarkan document code
+        $groupedByPlant = collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
+            $mappingsByPlant = $documentMappings->filter(
+                fn($item) =>
+                strtolower($item->partNumber?->plant ?? '') === strtolower($plant)
+            );
+
+            // group mapping by document code
+            $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
+
+            // pastikan semua dokumen master tetap ada di grup
+            $orderedGrouped = collect();
+
+            $documentsMaster->each(function ($doc) use (&$orderedGrouped, $groupedDocs) {
+                $orderedGrouped[$doc->code] = $groupedDocs->get($doc->code, collect());
             });
+
+            return [$plant => $orderedGrouped];
+        });
+
 
         return view('contents.document-review.index', compact(
             'plants',
@@ -75,6 +86,34 @@ class DocumentReviewController extends Controller
             'documentsMaster',
             'groupedByPlant'
         ));
+    }
+
+    public function getFiltersByPlant(Request $request)
+    {
+        $plant = $request->get('plant');
+
+        // Departments
+        $departments = $plant
+            ? Department::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
+            : Department::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('name')->get(['id', 'name']);
+
+        // Part Numbers
+        $partNumbers = $plant
+            ? PartNumber::where('plant', $plant)->orderBy('part_number')->get(['id', 'part_number'])
+            : PartNumber::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('part_number')->get(['id', 'part_number']);
+
+        // Processes → tampilkan berdasarkan plant, tanpa peduli PartNumber
+        $processes = $plant
+            ? Process::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
+            : Process::orderBy('name')->get(['id', 'name']);
+
+        $processes = $processes->map(fn($p) => ['id' => $p->id, 'name' => ucwords($p->name)]);
+
+        return response()->json([
+            'departments' => $departments,
+            'part_numbers' => $partNumbers,
+            'processes' => $processes,
+        ]);
     }
 
     public function liveSearch(Request $request)
@@ -146,27 +185,6 @@ class DocumentReviewController extends Controller
 
         return $enum;
     }
-
-    public function getDataByPlant(Request $request)
-    {
-        $plant = $request->plant;
-
-        // Ambil part numbers berdasarkan plant
-        $partNumbers = PartNumber::where('plant', $plant)
-            ->orderBy('part_number')
-            ->get(['id', 'part_number']);
-
-        // Ambil proses yang terkait dengan part numbers tersebut
-        $processIds = $partNumbers->pluck('process_id')->unique();
-
-        $processes = Process::whereIn('id', $processIds)->pluck('name');
-
-        return response()->json([
-            'part_numbers' => $partNumbers,
-            'processes' => $processes,
-        ]);
-    }
-
 
     public function show($id)
     {
@@ -285,8 +303,6 @@ class DocumentReviewController extends Controller
         return redirect()->route('document-review.index')
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
-
-
 
     public function reject(Request $request, $id)
     {

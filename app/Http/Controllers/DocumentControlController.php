@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\DocumentMapping;
 use App\Models\Status;
 use App\Models\User;
+use App\Notifications\DocumentActionNotification;
 use App\Notifications\DocumentStatusNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -15,24 +16,90 @@ use Illuminate\Support\Facades\Auth;
 
 class DocumentControlController extends Controller
 {
+
     public function index(Request $request)
     {
+        // Ambil semua data dengan relasi yang dibutuhkan
         $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
             ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
+        // Filter department kalau bukan Admin atau Super Admin
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            $query->where('department_id', Auth::user()->department_id);
+        }
+
+        // Filter department kalau Admin atau Super Admin pilih
+        if (in_array(Auth::user()->role->name, ['Admin', 'Super Admin']) && $request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // Filter department kalau ada
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        // Ambil data utama
+        // Search global
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('status', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhere('notes', 'like', "%$search%");
+            });
+        }
+
+        // Ambil atau buat status "Obsolete"
+        $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
+
+        // Ambil semua dokumen aktif yang tanggal obsolete-nya sudah sampai atau lewat hari ini
+        $toBeObsoleted = DocumentMapping::whereDate('obsolete_date', '<=', now()->today())
+            ->whereHas('status', fn($q) => $q->where('name', 'Active'))
+            ->get();
+        foreach ($toBeObsoleted as $mapping) {
+
+            // Ambil user department terkait
+            $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+
+            // Ambil semua admin
+            $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+
+            // Gabungkan keduanya dan hapus duplikat
+            $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
+
+            foreach ($notifiableUsers as $user) {
+
+                // Cek dulu apakah notif untuk dokumen ini sudah dikirim hari ini
+                $alreadyNotified = $user->notifications()
+                    ->where('type', DocumentStatusNotification::class)
+                    ->whereDate('created_at', now()->today())
+                    ->whereJsonContains('data->message', $mapping->document->name)
+                    ->exists();
+
+                if (!$alreadyNotified) {
+                    $user->notify(new DocumentStatusNotification(
+                        $mapping->document->name,
+                        'obsolete',
+                        Auth::user()->name ?? 'System',
+                        route('document-control.index')
+                    ));
+                }
+            }
+
+            // Update status menjadi Obsolete
+            $mapping->update(['status_id' => $obsoleteStatus->id]);
+        }
+
+        // ✅ Ambil data untuk tampilan
         $documentsMapping = $query->get();
 
-        // Hitung statistik berdasarkan relasi status
+        // Hitung statistik
         $totalDocuments = $documentsMapping->count();
         $activeDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Active')->count();
         $obsoleteDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Obsolete')->count();
 
-        // Group untuk accordion per department
+        // Group by department untuk accordion
         $groupedDocuments = $documentsMapping->groupBy(fn($d) => $d->department->name ?? 'Unknown Department');
 
         // Dropdown filter department
@@ -48,114 +115,175 @@ class DocumentControlController extends Controller
         ));
     }
 
+
     public function revise(Request $request, DocumentMapping $mapping)
     {
-        // Hanya admin atau user yang boleh revise
-        if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
-            abort(403, 'You do not have permission to revise this document.');
+        $uploadedFiles = $request->file('revision_files', []);
+
+        // Jika tidak ada file yang diupload, jangan ubah status atau file
+        if (empty($uploadedFiles)) {
+            return redirect()->back()->with('info', 'No files uploaded, document unchanged.');
         }
 
-        // Validasi input
+        // Validasi file hanya jika ada yang diupload
         $request->validate([
-            'files.*' => 'nullable|file|mimes:pdf,doc,docx|max:20480',
-            'notes' => 'required|string|max:500',
+            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ]);
 
-        // Tentukan folder berdasarkan tipe dokumen
         $mapping->load('document');
-        $folder = $mapping->document && $mapping->document->type === 'control'
-            ? 'document-controls'
-            : 'document-reviews';
+        $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
 
-        // Replace file lama jika ada file baru diupload
-        $files = $request->file('files', []);
-        foreach ($files as $fileId => $uploadedFile) {
-            if (!$uploadedFile)
-                continue;
+        $revisionFileIds = $request->input('revision_file_ids', []);
 
-            $oldFile = $mapping->files()->where('id', $fileId)->first();
-            if (!$oldFile)
-                continue;
+        foreach ($uploadedFiles as $index => $uploadedFile) {
+            $replaceId = $revisionFileIds[$index] ?? null;
 
-            // Hapus file lama
-            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
-                Storage::disk('public')->delete($oldFile->file_path);
+            $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $uploadedFile->getClientOriginalExtension();
+            $timestamp = now()->format('Ymd_His');
+
+            if ($replaceId) {
+                $oldFile = $mapping->files()->find($replaceId);
+                if ($oldFile) {
+                    if (Storage::disk('public')->exists($oldFile->file_path)) {
+                        Storage::disk('public')->delete($oldFile->file_path);
+                    }
+
+                    $existingRevisions = $mapping->files()
+                        ->where('original_name', 'like', $baseName . '_rev%')
+                        ->count();
+                    $revisionNumber = $existingRevisions + 1;
+
+                    $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
+                    $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+                    $oldFile->update([
+                        'file_path' => $newPath,
+                        'original_name' => $filename,
+                        'file_type' => $uploadedFile->getClientMimeType(),
+                        'uploaded_by' => Auth::id(),
+                    ]);
+                }
+            } else {
+                $existingRevisions = $mapping->files()
+                    ->where('original_name', 'like', $baseName . '_rev%')
+                    ->count();
+                $revisionNumber = $existingRevisions + 1;
+
+                $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
+                $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+                $mapping->files()->create([
+                    'file_path' => $newPath,
+                    'original_name' => $filename,
+                    'file_type' => $uploadedFile->getClientMimeType(),
+                    'uploaded_by' => Auth::id(),
+                ]);
             }
-
-            // Upload file baru
-            $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
-            $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
-
-            // Update record di database
-            $oldFile->update([
-                'file_path' => $newPath,
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'file_type' => $uploadedFile->getClientMimeType(),
-                'uploaded_by' => Auth::id(),
-            ]);
         }
 
-        // Update mapping
-        $status = Status::firstOrCreate(
-            ['name' => 'Need Review'],
-            ['description' => 'Document waiting for review']
-        );
-
+        // Update status hanya jika ada file baru
+        $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
         $mapping->update([
-            'notes' => $request->notes,
-            'status_id' => $status->id,
+            'status_id' => $needReviewStatus->id,
             'user_id' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'Document revised successfully!');
-    }
-
-
-    public function approve(DocumentMapping $mapping)
-    {
-        if (Auth::user()->role->name != 'Admin') {
-            abort(403, 'Only admin can approve documents.');
+        // Notifikasi admin
+        $uploader = Auth::user();
+        if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
+            $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new DocumentActionNotification(
+                    'revised',
+                    $uploader->name,
+                    null,
+                    $mapping->document->name,
+                    route('document-control.index')
+                ));
+            }
         }
 
-        $statusActive = Status::firstOrCreate(['name' => 'Active'], ['description' => 'Document is active']);
+        return redirect()->back()->with('success', 'Document Uploaded successfully!');
+    }
+
+    public function approve(Request $request, DocumentMapping $mapping)
+    {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            abort(403, 'Only admin or super admin can approve documents.');
+        }
+
+
+        $request->validate([
+            'obsolete_date' => 'required|date',
+            'reminder_date' => 'required|date|before_or_equal:obsolete_date',
+        ], [
+            'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
+        ]);
+
+        $statusActive = Status::firstOrCreate(
+            ['name' => 'Active'],
+            ['description' => 'Document is active']
+        );
 
         $mapping->update([
             'status_id' => $statusActive->id,
             'user_id' => Auth::id(),
+            'obsolete_date' => $request->obsolete_date,
+            'reminder_date' => $request->reminder_date,
         ]);
 
-        // Notifikasi ke semua user bahwa dokumen di-approve
-        $allUsers = User::all();
-        Notification::send($allUsers, new DocumentStatusNotification(
-            $mapping->document->name,
+        // Ambil semua user di department terkait, kecuali user yang melakukan approve
+        $departmentUsers = User::where('department_id', $mapping->department_id)
+            ->whereNotIn('id', [Auth::id()]) // kecuali user yang approve
+            ->get();
+
+        // Kirim notifikasi
+        Notification::send($departmentUsers, new DocumentActionNotification(
             'approved',
-            Auth::user()->name
+            Auth::user()->name,
+            null,
+            $mapping->document->name,
+            route('document-control.index') // url
         ));
+
 
         return back()->with('success', 'Document approved successfully.');
     }
 
-    public function reject(DocumentMapping $mapping)
+    public function reject(Request $request, DocumentMapping $mapping)
     {
-        if (Auth::user()->role->name != 'Admin') {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403, 'Only admin can reject documents.');
         }
 
-        $statusRejected = Status::firstOrCreate(['name' => 'Rejected'], ['description' => 'Document has been rejected']);
+        $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        $statusRejected = Status::firstOrCreate(
+            ['name' => 'Rejected'],
+            ['description' => 'Document has been rejected']
+        );
 
         $mapping->update([
             'status_id' => $statusRejected->id,
             'user_id' => Auth::id(),
+            'notes' => $request->input('notes'), // <-- simpan notes
         ]);
 
         // Notifikasi ke semua user bahwa dokumen di-reject
-        $allUsers = User::all();
-        Notification::send($allUsers, new DocumentStatusNotification(
-            $mapping->document->name,
+        $departmentUsers = User::where('department_id', $mapping->department_id)
+            ->whereNotIn('id', [Auth::id()]) // kecuali user yang approve
+            ->get();
+        Notification::send($departmentUsers, new DocumentActionNotification(
             'rejected',
-            Auth::user()->name
+            Auth::user()->name,
+            null,
+            $mapping->document->name,
+            route('document-control.index')
         ));
 
-        return back()->with('success', 'Document rejected successfully.');
+        return redirect()->back()->with('success', 'Document rejected successfully');
     }
 }

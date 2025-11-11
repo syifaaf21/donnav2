@@ -5,8 +5,8 @@
     <div class="flex items-center justify-between px-4 border-b">
         <div class="flex items-center gap-2">
             <div class="h-24 max-w-36 min-w-10 flex items-center justify-center">
-                <img src="{{ asset('images/donna-inverse.png') }}" alt="Logo" id="sidebarLogo" style="width: 150px; height: auto;"
-                    class="object-contain transition-all duration-300" data-full="{{ asset('images/donna-inverse.png') }}"
+                <img src="{{ asset('images/madonna1.png') }}" alt="Logo" id="sidebarLogo" style="width: 150px; height: auto;"
+                    class="object-contain transition-all duration-300" data-full="{{ asset('images/madonna1.png') }}"
                     data-icon="{{ asset('images/donna-icon-inverse.png') }}" />
             </div>
             <span class="font-semibold text-gray-800 text-lg tracking-tight sidebar-text"></span>

@@ -7,6 +7,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\FtppController;
@@ -18,9 +19,6 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartNumberController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UserController;
-use App\Models\Department;
-use App\Models\Document;
-use Illuminate\Routing\RouteRegistrar;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -31,20 +29,18 @@ use Illuminate\Support\Facades\Route;
 |
 | Here is where you can register web routes for your application. These
 | routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
+| be assigned to the "web" middleware group.
 |
 */
 
+// Redirect root to login
+Route::get('/', fn() => redirect()->route('login'));
 
-// Route::get('/', function () {
-//     return view('index');
-// });
+// Registration
+Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('register', [RegisterController::class, 'register']);
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-
-// Login & Logout Routes
+// Login & Logout
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', function () {
@@ -54,127 +50,119 @@ Route::post('/logout', function () {
     return redirect('/login');
 })->name('logout');
 
-// Master Data Management Routes
-Route::middleware(['auth'])->group(function () {
-    Route::get('/index', [DashboardController::class, 'index'])->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Master Data Routes
+|--------------------------------------------------------------------------
+*/
 
+// Master data: Admin & Super Admin
+Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super Admin'])->group(function () {
+    Route::resource('part_numbers', PartNumberController::class);
+    Route::resource('departments', DepartmentController::class);
+    Route::resource('products', ProductController::class);
+    Route::resource('models', ModelController::class);
+    Route::resource('processes', ProcessController::class);
+    Route::resource('hierarchy', DocumentController::class);
+    Route::prefix('ftpp')->name('ftpp.')->group(function () {
+        Route::get('/', [FtppMasterController::class, 'index'])->name('index');
+        Route::get('/load/{section}/{id?}', [FtppMasterController::class, 'loadSection'])->name('load');
+
+        // Audit
+        Route::prefix('audit')->name('audit.')->group(function () {
+            Route::get('/{id}', [AuditTypeController::class, 'show']);
+            Route::post('/store', [AuditTypeController::class, 'store'])->name('store');
+            Route::put('/update/{id}', [AuditTypeController::class, 'update'])->name('update');
+            Route::delete('/{id}', [AuditTypeController::class, 'destroy'])->name('destroy');
+        });
+
+        // Finding Category
+        Route::prefix('finding-category')->name('finding-category.')->group(function () {
+            Route::get('/{id}', [FindingCategoryController::class, 'show']);
+            Route::post('/', [FindingCategoryController::class, 'store'])->name('store');
+            Route::put('/update/{id}', [FindingCategoryController::class, 'update'])->name('update');
+            Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
+        });
+
+        // Klausul
+        Route::prefix('klausul')->name('klausul.')->group(function () {
+            Route::get('/{id}', [KlausulController::class, 'show']);
+            Route::post('/', [KlausulController::class, 'store'])->name('store');
+            Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
+            Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
+        });
+    });
+});
+
+// User management: hanya Super Admin
+Route::prefix('master')->name('master.')->middleware(['auth', 'role:Super Admin'])->group(function () {
+    Route::resource('users', UserController::class);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    // Dashboard & Profile
+    Route::get('/index', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
 
+    // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
-
-    Route::prefix('master')->name('master.')->middleware('auth')->group(function () {
-        // Part Number Management Routes
-        Route::resource('part_numbers', PartNumberController::class);
-
-        // User Management Routes
-        Route::resource('users', UserController::class);
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-
-        // Document Management Routes
-        Route::resource('hierarchy', DocumentController::class);
-        Route::get('/hierarchy', [DocumentController::class, 'index'])->name('hierarchy.index');
-
-        Route::resource('processes', ProcessController::class);
-        Route::get('/processes', [ProcessController::class, 'index'])->name('processes.index');
-
-        Route::resource('departments', DepartmentController::class);
-        Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
-
-        Route::resource('products', ProductController::class);
-        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-
-        Route::resource('models', ModelController::class);
-        Route::get('/models', [ModelController::class, 'index'])->name('models.index');
-
-        Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
-            Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
-
-            // Admin routes
-            Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
-            Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
-            Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
-            Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
-            Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');
-
-            // User route
-            Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
-        });
-
-        Route::prefix('document-control')->name('document-control.')->middleware('auth')->group(function () {
-            Route::get('/', [DocumentMappingController::class, 'controlIndex'])->name('index');
-            Route::post('/store', [DocumentMappingController::class, 'storeControl'])->name('store');
-            Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
-            Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveControl'])->name('approve');
-            Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateControl'])->name('update');
-            Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
-
-            Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
-        });
-
-        Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])
-            ->name('bulkDestroy');
-
-        // Master FTPP
-        Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
-            Route::get('/', [FtppMasterController::class, 'index'])->name('index');
-            Route::get('/load/{section}/{id?}', [FtppMasterController::class, 'loadSection'])->name('load');
-
-            Route::prefix('audit')->name('audit.')->middleware('auth')->group(function () {
-                Route::get('/{id}', [AuditTypeController::class, 'show']);
-                Route::post('/store', [AuditTypeController::class, 'store'])->name('store');
-                Route::put('/update/{id}', [AuditTypeController::class, 'update'])->name('update');
-                Route::delete('/{id}', [AuditTypeController::class, 'destroy'])->name('destroy');
-            });
-
-            Route::prefix('finding-category')->name('finding-category.')->middleware('auth')->group(function () {
-                Route::get('/{id}', [FindingCategoryController::class, 'show']);
-                Route::post('/', [FindingCategoryController::class, 'store'])->name('store');
-                Route::put('/update/{id}', [FindingCategoryController::class, 'update'])->name('update');
-                Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
-            });
-
-            Route::prefix('klausul')->name('klausul.')->middleware('auth')->group(function () {
-                Route::get('/{id}', [KlausulController::class, 'show']);
-                Route::post('/', [KlausulController::class, 'store'])->name('store');
-                Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
-                Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
-            });
-
-        });
-    });
-
-    Route::prefix('document-review')->name('document-review.')->middleware('auth')->group(function () {
+    Route::get('/notification/{id}/read', [NotificationController::class, 'redirectAndMarkRead'])
+    ->name('notifications.read');
+     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.markAllRead');
+    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead'])
+        ->name('notifications.markRead');
+    /*
+    |--------------------------------------------------------------------------
+    | Document Review Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('document-review')->name('document-review.')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
-        Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])
-            ->name('getDataByPlant');
+        Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
         Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
-        Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])
-            ->name('approveWithDates');
+        Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
-
-
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
+        Route::get('/get-filters', [DocumentReviewController::class, 'getFiltersByPlant'])->name('getFiltersByPlant');
+
     });
 
-    Route::prefix('document-control')->name('document-control.')->middleware('auth')->group(function () {
+    // Document Control
+    Route::prefix('document-control')->name('document-control.')->group(function () {
         Route::get('/', [DocumentControlController::class, 'index'])->name('index');
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
     });
 
-    // AJAX for Select2 (Product & Model inside Part Number)
+    /*
+    |--------------------------------------------------------------------------
+    | AJAX for Select2
+    |--------------------------------------------------------------------------
+    */
     Route::get('/ajax/products', [PartNumberController::class, 'ajaxProductIndex']);
     Route::post('/ajax/products', [PartNumberController::class, 'ajaxProductStore']);
-
     Route::get('/ajax/models', [PartNumberController::class, 'ajaxModelIndex']);
     Route::post('/ajax/models', [PartNumberController::class, 'ajaxModelStore']);
 
-    Route::prefix('ftpp')->name('ftpp.')->middleware('auth')->group(function () {
-        Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
+    /*
+    |--------------------------------------------------------------------------
+    | Master FTPP & related
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('ftpp')->name('ftpp.')->group(function () {
+
+        // Master FTTP
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
         Route::post('/', [FtppController::class, 'store'])->name('store');
