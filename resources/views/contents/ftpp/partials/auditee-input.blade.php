@@ -2,6 +2,7 @@
 <input type="text" name="audit_finding_id" x-model="selectedId">
 <input type="hidden" name="action" value="save_auditee_action">
 <input type="text" name="pic" value="{{ auth()->user()->id }}">
+<input type="text" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <table class="w-full border border-black text-sm mt-2">
     <tr class="bg-gray-100 font-semibold">
         <td class="border border-black p-1">AUDITEE</td>
@@ -107,27 +108,10 @@
             <textarea name="yokoten_area" x-show="form.yokoten == 0" x-model="form.yokoten_area"
                 class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
         </td>
-        {{-- LDR, SPV, DEPT HEAD --}}
-        <td class="border border-black p-2">
-            <input name="dept_head_signature" type="file" @change="uploadSignature($event, 'dept_head_signature')"
-                accept="image/*" class="text-xs">
-            <template x-if="form.dept_head_signature">
-                <img :src="form.dept_head_signature" class="mx-auto mt-1 h-16 object-contain">
-            </template>
-            {{-- <div class="signature-container">
-                <canvas id="signature-pad" width="400" height="200" style="border: 1px solid #000;"></canvas>
-                <button id="clear">Clear</button>
-            </div> --}}
-        </td>
-        <td class="border border-black p-2">
-            <input name="ldr_spv_signature" type="file" @change="uploadSignature($event, 'ldr_spv_signature')"
-                accept="image/*" class="text-xs">
-            <template x-if="form.ldr_spv_signature">
-                <img :src="form.ldr_spv_signature" class="mx-auto mt-1 h-16 object-contain">
-            </template>
-        </td>
+        @include('contents.ftpp.partials.signature')
     </tr>
 </table>
+
 <table>
     <tr>
         <td>
@@ -176,10 +160,17 @@
     </tr>
 </table>
 
+{{-- button --}}
 <div class="flex justify-end mt-2">
     <button type="button" onclick="saveAuditeeAction()"
         class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save Auditee
         Action</button>
+    @if (in_array(optional(auth()->user()->role)->name, ['Leader', 'Supervisor', 'Dept Head', 'Admin']))
+        <button type="button" onclick="saveAndSign(document.getElementById('auditee_action_id').value)"
+            class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
+            Save and Sign
+        </button>
+    @endif
 </div>
 
 <!-- Attachment Upload Handle Script: trigger inputs, preview, count, click-outside -->
@@ -373,12 +364,6 @@
         const yokotenAreaEl = document.querySelector('textarea[name="yokoten_area"]');
         formData.append('yokoten_area', yokotenAreaEl ? yokotenAreaEl.value : '');
 
-        // Dept Head & LDR/SPV signatures
-        const deptHead = document.querySelector('input[name="dept_head_signature"]').files[0];
-        const ldrSpv = document.querySelector('input[name="ldr_spv_signature"]').files[0];
-        if (deptHead) formData.append('dept_head_signature', deptHead);
-        if (ldrSpv) formData.append('ldr_spv_signature', ldrSpv);
-
         // Attachments
         const photoInput2 = document.getElementById('photoInput2');
         const fileInput2 = document.getElementById('fileInput2');
@@ -400,6 +385,52 @@
         } catch (error) {
             console.error('Error:', error);
             alert('❌ Error: ' + error.message);
+        }
+    }
+
+    // save and sign
+    async function saveAndSign(auditeeActionId) {
+        if (!auditeeActionId) {
+            alert('Gagal mendapatkan auditee_action_id!');
+            return;
+        }
+
+        const deptHead = document.getElementById('dept_head_signature')?.value;
+        const ldrSpv = document.getElementById('ldr_spv_signature')?.value;
+
+        if (!deptHead && !ldrSpv) {
+            alert('Tanda tangan belum diisi!');
+            return;
+        }
+
+        const token = document.querySelector('meta[name="csrf-token"]').content;
+        const formData = new FormData();
+        formData.append('_token', token);
+        formData.append('auditee_action_id', auditeeActionId);
+
+        let url = '';
+        if (ldrSpv) {
+            url = "{{ route('ftpp.ldr-spv-sign') }}";
+            formData.append('ldr_spv_signature', ldrSpv);
+        } else if (deptHead) {
+            url = "{{ route('ftpp.dept-head-sign') }}";
+            formData.append('dept_head_signature', deptHead);
+        }
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            if (res.ok && result.success) {
+                alert('✅ Signature berhasil disimpan!');
+            } else {
+                alert('❌ Gagal menyimpan signature: ' + (result.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('❌ Error: ' + err.message);
         }
     }
 </script>

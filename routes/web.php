@@ -178,8 +178,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
         Route::post('/', [FtppController::class, 'store'])->name('store');
-        // Route::put('/{id}', [FtppController::class, 'update'])->name('update');
-        Route::get('/{audit_finding}', [FtppController::class, 'create']);
+        Route::post('/ldr-spv-sign', [FtppController::class, 'ldrSpvSign'])->name('ldr-spv-sign');
+        Route::post('/dept-head-sign', [FtppController::class, 'deptheadSign'])->name('dept-head-sign');
     });
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
     Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);

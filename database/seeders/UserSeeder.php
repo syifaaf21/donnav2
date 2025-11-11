@@ -22,8 +22,8 @@ class UserSeeder extends Seeder
         $superAdminRoleId = 1;
         $userRoleId = 3;
         $auditorRoleId = 4;
-        $leaderRoleId = 6;
-        $spvRoleId = 7;
+        $leaderRoleId = 7;
+        $spvRoleId = 6;
 
         // Ambil satu department default untuk user global (misal Engineering Body)
         $defaultDept = Department::find(24); // sesuaikan dengan ID dept yang aman

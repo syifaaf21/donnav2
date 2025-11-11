@@ -143,12 +143,14 @@
 
                 <!-- Attachment button (paperclip) -->
                 <div class="relative inline-block">
-                    <button id="attachBtn" type="button"
-                        class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
-                        aria-haspopup="true" aria-expanded="false" title="Attach files">
-                        <i data-feather="paperclip" class="w-4 h-4"></i>
-                        <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
-                    </button>
+                    @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
+                        <button id="attachBtn" type="button"
+                            class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
+                            aria-haspopup="true" aria-expanded="false" title="Attach files">
+                            <i data-feather="paperclip" class="w-4 h-4"></i>
+                            <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                        </button>
+                    @endif
 
                     <!-- Small menu seperti email (hidden, muncul saat klik) -->
                     <div id="attachMenu" class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
@@ -183,11 +185,11 @@
     </tr>
 </table>
 
+@if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
 <div class="flex justify-end mt-2">
     <button type="button" onclick="saveHeaderOnly()"
         class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save Header</button>
 </div>
-
 <!-- Sidebar Klausul -->
 <div id="sidebarKlausul"
     class="fixed top-0 right-0 w-full md:w-1/4 h-full bg-white shadow-lg p-5 hidden overflow-y-auto">
@@ -300,12 +302,6 @@
         Save
     </button>
 </div>
-
-{{-- icon feather init --}}
-<script>
-    // Inisialisasi Feather Icons
-    feather.replace();
-</script>
 
 @push('scripts')
     <script>
@@ -1002,4 +998,11 @@
             alert('❌ Failed to save header:\n' + err.message);
         }
     }
+</script>
+@endif
+
+{{-- icon feather init --}}
+<script>
+    // Inisialisasi Feather Icons
+    feather.replace();
 </script>

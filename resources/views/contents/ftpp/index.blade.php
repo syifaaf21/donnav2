@@ -77,30 +77,13 @@
                         {{-- AUDITOR VERIFY --}}
                         @include('contents.ftpp.partials.auditor-verification')
                         {{-- END AUDITOR VERIFY --}}
-
-                        {{-- STATUS --}}
-                        <div class="flex justify-between mt-3">
-                            <div class="text-lg font-bold">
-                                Status:
-                                <span
-                                    :class="{
-                                        'text-red-500': form.status_id == 6, // For status 6 (Open)
-                                        'text-green-600': form.status_id == 10, // For status 10 (Close)
-                                        'text-yellow-500': form.status_id != 6 && form.status_id !=
-                                            10 // For other statuses
-                                    }">
-                                    <span
-                                        x-text="form.status_id == 6 ? 'OPEN' : (form.status_id == 10 ? 'CLOSE' : (form.status_id == 7 ? 'SUBMITTED' : 'CHECKED BY DEPT HEAD'))">
-                                    </span>
-                                </span>
-                            </div>
-                        </div>
                     </form>
                 </template>
             </div>
         </div>
     </div>
 @endsection
+
 @push('scripts')
     <script>
         function ftppApp() {
@@ -207,6 +190,8 @@
                         // Auditee action
                         if (finding.auditee_action) {
                             const act = finding.auditee_action;
+
+                            this.form.auditee_action_id = act.id;
 
                             // Root cause & yokoten
                             this.form.root_cause = act.root_cause || '';

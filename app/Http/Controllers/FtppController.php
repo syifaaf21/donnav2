@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\WhyCauses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Storage;
 
 class FtppController extends Controller
 {
@@ -150,13 +151,6 @@ class FtppController extends Controller
         return response()->json($auditees);
     }
 
-    public function create(AuditFinding $audit_finding)
-    {
-        return view('auditee.action-form', [
-            'auditFinding' => $audit_finding
-        ]);
-    }
-
     public function show($id)
     {
         $finding = AuditFinding::with([
@@ -171,6 +165,7 @@ class FtppController extends Controller
             'subKlausuls',
             'file',
             'status',
+            'auditeeAction',
             'auditeeAction.whyCauses',
             'auditeeAction.correctiveActions',
             'auditeeAction.preventiveActions',
@@ -299,17 +294,6 @@ class FtppController extends Controller
                         'yokoten_area' => $validated['yokoten_area'] ?? null,
                     ]);
 
-                    // 2️⃣ Simpan file signature (jika ada)
-                    if ($request->hasFile('dept_head_signature')) {
-                        $path = $request->file('dept_head_signature')->store('signatures', 'public');
-                        $auditeeAction->update(['dept_head_signature' => $path]);
-                    }
-
-                    if ($request->hasFile('ldr_spv_signature')) {
-                        $path = $request->file('ldr_spv_signature')->store('signatures', 'public');
-                        $auditeeAction->update(['ldr_spv_signature' => $path]);
-                    }
-
                     // 3️⃣ Simpan Why (5 Why)
                     for ($i = 1; $i <= 5; $i++) {
                         $why = $request->input('why_' . $i . '_mengapa');
@@ -404,14 +388,85 @@ class FtppController extends Controller
         }
     }
 
-    public function ldrSpvSign()
+    public function ldrSpvSign(Request $request)
     {
-        //
+        $request->validate([
+            'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
+            'ldr_spv_signature' => 'required',
+        ]);
+
+        $action = AuditeeAction::findOrFail($request->auditee_action_id);
+
+        // Proses signature
+        $path = $this->saveSignature($request->ldr_spv_signature, 'ldr-spv');
+        $action->ldr_spv_signature = $path;
+        $action->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Leader/SPV signature saved successfully',
+            'path' => $path
+        ]);
     }
 
-    public function deptheadSign()
+    public function deptheadSign(Request $request)
     {
-        //
+        $request->validate([
+            'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
+            'dept_head_signature' => 'required',
+        ]);
+
+        $action = AuditeeAction::findOrFail($request->auditee_action_id);
+
+        // Proses signature
+        $path = $this->saveSignature($request->dept_head_signature, 'dept-head');
+        $action->dept_head_signature = $path;
+        $action->save();
+
+        // Update status_id pada tt_audit_findings menjadi 8
+        $finding = AuditFinding::find($action->audit_finding_id);
+        if ($finding) {
+            $finding->update(['status_id' => 8]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dept Head signature saved & status updated',
+            'path' => $path
+        ]);
+    }
+
+    /**
+     * Fungsi bantu untuk menyimpan tanda tangan baik base64 atau file upload
+     */
+    private function saveSignature($signature, $folder)
+    {
+        // Jika dikirim dari canvas (base64)
+        if (is_string($signature) && str_starts_with($signature, 'data:image')) {
+            $image = preg_replace('/^data:image\/\w+;base64,/', '', $signature);
+            $image = base64_decode($image);
+            $filename = $folder . '_' . uniqid() . '.png';
+            $path = 'audit_finding_files/' . $filename;
+
+            // simpan langsung di disk public
+            Storage::disk('public')->put($path, $image);
+
+            // kembalikan path relatif (bukan URL)
+            return $path;
+        }
+
+        // Jika dikirim sebagai file upload biasa
+        if (request()->hasFile($folder . '_signature')) {
+            $file = request()->file($folder . '_signature');
+
+            // simpan di folder audit_finding_files di disk public
+            $path = $file->store('audit_finding_files', 'public');
+
+            // return path relatif, bukan URL
+            return $path;
+        }
+
+        return null;
     }
 
     public function auditorVerify()
