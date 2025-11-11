@@ -145,7 +145,7 @@ class DocumentMappingController extends Controller
             'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
             'files' => 'required',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ], [
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
@@ -181,7 +181,6 @@ class DocumentMappingController extends Controller
             'obsolete_date' => null,
             'status_id' => Status::where('name', 'Need Review')->first()->id,
             'notes' => $cleanNotes,
-            'user_id' => Auth::id(),
         ]);
 
         // 6️⃣ Upload file & simpan ke tabel relasi files
@@ -403,7 +402,7 @@ class DocumentMappingController extends Controller
             'notes' => 'nullable|string|max:500',
             'reminder_date' => 'nullable|date',
             'deadline' => 'nullable|date',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ], [
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
@@ -521,7 +520,10 @@ class DocumentMappingController extends Controller
             });
         }
 
-        $documentMappings = $query->get();
+        $documentMappings = $query
+            ->orderBy('id', 'desc')
+            ->paginate(10); // tampilkan 10 item per halaman
+
 
         // 🔁 Update status Obsolete otomatis
         // $statusObsolete = Status::where('name', 'Obsolete')->first();
@@ -558,14 +560,17 @@ class DocumentMappingController extends Controller
             'document_name' => 'required|string|max:255',
             'department' => 'required|array',
             'department.*' => 'exists:tm_departments,id',
-            'obsolete_date' => 'nullable|date',
-            'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
-            'notes' => 'nullable|string|max:500',
+            'obsolete_date' => 'required|date|after_or_equal:today',
+            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'notes' => 'required|string|max:500',
             'files' => 'nullable|array',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ], [
+            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
 
         // Simpan Document
         $newDocument = Document::create([
@@ -592,7 +597,6 @@ class DocumentMappingController extends Controller
                 'obsolete_date' => $validated['obsolete_date'],
                 'reminder_date' => $validated['reminder_date'],
                 'deadline' => null,
-                'user_id' => Auth::id(),
                 'department_id' => $deptId,
                 'version' => 0,
                 'notes' => $cleanNotes,
@@ -610,6 +614,7 @@ class DocumentMappingController extends Controller
                         'file_path' => $path,
                         'original_name' => $file->getClientOriginalName(),
                         'file_type' => $file->getClientMimeType(),
+                        'user_id' => Auth::id(),
                     ]);
                 }
             }
@@ -646,12 +651,15 @@ class DocumentMappingController extends Controller
         $validator = Validator::make($request->all(), [
             'document_name' => 'required|string|max:255',
             'department_id' => 'required|exists:tm_departments,id',
-            'obsolete_date' => 'nullable|date',
-            'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
-            'notes' => 'nullable|string|max:500',
+            'obsolete_date' => 'required|date|after_or_equal:today',
+            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'notes' => 'required|string|max:500',
         ], [
+            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
 
         // ❗ Kalau gagal validasi, langsung return back — jangan lanjut ke bawah
         if ($validator->fails()) {
@@ -684,7 +692,6 @@ class DocumentMappingController extends Controller
             'obsolete_date' => $validated['obsolete_date'],
             'reminder_date' => $validated['reminder_date'],
             'notes' => $validated['notes'] ?? null,
-            'user_id' => Auth::id(),
         ]);
 
         return redirect()->route('master.document-control.index')
@@ -694,7 +701,7 @@ class DocumentMappingController extends Controller
 
     public function bulkDestroy(Request $request)
     {
-        // validasi
+        // Validasi
         $data = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'integer|exists:tt_document_mappings,id',
@@ -702,17 +709,31 @@ class DocumentMappingController extends Controller
 
         $ids = $data['ids'];
 
-        $docs = DocumentMapping::whereIn('id', $ids)->get();
+        // Ambil semua dokumen sekaligus dengan relasi files
+        $docs = DocumentMapping::with('files')->whereIn('id', $ids)->get();
+
         foreach ($docs as $doc) {
-            if ($doc->file_path) {
+            // 1️⃣ Hapus semua file di relasi 'files'
+            foreach ($doc->files as $file) {
+                if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+                    Storage::disk('public')->delete($file->file_path);
+                }
+                $file->delete();
+            }
+
+            // 2️⃣ Hapus file utama DocumentMapping
+            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
                 Storage::disk('public')->delete($doc->file_path);
             }
+
+            // 3️⃣ Hapus data DocumentMapping
+            $doc->delete();
+
+            // 4️⃣ Opsional: hapus relasi anak-anak jika ini parent
+            DocumentMapping::where('parent_id', $doc->id)->update(['parent_id' => null]);
         }
 
-        // hapus records
-        DocumentMapping::whereIn('id', $ids)->delete();
-
         return redirect()->route('master.document-control.index')
-            ->with('success', count($ids) . ' document(s) deleted successfully.');
+            ->with('success', count($ids) . ' document(s) and related files deleted successfully.');
     }
 }

@@ -32,7 +32,7 @@ class DocumentMapping extends Model
     ];
 
     protected $table = 'tt_document_mappings';
-    
+
     public function latestFile()
     {
         // Mengambil satu file terbaru dari relasi files()
@@ -41,14 +41,16 @@ class DocumentMapping extends Model
 
     public function getFilesForModalAttribute()
     {
-        return $this->files->map(function ($file) {
-            return [
-                'id' => $file->id,
-                'name' => $file->original_name,
-                'document_name' => $this->document->name,
-                'url' => Storage::url($file->file_path),
-            ];
-        });
+        // Ambil file terbaru berdasarkan waktu upload
+        $latestFile = $this->files()->latest()->first();
+
+        // Kalau ada file, kirim dalam bentuk array seperti sebelumnya
+        return $latestFile ? [[
+            'id' => $latestFile->id,
+            'name' => $latestFile->original_name,
+            'document_name' => $this->document->name,
+            'url' => Storage::url($latestFile->file_path),
+        ]] : [];
     }
 
     public function document()

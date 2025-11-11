@@ -212,7 +212,7 @@
                                                             @php $file = $mapping->files_for_modal[0]; @endphp
                                                             <button type="button"
                                                                 class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md
-                   border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                                border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
                                                                 data-file="{{ $file['url'] }}"
                                                                 data-docid="{{ $mapping->id }}"
                                                                 data-doc-title="{{ $mapping->document->name }}"
@@ -222,7 +222,6 @@
                                                             </button>
                                                         @endif
                                                     </div>
-
                                                 </div>
                                             </div>
                                         </div>
@@ -388,6 +387,8 @@
                     const docId = btn.dataset.docid;
                     const docTitle = btn.dataset.docTitle || 'File Preview';
                     const notes = btn.dataset.notes || '';
+
+                    console.log('Preview file URL:', fileUrl)
 
                     window.currentDocId = docId;
                     window.currentDocNotes = notes;

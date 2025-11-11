@@ -142,44 +142,22 @@ class DocumentControlController extends Controller
             $extension = $uploadedFile->getClientOriginalExtension();
             $timestamp = now()->format('Ymd_His');
 
-            if ($replaceId) {
-                $oldFile = $mapping->files()->find($replaceId);
-                if ($oldFile) {
-                    if (Storage::disk('public')->exists($oldFile->file_path)) {
-                        Storage::disk('public')->delete($oldFile->file_path);
-                    }
+            // Hitung revisi yang sudah ada untuk file ini
+            $existingRevisions = $mapping->files()
+                ->where('original_name', 'like', $baseName . '_rev%')
+                ->count();
+            $revisionNumber = $existingRevisions + 1;
 
-                    $existingRevisions = $mapping->files()
-                        ->where('original_name', 'like', $baseName . '_rev%')
-                        ->count();
-                    $revisionNumber = $existingRevisions + 1;
+            $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
+            $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
-                    $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
-                    $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
-
-                    $oldFile->update([
-                        'file_path' => $newPath,
-                        'original_name' => $filename,
-                        'file_type' => $uploadedFile->getClientMimeType(),
-                        'uploaded_by' => Auth::id(),
-                    ]);
-                }
-            } else {
-                $existingRevisions = $mapping->files()
-                    ->where('original_name', 'like', $baseName . '_rev%')
-                    ->count();
-                $revisionNumber = $existingRevisions + 1;
-
-                $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
-                $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
-
-                $mapping->files()->create([
-                    'file_path' => $newPath,
-                    'original_name' => $filename,
-                    'file_type' => $uploadedFile->getClientMimeType(),
-                    'uploaded_by' => Auth::id(),
-                ]);
-            }
+            // Tambah file baru (tidak menghapus file lama)
+            $mapping->files()->create([
+                'file_path' => $newPath,
+                'original_name' => $uploadedFile->getClientOriginalName(),
+                'file_type' => $uploadedFile->getClientMimeType(),
+                'uploaded_by' => Auth::id(),
+            ]);
         }
 
         // Update status hanya jika ada file baru
@@ -189,7 +167,7 @@ class DocumentControlController extends Controller
             'user_id' => Auth::id(),
         ]);
 
-        // Notifikasi admin
+        // Kirim notifikasi ke Admin
         $uploader = Auth::user();
         if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
             $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
@@ -204,8 +182,9 @@ class DocumentControlController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Document Uploaded successfully!');
+        return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
+
 
     public function approve(Request $request, DocumentMapping $mapping)
     {
@@ -215,11 +194,14 @@ class DocumentControlController extends Controller
 
 
         $request->validate([
-            'obsolete_date' => 'required|date',
-            'reminder_date' => 'required|date|before_or_equal:obsolete_date',
+            'obsolete_date' => 'required|date|after_or_equal:today',
+            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
         ], [
+            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
 
         $statusActive = Status::firstOrCreate(
             ['name' => 'Active'],
@@ -228,7 +210,6 @@ class DocumentControlController extends Controller
 
         $mapping->update([
             'status_id' => $statusActive->id,
-            'user_id' => Auth::id(),
             'obsolete_date' => $request->obsolete_date,
             'reminder_date' => $request->reminder_date,
         ]);
@@ -268,7 +249,6 @@ class DocumentControlController extends Controller
 
         $mapping->update([
             'status_id' => $statusRejected->id,
-            'user_id' => Auth::id(),
             'notes' => $request->input('notes'), // <-- simpan notes
         ]);
 

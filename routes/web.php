@@ -115,8 +115,8 @@ Route::middleware('auth')->group(function () {
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notification/{id}/read', [NotificationController::class, 'redirectAndMarkRead'])
-    ->name('notifications.read');
-     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
         ->name('notifications.markAllRead');
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead'])
         ->name('notifications.markRead');
@@ -128,13 +128,13 @@ Route::middleware('auth')->group(function () {
     Route::prefix('document-review')->name('document-review.')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
-        Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
+        Route::get('/folder/{plant}/{docCode}', [DocumentReviewController::class, 'showFolder'])
+            ->name('showFolder');
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
         Route::get('/get-filters', [DocumentReviewController::class, 'getFiltersByPlant'])->name('getFiltersByPlant');
-
     });
 
     // Document Control

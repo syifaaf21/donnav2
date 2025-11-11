@@ -2,33 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
-use App\Models\Document;
-use App\Models\DocumentMapping;
-use App\Models\PartNumber;
-use App\Models\Process;
-use App\Models\ProductModel;
-use App\Models\Status;
-use App\Models\User;
-use App\Notifications\DocumentRevisedNotification;
-use App\Notifications\DocumentStatusNotification;
+use App\Models\{Department, Document, DocumentMapping, PartNumber, Process, ProductModel, Status, User};
+use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\{Auth, DB, Notification, Storage};
 
 class DocumentReviewController extends Controller
 {
     public function index(Request $request)
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
-        $processes = Process::pluck('name', 'id');
-        $documentsMaster = Document::where('type', 'review')->get(); // Master dokumen
-        $departments = Department::whereIn('plant', ['body', 'unit', 'electric'])->get();
-        $partNumbers = PartNumber::all();
-        $models = ProductModel::all();
+        $documentsMaster = Document::where('type', 'review')->get();
 
         $documentMappings = DocumentMapping::with([
             'document',
@@ -38,82 +22,51 @@ class DocumentReviewController extends Controller
             'partNumber.process',
             'user',
             'status',
-            'department',
+            'department'
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->when(
-                $request->plant,
-                fn($q, $plant) =>
-                $q->whereHas('partNumber', fn($q2) => $q2->where('plant', $plant))
-            )
             ->get();
 
-        // Tambahkan URL file
+        // Tambahkan URL file dengan aman
         $documentMappings->each(function ($mapping) {
             $mapping->files->transform(function ($file) {
-                $file->url = asset('storage/' . $file->file_path);
+                if (is_object($file) && isset($file->file_path)) {
+                    $file->url = asset('storage/' . $file->file_path);
+                } else {
+                    $file->url = null;
+                }
                 return $file;
             });
         });
 
-        // --- Grup berdasarkan plant, lalu berdasarkan document code
-        $groupedByPlant = collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
-            $mappingsByPlant = $documentMappings->filter(
-                fn($item) =>
-                strtolower($item->partNumber?->plant ?? '') === strtolower($plant)
-            );
-
-            // group mapping by document code
-            $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
-
-            // pastikan semua dokumen master tetap ada di grup
-            $orderedGrouped = collect();
-
-            $documentsMaster->each(function ($doc) use (&$orderedGrouped, $groupedDocs) {
-                $orderedGrouped[$doc->code] = $groupedDocs->get($doc->code, collect());
-            });
-
-            return [$plant => $orderedGrouped];
-        });
-
+        $groupedByPlant = $this->groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings);
 
         return view('contents.document-review.index', compact(
             'plants',
-            'processes',
-            'departments',
-            'partNumbers',
-            'models',
             'documentsMaster',
             'groupedByPlant'
         ));
     }
 
-    public function getFiltersByPlant(Request $request)
+    public function showFolder($plant, $docCode, Request $request)
     {
-        $plant = $request->get('plant');
+        $documentsByCode = $this->getDocumentsGroupedByPlantAndCode();
+        if (!isset($documentsByCode[$plant][$docCode])) abort(404);
 
-        // Departments
-        $departments = $plant
-            ? Department::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
-            : Department::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('name')->get(['id', 'name']);
+        $documents = $documentsByCode[$plant][$docCode];
 
-        // Part Numbers
-        $partNumbers = $plant
-            ? PartNumber::where('plant', $plant)->orderBy('part_number')->get(['id', 'part_number'])
-            : PartNumber::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('part_number')->get(['id', 'part_number']);
+        if ($search = $request->query('q')) {
+            $documents = $documents->filter(
+                fn($doc) =>
+                str_contains(strtolower($doc->document_number ?? ''), strtolower($search)) ||
+                    str_contains(strtolower($doc->notes ?? ''), strtolower($search)) ||
+                    str_contains(strtolower($doc->status?->name ?? ''), strtolower($search)) ||
+                    str_contains(strtolower($doc->user?->name ?? ''), strtolower($search)) ||
+                    str_contains(strtolower($doc->partNumber?->part_number ?? ''), strtolower($search))
+            );
+        }
 
-        // Processes → tampilkan berdasarkan plant, tanpa peduli PartNumber
-        $processes = $plant
-            ? Process::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
-            : Process::orderBy('name')->get(['id', 'name']);
-
-        $processes = $processes->map(fn($p) => ['id' => $p->id, 'name' => ucwords($p->name)]);
-
-        return response()->json([
-            'departments' => $departments,
-            'part_numbers' => $partNumbers,
-            'processes' => $processes,
-        ]);
+        return view('contents.document-review.partials.folder2', compact('plant', 'docCode', 'documents'));
     }
 
     public function liveSearch(Request $request)
@@ -124,73 +77,117 @@ class DocumentReviewController extends Controller
             'document',
             'partNumber.product',
             'partNumber.productModel',
-            'partNumber.process', // pastikan relasi ini ikut di-load
+            'partNumber.process',
             'user',
             'status',
             'files'
         ])
-            ->whereHas('document', fn($q) => $q->where('type', 'review')) // pastikan hanya review
-            ->when($keyword, function ($query) use ($keyword) {
-                $query->where(function ($q) use ($keyword) {
-                    $q->whereHas('partNumber', function ($q2) use ($keyword) {
-                        $q2->where('part_number', 'like', "%{$keyword}%")
-                            ->orWhere('plant', 'like', "%{$keyword}%")
-                            ->orWhereHas('process', function ($q3) use ($keyword) {
-                                $q3->where('name', 'like', "%{$keyword}%")
-                                    ->orWhere('code', 'like', "%{$keyword}%");
-                            });
-                    })
-                        ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('document', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('status', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('user', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhere('notes', 'like', "%{$keyword}%")
-                        ->orWhere('document_number', 'like', "%{$keyword}%");
-                });
-            })
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->when($keyword, fn($q) => $q->where(function ($q) use ($keyword) {
+                $q->whereHas(
+                    'partNumber',
+                    fn($q2) =>
+                    $q2->where('part_number', 'like', "%{$keyword}%")
+                        ->orWhere('plant', 'like', "%{$keyword}%")
+                        ->orWhereHas(
+                            'process',
+                            fn($q3) =>
+                            $q3->where('name', 'like', "%{$keyword}%")
+                                ->orWhere('code', 'like', "%{$keyword}%")
+                        )
+                )
+                    ->orWhereHas(
+                        'partNumber.productModel',
+                        fn($q2) =>
+                        $q2->where('name', 'like', "%{$keyword}%")
+                    )
+                    ->orWhereHas(
+                        'document',
+                        fn($q2) =>
+                        $q2->where('name', 'like', "%{$keyword}%")
+                    )
+                    ->orWhereHas(
+                        'status',
+                        fn($q2) =>
+                        $q2->where('name', 'like', "%{$keyword}%")
+                    )
+                    ->orWhereHas(
+                        'user',
+                        fn($q2) =>
+                        $q2->where('name', 'like', "%{$keyword}%")
+                    )
+                    ->orWhere('notes', 'like', "%{$keyword}%")
+                    ->orWhere('document_number', 'like', "%{$keyword}%");
+            }))
             ->get();
 
-        // group hasil by part-model-process (sama format seperti index partial expects)
-        $groupedData = $documentMappings->groupBy(function ($item) {
-            $partNumber = $item->partNumber?->part_number ?? 'unknown';
-            $model = $item->partNumber?->productModel?->name ?? 'unknown';
-            $process = $item->partNumber?->process?->code ?? 'unknown';
-            return "{$partNumber}-{$model}-{$process}";
-        });
+        $groupedData = $documentMappings->groupBy(
+            fn($item) => ($item->partNumber?->part_number ?? 'unknown') . '-' .
+                ($item->partNumber?->productModel?->name ?? 'unknown') . '-' .
+                ($item->partNumber?->process?->code ?? 'unknown')
+        );
 
-        // render partial yang hanya menerima $groupedData
         return view('contents.document-review.partials.table', compact('groupedData'))->render();
     }
 
-
+    // ========================= Helper Functions =========================
     private function getEnumValues($table, $column)
     {
         $type = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = '{$column}'")[0]->Type;
         preg_match('/enum\((.*)\)/', $type, $matches);
         $enum = [];
-
         if (!empty($matches)) {
             foreach (explode(',', $matches[1]) as $value) {
                 $enum[] = trim($value, "'");
             }
         }
-
         return $enum;
     }
 
-    public function show($id)
+    private function groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings)
     {
-        $document = Document::with('childrenRecursive')->findOrFail($id);
+        return collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
+            $mappingsByPlant = $documentMappings->filter(
+                fn($item) => strtolower($item->partNumber?->plant ?? '') === strtolower($plant)
+            );
 
-        return view('contents.document-review.show', compact('document'));
+            $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
+
+            $orderedGrouped = collect();
+            $documentsMaster->each(fn($doc) => $orderedGrouped->put($doc->code, $groupedDocs->get($doc->code, collect())));
+
+            return [$plant => $orderedGrouped];
+        });
+    }
+
+    private function getDocumentsGroupedByPlantAndCode()
+    {
+        $plants = $this->getEnumValues('tm_part_numbers', 'plant');
+        $documentsMaster = Document::where('type', 'review')->get();
+        $documentMappings = DocumentMapping::with([
+            'document',
+            'files',
+            'partNumber.product',
+            'partNumber.productModel',
+            'partNumber.process',
+            'user',
+            'status',
+            'department'
+        ])->whereHas('document', fn($q) => $q->where('type', 'review'))->get();
+
+        // Tambahkan URL file
+        $documentMappings->each(function ($mapping) {
+            $mapping->files->transform(function ($file) {
+                if (is_object($file) && isset($file->file_path)) {
+                    $file->url = asset('storage/' . $file->file_path);
+                } else {
+                    $file->url = null;
+                }
+                return $file;
+            });
+        });
+
+        return $this->groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings);
     }
 
     public function revise(Request $request, $id)
