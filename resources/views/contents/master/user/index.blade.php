@@ -68,7 +68,7 @@
     </div>
 {{-- Include modal Add/Edit (sama seperti kode kamu sebelumnya) --}}
 @include('contents.master.user.partials.modal-add')
-@include('contents.master.user.partials.modal-edit2')
+@include('contents.master.user.partials.modal-edit')
 @endsection
 
 @push('scripts')

@@ -23,6 +23,7 @@ return new class extends Migration
 
             // Tambah kolom acknowledge boolean
             $table->boolean('acknowledge_by_lead_auditor')->after('verified_by_auditor')->default(false);
+            $table->string('effectiveness_verification')->nullable()->after('acknowledge_by_lead_auditor');
         });
     }
 
@@ -47,6 +48,7 @@ return new class extends Migration
                 'auditor_id',
                 'lead_auditor_id',
                 'acknowledge_by_lead_auditor',
+                'effectiveness_verification',
             ]);
         });
     }

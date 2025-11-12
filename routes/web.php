@@ -64,6 +64,36 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
     Route::resource('models', ModelController::class);
     Route::resource('processes', ProcessController::class);
     Route::resource('hierarchy', DocumentController::class);
+
+    // Document Review
+    Route::prefix('document-review')->name('document-review.')->group(function () {
+        Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
+        Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
+        Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
+        Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
+        Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
+        Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');
+        Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
+    });
+
+    // Document Control
+    Route::prefix('document-control')->name('document-control.')->group(function () {
+        Route::get('/', [DocumentMappingController::class, 'controlIndex'])->name('index');
+        Route::post('/store', [DocumentMappingController::class, 'storeControl'])->name('store');
+        Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
+        Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveControl'])->name('approve');
+        Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateControl'])->name('update');
+        Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
+        Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
+    });
+
+    Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])->name('bulkDestroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Master FTPP & related
+    |--------------------------------------------------------------------------
+    */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
         Route::get('/', [FtppMasterController::class, 'index'])->name('index');
         Route::get('/load/{section}/{id?}', [FtppMasterController::class, 'loadSection'])->name('load');
@@ -115,8 +145,8 @@ Route::middleware('auth')->group(function () {
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notification/{id}/read', [NotificationController::class, 'redirectAndMarkRead'])
-    ->name('notifications.read');
-     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
         ->name('notifications.markAllRead');
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead'])
         ->name('notifications.markRead');
@@ -157,17 +187,19 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Master FTPP & related
+    | FTPP & related
     |--------------------------------------------------------------------------
     */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
-
-        // Master FTTP
+        Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
         Route::get('/', [FtppController::class, 'index'])->name('index');
-        Route::get('/{id}', [FtppController::class, 'show'])->name('show');
+        Route::get('/{id}', [FtppController::class, 'edit'])->name('edit');
         Route::post('/', [FtppController::class, 'store'])->name('store');
         Route::post('/ldr-spv-sign', [FtppController::class, 'ldrSpvSign'])->name('ldr-spv-sign');
         Route::post('/dept-head-sign', [FtppController::class, 'deptheadSign'])->name('dept-head-sign');
+        Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
+
     });
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
     Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);
@@ -178,4 +210,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/get-products/{plant}', [FtppController::class, 'getProducts']);
 
     Route::get('/get-auditee/{departmentId}', [FtppController::class, 'getAuditee']);
+
+    Route::post('/auditor-verify', [FtppController::class, 'auditorVerify']);
+    Route::post('/lead-auditor-acknowledge', [FtppController::class, 'leadAuditorAcknowledge']);
 });

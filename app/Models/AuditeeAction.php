@@ -20,9 +20,10 @@ class AuditeeAction extends Model
         'yokoten',
         'yokoten_area',
         'verified_by_auditor',
-        'auditee_signature',
+        'acknowledge_by_lead_auditor',
+        'effectiveness_verification',
+        'ldr_spv_signature',
         'dept_head_signature',
-        'auditor_signature',
     ];
 
     public function auditFinding()

@@ -1,8 +1,8 @@
 {{-- 5 WHY --}}
-<input type="text" name="audit_finding_id" x-model="selectedId">
+<input type="hidden" name="audit_finding_id" x-model="selectedId">
 <input type="hidden" name="action" value="save_auditee_action">
-<input type="text" name="pic" value="{{ auth()->user()->id }}">
-<input type="text" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
+<input type="hidden" name="pic" value="{{ auth()->user()->id }}">
+<input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <table class="w-full border border-black text-sm mt-2">
     <tr class="bg-gray-100 font-semibold">
         <td class="border border-black p-1">AUDITEE</td>
@@ -96,8 +96,8 @@
     <tr>
         <td class="border border-black p-2 w-2/3">
             <label>Yokoten?<span class="text-danger">*</span></label>
-            <label><input type="radio" value="0" x-model="form.yokoten" required> Yes</label>
-            <label><input type="radio" value="1" x-model="form.yokoten" required> No</label>
+            <label><input type="radio" value="1" x-model="form.yokoten" required> Yes</label>
+            <label><input type="radio" value="0" x-model="form.yokoten" required> No</label>
         </td>
         <td class="border border-black p-1 font-semibold text-center">Dept. Head</td>
         <td class="border border-black p-1 font-semibold text-center">Leader/Spv</td>
@@ -105,7 +105,7 @@
     <tr>
         <td>
             <label>Please specify:</label>
-            <textarea name="yokoten_area" x-show="form.yokoten == 0" x-model="form.yokoten_area"
+            <textarea name="yokoten_area" x-show="form.yokoten == 1" x-model="form.yokoten_area"
                 class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
         </td>
         @include('contents.ftpp.partials.signature')

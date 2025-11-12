@@ -21,12 +21,12 @@
                         <li @click="loadForm({{ $item->id }})" class="cursor-pointer px-2 py-2 border-b"
                             :class="{
                                 'bg-red-500 text-white hover:bg-red-600': {{ $item->status_id }} ===
-                                    6, // Assuming 6 is 'Open'
-                                'bg-yellow-500 text-gray-700 hover:bg-yellow-600': {{ $item->status_id }} !== 6 &&
+                                    7, // Assuming 7 is 'Open'
+                                'bg-yellow-500 text-gray-700 hover:bg-yellow-600': {{ $item->status_id }} !== 7 &&
                                     {{ $item->status_id }} !==
-                                    10, // For other statuses
+                                    11, // For other statuses
                                 'bg-green-600 text-white hover:bg-green-700': {{ $item->status_id }} ===
-                                    10 // For 'Closed'
+                                    11 // For 'Closed'
                             }">
                             <div class="font-semibold text-sm">
                                 {{ $item->registration_number }}
@@ -39,13 +39,19 @@
                             <div class="text-xs mt-1">
                                 <span
                                     :class="{
-                                        'text-white': {{ $item->status_id }} === 6, // Assuming 6 is 'Open'
-                                        'text-gray-700': {{ $item->status_id }} !== 6 && {{ $item->status_id }} !==
-                                            10, // For other statuses
-                                        'text-white': {{ $item->status_id }} === 10 // For 'Closed'
+                                        'text-white': {{ $item->status_id }} === 7, // Assuming 7 is 'Open'
+                                        'text-gray-700': {{ $item->status_id }} !== 7 && {{ $item->status_id }} !==
+                                            11, // For other statuses
+                                        'text-white': {{ $item->status_id }} === 11 // For 'Closed'
                                     }">
                                     {{ $item->status->name ?? 'Unknown Status' }}
                                 </span>
+                            </div>
+                            <div class="flex gap-1">
+                                <a href="{{ route('ftpp.download', $item->id) }}" class="text-blue-600 hover:text-blue-800"
+                                    title="Download PDF">
+                                    <i data-feather="download"></i>
+                                </a>
                             </div>
                         </li>
                     @endforeach
@@ -61,22 +67,27 @@
                 </template>
 
                 <template x-if="formLoaded">
-                    <form @submit.prevent action="{{ route('ftpp.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ isset($finding) ? route('ftpp.update', $finding->id) : route('ftpp.store') }}"
+                        method="POST" enctype="multipart/form-data">
                         @csrf
+                        @if (isset($finding))
+                            @method('PUT')
+                        @endif
+
                         {{-- HEADER --}}
-                        <div class="text-center font-bold text-lg mb-2">FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
+                        <div class="text-center font-bold text-lg mb-2">
+                            FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
                         </div>
 
-                        {{-- AUDITOR INPUT --}}
                         @include('contents.ftpp.partials.auditor-input')
-                        {{-- END AUDITOR INPUT --}}
-
-                        {{-- AUDITEE INPUT --}}
                         @include('contents.ftpp.partials.auditee-input')
-
-                        {{-- AUDITOR VERIFY --}}
                         @include('contents.ftpp.partials.auditor-verification')
-                        {{-- END AUDITOR VERIFY --}}
+
+                        <div class="mt-4 text-right">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                                x-text="mode === 'create' ? 'Save' : 'Update'">
+                            </button>
+                        </div>
                     </form>
                 </template>
             </div>
@@ -89,9 +100,10 @@
         function ftppApp() {
             return {
                 formLoaded: false,
+                mode: 'create',
                 selectedId: null,
                 form: {
-                    status_id: 6,
+                    status_id: 7,
                     audit_type_id: "",
                     sub_audit_type_id: "",
                     auditor_id: "",
@@ -109,9 +121,10 @@
                 },
 
                 createNew() {
+                    this.mode = 'create';
                     this.selectedId = null;
                     this.form = {
-                        status_id: 6,
+                        status_id: 7,
                         klausul_list: []
                     };
                     this.formLoaded = true;
@@ -127,6 +140,7 @@
 
                         console.log(finding);
 
+                        this.mode = 'edit';
                         this.form = finding; // isi semua field utama
                         this.selectedId = id;
                         this.formLoaded = true;
@@ -134,7 +148,7 @@
                         //
                         // ✅ SUB AUDIT TYPE (Level 2)
                         //
-                        this.form.sub_audit = finding.sub_audit ?? [];
+                        this.form.sub_audit = finding.sub_audit_type_id ?? [];
                         //
                         // ✅ PLANT / DEPT / PROCESS / PRODUCT DISPLAY
                         //
@@ -147,11 +161,11 @@
                         //
                         // ✅ AUDITEE
                         //
-                        selectedAuditees = finding.auditees ?? [];
+                        selectedAuditees = finding.auditee ?? [];
                         this.form.auditee_ids = selectedAuditees.map(a => a.id).join(',');
 
                         this.form._auditee_html =
-                            (finding.auditees ?? [])
+                            (finding.auditee ?? [])
                             .map(a => `
                                 <span class="bg-blue-100 px-2 py-1 rounded flex items-center gap-1">
                                     ${a.name}
@@ -159,10 +173,29 @@
                             `)
                             .join('');
 
-                        //
-                        // ✅ SUB KLAUSUL
-                        //
-                        this.form.sub_klausul_id = (finding.sub_klausul ?? []).map(s => s.id);
+                        this.formLoaded = true;
+
+                        // Tunggu Alpine render form dulu
+                        this.$nextTick(() => {
+                            const subKlausuls = finding.sub_klausul ?? finding.sub_klausuls ?? [];
+                            selectedSubIds = subKlausuls.map(s => String(s.id));
+
+                            const subContainer = document.getElementById('selectedSubContainer');
+                            if (!subContainer) return console.warn('⚠️ Sub container belum muncul');
+
+                            subContainer.innerHTML = '';
+                            subKlausuls.forEach(s => {
+                                const span = document.createElement('span');
+                                span.className =
+                                    "flex items-end gap-1 bg-blue-100 text-gray-700 px-2 py-1 rounded";
+                                span.dataset.id = s.id;
+                                span.innerHTML = `
+                                    ${s.code ?? ''} - ${s.name}`;
+                                subContainer.appendChild(span);
+                            });
+
+                            feather.replace();
+                        });
 
                         this.form.created_at = finding.created_at?.substring(0, 10) ?? '';
                         this.form.due_date = finding.due_date?.substring(0, 10) ?? '';
@@ -236,6 +269,28 @@
                             // Signature (jika kamu simpan path di DB)
                             this.form.dept_head_signature = act.dept_head_signature_url || null;
                             this.form.ldr_spv_signature = act.ldr_spv_signature_url || null;
+
+                            this.form.auditee_action_id = act.id;
+                            this.form.effectiveness_verification = act.effectiveness_verification ||
+                                ''; // ✅ ambil dari auditee_action
+
+                            // ✅ Jika auditor sudah verifikasi, tampilkan stamp & sembunyikan tombol
+                            if (act.verified_by_auditor) {
+                                this.form.auditor_signature = true;
+                                this.form.auditor_signature_url = `/images/stamp-internal-auditor.png`;
+                                this.form.auditor_verified = true; // flag baru
+                            } else {
+                                this.form.auditor_verified = false;
+                            }
+
+                            // ✅ Jika lead auditor sudah acknowledge
+                            if (act.acknowledge_by_lead_auditor) {
+                                this.form.lead_auditor_signature = true;
+                                this.form.lead_auditor_signature_url = `/images/stamp-lead-auditor.png`;
+                                this.form.lead_auditor_ack = true; // flag baru
+                            } else {
+                                this.form.lead_auditor_ack = false;
+                            }
                         } else {
                             // kosongkan jika belum ada
                             for (let i = 1; i <= 5; i++) {

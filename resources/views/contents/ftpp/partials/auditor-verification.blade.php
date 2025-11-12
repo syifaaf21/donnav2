@@ -1,4 +1,5 @@
 {{-- TANDA TANGAN --}}
+<input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <table class="w-full border border-black text-sm mt-2 text-center">
     <tr>
         <td class="border border-black p-1 font-semibold">Effectiveness Verification</td>
@@ -8,63 +9,57 @@
     </tr>
     <tr>
         <td class="border border-black">
-            <textarea name="effectiveness_verification" id="effectiveness_verification" class="w-full"></textarea>
+            <textarea name="effectiveness_verification" x-model="form.effectiveness_verification" class="w-full p-1"></textarea>
         </td>
         <td class="border border-black p-2">
-            {{-- STATUS --}}
-            <div class="flex justify-between mt-3">
-                <div class="text-lg font-bold">
-                    Status:
-                    <span
-                        :class="{
-                            'text-red-500': form.status_id == 6, // For status 6 (Open)
-                            'text-green-600': form.status_id == 10, // For status 10 (Close)
-                            'text-yellow-500': form.status_id != 6 && form.status_id !=
-                                10 // For other statuses
-                        }">
-                        <span
-                            x-text="form.status_id == 6 ? 'OPEN' : (form.status_id == 10 ? 'CLOSE' : (form.status_id == 7 ? 'SUBMITTED' : 'CHECKED BY DEPT HEAD'))">
-                        </span>
-                    </span>
-                </div>
+            <div class="text-lg font-bold">
+                Status:
+                <span
+                    :class="{
+                        'text-red-500': form.status_id == 7,
+                        'text-green-600': form.status_id == 11,
+                        'text-yellow-500': form.status_id != 7 && form.status_id != 11
+                    }"
+                    x-text="form.status_id == 7 ? 'OPEN' : (form.status_id == 11 ? 'CLOSE' : (form.status_id == 8 ? 'SUBMITTED' : 'CHECKED BY DEPT HEAD'))">
+                </span>
             </div>
         </td>
         <td class="border border-black">
             <div class="my-4">
-                <!-- Verifikasi Lead Auditor -->
-                <button onclick="verifySignature('lead_auditor_signature')">Verify</button>
+                <template x-if="!form.lead_auditor_ack">
+                    <button type="button" onclick="verifyLeadAuditor()">Verify</button>
+                </template>
                 <template x-if="form.lead_auditor_signature">
-                    <img :src="'/images/' + form.lead_auditor_signature" class="mx-auto mt-1 h-16 object-contain">
+                    <img :src="form.lead_auditor_signature_url" class="mx-auto mt-1 h-16 object-contain">
                 </template>
             </div>
-
             <table class="w-full h-1/4">
                 <tr>
                     <td class="border border-black">Lead Auditor</td>
                 </tr>
                 <tr>
                     <td>
-                        <input type="text" name="" id="">
+                        <input type="text" x-model="form.lead_auditor_name">
                     </td>
                 </tr>
             </table>
         </td>
         <td class="border border-black">
             <div class="my-4">
-                <!-- Verifikasi Auditor -->
-                <button onclick="verifySignature('auditor_signature')">Verify</button>
+                <template x-if="!form.auditor_verified">
+                    <button type="button" onclick="verifyAuditor()">Verify</button>
+                </template>
                 <template x-if="form.auditor_signature">
-                    <img :src="'/images/' + form.auditor_signature" class="mx-auto mt-1 h-16 object-contain">
+                    <img :src="form.auditor_signature_url" class="mx-auto mt-1 h-16 object-contain">
                 </template>
             </div>
-
             <table class="w-full h-1/4">
                 <tr>
                     <td class="border border-black">Auditor</td>
                 </tr>
                 <tr>
                     <td>
-                        <input type="text" name="" id="">
+                        <input type="text" x-model="form.auditor_name">
                     </td>
                 </tr>
             </table>
@@ -73,74 +68,100 @@
 </table>
 
 <script>
-    // Simulasi data awal, bisa diganti dengan data dari database
-    const form = {
-        status_id: 8,  // Initial status: checked by auditor (id=8)
-        auditor_signature: '',  // Gambar auditor signature (misalnya: 'auditor_signature.png')
-        lead_auditor_signature: '',  // Gambar lead auditor signature (misalnya: 'lead_auditor_signature.png')
-    };
+    async function verifyAuditor() {
+        const auditeeActionId = document.getElementById('auditee_action_id')?.value;
+        const alpineEl = document.querySelector('[x-data="ftppApp()"]');
+        const alpineComponent = Alpine.$data(alpineEl);
 
-    // Fungsi untuk memperbarui status
-    // function updateStatus() {
-    //     const statusElement = document.getElementById("status-text");
+        // 🔍 Pastikan effectiveness_verification diisi dulu
+        const verification = alpineComponent.form.effectiveness_verification?.trim();
+        if (!verification) {
+            alert('Please fill in Effectiveness Verification before verifying.');
+            return;
+        }
 
-    //     if (form.status_id === 8) {
-    //         statusElement.textContent = 'CHECKED BY DEPT HEAD';
-    //         statusElement.classList.add("text-yellow-500");
-    //         statusElement.classList.remove("text-red-500", "text-green-600");
-    //     } else if (form.status_id === 10) {
-    //         statusElement.textContent = 'CLOSE';
-    //         statusElement.classList.add("text-green-600");
-    //         statusElement.classList.remove("text-red-500", "text-yellow-500");
-    //     } else {
-    //         statusElement.textContent = 'OPEN';
-    //         statusElement.classList.add("text-red-500");
-    //         statusElement.classList.remove("text-green-600", "text-yellow-500");
-    //     }
-    // }
+        if (!auditeeActionId) {
+            alert('No auditee action ID found');
+            return;
+        }
 
-    // Verifikasi oleh Auditor
-    function verifyAuditor() {
-        // Hanya dapat mengubah status jika status saat ini adalah "CHECKED BY AUDITOR"
-        if (form.status_id === 8) {
-            // Status berubah menjadi "APPROVED BY AUDITOR"
-            form.status_id = 9;  // Ubah status menjadi approved by auditor (id=9)
-            // updateStatus();
-            alert("Status updated to Approved by Auditor");
+        try {
+            const res = await fetch(`/ftpp/auditor-verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    auditee_action_id: auditeeActionId,
+                    effectiveness_verification: verification // ✅ kirim ke backend
+                })
+            });
 
-            // Simulasi tanda tangan auditor
-            form.auditor_signature = 'auditor_signature.png';  // Ganti dengan nama file yang sesuai
-            const imgElement = document.getElementById("auditor-signature");
-            imgElement.src = '/images/' + form.auditor_signature;
-            imgElement.style.display = 'block';  // Menampilkan gambar
-        } else {
-            alert("Status cannot be updated by Auditor at this stage.");
+            if (!res.ok) {
+                const text = await res.text();
+                console.error('Server response:', text);
+                throw new Error('Failed to verify Auditor');
+            }
+
+            const data = await res.json();
+
+            if (data.success) {
+                alpineComponent.form.status_id = 10; // Approved by Auditor
+                alpineComponent.form.auditor_signature = true;
+                alpineComponent.form.auditor_signature_url = `/images/stamp-internal-auditor.png`;
+
+                alert('Status updated to Approved by Auditor');
+            } else {
+                alert('Failed to verify Auditor');
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('Error verifying Auditor. Check console for details.');
         }
     }
 
-    // Verifikasi oleh Lead Auditor (hanya role admin)
-    function verifyLeadAuditor() {
-        // Cek apakah user yang login adalah lead auditor (role admin)
-        const isAdmin = '{{ auth()->user()->role }}' === 'admin';  // Ganti dengan properti role yang sesuai
+    async function verifyLeadAuditor() {
+        const auditeeActionId = document.getElementById('auditee_action_id')?.value;
+        if (!auditeeActionId) return alert('No auditee action ID found');
 
-        if (form.status_id === 9 && isAdmin) {
-            // Status berubah menjadi "CLOSE" (id=10)
-            form.status_id = 10;
-            // updateStatus();
-            alert("Status updated to Closed");
+        try {
+            const res = await fetch(`/ftpp/lead-auditor-acknowledge`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    auditee_action_id: auditeeActionId
+                })
+            });
 
-            // Simulasi tanda tangan lead auditor (admin)
-            form.lead_auditor_signature = 'lead_auditor_signature.png';  // Ganti dengan nama file yang sesuai
-            const imgElement = document.getElementById("lead-auditor-signature");
-            imgElement.src = '/images/' + form.lead_auditor_signature;
-            imgElement.style.display = 'block';  // Menampilkan gambar
-        } else if (!isAdmin) {
-            alert("Only Lead Auditor (Admin) can perform this action.");
-        } else {
-            alert("Status cannot be updated by Lead Auditor at this stage.");
+            if (!res.ok) {
+                const text = await res.text();
+                console.error('Server response:', text);
+                throw new Error('Failed to verify Auditor');
+            }
+
+            const data = await res.json();
+
+            if (data.success) {
+                // ✅ Get the Alpine component
+                const alpineEl = document.querySelector('[x-data="ftppApp()"]');
+                const alpineComponent = Alpine.$data(alpineEl);
+                alpineComponent.form.status_id = 10; // Approved by Auditor
+                alpineComponent.form.auditor_signature = true;
+                alpineComponent.form.auditor_signature_url = `/images/stamp-lead-auditor.png`;
+
+                alert('Status updated to closed');
+            } else {
+                alert('Failed to verify Auditor');
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('Error verifying Auditor. Check console for details.');
         }
     }
-
-    // Inisialisasi status awal
-    // updateStatus();
 </script>
