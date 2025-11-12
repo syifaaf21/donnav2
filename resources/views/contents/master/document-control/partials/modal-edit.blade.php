@@ -24,7 +24,8 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Document Name <span class="text-danger">*</span></label>
                             <input type="text" name="document_name" class="form-control border-1 shadow-sm"
-                                value="{{ session('editOldInputs.'.$mapping->id.'.document_name', $mapping->document->name ?? '') }}" required>
+                                value="{{ session('editOldInputs.' . $mapping->id . '.document_name', $mapping->document->name ?? '') }}"
+                                required>
                             @error('document_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -37,7 +38,7 @@
                                 <option value="">-- Select Department --</option>
                                 @foreach ($departments as $dept)
                                     <option value="{{ $dept->id }}"
-                                        {{ (session('editOldInputs.'.$mapping->id.'.department_id', $mapping->department_id) == $dept->id) ? 'selected' : '' }}>
+                                        {{ session('editOldInputs.' . $mapping->id . '.department_id', $mapping->department_id) == $dept->id ? 'selected' : '' }}>
                                         {{ $dept->name }}
                                     </option>
                                 @endforeach
@@ -47,11 +48,15 @@
                             @enderror
                         </div>
 
+                        @php
+                            $today = now()->format('Y-m-d');
+                        @endphp
+
                         {{-- Reminder Date --}}
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Reminder Date <span class="text-danger">*</span></label>
                             <input type="date" name="reminder_date" class="form-control border-1 shadow-sm"
-                                value="{{ session('editOldInputs.'.$mapping->id.'.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}">
+                                value="{{ session('editOldInputs.' . $mapping->id . '.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}" min="{{ $today }}"required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -61,7 +66,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Obsolete Date <span class="text-danger">*</span></label>
                             <input type="date" name="obsolete_date" class="form-control border-1 shadow-sm"
-                                value="{{ session('editOldInputs.'.$mapping->id.'.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}">
+                                value="{{ session('editOldInputs.' . $mapping->id . '.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}" min="{{ $today }}"required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -69,15 +74,16 @@
 
                         {{-- Notes (Quill editable) --}}
                         <div class="col-12 mb-3">
-                            <label class="form-label fw-medium">Notes</label>
+                            <label class="form-label fw-medium">Notes <span class="text-danger">*</span></label>
                             <input type="hidden" name="notes" id="notes_input_edit{{ $mapping->id }}"
-                                value="{{ session('editOldInputs.'.$mapping->id.'.notes', $mapping->notes) }}">
+                                value="{{ session('editOldInputs.' . $mapping->id . '.notes', $mapping->notes) }}">
                             <div id="quill_editor_edit{{ $mapping->id }}" class="bg-white border-1 shadow-sm rounded"
                                 style="min-height: 100px; max-height: 130px; overflow-y: auto;"></div>
                             @error('notes')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">You can format your notes with bold, italic, colors, and more.</small>
+                            <small class="text-muted">You can format your notes with bold, italic, colors, and
+                                more.</small>
                         </div>
 
                     </div>

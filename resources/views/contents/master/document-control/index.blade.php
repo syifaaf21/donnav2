@@ -3,6 +3,7 @@
 
 @section('content')
     <div class="container mx-auto px-4 py-2">
+
         {{-- Header --}}
         <div class="flex justify-between items-center mb-3">
             {{-- Breadcrumbs --}}
@@ -23,14 +24,13 @@
             {{-- Add Button --}}
             <button type="button" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal"
                 class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add Document</span>
+                <i class="bi bi-plus-circle"></i> Add Document
             </button>
             @include('contents.master.document-control.partials.modal-add')
         </div>
 
-        {{-- Card --}}
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+        {{-- Table Card --}}
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
             {{-- Search Bar --}}
             <div class="p-4 border-b border-gray-100 flex justify-end">
                 <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
@@ -38,31 +38,30 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
                     <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
                         <i class="bi bi-search"></i>
                     </button>
                     <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
                         <i class="bi bi-x-circle"></i>
                     </button>
                 </form>
             </div>
 
             {{-- Table --}}
-            <div class="overflow-auto rounded-bottom-lg h-[60vh]">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
-                    {{-- Header tetap sama --}}
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
+            <div class="overflow-x-auto overflow-y-auto max-h-96">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
                         <tr>
-                            <th class="px-6 py-3">
+                            <th class="px-4 py-2">
                                 <input type="checkbox" id="selectAll" class="form-checkbox">
                             </th>
-                            <th class="px-6 py-3">No.</th>
-                            <th class="px-6 py-3">Document Name</th>
-                            <th class="px-6 py-3">Department</th>
-                            <th class="px-6 py-3">Obsolete</th>
-                            <th class="px-6 py-3">Reminder Date</th>
-                            <th class="px-6 py-3">Action</th>
+                            <th class="px-4 py-2">No</th>
+                            <th class="px-4 py-2">Document Name</th>
+                            <th class="px-4 py-2">Department</th>
+                            <th class="px-4 py-2">Obsolete</th>
+                            <th class="px-4 py-2">Reminder Date</th>
+                            <th class="px-4 py-2 text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -108,7 +107,8 @@
                                                                 '&embedded=true';
                                                     @endphp
                                                     <li class="px-3 small text-muted text-truncate">
-                                                        {{ $file->file_name ?? basename($file->file_path) }}</li>
+                                                        {{ $file->file_name ?? basename($file->file_path) }}
+                                                    </li>
                                                     <li>
                                                         @if ($isPdf || $isOffice)
                                                             <button type="button" class="dropdown-item view-file-btn"
@@ -165,9 +165,13 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $documentMappings->withQueryString()->links('vendor.pagination.tailwind') }}
+            </div>
         </div>
     </div>
-
     {{-- Snackbar Bulk Action --}}
     <div id="snackbar"
         class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-lg p-3 flex items-center justify-between space-x-4 w-full max-w-lg z-50 transition-all duration-300 opacity-0 pointer-events-none">
@@ -208,7 +212,6 @@
             </div>
         </div>
     </div>
-
 @endsection
 
 @push('scripts')
@@ -643,6 +646,11 @@
         #quill_editor .ql-editor span {
             white-space: normal !important;
             word-break: break-word !important;
+        }
+
+        /* Hilangkan pagination global kalau Tailwind render dua kali di bawah card */
+        nav[role="navigation"]:not(:last-of-type) {
+            display: none !important;
         }
     </style>
 @endpush

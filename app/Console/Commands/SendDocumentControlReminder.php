@@ -10,96 +10,119 @@ use Illuminate\Console\Command;
 class SendDocumentControlReminder extends Command
 {
     protected $signature = 'document:send-reminder';
-    protected $description = 'Send WhatsApp reminders for documents based on reminder and obsolete dates.';
+    protected $description = 'Send WhatsApp reminders efficiently for all documents.';
 
     public function handle(WhatsAppService $wa)
     {
-        $now = Carbon::now()->format('Y-m-d');
-        $groupId = config('services.whatsapp.group_id');
-
-        $this->info("Running WhatsApp reminder for documents. Date: $now");
-
-        // Dokumen yang belum obsolete dan reminder_date <= sekarang → trigger notifikasi
-        $reminderDocs = DocumentMapping::with(['document', 'department', 'status'])
-            ->whereDate('obsolete_date', '>', $now)       // Belum obsolete
-            ->whereNotNull('reminder_date')              // Ada tanggal reminder
-            ->whereDate('reminder_date', '<=', $now)    // Reminder sudah jatuh tempo
-            ->whereHas('status', function ($q) {
-                $q->where('name', 'Active');            // Hanya status Active
-            })
-            ->get()
-            ->groupBy('department.name');
-
-
-        if ($reminderDocs->isEmpty()) {
-            $this->info("No documents with active reminders today. Skipping notification.");
+        $today = Carbon::now();
+        if (!$today->isWednesday()) {
+            $this->info("Not Monday, skipping WhatsApp reminder.");
             return;
         }
 
-        // Dokumen yang obsolete hari ini
-        $todayObsoleteDocs = DocumentMapping::with(['document', 'department'])
-            ->whereDate('obsolete_date', $now)
-            ->whereNotNull('reminder_date')
-            ->whereDate('reminder_date', '<=', $now)
-            ->get()
-            ->groupBy('department.name');
+        $now = Carbon::now()->startOfDay(); // gunakan Carbon object
+        $groupId = config('services.whatsapp.group_id');
 
-        // Dokumen yang sudah overdue / obsolete (tanggal obsolete < sekarang)
-        $overdueDocs = DocumentMapping::with(['document', 'department'])
-            ->whereDate('obsolete_date', '<', $now)
-            ->get()
-            ->groupBy('department.name');
+        $this->info("Running WhatsApp reminder for documents. Date: {$now->toDateString()}");
+
+        // Ambil semua dokumen yang perlu diperiksa sekaligus
+        $docs = DocumentMapping::with(['document', 'department', 'status'])->get();
+
+        if ($docs->isEmpty()) {
+            $this->info("No documents to send reminders today.");
+            return;
+        }
+
+        // Inisialisasi array kategori
+        $categories = [
+            'uncomplete' => [],
+            'active' => [],
+            'obsolete_today' => [],
+            'overdue' => [],
+        ];
+
+        // Kategorikan dokumen
+        foreach ($docs as $doc) {
+            $status = $doc->status->name ?? '';
+            $obsoleteDate = Carbon::parse($doc->obsolete_date);
+            $reminderDate = $doc->reminder_date ? Carbon::parse($doc->reminder_date) : null;
+
+            // Uncomplete
+            if ($status === 'Uncomplete' && (!$doc->last_reminder_date || Carbon::parse($doc->last_reminder_date)->lt($now))) {
+                $categories['uncomplete'][$doc->department->name][] = $doc;
+                $doc->last_reminder_date = $now;
+                $doc->save();
+            }
+            // Active dengan reminder jatuh tempo
+            elseif ($status === 'Active' && $obsoleteDate->gt($now) && $reminderDate && $reminderDate->lte($now)) {
+                $categories['active'][$doc->department->name][] = $doc;
+            }
+            // Obsolete hari ini
+            elseif ($obsoleteDate->eq($now)) {
+                $categories['obsolete_today'][$doc->department->name][] = $doc;
+            }
+            // Overdue
+            elseif ($obsoleteDate->lt($now)) {
+                $categories['overdue'][$doc->department->name][] = $doc;
+            }
+        }
 
         // Format pesan
-        $message = "📌 *DOCUMENT OBSOLESCENCE REMINDER*\n\n";
+        $message = "📌 *DOCUMENT CONTROL REMINDER*\n";
+        $message .= "*(Automated WhatsApp Notification)*\n\n";
 
-        // 1️⃣ Reminder dokumen yang akan obsolete
-        if ($reminderDocs->isNotEmpty()) {
-            $index = 1;
-            foreach ($reminderDocs as $department => $docs) {
-                $message .= "🗂 *Department: {$department}*\n";
+        $formatCategory = function ($label, $docsByDept) use (&$message) {
+            if (empty($docsByDept)) return;
+            $deptCounter = 1;
+            $message .= "$label\n";
+            foreach ($docsByDept as $dept => $docs) {
+                $message .= "{$deptCounter}. *{$dept}*\n";
                 foreach ($docs as $doc) {
-                    $daysLeft = Carbon::parse($doc->obsolete_date)->diffInDays($now);
-                    $message .= "   - *{$doc->document->name}* → {$daysLeft} day(s) left ❗\n";
+                    $message .= $doc->_message;
                 }
                 $message .= "\n";
-                $index++;
+                $deptCounter++;
+            }
+        };
+
+        // Siapkan _message per kategori
+        foreach ($categories['uncomplete'] as $dept => $docs) {
+    foreach ($docs as $doc) {
+        $daysLeft = Carbon::parse($doc->obsolete_date)->diffInDays($now, false);
+
+        if ($daysLeft > 0) {
+            $doc->_message = "    - *{$doc->document->name}* → ⚠️ Please upload the file ({$daysLeft} day(s) left\n";
+        }
+    }
+}
+
+        foreach ($categories['active'] as $dept => $docs) {
+            foreach ($docs as $doc) {
+                $daysLeft = Carbon::parse($doc->obsolete_date)->diffInDays($now);
+                $doc->_message = "    - *{$doc->document->name}* → ⚠️{$daysLeft} day(s) left until obsolete)\n";
+            }
+        }
+        foreach ($categories['obsolete_today'] as $dept => $docs) {
+            foreach ($docs as $doc) {
+                $doc->_message = "    - *{$doc->document->name}* → Obsolete today\n ";
+            }
+        }
+        foreach ($categories['overdue'] as $dept => $docs) {
+            foreach ($docs as $doc) {
+                $daysOver = Carbon::parse($doc->obsolete_date)->diffInDays($now);
+                $doc->_message = "    - *{$doc->document->name}* → Overdue by {$daysOver} day(s)\n";
             }
         }
 
-        // 2️⃣ Dokumen obsolete hari ini
-        if ($todayObsoleteDocs->isNotEmpty()) {
-            $message .= "⚠️ *DOCUMENTS OBSOLETE TODAY*\n\n";
-            $index = 1;
-            foreach ($todayObsoleteDocs as $department => $docs) {
-                $message .= "🗂 *Department: {$department}*\n";
-                foreach ($docs as $doc) {
-                    $message .= "   - *{$doc->document->name}* → Obsolete today ⚠️\n";
-                }
-                $message .= "\n";
-                $index++;
-            }
-        }
-
-        // 3️⃣ Overdue documents
-        if ($overdueDocs->isNotEmpty()) {
-            $message .= "⏰ *OVERDUE DOCUMENTS*\n\n";
-            $index = 1;
-            foreach ($overdueDocs as $department => $docs) {
-                $message .= "🗂 *Department: {$department}*\n";
-                foreach ($docs as $doc) {
-                    $daysOver = Carbon::parse($doc->obsolete_date)->diffInDays($now);
-                    $message .= "   - *{$doc->document->name}* → Overdue by {$daysOver} day(s) ⚠️\n";
-                }
-                $message .= "\n";
-                $index++;
-            }
-        }
+        // Tambahkan kategori ke pesan
+        $formatCategory("⏳ *UNCOMPLETE DOCUMENTS (File not Uploaded)*", $categories['uncomplete']);
+        $formatCategory("✅ *DOCUMENTS OBSOLENCE REMINDER*", $categories['active']);
+        $formatCategory("⚠️ *DOCUMENTS OBSOLETE TODAY*", $categories['obsolete_today']);
+        $formatCategory("⏰ *OVERDUE DOCUMENTS*", $categories['overdue']);
 
         // Footer
         $message .= "📌 *Action Required:* Please submit and verify to MS Department.\n";
         $message .= "------ BY AISIN BISA ------";
-
 
         // Kirim ke WhatsApp
         $sent = $wa->sendMessage($groupId, $message);

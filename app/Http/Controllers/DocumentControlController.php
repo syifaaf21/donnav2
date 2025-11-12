@@ -92,7 +92,13 @@ class DocumentControlController extends Controller
         }
 
         // ✅ Ambil data untuk tampilan
-        $documentsMapping = $query->get();
+        $documentsMapping = $query->with(['files'])->get();
+
+// kalau butuh count aktif, dipakai di Blade:
+$activeCount = $documentsMapping->map(function($m){
+    return $m->files->where('is_active', true)->count();
+});
+
 
         // Hitung statistik
         $totalDocuments = $documentsMapping->count();
@@ -115,17 +121,15 @@ class DocumentControlController extends Controller
         ));
     }
 
-
-    public function revise(Request $request, DocumentMapping $mapping)
+   public function revise(Request $request, DocumentMapping $mapping)
 {
     $uploadedFiles = $request->file('revision_files', []);
+    $oldFileIds = $request->input('revision_file_ids', []); // index-parsed
 
-    // Jika tidak ada file yang diupload, jangan ubah status atau file
     if (empty($uploadedFiles)) {
         return redirect()->back()->with('info', 'No files uploaded, document unchanged.');
     }
 
-    // Validasi file hanya jika ada yang diupload
     $request->validate([
         'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
     ]);
@@ -133,16 +137,14 @@ class DocumentControlController extends Controller
     $mapping->load('document');
     $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
 
-    $revisionFileIds = $request->input('revision_file_ids', []);
-
     foreach ($uploadedFiles as $index => $uploadedFile) {
-        $replaceId = $revisionFileIds[$index] ?? null;
+        $oldFileId = $oldFileIds[$index] ?? null;
 
         $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
         $extension = $uploadedFile->getClientOriginalExtension();
         $timestamp = now()->format('Ymd_His');
 
-        // Hitung revisi yang sudah ada untuk file ini
+        // Calculate revision number (optional)
         $existingRevisions = $mapping->files()
             ->where('original_name', 'like', $baseName . '_rev%')
             ->count();
@@ -151,36 +153,48 @@ class DocumentControlController extends Controller
         $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
         $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
-        // Tambah file baru (tidak menghapus file lama)
-        $mapping->files()->create([
+        // Create new file record (active)
+        $newFile = $mapping->files()->create([
             'file_path' => $newPath,
-            'original_name' => $filename,
+            'original_name' => $uploadedFile->getClientOriginalName(),
             'file_type' => $uploadedFile->getClientMimeType(),
             'uploaded_by' => Auth::id(),
+            'is_active' => true,
         ]);
+
+        // Mark old file as inactive and link to replacer
+        if ($oldFileId) {
+            $oldFile = $mapping->files()->find($oldFileId);
+            if ($oldFile) {
+                $oldFile->update([
+                    'replaced_by_id' => $newFile->id,
+                    'is_active' => false,
+                ]);
+            }
+        }
     }
 
-    // Update status hanya jika ada file baru
+    // Update mapping status, notify, etc (sama seperti code kamu sekarang)
     $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
     $mapping->update([
         'status_id' => $needReviewStatus->id,
         'user_id' => Auth::id(),
     ]);
 
-    // Kirim notifikasi ke Admin
+    //Notif ke admin
     $uploader = Auth::user();
-    if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
-        $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new DocumentActionNotification(
-                'revised',
-                $uploader->name,
-                null,
-                $mapping->document->name,
-                route('document-control.index')
-            ));
+        if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
+            $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new DocumentActionNotification(
+                    'revised',
+                    $uploader->name,
+                    null,
+                    $mapping->document->name,
+                    route('document-control.index')
+                ));
+            }
         }
-    }
 
     return redirect()->back()->with('success', 'Document uploaded successfully!');
 }
@@ -194,11 +208,14 @@ class DocumentControlController extends Controller
 
 
         $request->validate([
-            'obsolete_date' => 'required|date',
-            'reminder_date' => 'required|date|before_or_equal:obsolete_date',
+            'obsolete_date' => 'required|date|after_or_equal:today',
+            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
         ], [
+            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
 
         $statusActive = Status::firstOrCreate(
             ['name' => 'Active'],
@@ -207,7 +224,6 @@ class DocumentControlController extends Controller
 
         $mapping->update([
             'status_id' => $statusActive->id,
-            'user_id' => Auth::id(),
             'obsolete_date' => $request->obsolete_date,
             'reminder_date' => $request->reminder_date,
         ]);
@@ -247,7 +263,6 @@ class DocumentControlController extends Controller
 
         $mapping->update([
             'status_id' => $statusRejected->id,
-            'user_id' => Auth::id(),
             'notes' => $request->input('notes'), // <-- simpan notes
         ]);
 

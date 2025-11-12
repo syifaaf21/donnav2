@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use App\Models\DocumentMapping;
 use App\Models\Document;
 use App\Models\PartNumber;
+use App\Models\ProductModel;
+use App\Models\Process;
+use App\Models\Product;
 use App\Models\Status;
 use App\Models\User;
 use App\Notifications\DocumentUpdatedNotification;
@@ -29,6 +32,7 @@ class DocumentMappingController extends Controller
         $partNumbers = PartNumber::all();
         $statuses = Status::all();
         $departments = Department::all();
+        $models = \App\Models\ProductModel::all();
 
         $plants = PartNumber::pluck('plant')->map(fn($p) => ucfirst(strtolower($p)))->unique();
 
@@ -124,8 +128,211 @@ class DocumentMappingController extends Controller
             'departments',
             'documentMappings',
             'existingDocuments',
+            'models',
         ));
     }
+
+    public function reviewIndex2(Request $request)
+{
+    $documentsMaster = Document::with('childrenRecursive')
+        ->where('type', 'review')
+        ->get();
+
+    $partNumbers = PartNumber::all();
+    $statuses = Status::all();
+    $departments = Department::all();
+    $models = ProductModel::all();
+    $processes = Process::all();
+    $products = Product::all();
+
+    // Ambil list plant unik
+    $plants = PartNumber::pluck('plant')
+        ->map(fn($p) => ucfirst(strtolower($p)))
+        ->unique()
+        ->values();
+
+    $groupedByPlant = [];
+
+    // Tab per plant
+    foreach ($plants as $plant) {
+        $query = DocumentMapping::with([
+            'document.parent',
+            'document.children',
+            'department',
+            'partNumber',
+            'status',
+            'user',
+            'files',
+            'parent',
+        ])
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->where(function($q) use ($plant) {
+                $q->whereHas('partNumber', fn($q2) =>
+                    $q2->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                );
+            });
+
+        // Filter search
+        $search = trim($request->search);
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('document_number', 'like', "%{$search}%")
+                    ->orWhereHas('partNumber', fn($q2) => $q2->where('part_number', 'like', "%{$search}%"))
+                    ->orWhereHas('document', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]))
+                    ->orWhereHas('department', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]));
+            });
+        }
+
+        $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
+    }
+
+    // Tab khusus untuk mapping tanpa part number (manual entry)
+    $queryManual = DocumentMapping::with([
+        'document.parent',
+        'document.children',
+        'department',
+        'partNumber',
+        'status',
+        'user',
+        'files',
+        'parent',
+    ])
+        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+        ->whereNull('part_number_id');
+
+    // Filter search
+    $search = trim($request->search);
+    if (!empty($search)) {
+        $queryManual->where(function ($q) use ($search) {
+            $q->where('document_number', 'like', "%{$search}%")
+                ->orWhereHas('document', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]))
+                ->orWhereHas('department', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]));
+        });
+    }
+
+    $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
+    if ($manualMappings->isNotEmpty()) {
+        $groupedByPlant['Other / Manual Entry'] = $manualMappings;
+    }
+
+    return view('contents.master.document-review.index2', compact(
+        'groupedByPlant',
+        'documentsMaster',
+        'partNumbers',
+        'statuses',
+        'departments',
+        'models',
+        'processes',
+        'products',
+    ));
+}
+
+
+    public function storeReview2(Request $request)
+    {
+        session()->forget('openModal');
+
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'document_id' => 'required|exists:tm_documents,id',
+            'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
+            'model_id' => 'nullable|exists:tm_models,id',
+            'product_id' => 'nullable|exists:tm_products,id',
+            'process_id' => 'nullable|exists:tm_processes,id',
+            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
+            'department_id' => 'required|exists:tm_departments,id',
+            'notes' => 'nullable|string|max:500',
+            'files' => 'required',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'parent_id' => 'nullable|exists:tt_document_mappings,id'
+        ], [
+            'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
+        ]);
+
+        $cleanNotes = trim($validated['notes'] ?? '');
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') $cleanNotes = null;
+
+        // **Validasi: minimal part number atau model/product/process harus diisi**
+        if (empty($validated['part_number_id']) && (empty($validated['model_id']) || empty($validated['product_id']) || empty($validated['process_id']))) {
+            return back()->withErrors(['part_number_id' => 'Please select a Part Number or fill Model, Product, and Process manually.'])->withInput();
+        }
+
+        // **Validasi parent jika diisi**
+        if (!empty($validated['parent_id'])) {
+            $parent = DocumentMapping::find($validated['parent_id']);
+            if (!$parent) {
+                return back()->withErrors(['parent_id' => 'Parent document not found'])->withInput();
+            }
+
+            if ($validated['part_number_id']) {
+                // Jika pakai part number, parent harus sama part number
+                if ($parent->part_number_id != $validated['part_number_id']) {
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected part number'])->withInput();
+                }
+            } else {
+                // Jika pakai manual model/product/process, parent harus sama kombinasi
+                if (
+                    $parent->model_id != $validated['model_id'] ||
+                    $parent->product_id != $validated['product_id'] ||
+                    $parent->process_id != $validated['process_id']
+                ) {
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Model/Product/Process combination'])->withInput();
+                }
+            }
+        }
+
+        $mapping = DocumentMapping::create([
+            'document_id' => $validated['document_id'],
+            'document_number' => $validated['document_number'],
+            'parent_id' => $validated['parent_id'] ?? null,
+            'model_id' => $validated['model_id'] ?? null,
+            'product_id' => $validated['product_id'] ?? null,
+            'process_id' => $validated['process_id'] ?? null,
+            'part_number_id' => $validated['part_number_id'] ?? null,
+            'department_id' => $validated['department_id'],
+            'reminder_date' => null,
+            'deadline' => null,
+            'obsolete_date' => null,
+            'status_id' => Status::where('name', 'Need Review')->first()->id,
+            'notes' => $cleanNotes,
+        ]);
+
+        // Upload file
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $index => $file) {
+                $extension = $file->getClientOriginalExtension();
+                $filename = "{$mapping->document_number}_v{$mapping->version}_" . time() . "_{$index}." . $extension;
+                $path = $file->storeAs('document-reviews', $filename, 'public');
+                $mapping->files()->create([
+                    'document_id' => $mapping->document_id,
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_type' => $file->getClientMimeType(),
+                    'uploaded_by' => Auth::id(),
+                ]);
+            }
+        }
+
+        // Kirim notifikasi
+        $users = User::where('department_id', $validated['department_id'])
+            ->whereHas('role', fn($q) => $q->whereNotIn('name', ['Admin', 'Super Admin']))
+            ->get();
+
+        // foreach ($users as $user) {
+        //     $user->notify(new DocumentCreatedNotification(
+        //         Auth::user()->name,
+        //         $mapping->document_number,
+        //         null,
+        //         route('document-review.index')
+        //     ));
+        // }
+
+        return back()->with('success', 'Document review created successfully!');
+    }
+
 
     // ================= Store Review (Admin) =================
     public function storeReview(Request $request)
@@ -141,14 +348,16 @@ class DocumentMappingController extends Controller
         $validated = $request->validate([
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
-            'part_number_id' => 'required|exists:tm_part_numbers,id',
+            'model_id' => 'nullable|exists:tm_models,id',
+            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
             'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
             'files' => 'required',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ], [
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
+
 
         // 3️⃣ Bersihkan notes kosong seperti <p><br></p>
         $cleanNotes = trim($validated['notes'] ?? '');
@@ -174,14 +383,14 @@ class DocumentMappingController extends Controller
             'document_id' => $validated['document_id'],
             'document_number' => $validated['document_number'],
             'parent_id' => $request->parent_id,
-            'part_number_id' => $validated['part_number_id'],
+            'model_id' => $validated['model_id'] ?? null,
+            'part_number_id' => $validated['part_number_id'] ?? null,
             'department_id' => $validated['department_id'],
             'reminder_date' => null,
             'deadline' => null,
             'obsolete_date' => null,
             'status_id' => Status::where('name', 'Need Review')->first()->id,
             'notes' => $cleanNotes,
-            'user_id' => Auth::id(),
         ]);
 
         // 6️⃣ Upload file & simpan ke tabel relasi files
@@ -403,7 +612,7 @@ class DocumentMappingController extends Controller
             'notes' => 'nullable|string|max:500',
             'reminder_date' => 'nullable|date',
             'deadline' => 'nullable|date',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ], [
             'files.*.mimes' => 'Only PDF, Word, or Excel files are allowed.',
         ]);
@@ -521,7 +730,10 @@ class DocumentMappingController extends Controller
             });
         }
 
-        $documentMappings = $query->get();
+        $documentMappings = $query
+            ->orderBy('id', 'desc')
+            ->paginate(10); // tampilkan 10 item per halaman
+
 
         // 🔁 Update status Obsolete otomatis
         // $statusObsolete = Status::where('name', 'Obsolete')->first();
@@ -558,14 +770,17 @@ class DocumentMappingController extends Controller
             'document_name' => 'required|string|max:255',
             'department' => 'required|array',
             'department.*' => 'exists:tm_departments,id',
-            'obsolete_date' => 'nullable|date',
-            'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
-            'notes' => 'nullable|string|max:500',
+            'obsolete_date' => 'required|date|after_or_equal:today',
+            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'notes' => 'required|string|max:500',
             'files' => 'nullable|array',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ], [
+            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
 
         // Simpan Document
         $newDocument = Document::create([
@@ -592,7 +807,6 @@ class DocumentMappingController extends Controller
                 'obsolete_date' => $validated['obsolete_date'],
                 'reminder_date' => $validated['reminder_date'],
                 'deadline' => null,
-                'user_id' => Auth::id(),
                 'department_id' => $deptId,
                 'version' => 0,
                 'notes' => $cleanNotes,
@@ -610,6 +824,7 @@ class DocumentMappingController extends Controller
                         'file_path' => $path,
                         'original_name' => $file->getClientOriginalName(),
                         'file_type' => $file->getClientMimeType(),
+                        'user_id' => Auth::id(),
                     ]);
                 }
             }
@@ -646,12 +861,15 @@ class DocumentMappingController extends Controller
         $validator = Validator::make($request->all(), [
             'document_name' => 'required|string|max:255',
             'department_id' => 'required|exists:tm_departments,id',
-            'obsolete_date' => 'nullable|date',
-            'reminder_date' => 'nullable|date|before_or_equal:obsolete_date',
-            'notes' => 'nullable|string|max:500',
+            'obsolete_date' => 'required|date|after_or_equal:today',
+            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'notes' => 'required|string|max:500',
         ], [
+            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
 
         // ❗ Kalau gagal validasi, langsung return back — jangan lanjut ke bawah
         if ($validator->fails()) {
@@ -684,7 +902,6 @@ class DocumentMappingController extends Controller
             'obsolete_date' => $validated['obsolete_date'],
             'reminder_date' => $validated['reminder_date'],
             'notes' => $validated['notes'] ?? null,
-            'user_id' => Auth::id(),
         ]);
 
         return redirect()->route('master.document-control.index')
@@ -694,7 +911,7 @@ class DocumentMappingController extends Controller
 
     public function bulkDestroy(Request $request)
     {
-        // validasi
+        // Validasi
         $data = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'integer|exists:tt_document_mappings,id',
@@ -702,17 +919,31 @@ class DocumentMappingController extends Controller
 
         $ids = $data['ids'];
 
-        $docs = DocumentMapping::whereIn('id', $ids)->get();
+        // Ambil semua dokumen sekaligus dengan relasi files
+        $docs = DocumentMapping::with('files')->whereIn('id', $ids)->get();
+
         foreach ($docs as $doc) {
-            if ($doc->file_path) {
+            // 1️⃣ Hapus semua file di relasi 'files'
+            foreach ($doc->files as $file) {
+                if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+                    Storage::disk('public')->delete($file->file_path);
+                }
+                $file->delete();
+            }
+
+            // 2️⃣ Hapus file utama DocumentMapping
+            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
                 Storage::disk('public')->delete($doc->file_path);
             }
+
+            // 3️⃣ Hapus data DocumentMapping
+            $doc->delete();
+
+            // 4️⃣ Opsional: hapus relasi anak-anak jika ini parent
+            DocumentMapping::where('parent_id', $doc->id)->update(['parent_id' => null]);
         }
 
-        // hapus records
-        DocumentMapping::whereIn('id', $ids)->delete();
-
         return redirect()->route('master.document-control.index')
-            ->with('success', count($ids) . ' document(s) deleted successfully.');
+            ->with('success', count($ids) . ' document(s) and related files deleted successfully.');
     }
 }
