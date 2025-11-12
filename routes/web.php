@@ -179,7 +179,9 @@ Route::middleware('auth')->group(function () {
         // Document Review
         Route::prefix('document-review')->name('document-review.')->group(function () {
             Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
+            Route::get('/', [DocumentMappingController::class, 'reviewIndex2'])->name('index2');
             Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
+            Route::post('/store', [DocumentMappingController::class, 'storeReview2'])->name('store2');
             Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
             Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
             Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');

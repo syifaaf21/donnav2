@@ -66,7 +66,7 @@ class DocumentReviewController extends Controller
             );
         }
 
-        return view('contents.document-review.partials.folder2', compact('plant', 'docCode', 'documents'));
+        return view('contents.document-review.partials.folder', compact('plant', 'docCode', 'documents'));
     }
 
     public function liveSearch(Request $request)

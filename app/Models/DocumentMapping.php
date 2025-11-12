@@ -14,6 +14,9 @@ class DocumentMapping extends Model
     protected $fillable = [
         'document_id',
         'document_number',
+        'model_id',
+        'product_id',
+        'process_id',
         'part_number_id',
         'parent_id',
         'department_id',
@@ -40,18 +43,22 @@ class DocumentMapping extends Model
     }
 
     public function getFilesForModalAttribute()
-    {
-        // Ambil file terbaru berdasarkan waktu upload
-        $latestFile = $this->files()->latest()->first();
+{
+    $allFiles = $this->files()
+        ->whereNull('replaced_by_id') // hanya file aktif
+        ->orderBy('created_at', 'asc')
+        ->get();
 
-        // Kalau ada file, kirim dalam bentuk array seperti sebelumnya
-        return $latestFile ? [[
-            'id' => $latestFile->id,
-            'name' => $latestFile->original_name,
+    return $allFiles->map(function ($file) {
+        return [
+            'id' => $file->id,
+            'name' => $file->original_name,
             'document_name' => $this->document->name,
-            'url' => Storage::url($latestFile->file_path),
-        ]] : [];
-    }
+            'url' => Storage::url($file->file_path),
+        ];
+    })->values()->toArray();
+}
+
 
     public function document()
     {
@@ -61,6 +68,21 @@ class DocumentMapping extends Model
     public function partNumber()
     {
         return $this->belongsTo(PartNumber::class, 'part_number_id');
+    }
+
+    public function productModel()
+    {
+        return $this->belongsTo(ProductModel::class, 'model_id');
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function process()
+    {
+        return $this->belongsTo(Process::class, 'process_id');
     }
 
     public function department()
