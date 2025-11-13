@@ -237,13 +237,8 @@
                                     previewImageContainer.innerHTML += `
                                         <img src="${a.url}" class="w-24 h-24 object-cover border rounded" />
                                     `;
-                                        <img src="${a.url}" class="w-24 h-24 object-cover border rounded" />
-                                    `;
                                 } else {
                                     previewFileContainer.innerHTML += `
-                                    <div class="flex gap-2 text-sm border p-2 rounded">
-                                        <i data-feather="file-text"></i> ${a.url.split('/').pop()}
-                                    </div>`;
                                     <div class="flex gap-2 text-sm border p-2 rounded">
                                         <i data-feather="file-text"></i> ${a.url.split('/').pop()}
                                     </div>`;

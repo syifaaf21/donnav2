@@ -150,7 +150,7 @@
                 // ✅ Get the Alpine component
                 const alpineEl = document.querySelector('[x-data="ftppApp()"]');
                 const alpineComponent = Alpine.$data(alpineEl);
-                alpineComponent.form.status_id = 10; // Approved by Auditor
+                alpineComponent.form.status_id = 11;
                 alpineComponent.form.auditor_signature = true;
                 alpineComponent.form.auditor_signature_url = `/images/stamp-lead-auditor.png`;
 
