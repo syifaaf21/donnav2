@@ -16,7 +16,39 @@
                     @endif
                 </div>
 
+                <!-- 🔍 Single Search Bar -->
+                <div class="m-3">
+                    <input type="text" x-model="search" placeholder="Search..."
+                        class="border border-gray-300 rounded-md px-2 py-1 w-full text-sm focus:ring focus:ring-blue-200">
+                </div>
+
                 <ul>
+                    <template x-for="item in filteredFindings" :key="item.id">
+                        <li @click="loadForm(item.id)" class="cursor-pointer px-2 py-2 border-b"
+                            :class="{
+                                'bg-red-500 text-white hover:bg-red-600': item.status_id === 7,
+                                'bg-yellow-500 text-gray-700 hover:bg-yellow-600': item.status_id !== 7 && item
+                                    .status_id !== 11,
+                                'bg-green-600 text-white hover:bg-green-700': item.status_id === 11
+                            }">
+                            <div class="font-semibold text-sm" x-text="item.registration_number"></div>
+                            <div class="text-xs" x-text="item.department?.name ?? '-'"></div>
+                            <div class="text-xs mt-1" x-text="item.status?.name ?? 'Unknown Status'"></div>
+                            <div class="flex gap-1">
+                                <a :href="`/ftpp/${item.id}/download`" class="text-blue-600 hover:text-blue-800"
+                                    title="Download PDF">
+                                    <i data-feather="download"></i>
+                                </a>
+                            </div>
+                        </li>
+                    </template>
+
+                    <template x-if="filteredFindings.length === 0">
+                        <li class="text-gray-400 text-sm text-center py-4">No results found.</li>
+                    </template>
+                </ul>
+
+                {{-- <ul>
                     @foreach ($findings as $item)
                         <li @click="loadForm({{ $item->id }})" class="cursor-pointer px-2 py-2 border-b"
                             :class="{
@@ -55,7 +87,7 @@
                             </div>
                         </li>
                     @endforeach
-                </ul>
+                </ul> --}}
             </div>
 
             {{-- RIGHT SIDE --}}
@@ -99,6 +131,8 @@
     <script>
         function ftppApp() {
             return {
+                search: '',
+                findings: @json($findings),
                 formLoaded: false,
                 mode: 'create',
                 selectedId: null,
@@ -314,6 +348,17 @@
                         console.error(error);
                         alert('Gagal mengambil data FTPP');
                     }
+                },
+                get filteredFindings() {
+                    if (!this.search) return this.findings;
+
+                    const keyword = this.search.toLowerCase();
+
+                    return this.findings.filter(f =>
+                        (f.registration_number || '').toLowerCase().includes(keyword) ||
+                        (f.department?.name || '').toLowerCase().includes(keyword) ||
+                        (f.status?.name || '').toLowerCase().includes(keyword)
+                    );
                 },
             }
         }

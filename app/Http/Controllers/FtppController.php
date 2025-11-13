@@ -42,7 +42,13 @@ class FtppController extends Controller
         $findingCategories = FindingCategory::all();
 
         $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
-        $findings = AuditFinding::with(['auditee', 'auditor', 'findingCategory'])
+        $findings = AuditFinding::with([
+            'auditee',
+            'auditor',
+            'findingCategory',
+            'department',   // 👈 tambahkan ini
+            'status'        // 👈 dan ini
+        ])
             ->orderByDesc('created_at')
             ->get();
 
@@ -613,9 +619,9 @@ class FtppController extends Controller
 
         // generate PDF menggunakan Blade
         $pdf = PDF::loadView('contents.ftpp.pdf', compact('finding'))
-                  ->setPaper('a4', 'portrait');
+            ->setPaper('a4', 'portrait');
 
-         $filename = 'FTPP_Finding_' . preg_replace('/[\/\\\\]/', '_', $finding->registration_number) . '.pdf';
+        $filename = 'FTPP_Finding_' . preg_replace('/[\/\\\\]/', '_', $finding->registration_number) . '.pdf';
 
         // download langsung
         return $pdf->download($filename);

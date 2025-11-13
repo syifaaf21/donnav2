@@ -56,11 +56,61 @@
         .w-50 {
             width: 50%;
         }
+
+        .header-table {
+            border: 1px solid #000;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+        }
+
+        .header-logo {
+            width: 20%;
+            /* lebih kecil dari sebelumnya */
+            text-align: center;
+            vertical-align: middle;
+            border-right: 1px solid #000;
+            padding: 4px;
+        }
+
+        .header-logo img {
+            width: 60px;
+            /* atur ukuran logo di sini */
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+            padding: 6px;
+        }
+
+        .header-title h3 {
+            margin: 0;
+            font-size: 13px;
+        }
     </style>
 </head>
 
 <body>
-
+    <!-- ======== HEADER ======== -->
+    <table class="header-table">
+        <tr>
+            <td class="header-logo">
+                <img src="{{ public_path('images/logo-aiia.png') }}" alt="AISIN Logo">
+            </td>
+            <td class="header-title">
+                <h3>
+                    FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
+                </h3>
+            </td>
+        </tr>
+    </table>
     {{-- ==================== AUDITOR INPUT ==================== --}}
     <table class="text-sm">
         <tr>
@@ -80,8 +130,8 @@
                     <tr>
                         <td class="font-semibold">Auditee:</td>
                         <td>
-                            @foreach ($finding->auditees ?? [] as $a)
-                                {{ $a->name }}{{ !$loop->last ? ', ' : '' }}
+                            @foreach ($finding->auditee ?? [] as $auditee)
+                                {{ $auditee->name }}{{ !$loop->last ? ', ' : '' }}
                             @endforeach
                         </td>
                     </tr>
@@ -132,7 +182,7 @@
                 <br><br>
                 <b>Clause:</b>
                 @foreach ($finding->subKlausuls ?? [] as $subKlausul)
-                   {{ $subKlausul->code }} {{ $subKlausul->name }}{{ !$loop->last ? ', ' : '' }}
+                    {{ $subKlausul->code }} {{ $subKlausul->name }}{{ !$loop->last ? ', ' : '' }}
                 @endforeach
             </td>
         </tr>
@@ -148,11 +198,12 @@
                 <div><b>5 Why Analysis:</b></div>
                 @for ($i = 1; $i <= 5; $i++)
                     <div class="ml-2 mb-1">
-                        Why {{ $i }} (Mengapa): {{ $finding['why_' . $i . '_mengapa'] ?? '-' }}<br>
-                        Cause (Karena): {{ $finding['cause_' . $i . '_karena'] ?? '-' }}
+                        Why {{ $i }} (Mengapa):
+                        {{ $finding->whyCauses['why_' . $i . '_mengapa'] ?? '-' }}<br>
+                        Cause (Karena): {{ $finding->whyCauses['cause_' . $i . '_karena'] ?? '-' }}
                     </div>
                 @endfor
-                <div class="mt-1"><b>Root Cause:</b> {{ $finding->root_cause ?? '-' }}</div>
+                <div class="mt-1"><b>Root Cause:</b> {{ $finding->auditeeAction->root_cause ?? '-' }}</div>
             </td>
         </tr>
     </table>
@@ -200,9 +251,9 @@
     <table class="w-full border text-sm mt-2">
         <tr>
             <td class="w-2/3">
-                <b>Yokoten?</b> {{ $finding->yokoten ? 'Yes' : 'No' }} <br>
-                @if ($finding->yokoten)
-                    <b>Area:</b> {{ $finding->yokoten_area ?? '-' }}
+                <b>Yokoten?</b> {{ $finding->auditeeAction->yokoten ? 'Yes' : 'No' }} <br>
+                @if ($finding->auditeeAction->yokoten)
+                    <b>Area:</b> {{ $finding->auditeeAction->yokoten_area ?? '-' }}
                 @endif
             </td>
             <td class="text-center font-semibold">Dept. Head</td>
@@ -211,12 +262,12 @@
         <tr>
             <td></td>
             <td class="text-center">
-                @if ($finding->dept_head_signature)
+                @if ($finding->auditeeAction->dept_head_signature)
                     <img src="{{ $finding->dept_head_signature_url }}" class="signature">
                 @endif
             </td>
             <td class="text-center">
-                @if ($finding->ldr_spv_signature)
+                @if ($finding->auditeeAction->ldr_spv_signature)
                     <img src="{{ $finding->ldr_spv_signature_url }}" class="signature">
                 @endif
             </td>
@@ -232,7 +283,7 @@
             <td>Approve</td>
         </tr>
         <tr>
-            <td>{{ $finding->effectiveness_verification ?? '-' }}</td>
+            <td>{{ $finding->auditeeAction->effectiveness_verification ?? '-' }}</td>
             <td class="font-bold">
                 @switch($finding->status_id)
                     @case(7)
@@ -244,7 +295,7 @@
                     @break
 
                     @case(10)
-                        <span style="color:blue;">CHECKED</span>
+                        <span style="color:blue;">CHECKED BY DEPT HEAD</span>
                     @break
 
                     @case(11)
@@ -256,16 +307,16 @@
                 @endswitch
             </td>
             <td>
-                @if ($finding->lead_auditor_signature)
+                @if ($finding->auditeeAction->lead_auditor_signature)
                     <img src="{{ $finding->lead_auditor_signature_url }}" class="signature"><br>
                 @endif
-                {{ $finding->lead_auditor_name ?? '-' }}
+                {{ $finding->auditeeAction->lead_auditor_name ?? '-' }}
             </td>
             <td>
-                @if ($finding->auditor_signature)
+                @if ($finding->auditeeAction->auditor_signature)
                     <img src="{{ $finding->auditor_signature_url }}" class="signature"><br>
                 @endif
-                {{ $finding->auditor_name ?? '-' }}
+                {{ $finding->auditeeAction->auditor_name ?? '-' }}
             </td>
         </tr>
     </table>
