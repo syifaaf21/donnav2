@@ -87,19 +87,24 @@ class SendDocumentControlReminder extends Command
 
         // Siapkan _message per kategori
         foreach ($categories['uncomplete'] as $dept => $docs) {
-            foreach ($docs as $doc) {
-                $doc->_message = "    - *{$doc->document->name}* → Please upload the file\n";
-            }
+    foreach ($docs as $doc) {
+        $daysLeft = Carbon::parse($doc->obsolete_date)->diffInDays($now, false);
+
+        if ($daysLeft > 0) {
+            $doc->_message = "    - *{$doc->document->name}* → ⚠️ Please upload the file ({$daysLeft} day(s) left\n";
         }
+    }
+}
+
         foreach ($categories['active'] as $dept => $docs) {
             foreach ($docs as $doc) {
                 $daysLeft = Carbon::parse($doc->obsolete_date)->diffInDays($now);
-                $doc->_message = "    - *{$doc->document->name}* → {$daysLeft} day(s) left\n";
+                $doc->_message = "    - *{$doc->document->name}* → ⚠️{$daysLeft} day(s) left until obsolete)\n";
             }
         }
         foreach ($categories['obsolete_today'] as $dept => $docs) {
             foreach ($docs as $doc) {
-                $doc->_message = "    - *{$doc->document->name}* → Obsolete today\n";
+                $doc->_message = "    - *{$doc->document->name}* → Obsolete today\n ";
             }
         }
         foreach ($categories['overdue'] as $dept => $docs) {
@@ -111,7 +116,7 @@ class SendDocumentControlReminder extends Command
 
         // Tambahkan kategori ke pesan
         $formatCategory("⏳ *UNCOMPLETE DOCUMENTS (File not Uploaded)*", $categories['uncomplete']);
-        $formatCategory("✅ *DOCUMENTS WITH REMINDER*", $categories['active']);
+        $formatCategory("✅ *DOCUMENTS OBSOLENCE REMINDER*", $categories['active']);
         $formatCategory("⚠️ *DOCUMENTS OBSOLETE TODAY*", $categories['obsolete_today']);
         $formatCategory("⏰ *OVERDUE DOCUMENTS*", $categories['overdue']);
 

@@ -92,7 +92,13 @@ class DocumentControlController extends Controller
         }
 
         // ✅ Ambil data untuk tampilan
-        $documentsMapping = $query->get();
+        $documentsMapping = $query->with(['files'])->get();
+
+// kalau butuh count aktif, dipakai di Blade:
+$activeCount = $documentsMapping->map(function($m){
+    return $m->files->where('is_active', true)->count();
+});
+
 
         // Hitung statistik
         $totalDocuments = $documentsMapping->count();
@@ -115,69 +121,68 @@ class DocumentControlController extends Controller
         ));
     }
 
-    public function revise(Request $request, DocumentMapping $mapping)
-    {
-        $uploadedFiles = $request->file('revision_files', []);
+   public function revise(Request $request, DocumentMapping $mapping)
+{
+    $uploadedFiles = $request->file('revision_files', []);
+    $oldFileIds = $request->input('revision_file_ids', []); // index-parsed
 
-        if (empty($uploadedFiles)) {
-            return redirect()->back()->with('info', 'No files uploaded, document unchanged.');
-        }
+    if (empty($uploadedFiles)) {
+        return redirect()->back()->with('info', 'No files uploaded, document unchanged.');
+    }
 
-        // Validasi file
-        $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+    $request->validate([
+        'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+    ]);
+
+    $mapping->load('document');
+    $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
+
+    foreach ($uploadedFiles as $index => $uploadedFile) {
+        $oldFileId = $oldFileIds[$index] ?? null;
+
+        $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $uploadedFile->getClientOriginalExtension();
+        $timestamp = now()->format('Ymd_His');
+
+        // Calculate revision number (optional)
+        $existingRevisions = $mapping->files()
+            ->where('original_name', 'like', $baseName . '_rev%')
+            ->count();
+        $revisionNumber = $existingRevisions + 1;
+
+        $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
+        $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+        // Create new file record (active)
+        $newFile = $mapping->files()->create([
+            'file_path' => $newPath,
+            'original_name' => $uploadedFile->getClientOriginalName(),
+            'file_type' => $uploadedFile->getClientMimeType(),
+            'uploaded_by' => Auth::id(),
+            'is_active' => true,
         ]);
 
-        $mapping->load('document');
-        $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
-
-        // Ambil array old file IDs (bisa null jika file baru tanpa replace)
-        $oldFileIds = $request->input('revision_file_ids', []);
-
-        foreach ($uploadedFiles as $index => $uploadedFile) {
-            $oldFileId = $oldFileIds[$index] ?? null;
-
-            $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $uploadedFile->getClientOriginalExtension();
-            $timestamp = now()->format('Ymd_His');
-
-            $existingRevisions = $mapping->files()
-                ->where('original_name', 'like', $baseName . '_rev%')
-                ->count();
-            $revisionNumber = $existingRevisions + 1;
-
-            $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
-            $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
-
-            // Buat file baru
-            $newFile = $mapping->files()->create([
-                'file_path' => $newPath,
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'file_type' => $uploadedFile->getClientMimeType(),
-                'uploaded_by' => Auth::id(),
-            ]);
-
-            // Tandai file lama jika ada
-            if ($oldFileId) {
-                $oldFile = $mapping->files()->find($oldFileId);
-                if ($oldFile) {
-                    $oldFile->update([
-                        'replaced_by_id' => $newFile->id,
-                        'is_active' => false,
-                    ]);
-                }
+        // Mark old file as inactive and link to replacer
+        if ($oldFileId) {
+            $oldFile = $mapping->files()->find($oldFileId);
+            if ($oldFile) {
+                $oldFile->update([
+                    'replaced_by_id' => $newFile->id,
+                    'is_active' => false,
+                ]);
             }
         }
+    }
 
-        // Update status
-        $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
-        $mapping->update([
-            'status_id' => $needReviewStatus->id,
-            'user_id' => Auth::id(),
-        ]);
+    // Update mapping status, notify, etc (sama seperti code kamu sekarang)
+    $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
+    $mapping->update([
+        'status_id' => $needReviewStatus->id,
+        'user_id' => Auth::id(),
+    ]);
 
-        // Kirim notifikasi ke Admin
-        $uploader = Auth::user();
+    //Notif ke admin
+    $uploader = Auth::user();
         if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
             $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
             foreach ($admins as $admin) {
@@ -191,9 +196,8 @@ class DocumentControlController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Document uploaded successfully!');
-    }
-
+    return redirect()->back()->with('success', 'Document uploaded successfully!');
+}
 
 
     public function approve(Request $request, DocumentMapping $mapping)

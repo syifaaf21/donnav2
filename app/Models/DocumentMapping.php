@@ -42,10 +42,11 @@ class DocumentMapping extends Model
         return $this->hasOne(DocumentFile::class)->latestOfMany();
     }
 
-    public function getFilesForModalAttribute()
+   public function getFilesForModalAttribute()
 {
+    // Hanya file aktif untuk ditampilkan di UI (view tombol/dropdown)
     $allFiles = $this->files()
-        ->whereNull('replaced_by_id') // hanya file aktif
+        ->where('is_active', true)
         ->orderBy('created_at', 'asc')
         ->get();
 
@@ -55,10 +56,29 @@ class DocumentMapping extends Model
             'name' => $file->original_name,
             'document_name' => $this->document->name,
             'url' => Storage::url($file->file_path),
+            'is_active' => (int) $file->is_active,
+            'created_at' => $file->created_at->toDateTimeString(),
         ];
     })->values()->toArray();
 }
 
+/** Jika butuh semua file (aktif + nonaktif) untuk audit/modal detail: */
+public function getFilesForModalAllAttribute()
+{
+    $allFiles = $this->files()->orderBy('created_at', 'asc')->get();
+
+    return $allFiles->map(function ($file) {
+        return [
+            'id' => $file->id,
+            'name' => $file->original_name,
+            'document_name' => $this->document->name,
+            'url' => Storage::url($file->file_path),
+            'is_active' => (int) $file->is_active,
+            'replaced_by_id' => $file->replaced_by_id,
+            'created_at' => $file->created_at->toDateTimeString(),
+        ];
+    })->values()->toArray();
+}
 
     public function document()
     {
