@@ -1,5 +1,5 @@
 {{-- 5 WHY --}}
-<input type="hidden" name="audit_finding_id" x-model="selectedId">
+<input type="text" name="audit_finding_id" x-model="selectedId">
 <input type="hidden" name="action" value="save_auditee_action">
 <input type="hidden" name="pic" value="{{ auth()->user()->id }}">
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
@@ -18,10 +18,12 @@
                     <label>Cause (Karena):</label>
                     <input type="text" name="cause[]" class="w-full border-b border-gray-400 p-1"
                         x-model="form['cause_'+i+'_karena']">
+                        x-model="form['cause_'+i+'_karena']">
                 </div>
             </template>
             <div class="mt-1">
                 Root Cause: <span class="text-danger">*</span>
+                <textarea name="root_cause" x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1" required></textarea>
                 <textarea name="root_cause" x-model="form.root_cause" class="w-full border border-gray-400 rounded p-1" required></textarea>
             </div>
         </td>
@@ -51,6 +53,7 @@
             </td>
             <td class="border border-black">
                 <input name="pic[]" type="text" class="w-full border-none p-1"
+                <input name="pic[]" type="text" class="w-full border-none p-1"
                     x-model="form['corrective_'+i+'_pic']">
             </td>
             <td class="border border-black">
@@ -76,6 +79,7 @@
                     x-model="form['preventive_'+i+'_activity']">
             </td>
             <td class="border border-black">
+                <input name="pic[]" type="text" class="w-full border-none p-1"
                 <input name="pic[]" type="text" class="w-full border-none p-1"
                     x-model="form['preventive_'+i+'_pic']">
             </td>
@@ -312,6 +316,7 @@
         const formData = new FormData();
         formData.append('_token', token);
         formData.append('action', 'save_auditee_action');
+        formData.append('action', 'save_auditee_action');
 
         // Get audit_finding_id
         const selectedIdEl = document.querySelector('input[name="audit_finding_id"]');
@@ -330,6 +335,7 @@
         for (let i = 0; i < 5; i++) {
             formData.append(`why_${i+1}_mengapa`, whyInputs[i]?.value || '');
             formData.append(`cause_${i+1}_karena`, causeInputs[i]?.value || '');
+            formData.append(`cause_${i+1}_karena`, causeInputs[i]?.value || '');
         }
 
         // Root cause
@@ -338,6 +344,7 @@
 
         document.querySelectorAll('tr.corrective-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
+            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
@@ -350,6 +357,7 @@
 
         document.querySelectorAll('tr.preventive-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
+            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const pic = row.querySelector('input[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';

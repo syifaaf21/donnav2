@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditeeActionController;
 use App\Http\Controllers\AuditTypeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentControlController;

@@ -327,6 +327,7 @@ class FtppController extends Controller
                             CorrectiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
                                 'pic' => $pic,
+                                'pic' => $pic,
                                 'activity' => $activity,
                                 'planning_date' => $plan,
                                 'actual_date' => $actual,
@@ -343,6 +344,7 @@ class FtppController extends Controller
                         if ($activity) {
                             PreventiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
+                                'pic' => $pic,
                                 'pic' => $pic,
                                 'activity' => $activity,
                                 'planning_date' => $plan,
