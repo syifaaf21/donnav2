@@ -86,7 +86,7 @@
         }
 
         try {
-            const res = await fetch(`/ftpp/auditor-verify`, {
+            const res = await fetch(`/auditor-verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,7 +127,7 @@
         if (!auditeeActionId) return alert('No auditee action ID found');
 
         try {
-            const res = await fetch(`/ftpp/lead-auditor-acknowledge`, {
+            const res = await fetch(`/lead-auditor-acknowledge`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

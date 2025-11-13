@@ -130,18 +130,18 @@
 
                 <!-- Small menu seperti email (hidden, muncul saat klik) -->
                 <div id="attachMenu2" class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
-                    <button id="attachImages2"
+                    <button id="attachImages2" type="button"
                         class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                         <i data-feather="image" class="w-4 h-4"></i>
                         <span class="text-sm">Upload Images</span>
                     </button>
-                    <button id="attachDocs2"
+                    <button id="attachDocs2" type="button"
                         class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                         <i data-feather="file-text" class="w-4 h-4"></i>
                         <span class="text-sm">Upload Documents</span>
                     </button>
                     <div class="border-t mt-1"></div>
-                    <button id="attachBoth2"
+                    <button id="attachBoth2" type="button"
                         class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                         <i data-feather="upload" class="w-4 h-4"></i>
                         <span class="text-sm">Open Combined Picker</span>
@@ -164,7 +164,10 @@
 <div class="flex justify-end mt-2">
     <button type="button" onclick="saveAuditeeAction()"
         class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save Auditee
-        Action</button>
+        Action
+    </button>
+</div>
+<div class="flex justify-end mt-2">
     @if (in_array(optional(auth()->user()->role)->name, ['Leader', 'Supervisor', 'Dept Head', 'Admin']))
         <button type="button" onclick="saveAndSign(document.getElementById('auditee_action_id').value)"
             class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
@@ -359,7 +362,7 @@
 
         // Yokoten
         const yokotenEl = document.querySelector('input[name="yokoten"]:checked');
-        formData.append('yokoten', yokotenEl ? yokotenEl.value : 0);
+        formData.append('yokoten', yokotenEl ? yokotenEl.value : 1);
 
         const yokotenAreaEl = document.querySelector('textarea[name="yokoten_area"]');
         formData.append('yokoten_area', yokotenAreaEl ? yokotenAreaEl.value : '');

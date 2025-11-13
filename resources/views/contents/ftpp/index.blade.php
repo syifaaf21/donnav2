@@ -114,12 +114,6 @@
                         @include('contents.ftpp.partials.auditor-input')
                         @include('contents.ftpp.partials.auditee-input')
                         @include('contents.ftpp.partials.auditor-verification')
-
-                        <div class="mt-4 text-right">
-                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                                x-text="mode === 'create' ? 'Save' : 'Update'">
-                            </button>
-                        </div>
                     </form>
                 </template>
             </div>
