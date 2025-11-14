@@ -2,14 +2,15 @@
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <table class="w-full border border-black text-sm mt-2 text-center">
     <tr>
-        <td class="border border-black p-1 font-semibold">Effectiveness Verification</td>
-        <td class="border border-black p-1 font-semibold">Status</td>
-        <td class="border border-black p-1 font-semibold">Acknowledge</td>
-        <td class="border border-black p-1 font-semibold">Approve</td>
+        <td class="border border-black p-1 font-semibold w-1/2">Effectiveness Verification</td>
+        <td class="border border-black p-1 font-semibold w-1/6">Status</td>
+        <td class="border border-black p-1 font-semibold w-1/6">Acknowledge</td>
+        <td class="border border-black p-1 font-semibold w-1/6">Approve</td>
     </tr>
     <tr>
         <td class="border border-black">
-            <textarea name="effectiveness_verification" x-model="form.effectiveness_verification" class="w-full p-1"></textarea>
+            <textarea name="effectiveness_verification" x-model="form.effectiveness_verification"
+                class="w-full h-32 p-1 resize-none"></textarea>
         </td>
         <td class="border border-black p-2">
             <div class="text-lg font-bold">
@@ -24,45 +25,43 @@
                 </span>
             </div>
         </td>
-        <td class="border border-black">
+        <td class="border border-black p-2">
             <div class="my-4">
                 <template x-if="!form.lead_auditor_ack">
-                    <button type="button" onclick="verifyLeadAuditor()">Verify</button>
+                    <button type="button" onclick="verifyLeadAuditor()" :disabled="form.status_id != 10"
+                            :class="form.status_id != 10 ? 'opacity-50 cursor-not-allowed' : ''">Verify</button>
                 </template>
                 <template x-if="form.lead_auditor_signature">
-                    <img :src="form.lead_auditor_signature_url" class="mx-auto mt-1 h-16 object-contain">
+                    <img :src="form.lead_auditor_signature_url" class="mx-auto mt-1 h-24 object-contain">
                 </template>
             </div>
-            <table class="w-full h-1/4">
-                <tr>
-                    <td class="border border-black">Lead Auditor</td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="text" x-model="form.lead_auditor_name">
-                    </td>
-                </tr>
-            </table>
+            <div class="items-center">
+                <span class="font-semibold my-1">Lead Auditor</span>
+                <input type="text" x-model="form.lead_auditor_name" value="{{ auth()->user()->name }}">
+            </div>
         </td>
-        <td class="border border-black">
+        <td class="border border-black p-2">
             <div class="my-4">
                 <template x-if="!form.auditor_verified">
-                    <button type="button" onclick="verifyAuditor()">Verify</button>
+                    <div class="flex flex-col gap-2">
+                        <button type="button" onclick="verifyAuditor()" :disabled="form.status_id != 9"
+                            :class="form.status_id != 9 ? 'opacity-50 cursor-not-allowed' : ''">
+                            Verify
+                        </button>
+                        <button type="button" onclick="returnForRevision()" :disabled="form.status_id != 9"
+                            :class="form.status_id != 9 ? 'opacity-50 cursor-not-allowed' : ''">
+                            Return
+                        </button>
+                    </div>
                 </template>
                 <template x-if="form.auditor_signature">
-                    <img :src="form.auditor_signature_url" class="mx-auto mt-1 h-16 object-contain">
+                    <img :src="form.auditor_signature_url" class="mx-auto mt-1 h-24 object-contain">
                 </template>
             </div>
-            <table class="w-full h-1/4">
-                <tr>
-                    <td class="border border-black">Auditor</td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="text" x-model="form.auditor_name">
-                    </td>
-                </tr>
-            </table>
+            <div class="items-center">
+                <span class="font-semibold my-1">Auditor</span>
+                <input type="text" x-model="form.auditor_name" value="{{ auth()->user()->name }}">
+            </div>
         </td>
     </tr>
 </table>
@@ -162,6 +161,49 @@
         } catch (error) {
             console.error(error);
             alert('Error verifying Auditor. Check console for details.');
+        }
+    }
+
+    async function returnForRevision() {
+        const auditeeActionId = document.getElementById('auditee_action_id')?.value;
+        const alpineEl = document.querySelector('[x-data="ftppApp()"]');
+        const alpineComponent = Alpine.$data(alpineEl);
+
+        if (!auditeeActionId) {
+            return alert('No auditee action ID found');
+        }
+
+        try {
+            const res = await fetch(`/auditor-return`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    auditee_action_id: auditeeActionId,
+                    status_id: 12 // Needs Revision
+                })
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error('Server response:', text);
+                throw new Error('Failed to return FTPP for revision');
+            }
+
+            const data = await res.json();
+
+            if (data.success) {
+                alpineComponent.form.status_id = 9; // Needs Revision
+                alert('FTPP returned to user for revision');
+            } else {
+                alert('Failed to return FTPP');
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('Error returning FTPP. Check console for details.');
         }
     }
 </script>

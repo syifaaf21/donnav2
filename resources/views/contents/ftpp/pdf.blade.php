@@ -5,11 +5,6 @@
     <meta charset="UTF-8">
     <title>FTPP Report</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-        }
-
         table {
             border-collapse: collapse;
             width: 100%;
@@ -74,7 +69,7 @@
         }
 
         .header-logo img {
-            width: 60px;
+            width: 64px;
             /* atur ukuran logo di sini */
             height: auto;
             display: block;
@@ -116,9 +111,9 @@
         <tr>
             <td class="w-1/3">
                 <div><b>Audit Type:</b></div>
-                <div>{{ ucfirst(optional($finding->auditType)->name ?? '-') }}</div>
+                <div>{{ ucfirst(optional($finding->audit)->name ?? '-') }}</div>
                 <div><b>Sub Audit Type:</b></div>
-                <div>{{ ucfirst(optional($finding->subAuditType)->name ?? '-') }}</div>
+                <div>{{ ucfirst(optional($finding->subAudit)->name ?? '-') }}</div>
             </td>
             <td>
                 <table class="text-sm w-full">
@@ -168,14 +163,16 @@
                 {{ $finding->finding_description ?? '-' }}
 
                 {{-- Tampilkan lampiran gambar yang terkait dengan finding ini --}}
-                {{-- @foreach ($finding->attachments->where('audit_finding_id', $finding->id)->where('type', 'image') as $image)
+                @foreach ($finding->file as $image)
                     <div class="mt-2 text-center">
-                        <img src="{{ $image->path }}"
+                        <img src="{{ $image->full_url }}"
                             style="max-width:300px; max-height:200px; display:block; margin:auto;">
-                        <div style="font-size:10px; text-align:center;">Lampiran Gambar: {{ basename($image->path) }}
+                        <div style="font-size:10px; text-align:center;">
+                            Lampiran Gambar: {{ basename($image->file_path) }}
                         </div>
                     </div>
-                @endforeach --}}
+                @endforeach
+
 
                 <br><br>
                 <b>Due Date:</b> {{ \Carbon\Carbon::parse($finding->due_date)->format('d M Y') }}
@@ -191,20 +188,26 @@
     {{-- ==================== AUDITEE INPUT ==================== --}}
     <table class="w-full border text-sm mt-2">
         <tr class="bg-gray font-semibold">
-            <td>AUDITEE</td>
+            <td colspan="2">AUDITEE</td>
         </tr>
         <tr>
-            <td>
-                <div><b>5 Why Analysis:</b></div>
-                @for ($i = 1; $i <= 5; $i++)
-                    <div class="ml-2 mb-1">
-                        Why {{ $i }} (Mengapa):
-                        {{ $finding->whyCauses['why_' . $i . '_mengapa'] ?? '-' }}<br>
-                        Cause (Karena): {{ $finding->whyCauses['cause_' . $i . '_karena'] ?? '-' }}
-                    </div>
-                @endfor
-                <div class="mt-1"><b>Root Cause:</b> {{ $finding->auditeeAction->root_cause ?? '-' }}</div>
+            <td colspan="2">
+                <b>5 Why Analysis:</b>
             </td>
+        </tr>
+        @foreach ($finding->auditeeAction->whyCauses ?? [] as $index => $why)
+            <tr>
+                <td style="width: 25%;">Why {{ $index + 1 }} (Mengapa)</td>
+                <td>{{ $why->why_description ?? '-' }}</td>
+            </tr>
+            <tr>
+                <td>Cause (Karena)</td>
+                <td>{{ $why->cause_description ?? '-' }}</td>
+            </tr>
+        @endforeach
+        <tr>
+            <td class="font-semibold">Root Cause</td>
+            <td>{{ $finding->auditeeAction->root_cause ?? '-' }}</td>
         </tr>
     </table>
 
@@ -212,7 +215,7 @@
     <table class="w-full border text-sm mt-2">
         <tr class="bg-gray font-semibold text-center">
             <td>No</td>
-            <td>Activity</td>
+            <td style="width: 50%">Activity</td>
             <td>PIC</td>
             <td>Planning</td>
             <td>Actual</td>
@@ -222,29 +225,37 @@
         <tr>
             <td colspan="5" class="font-semibold">Corrective Action</td>
         </tr>
-        @for ($i = 1; $i <= 4; $i++)
+        @foreach ($finding->auditeeAction->correctiveActions ?? [] as $index => $action)
             <tr>
-                <td class="text-center">{{ $i }}</td>
-                <td>{{ $finding['corrective_' . $i . '_activity'] ?? '' }}</td>
-                <td>{{ $finding['corrective_' . $i . '_pic'] ?? '' }}</td>
-                <td>{{ $finding['corrective_' . $i . '_planning'] ?? '' }}</td>
-                <td>{{ $finding['corrective_' . $i . '_actual'] ?? '' }}</td>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td>{{ $action->activity ?? '-' }}</td>
+                <td class="text-center">{{ $action->pic ?? '-' }}</td>
+                <td class="text-center">
+                    {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
+                </td>
+                <td class="text-center">
+                    {{ $action->actual_date ? \Carbon\Carbon::parse($action->actual_date)->format('d/m/Y') : '-' }}
+                </td>
             </tr>
-        @endfor
+        @endforeach
 
         {{-- Preventive --}}
         <tr>
             <td colspan="5" class="font-semibold">Preventive Action</td>
         </tr>
-        @for ($i = 1; $i <= 4; $i++)
+        @foreach ($finding->auditeeAction->preventiveActions ?? [] as $index => $action)
             <tr>
-                <td class="text-center">{{ $i }}</td>
-                <td>{{ $finding['preventive_' . $i . '_activity'] ?? '' }}</td>
-                <td>{{ $finding['preventive_' . $i . '_pic'] ?? '' }}</td>
-                <td>{{ $finding['preventive_' . $i . '_planning'] ?? '' }}</td>
-                <td>{{ $finding['preventive_' . $i . '_actual'] ?? '' }}</td>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td>{{ $action->activity ?? '-' }}</td>
+                <td class="text-center">{{ $action->pic ?? '-' }}</td>
+                <td class="text-center">
+                    {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
+                </td>
+                <td class="text-center">
+                    {{ $action->actual_date ? \Carbon\Carbon::parse($action->actual_date)->format('d/m/Y') : '-' }}
+                </td>
             </tr>
-        @endfor
+        @endforeach
     </table>
 
     {{-- ==================== YOKOTEN ==================== --}}
@@ -252,25 +263,27 @@
         <tr>
             <td class="w-2/3">
                 <b>Yokoten?</b> {{ $finding->auditeeAction->yokoten ? 'Yes' : 'No' }} <br>
-                @if ($finding->auditeeAction->yokoten)
-                    <b>Area:</b> {{ $finding->auditeeAction->yokoten_area ?? '-' }}
-                @endif
             </td>
             <td class="text-center font-semibold">Dept. Head</td>
             <td class="text-center font-semibold">Leader/Spv</td>
         </tr>
         <tr>
-            <td></td>
+            <td>
+                @if ($finding->auditeeAction->yokoten)
+                    <b>Area:</b> {{ $finding->auditeeAction->yokoten_area ?? '-' }}
+                @endif
+            </td>
             <td class="text-center">
-                @if ($finding->auditeeAction->dept_head_signature)
+                @if (!empty($finding->dept_head_signature_url))
                     <img src="{{ $finding->dept_head_signature_url }}" class="signature">
                 @endif
             </td>
             <td class="text-center">
-                @if ($finding->auditeeAction->ldr_spv_signature)
+                @if (!empty($finding->ldr_spv_signature_url))
                     <img src="{{ $finding->ldr_spv_signature_url }}" class="signature">
                 @endif
             </td>
+
         </tr>
     </table>
 
@@ -307,37 +320,43 @@
                 @endswitch
             </td>
             <td>
-                @if ($finding->auditeeAction->lead_auditor_signature)
-                    <img src="{{ $finding->lead_auditor_signature_url }}" class="signature"><br>
+                @if (!empty($finding->acknowledge_by_lead_auditor_url))
+                    <img src="{{ $finding->acknowledge_by_lead_auditor_url }}" class="signature"><br>
                 @endif
-                {{ $finding->auditeeAction->lead_auditor_name ?? '-' }}
+                {{ $finding->auditeeAction->lead_auditor_id ?? '-' }}
             </td>
             <td>
-                @if ($finding->auditeeAction->auditor_signature)
-                    <img src="{{ $finding->auditor_signature_url }}" class="signature"><br>
+                @if (!empty($finding->verified_by_auditor_url))
+                    <img src="{{ $finding->verified_by_auditor_url }}" class="signature"><br>
                 @endif
-                {{ $finding->auditeeAction->auditor_name ?? '-' }}
+                {{ $finding->auditeeAction->auditor_id ?? '-' }}
             </td>
         </tr>
     </table>
 
     {{-- ==================== ATTACHMENTS ==================== --}}
     {{-- LAMPIRAN FILE --}}
-    {{-- @if ($finding->auditeeAction->attachments->where('type', 'file')->count())
+    @if ($finding->auditeeAction && $finding->auditeeAction->file->count())
         <div class="page-break"></div>
-        <h4>Lampiran File</h4>
-        <ul>
-            @foreach ($finding->auditeeAction->attachments->where('type', 'file') as $file)
-                <li>
-                    {{ basename($file->path) }}
-                    @if ($file->audit_finding_id)
-                        - Lampiran untuk Finding ID {{ $file->audit_finding_id }}
-                    @endif
-                </li>
-            @endforeach
-        </ul>
+        <h4>Lampiran</h4>
 
-    @endif --}}
+        @foreach ($finding->auditeeAction->file as $file)
+            @php
+                $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+            @endphp
+
+            @if (in_array($ext, ['jpg', 'jpeg', 'png']))
+                <div class="mt-2 text-center">
+                    <img src="{{ $file->full_url }}"
+                        style="max-width:400px; max-height:250px; display:block; margin:auto;">
+                    <div style="font-size:10px; text-align:center;">
+                        {{ $file->original_name ?? basename($file->file_path) }}</div>
+                </div>
+            @else
+                <p>- {{ $file->original_name ?? basename($file->file_path) }}</p>
+            @endif
+        @endforeach
+    @endif
 </body>
 
 </html>

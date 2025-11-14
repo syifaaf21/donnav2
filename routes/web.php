@@ -200,6 +200,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/dept-head-sign', [FtppController::class, 'deptheadSign'])->name('dept-head-sign');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
         Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
+        Route::delete('/{id}', [FtppController::class, 'destroy'])->name('destroy');
+
 
     });
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
@@ -213,5 +215,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/get-auditee/{departmentId}', [FtppController::class, 'getAuditee']);
 
     Route::post('/auditor-verify', [FtppController::class, 'auditorVerify']);
+    Route::post('/auditor-return', [FtppController::class, 'auditorReturn']);
     Route::post('/lead-auditor-acknowledge', [FtppController::class, 'leadAuditorAcknowledge']);
 });

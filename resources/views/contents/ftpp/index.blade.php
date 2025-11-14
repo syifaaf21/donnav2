@@ -24,21 +24,27 @@
 
                 <ul>
                     <template x-for="item in filteredFindings" :key="item.id">
-                        <li @click="loadForm(item.id)" class="cursor-pointer px-2 py-2 border-b"
-                            :class="{
-                                'bg-red-500 text-white hover:bg-red-600': item.status_id === 7,
-                                'bg-yellow-500 text-gray-700 hover:bg-yellow-600': item.status_id !== 7 && item
-                                    .status_id !== 11,
-                                'bg-green-600 text-white hover:bg-green-700': item.status_id === 11
-                            }">
+                        <li @click="loadForm(item.id)"
+                            class="cursor-pointer px-2 py-2 border rounded shadow hover:bg-slate-50">
                             <div class="font-semibold text-sm" x-text="item.registration_number"></div>
                             <div class="text-xs" x-text="item.department?.name ?? '-'"></div>
-                            <div class="text-xs mt-1" x-text="item.status?.name ?? 'Unknown Status'"></div>
+                            <div class="text-xs mt-1" x-text="item.status?.name ?? 'Unknown Status'"
+                                :class="{
+                                    'text-red-500 hover:text-red-600': item.status_id === 7,
+                                    'text-yellow-500 hover:text-yellow-600': item.status_id !== 7 && item
+                                        .status_id !== 11,
+                                    'text-green-600 hover:text-green-700': item.status_id === 11
+                                }">
+                            </div>
                             <div class="flex gap-1">
                                 <a :href="`/ftpp/${item.id}/download`" class="text-blue-600 hover:text-blue-800"
                                     title="Download PDF">
                                     <i data-feather="download"></i>
                                 </a>
+                                <button @click.stop="deleteFinding(item.id)" class="text-red-600 hover:text-red-800"
+                                    title="Delete">
+                                    <i data-feather="trash-2"></i>
+                                </button>
                             </div>
                         </li>
                     </template>
@@ -47,47 +53,6 @@
                         <li class="text-gray-400 text-sm text-center py-4">No results found.</li>
                     </template>
                 </ul>
-
-                {{-- <ul>
-                    @foreach ($findings as $item)
-                        <li @click="loadForm({{ $item->id }})" class="cursor-pointer px-2 py-2 border-b"
-                            :class="{
-                                'bg-red-500 text-white hover:bg-red-600': {{ $item->status_id }} ===
-                                    7, // Assuming 7 is 'Open'
-                                'bg-yellow-500 text-gray-700 hover:bg-yellow-600': {{ $item->status_id }} !== 7 &&
-                                    {{ $item->status_id }} !==
-                                    11, // For other statuses
-                                'bg-green-600 text-white hover:bg-green-700': {{ $item->status_id }} ===
-                                    11 // For 'Closed'
-                            }">
-                            <div class="font-semibold text-sm">
-                                {{ $item->registration_number }}
-                            </div>
-                            <div class="text-xs">
-                                {{ $item->department->name ?? '-' }}
-                            </div>
-
-                            <!-- Display Status -->
-                            <div class="text-xs mt-1">
-                                <span
-                                    :class="{
-                                        'text-white': {{ $item->status_id }} === 7, // Assuming 7 is 'Open'
-                                        'text-gray-700': {{ $item->status_id }} !== 7 && {{ $item->status_id }} !==
-                                            11, // For other statuses
-                                        'text-white': {{ $item->status_id }} === 11 // For 'Closed'
-                                    }">
-                                    {{ $item->status->name ?? 'Unknown Status' }}
-                                </span>
-                            </div>
-                            <div class="flex gap-1">
-                                <a href="{{ route('ftpp.download', $item->id) }}" class="text-blue-600 hover:text-blue-800"
-                                    title="Download PDF">
-                                    <i data-feather="download"></i>
-                                </a>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul> --}}
             </div>
 
             {{-- RIGHT SIDE --}}
@@ -120,7 +85,7 @@
         </div>
     </div>
 @endsection
-
+<x-sweetalert-confirm />
 @push('scripts')
     <script>
         function ftppApp() {
@@ -156,6 +121,7 @@
                         klausul_list: []
                     };
                     this.formLoaded = true;
+                    this.readonly = false;
                 },
 
                 async loadForm(id) {
@@ -172,11 +138,56 @@
                         this.form = finding; // isi semua field utama
                         this.selectedId = id;
                         this.formLoaded = true;
+                        // Tampilkan tanda tangan jika ada
+                        const deptHeadSignatureUrl = finding.dept_head_signature_url || '';
+                        const ldrSpvSignatureUrl = finding.ldr_spv_signature_url || '';
+
+                        // Update Alpine component tanda tangan
+                        const deptHeadEl = document.querySelector('[x-data^="signatureForm(\'dept_head\'"]');
+                        if (deptHeadEl) {
+                            const alpineComp = Alpine.$data(deptHeadEl);
+                            alpineComp.signatureUrl = deptHeadSignatureUrl;
+                            alpineComp.signatureData = deptHeadSignatureUrl;
+                        }
+
+                        const ldrSpvEl = document.querySelector('[x-data^="signatureForm(\'ldr_spv\'"]');
+                        if (ldrSpvEl) {
+                            const alpineComp = Alpine.$data(ldrSpvEl);
+                            alpineComp.signatureUrl = ldrSpvSignatureUrl;
+                            alpineComp.signatureData = ldrSpvSignatureUrl;
+                        }
 
                         //
                         // ✅ SUB AUDIT TYPE (Level 2)
                         //
-                        this.form.sub_audit = finding.sub_audit_type_id ?? [];
+                        if (finding.audit_type_id) {
+                            fetch(`/ftpp/get-data/${finding.audit_type_id}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    const subContainer = document.getElementById('subAuditType');
+                                    subContainer.innerHTML = '';
+
+                                    if (data.sub_audit?.length) {
+                                        data.sub_audit.forEach(s => {
+                                            subContainer.insertAdjacentHTML('beforeend', `
+                                                <label class="block">
+                                                    <input type="radio"
+                                                        name="sub_audit_type_id"
+                                                        value="${s.id}"
+                                                        ${s.id === finding.sub_audit_type_id ? 'checked' : ''}
+                                                    >
+                                                    ${s.name}
+                                                </label>
+                                    `);
+                                        });
+                                    } else {
+                                        subContainer.innerHTML =
+                                            '<small class="text-gray-500">There is no sub audit type</small>';
+                                    }
+                                })
+                                .catch(err => console.error('❌ Gagal ambil sub audit type:', err));
+                        }
+
                         //
                         // ✅ PLANT / DEPT / PROCESS / PRODUCT DISPLAY
                         //
@@ -228,25 +239,50 @@
                         this.form.created_at = finding.created_at?.substring(0, 10) ?? '';
                         this.form.due_date = finding.due_date?.substring(0, 10) ?? '';
 
-                        if (finding.attachments?.length) {
-                            previewImageContainer.innerHTML = '';
-                            previewFileContainer.innerHTML = '';
+                        this.$nextTick(() => {
+                            const previewImageContainer = document.getElementById('previewImageContainer');
+                            const previewFileContainer = document.getElementById('previewFileContainer');
 
-                            finding.attachments.forEach(a => {
-                                if (a.type === 'image') {
-                                    previewImageContainer.innerHTML += `
-                                        <img src="${a.url}" class="w-24 h-24 object-cover border rounded" />
-                                    `;
-                                } else {
-                                    previewFileContainer.innerHTML += `
-                                    <div class="flex gap-2 text-sm border p-2 rounded">
-                                        <i data-feather="file-text"></i> ${a.url.split('/').pop()}
-                                    </div>`;
-                                }
-                            });
+                            if (!previewImageContainer || !previewFileContainer) {
+                                console.warn('⚠️ Preview container belum ada di DOM');
+                                return;
+                            }
 
-                            feather.replace();
-                        }
+                            if (finding.file?.length) {
+                                previewImageContainer.innerHTML = '';
+                                previewFileContainer.innerHTML = '';
+
+                                // Assuming this is your base URL. Replace it as needed.
+                                const baseUrl = 'http://127.0.0.1:8000/storage/'; // For local development
+                                // const fullUrl = `/storage/app/public`;
+
+                                finding.file.forEach(a => {
+                                    if (a.file_path && typeof a.file_path === 'string') {
+                                        // Construct full URL for the image
+                                        const fullUrl = baseUrl + a.file_path;
+
+                                        // Check if it's an image based on file extension
+                                        if (a.file_path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
+                                            // Image preview
+                                            previewImageContainer.innerHTML += `
+                                                <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded" />
+                                            `;
+                                        } else {
+                                            // Document preview
+                                            previewFileContainer.innerHTML += `
+                                            <div class="flex gap-2 text-sm border p-2 rounded">
+                                                <i data-feather="file-text"></i> ${a.file_path.split('/').pop()}
+                                            </div>`;
+                                        }
+                                    } else {
+                                        console.warn('Invalid file path for attachment:',
+                                            a); // Log problematic item
+                                    }
+                                });
+
+                                feather.replace();
+                            }
+                        });
 
                         // Auditee action
                         if (finding.auditee_action) {
@@ -294,9 +330,120 @@
                                 });
                             }
 
-                            // Signature (jika kamu simpan path di DB)
-                            this.form.dept_head_signature = act.dept_head_signature_url || null;
-                            this.form.ldr_spv_signature = act.ldr_spv_signature_url || null;
+                            this.$nextTick(() => {
+                                const previewDeptHeadSignature = document.getElementById(
+                                    'previewDeptHeadSignature');
+                                const previewLdrSpvSignature = document.getElementById(
+                                    'previewLdrSpvSignature');
+
+                                if (!previewDeptHeadSignature || !previewLdrSpvSignature) {
+                                    console.warn('⚠️ Preview container belum ada di DOM');
+                                    return;
+                                }
+
+                                const baseUrl = 'http://127.0.0.1:8000/storage/';
+
+                                // 🔹 Tampilkan tanda tangan Dept Head
+                                if (act.dept_head_signature) {
+                                    previewDeptHeadSignature.innerHTML = '';
+
+                                    // Jika array (misal di masa depan disimpan banyak file)
+                                    if (Array.isArray(act.dept_head_signature)) {
+                                        act.dept_head_signature.forEach(sig => {
+                                            const path = typeof sig === 'string' ? sig : sig
+                                                .dept_head_signature;
+                                            if (path && path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
+                                                previewDeptHeadSignature.innerHTML += `
+                        <img src="${baseUrl + path}" class="w-24 h-24 object-cover border rounded" />
+                    `;
+                                            }
+                                        });
+                                    }
+                                    // Jika string tunggal
+                                    else if (typeof act.dept_head_signature === 'string') {
+                                        if (act.dept_head_signature.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
+                                            previewDeptHeadSignature.innerHTML = `
+                    <img src="${baseUrl + act.dept_head_signature}" class="w-24 h-24 object-cover border rounded" />
+                `;
+                                        }
+                                    }
+                                }
+
+                                // 🔹 (optional) kalau nanti mau tambahkan preview untuk Ldr/Spv signature juga
+                                if (act.ldr_spv_signature) {
+                                    previewLdrSpvSignature.innerHTML = '';
+
+                                    if (Array.isArray(act.ldr_spv_signature)) {
+                                        act.ldr_spv_signature.forEach(sig => {
+                                            const path = typeof sig === 'string' ? sig : sig
+                                                .ldr_spv_signature;
+                                            if (path && path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
+                                                previewLdrSpvSignature.innerHTML += `
+                        <img src="${baseUrl + path}" class="w-24 h-24 object-cover border rounded" />
+                    `;
+                                            }
+                                        });
+                                    } else if (typeof act.ldr_spv_signature === 'string') {
+                                        if (act.ldr_spv_signature.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
+                                            previewLdrSpvSignature.innerHTML = `
+                    <img src="${baseUrl + act.ldr_spv_signature}" class="w-24 h-24 object-cover border rounded" />
+                `;
+                                        }
+                                    }
+                                }
+
+                                feather.replace();
+                            });
+
+
+                            // cek act sendiri
+                            console.log('act object:', act);
+
+                            this.$nextTick(() => {
+                                const previewImageContainer2 = document.getElementById(
+                                    'previewImageContainer2');
+                                const previewFileContainer2 = document.getElementById('previewFileContainer2');
+
+                                if (!previewImageContainer2 || !previewFileContainer2) {
+                                    console.warn('⚠️ Preview container belum ada di DOM');
+                                    return;
+                                }
+
+                                if (act.file?.length) {
+                                    previewImageContainer2.innerHTML = '';
+                                    previewFileContainer2.innerHTML = '';
+
+                                    // Assuming this is your base URL. Replace it as needed.
+                                    const baseUrl = 'http://127.0.0.1:8000/storage/'; // For local development
+                                    // const baseUrl = 'https://yourapp.com/'; // For production
+
+                                    act.file.forEach(a => {
+                                        if (a.file_path && typeof a.file_path === 'string') {
+                                            // Construct full URL for the image
+                                            const fullUrl = baseUrl + a.file_path;
+
+                                            // Check if it's an image based on file extension
+                                            if (a.file_path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
+                                                // Image preview
+                                                previewImageContainer2.innerHTML += `
+                                                <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded" />
+                                            `;
+                                            } else {
+                                                // Document preview
+                                                previewFileContainer2.innerHTML += `
+                                                <div class="flex gap-2 text-sm border p-2 rounded">
+                                                    <i data-feather="file-text"></i> ${a.file_path.split('/').pop()}
+                                                </div>`;
+                                            }
+                                        } else {
+                                            console.warn('Invalid file path for attachment:',
+                                                a); // Log problematic item
+                                        }
+                                    });
+
+                                    feather.replace();
+                                }
+                            });
 
                             this.form.auditee_action_id = act.id;
                             this.form.effectiveness_verification = act.effectiveness_verification ||
@@ -353,6 +500,26 @@
                         (f.department?.name || '').toLowerCase().includes(keyword) ||
                         (f.status?.name || '').toLowerCase().includes(keyword)
                     );
+                },
+                async deleteFinding(id) {
+                    if (!confirm("Are you sure you want to delete this item?")) return;
+                    try {
+                        const res = await fetch(`/ftpp/${id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+                        if (res.ok) {
+                            this.filteredFindings = this.filteredFindings.filter(f => f.id !== id);
+                            alert("Deleted successfully.");
+                        } else {
+                            alert("Failed to delete.");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("Error deleting item.");
+                    }
                 },
             }
         }

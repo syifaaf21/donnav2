@@ -96,11 +96,11 @@
     <tr>
         <td class="border border-black p-2 w-2/3">
             <label>Yokoten?<span class="text-danger">*</span></label>
-            <label><input type="radio" value="1" x-model="form.yokoten" required> Yes</label>
-            <label><input type="radio" value="0" x-model="form.yokoten" required> No</label>
+            <label><input type="radio" name="yokoten" value="1" x-model="form.yokoten" required> Yes</label>
+            <label><input type="radio" name="yokoten" value="0" x-model="form.yokoten" required> No</label>
         </td>
-        <td class="border border-black p-1 font-semibold text-center">Dept. Head</td>
-        <td class="border border-black p-1 font-semibold text-center">Leader/Spv</td>
+        <td class="border border-black p-1 font-semibold text-center">Checked</td>
+        <td class="border border-black p-1 font-semibold text-center">Created</td>
     </tr>
     <tr>
         <td>
@@ -166,14 +166,6 @@
         class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save Auditee
         Action
     </button>
-</div>
-<div class="flex justify-end mt-2">
-    @if (in_array(optional(auth()->user()->role)->name, ['Leader', 'Supervisor', 'Dept Head', 'Admin']))
-        <button type="button" onclick="saveAndSign(document.getElementById('auditee_action_id').value)"
-            class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
-            Save and Sign
-        </button>
-    @endif
 </div>
 
 <!-- Attachment Upload Handle Script: trigger inputs, preview, count, click-outside -->
@@ -360,9 +352,9 @@
             formData.append(`preventive_${i+1}_actual`, actual);
         });
 
-        // Yokoten
         const yokotenEl = document.querySelector('input[name="yokoten"]:checked');
-        formData.append('yokoten', yokotenEl ? yokotenEl.value : 1);
+        const yokotenValue = yokotenEl ? Number(yokotenEl.value) : 0; // konversi ke number
+        formData.append('yokoten', yokotenValue);
 
         const yokotenAreaEl = document.querySelector('textarea[name="yokoten_area"]');
         formData.append('yokoten_area', yokotenAreaEl ? yokotenAreaEl.value : '');

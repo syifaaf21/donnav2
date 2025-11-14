@@ -25,6 +25,7 @@ class StatusSeeder extends Seeder
             ['name' => 'Checked by Dept Head'],
             ['name' => 'Approved by Auditor'],
             ['name' => 'Close'],
+            ['name' => 'Need Revision'],
         ];
 
         foreach ($statuses as $status) {

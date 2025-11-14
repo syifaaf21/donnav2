@@ -33,12 +33,12 @@ class  AuditFinding extends Model
 
     public function audit()
     {
-        return $this->belongsTo(Audit::class);
+        return $this->belongsTo(Audit::class, 'audit_type_id');
     }
 
     public function subAudit()
     {
-        return $this->belongsTo(SubAudit::class);
+        return $this->belongsTo(SubAudit::class, 'sub_audit_type_id');
     }
 
     public function findingCategory()

@@ -569,22 +569,36 @@
                 const procSelect = document.getElementById('sidebarProcess');
                 const prodSelect = document.getElementById('sidebarProduct');
 
-                deptSelect.innerHTML = '<option value=""></option>';
-                procSelect.innerHTML = '<option value=""></option>';
-                prodSelect.innerHTML = '<option value=""></option>';
+                async function loadPlantRelatedData(plant) {
+                    const deptSelect = document.getElementById('sidebarDepartment');
+                    const procSelect = document.getElementById('sidebarProcess');
+                    const prodSelect = document.getElementById('sidebarProduct');
 
-                // ✅ Destroy Tom Select lama biar tidak conflict
-                if (tsDept) tsDept.destroy();
-                if (tsProc) tsProc.destroy();
-                if (tsProd) tsProd.destroy();
-
-                plantSelect.addEventListener('change', async function() {
-                    const plant = this.value;
+                    // Disable select dulu
                     deptSelect.disabled = true;
                     procSelect.disabled = true;
                     prodSelect.disabled = true;
 
-                    if (!plant) return;
+                    // Hancurkan TomSelect lama jika ada
+                    if (tsDept) {
+                        tsDept.destroy();
+                        tsDept = null;
+                    }
+                    if (tsProc) {
+                        tsProc.destroy();
+                        tsProc = null;
+                    }
+                    if (tsProd) {
+                        tsProd.destroy();
+                        tsProd = null;
+                    }
+
+                    // Reset HTML <select>
+                    deptSelect.innerHTML = '<option value=""></option>';
+                    procSelect.innerHTML = '<option value=""></option>';
+                    prodSelect.innerHTML = '<option value=""></option>';
+
+                    if (!plant || plant === "") return;
 
                     try {
                         const [dRes, pRes, prRes] = await Promise.all([
@@ -592,49 +606,54 @@
                             fetch(`/get-processes/${plant}`),
                             fetch(`/get-products/${plant}`)
                         ]);
-
                         const [depts, procs, prods] = await Promise.all([
                             dRes.json(),
                             pRes.json(),
                             prRes.json()
                         ]);
 
-                        // ✅ Isi ulang dan aktifkan Tom Select
-                        depts?.forEach(d => deptSelect.insertAdjacentHTML('beforeend',
-                            `<option value="${d.id}">${d.name}</option>`));
-                        procs?.forEach(p => procSelect.insertAdjacentHTML('beforeend',
-                            `<option value="${p.id}">${p.name.charAt(0).toUpperCase() + p.name.slice(1)}</option>`
-                            ));
-                        prods?.forEach(p => prodSelect.insertAdjacentHTML('beforeend',
-                            `<option value="${p.id}">${p.name}</option>`));
-
-                        // ✅ Aktifin Tom Select baru
+                        // Inisialisasi TomSelect lagi
                         tsDept = new TomSelect('#sidebarDepartment', {
                             allowEmptyOption: true,
                             placeholder: "Search Department...",
                             searchField: ['text'],
+                            options: depts.map(d => ({
+                                value: d.id,
+                                text: d.name
+                            }))
                         });
-
                         tsProc = new TomSelect('#sidebarProcess', {
                             allowEmptyOption: true,
                             placeholder: "Search Process...",
                             searchField: ['text'],
+                            options: procs.map(p => ({
+                                value: p.id,
+                                text: p.name.charAt(0).toUpperCase() + p.name.slice(1)
+                            }))
                         });
-
                         tsProd = new TomSelect('#sidebarProduct', {
                             allowEmptyOption: true,
                             placeholder: "Search Product...",
                             searchField: ['text'],
+                            options: prods.map(p => ({
+                                value: p.id,
+                                text: p.name
+                            }))
                         });
 
-                        // ✅ Enable Tom Select (hapus disabled)
+                        // Enable select
                         tsDept.enable();
                         tsProc.enable();
                         tsProd.enable();
 
-                    } catch (e) {
-                        console.error(e);
+                    } catch (error) {
+                        console.error('Error loading plant data:', error);
                     }
+                }
+
+                // Pasang event listener sekali di sini
+                plantSelect.addEventListener('change', function() {
+                    loadPlantRelatedData(this.value);
                 });
             }
 

@@ -47,7 +47,8 @@ class FtppController extends Controller
             'auditor',
             'findingCategory',
             'department',   // 👈 tambahkan ini
-            'status'        // 👈 dan ini
+            'status',        // 👈 dan ini
+            'auditeeAction',
         ])
             ->orderByDesc('created_at')
             ->get();
@@ -181,6 +182,20 @@ class FtppController extends Controller
             'auditeeAction.file',
         ])->findOrFail($id);
 
+        // Cek apakah auditeeAction ada dan tanda tangan ada
+        $finding->dept_head_signature = null;
+        $finding->ldr_spv_signature = null;
+
+        if ($finding->auditeeAction) {
+            $finding->dept_head_signature = $finding->auditeeAction->dept_head_signature
+                ? asset('storage/' . $finding->auditeeAction->dept_head_signature)
+                : null;
+
+            $finding->ldr_spv_signature = $finding->auditeeAction->ldr_spv_signature
+                ? asset('storage/' . $finding->auditeeAction->ldr_spv_signature)
+                : null;
+        }
+
         return response()->json($finding);
     }
 
@@ -241,33 +256,72 @@ class FtppController extends Controller
                 // === Upload attachments ===
                 if ($request->hasFile('photos')) {
                     foreach ($request->file('photos') as $photo) {
-                        $path = $photo->store('ftpp/audit_finding_attachments', 'public');
+                        // Get the original file name and extension
+                        $originalName = $photo->getClientOriginalName();
+                        $extension = $photo->getClientOriginalExtension();
+
+                        // Get the current date in 'Y-m-d' format
+                        $date = now()->format('Y-m-d');
+
+                        // Generate the new file name: original_name_date.extension
+                        $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
+
+                        // Store the file with the new name
+                        $path = $photo->storeAs('ftpp/audit_finding_attachments', $newFileName, 'public');
+
+                        // Save to the database
                         DocumentFile::create([
                             'audit_finding_id' => $auditFinding->id,
                             'file_path' => $path,
-                            'original_name' => $photo->getClientOriginalName(),
+                            'original_name' => $originalName,
                         ]);
                     }
                 }
 
                 if ($request->hasFile('files')) {
                     foreach ($request->file('files') as $file) {
-                        $path = $file->store('ftpp/audit_finding_attachments', 'public');
+                        // Get the original file name and extension
+                        $originalName = $file->getClientOriginalName();
+                        $extension = $file->getClientOriginalExtension();
+
+                        // Get the current date in 'Y-m-d' format
+                        $date = now()->format('Y-m-d');
+
+                        // Generate the new file name: original_name_date.extension
+                        $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
+
+                        // Store the file with the new name
+                        $path = $file->storeAs('ftpp/audit_finding_attachments', $newFileName, 'public');
+
+                        // Save to the database
                         DocumentFile::create([
                             'audit_finding_id' => $auditFinding->id,
                             'file_path' => $path,
-                            'original_name' => $file->getClientOriginalName(),
+                            'original_name' => $originalName,
                         ]);
                     }
                 }
 
                 if ($request->hasFile('attachments')) {
                     foreach ($request->file('attachments') as $file) {
-                        $path = $file->store('ftpp/audit_finding_attachments', 'public');
+                        // Get the original file name and extension
+                        $originalName = $file->getClientOriginalName();
+                        $extension = $file->getClientOriginalExtension();
+
+                        // Get the current date in 'Y-m-d' format
+                        $date = now()->format('Y-m-d');
+
+                        // Generate the new file name: original_name_date.extension
+                        $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
+
+                        // Store the file with the new name
+                        $path = $file->storeAs('ftpp/audit_finding_attachments', $newFileName, 'public');
+
+                        // Save to the database
                         DocumentFile::create([
                             'audit_finding_id' => $auditFinding->id,
                             'file_path' => $path,
-                            'original_name' => $file->getClientOriginalName(),
+                            'original_name' => $originalName,
                         ]);
                     }
                 }
@@ -356,11 +410,24 @@ class FtppController extends Controller
                     // 6️⃣ Upload Attachments
                     if ($request->hasFile('attachments')) {
                         foreach ($request->file('attachments') as $file) {
-                            $path = $file->store('ftpp/auditee_action_attachments', 'public');
+                            // Ambil nama asli dan ekstensi
+                            $originalName = $file->getClientOriginalName();
+                            $extension = $file->getClientOriginalExtension();
+
+                            // Ambil tanggal sekarang
+                            $date = now()->format('Y-m-d');
+
+                            // Buat nama file baru: originalname_date.extension
+                            $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
+
+                            // Simpan file dengan nama baru
+                            $path = $file->storeAs('ftpp/auditee_action_attachments', $newFileName, 'public');
+
+                            // Simpan ke database
                             DocumentFile::create([
                                 'auditee_action_id' => $auditeeAction->id,
                                 'file_path' => $path,
-                                'original_name' => $file->getClientOriginalName(),
+                                'original_name' => $originalName,
                             ]);
                         }
                     }
@@ -404,20 +471,15 @@ class FtppController extends Controller
     {
         $request->validate([
             'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
-            'ldr_spv_signature' => 'required',
         ]);
 
         $action = AuditeeAction::findOrFail($request->auditee_action_id);
-
-        // Proses signature
-        $path = $this->saveSignature($request->ldr_spv_signature, 'ldr-spv');
-        $action->ldr_spv_signature = $path;
+        $action->ldr_spv_signature = true;
         $action->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Leader/SPV signature saved successfully',
-            'path' => $path
+            'message' => 'Leader/SPV approved'
         ]);
     }
 
@@ -425,60 +487,21 @@ class FtppController extends Controller
     {
         $request->validate([
             'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
-            'dept_head_signature' => 'required',
         ]);
 
         $action = AuditeeAction::findOrFail($request->auditee_action_id);
-
-        // Proses signature
-        $path = $this->saveSignature($request->dept_head_signature, 'dept-head');
-        $action->dept_head_signature = $path;
+        $action->dept_head_signature = true;
         $action->save();
 
-        // Update status_id pada tt_audit_findings menjadi 9
+        // update status
         $finding = AuditFinding::find($action->audit_finding_id);
-        if ($finding) {
+        if ($finding)
             $finding->update(['status_id' => 9]);
-        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Dept Head signature saved & status updated',
-            'path' => $path
+            'message' => 'Dept Head approved'
         ]);
-    }
-
-    /**
-     * Fungsi bantu untuk menyimpan tanda tangan baik base64 atau file upload
-     */
-    private function saveSignature($signature, $folder)
-    {
-        // Jika dikirim dari canvas (base64)
-        if (is_string($signature) && str_starts_with($signature, 'data:image')) {
-            $image = preg_replace('/^data:image\/\w+;base64,/', '', $signature);
-            $image = base64_decode($image);
-            $filename = $folder . '_' . uniqid() . '.png';
-            $path = 'ftpp/signatures/' . $filename;
-
-            // simpan langsung di disk public
-            Storage::disk('public')->put($path, $image);
-
-            // kembalikan path relatif (bukan URL)
-            return $path;
-        }
-
-        // Jika dikirim sebagai file upload biasa
-        if (request()->hasFile($folder . '_signature')) {
-            $file = request()->file($folder . '_signature');
-
-            // simpan di folder ftpp/signatures di disk public
-            $path = $file->store('ftpp/signatures', 'public');
-
-            // return path relatif, bukan URL
-            return $path;
-        }
-
-        return null;
     }
 
     public function update(Request $request, $id)
@@ -580,6 +603,33 @@ class FtppController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function auditorReturn(Request $request)
+    {
+        $request->validate([
+            'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
+            'status_id' => 'required|integer'
+        ]);
+
+        // 1️⃣ Ambil action berdasarkan auditee_action_id
+        $auditeeAction = AuditeeAction::findOrFail($request->auditee_action_id);
+
+        // 2️⃣ Ambil audit finding yang menjadi induknya
+        $finding = AuditFinding::findOrFail($auditeeAction->audit_finding_id);
+
+        // 3️⃣ Update status di table "tt_audit_findings"
+        $finding->status_id = $request->status_id;
+        $finding->save();
+
+        // 4️⃣ Reset flag auditor supaya bisa verify lagi
+        $auditeeAction->verified_by_auditor = false;
+        $auditeeAction->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FTPP returned to user for revision'
+        ]);
+    }
+
     public function leadAuditorAcknowledge(Request $request)
     {
         $action = AuditeeAction::findOrFail($request->auditee_action_id);
@@ -619,13 +669,40 @@ class FtppController extends Controller
             'auditeeAction.file', // lampiran
         ])->findOrFail($id);
 
-        // generate PDF menggunakan Blade
+        // Tambah URL penuh untuk signature
+        foreach (['dept_head_signature', 'ldr_spv_signature', 'acknowledge_by_lead_auditor', 'verified_by_auditor'] as $sig) {
+            if (!empty($finding->auditeeAction?->$sig)) {
+                $finding->{$sig . '_url'} = asset('storage/' . $finding->auditeeAction->$sig);
+            }
+        }
+
+        // Tambah URL penuh untuk semua lampiran
+        if ($finding->auditeeAction && $finding->auditeeAction->file) {
+            foreach ($finding->auditeeAction->file as $file) {
+                $file->full_url = asset('storage/' . $file->file_path);
+            }
+        }
+
         $pdf = PDF::loadView('contents.ftpp.pdf', compact('finding'))
             ->setPaper('a4', 'portrait');
 
         $filename = 'FTPP_Finding_' . preg_replace('/[\/\\\\]/', '_', $finding->registration_number) . '.pdf';
 
-        // download langsung
         return $pdf->download($filename);
+    }
+
+    public function destroy($id)
+    {
+        $finding = AuditFinding::find($id);
+        if (!$finding) {
+            return response()->json(['message' => 'Finding not found'], 404);
+        }
+
+        try {
+            $finding->delete();
+            return response()->json(['message' => 'Finding deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to delete'], 500);
+        }
     }
 }
