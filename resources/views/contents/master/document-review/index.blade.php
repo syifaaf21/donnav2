@@ -28,7 +28,7 @@
                 <i class="bi bi-plus-circle"></i>
                 <span>Add Document</span>
             </button>
-            @include('contents.master.document-review.partials.modal-add2')
+            @include('contents.master.document-review.partials.modal-add')
         </div>
 
         <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">

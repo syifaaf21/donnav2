@@ -21,58 +21,28 @@
 
         {{-- 🔹 Main Card --}}
         <div class="bg-white shadow-lg rounded-2xl border border-gray-100 p-6">
-            {{-- Filter & Search --}}
-            <form method="GET" id="filterForm" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {{-- Filter --}}
+            <form method="GET" id="filterForm" class="mb-6">
                 @if (auth()->user()->role->name == 'Admin' || auth()->user()->role->name == 'Super Admin')
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                        <select id="departmentSelect" name="department_id"
-                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-sky-400 focus:border-sky-400"
-                            onchange="document.getElementById('filterForm').submit()">
-                            <option value="">All Departments</option>
-                            @foreach ($departments as $dept)
-                                <option value="{{ $dept->id }}"
-                                    {{ request('department_id') == $dept->id ? 'selected' : '' }}>
-                                    {{ $dept->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-
-                <div class="md:col-span-2 relative">
-                    <label for="searchInput" class="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
-                        Search Documents
-                    </label>
-
-                    <div class="relative">
-                        <input type="text" name="search" id="searchInput"
-                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-                   placeholder-transparent focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                            placeholder="Type to search..." value="{{ request('search') }}">
-
-                        <!-- Placeholder floating label -->
-                        <label for="searchInput"
-                            class="absolute left-4 top-2.5 text-gray-400 text-sm pointer-events-none transition-all duration-150
-                   peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                   peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600 bg-white px-1 rounded">
-                            Type to search...
-                        </label>
-
-                        <!-- Buttons (Search + Clear) -->
-                        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                            <button type="submit" class="text-gray-400 hover:text-sky-600 transition-colors duration-150">
-                                <i class="bi bi-search text-lg"></i>
-                            </button>
-                            <button type="button" id="clearSearch"
-                                onclick="document.getElementById('searchInput').value=''; document.getElementById('filterForm').submit();"
-                                class="text-gray-400 hover:text-red-500 transition-colors duration-150">
-                                <i class="bi bi-x-circle text-lg"></i>
-                            </button>
+                    <div class="flex justify-end w-full">
+                        <div class="w-96 rounded-2xl">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <select id="departmentSelect" name="department_id"
+                                class="w-full rounded-lg border-gray-300 text-sm focus:ring-sky-400 focus:border-sky-400"
+                                onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All Departments</option>
+                                @foreach ($departments as $dept)
+                                    <option value="{{ $dept->id }}"
+                                        {{ request('department_id') == $dept->id ? 'selected' : '' }}>
+                                        {{ $dept->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
-                </div>
+                @endif
             </form>
+
 
             {{-- 🔹 Accordion --}}
             <div id="docList" class="space-y-4">
@@ -80,9 +50,8 @@
                     <div
                         class="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         {{-- Header Accordion --}}
-                        <button type="button"
-                            class="doc-accordion-toggle w-full flex items-center justify-between px-5 py-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-sky-50 focus:outline-none"
-                            data-target="panel-{{ $loop->index }}">
+                        <a href="{{ route('document-control.department', ['department' => $department]) }}"
+                            class="w-full flex items-center justify-between px-5 py-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-sky-50 rounded-lg">
                             <div class="flex items-center gap-3">
                                 <div class="bg-sky-100 text-sky-600 p-2 rounded-md">
                                     <i class="bi bi-folder2-open text-base"></i>
@@ -92,10 +61,8 @@
                                     <p class="text-xs text-gray-500">{{ count($mappings) }} documents</p>
                                 </div>
                             </div>
-                            <i class="bi bi-chevron-down text-gray-500 transition-transform transform"
-                                data-rotate-for="panel-{{ $loop->index }}"></i>
-                        </button>
-
+                            <i class="bi bi-box-arrow-up-right text-gray-500"></i>
+                        </a>
                         {{-- Content --}}
                         <div id="panel-{{ $loop->index }}"
                             class="accordion-panel hidden px-4 py-3 bg-white transition-all duration-300 ease-in-out">
@@ -313,17 +280,6 @@
                         dropdown.classList.add('hidden');
                     }
                 });
-            });
-
-            // =======================
-            // Clear Search
-            // =======================
-            document.getElementById('clearSearch')?.addEventListener('click', function() {
-                const input = document.getElementById('searchInput');
-                if (input) {
-                    input.value = '';
-                    document.getElementById('searchForm').submit();
-                }
             });
 
             // =======================
@@ -614,18 +570,18 @@
                         let html = `
                 <div class="space-y-3">
                     ${activeFiles.map((f, i) => `
-                                                                        <div class="p-3 border rounded bg-gray-50">
-                                                                            <p class="text-sm text-gray-700 mb-1">
-                                                                                <strong>File ${i + 1}:</strong> ${f.name || f.original_name || 'Unnamed File'}
-                                                                            </p>
-                                                                            <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
-                                                                            <div class="mt-2 flex items-center gap-2">
-                                                                                <label class="text-xs text-gray-600">Replace:</label>
-                                                                                <input type="file" name="revision_files[]" class="form-control border-gray-300 rounded p-1 text-sm">
-                                                                                <input type="hidden" name="revision_file_ids[]" value="${f.id}">
-                                                                            </div>
-                                                                        </div>
-                                                                    `).join('')}
+                                                                                        <div class="p-3 border rounded bg-gray-50">
+                                                                                            <p class="text-sm text-gray-700 mb-1">
+                                                                                                <strong>File ${i + 1}:</strong> ${f.name || f.original_name || 'Unnamed File'}
+                                                                                            </p>
+                                                                                            <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
+                                                                                            <div class="mt-2 flex items-center gap-2">
+                                                                                                <label class="text-xs text-gray-600">Replace:</label>
+                                                                                                <input type="file" name="revision_files[]" class="form-control border-gray-300 rounded p-1 text-sm">
+                                                                                                <input type="hidden" name="revision_file_ids[]" value="${f.id}">
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    `).join('')}
                 </div>
             `;
                         container.innerHTML = html;

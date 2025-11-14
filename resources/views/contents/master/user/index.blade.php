@@ -2,7 +2,7 @@
 @section('title', 'User')
 
 @section('content')
-    <div class="container mx-auto px-4 py-2">
+    <div class="px-6 py-4">
         {{-- Header --}}
         <div class="flex justify-between items-center mb-4">
             <nav class="text-sm text-gray-500">

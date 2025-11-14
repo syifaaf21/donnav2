@@ -97,6 +97,23 @@ class PartNumberController extends Controller
         return redirect()->back()->with('success', 'Part Number updated successfully.');
     }
 
+    public function getDetails($id)
+    {
+        $part = PartNumber::with(['product', 'productModel', 'process'])->find($id);
+        if (!$part) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $part->id,
+            'part_number' => $part->part_number,
+            'plant' => $part->plant,
+            'product' => $part->product ? ['id' => $part->product->id, 'text' => $part->product->name] : null,
+            'model' => $part->productModel ? ['id' => $part->productModel->id, 'text' => $part->productModel->name] : null,
+            'process' => $part->process ? ['id' => $part->process->id, 'text' => $part->process->name] : null,
+        ]);
+    }
+
     public function getOptionsByPlant(Request $request)
     {
         $plant = ucfirst($request->query('plant'));

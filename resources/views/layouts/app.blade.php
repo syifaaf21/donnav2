@@ -72,8 +72,30 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     @stack('scripts')
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const sidebar = document.getElementById("sidebar");
+            const mainWrapper = document.getElementById("mainWrapper");
+            const toggle = document.getElementById("toggleSidebar");
+
+            toggle.addEventListener("click", () => {
+                sidebar.classList.toggle("collapsed");
+
+                if (sidebar.classList.contains("collapsed")) {
+                    mainWrapper.classList.remove("ml-64");
+                    mainWrapper.classList.add("ml-[70px]");
+                } else {
+                    mainWrapper.classList.remove("ml-[70px]");
+                    mainWrapper.classList.add("ml-64");
+                }
+
+                feather.replace();
+            });
+        });
+    </script>
+
+
 </body>
-
-
 
 </html>

@@ -140,6 +140,7 @@ Route::middleware('auth')->group(function () {
     // Document Control
     Route::prefix('document-control')->name('document-control.')->group(function () {
         Route::get('/', [DocumentControlController::class, 'index'])->name('index');
+        Route::get('/department/{department}', [DocumentControlController::class, 'showByDepartment'])->name('department');
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
@@ -178,11 +179,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('master')->name('master.')->group(function () {
         // Document Review
         Route::prefix('document-review')->name('document-review.')->group(function () {
-            Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
+            // Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
             Route::get('/', [DocumentMappingController::class, 'reviewIndex2'])->name('index2');
-            Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
+            // Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
             Route::post('/store', [DocumentMappingController::class, 'storeReview2'])->name('store2');
-            Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
+            // Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
+            Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview2'])->name('update2');
             Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
             Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
             Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');

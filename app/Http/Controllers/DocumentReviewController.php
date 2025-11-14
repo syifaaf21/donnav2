@@ -147,18 +147,27 @@ class DocumentReviewController extends Controller
     private function groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings)
     {
         return collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
+
+            // Filter dokumen per plant
             $mappingsByPlant = $documentMappings->filter(
-                fn($item) => strtolower($item->partNumber?->plant ?? '') === strtolower($plant)
+                fn($item) =>
+                strtolower($item->partNumber?->plant ?? strtolower($item->plant ?? '')) === strtolower($plant)
             );
 
+            // Group berdasarkan document code
             $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
 
+            // Pastikan semua kode dokumen master tetap ada (meskipun kosong)
             $orderedGrouped = collect();
-            $documentsMaster->each(fn($doc) => $orderedGrouped->put($doc->code, $groupedDocs->get($doc->code, collect())));
+            $documentsMaster->each(
+                fn($doc) =>
+                $orderedGrouped->put($doc->code, $groupedDocs->get($doc->code, collect()))
+            );
 
             return [$plant => $orderedGrouped];
         });
     }
+
 
     private function getDocumentsGroupedByPlantAndCode()
     {

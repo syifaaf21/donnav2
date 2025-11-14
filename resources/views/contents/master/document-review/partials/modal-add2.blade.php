@@ -14,7 +14,7 @@
                     </div>
 
                     {{-- Notes --}}
-                    <div class="d-flex align-items-center px-3 py-1 mb-3"
+                    {{-- <div class="d-flex align-items-center px-3 py-1 mb-3"
                         style="background-color: #fff8dc; border: 1px solid #ffeeba; border-left: 4px solid #ffc107; border-radius: 3px; font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #856404;">
                         <i class="bi bi-exclamation-triangle-fill me-2 text-warning" style="font-size: 1rem;"></i>
                         <div>
@@ -23,7 +23,7 @@
                                 Child Document cannot be created without Parent Document
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     {{-- Modal Body --}}
                     <div class="modal-body p-4">
@@ -93,8 +93,9 @@
 
                             {{-- Model --}}
                             <div class="col-md-4">
-                                <label class="form-label fw-medium">Model</label>
-                                <select id="model_select" name="model_id" class="form-select border-1 shadow-sm">
+                                <label class="form-label fw-medium">Model <span class="text-danger">*</span></label>
+                                <select id="model_select" name="model_id" class="form-select border-1 shadow-sm"
+                                    disabled required>
                                     <option value="">-- Select Model --</option>
                                     @foreach ($models as $model)
                                         <option value="{{ $model->id }}">{{ $model->name }}</option>
@@ -105,7 +106,8 @@
                             {{-- Product --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Product</label>
-                                <select id="product_select" name="product_id" class="form-select border-1 shadow-sm">
+                                <select id="product_select" name="product_id" class="form-select border-1 shadow-sm"
+                                    disabled>
                                     <option value="">-- Select Product --</option>
                                     @foreach ($products as $product)
                                         <option value="{{ $product->id }}">{{ $product->name }}</option>
@@ -116,7 +118,8 @@
                             {{-- Process --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Process</label>
-                                <select id="process_select" name="process_id" class="form-select border-1 shadow-sm text-capitalize">
+                                <select id="process_select" name="process_id"
+                                    class="form-select border-1 shadow-sm text-capitalize" disabled>
                                     <option value="">-- Select Process --</option>
                                     @foreach ($processes as $process)
                                         <option value="({{ $process->id }})">{{ $process->name }}</option>
@@ -129,7 +132,7 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Part Number (Optional)</label>
                                 <select id="partNumber_select" name="part_number_id"
-                                    class="form-select border-1 shadow-sm">
+                                    class="form-select border-1 shadow-sm" disabled>
                                     <option value="">-- Select Part Number --</option>
                                     @foreach ($partNumbers as $part)
                                         <option value="{{ $part->id }}">{{ $part->part_number }}</option>
@@ -143,7 +146,7 @@
                                         class="text-danger">*</span></label>
                                 <select id="department_select" name="department_id"
                                     class="form-select border-1 shadow-sm @error('department_id') is-invalid @enderror"
-                                    required>
+                                    disabled required>
                                     <option value="">-- Select Department --</option>
                                     @foreach ($departments as $dept)
                                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -155,16 +158,30 @@
                             {{-- Notes --}}
                             <div class="col-12 mb-3">
                                 <label class="form-label fw-medium">Notes</label>
-                                <textarea name="notes" class="form-control border-1 shadow-sm" rows="3" placeholder="Enter notes (optional)">{{ old('notes') }}</textarea>
+                                <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
+                                <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"
+                                    style="min-height: 100px; max-height: 150px; width: 100%; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; border: 1px solid #ddd; border-radius: 4px; padding: 8px; background-color: #fff;">
+                                </div>
+                                <small class="text-muted">You can format your notes with bold, italic, underline,
+                                    colors, and more.</small>
+                                @error('notes')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             {{-- File Upload --}}
-                            <div class="col-12 mt-4">
+                            <div class="col-12 mt-10">
                                 <label class="form-label fw-medium">Upload File <span
                                         class="text-danger">*</span></label>
-                                <input type="file" name="files[]"
-                                    class="form-control border-1 shadow-sm @error('files') is-invalid @enderror"
-                                    accept=".pdf,.doc,.docx,.xls,.xlsx" multiple required>
+                                <div id="file-upload-container">
+                                    <div class="input-group mb-2">
+                                        <input type="file" name="files[]" class="form-control border-1 shadow-sm"
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                                    </div>
+                                    <button class="btn btn-outline-success btn-sm mt-2 add-file-btn" type="button">+
+                                        Add
+                                        File</button>
+                                </div>
                                 <small class="text-muted d-block mt-1">Allowed Format: PDF, DOCX, EXCEL</small>
                                 <div class="invalid-feedback">At least one file is required.</div>
                             </div>
@@ -187,144 +204,267 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize TomSelect
-            const plantTS = new TomSelect("#plant_select", {
-                create: false
-            });
-            const documentTS = new TomSelect("#document_select", {
+            // Utility fetch wrapper with safe error handling
+            async function safeFetchJson(url) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+
+                    // Kalau data array → normalisasi untuk dropdown
+                    if (Array.isArray(data)) {
+                        return data.map(item => ({
+                            value: item.id ?? item.value,
+                            text: item.name ?? item.text ?? item.part_number ?? 'Unnamed'
+                        }));
+                    }
+
+                    // Kalau data object → return apa adanya (untuk detail)
+                    return data;
+                } catch (err) {
+                    console.error(`Error fetching ${url}:`, err);
+                    return [];
+                }
+            }
+
+            // --- Initialize TomSelects ---
+            const tsDocument = new TomSelect('#document_select', {
                 create: false,
                 sortField: {
-                    field: "text",
-                    direction: "asc"
+                    field: 'text',
+                    direction: 'asc'
                 }
             });
-            const modelTS = new TomSelect("#model_select", {
-                create: false
+            const tsPlant = new TomSelect('#plant_select', {
+                create: false,
+                sortField: {
+                    field: 'text',
+                    direction: 'asc'
+                }
             });
-            const productTS = new TomSelect("#product_select", {
-                create: false
+            const tsPart = new TomSelect('#partNumber_select', {
+                create: false,
+                sortField: {
+                    field: 'text',
+                    direction: 'asc'
+                }
             });
-            const processTS = new TomSelect("#process_select", {
-                create: false
+            const tsProduct = new TomSelect('#product_select', {
+                create: false,
+                sortField: {
+                    field: 'text',
+                    direction: 'asc'
+                }
             });
-            const partNumberTS = new TomSelect("#partNumber_select", {
-                create: false
+            const tsModel = new TomSelect('#model_select', {
+                create: false,
+                sortField: {
+                    field: 'text',
+                    direction: 'asc'
+                }
             });
-            const departmentTS = new TomSelect("#department_select", {
-                create: false
+            const tsProcess = new TomSelect('#process_select', {
+                create: false,
+                sortField: {
+                    field: 'text',
+                    direction: 'asc'
+                }
+            });
+            const tsDept = new TomSelect('#department_select', {
+                create: false,
+                sortField: {
+                    field: 'text',
+                    direction: 'asc'
+                }
             });
 
-            // Data from backend
-            const partNumbers =
-                @json($partNumbers); // each partNumber should have id, plant, model_id, product_id, process_id
-            const models = @json($models); // each model should have id, name
-            const products = @json($products); // each product should have id, name
-            const processes = @json($processes); // each process should have id, name
+            tsDocument.setValue(@json(old('document_id')));
+            tsPlant.setValue(@json(old('plant')));
+            tsPart.setValue(@json(old('part_number_id')));
+            tsProduct.setValue(@json(old('product_id')));
+            tsModel.setValue(@json(old('model_id')));
+            tsProcess.setValue(@json(old('process_id')));
+            tsDept.setValue(@json(old('department_id')));
 
-            function resetFields() {
-                modelTS.clear();
-                productTS.clear();
-                processTS.clear();
-                partNumberTS.clear();
-                modelTS.enable();
-                productTS.enable();
-                processTS.enable();
-                partNumberTS.enable();
+            // --- Function: disable all controls initially ---
+            function disableAllDetailControls() {
+                tsPart.disable();
+                tsProduct.disable();
+                tsModel.disable();
+                tsProcess.disable();
+                tsDept.disable();
             }
+            disableAllDetailControls();
 
-            function updateFieldsByPlant(plant) {
+            // --- When Plant selected ---
+            tsPlant.on('change', async function(plant) {
                 if (!plant) {
-                    resetFields();
+                    // If plant cleared: disable all and clear values
+                    disableAllDetailControls();
+                    tsPart.clear();
+                    tsProduct.clear();
+                    tsModel.clear();
+                    tsProcess.clear();
+                    tsDept.clear();
                     return;
                 }
 
-                // Filter Part Numbers sesuai Plant
-                const filteredParts = partNumbers.filter(p => p.plant === plant);
+                // Enable all fields once a plant is chosen
+                tsPart.enable();
+                tsProduct.enable();
+                tsModel.enable();
+                tsProcess.enable();
+                tsDept.enable();
 
-                // Update Part Number options
-                partNumberTS.clearOptions();
-                filteredParts.forEach(p => {
-                    partNumberTS.addOption({
-                        value: p.id,
-                        text: p.part_number
-                    });
-                });
+                // Fetch data filtered by plant
+                const [parts, products, models, processes, departments] = await Promise.all([
+                    safeFetchJson(`/api/part-numbers?plant=${encodeURIComponent(plant)}`),
+                    safeFetchJson(`/api/products?plant=${encodeURIComponent(plant)}`),
+                    safeFetchJson(`/api/models?plant=${encodeURIComponent(plant)}`),
+                    safeFetchJson(`/api/processes?plant=${encodeURIComponent(plant)}`),
+                    safeFetchJson(`/api/departments?plant=${encodeURIComponent(plant)}`)
+                ]);
 
-                // Filter Model options
-                const modelIds = [...new Set(filteredParts.map(p => p.model_id))];
-                modelTS.clearOptions();
-                models.filter(m => modelIds.includes(m.id)).forEach(m => modelTS.addOption({
-                    value: m.id,
-                    text: m.name
-                }));
+                // Clear and repopulate each dropdown
+                tsPart.clearOptions();
+                tsPart.addOptions(parts || []);
+                tsPart.refreshOptions(false);
 
-                // Filter Product options
-                const productIds = [...new Set(filteredParts.map(p => p.product_id))];
-                productTS.clearOptions();
-                products.filter(p => productIds.includes(p.id)).forEach(p => productTS.addOption({
-                    value: p.id,
-                    text: p.name
-                }));
+                tsProduct.clearOptions();
+                tsProduct.addOptions(products || []);
+                tsProduct.refreshOptions(false);
 
-                // Filter Process options
-                const processIds = [...new Set(filteredParts.map(p => p.process_id))];
-                processTS.clearOptions();
-                processes.filter(p => processIds.includes(p.id)).forEach(p => processTS.addOption({
-                    value: p.id,
-                    text: p.name
-                }));
+                tsModel.clearOptions();
+                tsModel.addOptions(models || []);
+                tsModel.refreshOptions(false);
 
-                // Reset values
-                modelTS.clear();
-                productTS.clear();
-                processTS.clear();
-                partNumberTS.clear();
+                tsProcess.clearOptions();
+                tsProcess.addOptions(processes || []);
+                tsProcess.refreshOptions(false);
 
-                // Jika cuma 1 part number, auto pilih
-                if (filteredParts.length === 1) {
-                    const part = filteredParts[0];
-                    partNumberTS.setValue(part.id);
-                    modelTS.setValue(part.model_id);
-                    productTS.setValue(part.product_id);
-                    processTS.setValue(part.process_id);
+                tsDept.clearOptions();
+                tsDept.addOptions(departments || []);
+                tsDept.refreshOptions(false);
+            });
 
-                    modelTS.disable();
-                    productTS.disable();
-                    processTS.disable();
-                    partNumberTS.disable();
+            // --- When Part Number selected ---
+            tsPart.on('change', async function(partId) {
+                if (!partId) {
+                    // If part cleared: empty & disable autofilled fields
+                    tsProduct.clear(true);
+                    tsModel.clear(true);
+                    tsProcess.clear(true);
+                    tsProduct.disable();
+                    tsModel.disable();
+                    tsProcess.disable();
+                    return;
+                }
+
+                // Fetch details of selected part number
+                const detail = await safeFetchJson(
+                    `/api/part-number-details/${encodeURIComponent(partId)}`);
+
+                if (detail && !detail.error) {
+                    // Auto-fill Product, Model, and Process
+                    if (detail.product) {
+                        tsProduct.addOption({
+                            value: detail.product.id,
+                            text: detail.product.name
+                        });
+                        tsProduct.setValue(detail.product.id);
+                    }
+                    if (detail.model) {
+                        tsModel.addOption({
+                            value: detail.model.id,
+                            text: detail.model.name
+                        });
+                        tsModel.setValue(detail.model.id);
+                    }
+                    if (detail.process) {
+                        tsProcess.addOption({
+                            value: detail.process.id,
+                            text: detail.process.name
+                        });
+                        tsProcess.setValue(detail.process.id);
+                    }
+
+                    // Keep them enabled so user can adjust if needed
+                    tsProduct.enable();
+                    tsModel.enable();
+                    tsProcess.enable();
                 } else {
-                    modelTS.enable();
-                    productTS.enable();
-                    processTS.enable();
-                    partNumberTS.enable();
-                }
-            }
-
-            plantTS.on('change', function(value) {
-                updateFieldsByPlant(value);
-            });
-
-            partNumberTS.on('change', function(value) {
-                const selectedId = parseInt(value);
-                if (!selectedId) {
-                    // Jika part number dihapus, enable semua field
-                    modelTS.enable();
-                    productTS.enable();
-                    processTS.enable();
-                    return;
-                }
-
-                const selectedPart = partNumbers.find(p => p.id === selectedId);
-                if (selectedPart) {
-                    modelTS.setValue(selectedPart.model_id);
-                    productTS.setValue(selectedPart.product_id);
-                    processTS.setValue(selectedPart.process_id);
-
-                    modelTS.disable();
-                    productTS.disable();
-                    processTS.disable();
+                    // If failed: clear all related fields
+                    tsProduct.clear(true);
+                    tsModel.clear(true);
+                    tsProcess.clear(true);
                 }
             });
+
+            const quill = new Quill('#quill_editor', {
+                theme: 'snow',
+                placeholder: 'Write your notes here...',
+                modules: {
+                    toolbar: [
+                        [{
+                            font: []
+                        }, {
+                            size: []
+                        }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{
+                            color: []
+                        }, {
+                            background: []
+                        }],
+                        [{
+                            list: 'ordered'
+                        }, {
+                            list: 'bullet'
+                        }],
+                        [{
+                            align: []
+                        }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Pilih form dan hidden input
+            const form = document.querySelector('#addDocumentModal form');
+            const hiddenInput = document.querySelector('#notes_input_add');
+
+            // Set old value jika ada
+            quill.root.innerHTML = hiddenInput.value || '';
+
+            // Saat submit form, isi hidden input dari Quill
+            form.addEventListener('submit', function() {
+                hiddenInput.value = quill.root.innerHTML;
+            });
+
+
+            const container = document.getElementById('file-upload-container');
+
+            container.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('add-file-btn')) {
+                    // Buat input file baru
+                    const newInputGroup = document.createElement('div');
+                    newInputGroup.className = 'input-group mb-2';
+                    newInputGroup.innerHTML = `
+                <input type="file" name="files[]" class="form-control border-1 shadow-sm" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
+            `;
+                    container.appendChild(newInputGroup);
+                }
+
+                if (e.target && e.target.classList.contains('remove-file-btn')) {
+                    e.target.parentElement.remove();
+                }
+            });
+
+            @if ($errors->any())
+                var addDocModal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
+                addDocModal.show();
+            @endif
         });
     </script>
 @endpush

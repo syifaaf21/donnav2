@@ -133,29 +133,63 @@ class DocumentMappingController extends Controller
     }
 
     public function reviewIndex2(Request $request)
-{
-    $documentsMaster = Document::with('childrenRecursive')
-        ->where('type', 'review')
-        ->get();
+    {
+        $documentsMaster = Document::with('childrenRecursive')
+            ->where('type', 'review')
+            ->get();
 
-    $partNumbers = PartNumber::all();
-    $statuses = Status::all();
-    $departments = Department::all();
-    $models = ProductModel::all();
-    $processes = Process::all();
-    $products = Product::all();
+        $partNumbers = PartNumber::all();
+        $statuses = Status::all();
+        $departments = Department::all();
+        $models = ProductModel::all();
+        $processes = Process::all();
+        $products = Product::all();
 
-    // Ambil list plant unik
-    $plants = PartNumber::pluck('plant')
-        ->map(fn($p) => ucfirst(strtolower($p)))
-        ->unique()
-        ->values();
+        // Ambil list plant unik
+        $plants = PartNumber::pluck('plant')
+            ->map(fn($p) => ucfirst(strtolower($p)))
+            ->unique()
+            ->values();
 
-    $groupedByPlant = [];
+        $groupedByPlant = [];
 
-    // Tab per plant
-    foreach ($plants as $plant) {
-        $query = DocumentMapping::with([
+        // Tab per plant
+        foreach ($plants as $plant) {
+            $query = DocumentMapping::with([
+                'document.parent',
+                'document.children',
+                'department',
+                'partNumber',
+                'status',
+                'user',
+                'files',
+                'parent',
+            ])
+                ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->where(function ($q) use ($plant) {
+                    $q->whereHas(
+                        'partNumber',
+                        fn($q2) =>
+                        $q2->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                    );
+                });
+
+            // Filter search
+            $search = trim($request->search);
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('document_number', 'like', "%{$search}%")
+                        ->orWhereHas('partNumber', fn($q2) => $q2->where('part_number', 'like', "%{$search}%"))
+                        ->orWhereHas('document', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]))
+                        ->orWhereHas('department', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]));
+                });
+            }
+
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
+        }
+
+        // Tab khusus untuk mapping tanpa part number (manual entry)
+        $queryManual = DocumentMapping::with([
             'document.parent',
             'document.children',
             'department',
@@ -166,66 +200,39 @@ class DocumentMappingController extends Controller
             'parent',
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->where(function($q) use ($plant) {
-                $q->whereHas('partNumber', fn($q2) =>
-                    $q2->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
-                );
-            });
+            ->whereNull('part_number_id');
 
         // Filter search
         $search = trim($request->search);
         if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
+            $queryManual->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
-                    ->orWhereHas('partNumber', fn($q2) => $q2->where('part_number', 'like', "%{$search}%"))
                     ->orWhereHas('document', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]))
                     ->orWhereHas('department', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]));
             });
         }
 
-        $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
-    }
+        $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
+        if ($manualMappings->isNotEmpty()) {
+            $groupedByPlant['Other / Manual Entry'] = $manualMappings;
+        }
+        $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
 
-    // Tab khusus untuk mapping tanpa part number (manual entry)
-    $queryManual = DocumentMapping::with([
-        'document.parent',
-        'document.children',
-        'department',
-        'partNumber',
-        'status',
-        'user',
-        'files',
-        'parent',
-    ])
-        ->whereHas('document', fn($q) => $q->where('type', 'review'))
-        ->whereNull('part_number_id');
-
-    // Filter search
-    $search = trim($request->search);
-    if (!empty($search)) {
-        $queryManual->where(function ($q) use ($search) {
-            $q->where('document_number', 'like', "%{$search}%")
-                ->orWhereHas('document', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]))
-                ->orWhereHas('department', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]));
-        });
-    }
-
-    $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
-    if ($manualMappings->isNotEmpty()) {
+        // Tambahkan tab Other / Manual Entry selalu
         $groupedByPlant['Other / Manual Entry'] = $manualMappings;
-    }
 
-    return view('contents.master.document-review.index2', compact(
-        'groupedByPlant',
-        'documentsMaster',
-        'partNumbers',
-        'statuses',
-        'departments',
-        'models',
-        'processes',
-        'products',
-    ));
-}
+
+        return view('contents.master.document-review.index2', compact(
+            'groupedByPlant',
+            'documentsMaster',
+            'partNumbers',
+            'statuses',
+            'departments',
+            'models',
+            'processes',
+            'products',
+        ));
+    }
 
 
     public function storeReview2(Request $request)
@@ -332,6 +339,72 @@ class DocumentMappingController extends Controller
 
         return back()->with('success', 'Document review created successfully!');
     }
+
+    public function updateReview2(Request $request, $id)
+    {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $mapping = DocumentMapping::findOrFail($id);
+
+        $validated = $request->validate([
+            'document_id' => 'required|exists:tm_documents,id',
+            'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
+            'model_id' => 'nullable|exists:tm_models,id',
+            'product_id' => 'nullable|exists:tm_products,id',
+            'process_id' => 'nullable|exists:tm_processes,id',
+            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
+            'department_id' => 'required|exists:tm_departments,id',
+            'notes' => 'nullable|string|max:500',
+            'parent_id' => 'nullable|exists:tt_document_mappings,id',
+        ]);
+
+        $cleanNotes = trim($validated['notes'] ?? '');
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') $cleanNotes = null;
+
+        // Validasi: minimal part number atau model/product/process harus diisi
+        if (empty($validated['part_number_id']) && (empty($validated['model_id']) || empty($validated['product_id']) || empty($validated['process_id']))) {
+            return back()->withErrors(['part_number_id' => 'Please select a Part Number or fill Model, Product, and Process manually.'])->withInput();
+        }
+
+        // Validasi parent jika diisi
+        if (!empty($validated['parent_id'])) {
+            $parent = DocumentMapping::find($validated['parent_id']);
+            if (!$parent) {
+                return back()->withErrors(['parent_id' => 'Parent document not found'])->withInput();
+            }
+
+            if ($validated['part_number_id']) {
+                if ($parent->part_number_id != $validated['part_number_id']) {
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected part number'])->withInput();
+                }
+            } else {
+                if (
+                    $parent->model_id != $validated['model_id'] ||
+                    $parent->product_id != $validated['product_id'] ||
+                    $parent->process_id != $validated['process_id']
+                ) {
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Model/Product/Process combination'])->withInput();
+                }
+            }
+        }
+
+        $mapping->update([
+            'document_id' => $validated['document_id'],
+            'document_number' => $validated['document_number'],
+            'parent_id' => $validated['parent_id'] ?? null,
+            'model_id' => $validated['model_id'] ?? null,
+            'product_id' => $validated['product_id'] ?? null,
+            'process_id' => $validated['process_id'] ?? null,
+            'part_number_id' => $validated['part_number_id'] ?? null,
+            'department_id' => $validated['department_id'],
+            'notes' => $cleanNotes,
+        ]);
+
+        return back()->with('success', 'Document review updated successfully!');
+    }
+
 
 
     // ================= Store Review (Admin) =================
