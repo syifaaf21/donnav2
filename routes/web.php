@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
+use App\Http\Controllers\Ftpp2Controller;
 use App\Http\Controllers\FtppController;
 use App\Http\Controllers\FtppMasterController;
 use App\Http\Controllers\KlausulController;
@@ -217,4 +218,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/auditor-verify', [FtppController::class, 'auditorVerify']);
     Route::post('/auditor-return', [FtppController::class, 'auditorReturn']);
     Route::post('/lead-auditor-acknowledge', [FtppController::class, 'leadAuditorAcknowledge']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | FTPP2
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('ftpp2')->name('ftpp2.')->group(function () {
+        Route::get('/search', [Ftpp2Controller::class, 'search'])->name('search');
+        Route::resource('/', Ftpp2Controller::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+        Route::delete('/{id}', [Ftpp2Controller::class, 'destroy'])->name('destroy');
+    });
 });

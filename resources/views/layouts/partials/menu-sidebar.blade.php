@@ -36,6 +36,14 @@
         </a>
     </li>
 
+    <li>
+        <a href="{{ route('ftpp2.index') }}"
+            class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all {{ Route::is('ftpp2*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
+            <i data-feather="alert-octagon" class="w-4 h-4 text-gray-100"></i>
+            <span class="sidebar-text text-gray-100">FTPP2</span>
+        </a>
+    </li>
+
     <hr class="my-2 border-gray-200">
 
     <!-- Master Data -->
