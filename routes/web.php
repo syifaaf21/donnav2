@@ -226,7 +226,22 @@ Route::middleware('auth')->group(function () {
     */
     Route::prefix('ftpp2')->name('ftpp2.')->group(function () {
         Route::get('/search', [Ftpp2Controller::class, 'search'])->name('search');
-        Route::resource('/', Ftpp2Controller::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+        // Custom store routes
+        Route::post('/store-audit-finding', [Ftpp2Controller::class, 'storeAuditFinding'])
+            ->name('storeAuditFinding');
+        // Route::post('/store-auditee-action', [Ftpp2Controller::class, 'storeAuditeeAction'])
+        //     ->name('storeAuditeeAction');
+        // Resource (gunakan path kosong)
+        Route::resource('/', Ftpp2Controller::class)->only([
+            'index',
+            'create',
+            'store',
+            'show',
+        ]);
         Route::delete('/{id}', [Ftpp2Controller::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/edit', [Ftpp2Controller::class, 'edit'])->name('edit');
+        Route::put('/{id}', [Ftpp2Controller::class, 'update'])->name('update');
+        Route::get('/{id}/download', [Ftpp2Controller::class, 'download'])->name('download');
     });
+
 });

@@ -2,27 +2,19 @@
 @section('title', 'FTPP2')
 
 @section('content')
-    <div class="p-6">
-        <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-2xl font-semibold">FTPP2 - Audit Findings & Auditee Actions</h2>
-            <a href="{{ route('ftpp2.create') }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700">
-                <i class="fas fa-plus"></i>
-                Add
-            </a>
-        </div>
+    <div class="p-2">
 
         <div class="flex gap-6">
             {{-- Left: status tabs/sidebar --}}
-            <aside class="w-64">
-                <div class="bg-slate-800 text-gray-100 rounded-lg p-4">
+            <aside class="w-64 h-100 bg-white text-gray-800 rounded-lg shadow p-4">
+                <div>
                     <ul class="space-y-1">
                         <li>
                             <a href="{{ route('ftpp2.index') }}"
-                                class="flex justify-between items-center py-2 rounded {{ request()->filled('status_id') ? 'text-gray-300' : 'bg-slate-700 text-white' }}">
+                                class="flex justify-between items-center p-2 rounded {{ request()->filled('status_id') ? 'text-gray-800' : 'bg-slate-700 text-white' }}">
                                 <span>All</span>
                                 <span
-                                    class="text-sm bg-slate-700 text-white px-1 py-0.5 rounded">{{ $totalCount ?? 0 }}</span>
+                                    class="text-sm bg-white text-gray-800 px-1 py-0.5 rounded">{{ $totalCount ?? 0 }}</span>
                             </a>
                         </li>
                         @foreach ($statuses as $status)
@@ -36,7 +28,7 @@
                                 ]))
                                 <li>
                                     <a href="{{ route('ftpp2.index', array_merge(request()->except('page'), ['status_id' => $status->id])) }}"
-                                        class="flex justify-between items-center py-2 rounded hover:bg-slate-700 {{ request('status_id') == $status->id ? 'bg-slate-700 text-white' : 'text-gray-100' }}">
+                                        class="flex justify-between items-center p-2 rounded hover:bg-slate-700 hover:text-white {{ request('status_id') == $status->id ? 'bg-slate-700 text-white' : 'text-gray-800' }}">
                                         <span>{{ $status->name }}</span>
                                         <span
                                             class="text-sm bg-slate-700 text-white px-1 py-0.5 rounded">{{ $status->audit_finding_count }}</span>
@@ -50,12 +42,19 @@
 
             {{-- Main column --}}
             <div class="flex-1">
-                <div class="mb-3">
+                <div class="mb-4 flex items-center justify-between">
                     <input id="live-search" type="text" placeholder="Search..."
-                        class="block w-1/3 rounded-lg border border-gray-300 p-2 focus:ring focus:ring-blue-300 focus:outline-none"
+                        class="block w-1/3 rounded-lg border shadow border-gray-300 p-2 focus:ring focus:ring-blue-400 focus:outline-none"
                         autocomplete="off">
-                </div>
+                    @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
+                        <a href="{{ route('ftpp2.create') }}"
+                            class="inline-flex items-center gap-2 px-4 py-2 shadow bg-blue-800 text-white rounded hover:bg-blue-700">
+                            <i class="fas fa-plus"></i>
+                            Add
+                        </a>
+                    @endif
 
+                </div>
 
                 <div class="bg-white shadow rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
@@ -88,7 +87,7 @@
                                     </th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
+                                        {{-- Actions --}}
                                     </th>
                                 </tr>
                             </thead>
@@ -126,16 +125,51 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <form method="POST" action="{{ route('ftpp2.destroy', $finding->id) }}"
-                                                onsubmit="return confirm('Delete this record?')" class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-800"
-                                                    title="Delete">
-                                                    <i data-feather="trash-2"></i>
+                                        <td class="flex px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
+                                                <button type="button"
+                                                    @click.prevent="
+                open = !open;
+                const rect = $el.getBoundingClientRect();
+                x = rect.left - 120;   // posisi horizontal dropdown
+                y = rect.top + 25;     // posisi vertical dropdown
+            "
+                                                    class="p-1 hover:bg-gray-200 rounded">
+                                                    <i data-feather="more-vertical" class="w-5 h-5"></i>
                                                 </button>
-                                            </form>
+
+                                                <!-- Teleport dropdown ke BODY -->
+                                                <template x-teleport="body">
+                                                    <div x-show="open" @click.outside="open = false" x-transition
+                                                        class="absolute bg-white border rounded-md shadow-lg z-[9999]"
+                                                        :style="`top:${y}px; left:${x}px; width:140px; position:fixed`">
+                                                        <a :href=""
+                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-800 hover:bg-gray-100">
+                                                            <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                        </a>
+
+                                                        <a :href="`/ftpp2/${item.id}/download`"
+                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-gray-100">
+                                                            <i data-feather="download" class="w-4 h-4"></i> Download
+                                                        </a>
+
+                                                        <a href="{{ route('ftpp2.edit', $finding->id) }}"
+                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-yellow-500 hover:bg-gray-100">
+                                                            <i data-feather="edit" class="w-4 h-4"></i> Edit
+                                                        </a>
+
+                                                        <form method="POST"
+                                                            action="{{ route('ftpp2.destroy', $finding->id) }}"
+                                                            onsubmit="return confirm('Delete this record?')">
+                                                            @csrf @method('DELETE')
+                                                            <button type="submit"
+                                                                class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                                <i data-feather="trash-2" class="w-4 h-4"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -222,9 +256,6 @@
                             .catch(err => console.error(err));
                     }, 300);
                 });
-
-                // No-AJAX delete: use standard form submissions (DELETE via POST + _method)
-
             })();
         </script>
     @endpush
