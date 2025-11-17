@@ -244,7 +244,6 @@
                             const previewFileContainer = document.getElementById('previewFileContainer');
 
                             if (!previewImageContainer || !previewFileContainer) {
-                                console.warn('⚠️ Preview container belum ada di DOM');
                                 return;
                             }
 
