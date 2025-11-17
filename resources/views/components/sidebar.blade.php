@@ -57,7 +57,7 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#!">
+              <a class="nav-link {{ Route::is('part-number.*') ? 'active bg-light rounded' : '' }}" href="{{ route('part_numbers.index') }}">
                 <div class="nav-link-icon text-success">
                   <i class="bi bi-box-seam"></i>
                 </div>
@@ -65,7 +65,7 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {{ Route::is('documents.*') ? 'active bg-light rounded' : '' }}" href="{{ route('documents.index') }}">
+              <a class="nav-link {{ Route::is('document.*') ? 'active bg-light rounded' : '' }}" href="{{ route('documents.index') }}">
                 <div class="nav-link-icon text-warning">
                   <i class="bi bi-file-earmark-text"></i>
                 </div>

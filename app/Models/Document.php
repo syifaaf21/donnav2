@@ -10,11 +10,15 @@ class Document extends Model
     use HasFactory;
 
     protected $fillable = [
-    'name',
-    'parent_id',
-    'department_id',
-];
+        'name',
+        'department_id',
+        'parent_id',
+    ];
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
     public function mapping()
     {

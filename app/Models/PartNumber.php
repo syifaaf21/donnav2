@@ -9,6 +9,13 @@ class PartNumber extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'part_number',
+        'product_id',
+        'model_id',
+        'process',
+    ];
+
     protected $table = 'part_numbers'; // sesuaikan
 
     public function product()

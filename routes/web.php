@@ -1,9 +1,12 @@
 <?php
 
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
-use App\Models\DocumentMapping;
-use App\Models\User;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\PartNumberController;
+use App\Http\Controllers\UserController;
+use App\Models\Document;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,13 +20,46 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
+// Route::get('/', function () {
+//     return view('index');
+// });
+
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
-Route::get('/users', [UserController::class, 'index'])->name('user.index');
+// Login & Logout Routes
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect('/login');
+})->name('logout');
+
+// Master Data Management Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/index', function () {
+        return view('contents.index');
+    })->name('index');
+    // Part Number Management Routes
+    Route::resource('part_numbers', PartNumberController::class);
+    Route::get('/part-numbers', [PartNumberController::class, 'index'])->name('part_numbers.index');
+
+    // User Management Routes
+    Route::resource('users', UserController::class);
+    Route::get('/users', [UserController::class, 'index'])->name('user.index');
+
+    // Document Management Routes
+    Route::resource('documents', DocumentController::class);
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+});
+
+Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::resource('users', UserController::class);
 
-Route::get('/documents', [DocumentMappingController::class, 'index'])->name('document.index');
-Route::resource('documents', DocumentMappingController::class);
+// Route::get('/documents', [DocumentMappingController::class, 'index'])->name('document.index');
+// Route::resource('documents', DocumentMappingController::class);
 
