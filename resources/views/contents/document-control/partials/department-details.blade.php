@@ -57,11 +57,11 @@
                     <tr>
                         <th class="px-4 py-2">No</th>
                         <th class="px-4 py-2">Document Name</th>
+                        <th class="px-4 py-2">Status</th>
+                        <th class="px-4 py-2">Obsolete Date</th>
                         <th class="px-4 py-2">Updated By</th>
                         <th class="px-4 py-2">Last Update</th>
-                        <th class="px-4 py-2">Obsolete Date</th>
                         <th class="px-4 py-2">Notes</th>
-                        <th class="px-4 py-2">Status</th>
                         <th class="px-4 py-2 text-center">Actions</th>
                     </tr>
                 </thead>
@@ -74,19 +74,6 @@
                             <td class="px-4 py-2 text-gray-700 truncate text-sm max-w-xs"
                                 title="{{ $mapping->document->name }}">
                                 {{ $mapping->document->name }}
-                            </td>
-                            <td class="px-4 py-2 text-gray-600 text-sm truncate">
-                                {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
-                            </td>
-                            <td class="px-4 py-2 text-gray-600 text-sm">{{ $mapping->updated_at?->format('d M Y') ?? '-' }}
-                            </td>
-                            <td class="px-4 py-2 text-gray-600 text-sm">
-                                {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
-                            </td>
-                            <td class="px-4 py-2 text-gray-600 text-sm max-w-xs">
-                                <div class="overflow-y-auto max-h-16 text-sm">
-                                    {!! $mapping->notes ?? '-' !!}
-                                </div>
                             </td>
                             {{-- Status badge --}}
                             <td class="px-4 py-2">
@@ -104,39 +91,22 @@
                                     {{ $mapping->status->name }}
                                 </span>
                             </td>
-
+                            <td class="px-4 py-2 text-gray-600 text-sm">
+                                {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
+                            </td>
+                            <td class="px-4 py-2 text-gray-600 text-sm truncate">
+                                {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
+                            </td>
+                            <td class="px-4 py-2 text-gray-600 text-sm">{{ $mapping->updated_at?->format('d M Y') ?? '-' }}
+                            </td>
+                            <td class="px-4 py-2 text-gray-600 text-sm max-w-xs">
+                                <div class="overflow-y-auto max-h-16 text-sm">
+                                    {!! $mapping->notes ?? '-' !!}
+                                </div>
+                            </td>
                             {{-- Actions --}}
                             <td class="px-4 py-2 text-center">
                                 <div class="flex justify-center gap-2 flex-wrap">
-                                    <!-- Upload -->
-                                    <button type="button"
-                                        class="btn-revise inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
-                                        data-docid="{{ $mapping->id }}" data-doc-title="{{ $mapping->document->name }}"
-                                        data-status="{{ $mapping->status->name }}"
-                                        data-files='@json($mapping->files_for_modal)' onclick="openReviseModal(this)">
-                                        <i class="bi bi-upload"></i>
-                                    </button>
-
-                                    <!-- Approve / Reject -->
-                                    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
-                                        <button type="button"
-                                            class="btn-approve inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600"
-                                            data-bs-toggle="modal" data-bs-target="#approveModal"
-                                            data-docid="{{ $mapping->id }}"
-                                            data-doc-title="{{ $mapping->document->name }}"
-                                            data-status="{{ $mapping->status->name }}">
-                                            <i class="bi bi-check2-circle"></i>
-                                        </button>
-                                        <button type="button"
-                                            class="btn-reject inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600"
-                                            data-docid="{{ $mapping->id }}"
-                                            data-doc-title="{{ $mapping->document->name }}"
-                                            data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
-                                            data-status="{{ $mapping->status->name }}">
-                                            <i class="bi bi-x-circle"></i>
-                                        </button>
-                                    @endif
-
                                     <!-- View Files -->
                                     <div class="relative inline-block overflow-visible">
                                         @if (count($mapping->files_for_modal) > 1)
@@ -153,8 +123,9 @@
                                                 <div class="py-1 text-sm max-h-80 overflow-y-auto">
                                                     @foreach ($mapping->files_for_modal as $file)
                                                         <button type="button"
-                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                            data-file="{{ $file['url'] }}">
+                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
+                                                            data-file="{{ $file['url'] }}"
+                                                            data-doc-title="{{ $file['name'] }}">
                                                             📄 {{ $file['name'] }}
                                                         </button>
                                                     @endforeach
@@ -163,12 +134,45 @@
                                         @elseif(count($mapping->files_for_modal) === 1)
                                             @php $file = $mapping->files_for_modal[0]; @endphp
                                             <button type="button"
-                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
-                                                data-file="{{ $file['url'] }}">
-                                                <i class="bi bi-eye"></i> View
+                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-cyan-500 hover:bg-cyan-600 text-white view-file-btn"
+                                                data-file="{{ $file['url'] }}"
+                                                title="View File">
+                                                <i class="bi bi-eye"></i>
                                             </button>
                                         @endif
                                     </div>
+                                    <!-- Upload -->
+                                    <button type="button"
+                                        class="btn-revise inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
+                                        data-docid="{{ $mapping->id }}" data-doc-title="{{ $mapping->document->name }}"
+                                        data-status="{{ $mapping->status->name }}"
+                                        title="Upload"
+                                        data-files='@json($mapping->files_for_modal)' onclick="openReviseModal(this)">
+                                        <i class="bi bi-upload"></i>
+                                    </button>
+                                    <!-- Approve / Reject -->
+                                    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+                                        <button type="button"
+                                            class="btn-approve inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600"
+                                            data-bs-toggle="modal" data-bs-target="#approveModal"
+                                            data-docid="{{ $mapping->id }}"
+                                            data-doc-title="{{ $mapping->document->name }}"
+                                            data-status="{{ $mapping->status->name }}"
+                                            title="Approve"
+                                            data-approve-url="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}">
+                                            <i class="bi bi-check2-circle"></i>
+                                        </button>
+                                        <button type="button"
+                                            class="btn-reject inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600"
+                                            data-docid="{{ $mapping->id }}"
+                                            data-doc-title="{{ $mapping->document->name }}"
+                                            data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
+                                            data-status="{{ $mapping->status->name }}"
+                                            title="Reject"
+                                            data-reject-url="{{ route('document-control.reject', $mapping) }}">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -183,13 +187,19 @@
     <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content rounded-2xl">
-                <div class="modal-header bg-white-600 text-white">
-                    <h5 class="modal-title font-semibold" id="previewTitle">File Preview</h5>
-                    <a href="#" id="viewFullBtn"
-                        class="ml-auto text-xs bg-sky-600 hover:bg-sky/30 px-3 py-1.5 rounded-md transition pointer-events-none opacity-60">
-                        View Full
-                    </a>
-                    <button type="button" class="btn-close btn-close-sky" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-white border-b flex items-center justify-between">
+                    <!-- Container teks agar overflow disembunyikan -->
+                    <h5 class="modal-title font-semibold text-gray-800 truncate max-w-[70%]" id="previewTitle"
+                        title="">
+                        File Preview
+                    </h5>
+
+                    <div class="flex items-center gap-2">
+                        <a href="#" id="viewFullBtn" class="btn btn-info btn-sm">
+                            <i class="bi bi-arrows-fullscreen"></i> View Full
+                        </a>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
                 </div>
                 <div class="modal-body p-0" style="height:80vh">
                     <iframe id="previewIframe" src="" class="w-full h-full border-none"></iframe>
@@ -197,11 +207,31 @@
             </div>
         </div>
     </div>
+
     <!-- Modals -->
     @include('contents.document-control.partials.modal-revise')
     @include('contents.document-control.partials.modal-approve')
     @include('contents.document-control.partials.modal-reject')
 @endsection
+<style>
+    /* --- Dropdown fix style --- */
+    .dropdown-fixed {
+        position: fixed !important;
+        z-index: 999999 !important;
+        background-color: #ffffff !important;
+        /* warna putih solid */
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* Tambahan: untuk isi dropdown agar tidak transparan juga */
+    .dropdown-fixed .py-1 {
+        background-color: #fff;
+    }
+</style>
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -321,12 +351,29 @@
             const reminderInput = document.getElementById('reminder_date');
             const approveForm = document.getElementById('approveForm');
 
+            // Saat tombol approve diklik → set ID nya (punyamu tetap dipakai)
             document.querySelectorAll('.btn-approve').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const docId = this.dataset.docid;
                     if (approveDocInput) approveDocInput.value = docId;
                 });
             });
+
+            // ================================
+            // 🔥 ADD THIS — Set action form approve
+            // ================================
+            if (approveModalEl) {
+                approveModalEl.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+
+                    // Ambil URL approve dari tombol
+                    const approveUrl = button.dataset.approveUrl;
+                    if (approveForm && approveUrl) {
+                        approveForm.action = approveUrl;
+                    }
+                });
+            }
 
             // simple validation: reminder <= obsolete
             if (approveForm) {
@@ -353,6 +400,7 @@
                 theme: 'snow',
                 placeholder: 'Write rejection notes...'
             });
+
             const rejectModalEl = document.getElementById('rejectModal');
             const rejectDocInput = document.getElementById('rejectDocumentId');
             const rejectNotesInput = document.getElementById('rejectNotes');
@@ -362,15 +410,24 @@
                 btn.addEventListener('click', function() {
                     const docId = this.dataset.docid;
                     const notes = this.dataset.notes || '';
+                    const rejectUrl = this.dataset.rejectUrl; // URL POST dari Blade
 
-                    if (rejectDocInput) rejectDocInput.value = docId;
-                    if (rejectQuill) rejectQuill.clipboard.dangerouslyPasteHTML(notes);
+                    // Set doc id
+                    rejectDocInput.value = docId;
 
+                    // Set Quill content
+                    rejectQuill.clipboard.dangerouslyPasteHTML(notes);
+
+                    // Set form action dinamis
+                    rejectForm.action = rejectUrl;
+
+                    // Tampilkan modal
                     const modal = new bootstrap.Modal(rejectModalEl);
                     modal.show();
                 });
             });
 
+            // Saat submit form, ambil konten Quill dan simpan ke input hidden
             if (rejectForm) {
                 rejectForm.addEventListener('submit', function() {
                     if (rejectQuill && rejectNotesInput) {
@@ -382,21 +439,49 @@
             // =========================
             // File preview dropdown / view
             // =========================
-            document.querySelectorAll('[id^="viewFilesBtn-"]').forEach(btn => {
-                const id = btn.id.replace('viewFilesBtn-', '');
-                const dropdown = document.getElementById(`viewFilesDropdown-${id}`);
-                if (!dropdown) return;
-
-                btn.addEventListener('click', e => {
+            document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    dropdown.classList.toggle('hidden');
-                });
-                document.addEventListener('click', e => {
-                    if (!btn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList
-                        .add('hidden');
+                    const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+
+                    const isVisible = !dropdown.classList.contains('hidden');
+
+                    // Tutup semua dropdown lain
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
+                        .add('hidden'));
+
+                    // Kalau yang diklik sedang terbuka → tutup saja
+                    if (isVisible) {
+                        dropdown.classList.add('hidden');
+                        return;
+                    }
+
+                    // Hitung posisi
+                    const rect = btn.getBoundingClientRect();
+                    const offsetX = -120;
+                    dropdown.style.position = 'fixed';
+                    dropdown.style.top = `${rect.bottom + 6}px`;
+                    dropdown.style.left = `${rect.left + offsetX}px`;
+                    dropdown.classList.remove('hidden');
+                    dropdown.classList.add('dropdown-fixed');
                 });
             });
 
+            // Tutup dropdown saat scroll
+            window.addEventListener('scroll', () => {
+                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
+                    'hidden'));
+            });
+
+            // Tutup dropdown saat klik di luar
+            document.addEventListener('click', function(e) {
+                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
+                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
+                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            });
             document.addEventListener('click', function(e) {
                 const btn = e.target.closest('.view-file-btn');
                 if (!btn) return;

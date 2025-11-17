@@ -17,6 +17,7 @@ class PartNumberController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $plantFilter = $request->input('plant'); // <-- ambil filter plant
         $query = PartNumber::with(['product', 'productModel', 'process']);
 
         if ($search) {
@@ -29,13 +30,22 @@ class PartNumberController extends Controller
             });
         }
 
-        $partNumbers = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+        // Tambahkan filter plant
+        if ($plantFilter) {
+            $query->where('plant', $plantFilter);
+        }
+
+        $partNumbers = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->appends($request->query());
+
         $products = Product::all();
         $models = ProductModel::all();
-        $processes = Process::all(); // <--- tambah ini
+        $processes = Process::all();
 
         return view('contents.master.part-number', compact('partNumbers', 'products', 'models', 'processes'));
     }
+
 
     public function store(Request $request)
     {

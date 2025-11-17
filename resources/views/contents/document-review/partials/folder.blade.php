@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', "Folder $docCode - $plant")
+@section('title', "Folder $docCode - " . ucwords($plant))
 
 @section('content')
     <div class="p-6 bg-gray-50 min-h-screen space-y-6">
@@ -24,24 +24,84 @@
                 <li class="text-gray-700 font-medium">{{ $docCode }}</li>
             </ol>
         </nav>
+        <!-- Search & Filter Bar -->
+<form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET"
+      class="flex flex-col sm:flex-row justify-end mb-4 w-full gap-2 items-end">
 
-        <!-- Search bar -->
-        <form id="filterForm" method="GET" action="{{ route('document-review.showFolder', [$plant, $docCode]) }}"
-            class="flex justify-end mb-4 w-full">
-            <div class="flex items-center w-full sm:w-96 relative">
-                <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    placeholder="Search...">
-                <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500">
-                    <i class="bi bi-search"></i>
-                </button>
-                <button type="button" id="clearSearch"
-                    class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500"
-                    onclick="document.getElementById('searchInput').value=''; document.getElementById('filterForm').submit();">
-                    <i class="bi bi-x-circle"></i>
-                </button>
-            </div>
-        </form>
+    <!-- Search input -->
+    <div class="flex items-center w-full sm:w-96 relative">
+        <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+               placeholder="Search...">
+        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500">
+            <i class="bi bi-search"></i>
+        </button>
+        <button type="button" id="clearSearch"
+                class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500"
+                onclick="document.getElementById('searchInput').value=''; this.form.submit();">
+            <i class="bi bi-x-circle"></i>
+        </button>
+    </div>
+
+    <!-- Filter Part Number -->
+    <div>
+        <select name="part_number" id="partSelect"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="">All Part Numbers</option>
+            @foreach($partNumbers as $part)
+                <option value="{{ $part }}" @selected(request('part_number') == $part)>{{ $part }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <!-- Filter Model -->
+    <div>
+        <select name="model" id="modelSelect"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="">All Models</option>
+            @foreach($models as $model)
+                <option value="{{ $model }}" @selected(request('model') == $model)>{{ $model }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <!-- Filter Process -->
+    <div>
+        <select name="process" id="processSelect"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="">All Processes</option>
+            @foreach($processes as $process)
+                <option value="{{ $process }}" @selected(request('process') == $process)>{{ $process }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <!-- Filter Product -->
+    <div>
+        <select name="product" id="productSelect"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="">All Products</option>
+            @foreach($products as $product)
+                <option value="{{ $product }}" @selected(request('product') == $product)>{{ $product }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <!-- Filter Mode -->
+    <div>
+        <select name="filter_mode" id="filterModeSelect"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="independent" @selected(request('filter_mode', 'independent') == 'independent')>Independent</option>
+            <option value="dependent" @selected(request('filter_mode') == 'dependent')>Dependent</option>
+        </select>
+    </div>
+
+    <!-- Submit button -->
+    <div>
+        <button type="submit"
+                class="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 text-sm">Apply</button>
+    </div>
+</form>
 
         <!-- Table -->
         <div class="overflow-x-auto bg-white rounded-lg shadow p-4">
@@ -113,9 +173,9 @@
                                             </div>
                                         @elseif(count($files) === 1)
                                             <button type="button"
-                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-cyan-500 hover:bg-cyan-600 view-file-btn"
                                                 data-file="{{ $files[0]['url'] }}">
-                                                <i data-feather="file-text" class="w-4 h-4"></i> View
+                                                <i data-feather="file-text" class="w-4 h-4"></i>
                                             </button>
                                         @endif
                                     </div>
@@ -316,13 +376,13 @@
                         <label class="form-label fw-semibold">Existing Files</label>
                         <ul class="list-group">
                             ${data.files.map(f => `
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span>📄 ${f.name}</span>
-                                                    <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-eye"></i> View
-                                                    </a>
-                                                </li>
-                                            `).join('')}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span>📄 ${f.name}</span>
+                                                        <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                            <i class="bi bi-eye"></i> View
+                                                        </a>
+                                                    </li>
+                                                `).join('')}
                         </ul>
                     `;
                             } else {
@@ -340,6 +400,44 @@
                 });
             });
 
+            const partSelect = document.getElementById('partSelect');
+    const modelSelect = document.getElementById('modelSelect');
+    const processSelect = document.getElementById('processSelect');
+    const productSelect = document.getElementById('productSelect');
+    const filterModeSelect = document.getElementById('filterModeSelect');
+
+    partSelect.addEventListener('change', updateDependentOptions);
+    filterModeSelect.addEventListener('change', updateDependentOptions);
+
+    function updateDependentOptions() {
+        const part = partSelect.value;
+        const mode = filterModeSelect.value;
+
+        if (mode === 'dependent' && part) {
+            // Fetch options terkait part number via AJAX
+            fetch(`/document-review/filters?part_number=${part}`)
+                .then(res => res.json())
+                .then(data => {
+                    updateSelect(modelSelect, data.models);
+                    updateSelect(processSelect, data.processes);
+                    updateSelect(productSelect, data.products);
+                });
+        } else {
+            // Reset semua opsi visible (independent mode)
+            [modelSelect, processSelect, productSelect].forEach(select => {
+                select.querySelectorAll('option').forEach(o => o.hidden = false);
+            });
+        }
+    }
+
+    function updateSelect(select, options) {
+        select.querySelectorAll('option').forEach(o => {
+            o.hidden = o.value && !options.includes(o.value);
+        });
+    }
+
+    // Trigger awal saat page load
+    updateDependentOptions();
         });
     </script>
 @endsection

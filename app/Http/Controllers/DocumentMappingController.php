@@ -233,8 +233,6 @@ class DocumentMappingController extends Controller
             'products',
         ));
     }
-
-
     public function storeReview2(Request $request)
     {
         session()->forget('openModal');
@@ -404,8 +402,6 @@ class DocumentMappingController extends Controller
 
         return back()->with('success', 'Document review updated successfully!');
     }
-
-
 
     // ================= Store Review (Admin) =================
     public function storeReview(Request $request)
@@ -802,10 +798,14 @@ class DocumentMappingController extends Controller
                     ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%$search%"));
             });
         }
+        if ($request->filled('department')) {
+            $query->whereIn('department_id', $request->department);
+        }
+
 
         $documentMappings = $query
             ->orderBy('id', 'desc')
-            ->paginate(10); // tampilkan 10 item per halaman
+            ->paginate(10);
 
 
         // 🔁 Update status Obsolete otomatis

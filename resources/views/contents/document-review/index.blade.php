@@ -42,14 +42,16 @@
                     <!-- Folder Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         @foreach ($documentsByCode as $docCode => $documentMappings)
-                            <a href="{{ route('document-review.showFolder', ['plant' => $plant, 'docCode' => $docCode]) }}"
+                            <a href="{{ route('document-review.showFolder', [
+                                'plant' => $plant,
+                                'docCode' => base64_encode($docCode),
+                            ]) }}"
                                 class="flex flex-col items-center justify-center border rounded-lg p-6 bg-yellow-50 hover:bg-yellow-100 hover:shadow-lg transition-all duration-200">
                                 <i class="bi bi-folder-fill text-yellow-400 text-6xl mb-4"></i>
                                 <h3 class="text-lg font-semibold text-dark-800">{{ $docCode }}</h3>
                             </a>
                         @endforeach
                     </div>
-
                 </div>
             @endforeach
         </div>

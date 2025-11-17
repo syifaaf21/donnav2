@@ -9,6 +9,7 @@ class WhatsAppService
 {
     protected $url;
     protected $token;
+    protected $groupId;
 
     public function __construct()
     {
@@ -33,11 +34,28 @@ class WhatsAppService
             return true; // anggap sukses
         }
 
-        $response = Http::asForm()->post($this->url, [
-            'token' => $this->token,
-            'number' => $number,
+        //FastWA for production
+        // $response = Http::asForm()->post($this->url, [
+        //     'api_key' => $this->token,
+        //     'phone'   => $number,
+        //     'message' => $message,
+        // ]);
+
+        //FastWA for tetsing
+         $response = Http::asForm()->withOptions([
+            'verify' => 'C:/xampp/apache/bin/curl-ca-bundle.crt'
+        ])->post($this->url, [
+            'api_key' => $this->token,
+            'phone'   => $number,
             'message' => $message,
         ]);
+
+        //RuangWA for Production
+        // $response = Http::asForm()->post($this->url, [
+        //     'token'   => $this->token,
+        //     'id'      => $this->groupId,
+        //     'message' => $message,
+        // ]);
 
         return $response->successful();
     }

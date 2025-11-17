@@ -20,6 +20,9 @@ class DocumentReviewController extends Controller
             'partNumber.product',
             'partNumber.productModel',
             'partNumber.process',
+            'productModel',
+            'process',
+            'product',
             'user',
             'status',
             'department'
@@ -48,26 +51,132 @@ class DocumentReviewController extends Controller
         ));
     }
 
-    public function showFolder($plant, $docCode, Request $request)
-    {
-        $documentsByCode = $this->getDocumentsGroupedByPlantAndCode();
-        if (!isset($documentsByCode[$plant][$docCode])) abort(404);
+    //     public function showFolder($plant, $docCode, Request $request)
+    // {
+    //     // 1) decode base64 (karena di blade kamu pakai base64_encode)
+    //     $docCode = base64_decode($docCode);
 
-        $documents = $documentsByCode[$plant][$docCode];
+    //     // 2) ambil grouped data (Collection)
+    //     $documentsByCode = $this->getDocumentsGroupedByPlantAndCode();
 
-        if ($search = $request->query('q')) {
-            $documents = $documents->filter(
-                fn($doc) =>
-                str_contains(strtolower($doc->document_number ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($doc->notes ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($doc->status?->name ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($doc->user?->name ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($doc->partNumber?->part_number ?? ''), strtolower($search))
-            );
+    //     // 3) ambil group untuk plant (bisa Collection atau null)
+    //     $plantGroup = $documentsByCode->get($plant) ?? collect();
+
+    //     // debug keys (pilih uncomment kalau butuh)
+    //     // dd($plantGroup->keys()->toArray());
+
+    //     // 4) normalisasi docCode untuk pencocokan (case-insensitive + trim)
+    //     $normalizedDocCode = trim(strtolower($docCode));
+
+    //     // 5) cari kode yang match pada keys dari plantGroup
+    //     $matchedCode = $plantGroup->keys()->first(function ($code) use ($normalizedDocCode) {
+    //         return trim(strtolower($code)) === $normalizedDocCode;
+    //     });
+
+    //     if (!$matchedCode) {
+    //         abort(404);
+    //     }
+
+    //     // 6) ambil documents berdasarkan matchedCode
+    //     $documents = $plantGroup->get($matchedCode, collect());
+
+    //     // 7) search/filter (sama seperti sebelumnya)
+    //     if ($search = strtolower($request->query('q'))) {
+    //         $documents = $documents->filter(function ($doc) use ($search) {
+    //             return str_contains(strtolower($doc->document_number ?? ''), $search)
+    //                 || str_contains(strtolower($doc->notes ?? ''), $search)
+    //                 || str_contains(strtolower($doc->document?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->document?->code ?? ''), $search)
+    //                 || str_contains(strtolower($doc->user?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->status?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->partNumber?->part_number ?? ''), $search)
+    //                 || str_contains(strtolower($doc->partNumber?->product?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->product?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->product?->code ?? ''), $search)
+    //                 || str_contains(strtolower($doc->partNumber?->productModel?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->productModel?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->partNumber?->process?->name ?? ''), $search)
+    //                 || str_contains(strtolower($doc->partNumber?->process?->code ?? ''), $search)
+    //                 || str_contains(strtolower($doc->process?->name ?? ''), $search);
+    //         });
+    //     }
+
+    //     $documents = $documents->filter(function ($doc) use ($request) {
+    //         if ($request->filter_mode === 'independent') {
+    //             // ✅ Independen: masing-masing filter bebas
+    //             $matchPartNumber = !$request->part_number || ($doc->partNumber?->part_number === $request->part_number);
+    //             $matchModel      = !$request->model || ($doc->partNumber?->productModel?->name === $request->model || $doc->productModel?->name === $request->model);
+    //             $matchProcess    = !$request->process || ($doc->partNumber?->process?->name === $request->process || $doc->process?->name === $request->process);
+    //             $matchProduct    = !$request->product || ($doc->partNumber?->product?->name === $request->product || $doc->product?->name === $request->product);
+
+    //             return $matchPartNumber && $matchModel && $matchProcess && $matchProduct;
+    //         } else {
+    //             // ✅ Terikat / dependent: filter lain hanya relevan jika part number dipilih
+    //             $matchPartNumber = !$request->part_number || ($doc->partNumber?->part_number === $request->part_number);
+    //             $matchModel      = !$request->part_number || !$request->model || ($doc->partNumber?->productModel?->name === $request->model);
+    //             $matchProcess    = !$request->part_number || !$request->process || ($doc->partNumber?->process?->name === $request->process);
+    //             $matchProduct    = !$request->part_number || !$request->product || ($doc->partNumber?->product?->name === $request->product);
+
+    //             return $matchPartNumber && $matchModel && $matchProcess && $matchProduct;
+    //         }
+    //     });
+
+    //     // Pass matchedCode instead of original decoded docCode (lebih akurat untuk view)
+    //     return view('contents.document-review.partials.folder', [
+    //         'plant' => $plant,
+    //         'docCode' => $matchedCode,
+    //         'documents' => $documents,
+    //     ]);
+    // }
+
+public function showFolder($plant, $docCode, Request $request)
+{
+    $docCode = base64_decode($docCode);
+
+    // Ambil grouped documents
+    $documentsByCode = $this->getDocumentsGroupedByPlantAndCode();
+    $plantGroup = $documentsByCode->get($plant) ?? collect();
+
+    $normalizedDocCode = trim(strtolower($docCode));
+    $matchedCode = $plantGroup->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
+
+    if (!$matchedCode) abort(404);
+
+    $documents = $plantGroup->get($matchedCode, collect());
+
+    // --- Filtering sesuai request (independent/dependent) ---
+    $documents = $documents->filter(function ($doc) use ($request) {
+        if ($request->filter_mode === 'independent') {
+            $matchPartNumber = !$request->part_number || ($doc->partNumber?->part_number === $request->part_number);
+            $matchModel      = !$request->model || ($doc->partNumber?->productModel?->name === $request->model || $doc->productModel?->name === $request->model);
+            $matchProcess    = !$request->process || ($doc->partNumber?->process?->name === $request->process || $doc->process?->name === $request->process);
+            $matchProduct    = !$request->product || ($doc->partNumber?->product?->name === $request->product || $doc->product?->name === $request->product);
+            return $matchPartNumber && $matchModel && $matchProcess && $matchProduct;
+        } else {
+            $matchPartNumber = !$request->part_number || ($doc->partNumber?->part_number === $request->part_number);
+            $matchModel      = !$request->part_number || !$request->model || ($doc->partNumber?->productModel?->name === $request->model);
+            $matchProcess    = !$request->part_number || !$request->process || ($doc->partNumber?->process?->name === $request->process);
+            $matchProduct    = !$request->part_number || !$request->product || ($doc->partNumber?->product?->name === $request->product);
+            return $matchPartNumber && $matchModel && $matchProcess && $matchProduct;
         }
+    });
 
-        return view('contents.document-review.partials.folder', compact('plant', 'docCode', 'documents'));
-    }
+    // --- Ambil list untuk filter dropdown ---
+    $partNumbers = $documents->pluck('partNumber.part_number')->unique()->filter()->values();
+    $models      = $documents->pluck('partNumber.productModel.name')->unique()->filter()->values();
+    $processes   = $documents->pluck('partNumber.process.name')->unique()->filter()->values();
+    $products    = $documents->pluck('partNumber.product.name')->unique()->filter()->values();
+
+    return view('contents.document-review.partials.folder', [
+        'plant'       => $plant,
+        'docCode'     => $matchedCode,
+        'documents'   => $documents,
+        'partNumbers' => $partNumbers,
+        'models'      => $models,
+        'processes'   => $processes,
+        'products'    => $products,
+    ]);
+}
 
     public function liveSearch(Request $request)
     {
@@ -148,11 +257,20 @@ class DocumentReviewController extends Controller
     {
         return collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
 
-            // Filter dokumen per plant
-            $mappingsByPlant = $documentMappings->filter(
-                fn($item) =>
-                strtolower($item->partNumber?->plant ?? strtolower($item->plant ?? '')) === strtolower($plant)
-            );
+            $mappingsByPlant = $documentMappings->filter(function ($item) use ($plant) {
+
+                // 1️⃣ Jika ada Part Number → pakai plant dari Part Number
+                if ($item->partNumber) {
+                    return strtolower($item->partNumber->plant ?? '') === strtolower($plant);
+                }
+
+                // 2️⃣ Jika tidak ada Part Number → pakai plant dari Model
+                if ($item->productModel) {
+                    return strtolower($item->productModel->plant ?? '') === strtolower($plant);
+                }
+
+                return false;
+            });
 
             // Group berdasarkan document code
             $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
@@ -167,6 +285,7 @@ class DocumentReviewController extends Controller
             return [$plant => $orderedGrouped];
         });
     }
+
 
 
     private function getDocumentsGroupedByPlantAndCode()
@@ -201,6 +320,7 @@ class DocumentReviewController extends Controller
 
     public function revise(Request $request, $id)
     {
+        auth()->user()->department_id;
         $mapping = DocumentMapping::with('document')->findOrFail($id);
         if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
             abort(403);

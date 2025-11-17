@@ -9,19 +9,27 @@ class DocumentActionNotification extends Notification
 {
     use Queueable;
 
-    protected $action;          // revised | approved | rejected
-    protected $byUser;          // nama user yang melakukan aksi
-    protected $documentNumber;  // untuk Document Review
-    protected $documentName;    // untuk Document Control
-    protected $url;             // link ke halaman
+    protected $action;           // revised | approved | rejected
+    protected $byUser;           // nama user yang melakukan aksi
+    protected $documentNumber;   // untuk Document Review
+    protected $documentName;     // untuk Document Control
+    protected $url;              // link ke halaman
+    protected $departmentName;   // nama department pengupload
 
-    public function __construct($action, $byUser, $documentNumber = null, $documentName = null, $url = null)
-    {
+    public function __construct(
+        $action,
+        $byUser,
+        $documentNumber = null,
+        $documentName = null,
+        $url = null,
+        $departmentName = null
+    ) {
         $this->action = $action;
         $this->byUser = $byUser;
         $this->documentNumber = $documentNumber;
         $this->documentName = $documentName;
         $this->url = $url;
+        $this->departmentName = $departmentName;
     }
 
     public function via($notifiable)
@@ -31,30 +39,44 @@ class DocumentActionNotification extends Notification
 
     public function toDatabase($notifiable)
     {
-        $title = $this->documentNumber ?? $this->documentName ?? 'A document';
+        // Format nama user, department, dan document
+        $byUserFormatted = ucwords(strtolower($this->byUser));
+        $departmentFormatted = $this->departmentName ? ucwords(strtolower($this->departmentName)) : null;
+
+        $title = $this->documentNumber ?? ($this->documentName ? ucwords(strtolower($this->documentName)) : 'A Document');
+
+
         $message = '';
 
         switch ($this->action) {
             case 'revised':
                 $message = $this->documentNumber
-                    ? "{$title} has been revised by {$this->byUser}."
-                    : "File for {$title} has been uploaded by {$this->byUser} and is pending review.";
+                    ? "{$title} has been revised by {$byUserFormatted}."
+                    : "File for {$title} has been uploaded by {$byUserFormatted}"
+                    . ($departmentFormatted ? " on department {$departmentFormatted}" : "")
+                    . " and is pending review.";
                 break;
 
             case 'approved':
                 $message = $this->documentNumber
-                    ? "{$title} has been approved by {$this->byUser}."
-                    : "File for {$title} has been approved by {$this->byUser} and document is active.";
+                    ? "{$title} has been approved by {$byUserFormatted}."
+                    : "File for {$title} has been approved by {$byUserFormatted}"
+                    . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
+                    . " and document is active.";
                 break;
 
             case 'rejected':
                 $message = $this->documentNumber
-                    ? "{$title} has been rejected by {$this->byUser}."
-                    : "File for {$title} has been rejected by {$this->byUser}.";
+                    ? "{$title} has been rejected by {$byUserFormatted}."
+                    : "File for {$title} has been rejected by {$byUserFormatted}"
+                    . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
+                    . ".";
                 break;
 
             default:
-                $message = "{$title} updated by {$this->byUser}.";
+                $message = "{$title} updated by {$byUserFormatted}"
+                    . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
+                    . ".";
                 break;
         }
 

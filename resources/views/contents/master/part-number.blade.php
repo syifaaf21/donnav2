@@ -44,6 +44,17 @@
                         <i class="bi bi-x-circle"></i>
                     </button>
                 </form>
+                <div class="ml-2 relative">
+                    <select id="filterPlant"
+                        class="form-select border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px] bg-gray-100">
+                        <option value="">All Plants</option>
+                        @foreach (['body', 'unit', 'electric'] as $plant)
+                            <option value="{{ $plant }}" {{ request('plant') == $plant ? 'selected' : '' }}>
+                                {{ ucfirst($plant) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             {{-- Table --}}
@@ -225,7 +236,8 @@
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label for="part_number" class="form-label fw-semibold">Part Number <span class="text-danger">*</span></label>
+                                <label for="part_number" class="form-label fw-semibold">Part Number <span
+                                        class="text-danger">*</span></label>
                                 <input type="text" id="part_number" name="part_number"
                                     class="form-control @error('part_number') is-invalid @enderror" required autofocus
                                     placeholder="Enter part number" value="{{ old('part_number') }}">
@@ -235,7 +247,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="plant" class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                                <label for="plant" class="form-label fw-semibold">Plant <span
+                                        class="text-danger">*</span></label>
                                 <select id="plant" name="plant"
                                     class="form-select @error('plant') is-invalid @enderror" required>
                                     <option value="" disabled selected>-- Select Plant --</option>
@@ -252,7 +265,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="product_id" class="form-label fw-semibold">Product <span class="text-danger">*</span></label>
+                                <label for="product_id" class="form-label fw-semibold">Product <span
+                                        class="text-danger">*</span></label>
                                 <select id="product_id" name="product_id"
                                     class="form-select @error('product_id') is-invalid @enderror"
                                     placeholder="Search or create product..." required disabled>
@@ -268,7 +282,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="model_id" class="form-label fw-semibold">Model <span class="text-danger">*</span></label>
+                                <label for="model_id" class="form-label fw-semibold">Model <span
+                                        class="text-danger">*</span></label>
                                 <select id="model_id" name="model_id"
                                     class="form-select @error('model_id') is-invalid @enderror"
                                     placeholder="Search or create model..." required disabled>
@@ -283,7 +298,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="process" class="form-label fw-semibold">Process <span class="text-danger">*</span></label>
+                                <label for="process" class="form-label fw-semibold">Process <span
+                                        class="text-danger">*</span></label>
                                 <select id="process_id" name="process_id"
                                     class="form-select @error('process_id') is-invalid @enderror"
                                     placeholder="Search or create process..." required disabled>
@@ -541,6 +557,38 @@
                     searchForm.submit();
                 });
             }
+
+            // Filter Plant
+const filterPlant = document.getElementById('filterPlant');
+
+if (filterPlant && searchForm) {
+    filterPlant.addEventListener('change', function() {
+        // Tambahkan input hidden search ke form filter
+        const existingInput = searchForm.querySelector('input[name="search"]');
+        if (!existingInput) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'search';
+            input.value = searchInput.value;
+            searchForm.appendChild(input);
+        } else {
+            existingInput.value = searchInput.value;
+        }
+
+        // Tambahkan hidden input plant
+        let plantInput = searchForm.querySelector('input[name="plant"]');
+        if (!plantInput) {
+            plantInput = document.createElement('input');
+            plantInput.type = 'hidden';
+            plantInput.name = 'plant';
+            searchForm.appendChild(plantInput);
+        }
+        plantInput.value = this.value;
+
+        searchForm.submit();
+    });
+}
+
         });
     </script>
 @endpush

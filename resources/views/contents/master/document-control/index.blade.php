@@ -32,22 +32,61 @@
         {{-- Table Card --}}
         <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
             {{-- Search Bar --}}
-            <div class="p-4 border-b border-gray-100 flex justify-end">
+            <div class="p-4 border-b border-gray-100 flex justify-end items-center space-x-2">
                 <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
                     <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
+                        class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
                         <i class="bi bi-search"></i>
                     </button>
                     <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
+                        class="absolute right-16 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
                         <i class="bi bi-x-circle"></i>
                     </button>
                 </form>
-            </div>
 
+                {{-- Filter Button --}}
+                <div class="relative ml-2">
+                    <button id="filterBtn" type="button"
+                        class="flex items-center gap-1 px-3 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+
+                    <!-- Dropdown filter -->
+                    <div id="filterDropdown"
+                        class="hidden fixed bg-white border border-gray-300 rounded shadow-lg z-50 max-h-[70vh] overflow-y-auto p-3"
+                        style="min-width: 220px;">
+                        <form method="GET" action="{{ route('master.document-control.index') }}">
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+
+                            @foreach ($departments as $department)
+                                <div class="flex items-center mb-2">
+                                    <input type="checkbox" name="department[]" value="{{ $department->id }}"
+                                        id="dept_{{ $department->id }}" class="form-checkbox"
+                                        {{ is_array(request('department')) && in_array($department->id, request('department')) ? 'checked' : '' }}>
+                                    <label for="dept_{{ $department->id }}" class="ml-2 text-gray-700">
+                                        {{ $department->name }}
+                                    </label>
+                                </div>
+                            @endforeach
+
+                            <!-- Button Apply + Clear -->
+                            <div class="flex justify-between mt-3">
+                                <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                    Apply
+                                </button>
+                                <button type="button" id="clearFilter"
+                                    class="px-3 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                                    Clear
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
             {{-- Table --}}
             <div class="overflow-x-auto overflow-y-auto max-h-96">
                 <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
@@ -389,20 +428,6 @@
             });
 
             /** =======================
-             * SEARCH CLEAR BUTTON
-             * ======================= */
-            const clearBtn = document.getElementById("clearSearch");
-            const searchInput = document.getElementById("searchInput");
-            const searchForm = document.getElementById("searchForm");
-
-            if (clearBtn && searchInput && searchForm) {
-                clearBtn.addEventListener("click", () => {
-                    searchInput.value = "";
-                    searchForm.submit();
-                });
-            }
-
-            /** =======================
              * SHOW MODAL IF VALIDATION ERRORS
              * ======================= */
             @if ($errors->any())
@@ -623,6 +648,59 @@
             modal.addEventListener('hidden.bs.modal', () => {
                 document.getElementById('fileViewer').src = '';
             });
+
+            const filterBtn = document.getElementById('filterBtn');
+    const filterDropdown = document.getElementById('filterDropdown');
+    const clearFilterBtn = document.getElementById('clearFilter');
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+
+    // Tampilkan / sembunyikan dropdown filter
+    filterBtn.addEventListener('click', () => {
+        filterDropdown.classList.toggle('hidden');
+
+        if (!filterDropdown.classList.contains('hidden')) {
+            const rect = filterBtn.getBoundingClientRect();
+            const dropdownWidth = filterDropdown.offsetWidth;
+            let left = rect.left;
+            const top = rect.bottom + window.scrollY;
+
+            // Pastikan dropdown tidak keluar viewport kanan
+            if (left + dropdownWidth > window.innerWidth - 100) {
+                left = window.innerWidth - dropdownWidth - 120;
+            }
+
+            filterDropdown.style.top = `${top}px`;
+            filterDropdown.style.left = `${left}px`;
+        }
+    });
+
+    // Klik di luar untuk menutup dropdown
+    document.addEventListener('click', (e) => {
+        if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
+            filterDropdown.classList.add('hidden');
+        }
+    });
+
+    // Clear filter (hanya reset checkbox, tidak reset search)
+    clearFilterBtn.addEventListener('click', () => {
+        const checkboxes = filterDropdown.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = false);
+    });
+
+    // Submit form filter → sinkronkan search terbaru
+    const filterForm = filterDropdown.querySelector('form');
+    filterForm.addEventListener('submit', (e) => {
+        const hiddenSearch = filterForm.querySelector('input[name="search"]');
+        hiddenSearch.value = searchInput.value; // update hidden search
+    });
+
+    // Clear search
+    const clearSearchBtn = document.getElementById('clearSearch');
+    clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchForm.submit();
+    });
         });
     </script>
 @endpush

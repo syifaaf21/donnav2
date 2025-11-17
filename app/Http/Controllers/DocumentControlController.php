@@ -143,7 +143,7 @@ class DocumentControlController extends Controller
         }
 
         // Ambil hasil dengan paginate
-        $mappings = $query->paginate(3);
+        $mappings = $query->paginate(10);
 
         // Load virtual attributes untuk modal
         $mappings->each(function ($mapping) {
@@ -228,7 +228,8 @@ class DocumentControlController extends Controller
                     $uploader->name,
                     null,
                     $mapping->document->name,
-                    route('document-control.index')
+                    route('document-control.index'),
+                    $uploader->department?->name
                 ));
             }
         }
