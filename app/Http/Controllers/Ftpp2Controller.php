@@ -155,7 +155,7 @@ class Ftpp2Controller extends Controller
 
         $user = auth()->user();
 
-        return view('contents.ftpp2.create', compact('findings', 'departments', 'processes', 'products', 'auditors', 'klausuls', 'auditTypes', 'findingCategories', 'user', 'subAudit'));
+        return view('contents.ftpp2.audit-finding.create', compact('findings', 'departments', 'processes', 'products', 'auditors', 'klausuls', 'auditTypes', 'findingCategories', 'user', 'subAudit'));
     }
 
     /**
@@ -246,31 +246,52 @@ class Ftpp2Controller extends Controller
 
     private function storeFile($file, $auditFinding)
     {
-        $fileName = time() . '-' . $file->getClientOriginalName();
+        // generate a more unique filename to avoid collisions
+        $timestamp = now()->format('YmdHis') . '_' . uniqid();
+        $safeOriginal = preg_replace('/[^A-Za-z0-9\-\_\.]/', '_', $file->getClientOriginalName());
+        $fileName = $timestamp . '-' . $safeOriginal;
+
         $path = $file->storeAs('ftpp/audit_finding_attachments', $fileName, 'public');
 
-        DocumentFile::create([
-            'audit_finding_id' => $auditFinding->id,
-            'file_path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-        ]);
-    }
+        $originalName = $file->getClientOriginalName();
 
-    /**
-     * Store a newly created auditee action in storage.
-     */
-    public function storeAuditeeAction(Request $request)
-    {
-        //
+        // prevent duplicate DocumentFile records: check by audit_finding_id + original_name + path
+        $exists = DocumentFile::where('audit_finding_id', $auditFinding->id)
+            ->where('original_name', $originalName)
+            ->where('file_path', $path)
+            ->exists();
+
+        if (!$exists) {
+            return DocumentFile::create([
+                'audit_finding_id' => $auditFinding->id,
+                'file_path' => $path,
+                'original_name' => $originalName,
+            ]);
+        }
+
+        // if already exists, return the existing record
+        return DocumentFile::where('audit_finding_id', $auditFinding->id)
+            ->where('original_name', $originalName)
+            ->where('file_path', $path)
+            ->first();
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $finding = AuditFinding::with([
+            'auditeeAction',
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
+            'auditeeAction.file'
+        ])->findOrFail($id);
+
+        return view('contents.ftpp2.partials.detail', compact('finding'));
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -295,20 +316,6 @@ class Ftpp2Controller extends Controller
             'auditeeAction.preventiveActions',
             'auditeeAction.file',
         ])->findOrFail($id);
-
-        // Cek apakah auditeeAction ada dan tanda tangan ada
-        $finding->dept_head_signature = null;
-        $finding->ldr_spv_signature = null;
-
-        if ($finding->auditeeAction) {
-            $finding->dept_head_signature = $finding->auditeeAction->dept_head_signature
-                ? asset('storage/' . $finding->auditeeAction->dept_head_signature)
-                : null;
-
-            $finding->ldr_spv_signature = $finding->auditeeAction->ldr_spv_signature
-                ? asset('storage/' . $finding->auditeeAction->ldr_spv_signature)
-                : null;
-        }
         $departments = Department::select('id', 'name')->get();
         $processes = Process::select('id', 'name')->get();
         $products = Product::select('id', 'name')->get();
@@ -324,7 +331,7 @@ class Ftpp2Controller extends Controller
 
         $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
 
-        return view('contents.ftpp2.edit', compact('finding', 'departments', 'processes', 'products', 'auditors', 'auditTypes', 'subAudit', 'findingCategories', 'klausuls'));
+        return view('contents.ftpp2.auditee-action.create', compact('finding', 'departments', 'processes', 'products', 'auditors', 'auditTypes', 'subAudit', 'findingCategories', 'klausuls'));
     }
 
 
@@ -339,10 +346,7 @@ class Ftpp2Controller extends Controller
         try {
             if ($action === 'update_audit_finding') {
 
-                // 🔹 Ubah auditee_ids dari string menjadi array sebelum validasi
-                // $auditeeIds = json_decode($request->auditee_ids, true) ?? [];
-                // $request->merge(['auditee_id' => $auditeeIds]); // agar validasi berjalan
-
+                // 🔹 Validasi request
                 $validated = $request->validate([
                     'audit_type_id' => 'required|exists:tm_audit_types,id',
                     'sub_audit_type_id' => 'nullable|exists:tm_sub_audit_types,id',
@@ -354,14 +358,20 @@ class Ftpp2Controller extends Controller
                     'product_id' => 'nullable|exists:tm_products,id',
                     'auditor_id' => 'required|exists:users,id',
                     'auditee_ids' => 'required|array',
-                    'auditee_ids.*' => 'exists:users,id', // validasi sekarang sudah pakai array
+                    'auditee_ids.*' => 'exists:users,id',
                     'registration_number' => 'nullable|string|max:100',
                     'finding_description' => 'required|string',
                     'due_date' => 'required|date',
-                    'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                    'photos.*' => 'nullable|file|image|max:2048',
+                    'files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                    'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:4096',
                 ]);
 
-                $auditFinding = AuditFinding::create([
+                // 🔹 Ambil data audit finding yang akan diupdate
+                $auditFinding = AuditFinding::findOrFail($id);
+
+                // 🔹 Update data utama
+                $auditFinding->update([
                     'audit_type_id' => $validated['audit_type_id'],
                     'sub_audit_type_id' => $validated['sub_audit_type_id'] ?? null,
                     'finding_category_id' => $validated['finding_category_id'],
@@ -371,13 +381,14 @@ class Ftpp2Controller extends Controller
                     'auditor_id' => $validated['auditor_id'],
                     'registration_number' => $validated['registration_number'] ?? null,
                     'finding_description' => $validated['finding_description'],
-                    'status_id' => 7,
                     'due_date' => $validated['due_date'],
                 ]);
 
-                // 🔹 Simpan auditee ke pivot
-                $auditFinding->auditee()->attach($validated['auditee_ids']);
+                // 🔹 Sync auditee pivot
+                $auditFinding->auditee()->sync($validated['auditee_ids']);
 
+                // 🔹 Update sub klausul
+                AuditFindingSubKlausul::where('audit_finding_id', $auditFinding->id)->delete();
                 foreach ($validated['sub_klausul_id'] as $subId) {
                     AuditFindingSubKlausul::create([
                         'audit_finding_id' => $auditFinding->id,
@@ -385,77 +396,36 @@ class Ftpp2Controller extends Controller
                     ]);
                 }
 
-                // === Upload attachments ===
+                // 🔹 Upload attachment function helper
+                $uploadFiles = function ($files) use ($auditFinding) {
+                    foreach ($files as $file) {
+                        $originalName = $file->getClientOriginalName();
+                        $extension = $file->getClientOriginalExtension();
+                        $date = now()->format('Y-m-d');
+                        $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
+                        $path = $file->storeAs('ftpp/audit_finding_attachments', $newFileName, 'public');
+
+                        DocumentFile::create([
+                            'audit_finding_id' => $auditFinding->id,
+                            'file_path' => $path,
+                            'original_name' => $originalName,
+                        ]);
+                    }
+                };
+
+                // 🔹 Upload photos
                 if ($request->hasFile('photos')) {
-                    foreach ($request->file('photos') as $photo) {
-                        // Get the original file name and extension
-                        $originalName = $photo->getClientOriginalName();
-                        $extension = $photo->getClientOriginalExtension();
-
-                        // Get the current date in 'Y-m-d' format
-                        $date = now()->format('Y-m-d');
-
-                        // Generate the new file name: original_name_date.extension
-                        $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
-
-                        // Store the file with the new name
-                        $path = $photo->storeAs('ftpp/audit_finding_attachments', $newFileName, 'public');
-
-                        // Save to the database
-                        DocumentFile::create([
-                            'audit_finding_id' => $auditFinding->id,
-                            'file_path' => $path,
-                            'original_name' => $originalName,
-                        ]);
-                    }
+                    $uploadFiles($request->file('photos'));
                 }
 
+                // 🔹 Upload documents
                 if ($request->hasFile('files')) {
-                    foreach ($request->file('files') as $file) {
-                        // Get the original file name and extension
-                        $originalName = $file->getClientOriginalName();
-                        $extension = $file->getClientOriginalExtension();
-
-                        // Get the current date in 'Y-m-d' format
-                        $date = now()->format('Y-m-d');
-
-                        // Generate the new file name: original_name_date.extension
-                        $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
-
-                        // Store the file with the new name
-                        $path = $file->storeAs('ftpp/audit_finding_attachments', $newFileName, 'public');
-
-                        // Save to the database
-                        DocumentFile::create([
-                            'audit_finding_id' => $auditFinding->id,
-                            'file_path' => $path,
-                            'original_name' => $originalName,
-                        ]);
-                    }
+                    $uploadFiles($request->file('files'));
                 }
 
+                // 🔹 Upload combined attachments
                 if ($request->hasFile('attachments')) {
-                    foreach ($request->file('attachments') as $file) {
-                        // Get the original file name and extension
-                        $originalName = $file->getClientOriginalName();
-                        $extension = $file->getClientOriginalExtension();
-
-                        // Get the current date in 'Y-m-d' format
-                        $date = now()->format('Y-m-d');
-
-                        // Generate the new file name: original_name_date.extension
-                        $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
-
-                        // Store the file with the new name
-                        $path = $file->storeAs('ftpp/audit_finding_attachments', $newFileName, 'public');
-
-                        // Save to the database
-                        DocumentFile::create([
-                            'audit_finding_id' => $auditFinding->id,
-                            'file_path' => $path,
-                            'original_name' => $originalName,
-                        ]);
-                    }
+                    $uploadFiles($request->file('attachments'));
                 }
 
                 DB::commit();
@@ -463,12 +433,13 @@ class Ftpp2Controller extends Controller
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => true,
-                        'message' => 'Header saved successfully',
+                        'message' => 'Audit Finding updated successfully',
                         'id' => $auditFinding->id,
                     ]);
                 }
 
-                return back()->with('success', 'Audit Finding berhasil disimpan!');
+                return back()->with('success', 'Audit Finding updated successfully.');
+
             } elseif ($action === 'update_auditee_action') {
                 $validated = $request->validate([
                     'audit_finding_id' => 'required|exists:tt_audit_findings,id',
@@ -477,24 +448,52 @@ class Ftpp2Controller extends Controller
                     'yokoten' => 'required|boolean',
                     'yokoten_area' => 'nullable|string',
                     'ldr_spv_signature' => 'nullable|boolean',
+
+                    // terima file upload
                     'attachments.*' => 'nullable|file|max:5120',
+                    'photos2.*' => 'nullable|file|max:5120',
+                    'files2.*' => 'nullable|file|max:5120',
                 ]);
+
                 try {
                     // 1️⃣ Simpan tt_auditee_actions
-                    $auditeeAction = AuditeeAction::updateOrCreate([
-                        'audit_finding_id' => $validated['audit_finding_id'],
-                        'pic' => $validated['pic'] ?? '-',
-                        'root_cause' => $validated['root_cause'],
-                        'yokoten' => $validated['yokoten'],
-                        'yokoten_area' => $validated['yokoten_area'] ?? null,
-                    ]);
+                    $auditeeAction = AuditeeAction::updateOrCreate(
+                        ['audit_finding_id' => $validated['audit_finding_id']],
+                        [
+                            'pic' => $validated['pic'] ?? '-',
+                            'root_cause' => $validated['root_cause'],
+                            'yokoten' => $validated['yokoten'],
+                            'yokoten_area' => $validated['yokoten_area'] ?? null,
+                        ]
+                    );
+
+                    // Hapus child lama agar sync (opsional tapi direkomendasikan saat update)
+                    if ($auditeeAction && $auditeeAction->id) {
+                        $aid = $auditeeAction->id;
+
+                        if (WhyCauses::where('auditee_action_id', $aid)->exists()) {
+                            WhyCauses::where('auditee_action_id', $aid)->delete();
+                        }
+
+                        if (CorrectiveAction::where('auditee_action_id', $aid)->exists()) {
+                            CorrectiveAction::where('auditee_action_id', $aid)->delete();
+                        }
+
+                        if (PreventiveAction::where('auditee_action_id', $aid)->exists()) {
+                            PreventiveAction::where('auditee_action_id', $aid)->delete();
+                        }
+
+                        if (DocumentFile::where('auditee_action_id', $aid)->exists()) {
+                            DocumentFile::where('auditee_action_id', $aid)->delete();
+                        }
+                    }
 
                     // 3️⃣ Simpan Why (5 Why)
                     for ($i = 1; $i <= 5; $i++) {
                         $why = $request->input('why_' . $i . '_mengapa');
                         $cause = $request->input('cause_' . $i . '_karena');
                         if ($why || $cause) {
-                            WhyCauses::updateOrCreate([
+                            WhyCauses::create([
                                 'auditee_action_id' => $auditeeAction->id,
                                 'why_description' => $why ?? '',
                                 'cause_description' => $cause ?? '',
@@ -508,14 +507,14 @@ class Ftpp2Controller extends Controller
                         $pic = $request->input('corrective_' . $i . '_pic');
                         $plan = $request->input('corrective_' . $i . '_planning');
                         $actual = $request->input('corrective_' . $i . '_actual');
+
                         if ($activity) {
-                            CorrectiveAction::updateOrCreate([
+                            CorrectiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
-                                'pic' => $pic,
-                                'pic' => $pic,
+                                'pic' => $pic ?: null,
                                 'activity' => $activity,
-                                'planning_date' => $plan,
-                                'actual_date' => $actual,
+                                'planning_date' => $plan ?: null,
+                                'actual_date' => $actual ?: null,
                             ]);
                         }
                     }
@@ -526,36 +525,28 @@ class Ftpp2Controller extends Controller
                         $pic = $request->input('preventive_' . $i . '_pic');
                         $plan = $request->input('preventive_' . $i . '_planning');
                         $actual = $request->input('preventive_' . $i . '_actual');
+
                         if ($activity) {
-                            PreventiveAction::updateOrCreate([
+                            PreventiveAction::create([
                                 'auditee_action_id' => $auditeeAction->id,
-                                'pic' => $pic,
-                                'pic' => $pic,
+                                'pic' => $pic ?: null,
                                 'activity' => $activity,
-                                'planning_date' => $plan,
-                                'actual_date' => $actual,
+                                'planning_date' => $plan ?: null,
+                                'actual_date' => $actual ?: null,
                             ]);
                         }
                     }
 
-                    // 6️⃣ Upload Attachments
+                    // 6️⃣ Upload Attachments (pastikan form mengirim 'attachments[]')
                     if ($request->hasFile('attachments')) {
                         foreach ($request->file('attachments') as $file) {
-                            // Ambil nama asli dan ekstensi
                             $originalName = $file->getClientOriginalName();
                             $extension = $file->getClientOriginalExtension();
-
-                            // Ambil tanggal sekarang
                             $date = now()->format('Y-m-d');
-
-                            // Buat nama file baru: originalname_date.extension
                             $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
-
-                            // Simpan file dengan nama baru
                             $path = $file->storeAs('ftpp/auditee_action_attachments', $newFileName, 'public');
 
-                            // Simpan ke database
-                            DocumentFile::updateOrCreate([
+                            DocumentFile::create([
                                 'auditee_action_id' => $auditeeAction->id,
                                 'file_path' => $path,
                                 'original_name' => $originalName,
@@ -563,6 +554,7 @@ class Ftpp2Controller extends Controller
                         }
                     }
 
+                    // update status finding
                     $auditFinding = AuditFinding::find($validated['audit_finding_id']);
                     if ($auditFinding) {
                         $auditFinding->update(['status_id' => 8]);
@@ -577,18 +569,26 @@ class Ftpp2Controller extends Controller
 
                     DB::commit();
 
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Updated successfully',
-                    ]);
-                } catch (\Exception $e) {
+                    if ($request->ajax()) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Auditee Action updated',
+                            'id' => $auditeeAction->id
+                        ]);
+                    }
+
+                    return back()->with('success', 'Auditee Action updated');
+                } catch (\Throwable $e) {
+                    DB::rollBack();
+                    // log error agar lebih mudah debug
+                    \Log::error('update_auditee_action error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
                     return response()->json([
                         'success' => false,
                         'message' => $e->getMessage()
                     ], 500);
                 }
             }
-
         } catch (\Exception $e) {
             DB::rollBack();
 

@@ -19,8 +19,8 @@ return new class extends Migration
 
         // Step 2: Tambahkan kolom boolean
         Schema::table('tt_auditee_actions', function (Blueprint $table) {
-            $table->boolean('ldr_spv_signature')->default(false);
-            $table->boolean('dept_head_signature')->default(false);
+            $table->boolean('ldr_spv_signature')->after('effectiveness_verification')->default(false);
+            $table->boolean('dept_head_signature')->after('ldr_spv_signature')->default(false);
         });
     }
 
@@ -34,8 +34,8 @@ return new class extends Migration
 
         // Tambahkan kembali sebagai string
         Schema::table('tt_auditee_actions', function (Blueprint $table) {
-            $table->string('ldr_spv_signature')->nullable();
-            $table->string('dept_head_signature')->nullable();
+            $table->string('ldr_spv_signature')->after('effectiveness_verification')->nullable();
+            $table->string('dept_head_signature')->after('ldr_spv_signature')->nullable();
         });
     }
 };

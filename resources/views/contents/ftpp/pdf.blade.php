@@ -274,16 +274,15 @@
                 @endif
             </td>
             <td class="text-center">
-                @if (!empty($finding->dept_head_signature_url))
-                    <img src="{{ $finding->dept_head_signature_url }}" class="signature">
+                @if (isset($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1)
+                    <img src="/images/mgr-approve.png" class="signature" alt="Dept Head Approved">
                 @endif
             </td>
             <td class="text-center">
-                @if (!empty($finding->ldr_spv_signature_url))
-                    <img src="{{ $finding->ldr_spv_signature_url }}" class="signature">
+                @if (isset($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1)
+                    <img src="/images/usr-approve.png" class="signature" alt="Leader/Spv Approved">
                 @endif
             </td>
-
         </tr>
     </table>
 

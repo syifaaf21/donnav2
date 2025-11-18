@@ -21,7 +21,7 @@
 
         {{-- Show create-audit-finding for: super admin, admin, auditor --}}
         @if (in_array($role, ['super admin', 'admin', 'auditor']))
-            @include('contents.ftpp2.partials.create-audit-finding')
+            @include('contents.ftpp2.audit-finding.partials.create-audit-finding')
         @endif
     </div>
 

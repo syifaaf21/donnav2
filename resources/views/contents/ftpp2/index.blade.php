@@ -2,7 +2,7 @@
 @section('title', 'FTPP2')
 
 @section('content')
-    <div class="p-2">
+    <div class="p-2" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
 
         <div class="flex gap-6">
             {{-- Left: status tabs/sidebar --}}
@@ -129,11 +129,11 @@
                                             <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
                                                 <button type="button"
                                                     @click.prevent="
-                open = !open;
-                const rect = $el.getBoundingClientRect();
-                x = rect.left - 120;   // posisi horizontal dropdown
-                y = rect.top + 25;     // posisi vertical dropdown
-            "
+                                                        open = !open;
+                                                        const rect = $el.getBoundingClientRect();
+                                                        x = rect.left - 120;   // posisi horizontal dropdown
+                                                        y = rect.top + 25;     // posisi vertical dropdown
+                                                    "
                                                     class="p-1 hover:bg-gray-200 rounded">
                                                     <i data-feather="more-vertical" class="w-5 h-5"></i>
                                                 </button>
@@ -143,19 +143,24 @@
                                                     <div x-show="open" @click.outside="open = false" x-transition
                                                         class="absolute bg-white border rounded-md shadow-lg z-[9999]"
                                                         :style="`top:${y}px; left:${x}px; width:140px; position:fixed`">
-                                                        <a :href=""
-                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-800 hover:bg-gray-100">
+                                                        <button @click="$dispatch('open-show-modal', {{ $finding->id }})"
+                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-gray-800 hover:bg-gray-100">
                                                             <i data-feather="eye" class="w-4 h-4"></i> Show
-                                                        </a>
+                                                        </button>
 
-                                                        <a :href="`/ftpp2/${item.id}/download`"
-                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-gray-100">
+                                                        <a href="{{ route('ftpp2.download', $finding->id) }}"
+                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-blue-600 hover:bg-gray-100">
                                                             <i data-feather="download" class="w-4 h-4"></i> Download
                                                         </a>
 
                                                         <a href="{{ route('ftpp2.edit', $finding->id) }}"
-                                                            class="flex items-center gap-2 px-4 py-2 text-sm text-yellow-500 hover:bg-gray-100">
-                                                            <i data-feather="edit" class="w-4 h-4"></i> Edit
+                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-yellow-500 hover:bg-gray-100">
+                                                            <i data-feather="edit" class="w-4 h-4"></i> Edit Audit Finding
+                                                        </a>
+
+                                                        <a href="{{ route('ftpp2.edit', $finding->id) }}"
+                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-yellow-500 hover:bg-gray-100">
+                                                            <i data-feather="edit" class="w-4 h-4"></i> Edit Auditee Action
                                                         </a>
 
                                                         <form method="POST"
@@ -163,7 +168,7 @@
                                                             onsubmit="return confirm('Delete this record?')">
                                                             @csrf @method('DELETE')
                                                             <button type="submit"
-                                                                class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                                class="w-full flex items-center gap-2 px-2 py-2 text-sm text-red-600 hover:bg-gray-100">
                                                                 <i data-feather="trash-2" class="w-4 h-4"></i> Delete
                                                             </button>
                                                         </form>
@@ -187,41 +192,44 @@
                 </div>
             </div> {{-- end .flex-1 --}}
         </div> {{-- end .flex --}}
+
+        @include('contents.ftpp2.show')
     </div> {{-- end .p-6 --}}
 
-    @push('scripts')
-        <script>
-            (function() {
-                const input = document.getElementById('live-search');
-                if (!input) return;
+@endsection
+@push('scripts')
+    <script>
+        (function() {
+            const input = document.getElementById('live-search');
+            if (!input) return;
 
-                let timeout = null;
-                const route = "{{ route('ftpp2.search') }}";
+            let timeout = null;
+            const route = "{{ route('ftpp2.search') }}";
 
-                const statusColors = {
-                    'open': 'bg-red-500 text-white',
-                    'submitted': 'bg-yellow-500 text-gray-900',
-                    'checked by dept head': 'bg-yellow-500 text-gray-900',
-                    'need revision': 'bg-yellow-500 text-gray-900',
-                    'approve by auditor': 'bg-blue-500 text-white',
-                    'close': 'bg-green-500 text-white'
-                };
+            const statusColors = {
+                'open': 'bg-red-500 text-white',
+                'submitted': 'bg-yellow-500 text-gray-900',
+                'checked by dept head': 'bg-yellow-500 text-gray-900',
+                'need revision': 'bg-yellow-500 text-gray-900',
+                'approve by auditor': 'bg-blue-500 text-white',
+                'close': 'bg-green-500 text-white'
+            };
 
-                function renderRows(items) {
-                    const tbody = document.querySelector('table tbody');
-                    if (!tbody) return;
-                    if (!items.length) {
-                        tbody.innerHTML =
-                            '<tr><td class="px-6 py-4 text-sm text-gray-500" colspan="7">No records found.</td></tr>';
-                        return;
-                    }
-                    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    tbody.innerHTML = items.map(f => {
-                        const statusName = f.status || '-';
-                        const cls = statusColors[statusName.toLowerCase()] || '';
-                        const due = f.due_date || '-';
-                        const auditee = f.auditee || '-';
-                        return `
+            function renderRows(items) {
+                const tbody = document.querySelector('table tbody');
+                if (!tbody) return;
+                if (!items.length) {
+                    tbody.innerHTML =
+                        '<tr><td class="px-6 py-4 text-sm text-gray-500" colspan="7">No records found.</td></tr>';
+                    return;
+                }
+                const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                tbody.innerHTML = items.map(f => {
+                    const statusName = f.status || '-';
+                    const cls = statusColors[statusName.toLowerCase()] || '';
+                    const due = f.due_date || '-';
+                    const auditee = f.auditee || '-';
+                    return `
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.registration_number || '-'}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm"><span class="${cls} p-1 rounded">${statusName}</span></td>
@@ -238,26 +246,51 @@
                             </td>
                         </tr>
                     `;
-                    }).join('');
-                }
+                }).join('');
+            }
 
-                input.addEventListener('input', function(e) {
-                    const v = e.target.value.trim();
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => {
-                        if (!v) {
-                            // empty -> reload page to restore server-side filters/pagination
-                            window.location = "{{ route('ftpp2.index') }}";
-                            return;
-                        }
-                        fetch(route + '?q=' + encodeURIComponent(v))
-                            .then(r => r.json())
-                            .then(data => renderRows(data))
-                            .catch(err => console.error(err));
-                    }, 300);
-                });
-            })();
-        </script>
-    @endpush
+            input.addEventListener('input', function(e) {
+                const v = e.target.value.trim();
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    if (!v) {
+                        // empty -> reload page to restore server-side filters/pagination
+                        window.location = "{{ route('ftpp2.index') }}";
+                        return;
+                    }
+                    fetch(route + '?q=' + encodeURIComponent(v))
+                        .then(r => r.json())
+                        .then(data => renderRows(data))
+                        .catch(err => console.error(err));
+                }, 300);
+            });
+        })();
 
-@endsection
+        function showModal() {
+            return {
+                isOpen: false,
+                loading: false,
+                content: '',
+                currentId: null,
+
+                openShowModal(id) {
+                    this.isOpen = true;
+                    this.loading = true;
+                    this.currentId = id;
+
+                    fetch(`/ftpp2/${id}`)
+                        .then(res => res.text())
+                        .then(html => {
+                            this.content = html;
+                            this.loading = false;
+                        });
+                },
+
+                close() {
+                    this.isOpen = false;
+                    this.content = '';
+                },
+            };
+        }
+    </script>
+@endpush

@@ -353,8 +353,8 @@
                                                 .dept_head_signature;
                                             if (path && path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
                                                 previewDeptHeadSignature.innerHTML += `
-                        <img src="${baseUrl + path}" class="w-24 h-24 object-cover border rounded" />
-                    `;
+                                                <img src="${baseUrl + path}" class="w-24 h-24 object-cover border rounded" />
+                                            `;
                                             }
                                         });
                                     }
