@@ -11,7 +11,8 @@ class Product extends Model
 
     protected $fillable = [
         'name',
-        'code'
+        'code',
+        'plant',
     ];
 
     protected $table = 'tm_products'; // sesuaikan kalau nama tabel beda

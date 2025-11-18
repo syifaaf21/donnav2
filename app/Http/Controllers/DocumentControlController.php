@@ -228,7 +228,7 @@ class DocumentControlController extends Controller
                     $uploader->name,
                     null,
                     $mapping->document->name,
-                    route('document-control.index'),
+                    route('document-control.department', $mapping->department->name),
                     $uploader->department?->name
                 ));
             }
@@ -277,7 +277,7 @@ class DocumentControlController extends Controller
             Auth::user()->name,
             null,
             $mapping->document->name,
-            route('document-control.index') // url
+            route('document-control.department', $mapping->department->name) // url
         ));
 
 
@@ -313,7 +313,7 @@ class DocumentControlController extends Controller
             Auth::user()->name,
             null,
             $mapping->document->name,
-            route('document-control.index')
+            route('document-control.department', $mapping->department->name)
         ));
 
         return redirect()->back()->with('success', 'Document rejected successfully');

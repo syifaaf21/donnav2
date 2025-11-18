@@ -462,10 +462,8 @@
                 const form = modalEl.querySelector('form');
                 const cancelButton = modalEl.querySelector('button[data-bs-dismiss="modal"]');
 
-                // Extract partId
                 const partId = modalId.split('-')[1];
 
-                // Select element IDs inside this modal
                 const productSelectId = `product_id_edit_${partId}`;
                 const modelSelectId = `model_id_edit_${partId}`;
                 const processSelectId = `process_edit_${partId}`;
@@ -474,7 +472,7 @@
                 const modelSelectEl = document.getElementById(modelSelectId);
                 const processSelectEl = document.getElementById(processSelectId);
 
-                // Initialize TomSelect for this modal
+                // ✅ Buat TomSelect dulu
                 tomSelectInstances[modalId] = {
                     productTomSelect: productSelectEl ? new TomSelect(productSelectEl, {
                         valueField: 'value',
@@ -504,40 +502,87 @@
                     }) : null,
                 };
 
+                // === Event change Plant pada EDIT modal (SETELAH TomSelect dibuat) ===
+                const plantSelectEdit = document.getElementById(`plant_edit_${partId}`);
+
+                if (plantSelectEdit) {
+                    plantSelectEdit.addEventListener('change', function() {
+                        const selectedPlant = this.value;
+                        const ts = tomSelectInstances[modalId];
+
+                        if (!ts) return;
+
+                        // Reset nilai
+                        ts.productTomSelect?.clear(true);
+                        ts.modelTomSelect?.clear(true);
+                        ts.processTomSelect?.clear(true);
+
+                        fetch(`/api/get-options-by-plant?plant=${selectedPlant}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                ts.productTomSelect?.clearOptions();
+                                ts.modelTomSelect?.clearOptions();
+                                ts.processTomSelect?.clearOptions();
+
+                                // Product
+                                if (data.products?.length) {
+                                    data.products.forEach(p => {
+                                        ts.productTomSelect.addOption({
+                                            value: p.id,
+                                            text: p.name
+                                        });
+                                    });
+                                    ts.productTomSelect.enable();
+                                } else ts.productTomSelect.disable();
+
+                                // Model
+                                if (data.models?.length) {
+                                    data.models.forEach(m => {
+                                        ts.modelTomSelect.addOption({
+                                            value: m.id,
+                                            text: m.name
+                                        });
+                                    });
+                                    ts.modelTomSelect.enable();
+                                } else ts.modelTomSelect.disable();
+
+                                // Process
+                                if (data.processes?.length) {
+                                    data.processes.forEach(pr => {
+                                        ts.processTomSelect.addOption({
+                                            value: pr.id,
+                                            text: pr.name
+                                        });
+                                    });
+                                    ts.processTomSelect.enable();
+                                } else ts.processTomSelect.disable();
+                            });
+                    });
+                }
+
+                // === Save & Reset original data ===
                 let originalFormData = {};
 
                 function saveOriginalFormData() {
                     originalFormData = {};
-                    const elements = form.elements;
-                    for (let i = 0; i < elements.length; i++) {
-                        const el = elements[i];
-                        if (el.name) {
-                            originalFormData[el.name] = el.value;
-                        }
-                    }
+                    [...form.elements].forEach(el => {
+                        if (el.name) originalFormData[el.name] = el.value;
+                    });
                 }
 
                 function resetFormToOriginal() {
-                    for (const name in originalFormData) {
-                        if (originalFormData.hasOwnProperty(name)) {
-                            const el = form.elements[name];
-                            if (el) el.value = originalFormData[name];
-                        }
+                    for (const key in originalFormData) {
+                        if (form.elements[key]) form.elements[key].value = originalFormData[key];
                     }
 
                     const ts = tomSelectInstances[modalId];
-                    if (ts.productTomSelect) ts.productTomSelect.setValue(originalFormData['product_id'] ||
-                        '');
-                    if (ts.modelTomSelect) ts.modelTomSelect.setValue(originalFormData['model_id'] || '');
-                    if (ts.processTomSelect) ts.processTomSelect.setValue(originalFormData['process_id'] ||
-                        '');
+                    ts.productTomSelect?.setValue(originalFormData['product_id'] || '');
+                    ts.modelTomSelect?.setValue(originalFormData['model_id'] || '');
+                    ts.processTomSelect?.setValue(originalFormData['process_id'] || '');
                 }
 
                 modalEl.addEventListener('show.bs.modal', saveOriginalFormData);
-
-                cancelButton.addEventListener('click', function() {
-                    resetFormToOriginal();
-                });
+                cancelButton.addEventListener('click', resetFormToOriginal);
             });
 
             // Jika ada error validation, show create modal
@@ -559,35 +604,35 @@
             }
 
             // Filter Plant
-const filterPlant = document.getElementById('filterPlant');
+            const filterPlant = document.getElementById('filterPlant');
 
-if (filterPlant && searchForm) {
-    filterPlant.addEventListener('change', function() {
-        // Tambahkan input hidden search ke form filter
-        const existingInput = searchForm.querySelector('input[name="search"]');
-        if (!existingInput) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'search';
-            input.value = searchInput.value;
-            searchForm.appendChild(input);
-        } else {
-            existingInput.value = searchInput.value;
-        }
+            if (filterPlant && searchForm) {
+                filterPlant.addEventListener('change', function() {
+                    // Tambahkan input hidden search ke form filter
+                    const existingInput = searchForm.querySelector('input[name="search"]');
+                    if (!existingInput) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'search';
+                        input.value = searchInput.value;
+                        searchForm.appendChild(input);
+                    } else {
+                        existingInput.value = searchInput.value;
+                    }
 
-        // Tambahkan hidden input plant
-        let plantInput = searchForm.querySelector('input[name="plant"]');
-        if (!plantInput) {
-            plantInput = document.createElement('input');
-            plantInput.type = 'hidden';
-            plantInput.name = 'plant';
-            searchForm.appendChild(plantInput);
-        }
-        plantInput.value = this.value;
+                    // Tambahkan hidden input plant
+                    let plantInput = searchForm.querySelector('input[name="plant"]');
+                    if (!plantInput) {
+                        plantInput = document.createElement('input');
+                        plantInput.type = 'hidden';
+                        plantInput.name = 'plant';
+                        searchForm.appendChild(plantInput);
+                    }
+                    plantInput.value = this.value;
 
-        searchForm.submit();
-    });
-}
+                    searchForm.submit();
+                });
+            }
 
         });
     </script>

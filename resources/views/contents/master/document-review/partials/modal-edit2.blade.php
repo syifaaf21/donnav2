@@ -40,7 +40,7 @@
                                     <div class="col-md-4">
                                         <label class="form-label fw-medium">Document Number</label>
                                         <input type="text" name="document_number" class="form-control"
-                                            value="{{ $mapping->document_number }}" readonly>
+                                            value="{{ $mapping->document_number }}">
                                     </div>
 
                                     {{-- Plant --}}
@@ -280,7 +280,7 @@
                 const tsDept = createTS(deptEl);
                 const tsDoc = createTS(docEl);
 
-                // LOAD ALL BASED ON PLANT 
+                // LOAD ALL BASED ON PLANT
                 async function loadByPlant(plant) {
 
                     if (!plant) {

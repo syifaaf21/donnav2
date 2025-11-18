@@ -104,10 +104,24 @@
                                             <td class="px-4 py-2 capitalize">{{ $doc->process->name ?? '-' }}</td>
                                             <td class="px-4 py-2">{{ $doc->department->name ?? '-' }}</td>
                                             <td class="px-4 py-2">
+                                                @php
+                                                    $statusClasses = [
+                                                        'approved' =>
+                                                            'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                                                        'rejected' =>
+                                                            'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                                                        'need review' =>
+                                                            'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
+                                                    ];
+
+                                                    $statusName = strtolower($doc->status?->name ?? '');
+                                                    $class =
+                                                        $statusClasses[$statusName] ??
+                                                        'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded';
+                                                @endphp
+
                                                 @if ($doc->status)
-                                                    <span
-                                                        class="px-2 py-1 text-xs font-semibold rounded-full
-                                                    {{ $doc->status->name === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                    <span class="{{ $class }}">
                                                         {{ $doc->status->name }}
                                                     </span>
                                                 @else
@@ -115,25 +129,12 @@
                                                 @endif
                                             </td>
                                             <td class="px-4 py-2 text-center">
-                                                <button data-bs-toggle="modal"
-                                                    data-bs-target="#editDocumentModal-{{ $doc->id }}"
-                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                </button>
-                                                <form action="{{ route('master.document-review.destroy', $doc->id) }}"
-                                                    method="POST" class="delete-form d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" title="Delete Document"
-                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                    </button>
-                                                </form>
                                                 <div class="relative inline-block overflow-visible">
                                                     @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
                                                     @if (count($files) > 1)
                                                         <button id="viewFilesBtn-{{ $doc->id }}" type="button"
-                                                            class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
+                                                            class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown"
+                                                            title="View File">
                                                             <i data-feather="file-text" class="w-5 h-5"></i>
                                                             <span
                                                                 class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
@@ -146,7 +147,7 @@
                                                                 @foreach ($files as $file)
                                                                     <button type="button"
                                                                         class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                        data-file="{{ $file['url'] }}">
+                                                                        data-file="{{ $file['url'] }}" title="View File">
                                                                         📄 {{ $file['name'] }}
                                                                     </button>
                                                                 @endforeach
@@ -155,11 +156,26 @@
                                                     @elseif(count($files) === 1)
                                                         <button type="button"
                                                             class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
-                                                            data-file="{{ $files[0]['url'] }}">
-                                                            <i data-feather="file-text" class="w-4 h-4"></i> View
+                                                            data-file="{{ $files[0]['url'] }}" title="View File">
+                                                            <i data-feather="file-text" class="w-4 h-4"></i>
                                                         </button>
                                                     @endif
                                                 </div>
+                                                <button data-bs-toggle="modal"
+                                                    data-bs-target="#editDocumentModal-{{ $doc->id }}"
+                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
+                                                    title="Edit">
+                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                </button>
+                                                <form action="{{ route('master.document-review.destroy', $doc->id) }}"
+                                                    method="POST" class="delete-form d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" title="Delete Document"
+                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </form>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -238,7 +254,7 @@
             viewModal.addEventListener('hidden.bs.modal', () => {
                 document.getElementById('fileViewer').src = '';
             });
-                        document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+            document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
@@ -285,22 +301,21 @@
     </script>
 @endpush
 <style>
-        /* --- Dropdown fix style --- */
-        .dropdown-fixed {
-            position: fixed !important;
-            z-index: 999999 !important;
-            background-color: #ffffff !important;
-            /* warna putih solid */
-            border: 1px solid rgba(0, 0, 0, 0.1) !important;
-            border-radius: 8px !important;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
+    /* --- Dropdown fix style --- */
+    .dropdown-fixed {
+        position: fixed !important;
+        z-index: 999999 !important;
+        background-color: #ffffff !important;
+        /* warna putih solid */
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
 
-        /* Tambahan: untuk isi dropdown agar tidak transparan juga */
-        .dropdown-fixed .py-1 {
-            background-color: #fff;
-        }
-    </style>
-
+    /* Tambahan: untuk isi dropdown agar tidak transparan juga */
+    .dropdown-fixed .py-1 {
+        background-color: #fff;
+    }
+</style>

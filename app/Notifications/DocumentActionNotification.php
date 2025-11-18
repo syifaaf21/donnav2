@@ -60,7 +60,7 @@ class DocumentActionNotification extends Notification
             case 'approved':
                 $message = $this->documentNumber
                     ? "{$title} has been approved by {$byUserFormatted}."
-                    : "File for {$title} has been approved by {$byUserFormatted}"
+                    : "Document {$title} has been approved by {$byUserFormatted}"
                     . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
                     . " and document is active.";
                 break;
@@ -68,7 +68,7 @@ class DocumentActionNotification extends Notification
             case 'rejected':
                 $message = $this->documentNumber
                     ? "{$title} has been rejected by {$byUserFormatted}."
-                    : "File for {$title} has been rejected by {$byUserFormatted}"
+                    : "Document {$title} has been rejected by {$byUserFormatted}"
                     . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
                     . ".";
                 break;

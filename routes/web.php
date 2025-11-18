@@ -130,6 +130,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
         Route::get('/folder/{plant}/{docCode}', [DocumentReviewController::class, 'showFolder'])
             ->name('showFolder');
+        Route::get('/filters', [DocumentReviewController::class, 'getFilters']);
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');

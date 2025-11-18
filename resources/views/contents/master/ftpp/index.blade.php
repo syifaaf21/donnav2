@@ -64,6 +64,14 @@
             // sembunyikan semua section dulu
             Object.values(sections).forEach(section => section.classList.add("hidden"));
 
+            // aktifkan tab pertama secara default
+            const firstTab = tabs[0];
+            const firstTarget = firstTab.getAttribute("data-section");
+
+            firstTab.classList.remove("bg-gray-200", "text-gray-700");
+            firstTab.classList.add("bg-blue-500", "text-white");
+            sections[firstTarget].classList.remove("hidden");
+
             // event klik
             tabs.forEach(tab => {
                 tab.addEventListener("click", () => {

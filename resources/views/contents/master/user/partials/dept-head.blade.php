@@ -31,7 +31,7 @@
                     @if ($user->role->name === 'Dept Head')
                         <tr class="border-b hover:bg-gray-50">
                             <td class="px-4 py-2">{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
-                            <td class="px-4 py-2">{{ $user->name }}</td>
+                            <td class="px-4 py-2">{{ ucwords(strtolower($user->name)) }}</td>
                             <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
                             <td class="px-4 py-2">{{ $user->email }}</td>
                             <td class="px-4 py-2 flex gap-2">

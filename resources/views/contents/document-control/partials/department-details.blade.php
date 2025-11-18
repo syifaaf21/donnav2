@@ -416,7 +416,7 @@
                     rejectDocInput.value = docId;
 
                     // Set Quill content
-                    rejectQuill.clipboard.dangerouslyPasteHTML(notes);
+                    rejectQuill.setText('');
 
                     // Set form action dinamis
                     rejectForm.action = rejectUrl;

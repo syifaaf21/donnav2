@@ -85,7 +85,6 @@
                         </form>
                     </div>
                 </div>
-
             </div>
             {{-- Table --}}
             <div class="overflow-x-auto overflow-y-auto max-h-96">

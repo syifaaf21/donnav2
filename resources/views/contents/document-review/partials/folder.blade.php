@@ -25,83 +25,110 @@
             </ol>
         </nav>
         <!-- Search & Filter Bar -->
-<form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET"
-      class="flex flex-col sm:flex-row justify-end mb-4 w-full gap-2 items-end">
+        <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET"
+            class="flex justify-end items-center gap-3 mb-4 w-full flex-wrap">
 
-    <!-- Search input -->
-    <div class="flex items-center w-full sm:w-96 relative">
-        <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-               placeholder="Search...">
-        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500">
-            <i class="bi bi-search"></i>
-        </button>
-        <button type="button" id="clearSearch"
-                class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500"
-                onclick="document.getElementById('searchInput').value=''; this.form.submit();">
-            <i class="bi bi-x-circle"></i>
-        </button>
-    </div>
+            <!-- Search Input (bentuk asli) -->
+            <div class="flex items-center w-full sm:w-96 relative">
+                <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    placeholder="Search...">
 
-    <!-- Filter Part Number -->
-    <div>
-        <select name="part_number" id="partSelect"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-            <option value="">All Part Numbers</option>
-            @foreach($partNumbers as $part)
-                <option value="{{ $part }}" @selected(request('part_number') == $part)>{{ $part }}</option>
-            @endforeach
-        </select>
-    </div>
+                <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500">
+                    <i class="bi bi-search"></i>
+                </button>
 
-    <!-- Filter Model -->
-    <div>
-        <select name="model" id="modelSelect"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-            <option value="">All Models</option>
-            @foreach($models as $model)
-                <option value="{{ $model }}" @selected(request('model') == $model)>{{ $model }}</option>
-            @endforeach
-        </select>
-    </div>
+                <button type="button" id="clearSearch"
+                    class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500"
+                    onclick="document.getElementById('searchInput').value=''; this.form.submit();">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </div>
+            <!-- Filter Button -->
+            <button type="button"
+                class="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
+                data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="bi bi-funnel"></i>
+            </button>
+        </form>
 
-    <!-- Filter Process -->
-    <div>
-        <select name="process" id="processSelect"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-            <option value="">All Processes</option>
-            @foreach($processes as $process)
-                <option value="{{ $process }}" @selected(request('process') == $process)>{{ $process }}</option>
-            @endforeach
-        </select>
-    </div>
 
-    <!-- Filter Product -->
-    <div>
-        <select name="product" id="productSelect"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-            <option value="">All Products</option>
-            @foreach($products as $product)
-                <option value="{{ $product }}" @selected(request('product') == $product)>{{ $product }}</option>
-            @endforeach
-        </select>
-    </div>
+        <!-- Modal Filter -->
+        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content rounded-2xl">
 
-    <!-- Filter Mode -->
-    <div>
-        <select name="filter_mode" id="filterModeSelect"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-            <option value="independent" @selected(request('filter_mode', 'independent') == 'independent')>Independent</option>
-            <option value="dependent" @selected(request('filter_mode') == 'dependent')>Dependent</option>
-        </select>
-    </div>
+                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
+                        method="GET">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
 
-    <!-- Submit button -->
-    <div>
-        <button type="submit"
-                class="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 text-sm">Apply</button>
-    </div>
-</form>
+                        <div class="modal-body space-y-4">
+
+                            <!-- Part Number -->
+                            <div class="flex flex-col">
+                                <label class="form-label font-semibold text-gray-700 mb-1">Part Number</label>
+                                <select name="part_number" id="modalPart" class="form-select rounded-lg py-2">
+                                    <option value="">All Part Numbers</option>
+                                    @foreach ($partNumbers as $part)
+                                        <option value="{{ $part }}" @selected(request('part_number') == $part)>{{ $part }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Model -->
+                            <div class="flex flex-col">
+                                <label class="form-label font-semibold text-gray-700 mb-1">Model</label>
+                                <select name="model" id="modalModel" class="form-select rounded-lg py-2">
+                                    <option value="">All Models</option>
+                                    @foreach ($models as $model)
+                                        <option value="{{ $model }}" @selected(request('model') == $model)>
+                                            {{ $model }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Process -->
+                            <div class="flex flex-col">
+                                <label class="form-label font-semibold text-gray-700 mb-1">Process</label>
+                                <select name="process" id="modalProcess" class="form-select rounded-lg py-2">
+                                    <option value="">All Processes</option>
+                                    @foreach ($processes as $process)
+                                        <option value="{{ $process }}" @selected(request('process') == $process)>
+                                            {{ ucwords($process) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <!-- Product -->
+                            <div class="flex flex-col">
+                                <label class="form-label font-semibold text-gray-700 mb-1">Product</label>
+                                <select name="product" id="modalProduct" class="form-select rounded-lg py-2">
+                                    <option value="">All Products</option>
+                                    @foreach ($products as $product)
+                                        <option value="{{ $product }}" @selected(request('product') == $product)>
+                                            {{ $product }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer flex justify-between">
+                            <button type="button" id="clearFilterBtn"
+                                class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                Clear
+                            </button>
+
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 text-white hover:bg-sky-700">
+                                Apply Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <!-- Table -->
         <div class="overflow-x-auto bg-white rounded-lg shadow p-4">
@@ -152,6 +179,7 @@
                                         @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
                                         @if (count($files) > 1)
                                             <button id="viewFilesBtn-{{ $doc->id }}" type="button"
+                                                title="View File"
                                                 class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
                                                 <i data-feather="file-text" class="w-5 h-5"></i>
                                                 <span
@@ -163,7 +191,7 @@
                                                 class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
                                                 <div class="py-1 text-sm max-h-80 overflow-y-auto">
                                                     @foreach ($files as $file)
-                                                        <button type="button"
+                                                        <button type="button" title="View File"
                                                             class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
                                                             data-file="{{ $file['url'] }}">
                                                             📄 {{ $file['name'] }}
@@ -172,20 +200,46 @@
                                                 </div>
                                             </div>
                                         @elseif(count($files) === 1)
-                                            <button type="button"
-                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-cyan-500 hover:bg-cyan-600 view-file-btn"
+                                            <button type="button" title="View File"
+                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 text-white bg-cyan-500 hover:bg-cyan-600 view-file-btn"
                                                 data-file="{{ $files[0]['url'] }}">
                                                 <i data-feather="file-text" class="w-4 h-4"></i>
                                             </button>
                                         @endif
                                     </div>
-
                                     {{-- Tombol edit --}}
-                                    <button type="button" class="btn btn-outline-warning btn-sm px-2 py-1 rounded text-xs"
-                                        data-doc-id="{{ $doc->id }}" title="Edit Document"
-                                        @if (!in_array($statusName, ['approved', 'rejected'])) disabled @endif>
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
+                                    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']) || auth()->user()->department_id === $doc->department_id)
+                                        <button type="button"
+                                            class="inline-flex items-center justify-center px-2.5 py-1.5 text-xs font-medium rounded text-white bg-yellow-500 hover:bg-yellow-600"
+                                            data-doc-id="{{ $doc->id }}" title="Edit Document"
+                                            @if (!in_array($statusName, ['approved', 'rejected'])) disabled @endif>
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    @endif
+                                    @if (in_array(strtolower(Auth::user()->role->name), ['admin', 'super admin']))
+                                        {{-- Tombol Approve --}}
+                                        <form action="{{ route('document-review.approveWithDates', $doc->id) }}"
+                                            method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                class="inline-flex items-center justify-center px-2.5 py-1.5 text-xs font-medium rounded text-white bg-green-500 hover:bg-green-600"
+                                                @if ($statusName !== 'need review') disabled @endif>
+                                                <i class="bi bi-check2-circle"></i>
+                                            </button>
+                                        </form>
+
+                                        {{-- Tombol Reject --}}
+                                        <form action="{{ route('document-review.reject', $doc->id) }}" method="POST"
+                                            class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                class="inline-flex items-center justify-center px-2.5 py-1.5 text-xs font-medium rounded text-white bg-red-500 hover:bg-red-600"
+                                                @if ($statusName !== 'need review') disabled @endif>
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+
                                 </div>
                             </td>
                         </tr>
@@ -376,13 +430,13 @@
                         <label class="form-label fw-semibold">Existing Files</label>
                         <ul class="list-group">
                             ${data.files.map(f => `
-                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                        <span>📄 ${f.name}</span>
-                                                        <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                            <i class="bi bi-eye"></i> View
-                                                        </a>
-                                                    </li>
-                                                `).join('')}
+                                                                                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                                    <span>📄 ${f.name}</span>
+                                                                                                                                    <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                                                                        <i class="bi bi-eye"></i> View
+                                                                                                                                    </a>
+                                                                                                                                </li>
+                                                                                                                            `).join('')}
                         </ul>
                     `;
                             } else {
@@ -400,44 +454,68 @@
                 });
             });
 
-            const partSelect = document.getElementById('partSelect');
-    const modelSelect = document.getElementById('modelSelect');
-    const processSelect = document.getElementById('processSelect');
-    const productSelect = document.getElementById('productSelect');
-    const filterModeSelect = document.getElementById('filterModeSelect');
+            const modalPart = document.getElementById('modalPart');
+            const modalModel = document.getElementById('modalModel');
+            const modalProcess = document.getElementById('modalProcess');
+            const modalProduct = document.getElementById('modalProduct');
 
-    partSelect.addEventListener('change', updateDependentOptions);
-    filterModeSelect.addEventListener('change', updateDependentOptions);
+            if (modalPart) {
+                modalPart.addEventListener('change', updateModalFilters);
+            }
 
-    function updateDependentOptions() {
-        const part = partSelect.value;
-        const mode = filterModeSelect.value;
+            function updateModalFilters() {
+                const part = modalPart.value;
 
-        if (mode === 'dependent' && part) {
-            // Fetch options terkait part number via AJAX
-            fetch(`/document-review/filters?part_number=${part}`)
-                .then(res => res.json())
-                .then(data => {
-                    updateSelect(modelSelect, data.models);
-                    updateSelect(processSelect, data.processes);
-                    updateSelect(productSelect, data.products);
+                if (part && part !== "") {
+                    fetch(`/document-review/filters?part_number=${part}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            updateSelect(modalModel, data.models);
+                            updateSelect(modalProcess, data.processes);
+                            updateSelect(modalProduct, data.products);
+                        });
+                } else {
+                    [modalModel, modalProcess, modalProduct].forEach(select => {
+                        select.querySelectorAll('option').forEach(o => o.hidden = false);
+                    });
+                }
+            }
+
+            function updateSelect(select, options) {
+                select.querySelectorAll('option').forEach(o => {
+                    o.hidden = o.value && !options.includes(o.value);
                 });
-        } else {
-            // Reset semua opsi visible (independent mode)
-            [modelSelect, processSelect, productSelect].forEach(select => {
-                select.querySelectorAll('option').forEach(o => o.hidden = false);
-            });
-        }
-    }
+            }
 
-    function updateSelect(select, options) {
-        select.querySelectorAll('option').forEach(o => {
-            o.hidden = o.value && !options.includes(o.value);
-        });
-    }
+            const filterModal = document.getElementById('filterModal');
+            if (filterModal) {
+                filterModal.addEventListener('shown.bs.modal', updateModalFilters);
+            }
+            // === CLEAR FILTER BUTTON ===
+            const clearFilterBtn = document.getElementById('clearFilterBtn');
 
-    // Trigger awal saat page load
-    updateDependentOptions();
+            if (clearFilterBtn) {
+                clearFilterBtn.addEventListener('click', () => {
+
+                    // Reset semua field dalam modal
+                    document.getElementById('modalPart').value = "";
+                    document.getElementById('modalModel').value = "";
+                    document.getElementById('modalProcess').value = "";
+                    document.getElementById('modalProduct').value = "";
+
+                    // Redirect ke halaman tanpa filter (tapi tetap membawa search q)
+                    const url = new URL(window.location.href);
+
+                    url.searchParams.delete('part_number');
+                    url.searchParams.delete('model');
+                    url.searchParams.delete('process');
+                    url.searchParams.delete('product');
+
+                    // q (search) tetap ada kalau sebelumnya sudah diisi
+                    window.location.href = url.toString();
+                });
+            }
+
         });
     </script>
 @endsection
