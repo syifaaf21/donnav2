@@ -29,9 +29,9 @@
                             <select class="form-select tomselect @error('department') is-invalid @enderror"
                                 id="department" name="department[]" multiple required>
                                 <option value="">-- Select Department --</option>
-                                 @foreach ($departments as $dept)
+                                @foreach ($departments as $dept)
                                     <option value="{{ $dept->id }}"
-                                        {{ (collect(old('department'))->contains($dept->id)) ? 'selected' : '' }}>
+                                        {{ collect(old('department'))->contains($dept->id) ? 'selected' : '' }}>
                                         {{ $dept->name }}
                                     </option>
                                 @endforeach
@@ -41,12 +41,15 @@
                             @enderror
                         </div>
                     </div>
+                    @php
+                        $today = now()->format('Y-m-d');
+                    @endphp
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
                             <label for="obsolete_date" class="form-label">Obsolete Date <span
                                     class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('obsolete_date') is-invalid @enderror"
-                                id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}" required>
+                                id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}" min="{{ $today }}" required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -55,7 +58,7 @@
                             <label for="reminder_date" class="form-label">Reminder Date <span
                                     class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('reminder_date') is-invalid @enderror"
-                                id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}" required>
+                                id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}" min="{{ $today }}" required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -63,8 +66,8 @@
                     </div>
                     {{-- Notes --}}
                     <div class="col-12 mt-3">
-                        <label class="form-label">Notes</label>
-                        <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
+                        <label class="form-label">Notes <span class="text-danger">*</span></label>
+                        <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}" required>
                         <div id="quill_editor_add" class="bg-white border-1 shadow-sm rounded"
                             style="min-height: 100px; max-height: 80px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; width: 100%;">
                         </div>

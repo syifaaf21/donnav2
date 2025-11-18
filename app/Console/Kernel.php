@@ -11,14 +11,15 @@ class Kernel extends ConsoleKernel
     {
         // Jalankan SendDocumentControlReminder setiap hari jam 08:00
         $schedule->command('document:send-reminder')
-                 ->dailyAt('08:00')
-                 ->withoutOverlapping()  // Pastikan tidak tumpang tindih jika task lama belum selesai
-                 ->runInBackground();    // Opsional: jalankan di background
+            ->weeklyOn(2, '08:00') // 1 = Senin
+            ->withoutOverlapping()
+            ->runInBackground();
+        // Opsional: jalankan di background
     }
 
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

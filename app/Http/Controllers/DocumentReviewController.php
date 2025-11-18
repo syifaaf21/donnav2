@@ -2,34 +2,237 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
-use App\Models\Document;
-use App\Models\DocumentMapping;
-use App\Models\PartNumber;
-use App\Models\Process;
-use App\Models\ProductModel;
-use App\Models\Status;
-use App\Models\User;
-use App\Notifications\DocumentRevisedNotification;
-use App\Notifications\DocumentStatusNotification;
+use App\Models\{Department, Document, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User};
+use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\{Auth, DB, Notification, Storage};
 
 class DocumentReviewController extends Controller
 {
     public function index(Request $request)
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
-        $processes = Process::pluck('name', 'id');
-        $documentsMaster = Document::where('type', 'review')->get(); // Master dokumen
-        $departments = Department::whereIn('plant', ['body', 'unit', 'electric'])->get();
-        $partNumbers = PartNumber::all();
-        $models = ProductModel::all();
+        $documentsMaster = Document::where('type', 'review')->get();
 
+        $documentMappings = DocumentMapping::with([
+            'document',
+            'files',
+            'partNumber.product',
+            'partNumber.productModel',
+            'partNumber.process',
+            'productModel',
+            'process',
+            'product',
+            'user',
+            'status',
+            'department'
+        ])
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->get();
+
+        // Tambahkan URL file dengan aman
+        $documentMappings->each(function ($mapping) {
+            $mapping->files->transform(function ($file) {
+                if (is_object($file) && isset($file->file_path)) {
+                    $file->url = asset('storage/' . $file->file_path);
+                } else {
+                    $file->url = null;
+                }
+                return $file;
+            });
+        });
+
+        $groupedByPlant = $this->groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings);
+
+        return view('contents.document-review.index', compact(
+            'plants',
+            'documentsMaster',
+            'groupedByPlant'
+        ));
+    }
+
+    public function showFolder($plant, $docCode, Request $request)
+    {
+        $docCode = base64_decode($docCode);
+
+        // Group documents
+        $documentsByCode = $this->getDocumentsGroupedByPlantAndCode();
+        $plantGroup      = $documentsByCode->get($plant) ?? collect();
+
+        $normalizedDocCode = trim(strtolower($docCode));
+        $matchedCode       = $plantGroup->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
+
+        if (!$matchedCode) abort(404);
+
+        $documents = $plantGroup->get($matchedCode, collect());
+
+        // 1. Semua dropdown berdasarkan plant
+        $allPartNumbers = PartNumber::where('plant', $plant)->pluck('part_number')->unique()->values();
+        $allModels      = ProductModel::where('plant', $plant)->pluck('name')->unique()->values();
+        $allProcesses   = Process::where('plant', $plant)->pluck('name')->unique()->values();
+        $allProducts    = Product::where('plant', $plant)->pluck('name')->unique()->sort()->values();
+
+        // 2. Filter berdasarkan dropdown (part / model / process / product)
+        $documents = $documents->filter(function ($doc) use ($request) {
+
+            // jika tidak pilih part number → filter bebas
+            if (!$request->part_number) {
+
+                $matchModel   = !$request->model   || ($doc->partNumber?->productModel?->name === $request->model);
+                $matchProcess = !$request->process || ($doc->partNumber?->process?->name === $request->process);
+                $matchProduct = !$request->product || ($doc->partNumber?->product?->name === $request->product);
+
+                return $matchModel && $matchProcess && $matchProduct;
+            }
+
+            // jika part number dipilih → filter ketat
+            $matchPartNumber = ($doc->partNumber?->part_number === $request->part_number);
+
+            $matchModel   = !$request->model   || ($doc->partNumber?->productModel?->name === $request->model);
+            $matchProcess = !$request->process || ($doc->partNumber?->process?->name === $request->process);
+            $matchProduct = !$request->product || ($doc->partNumber?->product?->name === $request->product);
+
+            return $matchPartNumber && $matchModel && $matchProcess && $matchProduct;
+        });
+
+        // 3. Search bar (q)
+        if ($request->filled('q')) {
+
+            $search = strtolower($request->q);
+
+            $documents = $documents->filter(function ($doc) use ($search) {
+
+                return
+                    str_contains(strtolower($doc->document_number ?? ''), $search)
+                    || str_contains(strtolower($doc->notes ?? ''), $search)
+                    || str_contains(strtolower($doc->document?->name ?? ''), $search)
+                    || str_contains(strtolower($doc->document?->code ?? ''), $search)
+                    || str_contains(strtolower($doc->user?->name ?? ''), $search)
+                    || str_contains(strtolower($doc->status?->name ?? ''), $search)
+
+                    // Part number
+                    || str_contains(strtolower($doc->partNumber?->part_number ?? ''), $search)
+
+                    // Product
+                    || str_contains(strtolower($doc->partNumber?->product?->name ?? ''), $search)
+                    || str_contains(strtolower($doc->product?->name ?? ''), $search)
+                    || str_contains(strtolower($doc->product?->code ?? ''), $search)
+
+                    // Model
+                    || str_contains(strtolower($doc->partNumber?->productModel?->name ?? ''), $search)
+                    || str_contains(strtolower($doc->productModel?->name ?? ''), $search)
+
+                    // Process
+                    || str_contains(strtolower($doc->partNumber?->process?->name ?? ''), $search)
+                    || str_contains(strtolower($doc->partNumber?->process?->code ?? ''), $search)
+                    || str_contains(strtolower($doc->process?->name ?? ''), $search);
+            });
+        }
+
+        // 4. Set dropdown dependent (harus setelah search)
+        if ($request->part_number) {
+
+            $related = PartNumber::with(['productModel', 'process', 'product'])
+                ->where('part_number', $request->part_number)
+                ->where('plant', $plant)
+                ->first();
+
+            $models    = collect([$related?->productModel?->name])->filter()->values();
+            $processes = collect([$related?->process?->name])->filter()->values();
+            $products  = collect([$related?->product?->name])->filter()->values();
+        } else {
+
+            $models    = $allModels;
+            $processes = $allProcesses;
+            $products  = $allProducts;
+        }
+
+        return view('contents.document-review.partials.folder', [
+            'plant'       => $plant,
+            'docCode'     => $matchedCode,
+            'documents'   => $documents,
+
+            'partNumbers' => $allPartNumbers,
+            'models'      => $models,
+            'processes'   => $processes,
+            'products'    => $products,
+        ]);
+    }
+
+    public function getFilters(Request $request)
+    {
+        if (!$request->part_number) {
+            return response()->json([
+                'models' => [],
+                'processes' => [],
+                'products' => []
+            ]);
+        }
+
+        $related = PartNumber::with(['productModel', 'process', 'product'])
+            ->where('part_number', $request->part_number)
+            ->first();
+
+        return response()->json([
+            'models'    => $related ? [$related->productModel?->name] : [],
+            'processes' => $related ? [$related->process?->name] : [],
+            'products'  => $related ? [$related->product?->name] : [],
+        ]);
+    }
+
+    // ========================= Helper Functions =========================
+    private function getEnumValues($table, $column)
+    {
+        $type = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = '{$column}'")[0]->Type;
+        preg_match('/enum\((.*)\)/', $type, $matches);
+        $enum = [];
+        if (!empty($matches)) {
+            foreach (explode(',', $matches[1]) as $value) {
+                $enum[] = trim($value, "'");
+            }
+        }
+        return $enum;
+    }
+
+    private function groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings)
+    {
+        return collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
+
+            $mappingsByPlant = $documentMappings->filter(function ($item) use ($plant) {
+
+                // 1️⃣ Jika ada Part Number → pakai plant dari Part Number
+                if ($item->partNumber) {
+                    return strtolower($item->partNumber->plant ?? '') === strtolower($plant);
+                }
+
+                // 2️⃣ Jika tidak ada Part Number → pakai plant dari Model
+                if ($item->productModel) {
+                    return strtolower($item->productModel->plant ?? '') === strtolower($plant);
+                }
+
+                return false;
+            });
+
+            // Group berdasarkan document code
+            $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
+
+            // Pastikan semua kode dokumen master tetap ada (meskipun kosong)
+            $orderedGrouped = collect();
+            $documentsMaster->each(
+                fn($doc) =>
+                $orderedGrouped->put($doc->code, $groupedDocs->get($doc->code, collect()))
+            );
+
+            return [$plant => $orderedGrouped];
+        });
+    }
+
+
+
+    private function getDocumentsGroupedByPlantAndCode()
+    {
+        $plants = $this->getEnumValues('tm_part_numbers', 'plant');
+        $documentsMaster = Document::where('type', 'review')->get();
         $documentMappings = DocumentMapping::with([
             'document',
             'files',
@@ -38,163 +241,27 @@ class DocumentReviewController extends Controller
             'partNumber.process',
             'user',
             'status',
-            'department',
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->when(
-                $request->plant,
-                fn($q, $plant) =>
-                $q->whereHas('partNumber', fn($q2) => $q2->where('plant', $plant))
-            )
-            ->get();
+            'department'
+        ])->whereHas('document', fn($q) => $q->where('type', 'review'))->get();
 
         // Tambahkan URL file
         $documentMappings->each(function ($mapping) {
             $mapping->files->transform(function ($file) {
-                $file->url = asset('storage/' . $file->file_path);
+                if (is_object($file) && isset($file->file_path)) {
+                    $file->url = asset('storage/' . $file->file_path);
+                } else {
+                    $file->url = null;
+                }
                 return $file;
             });
         });
 
-        // --- Grup berdasarkan plant, lalu berdasarkan document code
-        $groupedByPlant = collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
-            $mappingsByPlant = $documentMappings->filter(
-                fn($item) =>
-                strtolower($item->partNumber?->plant ?? '') === strtolower($plant)
-            );
-
-            // group mapping by document code
-            $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
-
-            // pastikan semua dokumen master tetap ada di grup
-            $orderedGrouped = collect();
-
-            $documentsMaster->each(function ($doc) use (&$orderedGrouped, $groupedDocs) {
-                $orderedGrouped[$doc->code] = $groupedDocs->get($doc->code, collect());
-            });
-
-            return [$plant => $orderedGrouped];
-        });
-
-
-        return view('contents.document-review.index', compact(
-            'plants',
-            'processes',
-            'departments',
-            'partNumbers',
-            'models',
-            'documentsMaster',
-            'groupedByPlant'
-        ));
-    }
-
-    public function getFiltersByPlant(Request $request)
-    {
-        $plant = $request->get('plant');
-
-        // Departments
-        $departments = $plant
-            ? Department::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
-            : Department::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('name')->get(['id', 'name']);
-
-        // Part Numbers
-        $partNumbers = $plant
-            ? PartNumber::where('plant', $plant)->orderBy('part_number')->get(['id', 'part_number'])
-            : PartNumber::whereIn('plant', ['body', 'unit', 'electric'])->orderBy('part_number')->get(['id', 'part_number']);
-
-        // Processes → tampilkan berdasarkan plant, tanpa peduli PartNumber
-        $processes = $plant
-            ? Process::where('plant', $plant)->orderBy('name')->get(['id', 'name'])
-            : Process::orderBy('name')->get(['id', 'name']);
-
-        $processes = $processes->map(fn($p) => ['id' => $p->id, 'name' => ucwords($p->name)]);
-
-        return response()->json([
-            'departments' => $departments,
-            'part_numbers' => $partNumbers,
-            'processes' => $processes,
-        ]);
-    }
-
-    public function liveSearch(Request $request)
-    {
-        $keyword = $request->keyword;
-
-        $documentMappings = DocumentMapping::with([
-            'document',
-            'partNumber.product',
-            'partNumber.productModel',
-            'partNumber.process', // pastikan relasi ini ikut di-load
-            'user',
-            'status',
-            'files'
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'review')) // pastikan hanya review
-            ->when($keyword, function ($query) use ($keyword) {
-                $query->where(function ($q) use ($keyword) {
-                    $q->whereHas('partNumber', function ($q2) use ($keyword) {
-                        $q2->where('part_number', 'like', "%{$keyword}%")
-                            ->orWhere('plant', 'like', "%{$keyword}%")
-                            ->orWhereHas('process', function ($q3) use ($keyword) {
-                                $q3->where('name', 'like', "%{$keyword}%")
-                                    ->orWhere('code', 'like', "%{$keyword}%");
-                            });
-                    })
-                        ->orWhereHas('partNumber.productModel', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('document', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('status', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhereHas('user', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })
-                        ->orWhere('notes', 'like', "%{$keyword}%")
-                        ->orWhere('document_number', 'like', "%{$keyword}%");
-                });
-            })
-            ->get();
-
-        // group hasil by part-model-process (sama format seperti index partial expects)
-        $groupedData = $documentMappings->groupBy(function ($item) {
-            $partNumber = $item->partNumber?->part_number ?? 'unknown';
-            $model = $item->partNumber?->productModel?->name ?? 'unknown';
-            $process = $item->partNumber?->process?->code ?? 'unknown';
-            return "{$partNumber}-{$model}-{$process}";
-        });
-
-        // render partial yang hanya menerima $groupedData
-        return view('contents.document-review.partials.table', compact('groupedData'))->render();
-    }
-
-
-    private function getEnumValues($table, $column)
-    {
-        $type = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = '{$column}'")[0]->Type;
-        preg_match('/enum\((.*)\)/', $type, $matches);
-        $enum = [];
-
-        if (!empty($matches)) {
-            foreach (explode(',', $matches[1]) as $value) {
-                $enum[] = trim($value, "'");
-            }
-        }
-
-        return $enum;
-    }
-
-    public function show($id)
-    {
-        $document = Document::with('childrenRecursive')->findOrFail($id);
-
-        return view('contents.document-review.show', compact('document'));
+        return $this->groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings);
     }
 
     public function revise(Request $request, $id)
     {
+        auth()->user()->department_id;
         $mapping = DocumentMapping::with('document')->findOrFail($id);
         if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
             abort(403);
@@ -266,39 +333,42 @@ class DocumentReviewController extends Controller
 
     public function approveWithDates(Request $request, $id)
     {
-        // Validasi input
         $validated = $request->validate([
             'reminder_date' => 'required|date',
             'deadline' => 'required|date|after_or_equal:reminder_date',
         ]);
 
-        $mapping = DocumentMapping::findOrFail($id);
-
+        $mapping = DocumentMapping::with('department')->findOrFail($id);
         $approvedStatus = Status::where('name', 'Approved')->first();
 
-        $mapping->update([
+        $mapping->timestamps = false;
+        $mapping->updateQuietly([
             'status_id'     => $approvedStatus->id ?? $mapping->status_id,
             'reminder_date' => $validated['reminder_date'],
             'deadline'      => $validated['deadline'],
-            'updated_at'    => now(),
             'user_id'       => auth()->id(),
         ]);
+        $mapping->timestamps = true;
 
-        // Kirim notifikasi ke semua user
-        $allUsers = User::all();
-        Notification::send($allUsers, new DocumentStatusNotification(
-            $mapping->document_number,
-            'Approved',
-            auth()->user()->name
+        // Hanya user departemen terkait (kecuali Admin/Super Admin)
+        $targetUsers = User::where('department_id', $mapping->department_id)
+            ->whereNotIn('role_id', function ($query) {
+                $query->select('id')->from('tm_roles')->whereIn('name', ['Admin', 'Super Admin']);
+            })
+            ->get();
+
+        $url = route('document-review.showFolder', [
+            'plant' => $mapping->partNumber->plant ?? 'unknown',
+            'docCode' => base64_encode($mapping->document->code ?? ''),
+        ]);
+
+        Notification::send($targetUsers, new DocumentActionNotification(
+            action: 'approved',
+            byUser: auth()->user()->name,
+            documentNumber: $mapping->document_number, // Hanya document_number
+            url: $url,
+            departmentName: $mapping->department?->name,
         ));
-
-        // ✅ (Opsional) Catat log activity
-        // ActivityLog::create([
-        //     'user_id' => auth()->id(),
-        //     'action' => 'Approved document',
-        //     'document_mapping_id' => $mapping->id,
-        //     'details' => json_encode($validated),
-        // ]);
 
         return redirect()->route('document-review.index')
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
@@ -306,22 +376,33 @@ class DocumentReviewController extends Controller
 
     public function reject(Request $request, $id)
     {
-        $mapping = DocumentMapping::findOrFail($id);
-
+        $mapping = DocumentMapping::with('department')->findOrFail($id);
         $rejectedStatus = Status::where('name', 'Rejected')->first();
 
-        $mapping->update([
+        $mapping->timestamps = false;
+        $mapping->updateQuietly([
             'status_id' => $rejectedStatus->id ?? $mapping->status_id,
-            'updated_at' => now(),
             'user_id' => auth()->id(),
         ]);
+        $mapping->timestamps = true;
 
-        // Kirim notifikasi ke semua user
-        $allUsers = User::all();
-        Notification::send($allUsers, new DocumentStatusNotification(
-            $mapping->document_number,
-            'Rejected',
-            auth()->user()->name
+        $targetUsers = User::where('department_id', $mapping->department_id)
+            ->whereNotIn('role_id', function ($query) {
+                $query->select('id')->from('tm_roles')->whereIn('name', ['Admin', 'Super Admin']);
+            })
+            ->get();
+
+        $url = route('document-review.showFolder', [
+            'plant' => $mapping->partNumber->plant ?? 'unknown',
+            'docCode' => base64_encode($mapping->document->code ?? ''),
+        ]);
+
+        Notification::send($targetUsers, new DocumentActionNotification(
+            action: 'rejected',
+            byUser: auth()->user()->name,
+            documentNumber: $mapping->document_number, // Hanya document_number
+            url: $url,
+            departmentName: $mapping->department?->name,
         ));
 
         return redirect()->route('document-review.index')

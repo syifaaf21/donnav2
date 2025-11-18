@@ -9,36 +9,55 @@ class WhatsAppService
 {
     protected $url;
     protected $token;
+    protected $groupId;
 
     public function __construct()
     {
         $this->url = config('services.whatsapp.url');
         $this->token = config('services.whatsapp.token');
+        $this->groupId = config('services.whatsapp.group_id');
     }
 
-    public function sendMessage($number, $message)
+    /**
+     * Kirim pesan ke group WhatsApp
+     *
+     * @param string $message
+     * @return bool
+     */
+    public function sendMessage(string $message): bool
     {
 
-        // ✅ STEP 1: Cek apakah environment "local"
+        // STEP 1: Cek environment local
         if (config('app.env') === 'local') {
-            // Simulasi saja (tidak benar-benar kirim)
-            Log::info("[LOCAL MODE] WhatsApp simulated send to {$number}");
+            Log::info("[LOCAL MODE] WhatsApp simulated send to group {$this->groupId}");
             Log::info("Message:\n{$message}");
-            echo "\n=============================\n";
-            echo "[LOCAL MODE] WhatsApp message simulated!\n";
-            echo "To: {$number}\n";
-            echo "Message:\n{$message}\n";
-            echo "=============================\n";
-
-            return true; // anggap sukses
+            return true;
         }
 
-        $response = Http::asForm()->post($this->url, [
-            'token' => $this->token,
-            'number' => $number,
-            'message' => $message,
-        ]);
+        try {
+            // STEP 2: Kirim request ke RuangWA dengan opsi verify=false
+            $response = Http::asForm()->withOptions([
+                'verify' => false, // skip SSL verification
+            ])->post($this->url, [
+                'token' => $this->token,
+                'number' => $this->groupId,
+                'message' => $message,
+            ]);
 
-        return $response->successful();
+            // STEP 3: Log response untuk debugging
+            Log::info("RuangWA response status: " . $response->status());
+            Log::info("RuangWA response body: " . $response->body());
+
+            $body = json_decode($response->body(), true);
+
+            // STEP 4: Cek apakah API berhasil
+            return isset($body['success']) && $body['success'] === true;
+        } catch (\Exception $e) {
+            Log::error("Exception sending WhatsApp message", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return false;
+        }
     }
 }

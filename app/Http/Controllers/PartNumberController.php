@@ -17,6 +17,7 @@ class PartNumberController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $plantFilter = $request->input('plant'); // <-- ambil filter plant
         $query = PartNumber::with(['product', 'productModel', 'process']);
 
         if ($search) {
@@ -29,13 +30,22 @@ class PartNumberController extends Controller
             });
         }
 
-        $partNumbers = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+        // Tambahkan filter plant
+        if ($plantFilter) {
+            $query->where('plant', $plantFilter);
+        }
+
+        $partNumbers = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->appends($request->query());
+
         $products = Product::all();
         $models = ProductModel::all();
-        $processes = Process::all(); // <--- tambah ini
+        $processes = Process::all();
 
         return view('contents.master.part-number', compact('partNumbers', 'products', 'models', 'processes'));
     }
+
 
     public function store(Request $request)
     {
@@ -95,6 +105,23 @@ class PartNumberController extends Controller
         $partNumber->update($request->only('part_number', 'product_id', 'model_id', 'process_id', 'plant'));
 
         return redirect()->back()->with('success', 'Part Number updated successfully.');
+    }
+
+    public function getDetails($id)
+    {
+        $part = PartNumber::with(['product', 'productModel', 'process'])->find($id);
+        if (!$part) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $part->id,
+            'part_number' => $part->part_number,
+            'plant' => $part->plant,
+            'product' => $part->product ? ['id' => $part->product->id, 'text' => $part->product->name] : null,
+            'model' => $part->productModel ? ['id' => $part->productModel->id, 'text' => $part->productModel->name] : null,
+            'process' => $part->process ? ['id' => $part->process->id, 'text' => $part->process->name] : null,
+        ]);
     }
 
     public function getOptionsByPlant(Request $request)

@@ -14,8 +14,8 @@ class DepartmentController extends Controller
         // Optional: filter by search
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('code', 'like', '%' . $request->search . '%')
-                  ->orWhere('plant', 'like', '%' . $request->search . '%');
+                ->orWhere('code', 'like', '%' . $request->search . '%')
+                ->orWhere('plant', 'like', '%' . $request->search . '%');
         }
 
         $departments = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
@@ -56,5 +56,11 @@ class DepartmentController extends Controller
         $department->delete();
 
         return redirect()->back()->with('success', 'Department deleted successfully.');
+    }
+
+    public function byPlant($plantId)
+    {
+        $departments = Department::where('plant_id', $plantId)->get(['id', 'name']);
+        return response()->json($departments);
     }
 }

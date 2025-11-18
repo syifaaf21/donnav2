@@ -160,18 +160,20 @@ Route::middleware('auth')->group(function () {
     Route::prefix('document-review')->name('document-review.')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
-        Route::get('/show/{id}', [DocumentReviewController::class, 'show'])->name('show');
+        Route::get('/folder/{plant}/{docCode}', [DocumentReviewController::class, 'showFolder'])
+            ->name('showFolder');
+        Route::get('/filters', [DocumentReviewController::class, 'getFilters']);
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
         Route::get('/get-filters', [DocumentReviewController::class, 'getFiltersByPlant'])->name('getFiltersByPlant');
-
     });
 
     // Document Control
     Route::prefix('document-control')->name('document-control.')->group(function () {
         Route::get('/', [DocumentControlController::class, 'index'])->name('index');
+        Route::get('/department/{department}', [DocumentControlController::class, 'showByDepartment'])->name('department');
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');

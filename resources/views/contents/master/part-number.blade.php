@@ -44,6 +44,17 @@
                         <i class="bi bi-x-circle"></i>
                     </button>
                 </form>
+                <div class="ml-2 relative">
+                    <select id="filterPlant"
+                        class="form-select border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px] bg-gray-100">
+                        <option value="">All Plants</option>
+                        @foreach (['body', 'unit', 'electric'] as $plant)
+                            <option value="{{ $plant }}" {{ request('plant') == $plant ? 'selected' : '' }}>
+                                {{ ucfirst($plant) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             {{-- Table --}}
@@ -225,7 +236,8 @@
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label for="part_number" class="form-label fw-semibold">Part Number <span class="text-danger">*</span></label>
+                                <label for="part_number" class="form-label fw-semibold">Part Number <span
+                                        class="text-danger">*</span></label>
                                 <input type="text" id="part_number" name="part_number"
                                     class="form-control @error('part_number') is-invalid @enderror" required autofocus
                                     placeholder="Enter part number" value="{{ old('part_number') }}">
@@ -235,7 +247,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="plant" class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                                <label for="plant" class="form-label fw-semibold">Plant <span
+                                        class="text-danger">*</span></label>
                                 <select id="plant" name="plant"
                                     class="form-select @error('plant') is-invalid @enderror" required>
                                     <option value="" disabled selected>-- Select Plant --</option>
@@ -252,7 +265,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="product_id" class="form-label fw-semibold">Product <span class="text-danger">*</span></label>
+                                <label for="product_id" class="form-label fw-semibold">Product <span
+                                        class="text-danger">*</span></label>
                                 <select id="product_id" name="product_id"
                                     class="form-select @error('product_id') is-invalid @enderror"
                                     placeholder="Search or create product..." required disabled>
@@ -268,7 +282,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="model_id" class="form-label fw-semibold">Model <span class="text-danger">*</span></label>
+                                <label for="model_id" class="form-label fw-semibold">Model <span
+                                        class="text-danger">*</span></label>
                                 <select id="model_id" name="model_id"
                                     class="form-select @error('model_id') is-invalid @enderror"
                                     placeholder="Search or create model..." required disabled>
@@ -283,7 +298,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="process" class="form-label fw-semibold">Process <span class="text-danger">*</span></label>
+                                <label for="process" class="form-label fw-semibold">Process <span
+                                        class="text-danger">*</span></label>
                                 <select id="process_id" name="process_id"
                                     class="form-select @error('process_id') is-invalid @enderror"
                                     placeholder="Search or create process..." required disabled>
@@ -446,10 +462,8 @@
                 const form = modalEl.querySelector('form');
                 const cancelButton = modalEl.querySelector('button[data-bs-dismiss="modal"]');
 
-                // Extract partId
                 const partId = modalId.split('-')[1];
 
-                // Select element IDs inside this modal
                 const productSelectId = `product_id_edit_${partId}`;
                 const modelSelectId = `model_id_edit_${partId}`;
                 const processSelectId = `process_edit_${partId}`;
@@ -458,7 +472,7 @@
                 const modelSelectEl = document.getElementById(modelSelectId);
                 const processSelectEl = document.getElementById(processSelectId);
 
-                // Initialize TomSelect for this modal
+                // ✅ Buat TomSelect dulu
                 tomSelectInstances[modalId] = {
                     productTomSelect: productSelectEl ? new TomSelect(productSelectEl, {
                         valueField: 'value',
@@ -488,40 +502,87 @@
                     }) : null,
                 };
 
+                // === Event change Plant pada EDIT modal (SETELAH TomSelect dibuat) ===
+                const plantSelectEdit = document.getElementById(`plant_edit_${partId}`);
+
+                if (plantSelectEdit) {
+                    plantSelectEdit.addEventListener('change', function() {
+                        const selectedPlant = this.value;
+                        const ts = tomSelectInstances[modalId];
+
+                        if (!ts) return;
+
+                        // Reset nilai
+                        ts.productTomSelect?.clear(true);
+                        ts.modelTomSelect?.clear(true);
+                        ts.processTomSelect?.clear(true);
+
+                        fetch(`/api/get-options-by-plant?plant=${selectedPlant}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                ts.productTomSelect?.clearOptions();
+                                ts.modelTomSelect?.clearOptions();
+                                ts.processTomSelect?.clearOptions();
+
+                                // Product
+                                if (data.products?.length) {
+                                    data.products.forEach(p => {
+                                        ts.productTomSelect.addOption({
+                                            value: p.id,
+                                            text: p.name
+                                        });
+                                    });
+                                    ts.productTomSelect.enable();
+                                } else ts.productTomSelect.disable();
+
+                                // Model
+                                if (data.models?.length) {
+                                    data.models.forEach(m => {
+                                        ts.modelTomSelect.addOption({
+                                            value: m.id,
+                                            text: m.name
+                                        });
+                                    });
+                                    ts.modelTomSelect.enable();
+                                } else ts.modelTomSelect.disable();
+
+                                // Process
+                                if (data.processes?.length) {
+                                    data.processes.forEach(pr => {
+                                        ts.processTomSelect.addOption({
+                                            value: pr.id,
+                                            text: pr.name
+                                        });
+                                    });
+                                    ts.processTomSelect.enable();
+                                } else ts.processTomSelect.disable();
+                            });
+                    });
+                }
+
+                // === Save & Reset original data ===
                 let originalFormData = {};
 
                 function saveOriginalFormData() {
                     originalFormData = {};
-                    const elements = form.elements;
-                    for (let i = 0; i < elements.length; i++) {
-                        const el = elements[i];
-                        if (el.name) {
-                            originalFormData[el.name] = el.value;
-                        }
-                    }
+                    [...form.elements].forEach(el => {
+                        if (el.name) originalFormData[el.name] = el.value;
+                    });
                 }
 
                 function resetFormToOriginal() {
-                    for (const name in originalFormData) {
-                        if (originalFormData.hasOwnProperty(name)) {
-                            const el = form.elements[name];
-                            if (el) el.value = originalFormData[name];
-                        }
+                    for (const key in originalFormData) {
+                        if (form.elements[key]) form.elements[key].value = originalFormData[key];
                     }
 
                     const ts = tomSelectInstances[modalId];
-                    if (ts.productTomSelect) ts.productTomSelect.setValue(originalFormData['product_id'] ||
-                        '');
-                    if (ts.modelTomSelect) ts.modelTomSelect.setValue(originalFormData['model_id'] || '');
-                    if (ts.processTomSelect) ts.processTomSelect.setValue(originalFormData['process_id'] ||
-                        '');
+                    ts.productTomSelect?.setValue(originalFormData['product_id'] || '');
+                    ts.modelTomSelect?.setValue(originalFormData['model_id'] || '');
+                    ts.processTomSelect?.setValue(originalFormData['process_id'] || '');
                 }
 
                 modalEl.addEventListener('show.bs.modal', saveOriginalFormData);
-
-                cancelButton.addEventListener('click', function() {
-                    resetFormToOriginal();
-                });
+                cancelButton.addEventListener('click', resetFormToOriginal);
             });
 
             // Jika ada error validation, show create modal
@@ -541,6 +602,38 @@
                     searchForm.submit();
                 });
             }
+
+            // Filter Plant
+            const filterPlant = document.getElementById('filterPlant');
+
+            if (filterPlant && searchForm) {
+                filterPlant.addEventListener('change', function() {
+                    // Tambahkan input hidden search ke form filter
+                    const existingInput = searchForm.querySelector('input[name="search"]');
+                    if (!existingInput) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'search';
+                        input.value = searchInput.value;
+                        searchForm.appendChild(input);
+                    } else {
+                        existingInput.value = searchInput.value;
+                    }
+
+                    // Tambahkan hidden input plant
+                    let plantInput = searchForm.querySelector('input[name="plant"]');
+                    if (!plantInput) {
+                        plantInput = document.createElement('input');
+                        plantInput.type = 'hidden';
+                        plantInput.name = 'plant';
+                        searchForm.appendChild(plantInput);
+                    }
+                    plantInput.value = this.value;
+
+                    searchForm.submit();
+                });
+            }
+
         });
     </script>
 @endpush

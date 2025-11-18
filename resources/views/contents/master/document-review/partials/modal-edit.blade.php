@@ -110,39 +110,6 @@
                             <small class="text-muted">You can format your notes with bold, italic, colors, and
                                 more.</small>
                         </div>
-
-                        {{-- File Upload --}}
-                        {{-- <div class="col-12">
-                            <label class="form-label fw-medium">Upload File <span class="text-danger">*</span></label>
-
-                            @if ($mapping->files->count())
-                                <p class="mb-2">Existing file:
-                                    @foreach ($mapping->files as $file)
-                                        <a href="{{ Storage::url($file->file_path) }}" target="_blank"
-                                            style="color: blue;">
-                                            {{ $file->original_name }}
-                                        </a>
-                                        @if (!$loop->last)
-                                            ,
-                                        @endif
-                                    @endforeach
-                                </p>
-                            @endif
-
-                            <div id="editFileFields{{ $mapping->id }}">
-                                <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
-                                    <input type="file" class="form-control border-1 shadow-sm" name="files[]"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx">
-                                </div>
-                            </div>
-                            <small class="text-muted d-block mt-2">Leave empty if you don’t want to change the
-                                file.</small>
-
-                            <button type="button" class="btn btn-outline-success btn-sm mt-2"
-                                id="editAddFile{{ $mapping->id }}">
-                                <i class="bi bi-plus"></i> Add File
-                            </button>
-                        </div> --}}
                     </div>
                 </div>
 

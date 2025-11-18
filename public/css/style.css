@@ -287,6 +287,19 @@ a:hover {
     white-space: nowrap;
 }
 
+/* Saat sidebar full */
+.main-with-sidebar {
+    margin-left: 250px; /* sesuaikan */
+    transition: all 0.3s ease;
+}
+
+/* Saat sidebar collapsed */
+.main-with-sidebar-collapsed {
+    margin-left: 80px; /* sesuaikan */
+    transition: all 0.3s ease;
+}
+
+
 /* 15. Snackbar */
 .snackbar {
     position: fixed;
@@ -360,6 +373,7 @@ a:hover {
     bottom: 100%;
     margin-bottom: .125rem;
 }
+
 
 
 /* Optional: Gradient background for main content

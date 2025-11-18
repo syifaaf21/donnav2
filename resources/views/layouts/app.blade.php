@@ -41,7 +41,8 @@
     @include('components.flash-message')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-gray-50 rounded-xl mt-2">
+    <div id="mainWrapper"
+        class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-gray-50 rounded-xl mt-2">
         @include('layouts.partials.navbar')
 
         <!-- Content -->
@@ -50,21 +51,53 @@
         </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script> --}}
-    <!-- ✅ Custom Script  -->
-    <script src="{{ asset('js/sidebar.js') }}"></script>
 
+    <!-- ✅ jQuery (load first, even if not required by Bootstrap 5) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- ✅ Bootstrap Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ✅ SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {{-- ✅ Feather Icons --}}
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- ✅ AlpineJS -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!-- ✅ Custom & Plugins -->
+    <script src="{{ asset('js/sidebar.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-
-
     @stack('scripts')
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const sidebar = document.getElementById("sidebar");
+            const mainWrapper = document.getElementById("mainWrapper");
+            const toggle = document.getElementById("toggleSidebar");
+
+            toggle.addEventListener("click", () => {
+                sidebar.classList.toggle("collapsed");
+
+                if (sidebar.classList.contains("collapsed")) {
+                    mainWrapper.classList.remove("ml-64");
+                    mainWrapper.classList.add("ml-[70px]");
+                } else {
+                    mainWrapper.classList.remove("ml-[70px]");
+                    mainWrapper.classList.add("ml-64");
+                }
+
+                feather.replace();
+            });
+        });
+    </script>
+
+
 </body>
-
-
 
 </html>

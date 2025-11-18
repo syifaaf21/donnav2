@@ -10,13 +10,17 @@
             <form id="approveForm" method="POST">
                 @csrf
                 <input type="hidden" name="doc_id" id="approveDocId"> {{-- hidden untuk document id --}}
+
+                @php
+                    $today = now()->format('Y-m-d');
+                @endphp
                 <div class="modal-body p-4">
                     {{-- Obsolete Date --}}
                     <div class="mb-3">
                         <label for="obsolete_date" class="form-label fw-semibold">
                             Obsolete Date <span class="text-danger">*</span>
                         </label>
-                        <input type="date" name="obsolete_date" id="obsolete_date" class="form-control" required>
+                        <input type="date" name="obsolete_date" id="obsolete_date" class="form-control" min="{{ $today }}" required>
                         <div id="obsoleteError" class="text-danger small mt-1" style="display:none;">
                             Obsolete Date must be valid.
                         </div>
@@ -27,7 +31,7 @@
                         <label for="reminder_date" class="form-label fw-semibold">
                             Reminder Date <span class="text-danger">*</span>
                         </label>
-                        <input type="date" name="reminder_date" id="reminder_date" class="form-control" required>
+                        <input type="date" name="reminder_date" id="reminder_date" class="form-control" min="{{ $today }}" required>
                         <div id="reminderError" class="text-danger small mt-1" style="display:none;">
                             Reminder Date must be earlier than or equal to Obsolete Date.
                         </div>
