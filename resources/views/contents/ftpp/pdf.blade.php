@@ -274,13 +274,17 @@
                 @endif
             </td>
             <td class="text-center">
-                @if (isset($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1)
-                    <img src="/images/mgr-approve.png" class="signature" alt="Dept Head Approved">
+                @if (!empty($finding->dept_head_signature_url))
+                    <img src="{{ $finding->dept_head_signature_url }}" class="signature" alt="Dept Head Approved">
+                @elseif (isset($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1)
+                    <img src="{{ public_path('images/mgr-approve.png') }}" class="signature" alt="Dept Head Approved">
                 @endif
             </td>
             <td class="text-center">
-                @if (isset($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1)
-                    <img src="/images/usr-approve.png" class="signature" alt="Leader/Spv Approved">
+                @if (!empty($finding->ldr_spv_signature_url))
+                    <img src="{{ $finding->ldr_spv_signature_url }}" class="signature" alt="Leader/Spv Approved">
+                @elseif (isset($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1)
+                    <img src="{{ public_path('images/usr-approve.png') }}" class="signature" alt="Leader/Spv Approved">
                 @endif
             </td>
         </tr>
@@ -321,23 +325,27 @@
             <td>
                 @if (!empty($finding->acknowledge_by_lead_auditor_url))
                     <img src="{{ $finding->acknowledge_by_lead_auditor_url }}" class="signature"><br>
+                @elseif ($finding->auditeeAction->lead_auditor_id == 1)
+                    <img src="/images/stamp-lead-auditor.png" class="signature"><br>
                 @endif
                 {{ $finding->auditeeAction->lead_auditor_id ?? '-' }}
             </td>
             <td>
                 @if (!empty($finding->verified_by_auditor_url))
                     <img src="{{ $finding->verified_by_auditor_url }}" class="signature"><br>
+                @elseif ($finding->auditeeAction->auditor_id == 1)
+                    <img src="/images/stamp-internal-auditor.png" class="signature"><br>
                 @endif
                 {{ $finding->auditeeAction->auditor_id ?? '-' }}
             </td>
         </tr>
     </table>
 
-    {{-- ==================== ATTACHMENTS ==================== --}}
+    {{-- ==================== ATTACHMENTS ================== --}}
     {{-- LAMPIRAN FILE --}}
     @if ($finding->auditeeAction && $finding->auditeeAction->file->count())
         <div class="page-break"></div>
-        <h4>Lampiran</h4>
+        <h6>Attachment and Evidence</h6>
 
         @foreach ($finding->auditeeAction->file as $file)
             @php
@@ -348,11 +356,11 @@
                 <div class="mt-2 text-center">
                     <img src="{{ $file->full_url }}"
                         style="max-width:400px; max-height:250px; display:block; margin:auto;">
-                    <div style="font-size:10px; text-align:center;">
+                    <div class="text-sm" style="font-size:10px; text-align:center;">
                         {{ $file->original_name ?? basename($file->file_path) }}</div>
                 </div>
             @else
-                <p>- {{ $file->original_name ?? basename($file->file_path) }}</p>
+                <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
             @endif
         @endforeach
     @endif

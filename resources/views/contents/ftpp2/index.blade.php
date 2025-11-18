@@ -143,7 +143,8 @@
                                                     <div x-show="open" @click.outside="open = false" x-transition
                                                         class="absolute bg-white border rounded-md shadow-lg z-[9999]"
                                                         :style="`top:${y}px; left:${x}px; width:140px; position:fixed`">
-                                                        <button @click="$dispatch('open-show-modal', {{ $finding->id }})"
+                                                        <button type="button"
+                                                            @click="$dispatch('open-show-modal', {{ $finding->id }})"
                                                             class="flex items-center gap-2 px-2 py-2 text-sm text-gray-800 hover:bg-gray-100">
                                                             <i data-feather="eye" class="w-4 h-4"></i> Show
                                                         </button>

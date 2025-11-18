@@ -155,18 +155,18 @@
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
                             class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
-                            <button id="attachImages"
+                            <button id="attachImages" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="image" class="w-4 h-4"></i>
                                 <span class="text-sm">Upload Images</span>
                             </button>
-                            <button id="attachDocs"
+                            <button id="attachDocs" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="file-text" class="w-4 h-4"></i>
                                 <span class="text-sm">Upload Documents</span>
                             </button>
                             <div class="border-t mt-1"></div>
-                            <button id="attachBoth"
+                            <button id="attachBoth" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="upload" class="w-4 h-4"></i>
                                 <span class="text-sm">Open Combined Picker</span>
@@ -197,7 +197,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
         <h2 class="font-semibold text-lg text-gray-700">Select Clause</h2>
-        <button onclick="closeSidebar()" class="text-gray-600 hover:text-red-500">
+        <button type="button" onclick="closeSidebar()" class="text-gray-600 hover:text-red-500">
             <i data-feather="x"></i>
         </button>
     </div>
@@ -233,7 +233,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-semibold text-gray-700">Select Plant / Department</h2>
-        <button onclick="closePlantSidebar()" class="text-gray-600 hover:text-red-500">
+        <button type="button" onclick="closePlantSidebar()" class="text-gray-600 hover:text-red-500">
             <i data-feather="x"></i> <!-- Feather icon -->
         </button>
     </div>
@@ -276,7 +276,7 @@
     </select>
 
     <!-- Submit -->
-    <button onclick="submitSidebarPlant()"
+    <button type="button" onclick="submitSidebarPlant()"
         class="bg-blue-500 text-white mt-2 px-4 py-2 w-2/3 rounded hover:bg-blue-600">
         Submit
     </button>
@@ -288,7 +288,7 @@
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-semibold text-gray-700">Select Auditee</h2>
-        <button onclick="closeAuditeeSidebar()" class="text-gray-600 hover:text-red-500">
+        <button type="button" onclick="closeAuditeeSidebar()" class="text-gray-600 hover:text-red-500">
             <i data-feather="x"></i>
         </button>
     </div>
@@ -297,7 +297,7 @@
     <select id="auditeeSelect" multiple placeholder="Search or select auditee..."
         class="w-full border rounded p-2"></select>
 
-    <button onclick="saveAuditeeSelection()"
+    <button type="button" onclick="saveAuditeeSelection()"
         class="mt-4 bg-blue-500 text-white px-4 py-2 w-full rounded hover:bg-green-600">
         Save
     </button>
@@ -835,6 +835,7 @@
                 img.className = "w-24 h-24 object-cover border rounded";
 
                 const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                 btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
                 btn.onclick = () => {
@@ -866,6 +867,7 @@
                 name.textContent = file.name;
 
                 const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                 btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
                 btn.onclick = () => {

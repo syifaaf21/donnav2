@@ -216,11 +216,15 @@ class Ftpp2Controller extends Controller
         // Handle file uploads for photos, files, and attachments
         $this->handleFileUploads($request, $auditFinding);
 
-        // Return response
-        return response()->json([
-            'success' => true,
-            'message' => 'Audit Finding saved successfully!',
-        ]);
+        // Return response: JSON for AJAX, redirect to index for normal requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Audit Finding saved successfully!',
+            ]);
+        }
+
+        return redirect('/ftpp2')->with('success', 'Audit Finding saved successfully!');
     }
 
     private function handleFileUploads(Request $request, $auditFinding)
@@ -430,7 +434,7 @@ class Ftpp2Controller extends Controller
 
                 DB::commit();
 
-                if ($request->ajax()) {
+                if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => true,
                         'message' => 'Audit Finding updated successfully',
@@ -438,7 +442,7 @@ class Ftpp2Controller extends Controller
                     ]);
                 }
 
-                return back()->with('success', 'Audit Finding updated successfully.');
+                return redirect('/ftpp2')->with('success', 'Audit Finding updated successfully.');
 
             } elseif ($action === 'update_auditee_action') {
                 $validated = $request->validate([
@@ -569,7 +573,7 @@ class Ftpp2Controller extends Controller
 
                     DB::commit();
 
-                    if ($request->ajax()) {
+                    if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([
                             'success' => true,
                             'message' => 'Auditee Action updated',
@@ -577,7 +581,7 @@ class Ftpp2Controller extends Controller
                         ]);
                     }
 
-                    return back()->with('success', 'Auditee Action updated');
+                    return redirect('/ftpp2')->with('success', 'Auditee Action updated');
                 } catch (\Throwable $e) {
                     DB::rollBack();
                     // log error agar lebih mudah debug
@@ -592,14 +596,14 @@ class Ftpp2Controller extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => $e->getMessage(),
                 ], 500);
             }
 
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return redirect('/ftpp2')->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
@@ -613,7 +617,7 @@ class Ftpp2Controller extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Finding not found'], 404);
             }
-            return redirect()->back()->with('error', 'Finding not found');
+            return redirect('/ftpp2')->with('error', 'Finding not found');
         }
 
         try {
@@ -621,12 +625,12 @@ class Ftpp2Controller extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Finding deleted successfully']);
             }
-            return redirect()->back()->with('success', 'Record deleted.');
+            return redirect('/ftpp2')->with('success', 'Record deleted.');
         } catch (\Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Failed to delete'], 500);
             }
-            return redirect()->back()->with('error', 'Failed to delete record.');
+            return redirect('/ftpp2')->with('error', 'Failed to delete record.');
         }
     }
 
@@ -655,25 +659,174 @@ class Ftpp2Controller extends Controller
             'auditeeAction.file', // lampiran
         ])->findOrFail($id);
 
-        // Tambah URL penuh untuk signature
-        foreach (['dept_head_signature', 'ldr_spv_signature', 'acknowledge_by_lead_auditor', 'verified_by_auditor'] as $sig) {
-            if (!empty($finding->auditeeAction?->$sig)) {
-                $finding->{$sig . '_url'} = asset('storage/' . $finding->auditeeAction->$sig);
+        // Set stamp image URLs when signature/approval flags are set (value == 1)
+        if ($finding->auditeeAction) {
+            // Dept head signature (show manager approval image)
+            if (!empty($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1) {
+                $finding->dept_head_signature_url = public_path('images/mgr-approve.png');
+            }
+
+            // Leader / Supervisor signature (show user approval image)
+            if (!empty($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1) {
+                $finding->ldr_spv_signature_url = public_path('images/usr-approve.png');
+            }
+
+            // Acknowledge by lead auditor: if flag present on finding or auditeeAction, show lead auditor stamp
+            if ((!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1)
+                || (!empty($finding->auditeeAction->acknowledge_by_lead_auditor) && $finding->auditeeAction->acknowledge_by_lead_auditor == 1)) {
+                $finding->acknowledge_by_lead_auditor_url = public_path('images/stamp-lead-auditor.png');
+            }
+
+            // Verified by auditor: if flag present on finding or auditeeAction, show internal auditor stamp
+            if ((!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1)
+                || (!empty($finding->auditeeAction->verified_by_auditor) && $finding->auditeeAction->verified_by_auditor == 1)) {
+                $finding->verified_by_auditor_url = public_path('images/stamp-internal-auditor.png');
+            }
+        } else {
+            // In case auditeeAction is absent but flags are on the finding
+            if (!empty($finding->dept_head_signature) && $finding->dept_head_signature == 1) {
+                $finding->dept_head_signature_url = public_path('images/mgr-approve.png');
+            }
+            if (!empty($finding->ldr_spv_signature) && $finding->ldr_spv_signature == 1) {
+                $finding->ldr_spv_signature_url = public_path('images/usr-approve.png');
+            }
+            if (!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1) {
+                $finding->acknowledge_by_lead_auditor_url = public_path('images/stamp-lead-auditor.png');
+            }
+            if (!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1) {
+                $finding->verified_by_auditor_url = public_path('images/stamp-internal-auditor.png');
             }
         }
 
-        // Tambah URL penuh untuk semua lampiran
+        // Tambah filesystem path untuk semua lampiran pada audit finding (images/files) so DomPDF can embed them
+        if ($finding->file) {
+            foreach ($finding->file as $file) {
+                $diskPath = storage_path('app/public/' . $file->file_path);
+                if (file_exists($diskPath)) {
+                    $file->full_url = $diskPath;
+                } else {
+                    $file->full_url = public_path('storage/' . $file->file_path);
+                }
+            }
+        }
+
+        // Tambah filesystem path untuk semua lampiran pada auditeeAction (lampiran auditee) so DomPDF can embed them
         if ($finding->auditeeAction && $finding->auditeeAction->file) {
             foreach ($finding->auditeeAction->file as $file) {
-                $file->full_url = asset('storage/' . $file->file_path);
+                $diskPath = storage_path('app/public/' . $file->file_path);
+                if (file_exists($diskPath)) {
+                    $file->full_url = $diskPath;
+                } else {
+                    $file->full_url = public_path('storage/' . $file->file_path);
+                }
             }
         }
 
+        // Generate main PDF content
         $pdf = PDF::loadView('contents.ftpp.pdf', compact('finding'))
             ->setPaper('a4', 'portrait');
 
-        $filename = 'FTPP_Finding_' . preg_replace('/[\/\\\\]/', '_', $finding->registration_number) . '.pdf';
+        $mainPdfContent = $pdf->output();
 
-        return $pdf->download($filename);
+        // Attempt to merge attached PDFs (from finding->file and auditeeAction->file)
+        $tempDir = sys_get_temp_dir();
+        $mainTempPath = $tempDir . DIRECTORY_SEPARATOR . 'ftpp_main_' . uniqid() . '.pdf';
+        file_put_contents($mainTempPath, $mainPdfContent);
+
+        // Collect attachment PDF paths
+        $pdfFilesToMerge = [];
+
+        if ($finding->file) {
+            foreach ($finding->file as $file) {
+                $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                if ($ext === 'pdf') {
+                    $diskPath = storage_path('app/public/' . $file->file_path);
+                    if (file_exists($diskPath)) {
+                        $pdfFilesToMerge[] = $diskPath;
+                    }
+                }
+            }
+        }
+
+        if ($finding->auditeeAction && $finding->auditeeAction->file) {
+            foreach ($finding->auditeeAction->file as $file) {
+                $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                if ($ext === 'pdf') {
+                    $diskPath = storage_path('app/public/' . $file->file_path);
+                    if (file_exists($diskPath)) {
+                        $pdfFilesToMerge[] = $diskPath;
+                    }
+                }
+            }
+        }
+
+        $finalFilename = 'FTPP_Finding_' . preg_replace('/[\/\\\\]/', '_', $finding->registration_number) . '.pdf';
+
+        if (empty($pdfFilesToMerge)) {
+            // No other PDFs to merge — return main PDF
+            // Clean up temp
+            @unlink($mainTempPath);
+            return response($mainPdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+            ]);
+        }
+
+        // Merge using FPDI if available. If not installed, log a hint and return main PDF.
+        if (!empty($pdfFilesToMerge)) {
+            if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
+                \Log::warning('FPDI not available. Install it with: composer require setasign/fpdi-fpdf');
+                @unlink($mainTempPath);
+                return response($mainPdfContent, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+                ]);
+            }
+
+            try {
+                $merger = new \setasign\Fpdi\Fpdi();
+
+                // import main PDF
+                $pageCount = $merger->setSourceFile($mainTempPath);
+                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                    $tplId = $merger->importPage($pageNo);
+                    $size = $merger->getTemplateSize($tplId);
+                    $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                    $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                    $merger->useTemplate($tplId);
+                }
+
+                // append other pdfs
+                foreach ($pdfFilesToMerge as $pf) {
+                    $pc = $merger->setSourceFile($pf);
+                    for ($p = 1; $p <= $pc; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                        $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                }
+
+                // Output merged PDF as string
+                $mergedPdfString = $merger->Output('', 'S');
+
+                // cleanup temp
+                @unlink($mainTempPath);
+
+                return response($mergedPdfString, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+                ]);
+            } catch (\Throwable $e) {
+                // If merging fails, fall back to main PDF
+                \Log::error('PDF merge failed: ' . $e->getMessage());
+                @unlink($mainTempPath);
+                return response($mainPdfContent, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+                ]);
+            }
+        }
     }
 }

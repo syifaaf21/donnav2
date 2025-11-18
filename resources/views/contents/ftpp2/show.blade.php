@@ -7,7 +7,7 @@
 
         <div class="bg-white w-[794px] min-h-[1123px] shadow-2xl p-8 rounded-lg" x-html="content"></div>
 
-        <button @click="isOpen=false"
+        <button type="button" @click="isOpen=false"
             class="absolute top-4 right-4 bg-white rounded-full shadow px-3 py-1 text-gray-700 hover:bg-red-500 hover:text-white z-[10001]">
             ✖
         </button>

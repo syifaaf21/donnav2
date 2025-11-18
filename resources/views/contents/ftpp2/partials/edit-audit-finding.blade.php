@@ -154,18 +154,18 @@
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
                             class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
-                            <button id="attachImages"
+                            <button id="attachImages" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="image" class="w-4 h-4"></i>
                                 <span class="text-sm">Upload Images</span>
                             </button>
-                            <button id="attachDocs"
+                            <button id="attachDocs" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="file-text" class="w-4 h-4"></i>
                                 <span class="text-sm">Upload Documents</span>
                             </button>
                             <div class="border-t mt-1"></div>
-                            <button id="attachBoth"
+                            <button id="attachBoth" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="upload" class="w-4 h-4"></i>
                                 <span class="text-sm">Open Combined Picker</span>
