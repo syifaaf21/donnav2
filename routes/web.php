@@ -215,6 +215,8 @@ Route::middleware('auth')->group(function () {
             // Auditee Action routes
             Route::get('/{id}', [AuditeeActionController::class, 'create'])->name('create');
             Route::post('/store', [AuditeeActionController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [AuditeeActionController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [AuditeeActionController::class, 'update'])->name('update');
         });
 
 

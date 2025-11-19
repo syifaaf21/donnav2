@@ -184,11 +184,11 @@
                                                 <!-- BUTTON -->
                                                 <button type="button"
                                                     @click.prevent="
-            open = !open;
-            const rect = $el.getBoundingClientRect();
-            x = rect.left - 150;   // posisi horizontal lebih pas
-            y = rect.top + 28;     // posisi vertical lebih rapi
-        "
+                                                        open = !open;
+                                                        const rect = $el.getBoundingClientRect();
+                                                        x = rect.left - 150;   // posisi horizontal lebih pas
+                                                        y = rect.top + 28;     // posisi vertical lebih rapi
+                                                    "
                                                     class="p-1.5 hover:bg-gray-100 rounded-full transition">
                                                     <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
                                                 </button>
@@ -216,12 +216,21 @@
                                                         </a>
 
                                                         <!-- ITEM: Assign Auditee Action -->
-                                                        <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
-                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                            <i data-feather="edit-2" class="w-4 h-4"></i>
-                                                            Assign Auditee Action
-                                                        </a>
+                                                        @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
 
+                                                        @if ($statusName === 'need revision')
+                                                            <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="edit" class="w-4 h-4"></i>
+                                                                Revise Auditee Action
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                                Assign Auditee Action
+                                                            </a>
+                                                        @endif
                                                         <!-- ITEM: Delete -->
                                                         <form method="POST"
                                                             action="{{ route('ftpp.destroy', $finding->id) }}"

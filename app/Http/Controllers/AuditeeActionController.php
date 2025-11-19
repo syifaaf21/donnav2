@@ -88,7 +88,7 @@ class AuditeeActionController extends Controller
             'photos2.*' => 'nullable|file|max:5120',
             'files2.*' => 'nullable|file|max:5120',
         ]);
-        
+
         DB::beginTransaction();
 
         try {
@@ -237,18 +237,164 @@ class AuditeeActionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
     {
-        //
+        $finding = AuditFinding::with([
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
+            'auditeeAction.whyCauses',
+            'auditeeAction.file',
+            'auditee',
+            'department',
+            'process',
+            'product'
+        ])->findOrFail($id);
+
+        $subAudit = SubAudit::all();
+
+        return view('contents.ftpp2.auditee-action.edit', compact('finding', 'subAudit'));
     }
+
+
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $validated = $request->validate([
+            'root_cause' => 'required|string',
+            'pic' => 'nullable|string|max:100',
+            'yokoten' => 'required|boolean',
+            'yokoten_area' => 'nullable|string',
+            'ldr_spv_signature' => 'nullable|boolean',
+
+            'attachments.*' => 'nullable|file|max:5120',
+            'photos2.*' => 'nullable|file|max:5120',
+            'files2.*' => 'nullable|file|max:5120',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $auditeeAction = AuditeeAction::findOrFail($id);
+
+            // UPDATE parent
+            $auditeeAction->update([
+                'pic' => $validated['pic'] ?? '-',
+                'root_cause' => $validated['root_cause'],
+                'yokoten' => $validated['yokoten'],
+                'yokoten_area' => $validated['yokoten_area'] ?? null,
+            ]);
+
+            /* =====================================================
+             * 1️⃣ UPDATE WHY (5 WHY)
+             * ===================================================== */
+            WhyCauses::where('auditee_action_id', $id)->delete();
+
+            for ($i = 1; $i <= 5; $i++) {
+                $why = $request->input("why_{$i}_mengapa");
+                $cause = $request->input("cause_{$i}_karena");
+
+                if ($why || $cause) {
+                    WhyCauses::create([
+                        'auditee_action_id' => $auditeeAction->id,
+                        'why_description' => $why ?? '',
+                        'cause_description' => $cause ?? '',
+                    ]);
+                }
+            }
+
+            /* =====================================================
+             * 2️⃣ UPDATE Corrective Action (hapus & replace)
+             * ===================================================== */
+            CorrectiveAction::where('auditee_action_id', $id)->delete();
+
+            for ($i = 1; $i <= 4; $i++) {
+                $activity = $request->input("corrective_{$i}_activity");
+                if ($activity) {
+                    CorrectiveAction::create([
+                        'auditee_action_id' => $auditeeAction->id,
+                        'activity' => $activity,
+                        'pic' => $request->input("corrective_{$i}_pic"),
+                        'planning_date' => $request->input("corrective_{$i}_planning"),
+                        'actual_date' => $request->input("corrective_{$i}_actual"),
+                    ]);
+                }
+            }
+
+            /* =====================================================
+             * 3️⃣ UPDATE Preventive Action
+             * ===================================================== */
+            PreventiveAction::where('auditee_action_id', $id)->delete();
+
+            for ($i = 1; $i <= 4; $i++) {
+                $activity = $request->input("preventive_{$i}_activity");
+                if ($activity) {
+                    PreventiveAction::create([
+                        'auditee_action_id' => $auditeeAction->id,
+                        'activity' => $activity,
+                        'pic' => $request->input("preventive_{$i}_pic"),
+                        'planning_date' => $request->input("preventive_{$i}_planning"),
+                        'actual_date' => $request->input("preventive_{$i}_actual"),
+                    ]);
+                }
+            }
+
+            /* =====================================================
+             * 4️⃣ Handle Upload Attachments Baru
+             * ===================================================== */
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $extension = $file->getClientOriginalExtension();
+                    $date = now()->format('Y-m-d');
+                    $newName = pathinfo($originalName, PATHINFO_FILENAME) . "_{$date}.{$extension}";
+
+                    $path = $file->storeAs(
+                        'ftpp/auditee_action_attachments',
+                        $newName,
+                        'public'
+                    );
+
+                    DocumentFile::create([
+                        'auditee_action_id' => $auditeeAction->id,
+                        'file_path' => $path,
+                        'original_name' => $originalName,
+                    ]);
+                }
+            }
+
+            /* =====================================================
+             * 5️⃣ UPDATE Status Finding
+             * ===================================================== */
+            $auditFinding = AuditFinding::find($auditeeAction->audit_finding_id);
+            if ($auditFinding) {
+                $auditFinding->update(['status_id' => 8]);
+            }
+
+            /* =====================================================
+             * 6️⃣ Approve Ldr/SPV
+             * ===================================================== */
+            if ($request->approve_ldr_spv == 1) {
+                $auditeeAction->update([
+                    'ldr_spv_signature' => 1,
+                    'ldr_spv_id' => auth()->id(),
+                ]);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Auditee Action updated successfully.');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error("update_auditee_action: " . $e->getMessage());
+
+            return back()->with('error', $e->getMessage());
+        }
     }
+
 
     /**
      * Remove the specified resource from storage.
