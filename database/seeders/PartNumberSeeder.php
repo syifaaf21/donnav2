@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use App\Models\Product;
 use App\Models\ProductModel;
 use App\Models\Process;
@@ -13,75 +12,135 @@ class PartNumberSeeder extends Seeder
 {
     public function run(): void
     {
-        $plantMapping = [
-            'body' => ['injection', 'painting', 'assembling body'],
-            'unit' => ['die casting', 'machining', 'assembling unit'],
-            'electric' => ['mounting', 'assembling electric', 'inspection'],
-        ];
+        /* ============================================================
+         * PLANT UNIT — FIXED PART NUMBERS
+         * ============================================================ */
+        $unitPartNumbers = [
 
-        $data = [
             'Timing Chain Cover' => [
-                'models' => ['D98E', '889F/D81F', 'D72F/D73F', 'D05E', '4A91', 'D18E', 'D41E', 'D13E'],
-                'processes' => ['die casting', 'machining', 'assembling unit'],
+                'D98E' => [
+                    'die casting'      => '212111-31900-04',
+                    'machining'        => '212111-31900',
+                    'assembling unit'  => '212110-34010',
+                ],
+                '889F' => [
+                    'die casting'      => '212111-31930-04',
+                    'machining'        => '212111-31930',
+                    'assembling unit'  => '212110-34040',
+                ],
+                'D72F' => [
+                    'die casting'      => '212111-34020-04',
+                    'machining'        => '212111-34020',
+                    'assembling unit'  => '212110-34140',
+                ],
+                'D18E' => [
+                    'die casting'      => '212111-34110-04',
+                    'machining'        => '212111-34110',
+                    'assembling unit'  => '212110-34270',
+                ],
+                'D05E' => [
+                    'die casting'      => '212111-34130-04',
+                    'machining'        => '212111-34130',
+                    'assembling unit'  => '212110-34300',
+                ],
+                '4A91' => [
+                    'die casting'      => '212111-21350',
+                    'machining'        => '212104-21030',
+                    'assembling unit'  => '212130-21250',
+                ],
+                'D41E' => [
+                    'die casting'      => '212111-34171-04',
+                    'machining'        => '212111-34171',
+                    'assembling unit'  => '212110-34341',
+                ],
+                'D13E' => [
+                    'die casting'      => '212111-21360-04',
+                    'machining'        => '212111-21360',
+                    'assembling unit'  => '212130-21260',
+                ],
             ],
-            'Camshaft Housing' => [
-                'models' => ['D98E', 'D05E'],
-                'processes' => ['die casting', 'machining', 'assembling unit'],
-            ],
+
             'Oil Pan' => [
-                'models' => ['889F/D81F', 'D72F/D73F', 'D41E', '922F'],
-                'processes' => ['die casting', 'machining'],
+                '889F' => [
+                    'die casting' => '243212-10980-04',
+                    'machining'   => '12101-0Y040',
+                ],
+                '922F' => [
+                    'die casting' => '243212-11020-04',
+                    'machining'   => '243202-10680',
+                ],
+                'D72F' => [
+                    'die casting' => '243212-11040-04',
+                    'machining'   => '243202-10710',
+                ],
+                'D41E' => [
+                    'die casting' => '243212-11030-04',
+                ],
             ],
-            'Handle1' => [
-                'models' => ['4L45W', 'YHA', '660A', '230B', '560B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
-                'processes' => ['injection', 'painting', 'assembling body'],
+
+            'Camshaft Housing' => [
+                'D98E' => [
+                    'die casting' => '243131-10260',
+                ],
+                'D05E' => [
+                    'die casting' => '243131-10490',
+                ],
             ],
-            'Handle2' => [
-                'models' => ['4L45W', 'YHA', '660A', '230B', '560B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
-                'processes' => ['injection', 'assembling body'],
+
+            'Water Pump' => [
+                'K3' => [
+                    'assembling unit' => '213100-13551',
+                ],
+                'NR' => [
+                    'assembling unit' => '213100-14200',
+                ],
+                'SZ' => [
+                    'assembling unit' => '213100-13531',
+                ],
             ],
-            'Frame' => [
-                'models' => ['4L45W', 'YHA', '660A', '230B', '560B', 'YL8', 'IMV', '810A', '700A', 'YTB', '4J45', '5D45W', '5H45', '655B'],
-                'processes' => ['injection', 'assembling body'],
-            ],
-            'Antenna' => [
-                'models' => ['4WD 5F00', 'EF160 105E', 'EF160 123E', 'EF160 Z12E', 'GA35', 'T431', '4WD IMV', 'PBD', 'ANTENNA ASSY'],
-                'processes' => ['mounting', 'assembling electric', 'inspection'],
+
+            'Oil Pump' => [
+                '1SZ' => [
+                    'assembling unit' => '223100-41090',
+                ],
+                '3SZ' => [
+                    'assembling unit' => '223100-41110',
+                ],
             ],
         ];
 
-        foreach ($data as $productName => $info) {
-            $product = Product::where('name', $productName)->first();
+        /* ============================================================
+         * INSERT DATA FOR UNIT PLANT
+         * ============================================================ */
+        foreach ($unitPartNumbers as $productName => $models) {
+
+            $product = Product::where('name', $productName)
+                ->where('plant', 'unit')
+                ->first();
+
             if (!$product) continue;
 
-            foreach ($info['models'] as $modelName) {
-                $model = ProductModel::where('name', $modelName)->first();
+            foreach ($models as $modelName => $processes) {
+
+                $model = ProductModel::where('name', $modelName)
+                    ->where('plant', 'unit')
+                    ->first();
+
                 if (!$model) continue;
 
-                foreach ($info['processes'] as $processName) {
-                    // Cek apakah proses ada
+                foreach ($processes as $processName => $partNumber) {
+
                     $process = Process::where('name', $processName)->first();
                     if (!$process) continue;
 
-                    // Tentukan plant berdasarkan process
-                    $plant = null;
-                    foreach ($plantMapping as $plantName => $processes) {
-                        if (in_array($processName, $processes)) {
-                            $plant = $plantName;
-                            break;
-                        }
-                    }
-
-                    if (!$plant) continue;
-
                     DB::table('tm_part_numbers')->insert([
-                        'part_number' => strtoupper(Str::random(10)),
-                        'product_id' => $product->id,
-                        'model_id' => $model->id,
-                        'process_id' => $process->id,
-                        'plant' => $plant,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'part_number' => $partNumber,
+                        'product_id'  => $product->id,
+                        'model_id'    => $model->id,
+                        'process_id'  => $process->id,
+                        'plant'       => 'unit',
+                        'created_at'  => now(),
+                        'updated_at'  => now(),
                     ]);
                 }
             }
