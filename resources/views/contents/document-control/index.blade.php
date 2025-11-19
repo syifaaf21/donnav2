@@ -71,6 +71,14 @@
             </div>
         </div>
     </div>
+    <!-- Scroll Up Button -->
+    <button id="scrollUpBtn"
+        class="fixed bottom-5 right-5 w-12 h-12 bg-sky-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-sky-600 transition-opacity"
+        title="Scroll to top">
+        <i class="bi bi-chevron-up text-lg"></i>
+    </button>
+
+
 @endsection
 
 
@@ -97,5 +105,26 @@
             }
 
         });
+        const scrollBtn = document.getElementById('scrollUpBtn');
+
+        // Tampilkan tombol saat scroll lebih dari 100px
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                scrollBtn.classList.remove('hidden');
+            } else {
+                scrollBtn.classList.add('hidden');
+            }
+        });
+
+        // Scroll ke atas saat tombol diklik
+        scrollBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Sembunyikan default
+        scrollBtn.classList.add('hidden');
     </script>
 @endpush

@@ -146,14 +146,10 @@ class DocumentMappingController extends Controller
         $products = Product::all();
 
         // Ambil list plant unik
-        $plants = PartNumber::pluck('plant')
-            ->map(fn($p) => ucfirst(strtolower($p)))
-            ->unique()
-            ->values();
+        $plants = ['Body', 'Unit', 'Electric'];
 
         $groupedByPlant = [];
 
-        // Tab per plant
         foreach ($plants as $plant) {
             $query = DocumentMapping::with([
                 'document.parent',
@@ -164,17 +160,14 @@ class DocumentMappingController extends Controller
                 'user',
                 'files',
                 'parent',
-            ])
-                ->whereHas('document', fn($q) => $q->where('type', 'review'))
-                ->where(function ($q) use ($plant) {
-                    $q->whereHas(
-                        'partNumber',
-                        fn($q2) =>
-                        $q2->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
-                    );
-                });
+            ])->whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereHas(
+                    'partNumber',
+                    fn($q2) =>
+                    $q2->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                );
 
-            // Filter search
+            // 🔹 Filter search global
             $search = trim($request->search);
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
@@ -185,10 +178,43 @@ class DocumentMappingController extends Controller
                 });
             }
 
+            // 🔹 Filter modal
+            if ($request->filled('document_name')) {
+                $query->whereHas(
+                    'document',
+                    fn($q) =>
+                    $q->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($request->document_name) . "%"])
+                );
+            }
+
+            if ($request->filled('document_number')) {
+                $query->where('document_number', $request->document_number);
+            }
+
+            if ($request->filled('part_number_id')) {
+                $query->where('part_number_id', $request->part_number_id);
+            }
+
+            if ($request->filled('model_id')) {
+                $query->where('model_id', $request->model_id);
+            }
+
+            if ($request->filled('product_id')) {
+                $query->where('product_id', $request->product_id);
+            }
+
+            if ($request->filled('process_id')) {
+                $query->where('process_id', $request->process_id);
+            }
+
+            if ($request->filled('status_id')) {
+                $query->where('status_id', $request->status_id);
+            }
+
             $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
         }
 
-        // Tab khusus untuk mapping tanpa part number (manual entry)
+        // 🔹 Tab khusus untuk mapping tanpa part number (manual entry)
         $queryManual = DocumentMapping::with([
             'document.parent',
             'document.children',
@@ -198,12 +224,10 @@ class DocumentMappingController extends Controller
             'user',
             'files',
             'parent',
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'review'))
+        ])->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->whereNull('part_number_id');
 
-        // Filter search
-        $search = trim($request->search);
+        // 🔹 Filter search global
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
@@ -212,15 +236,39 @@ class DocumentMappingController extends Controller
             });
         }
 
-        $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
-        if ($manualMappings->isNotEmpty()) {
-            $groupedByPlant['Other / Manual Entry'] = $manualMappings;
+        // 🔹 Filter modal
+        if ($request->filled('document_name')) {
+            $queryManual->whereHas(
+                'document',
+                fn($q) =>
+                $q->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($request->document_name) . "%"])
+            );
         }
+
+        if ($request->filled('document_number')) {
+            $queryManual->where('document_number', $request->document_number);
+        }
+
+        if ($request->filled('model_id')) {
+            $queryManual->where('model_id', $request->model_id);
+        }
+
+        if ($request->filled('product_id')) {
+            $queryManual->where('product_id', $request->product_id);
+        }
+
+        if ($request->filled('process_id')) {
+            $queryManual->where('process_id', $request->process_id);
+        }
+
+        if ($request->filled('status_id')) {
+            $queryManual->where('status_id', $request->status_id);
+        }
+
         $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
 
-        // Tambahkan tab Other / Manual Entry selalu
+        // 🔹 Tambahkan tab Other / Manual Entry
         $groupedByPlant['Other / Manual Entry'] = $manualMappings;
-
 
         return view('contents.master.document-review.index2', compact(
             'groupedByPlant',
@@ -233,6 +281,7 @@ class DocumentMappingController extends Controller
             'products',
         ));
     }
+
     public function storeReview2(Request $request)
     {
         session()->forget('openModal');

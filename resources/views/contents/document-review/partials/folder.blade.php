@@ -464,15 +464,15 @@
                         <label class="form-label fw-semibold">Existing Files</label>
                         <ul class="list-group">
                             ${data.files.map(f => `
-                                                                                                                                                                                                                                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                                                                                                                                                <span>📄 ${f.name}</span>
-                                                                                                                                                                                                                                                                <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                                                                                                                                                                                                    <i class="bi bi-eye"></i> View
-                                                                                                                                                                                                                                                                </a>
-                                                                                                                                                                                                                                                            </li>
-                                                                                                                                                                                                                                                        `).join('')}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>📄 ${f.name}</span>
+                                            <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                    </li>
+                                    `).join('')}
                         </ul>
-                    `;
+                                   `;
                                 } else {
                                     filesContainer.innerHTML =
                                         '<p class="text-muted">No files available for revision.</p>';

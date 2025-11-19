@@ -41,7 +41,6 @@
 
     <!-- Master Data -->
     @if (in_array(strtolower(auth()->user()->role->name), ['super admin', 'admin']))
-
         <li>
             <a type="button"
                 class="collapse-toggle menu-item w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800 text-left font-medium"
@@ -147,21 +146,16 @@
                         <span class="sidebar-text text-gray-100">FTPP</span>
                     </a>
                 </li>
-
-                <!-- Super Admin Only -->
-                @if (strtolower(auth()->user()->role->name) === 'super admin')
-                    <li>
-                        <a href="{{ route('master.users.index') }}"
-                            class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-sm
+                <li>
+                    <a href="{{ route('master.users.index') }}"
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-sm
                             {{ Route::is('users.*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
-                            <i data-feather="user" class="w-4 h-4 text-gray-100"></i>
-                            <span class="sidebar-text">User</span>
-                        </a>
-                    </li>
-                @endif
+                        <i data-feather="user" class="w-4 h-4 text-gray-100"></i>
+                        <span class="sidebar-text">User</span>
+                    </a>
+                </li>
             </ul>
         </li>
-
     @endif
 
 </ul>

@@ -64,6 +64,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
     Route::resource('models', ModelController::class);
     Route::resource('processes', ProcessController::class);
     Route::resource('hierarchy', DocumentController::class);
+    Route::resource('users', UserController::class);
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
         Route::get('/', [FtppMasterController::class, 'index'])->name('index');
         Route::get('/load/{section}/{id?}', [FtppMasterController::class, 'loadSection'])->name('load');
@@ -92,11 +93,6 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
             Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
         });
     });
-});
-
-// User management: hanya Super Admin
-Route::prefix('master')->name('master.')->middleware(['auth', 'role:Super Admin'])->group(function () {
-    Route::resource('users', UserController::class);
 });
 
 /*
