@@ -208,7 +208,8 @@
                                         @endif
                                     </div>
                                     {{-- Tombol edit --}}
-                                    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']) || auth()->user()->department_id === $doc->department_id)
+                                    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']) ||
+                                            auth()->user()->department_id === $doc->department_id)
                                         <button type="button"
                                             class="inline-flex items-center justify-center px-2.5 py-1.5 text-xs font-medium rounded text-white bg-yellow-500 hover:bg-yellow-600"
                                             data-doc-id="{{ $doc->id }}" title="Edit Document"
@@ -300,222 +301,297 @@
             background-color: #fff;
         }
     </style>
+    @push('scripts')
+        <script>
+            const currentPlant = "{{ $plant }}";
+            document.addEventListener('DOMContentLoaded', function() {
+                const originalModelOptions = @json($models);
+                const originalProcessOptions = @json($processes);
+                const originalProductOptions = @json($products);
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            feather.replace();
-            const previewModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
-            const previewFrame = document.getElementById('filePreviewFrame');
-            const viewFullBtn = document.getElementById('viewFullBtn');
+                // === Inisialisasi TomSelect ===
+                let tsPart = new TomSelect("#modalPart", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Part Number",
+                    onChange(value) {
+                        updateModalFilters(value);
+                    }
+                });
 
-            // === Dropdown logic ===
-            document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+                let tsModel = new TomSelect("#modalModel", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Model"
+                });
 
-                    const isVisible = !dropdown.classList.contains('hidden');
+                let tsProcess = new TomSelect("#modalProcess", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Process"
+                });
 
-                    // Tutup semua dropdown lain
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                        .add('hidden'));
+                let tsProduct = new TomSelect("#modalProduct", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Product"
+                });
 
-                    // Kalau yang diklik sedang terbuka → tutup saja
-                    if (isVisible) {
-                        dropdown.classList.add('hidden');
+                feather.replace();
+                const previewModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+                const previewFrame = document.getElementById('filePreviewFrame');
+                const viewFullBtn = document.getElementById('viewFullBtn');
+
+                // === Dropdown logic ===
+                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+
+                        const isVisible = !dropdown.classList.contains('hidden');
+
+                        // Tutup semua dropdown lain
+                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
+                            .add('hidden'));
+
+                        // Kalau yang diklik sedang terbuka → tutup saja
+                        if (isVisible) {
+                            dropdown.classList.add('hidden');
+                            return;
+                        }
+
+                        // Hitung posisi
+                        const rect = btn.getBoundingClientRect();
+                        const offsetX = -120;
+                        dropdown.style.position = 'fixed';
+                        dropdown.style.top = `${rect.bottom + 6}px`;
+                        dropdown.style.left = `${rect.left + offsetX}px`;
+                        dropdown.classList.remove('hidden');
+                        dropdown.classList.add('dropdown-fixed');
+                    });
+                });
+
+                // Tutup dropdown saat scroll
+                window.addEventListener('scroll', () => {
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
+                        'hidden'));
+                });
+
+                // Tutup dropdown saat klik di luar
+                document.addEventListener('click', function(e) {
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
+                        const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
+                        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
+                });
+
+
+                // === File preview modal ===
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const url = btn.dataset.file;
+                        previewFrame.src = url;
+                        viewFullBtn.href = url;
+                        previewModal.show();
+                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
+                            .add('hidden'));
+                    });
+                });
+
+                const printFileBtn = document.getElementById('printFileBtn');
+
+                printFileBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const frame = document.getElementById('filePreviewFrame');
+                    const fileUrl = frame.src;
+
+                    if (!fileUrl) {
+                        alert('No file loaded.');
                         return;
                     }
 
-                    // Hitung posisi
-                    const rect = btn.getBoundingClientRect();
-                    const offsetX = -120;
-                    dropdown.style.position = 'fixed';
-                    dropdown.style.top = `${rect.bottom + 6}px`;
-                    dropdown.style.left = `${rect.left + offsetX}px`;
-                    dropdown.classList.remove('hidden');
-                    dropdown.classList.add('dropdown-fixed');
-                });
-            });
+                    // Pastikan iframe sudah memuat file
+                    frame.focus();
 
-            // Tutup dropdown saat scroll
-            window.addEventListener('scroll', () => {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
-                    'hidden'));
-            });
-
-            // Tutup dropdown saat klik di luar
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                        dropdown.classList.add('hidden');
+                    // Panggil print dari iframe tanpa membuka tab baru
+                    try {
+                        frame.contentWindow.print();
+                    } catch (err) {
+                        console.error('Unable to auto-print:', err);
+                        alert('Failed to print file.');
                     }
                 });
-            });
 
 
-            // === File preview modal ===
-            document.querySelectorAll('.view-file-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const url = btn.dataset.file;
-                    previewFrame.src = url;
-                    viewFullBtn.href = url;
-                    previewModal.show();
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                        .add('hidden'));
+                // Reset modal
+                document.getElementById('filePreviewModal').addEventListener('hidden.bs.modal', () => {
+                    previewFrame.src = '';
+                    viewFullBtn.href = '#';
                 });
-            });
 
-            const printFileBtn = document.getElementById('printFileBtn');
-
-            printFileBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const frame = document.getElementById('filePreviewFrame');
-                const fileUrl = frame.src;
-
-                if (!fileUrl) {
-                    alert('No file loaded.');
-                    return;
-                }
-
-                // Pastikan iframe sudah memuat file
-                frame.focus();
-
-                // Panggil print dari iframe tanpa membuka tab baru
-                try {
-                    frame.contentWindow.print();
-                } catch (err) {
-                    console.error('Unable to auto-print:', err);
-                    alert('Failed to print file.');
-                }
-            });
-
-
-            // Reset modal
-            document.getElementById('filePreviewModal').addEventListener('hidden.bs.modal', () => {
-                previewFrame.src = '';
-                viewFullBtn.href = '#';
-            });
-
-            // Klik di luar → tutup dropdown
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                        dropdown.classList.add('hidden');
-                    }
+                // Klik di luar → tutup dropdown
+                document.addEventListener('click', function(e) {
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
+                        const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
+                        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
                 });
-            });
-            // === Modal Revise / Edit Document ===
-            document.querySelectorAll('button[data-doc-id]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const docId = btn.getAttribute('data-doc-id');
-                    const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
-                    const reviseForm = document.getElementById('reviseForm');
-                    const filesContainer = document.querySelector('.existing-files-container');
+                // === Modal Revise / Edit Document ===
+                document.querySelectorAll('button[data-doc-id]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const docId = btn.getAttribute('data-doc-id');
+                        const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
+                        const reviseForm = document.getElementById('reviseForm');
+                        const filesContainer = document.querySelector('.existing-files-container');
 
-                    // Ubah action form
-                    reviseForm.action =
-                        `/document-review/${docId}/revise`; // ubah sesuai route kamu
+                        // Ubah action form
+                        reviseForm.action =
+                            `/document-review/${docId}/revise`; // ubah sesuai route kamu
 
-                    // Kosongkan isi dulu
-                    filesContainer.innerHTML = '<p class="text-muted">Loading files...</p>';
+                        // Kosongkan isi dulu
+                        filesContainer.innerHTML = '<p class="text-muted">Loading files...</p>';
 
-                    // Ambil data file via AJAX
-                    fetch(`/document-review/${docId}/files`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.files && data.files.length > 0) {
-                                filesContainer.innerHTML = `
+                        // Ambil data file via AJAX
+                        fetch(`/document-review/${docId}/files`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.files && data.files.length > 0) {
+                                    filesContainer.innerHTML = `
                         <label class="form-label fw-semibold">Existing Files</label>
                         <ul class="list-group">
                             ${data.files.map(f => `
-                                                                                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                    <span>📄 ${f.name}</span>
-                                                                                                                                    <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                                                                        <i class="bi bi-eye"></i> View
-                                                                                                                                    </a>
-                                                                                                                                </li>
-                                                                                                                            `).join('')}
+                                                                                                                                                                                                                                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                                                                                                                                                                <span>📄 ${f.name}</span>
+                                                                                                                                                                                                                                                                <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                                                                                                                                                                                                    <i class="bi bi-eye"></i> View
+                                                                                                                                                                                                                                                                </a>
+                                                                                                                                                                                                                                                            </li>
+                                                                                                                                                                                                                                                        `).join('')}
                         </ul>
                     `;
-                            } else {
+                                } else {
+                                    filesContainer.innerHTML =
+                                        '<p class="text-muted">No files available for revision.</p>';
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Error loading files:', err);
                                 filesContainer.innerHTML =
-                                    '<p class="text-muted">No files available for revision.</p>';
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Error loading files:', err);
-                            filesContainer.innerHTML =
-                                '<p class="text-danger">Failed to load files.</p>';
-                        });
+                                    '<p class="text-danger">Failed to load files.</p>';
+                            });
 
-                    reviseModal.show();
+                        reviseModal.show();
+                    });
                 });
-            });
 
-            const modalPart = document.getElementById('modalPart');
-            const modalModel = document.getElementById('modalModel');
-            const modalProcess = document.getElementById('modalProcess');
-            const modalProduct = document.getElementById('modalProduct');
+                const modalPart = document.getElementById('modalPart');
+                const modalModel = document.getElementById('modalModel');
+                const modalProcess = document.getElementById('modalProcess');
+                const modalProduct = document.getElementById('modalProduct');
 
-            if (modalPart) {
-                modalPart.addEventListener('change', updateModalFilters);
-            }
+                if (modalPart) {
+                    modalPart.addEventListener('change', updateModalFilters);
+                }
 
-            function updateModalFilters() {
-                const part = modalPart.value;
+                const currentPlant = "{{ $plant }}";
 
-                if (part && part !== "") {
-                    fetch(`/document-review/filters?part_number=${part}`)
+                function updateModalFilters(partNumber) {
+
+                    if (typeof partNumber !== "string") {
+                        partNumber = tsPart.getValue();
+                    }
+
+                    fetch(`/document-review/filters?part_number=${partNumber}&plant=${currentPlant}`)
                         .then(res => res.json())
                         .then(data => {
-                            updateSelect(modalModel, data.models);
-                            updateSelect(modalProcess, data.processes);
-                            updateSelect(modalProduct, data.products);
+                            resetTomSelect(tsModel, data.models);
+                            resetTomSelect(tsProcess, data.processes);
+                            resetTomSelect(tsProduct, data.products);
                         });
-                } else {
-                    [modalModel, modalProcess, modalProduct].forEach(select => {
-                        select.querySelectorAll('option').forEach(o => o.hidden = false);
+                }
+
+                function refreshTomSelect(ts, list) {
+                    ts.clearOptions();
+                    ts.addOption({
+                        value: "",
+                        text: "All"
+                    });
+
+                    list.forEach(item => {
+                        ts.addOption({
+                            value: item,
+                            text: item.replace(/(^|\s)\S/g, (t) => t.toUpperCase())
+                        });
+                    });
+
+                    ts.refreshOptions(false);
+                    ts.setValue("");
+                }
+
+
+                function resetTomSelect(ts, list) {
+                    ts.clearOptions();
+
+                    ts.addOption({
+                        value: "",
+                        text: "All"
+                    });
+
+                    list.forEach(item => {
+                        ts.addOption({
+                            value: item,
+                            text: item.replace(/(^|\s)\S/g, (t) => t.toUpperCase())
+                        });
+                    });
+
+                    ts.refreshOptions(false);
+                }
+
+                function updateSelect(select, options) {
+                    select.querySelectorAll('option').forEach(o => {
+                        o.hidden = o.value && !options.includes(o.value);
                     });
                 }
-            }
 
-            function updateSelect(select, options) {
-                select.querySelectorAll('option').forEach(o => {
-                    o.hidden = o.value && !options.includes(o.value);
-                });
-            }
+                const filterModal = document.getElementById('filterModal');
+                if (filterModal) {
+                    filterModal.addEventListener('shown.bs.modal', function() {
+                        updateModalFilters(tsPart.getValue());
+                    });
+                }
+                // === CLEAR FILTER BUTTON ===
+                const clearFilterBtn = document.getElementById("clearFilterBtn");
 
-            const filterModal = document.getElementById('filterModal');
-            if (filterModal) {
-                filterModal.addEventListener('shown.bs.modal', updateModalFilters);
-            }
-            // === CLEAR FILTER BUTTON ===
-            const clearFilterBtn = document.getElementById('clearFilterBtn');
+                if (clearFilterBtn) {
+                    clearFilterBtn.addEventListener("click", () => {
 
-            if (clearFilterBtn) {
-                clearFilterBtn.addEventListener('click', () => {
+                        // Clear DOM select
+                        tsPart.setValue("");
+                        tsModel.setValue("");
+                        tsProcess.setValue("");
+                        tsProduct.setValue("");
 
-                    // Reset semua field dalam modal
-                    document.getElementById('modalPart').value = "";
-                    document.getElementById('modalModel').value = "";
-                    document.getElementById('modalProcess').value = "";
-                    document.getElementById('modalProduct').value = "";
+                        // Reset options model/process/product
+                        resetTomSelect(tsModel, originalModelOptions);
+                        resetTomSelect(tsProcess, originalProcessOptions);
+                        resetTomSelect(tsProduct, originalProductOptions);
 
-                    // Redirect ke halaman tanpa filter (tapi tetap membawa search q)
-                    const url = new URL(window.location.href);
+                        // Hapus query string filter
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('part_number');
+                        url.searchParams.delete('model');
+                        url.searchParams.delete('process');
+                        url.searchParams.delete('product');
 
-                    url.searchParams.delete('part_number');
-                    url.searchParams.delete('model');
-                    url.searchParams.delete('process');
-                    url.searchParams.delete('product');
+                        window.location.href = url.toString();
+                    });
+                }
 
-                    // q (search) tetap ada kalau sebelumnya sudah diisi
-                    window.location.href = url.toString();
-                });
-            }
-
-        });
-    </script>
+            });
+        </script>
+    @endpush
 @endsection

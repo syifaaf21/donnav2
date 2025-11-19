@@ -11,7 +11,7 @@ class Kernel extends ConsoleKernel
     {
         // Jalankan SendDocumentControlReminder setiap hari jam 08:00
         $schedule->command('document:send-reminder')
-            ->weeklyOn(2, '08:00') // 1 = Senin
+            ->weeklyOn(1, '08:00') // 1 = Senin
             ->withoutOverlapping()
             ->runInBackground();
         // Opsional: jalankan di background

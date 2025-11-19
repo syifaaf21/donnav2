@@ -12,6 +12,7 @@ class DocumentReviewController extends Controller
     public function index(Request $request)
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
+        // $plants = array_filter($plants, fn($p) => in_array($p, ['Body', 'Unit', 'Electric']));
         $documentsMaster = Document::where('type', 'review')->get();
 
         $documentMappings = DocumentMapping::with([
@@ -161,7 +162,24 @@ class DocumentReviewController extends Controller
 
     public function getFilters(Request $request)
     {
+        $plant = $request->plant;
+
+        // Jika part number tidak dipilih → return full list
         if (!$request->part_number) {
+            return response()->json([
+                'models'    => ProductModel::where('plant', $plant)->pluck('name')->unique()->values(),
+                'processes' => Process::where('plant', $plant)->pluck('name')->unique()->values(),
+                'products'  => Product::where('plant', $plant)->pluck('name')->unique()->values(),
+            ]);
+        }
+
+        // Ambil detail berdasarkan part number
+        $part = PartNumber::with(['productModel', 'process', 'product'])
+            ->where('part_number', $request->part_number)
+            ->where('plant', $plant)
+            ->first();
+
+        if (!$part) {
             return response()->json([
                 'models' => [],
                 'processes' => [],
@@ -169,14 +187,10 @@ class DocumentReviewController extends Controller
             ]);
         }
 
-        $related = PartNumber::with(['productModel', 'process', 'product'])
-            ->where('part_number', $request->part_number)
-            ->first();
-
         return response()->json([
-            'models'    => $related ? [$related->productModel?->name] : [],
-            'processes' => $related ? [$related->process?->name] : [],
-            'products'  => $related ? [$related->product?->name] : [],
+            'models'    => [$part->productModel?->name],
+            'processes' => [$part->process?->name],
+            'products'  => [$part->product?->name],
         ]);
     }
 
