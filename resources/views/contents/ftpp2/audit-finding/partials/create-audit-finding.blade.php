@@ -54,10 +54,13 @@
                     Select Auditee
                 </button>
 
-                <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
-                </div>
+                 <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
+                 </div>
 
-                <input type="hidden" id="auditee_ids" name="auditee_ids[]" x-model="form.auditee_ids">
+                 <!-- Hidden holder for selected auditees (NOT submitted directly).
+                     We avoid naming this input so only the dynamic `auditee_ids[]` inputs
+                     created by `saveHeaderOnly()` are included in the POST request. -->
+                 <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
             </div>
 
             <!-- AUDITOR -->
@@ -303,6 +306,7 @@
     </button>
 </div>
 
+<x-flash-message />
 @push('scripts')
     <script>
         // === SIDEBAR OPEN/CLOSE ===
@@ -763,9 +767,12 @@
                 name: option.text
             }));
 
+            // Deduplicate by id in case the UI/control returns duplicates
+            selectedAuditees = Array.from(new Map(selectedAuditees.map(a => [a.id, a])).values());
+
             // Tampilkan ke UI
             document.getElementById('selectedAuditees').innerHTML = selectedAuditees.map(a => `
-                <span class="bg-blue-100 px-2 py-1 rounded flex items-center gap-1">
+                <span data-id="${a.id}" class="bg-blue-100 px-2 py-1 rounded flex items-center gap-1">
                     ${a.name}
                     <button type="button" onclick="removeAuditee('${a.id}')">
                         <i data-feather="x" class="w-4 h-4 text-red-500"></i>
@@ -923,72 +930,56 @@
 {{-- Store header data handler --}}
 <script>
     async function saveHeaderOnly() {
-        const formData = new FormData();
-        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        // Instead of AJAX, submit the main form so the controller can redirect and set a flash message.
+        const form = document.querySelector('form[action="{{ route('ftpp.audit-finding.store') }}"]');
+        if (!form) return alert('Form not found');
 
-        formData.append('_token', token);
-        formData.append('department_id', document.querySelector('input[name="department_id"]').value || '');
-        formData.append('process_id', document.querySelector('input[name="process_id"]').value || '');
-        formData.append('product_id', document.querySelector('input[name="product_id"]').value || '');
-        formData.append('audit_type_id', document.querySelector('input[name="audit_type_id"]:checked')?.value ||
-            '');
-        formData.append('sub_audit_type_id', document.querySelector('input[name="sub_audit_type_id"]:checked')
-            ?.value || '');
-        formData.append('auditor_id', document.querySelector('select[name="auditor_id"]').value || '');
-        formData.append('created_at', document.querySelector('input[name="created_at"]').value || '');
-        formData.append('registration_number', document.querySelector('input[name="registration_number"]').value ||
-            '');
-        formData.append('finding_category_id', document.querySelector('input[name="finding_category_id"]:checked')
-            ?.value || '');
-        formData.append('finding_description', document.querySelector('textarea[name="finding_description"]')
-            .value || '');
-        formData.append('due_date', document.querySelector('input[name="due_date"]').value || '');
-        formData.append('action', 'save_header');
+        // remove any previously added dynamic inputs to avoid duplicates
+        document.querySelectorAll('[data-dyn-input]').forEach(n => n.remove());
 
-        // Replace this part in saveHeaderOnly()
-        selectedAuditees.forEach(a => formData.append('auditee_ids[]', a.id));
-
-        // 🔹 sub klausul array
-        selectedSubIds.forEach(id => {
-            formData.append('sub_klausul_id[]', id);
-        });
-
-        // Photos
-        const photoInput = document.getElementById('photoInput');
-        Array.from(photoInput.files).forEach(file => formData.append('photos[]', file));
-
-        // Documents
-        const fileInput = document.getElementById('fileInput');
-        Array.from(fileInput.files).forEach(file => formData.append('files[]', file));
-
-        // Combined (optional)
-        const combinedInput = document.getElementById('combinedInput');
-        Array.from(combinedInput.files).forEach(file => formData.append('attachments[]', file));
-
-        try {
-            const res = await fetch('{{ route('ftpp.audit-finding.store') }}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': token,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin'
-            });
-
-            const data = await res.json(); // langsung parse JSON
-
-            if (data.success) {
-                alert('✅ Header saved successfully');
-                console.log('Parsed JSON:', data);
-            } else {
-                alert('❌ Failed: ' + data.message);
-            }
-
-        } catch (err) {
-            console.error('Fetch error:', err);
-            alert('❌ Failed to save header:\n' + err.message);
+        // Prevent the static single `selectedSub` hidden input from submitting an empty value
+        const staticSelectedSub = document.getElementById('selectedSub');
+        if (staticSelectedSub) {
+            staticSelectedSub.removeAttribute('name');
         }
+
+        // Add action indicator
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'save_header';
+        actionInput.setAttribute('data-dyn-input', '1');
+        form.appendChild(actionInput);
+
+        // Add selected auditees (deduplicated by id)
+        if (typeof selectedAuditees !== 'undefined' && selectedAuditees.length) {
+            const uniqueIds = Array.from(new Set(selectedAuditees.map(a => a.id)));
+            uniqueIds.forEach(id => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'auditee_ids[]';
+                inp.value = id;
+                inp.setAttribute('data-dyn-input', '1');
+                form.appendChild(inp);
+            });
+        }
+
+        // Add selected sub klausul ids
+        if (typeof selectedSubIds !== 'undefined' && selectedSubIds.length) {
+            selectedSubIds.forEach(id => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'sub_klausul_id[]';
+                inp.value = Number(id);
+                inp.setAttribute('data-dyn-input', '1');
+                form.appendChild(inp);
+            });
+        }
+
+        // Files are already in the hidden file inputs (photoInput, fileInput, combinedInput) so a normal submit will include them.
+
+        // Submit the form normally (will redirect and show flash message from controller)
+        form.submit();
     }
 </script>
 

@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\WhyCauses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AuditeeActionController extends Controller
 {
@@ -264,14 +265,14 @@ class AuditeeActionController extends Controller
     {
         $validated = $request->validate([
             'root_cause' => 'required|string',
-            'pic' => 'nullable|string|max:100',
+            // 'pic' => 'nullable|string|max:100',
             'yokoten' => 'required|boolean',
             'yokoten_area' => 'nullable|string',
             'ldr_spv_signature' => 'nullable|boolean',
-
             'attachments.*' => 'nullable|file|max:5120',
             'photos2.*' => 'nullable|file|max:5120',
             'files2.*' => 'nullable|file|max:5120',
+            'remove_attachments.*' => 'nullable|numeric',
         ]);
 
         DB::beginTransaction();
@@ -342,7 +343,32 @@ class AuditeeActionController extends Controller
             }
 
             /* =====================================================
-             * 4️⃣ Handle Upload Attachments Baru
+             * 4️⃣ Handle removed attachments first (from edit UI)
+             * ===================================================== */
+            if ($request->has('remove_attachments')) {
+                $removeIds = (array) $request->input('remove_attachments');
+                foreach ($removeIds as $rid) {
+                    $df = DocumentFile::find($rid);
+                    if ($df && $df->auditee_action_id == $auditeeAction->id) {
+                        try {
+                            if ($df->file_path && Storage::disk('public')->exists($df->file_path)) {
+                                Storage::disk('public')->delete($df->file_path);
+                            }
+                        } catch (\Throwable $e) {
+                            \Log::warning("Failed to delete file for DocumentFile id={$rid}: " . $e->getMessage());
+                        }
+
+                        try {
+                            $df->delete();
+                        } catch (\Throwable $e) {
+                            \Log::warning("Failed to delete DocumentFile record id={$rid}: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
+
+            /* =====================================================
+             * 5️⃣ Handle Upload Attachments Baru
              * ===================================================== */
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
@@ -385,7 +411,7 @@ class AuditeeActionController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Auditee Action updated successfully.');
+            return redirect()->route('ftpp.auditee-action.index')->with('success', 'Auditee Action updated successfully.');
 
         } catch (\Throwable $e) {
             DB::rollBack();

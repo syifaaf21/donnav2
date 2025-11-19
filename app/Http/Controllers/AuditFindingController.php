@@ -126,7 +126,7 @@ class AuditFindingController extends Controller
             ]);
         }
 
-        return redirect('/ftpp2')->with('success', 'Audit Finding saved successfully!');
+        return redirect('/ftpp')->with('success', 'Audit Finding saved successfully!');
     }
 
     private function handleFileUploads(Request $request, $auditFinding)

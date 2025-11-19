@@ -286,10 +286,18 @@
             });
 
             document.getElementById('modalEditAudit').addEventListener('hidden.bs.modal', function() {
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
+                try {
+                    setTimeout(() => {
+                        if (document.querySelectorAll('.modal.show').length === 0) {
+                            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                            document.body.classList.remove('modal-open');
+                            document.body.style.overflow = '';
+                            document.body.style.paddingRight = '';
+                        }
+                    }, 50);
+                } catch (e) {
+                    console.warn('Backdrop cleanup skipped:', e);
+                }
             });
         });
 

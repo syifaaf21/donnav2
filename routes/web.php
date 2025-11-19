@@ -126,10 +126,6 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
             Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
         });
     });
-});
-
-// User management: hanya Super Admin
-Route::prefix('master')->name('master.')->middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::resource('users', UserController::class);
 });
 

@@ -84,6 +84,35 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                <!-- Audit Type (shown only when Role = Auditor) -->
+                @php
+                    $auditTypes = \App\Models\Audit::select('id', 'name')->get();
+                    $roleName = $user->role->name ?? null;
+                    if (old('role_id')) {
+                        $r = collect($roles)->firstWhere('id', (int) old('role_id'));
+                        $roleName = $r->name ?? $roleName;
+                    }
+                @endphp
+
+                <div class="col-md-6" id="auditTypeContainerEdit_{{ $user->id }}"
+                    style="display: {{ strtolower($roleName ?? '') === 'auditor' ? 'block' : 'none' }};">
+                    <label class="form-label fw-medium">Audit Type</label>
+                    <select name="audit_type_id" id="audit_type_select_edit_{{ $user->id }}"
+                        class="form-select rounded-3 @error('audit_type_id') is-invalid @enderror">
+                        <option value="" disabled
+                            {{ old('audit_type_id', $user->audit_type_id) ? '' : 'selected' }}>-- Select
+                            Audit Type --</option>
+                        @foreach ($auditTypes as $a)
+                            <option value="{{ $a->id }}"
+                                {{ (old('audit_type_id') ? old('audit_type_id') == $a->id : $user->audit_type_id == $a->id) ? 'selected' : '' }}>
+                                {{ $a->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('audit_type_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
 
                 <!-- Department -->
                 <div class="col-md-6">
@@ -103,6 +132,31 @@
                     @enderror
                 </div>
             </div>
+            <script>
+                (function() {
+                    const roleSelect = document.getElementById('role_select_edit_{{ $user->id }}');
+                    const auditTypeContainer = document.getElementById('auditTypeContainerEdit_{{ $user->id }}');
+                    const auditTypeSelect = document.getElementById('audit_type_select_edit_{{ $user->id }}');
+
+                    if (!roleSelect || !auditTypeContainer) return;
+
+                    function toggleAuditType() {
+                        const sel = roleSelect.options[roleSelect.selectedIndex];
+                        const text = (sel?.text || '').toLowerCase();
+                        if (text.includes('auditor')) {
+                            auditTypeContainer.style.display = 'block';
+                            if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');
+                        } else {
+                            auditTypeContainer.style.display = 'none';
+                            if (auditTypeSelect) auditTypeSelect.removeAttribute('required');
+                        }
+                    }
+
+                    roleSelect.addEventListener('change', toggleAuditType);
+                    // initial state
+                    toggleAuditType();
+                })();
+            </script>
         </div>
 
         <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">

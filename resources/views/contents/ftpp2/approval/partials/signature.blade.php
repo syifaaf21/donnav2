@@ -40,18 +40,32 @@
     </div>
 </td>
 
-
-
 <script>
-    function approveDeptHead() {
-        const id = document.getElementById('auditee_action_id')?.value;
+    async function approveDeptHead(id) {
+        const aid = id || document.getElementById('auditee_action_id')?.value;
 
-        if (!id) {
-            alert("❌ Error: auditee_action_id tidak ditemukan!");
+        if (!aid) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'auditee_action_id tidak ditemukan!'
+            });
             return;
         }
 
-        fetch('/approval/dept-head-sign', {
+        const result = await Swal.fire({
+            title: 'Confirm Approval',
+            text: 'Are you sure you want to approve this finding?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, approve',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch('/approval/dept-head-sign', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -59,20 +73,36 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    auditee_action_id: id
+                    auditee_action_id: aid
                 })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("Approved:", data);
-            })
-            .then(data => {
-                console.log(data);
-                if (data.success) {
-                    location.reload(); // <= Refresh halaman agar Blade fetch data terbaru
-                }
-            })
-            .catch(err => console.error(err));
+            });
 
+            const data = await res.json();
+
+            if (data && data.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Approved',
+                    text: 'The finding was approved.',
+                    timer: 1200,
+                    showConfirmButton: false
+                });
+                // reload automatically
+                location.reload();
+            } else {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Approval failed',
+                    text: data?.message || 'Unknown error'
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Network Error',
+                text: 'Network or server error when approving'
+            });
+        }
     }
 </script>

@@ -103,6 +103,35 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <!-- Audit Type (shown only when Role = Auditor) -->
+                        @php
+                            $auditTypes = \App\Models\Audit::select('id', 'name')->get();
+                            // helper to check old role on initial render
+                            $oldRoleName = null;
+                            if (old('role_id')) {
+                                $r = collect($roles)->firstWhere('id', (int) old('role_id'));
+                                $oldRoleName = $r->name ?? null;
+                            }
+                        @endphp
+
+                        <div class="col-md-6" id="auditTypeContainer"
+                            style="display: {{ strtolower($oldRoleName ?? '') === 'auditor' ? 'block' : 'none' }};">
+                            <label class="form-label fw-medium">Audit Type <span class="text-danger">*</span></label>
+                            <select id="audit_type_select" name="audit_type_id"
+                                class="form-select rounded-3 @error('audit_type_id') is-invalid @enderror">
+                                <option value="" disabled {{ old('audit_type_id') ? '' : 'selected' }}>-- Select
+                                    Audit Type --</option>
+                                @foreach ($auditTypes as $a)
+                                    <option value="{{ $a->id }}"
+                                        {{ old('audit_type_id') == $a->id ? 'selected' : '' }}>{{ $a->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('audit_type_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         <!-- Department -->
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
@@ -124,6 +153,31 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                    (function() {
+                        const roleSelect = document.getElementById('role_select');
+                        const auditTypeContainer = document.getElementById('auditTypeContainer');
+                        const auditTypeSelect = document.getElementById('audit_type_select');
+
+                        if (!roleSelect || !auditTypeContainer) return;
+
+                        function toggleAuditType() {
+                            const sel = roleSelect.options[roleSelect.selectedIndex];
+                            const text = (sel?.text || '').toLowerCase();
+                            if (text.includes('auditor')) {
+                                auditTypeContainer.style.display = 'block';
+                                if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');
+                            } else {
+                                auditTypeContainer.style.display = 'none';
+                                if (auditTypeSelect) auditTypeSelect.removeAttribute('required');
+                            }
+                        }
+
+                        roleSelect.addEventListener('change', toggleAuditType);
+                        // initial state
+                        toggleAuditType();
+                    })();
+                </script>
 
                 <!-- Footer -->
                 <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">

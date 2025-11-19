@@ -66,9 +66,9 @@
         </div>
 
     </div>
-{{-- Include modal Add/Edit (sama seperti kode kamu sebelumnya) --}}
-@include('contents.master.user.partials.modal-add')
-@include('contents.master.user.partials.modal-edit')
+    {{-- Include modal Add/Edit (sama seperti kode kamu sebelumnya) --}}
+    @include('contents.master.user.partials.modal-add')
+    @include('contents.master.user.partials.modal-edit')
 @endsection
 
 @push('scripts')
@@ -116,7 +116,53 @@
     @if ($errors->any() && session('edit_modal'))
         <script>
             document.addEventListener("DOMContentLoaded", function() {
-                new bootstrap.Modal(document.getElementById("editUserModal-{{ session('edit_modal') }}")).show();
+                const userId = "{{ session('edit_modal') }}";
+                const modalEl = document.getElementById('editUserModal');
+                const modalContent = document.getElementById('editUserModalContent');
+
+                if (!modalEl || !modalContent) {
+                    console.warn('Edit modal element not found: editUserModal');
+                    return;
+                }
+
+                const modalInstance = new bootstrap.Modal(modalEl);
+                modalContent.innerHTML = '<div class="p-5 text-center text-gray-500">Loading...</div>';
+                modalInstance.show();
+
+                // Load the edit form via AJAX so validation errors are shown inside modal
+                fetch(`/master/users/${userId}/edit`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to fetch edit form');
+                        return response.text();
+                    })
+                    .then(html => {
+                        modalContent.innerHTML = html;
+                        try {
+                            // attempt to reinitialize TomSelects if present
+                            if (typeof TomSelect !== 'undefined') {
+                                try {
+                                    new TomSelect(`#role_select_edit_${userId}`, {
+                                        create: false,
+                                        maxItems: 1
+                                    });
+                                } catch (e) {}
+                                try {
+                                    new TomSelect(`#department_select_edit_${userId}`, {
+                                        create: false,
+                                        maxItems: 1
+                                    });
+                                } catch (e) {}
+                            }
+                        } catch (e) {
+                            console.warn('TomSelect init failed', e);
+                        }
+                        if (typeof feather !== 'undefined') feather.replace();
+                    })
+                    .catch(err => {
+                        modalContent.innerHTML =
+                            '<div class="p-5 text-center text-red-500">Failed to load edit form.</div>';
+                        console.error(err);
+                    });
             });
         </script>
     @endif

@@ -281,7 +281,7 @@ class FtppController extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Finding not found'], 404);
             }
-            return redirect('/ftpp2')->with('error', 'Finding not found');
+            return redirect('/ftpp')->with('error', 'Finding not found');
         }
 
         try {
@@ -289,12 +289,12 @@ class FtppController extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Finding deleted successfully']);
             }
-            return redirect('/ftpp2')->with('success', 'Record deleted.');
+            return redirect('/ftpp')->with('success', 'Record deleted.');
         } catch (\Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Failed to delete'], 500);
             }
-            return redirect('/ftpp2')->with('error', 'Failed to delete record.');
+            return redirect('/ftpp')->with('error', 'Failed to delete record.');
         }
     }
 
@@ -336,14 +336,18 @@ class FtppController extends Controller
             }
 
             // Acknowledge by lead auditor: if flag present on finding or auditeeAction, show lead auditor stamp
-            if ((!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1)
-                || (!empty($finding->auditeeAction->acknowledge_by_lead_auditor) && $finding->auditeeAction->acknowledge_by_lead_auditor == 1)) {
+            if (
+                (!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1)
+                || (!empty($finding->auditeeAction->acknowledge_by_lead_auditor) && $finding->auditeeAction->acknowledge_by_lead_auditor == 1)
+            ) {
                 $finding->acknowledge_by_lead_auditor_url = public_path('images/stamp-lead-auditor.png');
             }
 
             // Verified by auditor: if flag present on finding or auditeeAction, show internal auditor stamp
-            if ((!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1)
-                || (!empty($finding->auditeeAction->verified_by_auditor) && $finding->auditeeAction->verified_by_auditor == 1)) {
+            if (
+                (!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1)
+                || (!empty($finding->auditeeAction->verified_by_auditor) && $finding->auditeeAction->verified_by_auditor == 1)
+            ) {
                 $finding->verified_by_auditor_url = public_path('images/stamp-internal-auditor.png');
             }
         } else {

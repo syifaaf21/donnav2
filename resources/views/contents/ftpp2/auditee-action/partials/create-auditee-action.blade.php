@@ -342,9 +342,19 @@
 {{-- Store data auditee action handler --}}
 <script>
     function confirmApprove() {
-        if (!confirm("Yakin ingin APPROVE data ini?")) {
-            return;
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Are you sure you want to APPROVE this data?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, approve it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateAuditeeAction(true);
+            }
+        });
         updateAuditeeAction(true);
     }
     async function updateAuditeeAction(isApprove = false) {
@@ -446,8 +456,9 @@
             const result = await res.json();
 
             if (res.ok && result.success) {
-                alert("✅ Auditee Action updated successfully");
                 console.log(result);
+                // Redirect to index after user closes the alert
+                window.location.href = "{{ route('ftpp.index') }}";
             } else {
                 alert("❌ Failed: " + (result.message || "Unknown error"));
             }

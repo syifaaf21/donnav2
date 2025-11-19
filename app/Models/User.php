@@ -25,7 +25,7 @@ class User extends Authenticatable
         'password',
         'role_id',
         'department_id',
-
+        'audit_type_id',
     ];
 
     /**

@@ -7,11 +7,8 @@
         <div class="mb-3">
             <a href="{{ route('ftpp.index') }}"
                 class="inline-flex items-center px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-sm text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                    stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                <span class="ml-2">Back to index</span>
+                <i data-feather="arrow-left" class="w-4 h-4"></i>
+                <span class="ml-2">Back</span>
             </a>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -35,7 +32,7 @@
 
                 <ul>
                     <template
-                        x-for="item in filteredFindings.filter(i => ['submitted','checked by dept head','approve by auditor'].includes((i.status?.name || '').toLowerCase()))"
+                        x-for="item in filteredFindings.filter(i => ['submitted','checked by dept head','approved by auditor'].includes((i.status?.name || '').toLowerCase()))"
                         :key="item.id">
                         <li @click="loadForm(item.id)"
                             class="cursor-pointer px-2 py-2 mb-2 border rounded shadow hover:bg-slate-50">

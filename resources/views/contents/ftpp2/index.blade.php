@@ -6,6 +6,7 @@
         <div class="mb-6">
             <h4 class="text-gray-800">Audit Findings Monitoring & Auditee Actions</h4>
         </div>
+
         <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <!-- Search -->
             <div class="w-full md:w-1/3">

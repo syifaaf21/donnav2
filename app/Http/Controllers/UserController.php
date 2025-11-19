@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Audit;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Department;
@@ -44,7 +45,8 @@ class UserController extends Controller
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('role', fn($r) => $r->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));;
+                    ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));
+                ;
             });
         }
 
@@ -84,6 +86,7 @@ class UserController extends Controller
             ],
             'role_id' => 'required',
             'department_id' => 'required',
+            'audit_type_id' => 'nullable',
         ], [
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
@@ -109,6 +112,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role_id' => $roleId,
             'department_id' => $departmentId,
+            'audit_type_id' => is_numeric($request->audit_type_id) ? $request->audit_type_id : null,
         ]);
 
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
@@ -116,14 +120,15 @@ class UserController extends Controller
 
 
 
-    public function edit(User $user)
+    public function edit($id)
     {
         $user = User::findOrFail($id);
         $roles = Role::all();
         $departments = Department::all();
+        $auditTypes = Audit::all();
 
         // Kembalikan partial Blade khusus isi modal
-        return view('contents.master.user.partials.form-edit', compact('user', 'roles', 'departments'));
+        return view('contents.master.user.partials.form-edit', compact('user', 'roles', 'departments', 'auditTypes'));
     }
 
     public function update(Request $request, User $user)
@@ -135,6 +140,7 @@ class UserController extends Controller
             'email' => 'nullable|email|unique:users,email,' . $user->id,
             'role_id' => 'required',
             'department_id' => 'required',
+            'audit_type_id' => 'nullable',
         ];
 
         if ($request->filled('password')) {
@@ -150,7 +156,7 @@ class UserController extends Controller
                 ->with('edit_modal', $user->id);
         }
 
-        $data = $request->only(['name', 'npk', 'email', 'role_id', 'department_id']);
+        $data = $request->only(['name', 'npk', 'email', 'role_id', 'department_id', 'audit_type_id']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
