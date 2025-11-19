@@ -352,7 +352,7 @@
         const formData = new FormData();
 
         formData.append('_token', token);
-        formData.append('_method', 'PUT'); // WAJIB!
+        formData.append('_method', 'POST'); // WAJIB!
         formData.append('action', 'update_auditee_action');
 
         // Jika ini approve, kasih flag ke backend
@@ -432,7 +432,7 @@
         // Submit
         // -----------------------------
         try {
-            const res = await fetch("{{ route('ftpp2.update', ['id' => $finding->id]) }}", {
+            const res = await fetch("{{ route('ftpp.auditee-action.store', ['id' => $finding->id]) }}", {
                 method: "POST",
                 headers: {
                     "X-CSRF-TOKEN": token,

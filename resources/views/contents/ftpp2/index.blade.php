@@ -3,59 +3,113 @@
 
 @section('content')
     <div class="p-2" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
+        <div class="mb-6">
+            <h4 class="text-gray-800">Audit Findings Monitoring & Auditee Actions</h4>
+        </div>
+        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <!-- Search -->
+            <div class="w-full md:w-1/3">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input id="live-search" type="text" placeholder="Search..." autocomplete="off"
+                        class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 shadow-sm
+                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="flex items-center gap-3">
+
+                @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
+                    <a href="{{ route('ftpp.audit-finding.create') }}"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 text-white font-medium
+                       shadow hover:bg-blue-800 hover:shadow-md transition-all duration-150">
+                        <i data-feather="plus" class="w-4 h-4"></i>
+                        Add Finding
+                    </a>
+                @endif
+
+                @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor', 'Dept-Head']))
+                    <a href="{{ route('approval.index') }}"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-600 text-white font-medium
+                       shadow hover:bg-gray-700 hover:shadow-md transition-all duration-150">
+                        <i data-feather="pen-tool" class="w-4 h-4"></i>
+                        Approval
+                    </a>
+                @endif
+            </div>
+
+        </div>
 
         <div class="flex gap-6">
             {{-- Left: status tabs/sidebar --}}
-            <aside class="w-64 h-100 bg-white text-gray-800 rounded-lg shadow p-4">
-                <div>
-                    <ul class="space-y-1">
-                        <li>
-                            <a href="{{ route('ftpp2.index') }}"
-                                class="flex justify-between items-center p-2 rounded {{ request()->filled('status_id') ? 'text-gray-800' : 'bg-slate-700 text-white' }}">
-                                <span>All</span>
-                                <span
-                                    class="text-sm bg-white text-gray-800 px-1 py-0.5 rounded">{{ $totalCount ?? 0 }}</span>
-                            </a>
-                        </li>
-                        @foreach ($statuses as $status)
-                            @if (in_array(strtolower($status->name), [
-                                    'open',
-                                    'submitted',
-                                    'checked by dept head',
-                                    'approve by auditor',
-                                    'need revision',
-                                    'close',
-                                ]))
-                                <li>
-                                    <a href="{{ route('ftpp2.index', array_merge(request()->except('page'), ['status_id' => $status->id])) }}"
-                                        class="flex justify-between items-center p-2 rounded hover:bg-slate-700 hover:text-white {{ request('status_id') == $status->id ? 'bg-slate-700 text-white' : 'text-gray-800' }}">
-                                        <span>{{ $status->name }}</span>
-                                        <span
-                                            class="text-sm bg-slate-700 text-white px-1 py-0.5 rounded">{{ $status->audit_finding_count }}</span>
-                                    </a>
-                                </li>
-                            @endif
-                        @endforeach
-                    </ul>
-                </div>
+            <aside class="w-64 bg-white justify-center rounded-xl shadow-sm py-4 pr-4 border border-gray-100">
+                <ul class="space-y-1">
+
+                    {{-- ALL --}}
+                    <li>
+                        <a href="{{ route('ftpp.index') }}"
+                            class="flex justify-between items-center px-1 py-2 rounded-lg transition
+                    {{ request()->filled('status_id') ? 'text-gray-700 hover:bg-gray-100' : 'bg-blue-600 text-white shadow-sm' }}">
+                            <span class="flex items-center gap-2">
+                                <i data-feather="list" class="w-4 h-4"></i>
+                                All
+                            </span>
+
+                            <span
+                                class="text-xs px-2 py-0.5 rounded-full
+                    {{ request()->filled('status_id') ? 'bg-gray-200 text-gray-800' : 'bg-white text-blue-700' }}">
+                                {{ $totalCount ?? 0 }}
+                            </span>
+                        </a>
+                    </li>
+
+                    {{-- LOOP STATUS --}}
+                    @foreach ($statuses as $status)
+                        @php
+                            $name = strtolower($status->name);
+                            $active = request('status_id') == $status->id;
+
+                            // mapping ikon per status
+                            $icons = [
+                                'open' => 'alert-circle',
+                                'submitted' => 'upload-cloud',
+                                'checked by dept head' => 'user-check',
+                                'approve by auditor' => 'check-circle',
+                                'need revision' => 'alert-triangle',
+                                'close' => 'lock',
+                            ];
+                        @endphp
+
+                        @if (array_key_exists($name, $icons))
+                            <li>
+                                <a href="{{ route('ftpp.index', array_merge(request()->except('page'), ['status_id' => $status->id])) }}"
+                                    class="flex justify-between items-center px-1 py-2 rounded-lg transition
+                            {{ $active ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100' }}">
+
+                                    <span class="flex items-center gap-2 capitalize">
+                                        <i data-feather="{{ $icons[$name] }}" class="w-4 h-4"></i>
+                                        {{ $status->name }}
+                                    </span>
+
+                                    {{-- Badge counter --}}
+                                    <span
+                                        class="text-xs px-2 py-0.5 rounded-full
+                            {{ $active ? 'bg-white text-blue-700' : 'bg-gray-200 text-gray-800' }}">
+                                        {{ $status->audit_finding_count }}
+                                    </span>
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
+
+                </ul>
             </aside>
 
             {{-- Main column --}}
             <div class="flex-1">
-                <div class="mb-4 flex items-center justify-between">
-                    <input id="live-search" type="text" placeholder="Search..."
-                        class="block w-1/3 rounded-lg border shadow border-gray-300 p-2 focus:ring focus:ring-blue-400 focus:outline-none"
-                        autocomplete="off">
-                    @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
-                        <a href="{{ route('ftpp2.create') }}"
-                            class="inline-flex items-center gap-2 px-4 py-2 shadow bg-blue-800 text-white rounded hover:bg-blue-700">
-                            <i class="fas fa-plus"></i>
-                            Add
-                        </a>
-                    @endif
-
-                </div>
-
                 <div class="bg-white shadow rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -127,52 +181,59 @@
                                         </td>
                                         <td class="flex px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
+                                                <!-- BUTTON -->
                                                 <button type="button"
                                                     @click.prevent="
-                                                        open = !open;
-                                                        const rect = $el.getBoundingClientRect();
-                                                        x = rect.left - 120;   // posisi horizontal dropdown
-                                                        y = rect.top + 25;     // posisi vertical dropdown
-                                                    "
-                                                    class="p-1 hover:bg-gray-200 rounded">
-                                                    <i data-feather="more-vertical" class="w-5 h-5"></i>
+            open = !open;
+            const rect = $el.getBoundingClientRect();
+            x = rect.left - 150;   // posisi horizontal lebih pas
+            y = rect.top + 28;     // posisi vertical lebih rapi
+        "
+                                                    class="p-1.5 hover:bg-gray-100 rounded-full transition">
+                                                    <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
                                                 </button>
 
-                                                <!-- Teleport dropdown ke BODY -->
+                                                <!-- DROPDOWN -->
                                                 <template x-teleport="body">
-                                                    <div x-show="open" @click.outside="open = false" x-transition
-                                                        class="absolute bg-white border rounded-md shadow-lg z-[9999]"
-                                                        :style="`top:${y}px; left:${x}px; width:140px; position:fixed`">
+                                                    <div x-show="open" @click.outside="open = false"
+                                                        x-transition.opacity.duration.150ms
+                                                        class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
+                                                        :style="`top:${y}px; left:${x}px; width:170px; position:fixed`">
+
+                                                        <!-- ITEM: Show -->
                                                         <button type="button"
                                                             @click="$dispatch('open-show-modal', {{ $finding->id }})"
-                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-gray-800 hover:bg-gray-100">
-                                                            <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                            <i data-feather="eye" class="w-4 h-4"></i>
+                                                            Show
                                                         </button>
 
-                                                        <a href="{{ route('ftpp2.download', $finding->id) }}"
-                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-blue-600 hover:bg-gray-100">
-                                                            <i data-feather="download" class="w-4 h-4"></i> Download
+                                                        <!-- ITEM: Download -->
+                                                        <a href="{{ route('ftpp.download', $finding->id) }}"
+                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
+                                                            <i data-feather="download" class="w-4 h-4"></i>
+                                                            Download
                                                         </a>
 
-                                                        <a href="{{ route('ftpp2.edit', $finding->id) }}"
-                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-yellow-500 hover:bg-gray-100">
-                                                            <i data-feather="edit" class="w-4 h-4"></i> Edit Audit Finding
+                                                        <!-- ITEM: Assign Auditee Action -->
+                                                        <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
+                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                            <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                            Assign Auditee Action
                                                         </a>
 
-                                                        <a href="{{ route('ftpp2.edit', $finding->id) }}"
-                                                            class="flex items-center gap-2 px-2 py-2 text-sm text-yellow-500 hover:bg-gray-100">
-                                                            <i data-feather="edit" class="w-4 h-4"></i> Edit Auditee Action
-                                                        </a>
-
+                                                        <!-- ITEM: Delete -->
                                                         <form method="POST"
-                                                            action="{{ route('ftpp2.destroy', $finding->id) }}"
+                                                            action="{{ route('ftpp.destroy', $finding->id) }}"
                                                             onsubmit="return confirm('Delete this record?')">
                                                             @csrf @method('DELETE')
                                                             <button type="submit"
-                                                                class="w-full flex items-center gap-2 px-2 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                                                <i data-feather="trash-2" class="w-4 h-4"></i> Delete
+                                                                class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                                Delete
                                                             </button>
                                                         </form>
+
                                                     </div>
                                                 </template>
                                             </div>
@@ -205,7 +266,7 @@
             if (!input) return;
 
             let timeout = null;
-            const route = "{{ route('ftpp2.search') }}";
+            const route = "{{ route('ftpp.search') }}";
 
             const statusColors = {
                 'open': 'bg-red-500 text-white',
@@ -256,7 +317,7 @@
                 timeout = setTimeout(() => {
                     if (!v) {
                         // empty -> reload page to restore server-side filters/pagination
-                        window.location = "{{ route('ftpp2.index') }}";
+                        window.location = "{{ route('ftpp.index') }}";
                         return;
                     }
                     fetch(route + '?q=' + encodeURIComponent(v))
@@ -279,7 +340,7 @@
                     this.loading = true;
                     this.currentId = id;
 
-                    fetch(`/ftpp2/${id}`)
+                    fetch(`/ftpp/${id}`)
                         .then(res => res.text())
                         .then(html => {
                             this.content = html;

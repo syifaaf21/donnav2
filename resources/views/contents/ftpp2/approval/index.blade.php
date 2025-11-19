@@ -3,17 +3,28 @@
 
 @section('content')
     <div x-data="ftppApp()" class="container mx-auto my-2 px-4">
+        {{-- Back button --}}
+        <div class="mb-3">
+            <a href="{{ route('ftpp.index') }}"
+                class="inline-flex items-center px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-sm text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span class="ml-2">Back to index</span>
+            </a>
+        </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
             {{-- LEFT SIDE --}}
             <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow-sm p-4 overflow-auto h-[90vh]">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-lg font-semibold text-gray-700">FTPP List</h2>
-                    @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
+                    {{-- @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
                         <button @click="createNew()" class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
                             + Add
                         </button>
-                    @endif
+                    {{-- @endif --}}
                 </div>
 
                 <!-- 🔍 Single Search Bar -->
@@ -23,9 +34,11 @@
                 </div>
 
                 <ul>
-                    <template x-for="item in filteredFindings" :key="item.id">
+                    <template
+                        x-for="item in filteredFindings.filter(i => ['submitted','checked by dept head','approve by auditor'].includes((i.status?.name || '').toLowerCase()))"
+                        :key="item.id">
                         <li @click="loadForm(item.id)"
-                            class="cursor-pointer px-2 py-2 border rounded shadow hover:bg-slate-50">
+                            class="cursor-pointer px-2 py-2 mb-2 border rounded shadow hover:bg-slate-50">
                             <div class="font-semibold text-sm" x-text="item.registration_number"></div>
                             <div class="text-xs" x-text="item.department?.name ?? '-'"></div>
                             <div class="text-xs mt-1" x-text="item.status?.name ?? 'Unknown Status'"
@@ -35,16 +48,6 @@
                                         .status_id !== 11,
                                     'text-green-600 hover:text-green-700': item.status_id === 11
                                 }">
-                            </div>
-                            <div class="flex gap-1">
-                                <a :href="`/ftpp/${item.id}/download`" class="text-blue-600 hover:text-blue-800"
-                                    title="Download PDF">
-                                    <i data-feather="download"></i>
-                                </a>
-                                <button @click.stop="deleteFinding(item.id)" class="text-red-600 hover:text-red-800"
-                                    title="Delete">
-                                    <i data-feather="trash-2"></i>
-                                </button>
                             </div>
                         </li>
                     </template>
@@ -64,21 +67,20 @@
                 </template>
 
                 <template x-if="formLoaded">
-                    <form action="{{ isset($finding) ? route('ftpp.update', $finding->id) : route('ftpp.store') }}"
-                        method="POST" enctype="multipart/form-data">
-                        @csrf
+                    <form>
+                        {{-- @csrf
                         @if (isset($finding))
                             @method('PUT')
-                        @endif
+                        @endif --}}
 
                         {{-- HEADER --}}
                         <div class="text-center font-bold text-lg mb-2">
                             FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
                         </div>
 
-                        @include('contents.ftpp.partials.auditor-input')
-                        @include('contents.ftpp.partials.auditee-input')
-                        @include('contents.ftpp.partials.auditor-verification')
+                        @include('contents.ftpp2.approval.partials.auditor-input')
+                        @include('contents.ftpp2.approval.partials.auditee-input')
+                        @include('contents.ftpp2.approval.partials.auditor-verification')
                     </form>
                 </template>
             </div>
@@ -126,7 +128,7 @@
 
                 async loadForm(id) {
                     try {
-                        const res = await fetch(`/ftpp/${id}`);
+                        const res = await fetch(`/approval/${id}`);
 
                         if (!res.ok) throw new Error('Failed to fetch data');
 
@@ -161,7 +163,7 @@
                         // ✅ SUB AUDIT TYPE (Level 2)
                         //
                         if (finding.audit_type_id) {
-                            fetch(`/ftpp/get-data/${finding.audit_type_id}`)
+                            fetch(`/approval/get-data/${finding.audit_type_id}`)
                                 .then(res => res.json())
                                 .then(data => {
                                     const subContainer = document.getElementById('subAuditType');
@@ -329,70 +331,26 @@
                                 });
                             }
 
-                            this.$nextTick(() => {
-                                const previewDeptHeadSignature = document.getElementById(
-                                    'previewDeptHeadSignature');
-                                const previewLdrSpvSignature = document.getElementById(
-                                    'previewLdrSpvSignature');
+                            // 🔹 Tampilkan tanda tangan Dept Head
+                            this.form.auditee_action_id = act.id;
 
-                                if (!previewDeptHeadSignature || !previewLdrSpvSignature) {
-                                    console.warn('⚠️ Preview container belum ada di DOM');
-                                    return;
-                                }
+                            // ✅ Jika auditor sudah verifikasi, tampilkan stamp & sembunyikan tombol
+                            if (act.ldr_spv_signature) {
+                                this.form.ldr_spv_signature = true;
+                                this.form.ldr_spv_signature_url = `/images/usr-approve.png`;
+                                this.form.ldr_spv_signature = true; // flag baru
+                            } else {
+                                this.form.ldr_spv_signature = false;
+                            }
 
-                                const baseUrl = 'http://127.0.0.1:8000/storage/';
-
-                                // 🔹 Tampilkan tanda tangan Dept Head
-                                if (act.dept_head_signature) {
-                                    previewDeptHeadSignature.innerHTML = '';
-
-                                    // Jika array (misal di masa depan disimpan banyak file)
-                                    if (Array.isArray(act.dept_head_signature)) {
-                                        act.dept_head_signature.forEach(sig => {
-                                            const path = typeof sig === 'string' ? sig : sig
-                                                .dept_head_signature;
-                                            if (path && path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
-                                                previewDeptHeadSignature.innerHTML += `
-                                                <img src="${baseUrl + path}" class="w-24 h-24 object-cover border rounded" />
-                                            `;
-                                            }
-                                        });
-                                    }
-                                    // Jika string tunggal
-                                    else if (typeof act.dept_head_signature === 'string') {
-                                        if (act.dept_head_signature.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
-                                            previewDeptHeadSignature.innerHTML = `
-                    <img src="${baseUrl + act.dept_head_signature}" class="w-24 h-24 object-cover border rounded" />
-                `;
-                                        }
-                                    }
-                                }
-
-                                // 🔹 (optional) kalau nanti mau tambahkan preview untuk Ldr/Spv signature juga
-                                if (act.ldr_spv_signature) {
-                                    previewLdrSpvSignature.innerHTML = '';
-
-                                    if (Array.isArray(act.ldr_spv_signature)) {
-                                        act.ldr_spv_signature.forEach(sig => {
-                                            const path = typeof sig === 'string' ? sig : sig
-                                                .ldr_spv_signature;
-                                            if (path && path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
-                                                previewLdrSpvSignature.innerHTML += `
-                        <img src="${baseUrl + path}" class="w-24 h-24 object-cover border rounded" />
-                    `;
-                                            }
-                                        });
-                                    } else if (typeof act.ldr_spv_signature === 'string') {
-                                        if (act.ldr_spv_signature.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
-                                            previewLdrSpvSignature.innerHTML = `
-                    <img src="${baseUrl + act.ldr_spv_signature}" class="w-24 h-24 object-cover border rounded" />
-                `;
-                                        }
-                                    }
-                                }
-
-                                feather.replace();
-                            });
+                            // ✅ Jika lead auditor sudah acknowledge
+                            if (act.dept_head_signature) {
+                                this.form.dept_head_signature = true;
+                                this.form.dept_head_signature_url = `/images/mgr-approve.png`;
+                                this.form.dept_head_signature = true; // flag baru
+                            } else {
+                                this.form.dept_head_signature = false;
+                            }
 
 
                             // cek act sendiri
@@ -503,7 +461,7 @@
                 async deleteFinding(id) {
                     if (!confirm("Are you sure you want to delete this item?")) return;
                     try {
-                        const res = await fetch(`/ftpp/${id}`, {
+                        const res = await fetch(`/approval/${id}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content

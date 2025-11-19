@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Edit-FTPP')
+@section('title', 'FTPP')
 
 @php
     $role = strtolower(auth()->user()->role->name);
@@ -9,7 +9,7 @@
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow-sm space-y-6 mt-2">
             {{-- Back button --}}
             <div class="mb-3">
-                <a href="{{ route('ftpp2.index') }}"
+                <a href="{{ route('ftpp.index') }}"
                     class="inline-flex items-center px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-sm text-gray-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="2">
@@ -19,9 +19,9 @@
                 </a>
             </div>
             <div x-data="editFtppApp()" x-init="init()">
-                <form action="{{ route('ftpp2.update', $finding->id) }}" method="POST">
+                <form action="{{ route('ftpp.auditee-action.store', $finding->id) }}" method="POST">
                     @csrf
-                    @method('PUT')
+                    @method('POST')
                     {{-- Show create-audit-finding for: super admin, admin, auditor --}}
                     @php
                         $canEditAuditFinding =
@@ -38,7 +38,7 @@
                         @php
                             $statusNeedsReview =
                                 ($finding->status->need_review ?? null) === true ||
-                                in_array(strtolower($finding->status->name ?? ''), ['need review', 'open']);
+                                in_array(strtolower($finding->status->name ?? ''), ['need revision', 'open']);
                         @endphp
 
                         @include('contents.ftpp2.auditee-action.partials.create-auditee-action', [

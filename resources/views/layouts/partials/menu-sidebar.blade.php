@@ -28,20 +28,20 @@
         </a>
     </li>
 
-    <li>
+    {{-- <li>
         <a href="{{ route('ftpp.index') }}"
             class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all
         {{ Route::is('ftpp*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
             <i data-feather="alert-octagon" class="menu-icon w-4 h-4 text-gray-100"></i>
             <span class="sidebar-text">FTPP</span>
         </a>
-    </li>
+    </li> --}}
 
     <li>
-        <a href="{{ route('ftpp2.index') }}"
-            class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all {{ Route::is('ftpp2*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
+        <a href="{{ route('ftpp.index') }}"
+            class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all {{ Route::is('ftpp*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
             <i data-feather="alert-octagon" class="w-4 h-4 text-gray-100"></i>
-            <span class="sidebar-text text-gray-100">FTPP2</span>
+            <span class="sidebar-text text-gray-100">FTPP</span>
         </a>
     </li>
 

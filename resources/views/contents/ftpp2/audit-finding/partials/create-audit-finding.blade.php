@@ -1,4 +1,4 @@
-<form action="{{ route('ftpp2.storeAuditFinding') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('ftpp.audit-finding.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
     <!-- CARD WRAPPER -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -966,7 +966,7 @@
         Array.from(combinedInput.files).forEach(file => formData.append('attachments[]', file));
 
         try {
-            const res = await fetch('{{ route('ftpp2.storeAuditFinding') }}', {
+            const res = await fetch('{{ route('ftpp.audit-finding.store') }}', {
                 method: 'POST',
                 body: formData,
                 headers: {

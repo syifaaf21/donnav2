@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuditeeActionController;
+use App\Http\Controllers\AuditFindingController;
 use App\Http\Controllers\AuditTypeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentControlController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\Ftpp2Controller;
+use App\Http\Controllers\FtppAprovalController;
 use App\Http\Controllers\FtppController;
 use App\Http\Controllers\FtppMasterController;
 use App\Http\Controllers\KlausulController;
@@ -196,17 +198,37 @@ Route::middleware('auth')->group(function () {
     */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
         Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
+        Route::get('/search', [FtppController::class, 'search'])->name('search');
         Route::get('/', [FtppController::class, 'index'])->name('index');
-        Route::get('/{id}', [FtppController::class, 'edit'])->name('edit');
-        Route::post('/', [FtppController::class, 'store'])->name('store');
-        Route::post('/ldr-spv-sign', [FtppController::class, 'ldrSpvSign'])->name('ldr-spv-sign');
-        Route::post('/dept-head-sign', [FtppController::class, 'deptheadSign'])->name('dept-head-sign');
-        Route::put('/{id}', [FtppController::class, 'update'])->name('update');
-        Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
+        Route::get('/{id}', [FtppController::class, 'show'])->name('show');
         Route::delete('/{id}', [FtppController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
+        Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        Route::prefix('audit-finding')->name('audit-finding.')->group(function () {
+            // Audit Finding routes
+            Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
+            Route::post('/store', [AuditFindingController::class, 'store'])
+                ->name('store');
+        });
+
+        Route::prefix('auditee-action')->name('auditee-action.')->group(function () {
+            // Auditee Action routes
+            Route::get('/{id}', [AuditeeActionController::class, 'create'])->name('create');
+            Route::post('/store', [AuditeeActionController::class, 'store'])->name('store');
+        });
 
 
     });
+    Route::prefix('approval')->name('approval.')->group(function () {
+        Route::get('/get-data/{auditTypeId}', [FtppAprovalController::class, 'getData']);
+        Route::get('/', [FtppAprovalController::class, 'index'])->name('index');
+        Route::get('/{id}', [FtppAprovalController::class, 'edit'])->name('edit');
+        Route::post('/', [FtppAprovalController::class, 'store'])->name('store');
+        Route::post('/ldr-spv-sign', [FtppAprovalController::class, 'ldrSpvSign'])->name('ldr-spv-sign');
+        Route::post('/dept-head-sign', [FtppAprovalController::class, 'deptheadSign'])->name('dept-head-sign');
+        Route::put('/{id}', [FtppAprovalController::class, 'update'])->name('update');
+    });
+
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
     Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);
     Route::get('/sub-klausul/{headId}', [FtppController::class, 'getSubKlausul']);
@@ -217,29 +239,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/get-auditee/{departmentId}', [FtppController::class, 'getAuditee']);
 
-    Route::post('/auditor-verify', [FtppController::class, 'auditorVerify']);
-    Route::post('/auditor-return', [FtppController::class, 'auditorReturn']);
-    Route::post('/lead-auditor-acknowledge', [FtppController::class, 'leadAuditorAcknowledge']);
-
-    /*
-    |--------------------------------------------------------------------------
-    | FTPP2
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('ftpp2')->name('ftpp2.')->group(function () {
-        Route::get('/search', [Ftpp2Controller::class, 'search'])->name('search');
-        Route::resource('/', Ftpp2Controller::class)->only([
-            'index',
-            'create',
-        ]);
-        Route::get('/{id}', [Ftpp2Controller::class, 'show'])->name('show');
-        // Custom store routes
-        Route::post('/store-audit-finding', [Ftpp2Controller::class, 'storeAuditFinding'])
-            ->name('storeAuditFinding');
-        Route::delete('/{id}', [Ftpp2Controller::class, 'destroy'])->name('destroy');
-        Route::get('/{id}/edit', [Ftpp2Controller::class, 'edit'])->name('edit');
-        Route::put('/{id}', [Ftpp2Controller::class, 'update'])->name('update');
-        Route::get('/{id}/download', [Ftpp2Controller::class, 'download'])->name('download');
-    });
+    Route::post('/auditor-verify', [FtppAprovalController::class, 'auditorVerify']);
+    Route::post('/auditor-return', [FtppAprovalController::class, 'auditorReturn']);
+    Route::post('/lead-auditor-acknowledge', [FtppAprovalController::class, 'leadAuditorAcknowledge']);
 
 });

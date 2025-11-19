@@ -181,13 +181,12 @@
                     <input type="file" id="combinedInput" name="attachments[]"
                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
                 </div>
-                @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor']))
+                {{-- @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor']))
                     <button type="button" onclick="updateAuditFinding()"
                         class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 mb-4">
                         Save changes
                     </button>
-                @endif
-
+                {{-- @endif --}}
             </div>
         </div>
     </div>

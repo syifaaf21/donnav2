@@ -12,6 +12,7 @@ class DocumentReviewController extends Controller
     public function index(Request $request)
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
+        $plants = array_filter($plants, fn($p) => in_array($p, ['Body', 'Unit', 'Electric']));
         $documentsMaster = Document::where('type', 'review')->get();
 
         $documentMappings = DocumentMapping::with([
