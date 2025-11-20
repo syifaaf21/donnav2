@@ -13,7 +13,11 @@ class DocumentReviewController extends Controller
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
         // $plants = array_filter($plants, fn($p) => in_array($p, ['Body', 'Unit', 'Electric']));
-        $documentsMaster = Document::where('type', 'review')->get();
+        // AMBIL SEMUA DOKUMEN DENGAN ANAK-CUCU
+        $documents = Document::with('childrenRecursive')->where('type', 'review')->get();
+
+        // ROOT = dokumen yang parent_id nya NULL
+        $roots = $documents->where('parent_id', null);
 
         $documentMappings = DocumentMapping::with([
             'document',
@@ -43,12 +47,13 @@ class DocumentReviewController extends Controller
             });
         });
 
-        $groupedByPlant = $this->groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings);
+        $groupedByPlant = $this->groupDocumentsByPlantAndCode($plants, $documents, $documentMappings);
 
         return view('contents.document-review.index', compact(
             'plants',
-            'documentsMaster',
-            'groupedByPlant'
+            'documents',
+            'groupedByPlant',
+            'roots',
         ));
     }
 
@@ -79,9 +84,21 @@ class DocumentReviewController extends Controller
             // jika tidak pilih part number → filter bebas
             if (!$request->part_number) {
 
-                $matchModel   = !$request->model   || ($doc->partNumber?->productModel?->name === $request->model);
-                $matchProcess = !$request->process || ($doc->partNumber?->process?->name === $request->process);
-                $matchProduct = !$request->product || ($doc->partNumber?->product?->name === $request->product);
+                $matchProduct = !$request->product || (
+                    (strtolower(trim($doc->partNumber?->product?->name ?? '')) === strtolower(trim($request->product))) ||
+                    (strtolower(trim($doc->product?->name ?? '')) === strtolower(trim($request->product)))
+                );
+
+                $matchModel = !$request->model || (
+                    (strtolower(trim($doc->partNumber?->productModel?->name ?? '')) === strtolower(trim($request->model))) ||
+                    (strtolower(trim($doc->productModel?->name ?? '')) === strtolower(trim($request->model)))
+                );
+
+                $matchProcess = !$request->process || (
+                    (strtolower(trim($doc->partNumber?->process?->name ?? '')) === strtolower(trim($request->process))) ||
+                    (strtolower(trim($doc->process?->name ?? '')) === strtolower(trim($request->process)))
+                );
+
 
                 return $matchModel && $matchProcess && $matchProduct;
             }
@@ -148,10 +165,25 @@ class DocumentReviewController extends Controller
             $products  = $allProducts;
         }
 
+        // 5. Pagination manual (karena Collection)
+        $page     = $request->input('page', 1);
+        $perPage  = 10;
+
+        $documentsPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $documents->forPage($page, $perPage),
+            $documents->count(),
+            $perPage,
+            $page,
+            [
+                'path'  => url()->current(),
+                'query' => $request->query(),
+            ]
+        );
+
         return view('contents.document-review.partials.folder', [
             'plant'       => $plant,
             'docCode'     => $matchedCode,
-            'documents'   => $documents,
+            'documents' => $documentsPaginated,
 
             'partNumbers' => $allPartNumbers,
             'models'      => $models,
@@ -384,8 +416,10 @@ class DocumentReviewController extends Controller
             departmentName: $mapping->department?->name,
         ));
 
-        return redirect()->route('document-review.index')
-            ->with('success', "Document '{$mapping->document_number}' approved successfully!");
+        return redirect()->route('document-review.showFolder', [
+            'plant' => $mapping->partNumber->plant,
+            'docCode' => base64_encode($mapping->document->code),
+        ])->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
 
     public function reject(Request $request, $id)
@@ -396,6 +430,7 @@ class DocumentReviewController extends Controller
         $mapping->timestamps = false;
         $mapping->updateQuietly([
             'status_id' => $rejectedStatus->id ?? $mapping->status_id,
+            'notes' => $request->notes,
             'user_id' => auth()->id(),
         ]);
         $mapping->timestamps = true;

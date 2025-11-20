@@ -143,7 +143,7 @@ class DocumentControlController extends Controller
         }
 
         // Ambil hasil dengan paginate
-        $mappings = $query->paginate(10);
+        $mappings = $query->paginate(10)->appends($request->query());
 
         // Load virtual attributes untuk modal
         $mappings->each(function ($mapping) {

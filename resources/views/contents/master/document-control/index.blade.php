@@ -119,60 +119,29 @@
                                 </td>
                                 <td class="px-6 py-4 flex space-x-2">
                                     @if ($mapping->files->count())
-                                        <div class="relative">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                                                data-bs-toggle="dropdown">
-                                                <i class="bi bi-paperclip"></i> Files
+                                        <div class="relative inline-block">
+                                            <button type="button"
+                                                class="btn btn-outline-secondary btn-sm view-files-btn relative flex items-center justify-center w-8 h-8"
+                                                data-mapping-id="{{ $mapping->id }}"
+                                                data-files='@json(
+                                                    $mapping->files->map(fn($file) => [
+                                                            'name' => $file->file_name ?? basename($file->file_path),
+                                                            'url' => asset('storage/' . $file->file_path),
+                                                        ]))'>
+                                                <i class="bi bi-paperclip text-lg"></i>
+
+                                                @if ($mapping->files->count() > 1)
+                                                    <span
+                                                        class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow">
+                                                        {{ $mapping->files->count() }}
+                                                    </span>
+                                                @endif
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                @foreach ($mapping->files as $file)
-                                                    @php
-                                                        $fileUrl = asset('storage/' . $file->file_path);
-                                                        $extension = strtolower(
-                                                            pathinfo($file->file_path, PATHINFO_EXTENSION),
-                                                        );
-                                                        $isPdf = $extension === 'pdf';
-                                                        $isOffice = in_array($extension, [
-                                                            'doc',
-                                                            'docx',
-                                                            'xls',
-                                                            'xlsx',
-                                                        ]);
-                                                        $viewerUrl = $isPdf
-                                                            ? $fileUrl
-                                                            : 'https://docs.google.com/gview?url=' .
-                                                                urlencode($fileUrl) .
-                                                                '&embedded=true';
-                                                    @endphp
-                                                    <li class="px-3 small text-muted text-truncate">
-                                                        {{ $file->file_name ?? basename($file->file_path) }}
-                                                    </li>
-                                                    <li>
-                                                        @if ($isPdf || $isOffice)
-                                                            <button type="button" class="dropdown-item view-file-btn"
-                                                                data-bs-toggle="modal" data-bs-target="#viewFileModal"
-                                                                data-file="{{ $viewerUrl }}">
-                                                                <i class="bi bi-eye me-1"></i> View
-                                                            </button>
-                                                        @else
-                                                            <span class="dropdown-item text-muted disabled">Preview Not
-                                                                Supported</span>
-                                                        @endif
-                                                    </li>
-                                                    <li>
-                                                        <a href="{{ $fileUrl }}" class="dropdown-item" download>
-                                                            <i class="bi bi-download me-1"></i> Download
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <hr class="dropdown-divider">
-                                                    </li>
-                                                @endforeach
-                                            </ul>
                                         </div>
                                     @else
                                         <span class="text-gray-500">No File</span>
                                     @endif
+
 
                                     <div class="flex items-center gap-2">
                                         @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
@@ -209,6 +178,11 @@
                 {{ $documentMappings->withQueryString()->links('vendor.pagination.tailwind') }}
             </div>
         </div>
+    </div>
+    <!-- Global Files Dropdown -->
+    <div id="globalFileDropdown"
+        class="hidden absolute bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[200px]">
+        <ul id="globalFileList" class="p-2"></ul>
     </div>
     {{-- Snackbar Bulk Action --}}
     <div id="snackbar"
@@ -256,7 +230,41 @@
     <x-sweetalert-confirm />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const globalDropdown = document.getElementById('globalFileDropdown');
+            const globalFileList = document.getElementById('globalFileList');
 
+            document.querySelectorAll('.view-files-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const files = JSON.parse(this.dataset.files);
+                    globalFileList.innerHTML = '';
+
+                    files.forEach(file => {
+                        const li = document.createElement('li');
+                        li.className =
+                            'flex justify-between items-center p-1 hover:bg-gray-100 rounded';
+                        li.innerHTML = `
+                            <span class="truncate">${file.name}</span>
+                            <a href="${file.url}" target="_blank" class="text-blue-600 hover:underline ml-2">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        `;
+                        globalFileList.appendChild(li);
+                    });
+
+                    // Hitung posisi tombol
+                    const rect = btn.getBoundingClientRect();
+                    globalDropdown.style.top = `${rect.bottom + window.scrollY}px`;
+                    globalDropdown.style.left = `${rect.left + window.scrollX}px`;
+                    globalDropdown.classList.remove('hidden');
+                });
+            });
+
+            // Klik di luar untuk tutup
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.view-files-btn') && !e.target.closest('#globalFileDropdown')) {
+                    globalDropdown.classList.add('hidden');
+                }
+            });
             /** =======================
              * FUNCTION: Initialize TomSelect
              * ======================= */
@@ -649,57 +657,57 @@
             });
 
             const filterBtn = document.getElementById('filterBtn');
-    const filterDropdown = document.getElementById('filterDropdown');
-    const clearFilterBtn = document.getElementById('clearFilter');
-    const searchInput = document.getElementById('searchInput');
-    const searchForm = document.getElementById('searchForm');
+            const filterDropdown = document.getElementById('filterDropdown');
+            const clearFilterBtn = document.getElementById('clearFilter');
+            const searchInput = document.getElementById('searchInput');
+            const searchForm = document.getElementById('searchForm');
 
-    // Tampilkan / sembunyikan dropdown filter
-    filterBtn.addEventListener('click', () => {
-        filterDropdown.classList.toggle('hidden');
+            // Tampilkan / sembunyikan dropdown filter
+            filterBtn.addEventListener('click', () => {
+                filterDropdown.classList.toggle('hidden');
 
-        if (!filterDropdown.classList.contains('hidden')) {
-            const rect = filterBtn.getBoundingClientRect();
-            const dropdownWidth = filterDropdown.offsetWidth;
-            let left = rect.left;
-            const top = rect.bottom + window.scrollY;
+                if (!filterDropdown.classList.contains('hidden')) {
+                    const rect = filterBtn.getBoundingClientRect();
+                    const dropdownWidth = filterDropdown.offsetWidth;
+                    let left = rect.left;
+                    const top = rect.bottom + window.scrollY;
 
-            // Pastikan dropdown tidak keluar viewport kanan
-            if (left + dropdownWidth > window.innerWidth - 100) {
-                left = window.innerWidth - dropdownWidth - 120;
-            }
+                    // Pastikan dropdown tidak keluar viewport kanan
+                    if (left + dropdownWidth > window.innerWidth - 100) {
+                        left = window.innerWidth - dropdownWidth - 120;
+                    }
 
-            filterDropdown.style.top = `${top}px`;
-            filterDropdown.style.left = `${left}px`;
-        }
-    });
+                    filterDropdown.style.top = `${top}px`;
+                    filterDropdown.style.left = `${left}px`;
+                }
+            });
 
-    // Klik di luar untuk menutup dropdown
-    document.addEventListener('click', (e) => {
-        if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
-            filterDropdown.classList.add('hidden');
-        }
-    });
+            // Klik di luar untuk menutup dropdown
+            document.addEventListener('click', (e) => {
+                if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
+                    filterDropdown.classList.add('hidden');
+                }
+            });
 
-    // Clear filter (hanya reset checkbox, tidak reset search)
-    clearFilterBtn.addEventListener('click', () => {
-        const checkboxes = filterDropdown.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(cb => cb.checked = false);
-    });
+            // Clear filter (hanya reset checkbox, tidak reset search)
+            clearFilterBtn.addEventListener('click', () => {
+                const checkboxes = filterDropdown.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = false);
+            });
 
-    // Submit form filter → sinkronkan search terbaru
-    const filterForm = filterDropdown.querySelector('form');
-    filterForm.addEventListener('submit', (e) => {
-        const hiddenSearch = filterForm.querySelector('input[name="search"]');
-        hiddenSearch.value = searchInput.value; // update hidden search
-    });
+            // Submit form filter → sinkronkan search terbaru
+            const filterForm = filterDropdown.querySelector('form');
+            filterForm.addEventListener('submit', (e) => {
+                const hiddenSearch = filterForm.querySelector('input[name="search"]');
+                hiddenSearch.value = searchInput.value; // update hidden search
+            });
 
-    // Clear search
-    const clearSearchBtn = document.getElementById('clearSearch');
-    clearSearchBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        searchForm.submit();
-    });
+            // Clear search
+            const clearSearchBtn = document.getElementById('clearSearch');
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchForm.submit();
+            });
         });
     </script>
 @endpush
@@ -728,6 +736,15 @@
         /* Hilangkan pagination global kalau Tailwind render dua kali di bawah card */
         nav[role="navigation"]:not(:last-of-type) {
             display: none !important;
+        }
+
+        #globalFileDropdown li span {
+            display: block;
+            max-width: 150px;
+            /* atau sesuai kebutuhan */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     </style>
 @endpush

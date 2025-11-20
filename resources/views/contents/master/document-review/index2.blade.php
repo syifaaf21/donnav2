@@ -191,11 +191,11 @@
                                 <th class="px-4 py-2 text-left font-semibold">No</th>
                                 <th class="px-4 py-2 text-left font-semibold">Document Number</th>
                                 <th class="px-4 py-2 text-left font-semibold">Part Number</th>
-                                <th class="px-4 py-2 text-left font-semibold">Model</th>
                                 <th class="px-4 py-2 text-left font-semibold">Product</th>
+                                <th class="px-4 py-2 text-left font-semibold">Model</th>
                                 <th class="px-4 py-2 text-left font-semibold">Process</th>
-                                <th class="px-4 py-2 text-left font-semibold">Department</th>
-                                <th class="px-4 py-2 text-left font-semibold">Status</th>
+                                <th class="px-4 py-2 text-left font-semibold">Reminder Date</th>
+                                <th class="px-4 py-2 text-left font-semibold">Deadline</th>
                                 <th class="px-4 py-2 text-center font-semibold">Actions</th>
                             </tr>
                         </thead>
@@ -213,11 +213,12 @@
                                         <td class="px-4 py-2">{{ $index + 1 }}</td>
                                         <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
                                         <td class="px-4 py-2">{{ $doc->partNumber->part_number ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ $doc->productModel->name ?? '-' }}</td>
                                         <td class="px-4 py-2">{{ $doc->product->name ?? '-' }}</td>
+                                        <td class="px-4 py-2">{{ $doc->productModel->name ?? '-' }}</td>
                                         <td class="px-4 py-2 capitalize">{{ $doc->process->name ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ $doc->department->name ?? '-' }}</td>
-                                        <td class="px-4 py-2">
+                                        <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
+                                        <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
+                                        {{-- <td class="px-4 py-2">
                                             @php
                                                 $statusClasses = [
                                                     'approved' =>
@@ -241,7 +242,7 @@
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif
-                                        </td>
+                                        </td> --}}
                                         <td class="px-4 py-2 text-center">
                                             <div class="relative inline-block overflow-visible">
                                                 @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
@@ -249,7 +250,7 @@
                                                     <button id="viewFilesBtn-{{ $doc->id }}" type="button"
                                                         class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
                                                         title="View File">
-                                                        <i data-feather="file-text" class="w-5 h-5"></i>
+                                                        <i data-feather="file-text" class="w-6 h-6"></i>
                                                         <span
                                                             class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
                                                             {{ count($files) }}

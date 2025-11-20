@@ -51,4 +51,27 @@ class Document extends Model
             'review' => 'Review',
         ];
     }
+
+    public function allMappingsCount()
+    {
+        $count = $this->mapping()->count();
+        foreach ($this->childrenRecursive as $child) {
+            $count += $child->allMappingsCount();
+        }
+        return $count;
+    }
+
+    public function allMappingsForPlant($plant)
+    {
+        // pastikan gunakan relationship mapping() yang sudah didefinisikan
+        return $this->mapping->filter(function ($mapping) use ($plant) {
+            if ($mapping->partNumber) {
+                return strtolower($mapping->partNumber->plant ?? '') === strtolower($plant);
+            }
+            if ($mapping->productModel) {
+                return strtolower($mapping->productModel->plant ?? '') === strtolower($plant);
+            }
+            return false;
+        });
+    }
 }
