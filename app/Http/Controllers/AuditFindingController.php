@@ -82,11 +82,11 @@ class AuditFindingController extends Controller
             'finding_description' => 'required|string',
             'due_date' => 'required|date',
             'photos' => 'nullable|array',
-            'photos.*' => 'file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'photos.*' => 'file|mimes:jpg,jpeg,png,pdf',
             'files' => 'nullable|array',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:2048',
+            'files.*' => 'file|mimes:pdf',
             'attachments' => 'nullable|array',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx|max:2048',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
         ]);
 
         // Create the audit finding

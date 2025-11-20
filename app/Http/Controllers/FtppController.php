@@ -27,38 +27,6 @@ use Storage;
 
 class FtppController extends Controller
 {
-    // public function index()
-    // {
-    //     $departments = Department::select('id', 'name')->get();
-    //     $processes = Process::select('id', 'name')->get();
-    //     $products = Product::select('id', 'name')->get();
-
-    //     $auditors = User::whereHas('role', fn($q) => $q->where('name', 'auditor'))
-    //         ->select('id', 'name')->get();
-
-    //     $auditTypes = Audit::with('subAudit')->get();
-
-    //     $subAudit = SubAudit::all();
-
-    //     $findingCategories = FindingCategory::all();
-
-    //     $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
-    //     $findings = AuditFinding::with([
-    //         'auditee',
-    //         'auditor',
-    //         'findingCategory',
-    //         'department',   // 👈 tambahkan ini
-    //         'status',        // 👈 dan ini
-    //         'auditeeAction',
-    //     ])
-    //         ->orderByDesc('created_at')
-    //         ->get();
-
-    //     $user = auth()->user();
-
-    //     return view('contents.ftpp2.approval.index', compact('findings', 'departments', 'processes', 'products', 'auditors', 'klausuls', 'auditTypes', 'findingCategories', 'user', 'subAudit'));
-    // }
-
     public function index(Request $request)
     {
         // Build base query
@@ -88,16 +56,8 @@ class FtppController extends Controller
             });
         }
 
-        if ($request->filled('due_date_from')) {
-            $query->whereDate('due_date', '>=', $request->input('due_date_from'));
-        }
-
-        if ($request->filled('due_date_to')) {
-            $query->whereDate('due_date', '<=', $request->input('due_date_to'));
-        }
-
         // order and paginate
-        $findings = $query->orderBy('due_date')->paginate(15);
+        $findings = $query->orderBy('updated_at')->paginate(15);
         // preserve filters in pagination links
         $findings->appends($request->except('page'));
 
@@ -136,7 +96,7 @@ class FtppController extends Controller
                         $q5->where('name', 'like', "%{$q}%");
                     });
             })
-            ->orderBy('due_date')
+            ->orderBy('registration_number')
             ->limit(50)
             ->get();
 
@@ -269,6 +229,64 @@ class FtppController extends Controller
         ])->findOrFail($id);
 
         return view('contents.ftpp2.partials.detail', compact('finding'));
+    }
+
+    public function previewPdf($id)
+    {
+        $finding = AuditFinding::with(['auditeeAction.file'])->findOrFail($id);
+
+        // Generate main PDF
+        $mainPdf = PDF::setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+        ])->loadView('contents.ftpp2.pdf', compact('finding'))->output();
+
+        $merger = new \setasign\Fpdi\Fpdi();
+
+        // Simpan sementara main PDF
+        $tmpMain = storage_path('app/temp_main.pdf');
+        file_put_contents($tmpMain, $mainPdf);
+
+        $pageCount = $merger->setSourceFile($tmpMain);
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $merger->AddPage();
+            $merger->importPage($i);
+        }
+
+        // Tambahkan file attachment AuditFinding
+        foreach ($finding->attachments ?? [] as $file) {
+            $path = storage_path('app/public/ftpp/audit_finding_attachments/' . $file->filename);
+            if (file_exists($path)) {
+                $pages = $merger->setSourceFile($path);
+                for ($i = 1; $i <= $pages; $i++) {
+                    $merger->AddPage();
+                    $merger->importPage($i);
+                }
+            }
+        }
+
+        // Tambahkan file attachment AuditeeAction
+        if ($finding->auditeeAction) {
+            $auditeeFiles = $finding->auditeeAction->file ?? [];
+            foreach ($auditeeFiles as $file) {
+                if (!empty($file->filename)) {
+                    $path = storage_path('app/public/ftpp/auditee_action_attachments/' . $file->filename);
+                    if (file_exists($path)) {
+                        $pages = $merger->setSourceFile($path);
+                        for ($i = 1; $i <= $pages; $i++) {
+                            $merger->AddPage();
+                            $merger->importPage($i);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Simpan file sementara untuk preview
+        $tmpMerged = storage_path('app/temp_merged.pdf');
+        $merger->Output($tmpMerged, 'F');
+
+        return response()->file($tmpMerged); // iframe bisa load PDF merge
     }
 
     /**

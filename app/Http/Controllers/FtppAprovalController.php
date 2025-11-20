@@ -605,7 +605,8 @@ class FtppAprovalController extends Controller
     {
         $request->validate([
             'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
-            'status_id' => 'required|integer'
+            'status_id' => 'required|integer',
+            'effectiveness_verification' => 'required|string',
         ]);
 
         // 1️⃣ Ambil action berdasarkan auditee_action_id
@@ -620,6 +621,8 @@ class FtppAprovalController extends Controller
 
         // 4️⃣ Reset flag auditor supaya bisa verify lagi
         $auditeeAction->verified_by_auditor = false;
+        $auditeeAction->effectiveness_verification = $request->effectiveness_verification;
+        $auditeeAction->dept_head_signature = 0; // reset tanda tangan dept head
         $auditeeAction->save();
 
         return response()->json([

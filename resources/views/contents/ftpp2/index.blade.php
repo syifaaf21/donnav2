@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'FTPP2')
+@section('title', 'FTPP')
 
 @section('content')
     <div class="p-2" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
@@ -78,7 +78,7 @@
                                 'open' => 'alert-circle',
                                 'submitted' => 'upload-cloud',
                                 'checked by dept head' => 'user-check',
-                                'approve by auditor' => 'check-circle',
+                                'approved by auditor' => 'check-circle',
                                 'need revision' => 'alert-triangle',
                                 'close' => 'lock',
                             ];
@@ -158,7 +158,7 @@
                                                     'submitted' => 'bg-yellow-500 text-gray-900',
                                                     'checked by dept head' => 'bg-yellow-500 text-gray-900',
                                                     'need revision' => 'bg-yellow-500 text-gray-900',
-                                                    'approve by auditor' => 'bg-blue-500 text-white',
+                                                    'approved by auditor' => 'bg-blue-500 text-white',
                                                     'close' => 'bg-green-500 text-white',
                                                 ];
                                                 $statusName = optional($finding->status)->name ?? '-';
@@ -185,10 +185,10 @@
                                                 <!-- BUTTON -->
                                                 <button type="button"
                                                     @click.prevent="
-                                                        open = !open;
-                                                        const rect = $el.getBoundingClientRect();
-                                                        x = rect.left - 150;   // posisi horizontal lebih pas
-                                                        y = rect.top + 28;     // posisi vertical lebih rapi
+                                                        open = true;
+                                                        const rect = $event.target.getBoundingClientRect();
+                                                        x = rect.right - 160;          // lebih presisi horizontal
+                                                        y = rect.bottom + window.scrollY; // fix posisi vertical & scroll
                                                     "
                                                     class="p-1.5 hover:bg-gray-100 rounded-full transition">
                                                     <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
@@ -199,18 +199,23 @@
                                                     <div x-show="open" @click.outside="open = false"
                                                         x-transition.opacity.duration.150ms
                                                         class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
-                                                        :style="`top:${y}px; left:${x}px; width:170px; position:fixed`">
+                                                        :style="`top:${y}px; left:${x}px; width:170px;`">
 
-                                                        <!-- ITEM: Show -->
-                                                        <button type="button"
-                                                            @click="$dispatch('open-show-modal', {{ $finding->id }})"
-                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                            <i data-feather="eye" class="w-4 h-4"></i>
-                                                            Show
-                                                        </button>
+                                                        @if (strtolower(optional($finding->status)->name ?? '') !== 'open')
+                                                            <!-- ITEM: Show -->
+                                                            <button type="button"
+                                                                @click="
+                                                                open = false;
+                                                                $dispatch('open-show-modal', {{ $finding->id }})"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="eye" class="w-4 h-4"></i>
+                                                                Show
+                                                            </button>
+                                                        @endif
 
                                                         <!-- ITEM: Download -->
                                                         <a href="{{ route('ftpp.download', $finding->id) }}"
+                                                            @click="open = false"
                                                             class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
                                                             <i data-feather="download" class="w-4 h-4"></i>
                                                             Download
@@ -221,12 +226,14 @@
 
                                                         @if ($statusName === 'need revision')
                                                             <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                                @click="open = false"
                                                                 class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                                 <i data-feather="edit" class="w-4 h-4"></i>
                                                                 Revise Auditee Action
                                                             </a>
                                                         @else
                                                             <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
+                                                                @click="open = false"
                                                                 class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                                 <i data-feather="edit-2" class="w-4 h-4"></i>
                                                                 Assign Auditee Action
@@ -237,7 +244,7 @@
                                                             action="{{ route('ftpp.destroy', $finding->id) }}"
                                                             onsubmit="return confirm('Delete this record?')">
                                                             @csrf @method('DELETE')
-                                                            <button type="submit"
+                                                            <button type="submit" @click="open = false"
                                                                 class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
                                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                                                 Delete
@@ -287,49 +294,134 @@
                 'close': 'bg-green-500 text-white'
             };
 
+            function renderRow(f, csrf) {
+                const statusName = f.status?.name ?? '-';
+                const cls = statusColors[f.status.toLowerCase()] ?? '';
+
+                const department = f.department?.name ?? '-';
+                const auditor = f.auditor?.name ?? '-';
+
+                const auditee = Array.isArray(f.auditee) && f.auditee.length ?
+                    f.auditee.map(a => a.name).join(', ') :
+                    '-';
+
+                const due = f.due_date ?
+                    new Date(f.due_date).toISOString().slice(0, 10).replace(/-/g, '/') :
+                    '-';
+
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${f.registration_number ?? '-'}
+                        </td>
+
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                            <span class="${cls} p-1 rounded">${f.status}</span>
+                        </td>
+
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.department}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.auditor}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.auditee}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.due_date}</td>
+
+                        <td class="flex px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
+
+                                <!-- BUTTON -->
+                                <button type="button"
+                                    @click.prevent="
+                                        open = true;
+                                        const rect = $event.target.getBoundingClientRect();
+                                        x = rect.right - 160;
+                                        y = rect.bottom + window.scrollY;
+                                    "
+                                    class="p-1.5 hover:bg-gray-100 rounded-full transition">
+                                    <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
+                                </button>
+
+                                <!-- DROPDOWN -->
+                                <template x-teleport="body">
+                                    <div x-show="open" @click.outside="open = false"
+                                        x-transition.opacity.duration.150ms
+                                        class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
+                                        :style="\`top:\${y}px; left:\${x}px; width:170px;\`">
+
+                                        ${statusName.toLowerCase() !== 'open' ? `
+                                                <button type="button"
+                                                    @click="open = false; $dispatch('open-show-modal', ${f.id})"
+                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                    <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                </button>
+                                            ` : ''}
+
+                                        <a href="/ftpp/${f.id}/download"
+                                            @click="open = false"
+                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
+                                            <i data-feather="download" class="w-4 h-4"></i> Download
+                                        </a>
+
+                                        ${f.status.toLowerCase() === 'need revision'
+                                                ? `
+                                                    <a href="/ftpp/auditee-action/${f.id}/edit"
+                                                        @click="open = false"
+                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                        <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
+                                                    </a>`
+                                                : `
+                                                    <a href="/ftpp/auditee-action/${f.id}"
+                                                        @click="open = false"
+                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                        <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
+                                                    </a>`
+                                        }
+
+                                        <form method="POST" action="/ftpp/${f.id}"
+                                            onsubmit="return confirm('Delete this record?')">
+                                            <input type="hidden" name="_token" value="${csrf}">
+                                            <input type="hidden" name="_method" value="DELETE">
+
+                                            <button type="submit"
+                                                @click="open = false"
+                                                class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                <i data-feather="trash-2" class="w-4 h-4"></i> Delete
+                                            </button>
+                                        </form>
+
+                                    </div>
+                                </template>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+
             function renderRows(items) {
-                const tbody = document.querySelector('table tbody');
+                const tbody = document.querySelector("table tbody");
                 if (!tbody) return;
+
                 if (!items.length) {
                     tbody.innerHTML =
                         '<tr><td class="px-6 py-4 text-sm text-gray-500" colspan="7">No records found.</td></tr>';
                     return;
                 }
-                const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                tbody.innerHTML = items.map(f => {
-                    const statusName = f.status || '-';
-                    const cls = statusColors[statusName.toLowerCase()] || '';
-                    const due = f.due_date || '-';
-                    const auditee = f.auditee || '-';
-                    return `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.registration_number || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm"><span class="${cls} p-1 rounded">${statusName}</span></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.department || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.auditor || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${auditee}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${due}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <form method="POST" action="/ftpp2/${f.id}" onsubmit="return confirm('Delete this record?')" class="inline">
-                                    <input type="hidden" name="_token" value="${csrf}">
-                                    <input type="hidden" name="_method" value="DELETE">
-                                    <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+
+                tbody.innerHTML = items.map(f => renderRow(f, csrf)).join('');
+
+                feather.replace();
             }
 
             input.addEventListener('input', function(e) {
                 const v = e.target.value.trim();
                 clearTimeout(timeout);
+
                 timeout = setTimeout(() => {
                     if (!v) {
-                        // empty -> reload page to restore server-side filters/pagination
                         window.location = "{{ route('ftpp.index') }}";
                         return;
                     }
+
                     fetch(route + '?q=' + encodeURIComponent(v))
                         .then(r => r.json())
                         .then(data => renderRows(data))
@@ -337,6 +429,7 @@
                 }, 300);
             });
         })();
+
 
         function showModal() {
             return {
@@ -364,5 +457,24 @@
                 },
             };
         }
+
+        // function showModal() {
+        //     return {
+        //         isOpen: false,
+        //         pdfUrl: null,
+
+        //         openShowModal(id) {
+        //             this.isOpen = true;
+
+        //             // URL ke route preview PDF
+        //             this.pdfUrl = `/ftpp/${id}/preview-pdf`;
+        //         },
+
+        //         close() {
+        //             this.isOpen = false;
+        //             this.pdfUrl = null;
+        //         },
+        //     };
+        // }
     </script>
 @endpush

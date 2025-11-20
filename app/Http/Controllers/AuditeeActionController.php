@@ -16,9 +16,11 @@ use App\Models\Product;
 use App\Models\SubAudit;
 use App\Models\User;
 use App\Models\WhyCauses;
+use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AuditeeActionController extends Controller
 {
@@ -84,10 +86,10 @@ class AuditeeActionController extends Controller
             'yokoten_area' => 'nullable|string',
             'ldr_spv_signature' => 'nullable|boolean',
 
-            // terima file upload
-            'attachments.*' => 'nullable|file|max:5120',
-            'photos2.*' => 'nullable|file|max:5120',
-            'files2.*' => 'nullable|file|max:5120',
+            // terima file upload (hapus rule max, akan dikompres otomatis jika image)
+            'attachments.*' => 'nullable|file',
+            'photos2.*' => 'nullable|file',
+            'files2.*' => 'nullable|file',
         ]);
 
         DB::beginTransaction();
@@ -177,16 +179,11 @@ class AuditeeActionController extends Controller
             // 6️⃣ Upload Attachments (pastikan form mengirim 'attachments[]')
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    $originalName = $file->getClientOriginalName();
-                    $extension = $file->getClientOriginalExtension();
-                    $date = now()->format('Y-m-d');
-                    $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . $date . '.' . $extension;
-                    $path = $file->storeAs('ftpp/auditee_action_attachments', $newFileName, 'public');
-
+                    $stored = $this->compressAndStore($file, 'ftpp/auditee_action_attachments');
                     DocumentFile::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'file_path' => $path,
-                        'original_name' => $originalName,
+                        'file_path' => $stored['path'],
+                        'original_name' => $stored['original'],
                     ]);
                 }
             }
@@ -269,9 +266,9 @@ class AuditeeActionController extends Controller
             'yokoten' => 'required|boolean',
             'yokoten_area' => 'nullable|string',
             'ldr_spv_signature' => 'nullable|boolean',
-            'attachments.*' => 'nullable|file|max:5120',
-            'photos2.*' => 'nullable|file|max:5120',
-            'files2.*' => 'nullable|file|max:5120',
+            'attachments.*' => 'nullable|file',
+            'photos2.*' => 'nullable|file',
+            'files2.*' => 'nullable|file',
             'remove_attachments.*' => 'nullable|numeric',
         ]);
 
@@ -317,9 +314,9 @@ class AuditeeActionController extends Controller
                     CorrectiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->input("corrective_{$i}_pic"),
-                        'planning_date' => $request->input("corrective_{$i}_planning"),
-                        'actual_date' => $request->input("corrective_{$i}_actual"),
+                        'pic' => $request->corrective_pic[$i] ?? null,
+                        'planning_date' => $request->corrective_planning[$i] ?? null,
+                        'actual_date' => $request->corrective_actual[$i] ?? null,
                     ]);
                 }
             }
@@ -335,9 +332,9 @@ class AuditeeActionController extends Controller
                     PreventiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->input("preventive_{$i}_pic"),
-                        'planning_date' => $request->input("preventive_{$i}_planning"),
-                        'actual_date' => $request->input("preventive_{$i}_actual"),
+                        'pic' => $request->preventive_pic[$i] ?? null,
+                        'planning_date' => $request->preventive_planning[$i] ?? null,
+                        'actual_date' => $request->preventive_actual[$i] ?? null,
                     ]);
                 }
             }
@@ -372,21 +369,12 @@ class AuditeeActionController extends Controller
              * ===================================================== */
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    $originalName = $file->getClientOriginalName();
-                    $extension = $file->getClientOriginalExtension();
-                    $date = now()->format('Y-m-d');
-                    $newName = pathinfo($originalName, PATHINFO_FILENAME) . "_{$date}.{$extension}";
-
-                    $path = $file->storeAs(
-                        'ftpp/auditee_action_attachments',
-                        $newName,
-                        'public'
-                    );
+                    $stored = $this->compressAndStore($file, 'ftpp/auditee_action_attachments');
 
                     DocumentFile::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'file_path' => $path,
-                        'original_name' => $originalName,
+                        'file_path' => $stored['path'],
+                        'original_name' => $stored['original'],
                     ]);
                 }
             }
@@ -411,7 +399,7 @@ class AuditeeActionController extends Controller
 
             DB::commit();
 
-            return redirect()->route('ftpp.auditee-action.index')->with('success', 'Auditee Action updated successfully.');
+            return redirect()->route('ftpp.index')->with('success', 'Auditee Action updated successfully.');
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -428,5 +416,98 @@ class AuditeeActionController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Compress image files and store to disk. Returns ['path'=>..., 'original'=>...]
+     */
+    private function compressAndStore($file, $directory)
+    {
+        $originalName = $file->getClientOriginalName();
+        $extension = strtolower($file->getClientOriginalExtension());
+        $date = now()->format('Y-m-d_His');
+        $base = pathinfo($originalName, PATHINFO_FILENAME);
+        $safeBase = Str::slug($base);
+        $newFileName = $safeBase . '_' . $date . '.' . $extension;
+
+        $mime = $file->getMimeType() ?? '';
+
+        // Image handling (compress/resize)
+        if (str_starts_with($mime, 'image/')) {
+            try {
+                $img = Image::make($file)->orientate();
+                $img->resize(1920, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+
+                if (in_array($extension, ['jpg', 'jpeg'])) {
+                    $encoded = (string) $img->encode('jpg', 75);
+                    $newFileName = preg_replace('/\.(jpg|jpeg)$/i', '.jpg', $newFileName);
+                } elseif ($extension === 'png') {
+                    $encoded = (string) $img->encode('png', 8);
+                } elseif ($extension === 'gif') {
+                    $encoded = (string) $img->encode('gif');
+                } else {
+                    $encoded = (string) $img->encode('jpg', 75);
+                    $newFileName = preg_replace('/\.[^.]+$/', '.jpg', $newFileName);
+                }
+
+                $path = $directory . '/' . $newFileName;
+                Storage::disk('public')->put($path, $encoded);
+
+                return ['path' => $path, 'original' => $originalName];
+            } catch (\Throwable $e) {
+                \Log::warning('Image compress/store failed: ' . $e->getMessage());
+                // fallback: simpan file langsung
+                $path = $file->storeAs($directory, $newFileName, 'public');
+                return ['path' => $path, 'original' => $originalName];
+            }
+        }
+
+        // PDF handling (try Ghostscript compression)
+        if ($extension === 'pdf' || str_contains($mime, 'pdf')) {
+            $inputPath = $file->getRealPath();
+            if ($inputPath && file_exists($inputPath)) {
+                $tmpName = 'gs_compressed_' . uniqid() . '.pdf';
+                $tmpPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $tmpName;
+
+                // Choose a PDFSETTINGS level. /ebook is a decent balance (smaller than /printer, better quality than /screen)
+                $pdfSettings = '/ebook';
+
+                $cmd = sprintf(
+                    'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=%s -dNOPAUSE -dQUIET -dBATCH -sOutputFile=%s %s 2>&1',
+                    escapeshellarg($pdfSettings),
+                    escapeshellarg($tmpPath),
+                    escapeshellarg($inputPath)
+                );
+
+                try {
+                    @exec($cmd, $output, $returnVar);
+
+                    if ($returnVar === 0 && file_exists($tmpPath) && filesize($tmpPath) > 0) {
+                        $path = $directory . '/' . $newFileName;
+                        $contents = file_get_contents($tmpPath);
+                        Storage::disk('public')->put($path, $contents);
+                        @unlink($tmpPath);
+                        return ['path' => $path, 'original' => $originalName];
+                    } else {
+                        \Log::warning('Ghostscript PDF compression failed or produced empty file. Cmd: ' . $cmd . ' Output: ' . implode("\n", (array) $output));
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('PDF compression via Ghostscript failed: ' . $e->getMessage());
+                }
+            } else {
+                \Log::warning('PDF compress: uploaded file real path missing for ' . $originalName);
+            }
+
+            // fallback: store original pdf
+            $path = $file->storeAs($directory, $newFileName, 'public');
+            return ['path' => $path, 'original' => $originalName];
+        }
+
+        // non-image, non-pdf files: simpan apa adanya
+        $path = $file->storeAs($directory, $newFileName, 'public');
+        return ['path' => $path, 'original' => $originalName];
     }
 }

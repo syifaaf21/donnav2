@@ -28,8 +28,18 @@
         <td class="border border-black p-2">
             <div class="my-4">
                 <template x-if="!form.lead_auditor_ack">
-                    <button type="button" onclick="verifyLeadAuditor()" :disabled="form.status_id != 10"
-                        :class="form.status_id != 10 ? 'opacity-50 cursor-not-allowed' : ''">Verify</button>
+                    <div class="flex flex-col gap-2">
+                        <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
+                            onclick="verifyLeadAuditor()" :disabled="form.status_id != 10"
+                            :class="form.status_id != 10 ? 'opacity-50 cursor-not-allowed' : ''">
+                            Verify
+                        </button>
+                        <button type="button" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded"
+                            onclick="returnForRevision()" :disabled="form.status_id != 10"
+                            :class="form.status_id != 10 ? 'opacity-50 cursor-not-allowed' : ''">
+                            Return
+                        </button>
+                    </div>
                 </template>
                 <template x-if="form.lead_auditor_signature">
                     <img :src="form.lead_auditor_signature_url" class="mx-auto mt-1 h-24 object-contain">
@@ -44,11 +54,13 @@
             <div class="my-4">
                 <template x-if="!form.auditor_verified">
                     <div class="flex flex-col gap-2">
-                        <button type="button" onclick="verifyAuditor()" :disabled="form.status_id != 9"
+                        <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
+                            onclick="verifyAuditor()" :disabled="form.status_id != 9"
                             :class="form.status_id != 9 ? 'opacity-50 cursor-not-allowed' : ''">
                             Verify
                         </button>
-                        <button type="button" onclick="returnForRevision()" :disabled="form.status_id != 9"
+                        <button type="button" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded"
+                            onclick="returnForRevision()" :disabled="form.status_id != 9"
                             :class="form.status_id != 9 ? 'opacity-50 cursor-not-allowed' : ''">
                             Return
                         </button>
@@ -239,6 +251,17 @@
         const alpineEl = document.querySelector('[x-data="ftppApp()"]');
         const alpineComponent = Alpine.$data(alpineEl);
 
+        // Pastikan effectiveness_verification diisi dulu
+        const verification = alpineComponent.form.effectiveness_verification?.trim();
+        if (!verification) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Missing',
+                text: 'Please fill in Effectiveness Verification before verifying.'
+            });
+            return;
+        }
+
         if (!auditeeActionId) {
             return Swal.fire({
                 icon: 'error',
@@ -267,7 +290,8 @@
                 },
                 body: JSON.stringify({
                     auditee_action_id: auditeeActionId,
-                    status_id: 12
+                    status_id: 12,
+                    effectiveness_verification: verification
                 })
             });
 

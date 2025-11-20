@@ -6,6 +6,14 @@
 
         <h2 class="text-2xl font-semibold mb-4">Edit Auditee Action</h2>
 
+        <div class="mb-3">
+            <a href="{{ route('ftpp.index') }}"
+                class="inline-flex items-center px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-sm text-gray-700">
+                <i data-feather="arrow-left" class="w-4 h-4"></i>
+                <span class="ml-2">Back</span>
+            </a>
+        </div>
+        
         <form action="{{ route('ftpp.auditee-action.update', $finding->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -73,19 +81,19 @@
                                 <tr class="corrective-row">
                                     <td class="border border-gray-200 text-center" x-text="i"></td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="activity[]" class="w-full p-1 border-none"
+                                        <input type="text" name="corrective_activity[]" class="w-full p-1 border-none"
                                             x-model="form['corrective_'+i+'_activity']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="pic[]" class="w-full p-1 border-none"
+                                        <input type="text" name="corrective_pic[]" class="w-full p-1 border-none"
                                             x-model="form['corrective_'+i+'_pic']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="planning_date[]" class="w-full p-1 border-none"
-                                            x-model="form['corrective_'+i+'_planning']">
+                                        <input type="date" name="corrective_planning_date[]"
+                                            class="w-full p-1 border-none" x-model="form['corrective_'+i+'_planning']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="actual_date[]" class="w-full p-1 border-none"
+                                        <input type="date" name="corrective_actual_date[]" class="w-full p-1 border-none"
                                             x-model="form['corrective_'+i+'_actual']">
                                     </td>
                                 </tr>
@@ -101,20 +109,20 @@
                                 <tr class="preventive-row">
                                     <td class="border border-gray-200 text-center" x-text="i"></td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="activity[]" class="w-full p-1 border-none"
+                                        <input type="text" name="preventive_activity[]" class="w-full p-1 border-none"
                                             x-model="form['preventive_'+i+'_activity']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="pic[]" class="w-full p-1 border-none"
+                                        <input type="text" name="preventive_pic[]" class="w-full p-1 border-none"
                                             x-model="form['preventive_'+i+'_pic']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="planning_date[]" class="w-full p-1 border-none"
-                                            x-model="form['preventive_'+i+'_planning']">
+                                        <input type="date" name="preventive_planning_date[]"
+                                            class="w-full p-1 border-none" x-model="form['preventive_'+i+'_planning']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="actual_date[]" class="w-full p-1 border-none"
-                                            x-model="form['preventive_'+i+'_actual']">
+                                        <input type="date" name="preventive_actual_date[]"
+                                            class="w-full p-1 border-none" x-model="form['preventive_'+i+'_actual']">
                                     </td>
                                 </tr>
                             </template>
@@ -182,10 +190,10 @@
                                 <!-- Hidden file inputs -->
                                 <input type="file" id="photoInput2" name="attachments[]" accept="image/*" multiple
                                     class="hidden">
-                                <input type="file" id="fileInput2" name="attachments[]"
-                                    accept=".pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
-                                <input type="file" id="combinedInput2" name="attachments[]"
-                                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
+                                <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple
+                                    class="hidden">
+                                <input type="file" id="combinedInput2" name="attachments[]" accept="image/*,.pdf"
+                                    multiple class="hidden">
 
                                 {{-- Render existing attachments server-side so users can remove them --}}
                                 @php

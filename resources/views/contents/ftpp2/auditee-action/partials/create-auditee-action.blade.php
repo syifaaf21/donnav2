@@ -7,10 +7,10 @@
 
         <!-- LEFT: 5 WHY -->
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
-            <div class="font-semibold text-lg text-gray-700">AUDITEE</div>
+            <div class="font-semibold text-lg text-gray-900">AUDITEE</div>
 
             <div>
-                <label class="font-semibold text-gray-700">Issue Causes (5 Why)</label>
+                <label class="font-semibold text-gray-900">Issue Causes (5 Why)</label>
 
                 <template x-for="i in 5">
                     <div class="mt-2 space-y-2">
@@ -29,7 +29,7 @@
                 </template>
 
                 <div class="mt-4">
-                    <label class="font-semibold text-gray-700">Root Cause <span class="text-red-500">*</span></label>
+                    <label class="font-semibold text-gray-900">Root Cause <span class="text-red-500">*</span></label>
                     <textarea name="root_cause" x-model="form.root_cause"
                         class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400" required></textarea>
                 </div>
@@ -111,11 +111,11 @@
 
             <!-- Yokoten -->
             <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
-                <div class="font-semibold text-lg text-gray-700">Yokoten</div>
+                <div class="font-semibold text-lg text-gray-900">Yokoten</div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="font-semibold text-gray-700">Yokoten?</label>
+                        <label class="font-semibold text-gray-900">Yokoten?</label>
                         <div class="flex gap-6">
                             <label><input type="radio" name="yokoten" value="1" x-model="form.yokoten">
                                 Yes</label>
@@ -126,7 +126,7 @@
                 </div>
 
                 <div x-show="form.yokoten == 1">
-                    <label class="font-semibold text-gray-700">Please Specify:</label>
+                    <label class="font-semibold text-gray-900">Please Specify:</label>
                     <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
                 </div>
 
@@ -135,76 +135,77 @@
                     $actionId = $action?->id ?? 'null';
                 @endphp
 
-                <!-- Leader/SPV -->
-                <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center max-w-xs">
-                    <div>Created</div>
+                <!-- Attachments -->
+                <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
 
-                    {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
-                    @if ($action && $action->ldr_spv_signature == 1)
-                        <img src="/images/usr-approve.png" class="mx-auto h-24">
-                    @else
-                        {{-- Jika belum approve, tombol tetap muncul --}}
-                        <button type="button" class="px-3 py-1 bg-blue-600 text-white text-xs rounded"
-                            @click="confirmApprove()">
-                            Approve
-                        </button>
-                    @endif
+                    <div class="font-semibold text-lg text-gray-900">Attachments</div>
+                    <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
+                    <div id="previewImageContainer2" class="flex flex-wrap gap-2"></div>
+                    <div id="previewFileContainer2" class="flex flex-col gap-1"></div>
 
-                    <div class="mb-1 font-semibold text-gray-700">Leader / SPV</div>
 
-                    <input type="text" value="{{ auth()->user()->name }}"
-                        class="w-full border border-gray-300 rounded text-center py-1" readonly>
-                </div>
+                    <div class="flex items-center justify-between">
+                        <div class="items-center gap-4 mt-2">
 
-            </div>
-
-            <!-- Attachments -->
-            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-
-                <div class="font-semibold text-lg text-gray-700">Attachments</div>
-
-                <div id="previewImageContainer2" class="flex flex-wrap gap-2"></div>
-                <div id="previewFileContainer2" class="flex flex-col gap-1"></div>
-
-                <div class="flex items-center justify-between">
-                    <div class="items-center gap-4 mt-4">
-
-                        <!-- Attachment button -->
-                        <button id="attachBtn2" type="button"
-                            class="items-center gap-2 px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 focus:outline-none"
-                            title="Attach files">
-                            <i data-feather="paperclip" class="w-4 h-4"></i>
-                            <span id="attachCount2" class="text-xs text-gray-600 hidden">0</span>
-                        </button>
-
-                        <!-- Attachment Menu -->
-                        <div id="attachMenu2"
-                            class="hidden absolute mt-12 w-44 bg-white border rounded-xl shadow-lg z-20">
-                            <button id="attachImages2" type="button"
-                                class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                <i data-feather="image" class="w-4 h-4"></i> Upload Images
+                            <!-- Attachment button -->
+                            <button id="attachBtn2" type="button"
+                                class="items-center gap-2 px-4 py-2 border rounded-lg text-gray-900 hover:bg-gray-100 focus:outline-none"
+                                title="Attach files">
+                                <i data-feather="paperclip" class="w-4 h-4"></i>
+                                <span id="attachCount2" class="text-xs text-gray-600 hidden">0</span>
                             </button>
-                            <button id="attachDocs2" type="button"
-                                class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                <i data-feather="file-text" class="w-4 h-4"></i> Upload Documents
-                            </button>
-                            <div class="border-t mt-1"></div>
-                            <button id="attachBoth2" type="button"
-                                class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                <i data-feather="upload" class="w-4 h-4"></i> Open Combined Picker
-                            </button>
+
+                            <!-- Attachment Menu -->
+                            <div id="attachMenu2"
+                                class="hidden absolute mt-12 w-44 bg-white border rounded-xl shadow-lg z-20">
+                                <button id="attachImages2" type="button"
+                                    class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                    <i data-feather="image" class="w-4 h-4"></i> Upload Images
+                                </button>
+                                <button id="attachDocs2" type="button"
+                                    class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                    <i data-feather="file-text" class="w-4 h-4"></i> Upload Documents
+                                </button>
+                                <div class="border-t mt-1"></div>
+                                <button id="attachBoth2" type="button"
+                                    class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                    <i data-feather="upload" class="w-4 h-4"></i> Open Combined Picker
+                                </button>
+                            </div>
+
+                            <!-- Hidden file inputs -->
+                            <input type="file" id="photoInput2" name="photos2[]" accept="image/*" multiple
+                                class="hidden">
+                            <input type="file" id="fileInput2" name="files2[]" accept=".pdf" multiple
+                                class="hidden">
+                            <input type="file" id="combinedInput2" name="attachments2[]" accept="image/*,.pdf"
+                                multiple class="hidden">
                         </div>
-
-                        <!-- Hidden file inputs -->
-                        <input type="file" id="photoInput2" name="photos2[]" accept="image/*" multiple
-                            class="hidden">
-                        <input type="file" id="fileInput2" name="files2[]" accept=".pdf,.doc,.docx,.xls,.xlsx"
-                            multiple class="hidden">
-                        <input type="file" id="combinedInput2" name="attachments2[]"
-                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
                     </div>
                 </div>
             </div>
+            <!-- Leader/SPV -->
+            <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center max-w-xs">
+                <div>Created</div>
+
+                {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
+                @if ($action && $action->ldr_spv_signature == 1)
+                    <img src="/images/usr-approve.png" class="mx-auto h-24">
+                @else
+                    {{-- Jika belum approve, tombol tetap muncul --}}
+                    <button type="button" class="px-3 py-1 bg-blue-600 text-white text-xs rounded"
+                        @click="confirmApprove()">
+                        Approve
+                    </button>
+                @endif
+
+                <div class="mb-1 font-semibold text-gray-900">Leader / SPV</div>
+
+                <input type="text" value="{{ auth()->user()->name }}"
+                    class="w-full border border-gray-300 rounded text-center py-1" readonly>
+            </div>
+
+
 
         </div>
 
@@ -341,22 +342,23 @@
 
 {{-- Store data auditee action handler --}}
 <script>
-    function confirmApprove() {
-        Swal.fire({
+    async function confirmApprove() {
+        const result = await Swal.fire({
             title: 'Are you sure?',
-            text: "Are you sure you want to APPROVE this data?",
+            text: "Are you sure you want to save this data?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, approve it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                updateAuditeeAction(true);
-            }
+            confirmButtonText: 'Yes, save it!'
         });
-        updateAuditeeAction(true);
+
+        if (result.isConfirmed) {
+            // wait for save; updateAuditeeAction will redirect on success
+            await updateAuditeeAction(true);
+        }
     }
+
     async function updateAuditeeAction(isApprove = false) {
         const token = document.querySelector('meta[name="csrf-token"]').content;
         const formData = new FormData();
@@ -452,12 +454,11 @@
                 body: formData
             });
 
-
             const result = await res.json();
 
             if (res.ok && result.success) {
                 console.log(result);
-                // Redirect to index after user closes the alert
+                // Redirect to index after successful save
                 window.location.href = "{{ route('ftpp.index') }}";
             } else {
                 alert("❌ Failed: " + (result.message || "Unknown error"));

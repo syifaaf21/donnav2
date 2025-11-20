@@ -20,14 +20,8 @@
                     @csrf
                     @method('POST')
                     {{-- Show create-audit-finding for: super admin, admin, auditor --}}
-                    @php
-                        $canEditAuditFinding =
-                            in_array($role, ['super admin', 'admin', 'auditor']) &&
-                            strtolower($finding->status->name ?? '') === 'open';
-                    @endphp
-
                     @include('contents.ftpp2.auditee-action.partials.show-audit-finding', [
-                        'readonly' => !$canEditAuditFinding,
+                        'readonly' => true,
                     ])
 
                     {{-- Show create-auditee-action for: super admin, admin, user --}}

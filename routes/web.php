@@ -193,6 +193,7 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
+        Route::get('/{id}/preview-pdf', [FtppController::class, 'previewPdf'])->name('previewPdf');
         Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
         Route::get('/search', [FtppController::class, 'search'])->name('search');
         Route::get('/', [FtppController::class, 'index'])->name('index');
@@ -200,6 +201,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [FtppController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+
         Route::prefix('audit-finding')->name('audit-finding.')->group(function () {
             // Audit Finding routes
             Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
@@ -241,4 +243,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/auditor-return', [FtppAprovalController::class, 'auditorReturn']);
     Route::post('/lead-auditor-acknowledge', [FtppAprovalController::class, 'leadAuditorAcknowledge']);
 
+    // Route::get('/test-pdf/{id}', function ($id) {
+    //     $finding = \App\Models\AuditFinding::with(['auditeeAction.file'])->findOrFail($id);
+    //     return view('contents.ftpp2.pdf', compact('finding'));
+    // });
+
 });
+    

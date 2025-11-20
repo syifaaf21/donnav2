@@ -139,6 +139,7 @@
             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
 
                 <div class="font-semibold text-lg text-gray-700">Attachments</div>
+                <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
                 <div>
                     <!-- Preview containers (sesuaikan posisi di form) -->
                     <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
@@ -179,15 +180,15 @@
 
                     <!-- Hidden file inputs -->
                     <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
-                    <input type="file" id="fileInput" name="files[]" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple
+                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple
                         class="hidden">
                     <!-- Optional combined input -->
                     <input type="file" id="combinedInput" name="attachments[]"
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
+                        accept="image/*,.pdf" multiple class="hidden">
                 </div>
                 <button type="button" onclick="saveHeaderOnly()"
                     class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
-                    Save Header
+                    Save Finding
                 </button>
             </div>
         </div>
@@ -281,7 +282,7 @@
     <!-- Submit -->
     <button type="button" onclick="submitSidebarPlant()"
         class="bg-blue-500 text-white mt-2 px-4 py-2 w-2/3 rounded hover:bg-blue-600">
-        Submit
+        Add
     </button>
 </div>
 
@@ -301,8 +302,8 @@
         class="w-full border rounded p-2"></select>
 
     <button type="button" onclick="saveAuditeeSelection()"
-        class="mt-4 bg-blue-500 text-white px-4 py-2 w-full rounded hover:bg-green-600">
-        Save
+        class="mt-4 bg-blue-500 text-white px-4 py-2 w-full rounded hover:bg-blue-600">
+        Add
     </button>
 </div>
 

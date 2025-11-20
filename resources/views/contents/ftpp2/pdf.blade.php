@@ -341,6 +341,9 @@
         </tr>
     </table>
 
+    <p class="text-sm text-gray-400">Note : 1 Lembar form untuk satu temuan, tambahkan lampiran jika diperlukan</p>
+    <p class="text-sm text-gray-400">No Form : FRM-MR-M4-001-05</p>
+
     {{-- ==================== ATTACHMENTS ================== --}}
     {{-- LAMPIRAN FILE --}}
     @if ($finding->auditeeAction && $finding->auditeeAction->file->count())

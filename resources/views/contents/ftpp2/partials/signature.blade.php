@@ -30,15 +30,20 @@
                     <span>-</span>
             @endswitch
         </td>
-        <td class="border p-1">
-            @if (!empty($finding->acknowledge_by_lead_auditor_url))
-                <img src="{{ $finding->acknowledge_by_lead_auditor_url }}" class="signature"><br>
+        <td class="border p-1 text-center">
+            @if ($finding->auditeeAction->acknowledge_by_lead_auditor == 1)
+                <img src="{{ asset('images/stamp-lead-auditor.png') }}" class="signature mx-auto"
+                    style="max-width:120px; height:auto;">
+                <br>
             @endif
             {{ $finding->auditeeAction->lead_auditor_id ?? '-' }}
         </td>
-        <td class="border p-1">
-            @if (!empty($finding->verified_by_auditor_url))
-                <img src="{{ $finding->verified_by_auditor_url }}" class="signature"><br>
+
+        <td class="border p-1 text-center">
+            @if ($finding->auditeeAction->verified_by_auditor == 1)
+                <img src="{{ asset('images/stamp-internal-auditor.png') }}" class="signature mx-auto"
+                    style="max-width:120px; height:auto;">
+                <br>
             @endif
             {{ $finding->auditeeAction->auditor_id ?? '-' }}
         </td>

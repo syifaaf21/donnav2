@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'FTPP2')
+@section('title', 'FTPP')
 
 @php
     $role = strtolower(auth()->user()->role->name);
