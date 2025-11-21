@@ -7,57 +7,58 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppService
 {
-    protected $url;
-    protected $token;
-    protected $groupId;
+    protected string $url;
+    protected string $token;
+    protected string $defaultGroupId;
 
     public function __construct()
     {
-        $this->url = config('services.whatsapp.url');
+        $this->url = config('services.whatsapp.url');         // e.g. https://app.fastwa.com/api/v1/…/send_group
         $this->token = config('services.whatsapp.token');
-        $this->groupId = config('services.whatsapp.group_id');
+        $this->defaultGroupId = config('services.whatsapp.group_id');
     }
 
     /**
-     * Kirim pesan ke group WhatsApp
+     * Kirim pesan ke group WhatsApp.
      *
-     * @param string $message
+     * @param string|null $groupId
+     * @param string      $message
      * @return bool
      */
-    public function sendMessage(string $message): bool
+    public function sendGroupMessage(?string $groupId, string $message): bool
     {
+        $groupId = $groupId ?: $this->defaultGroupId;
 
-        // STEP 1: Cek environment local
+        // Simulasi jika environment local
         if (config('app.env') === 'local') {
-            Log::info("[LOCAL MODE] WhatsApp simulated send to group {$this->groupId}");
+            Log::info("[LOCAL MODE] WhatsApp simulated send to group {$groupId}");
             Log::info("Message:\n{$message}");
             return true;
         }
 
-        try {
-            // STEP 2: Kirim request ke RuangWA dengan opsi verify=false
-            $response = Http::asForm()->withOptions([
-                'verify' => false, // skip SSL verification
-            ])->post($this->url, [
-                'token' => $this->token,
-                'number' => $this->groupId,
+        // Sesuaikan endpoint dan parameter sesuai dokumentasi FastWA.
+        // Misalnya endpoint: /send_group atau /send_text_group
+        $response = Http::asForm()->withOptions([
+            'verify' => 'C:/xampp/apache/bin/curl-ca-bundle.crt',
+        ])->post($this->url, [
+            'api_key'  => $this->token,
+            'phone' => $groupId,     // note: gunakan key 'group_id' jika itu parameter yang diminta
+            'message'  => $message,
+        ]);
+
+        if (!$response->successful()) {
+            Log::error("WhatsApp send to group failed", [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+                'groupId'=> $groupId,
+            ]);
+        } else {
+            Log::info("WhatsApp message to group sent successfully", [
+                'groupId' => $groupId,
                 'message' => $message,
             ]);
-
-            // STEP 3: Log response untuk debugging
-            Log::info("RuangWA response status: " . $response->status());
-            Log::info("RuangWA response body: " . $response->body());
-
-            $body = json_decode($response->body(), true);
-
-            // STEP 4: Cek apakah API berhasil
-            return isset($body['success']) && $body['success'] === true;
-        } catch (\Exception $e) {
-            Log::error("Exception sending WhatsApp message", [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return false;
         }
+
+        return $response->successful();
     }
 }

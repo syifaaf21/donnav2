@@ -137,11 +137,14 @@
                     <tr>
                         <th class="px-4 py-2">No</th>
                         <th class="px-4 py-2">Document Number</th>
+                        <th class="px-4 py-2">Part Number</th>
+                        <th class="px-4 py-2">Product</th>
+                        <th class="px-4 py-2">Model</th>
+                        <th class="px-4 py-2">Process</th>
                         <th class="px-4 py-2">Notes</th>
-                        <th class="px-4 py-2">Reminder Date</th>
                         <th class="px-4 py-2">Deadline</th>
-                        <th class="px-4 py-2">Last Update</th>
                         <th class="px-4 py-2">Updated By</th>
+                        <th class="px-4 py-2">Last Update</th>
                         <th class="px-4 py-2">Status</th>
                         <th class="px-4 py-2 text-center">Actions</th>
                     </tr>
@@ -151,11 +154,18 @@
                         <tr class="border-b hover:bg-gray-50 transition">
                             <td class="px-4 py-2">{{ $loop->iteration }}</td>
                             <td class="px-4 py-2">{{ $doc->document_number ?? '-' }}</td>
-                            <td class="px-4 py-2">{!! $doc->notes ?? '-' !!}</td>
-                            <td class="px-4 py-2">{{ $doc->reminder_date?->format('Y-m-d') ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $doc->partNumber->part_number ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $doc->product->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $doc->productModel->name ?? '-' }}</td>
+                            <td class="px-4 py-2 capitalize">{{ $doc->process->code ?? '-' }}</td>
+                            <td class="max-w-[250px]">
+                                <div class="max-h-24 overflow-y-auto">
+                                    {!! $doc->notes ?? '-' !!}
+                                </div>
+                            </td>
                             <td class="px-4 py-2">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
                             <td class="px-4 py-2">{{ $doc->user?->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
                             @php
                                 $statusName = strtolower($doc->status?->name ?? '');
                                 $statusClass = match ($statusName) {
@@ -173,20 +183,33 @@
                                 <span class="{{ $statusClass }}">{{ ucfirst($statusName ?: '-') }}</span>
                             </td>
                             <td class="px-4 py-2 text-center">
-                                <div class="flex justify-center gap-2 flex-wrap">
-                                    {{-- File Dropdown / View --}}
+
+                                <div class="flex justify-center items-center gap-2 relative">
+
+                                    {{-- ================= FILE BUTTON (TETAP DI LUAR) ================= --}}
                                     <div class="relative inline-block overflow-visible">
-                                        @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
+                                        @php
+                                            $files = $doc->files
+                                                ->map(
+                                                    fn($f) => [
+                                                        'name' => $f->file_name ?? basename($f->file_path),
+                                                        'url' => asset('storage/' . $f->file_path),
+                                                    ],
+                                                )
+                                                ->toArray();
+                                        @endphp
+
                                         @if (count($files) > 1)
                                             <button id="viewFilesBtn-{{ $doc->id }}" type="button"
                                                 title="View File"
                                                 class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
-                                                <i data-feather="file-text" class="w-5 h-5"></i>
+                                                <i data-feather="file-text" class="w-6 h-6"></i>
                                                 <span
                                                     class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
                                                     {{ count($files) }}
                                                 </span>
                                             </button>
+
                                             <div id="viewFilesDropdown-{{ $doc->id }}"
                                                 class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
                                                 <div class="py-1 text-sm max-h-80 overflow-y-auto">
@@ -207,51 +230,69 @@
                                             </button>
                                         @endif
                                     </div>
-                                    {{-- Tombol edit --}}
-                                    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']) || auth()->user()->department_id === $doc->department_id)
-                                        <button type="button"
-                                            class="inline-flex items-center justify-center px-2.5 py-1.5 text-xs font-medium rounded text-white bg-yellow-500 hover:bg-yellow-600"
-                                            data-doc-id="{{ $doc->id }}" title="Edit Document"
-                                            @if (!in_array($statusName, ['approved', 'rejected'])) disabled @endif>
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                    @endif
-                                    @if (in_array(strtolower(Auth::user()->role->name), ['admin', 'super admin']))
-                                        {{-- Tombol Approve --}}
-                                        <form action="{{ route('document-review.approveWithDates', $doc->id) }}"
-                                            method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit"
-                                                class="inline-flex items-center justify-center px-2.5 py-1.5 text-xs font-medium rounded text-white bg-green-500 hover:bg-green-600"
-                                                @if ($statusName !== 'need review') disabled @endif>
-                                                <i class="bi bi-check2-circle"></i>
-                                            </button>
-                                        </form>
 
-                                        {{-- Tombol Reject --}}
-                                        <form action="{{ route('document-review.reject', $doc->id) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            <button type="submit"
-                                                class="inline-flex items-center justify-center px-2.5 py-1.5 text-xs font-medium rounded text-white bg-red-500 hover:bg-red-600"
-                                                @if ($statusName !== 'need review') disabled @endif>
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        </form>
-                                    @endif
+                                    {{-- ================== TITIK 3 (ALL OTHER ACTIONS) ================== --}}
+                                    <div class="relative inline-block text-left">
+                                        <button type="button"
+                                            onclick="document.getElementById('actionMenu-{{ $doc->id }}').classList.toggle('hidden')"
+                                            class="w-8 h-8 flex justify-center items-center rounded-full hover:bg-gray-200">
+                                            <i class="bi bi-three-dots-vertical text-lg"></i>
+                                        </button>
+
+                                        <div id="actionMenu-{{ $doc->id }}"
+                                            class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
+
+                                            {{-- Edit --}}
+                                            @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']) ||
+                                                    auth()->user()->department_id === $doc->department_id)
+                                                <button type="button"
+                                                    class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
+        disabled:text-yellow-300 disabled:hover:bg-white"
+                                                    data-doc-id="{{ $doc->id }}" title="Edit Document"
+                                                    @if ($statusName === 'need review') disabled @endif>
+                                                    <i class="bi bi-pencil mr-2"></i> Edit
+                                                </button>
+                                            @endif
+
+                                            {{-- Approve --}}
+                                            @if (in_array(strtolower(Auth::user()->role->name), ['admin', 'super admin']))
+                                                <button type="button"
+                                                    class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-green-600
+    disabled:text-green-300 disabled:hover:bg-white btn-approve"
+                                                    data-id="{{ $doc->id }}"
+                                                    @if ($statusName !== 'need review') disabled @endif>
+                                                    <i class="bi bi-check2-circle mr-2"></i> Approve
+                                                </button>
+
+                                                {{-- Reject --}}
+                                                <button type="button"
+                                                    class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-red-600
+    disabled:text-red-300 disabled:hover:bg-white"
+                                                    data-bs-toggle="modal" data-bs-target="#rejectModal"
+                                                    data-id="{{ $doc->id }}"
+                                                    @if ($statusName !== 'need review') disabled @endif>
+                                                    <i class="bi bi-x-circle mr-2"></i> Reject
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
 
                                 </div>
                             </td>
+
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-gray-400">
+                            <td colspan="11" class="text-center py-8 text-gray-400">
                                 <p class="text-sm">No data found. Apply filters to see results.</p>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="mt-4">
+            {{ $documents->withQueryString()->links('vendor.pagination.tailwind') }}
         </div>
     </div>
 
@@ -281,6 +322,7 @@
     </div>
     @include('contents.document-review.partials.modal-approve')
     @include('contents.document-review.partials.modal-edit')
+    @include('contents.document-review.partials.modal-reject')
     <style>
         /* --- Dropdown fix style --- */
         .dropdown-fixed {
@@ -299,223 +341,394 @@
         .dropdown-fixed .py-1 {
             background-color: #fff;
         }
+
+        .action-fixed {
+            position: fixed !important;
+            z-index: 999999 !important;
+            background: white !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
     </style>
+    @push('scripts')
+        <script>
+            const currentPlant = "{{ $plant }}";
+            document.addEventListener('DOMContentLoaded', function() {
+                const originalModelOptions = @json($models);
+                const originalProcessOptions = @json($processes);
+                const originalProductOptions = @json($products);
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            feather.replace();
-            const previewModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
-            const previewFrame = document.getElementById('filePreviewFrame');
-            const viewFullBtn = document.getElementById('viewFullBtn');
+                // === Inisialisasi TomSelect ===
+                let tsPart = new TomSelect("#modalPart", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Part Number",
+                    onChange(value) {
+                        updateModalFilters(value);
+                    }
+                });
 
-            // === Dropdown logic ===
-            document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+                let tsModel = new TomSelect("#modalModel", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Model"
+                });
 
-                    const isVisible = !dropdown.classList.contains('hidden');
+                let tsProcess = new TomSelect("#modalProcess", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Process"
+                });
 
-                    // Tutup semua dropdown lain
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                        .add('hidden'));
+                let tsProduct = new TomSelect("#modalProduct", {
+                    allowEmptyOption: true,
+                    create: false,
+                    placeholder: "Select Product"
+                });
 
-                    // Kalau yang diklik sedang terbuka → tutup saja
-                    if (isVisible) {
-                        dropdown.classList.add('hidden');
+                feather.replace();
+                const previewModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+                const previewFrame = document.getElementById('filePreviewFrame');
+                const viewFullBtn = document.getElementById('viewFullBtn');
+
+                // === Dropdown logic ===
+                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+
+                        const isVisible = !dropdown.classList.contains('hidden');
+
+                        // Tutup semua dropdown lain
+                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
+                            .add('hidden'));
+
+                        // Kalau yang diklik sedang terbuka → tutup saja
+                        if (isVisible) {
+                            dropdown.classList.add('hidden');
+                            return;
+                        }
+
+                        // Hitung posisi
+                        const rect = btn.getBoundingClientRect();
+                        const offsetX = -120;
+                        dropdown.style.position = 'fixed';
+                        dropdown.style.top = `${rect.bottom + 6}px`;
+                        dropdown.style.left = `${rect.left + offsetX}px`;
+                        dropdown.classList.remove('hidden');
+                        dropdown.classList.add('dropdown-fixed');
+                    });
+                });
+
+                // Tutup dropdown saat scroll
+                window.addEventListener('scroll', () => {
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
+                        'hidden'));
+                });
+
+                // Tutup dropdown saat klik di luar
+                document.addEventListener('click', function(e) {
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
+                        const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
+                        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
+                });
+
+
+                // === File preview modal ===
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const url = btn.dataset.file;
+                        previewFrame.src = url;
+                        viewFullBtn.href = url;
+                        previewModal.show();
+                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
+                            .add('hidden'));
+                    });
+                });
+
+                const printFileBtn = document.getElementById('printFileBtn');
+
+                printFileBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const frame = document.getElementById('filePreviewFrame');
+                    const fileUrl = frame.src;
+
+                    if (!fileUrl) {
+                        alert('No file loaded.');
                         return;
                     }
 
-                    // Hitung posisi
-                    const rect = btn.getBoundingClientRect();
-                    const offsetX = -120;
-                    dropdown.style.position = 'fixed';
-                    dropdown.style.top = `${rect.bottom + 6}px`;
-                    dropdown.style.left = `${rect.left + offsetX}px`;
-                    dropdown.classList.remove('hidden');
-                    dropdown.classList.add('dropdown-fixed');
-                });
-            });
+                    // Pastikan iframe sudah memuat file
+                    frame.focus();
 
-            // Tutup dropdown saat scroll
-            window.addEventListener('scroll', () => {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
-                    'hidden'));
-            });
-
-            // Tutup dropdown saat klik di luar
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                        dropdown.classList.add('hidden');
+                    // Panggil print dari iframe tanpa membuka tab baru
+                    try {
+                        frame.contentWindow.print();
+                    } catch (err) {
+                        console.error('Unable to auto-print:', err);
+                        alert('Failed to print file.');
                     }
                 });
-            });
 
 
-            // === File preview modal ===
-            document.querySelectorAll('.view-file-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const url = btn.dataset.file;
-                    previewFrame.src = url;
-                    viewFullBtn.href = url;
-                    previewModal.show();
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                        .add('hidden'));
+                // Reset modal
+                document.getElementById('filePreviewModal').addEventListener('hidden.bs.modal', () => {
+                    previewFrame.src = '';
+                    viewFullBtn.href = '#';
                 });
-            });
 
-            const printFileBtn = document.getElementById('printFileBtn');
-
-            printFileBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const frame = document.getElementById('filePreviewFrame');
-                const fileUrl = frame.src;
-
-                if (!fileUrl) {
-                    alert('No file loaded.');
-                    return;
-                }
-
-                // Pastikan iframe sudah memuat file
-                frame.focus();
-
-                // Panggil print dari iframe tanpa membuka tab baru
-                try {
-                    frame.contentWindow.print();
-                } catch (err) {
-                    console.error('Unable to auto-print:', err);
-                    alert('Failed to print file.');
-                }
-            });
-
-
-            // Reset modal
-            document.getElementById('filePreviewModal').addEventListener('hidden.bs.modal', () => {
-                previewFrame.src = '';
-                viewFullBtn.href = '#';
-            });
-
-            // Klik di luar → tutup dropdown
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                        dropdown.classList.add('hidden');
-                    }
+                // Klik di luar → tutup dropdown
+                document.addEventListener('click', function(e) {
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
+                        const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
+                        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
                 });
-            });
-            // === Modal Revise / Edit Document ===
-            document.querySelectorAll('button[data-doc-id]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const docId = btn.getAttribute('data-doc-id');
-                    const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
-                    const reviseForm = document.getElementById('reviseForm');
-                    const filesContainer = document.querySelector('.existing-files-container');
+                // === Modal Revise / Edit Document ===
+                document.querySelectorAll('button[data-doc-id]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const docId = btn.getAttribute('data-doc-id');
+                        const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
+                        const reviseForm = document.getElementById('reviseForm');
+                        const filesContainer = document.querySelector('.existing-files-container');
 
-                    // Ubah action form
-                    reviseForm.action =
-                        `/document-review/${docId}/revise`; // ubah sesuai route kamu
+                        // Ubah action form
+                        reviseForm.action =
+                            `/document-review/${docId}/revise`; // ubah sesuai route kamu
 
-                    // Kosongkan isi dulu
-                    filesContainer.innerHTML = '<p class="text-muted">Loading files...</p>';
+                        // Kosongkan isi dulu
+                        filesContainer.innerHTML = '<p class="text-muted">Loading files...</p>';
 
-                    // Ambil data file via AJAX
-                    fetch(`/document-review/${docId}/files`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.files && data.files.length > 0) {
-                                filesContainer.innerHTML = `
+                        // Ambil data file via AJAX
+                        fetch(`/document-review/${docId}/files`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.files && data.files.length > 0) {
+                                    filesContainer.innerHTML = `
                         <label class="form-label fw-semibold">Existing Files</label>
                         <ul class="list-group">
                             ${data.files.map(f => `
-                                                                                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                    <span>📄 ${f.name}</span>
-                                                                                                                                    <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                                                                        <i class="bi bi-eye"></i> View
-                                                                                                                                    </a>
-                                                                                                                                </li>
-                                                                                                                            `).join('')}
+                                                                                                                                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                                                                        <span>📄 ${f.name}</span>
+                                                                                                                                                                            <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                                                                                                                <i class="bi bi-eye"></i> View
+                                                                                                                                                                            </a>
+                                                                                                                                                                    </li>
+                                                                                                                                                                    `).join('')}
                         </ul>
-                    `;
-                            } else {
+                                   `;
+                                } else {
+                                    filesContainer.innerHTML =
+                                        '<p class="text-muted">No files available for revision.</p>';
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Error loading files:', err);
                                 filesContainer.innerHTML =
-                                    '<p class="text-muted">No files available for revision.</p>';
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Error loading files:', err);
-                            filesContainer.innerHTML =
-                                '<p class="text-danger">Failed to load files.</p>';
-                        });
+                                    '<p class="text-danger">Failed to load files.</p>';
+                            });
 
-                    reviseModal.show();
+                        reviseModal.show();
+                    });
                 });
-            });
 
-            const modalPart = document.getElementById('modalPart');
-            const modalModel = document.getElementById('modalModel');
-            const modalProcess = document.getElementById('modalProcess');
-            const modalProduct = document.getElementById('modalProduct');
+                // === APPROVE MODAL ===
+                document.querySelectorAll('.btn-approve').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
 
-            if (modalPart) {
-                modalPart.addEventListener('change', updateModalFilters);
-            }
+                        const docId = this.getAttribute('data-id');
 
-            function updateModalFilters() {
-                const part = modalPart.value;
+                        // Atur action form
+                        const approveForm = document.getElementById('approveForm');
+                        approveForm.action = `/document-review/${docId}/approve-with-dates`;
 
-                if (part && part !== "") {
-                    fetch(`/document-review/filters?part_number=${part}`)
+                        // Tampilkan modal
+                        const approveModal = new bootstrap.Modal(document.getElementById(
+                            'approveModal'));
+                        approveModal.show();
+                    });
+                });
+                // === REJECT MODAL ===
+                const rejectModal = document.getElementById('rejectModal');
+                rejectModal.addEventListener('show.bs.modal', function(event) {
+                    let button = event.relatedTarget;
+                    let docId = button.getAttribute('data-id');
+
+                    // Set action ke form modal
+                    document.getElementById('rejectForm').action =
+                        `/document-review/${docId}/reject`;
+                });
+
+                let quillReject = new Quill('#quillRejectEditor', {
+                    theme: 'snow'
+                });
+
+                document.getElementById('rejectForm').addEventListener('submit', function() {
+                    let html = quillReject.root.innerHTML;
+                    document.getElementById('rejectNotes').value = html;
+                });
+
+                function openRejectModal(docId, plant, docCode, notes) {
+                    document.getElementById('rejectDocumentId').value = docId;
+                    document.getElementById('rejectPlant').value = plant;
+                    document.getElementById('rejectDocCode').value = btoa(docCode); // encode base64
+                    document.getElementById('rejectNotes').value = notes || '';
+
+                    // Jika pakai Quill
+                    if (window.quillReject) {
+                        quillReject.root.innerHTML = notes || '';
+                    }
+
+                    var modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+                    modal.show();
+                }
+
+                const modalPart = document.getElementById('modalPart');
+                const modalModel = document.getElementById('modalModel');
+                const modalProcess = document.getElementById('modalProcess');
+                const modalProduct = document.getElementById('modalProduct');
+
+                if (modalPart) {
+                    modalPart.addEventListener('change', updateModalFilters);
+                }
+
+                const currentPlant = "{{ $plant }}";
+
+                function updateModalFilters(partNumber) {
+
+                    if (typeof partNumber !== "string") {
+                        partNumber = tsPart.getValue();
+                    }
+
+                    fetch(`/document-review/filters?part_number=${partNumber}&plant=${currentPlant}`)
                         .then(res => res.json())
                         .then(data => {
-                            updateSelect(modalModel, data.models);
-                            updateSelect(modalProcess, data.processes);
-                            updateSelect(modalProduct, data.products);
+                            resetTomSelect(tsModel, data.models);
+                            resetTomSelect(tsProcess, data.processes);
+                            resetTomSelect(tsProduct, data.products);
                         });
-                } else {
-                    [modalModel, modalProcess, modalProduct].forEach(select => {
-                        select.querySelectorAll('option').forEach(o => o.hidden = false);
+                }
+
+                function refreshTomSelect(ts, list) {
+                    ts.clearOptions();
+                    ts.addOption({
+                        value: "",
+                        text: "All"
+                    });
+
+                    list.forEach(item => {
+                        ts.addOption({
+                            value: item,
+                            text: item.replace(/(^|\s)\S/g, (t) => t.toUpperCase())
+                        });
+                    });
+
+                    ts.refreshOptions(false);
+                    ts.setValue("");
+                }
+
+
+                function resetTomSelect(ts, list) {
+                    ts.clearOptions();
+
+                    ts.addOption({
+                        value: "",
+                        text: "All"
+                    });
+
+                    list.forEach(item => {
+                        ts.addOption({
+                            value: item,
+                            text: item.replace(/(^|\s)\S/g, (t) => t.toUpperCase())
+                        });
+                    });
+
+                    ts.refreshOptions(false);
+                }
+
+                function updateSelect(select, options) {
+                    select.querySelectorAll('option').forEach(o => {
+                        o.hidden = o.value && !options.includes(o.value);
                     });
                 }
-            }
 
-            function updateSelect(select, options) {
-                select.querySelectorAll('option').forEach(o => {
-                    o.hidden = o.value && !options.includes(o.value);
+                const filterModal = document.getElementById('filterModal');
+                if (filterModal) {
+                    filterModal.addEventListener('shown.bs.modal', function() {
+                        updateModalFilters(tsPart.getValue());
+                    });
+                }
+                // === CLEAR FILTER BUTTON ===
+                const clearFilterBtn = document.getElementById("clearFilterBtn");
+
+                if (clearFilterBtn) {
+                    clearFilterBtn.addEventListener("click", () => {
+
+                        // Clear DOM select
+                        tsPart.setValue("");
+                        tsModel.setValue("");
+                        tsProcess.setValue("");
+                        tsProduct.setValue("");
+
+                        // Reset options model/process/product
+                        resetTomSelect(tsModel, originalModelOptions);
+                        resetTomSelect(tsProcess, originalProcessOptions);
+                        resetTomSelect(tsProduct, originalProductOptions);
+
+                        // Hapus query string filter
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('part_number');
+                        url.searchParams.delete('model');
+                        url.searchParams.delete('process');
+                        url.searchParams.delete('product');
+
+                        window.location.href = url.toString();
+                    });
+                }
+
+                document.querySelectorAll('[id^="actionMenu-"]').forEach(menu => menu.classList.add('hidden'));
+
+                document.querySelectorAll('button[onclick*="actionMenu"]').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+
+                        const id = btn.getAttribute('onclick').match(/actionMenu-(\d+)/)[1];
+                        const menu = document.getElementById(`actionMenu-${id}`);
+
+                        // Tutup semua action menu lain
+                        document.querySelectorAll('[id^="actionMenu-"]').forEach(m => m.classList.add(
+                            'hidden'));
+
+                        const isVisible = !menu.classList.contains('hidden');
+                        if (isVisible) {
+                            menu.classList.add('hidden');
+                            return;
+                        }
+
+                        // Ambil posisi tombol
+                        const rect = btn.getBoundingClientRect();
+
+                        // Posisi fixed
+                        menu.style.position = 'fixed';
+                        menu.style.top = `${rect.bottom + 5}px`;
+                        menu.style.left = `${rect.left - 140}px`; // offset sedikit ke kiri
+                        menu.style.zIndex = 999999;
+                        menu.classList.remove('hidden');
+                    });
                 });
-            }
 
-            const filterModal = document.getElementById('filterModal');
-            if (filterModal) {
-                filterModal.addEventListener('shown.bs.modal', updateModalFilters);
-            }
-            // === CLEAR FILTER BUTTON ===
-            const clearFilterBtn = document.getElementById('clearFilterBtn');
-
-            if (clearFilterBtn) {
-                clearFilterBtn.addEventListener('click', () => {
-
-                    // Reset semua field dalam modal
-                    document.getElementById('modalPart').value = "";
-                    document.getElementById('modalModel').value = "";
-                    document.getElementById('modalProcess').value = "";
-                    document.getElementById('modalProduct').value = "";
-
-                    // Redirect ke halaman tanpa filter (tapi tetap membawa search q)
-                    const url = new URL(window.location.href);
-
-                    url.searchParams.delete('part_number');
-                    url.searchParams.delete('model');
-                    url.searchParams.delete('process');
-                    url.searchParams.delete('product');
-
-                    // q (search) tetap ada kalau sebelumnya sudah diisi
-                    window.location.href = url.toString();
+                // Klik di luar → tutup
+                document.addEventListener('click', () => {
+                    document.querySelectorAll('[id^="actionMenu-"]').forEach(m => m.classList.add('hidden'));
                 });
-            }
-
-        });
-    </script>
+            });
+        </script>
+    @endpush
 @endsection

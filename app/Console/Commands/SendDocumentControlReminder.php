@@ -15,7 +15,7 @@ class SendDocumentControlReminder extends Command
     public function handle(WhatsAppService $wa)
     {
         $today = Carbon::now();
-        if (!$today->isTuesday()) {
+        if (!$today->isWednesday()) {
             $this->info("Not Monday, skipping WhatsApp reminder.");
             return;
         }
@@ -137,7 +137,7 @@ class SendDocumentControlReminder extends Command
         $message .= "------ *BY AISIN BISA* ------";
 
         // Kirim ke WhatsApp
-        $sent = $wa->sendMessage($groupId, $message);
+        $sent = $wa->sendGroupMessage($groupId, $message);
 
         if ($sent) {
             $this->info("WhatsApp message sent successfully to Group ID: $groupId". config('services.whatsapp.group_id'));

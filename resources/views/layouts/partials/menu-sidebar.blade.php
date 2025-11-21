@@ -154,7 +154,6 @@
                         <span class="sidebar-text text-gray-100">FTPP</span>
                     </a>
                 </li>
-
                 <li>
                     <a href="{{ route('master.users.index') }}"
                         class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-sm
