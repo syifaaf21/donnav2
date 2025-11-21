@@ -158,7 +158,7 @@
 
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
-                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
+                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
                             <button id="attachImages" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="image" class="w-4 h-4"></i>

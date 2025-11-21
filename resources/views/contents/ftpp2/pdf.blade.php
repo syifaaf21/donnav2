@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <title>FTPP Report</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            margin: 0;
+            padding: 0;
+        }
+
         table {
             border-collapse: collapse;
             width: 100%;
@@ -89,6 +96,24 @@
             margin: 0;
             font-size: 13px;
         }
+
+        .image-row {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            /* jarak antar gambar */
+            justify-content: center;
+            /* atau start sesuai kebutuhan */
+            flex-wrap: wrap;
+            /* jika gambar banyak agar tidak keluar layar */
+        }
+
+        .note {
+            font-size: 10px;
+            /* lebih kecil dari text-sm */
+            color: #888888;
+            /* abu-abu lebih terang */
+        }
     </style>
 </head>
 
@@ -119,8 +144,13 @@
                 <table class="text-sm w-full">
                     <tr>
                         <td class="font-semibold">Department / Process / Product:</td>
-                        <td>{{ $finding->department->name ?? '-' }} / {{ $finding->process->name ?? '-' }} /
-                            {{ $finding->product->name ?? '-' }}</td>
+                        <td>
+                            {{ \Illuminate\Support\Str::title($finding->department->name ?? '-') .
+                                ' / ' .
+                                \Illuminate\Support\Str::title($finding->process->name ?? '-') .
+                                ' / ' .
+                                \Illuminate\Support\Str::title($finding->product->name ?? '-') }}
+                        </td>
                     </tr>
                     <tr>
                         <td class="font-semibold">Auditee:</td>
@@ -164,15 +194,14 @@
 
                 {{-- Tampilkan lampiran gambar yang terkait dengan finding ini --}}
                 @foreach ($finding->file as $image)
-                    <div class="mt-2 text-center">
+                    <div class="image-row mt-2 text-center">
                         <img src="{{ $image->full_url }}"
-                            style="max-width:300px; max-height:200px; display:block; margin:auto;">
-                        <div style="font-size:10px; text-align:center;">
-                            Lampiran Gambar: {{ basename($image->file_path) }}
+                            style="max-width: 64px; max-height: 64px; display:block; margin:auto;">
+                        <div style="font-size:8px; text-align:center;">
+                            Lampiran Gambar: {{ $image->original_name ?? basename($image->file_path) }}
                         </div>
                     </div>
                 @endforeach
-
 
                 <br><br>
                 <b>Due Date:</b> {{ \Carbon\Carbon::parse($finding->due_date)->format('d M Y') }}
@@ -341,8 +370,8 @@
         </tr>
     </table>
 
-    <p class="text-sm text-gray-400">Note : 1 Lembar form untuk satu temuan, tambahkan lampiran jika diperlukan</p>
-    <p class="text-sm text-gray-400">No Form : FRM-MR-M4-001-05</p>
+    <p class="note">Note : 1 Lembar form untuk satu temuan, tambahkan lampiran jika diperlukan</p>
+    <p class="note">No Form : FRM-MR-M4-001-05</p>
 
     {{-- ==================== ATTACHMENTS ================== --}}
     {{-- LAMPIRAN FILE --}}

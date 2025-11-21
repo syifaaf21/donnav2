@@ -137,13 +137,12 @@
 
                     <div class="font-semibold text-lg text-gray-900">Attachments</div>
                     <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
-                    <div id="previewImageContainer2" class="flex flex-wrap gap-2"></div>
-                    <div id="previewFileContainer2" class="flex flex-col gap-1"></div>
+                    <div>
+                        <div id="previewImageContainer2" class="flex flex-wrap gap-2"></div>
+                        <div id="previewFileContainer2" class="flex flex-col gap-1"></div>
 
-
-                    <div class="flex items-center justify-between">
-                        <div class="items-center gap-4 mt-2">
-
+                        <!-- Attachment button (paperclip) -->
+                        <div class="relative inline-block">
                             <!-- Attachment button -->
                             <button id="attachBtn2" type="button"
                                 class="items-center gap-2 px-4 py-2 border rounded-lg text-gray-900 hover:bg-gray-100 focus:outline-none"
@@ -154,19 +153,22 @@
 
                             <!-- Attachment Menu -->
                             <div id="attachMenu2"
-                                class="hidden absolute mt-12 w-44 bg-white border rounded-xl shadow-lg z-20">
+                                class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
                                 <button id="attachImages2" type="button"
-                                    class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                    <i data-feather="image" class="w-4 h-4"></i> Upload Images
+                                    class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                    <i data-feather="image" class="w-4 h-4"></i>
+                                    <span class="text-sm">Upload Images</span>
                                 </button>
                                 <button id="attachDocs2" type="button"
-                                    class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                    <i data-feather="file-text" class="w-4 h-4"></i> Upload Documents
+                                    class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                    <i data-feather="file-text" class="w-4 h-4"></i>
+                                    <span class="text-sm">Upload Documents</span>
                                 </button>
                                 <div class="border-t mt-1"></div>
                                 <button id="attachBoth2" type="button"
-                                    class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                    <i data-feather="upload" class="w-4 h-4"></i> Open Combined Picker
+                                    class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                    <i data-feather="upload" class="w-4 h-4"></i>
+                                    <span class="text-sm">Open Combined Picker</span>
                                 </button>
                             </div>
 
