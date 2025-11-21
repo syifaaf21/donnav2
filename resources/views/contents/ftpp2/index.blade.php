@@ -8,18 +8,99 @@
         </div>
 
         <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <!-- Search -->
-            <div class="w-full md:w-1/3">
-                <div class="relative">
+            <!-- LEFT: Search + Filter -->
+            <div class="flex items-center gap-2 w-full md:w-1/3">
+
+                <!-- SEARCH -->
+                <div class="relative flex-1">
                     <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
-                        <i class="fas fa-search"></i>
+                        <i class="bi bi-search"></i>
                     </span>
                     <input id="live-search" type="text" placeholder="Search..." autocomplete="off"
                         class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 shadow-sm
-                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    <button type="button" id="clearSearch"
+                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 hidden">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+
+                <!-- FILTER BUTTON -->
+                <div x-data="statusFilter()" class="relative">
+                    <button @click="toggle($event)"
+                        class="bg-white border border-gray-200 rounded-xl shadow p-2 hover:bg-gray-100 transition">
+                        <i data-feather="filter" class="w-5 h-5"></i>
+                    </button>
+
+                    <!-- Teleported dropdown -->
+                    <template x-teleport="body">
+                        <div x-show="open" x-transition.opacity.duration.150ms @click.outside="open=false"
+                            class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] p-2 mt-1"
+                            :style="`top:${dropdown.y}px; left:${dropdown.x}px; width:300px;`">
+
+                            <div class="p-2 border-b font-semibold text-gray-700">
+                                Filter by Status
+                            </div>
+
+                            <form id="statusFilterForm" method="GET">
+                                @foreach (request()->except(['page', 'status_id']) as $key => $val)
+                                    <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                                @endforeach
+
+                                <div class="max-h-64 overflow-y-auto px-2 py-1 space-y-2">
+
+                                    <!-- ALL -->
+                                    <label
+                                        class="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" value="all" x-model="selected" @change="submitForm"
+                                                :checked="{{ request()->filled('status_id') ? 'false' : 'true' }}">
+                                            <span>All</span>
+                                        </div>
+                                        <span class="text-xs bg-gray-200 text-gray-800 px-2 py-0.5 rounded-full">
+                                            {{ $totalCount ?? 0 }}
+                                        </span>
+                                    </label>
+
+                                    <!-- STATUS LOOP -->
+                                    @foreach ($statuses as $status)
+                                        @php
+                                            $name = strtolower($status->name);
+                                            $isChecked = in_array($status->id, (array) request()->status_id);
+                                            $icons = [
+                                                'open' => 'alert-circle',
+                                                'submitted' => 'upload-cloud',
+                                                'checked by dept head' => 'user-check',
+                                                'approved by auditor' => 'check-circle',
+                                                'need revision' => 'alert-triangle',
+                                                'close' => 'lock',
+                                            ];
+                                        @endphp
+
+                                        @if (array_key_exists($name, $icons))
+                                            <label
+                                                class="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
+                                                <div class="flex items-center gap-2">
+                                                    <input type="checkbox" name="status_id[]" value="{{ $status->id }}"
+                                                        @change="submitForm" {{ $isChecked ? 'checked' : '' }}>
+                                                    <i data-feather="{{ $icons[$name] }}" class="w-4 h-4"></i>
+                                                    <span class="capitalize">{{ $status->name }}</span>
+                                                </div>
+
+                                                <span class="text-xs bg-gray-200 text-gray-800 px-2 py-0.5 rounded-full">
+                                                    {{ $status->audit_finding_count }}
+                                                </span>
+                                            </label>
+                                        @endif
+                                    @endforeach
+
+                                </div>
+                            </form>
+
+                        </div>
+                    </template>
                 </div>
             </div>
-
             <!-- ACTION BUTTONS -->
             <div class="flex items-center gap-3">
 
@@ -45,70 +126,6 @@
         </div>
 
         <div class="flex gap-6">
-            {{-- Left: status tabs/sidebar --}}
-            <aside class="w-64 bg-white justify-center rounded-xl shadow-sm py-4 pr-4 border border-gray-100">
-                <ul class="space-y-1">
-
-                    {{-- ALL --}}
-                    <li>
-                        <a href="{{ route('ftpp.index') }}"
-                            class="flex justify-between items-center px-1 py-2 rounded-lg transition
-                    {{ request()->filled('status_id') ? 'text-gray-700 hover:bg-gray-100' : 'bg-blue-600 text-white shadow-sm' }}">
-                            <span class="flex items-center gap-2">
-                                <i data-feather="list" class="w-4 h-4"></i>
-                                All
-                            </span>
-
-                            <span
-                                class="text-xs px-2 py-0.5 rounded-full
-                    {{ request()->filled('status_id') ? 'bg-gray-200 text-gray-800' : 'bg-white text-blue-700' }}">
-                                {{ $totalCount ?? 0 }}
-                            </span>
-                        </a>
-                    </li>
-
-                    {{-- LOOP STATUS --}}
-                    @foreach ($statuses as $status)
-                        @php
-                            $name = strtolower($status->name);
-                            $active = request('status_id') == $status->id;
-
-                            // mapping ikon per status
-                            $icons = [
-                                'open' => 'alert-circle',
-                                'submitted' => 'upload-cloud',
-                                'checked by dept head' => 'user-check',
-                                'approved by auditor' => 'check-circle',
-                                'need revision' => 'alert-triangle',
-                                'close' => 'lock',
-                            ];
-                        @endphp
-
-                        @if (array_key_exists($name, $icons))
-                            <li>
-                                <a href="{{ route('ftpp.index', array_merge(request()->except('page'), ['status_id' => $status->id])) }}"
-                                    class="flex justify-between items-center px-1 py-2 rounded-lg transition
-                            {{ $active ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100' }}">
-
-                                    <span class="flex items-center gap-2 capitalize">
-                                        <i data-feather="{{ $icons[$name] }}" class="w-4 h-4"></i>
-                                        {{ $status->name }}
-                                    </span>
-
-                                    {{-- Badge counter --}}
-                                    <span
-                                        class="text-xs px-2 py-0.5 rounded-full
-                            {{ $active ? 'bg-white text-blue-700' : 'bg-gray-200 text-gray-800' }}">
-                                        {{ $status->audit_finding_count }}
-                                    </span>
-                                </a>
-                            </li>
-                        @endif
-                    @endforeach
-
-                </ul>
-            </aside>
-
             {{-- Main column --}}
             <div class="flex-1">
                 <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -347,12 +364,12 @@
                                         :style="\`top:\${y}px; left:\${x}px; width:170px;\`">
 
                                         ${statusName.toLowerCase() !== 'open' ? `
-                                                <button type="button"
-                                                    @click="open = false; $dispatch('open-show-modal', ${f.id})"
-                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                    <i data-feather="eye" class="w-4 h-4"></i> Show
-                                                </button>
-                                            ` : ''}
+                                                                                            <button type="button"
+                                                                                                @click="open = false; $dispatch('open-show-modal', ${f.id})"
+                                                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                                <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                                                            </button>
+                                                                                        ` : ''}
 
                                         <a href="/ftpp/${f.id}/download"
                                             @click="open = false"
@@ -362,17 +379,17 @@
 
                                         ${f.status.toLowerCase() === 'need revision'
                                                 ? `
-                                                    <a href="/ftpp/auditee-action/${f.id}/edit"
-                                                        @click="open = false"
-                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                        <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
-                                                    </a>`
+                                                                                                <a href="/ftpp/auditee-action/${f.id}/edit"
+                                                                                                    @click="open = false"
+                                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                                    <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
+                                                                                                </a>`
                                                 : `
-                                                    <a href="/ftpp/auditee-action/${f.id}"
-                                                        @click="open = false"
-                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                        <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
-                                                    </a>`
+                                                                                                <a href="/ftpp/auditee-action/${f.id}"
+                                                                                                    @click="open = false"
+                                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                                    <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
+                                                                                                </a>`
                                         }
 
                                         <form method="POST" action="/ftpp/${f.id}"
@@ -430,6 +447,30 @@
             });
         })();
 
+        document.addEventListener("DOMContentLoaded", function() {
+            const input = document.getElementById("live-search");
+            const clearBtn = document.getElementById("clearSearch");
+
+            if (!input || !clearBtn) return;
+
+            // Tampil atau hilangkan tombol X
+            input.addEventListener("input", function() {
+                if (input.value.trim() !== "") {
+                    clearBtn.classList.remove("hidden");
+                } else {
+                    clearBtn.classList.add("hidden");
+                }
+            });
+
+            // Fungsi hapus input + reset data
+            clearBtn.addEventListener("click", function() {
+                input.value = "";
+                clearBtn.classList.add("hidden");
+
+                // Jika mau reload data default:
+                window.location = "{{ route('ftpp.index') }}";
+            });
+        });
 
         function showModal() {
             return {
@@ -476,5 +517,34 @@
         //         },
         //     };
         // }
+    </script>
+    <script>
+        function statusFilter() {
+            return {
+                open: false,
+
+                selected: [], // ← WAJIB supaya x-model tidak error
+
+                dropdown: {
+                    x: 0,
+                    y: 0
+                },
+
+                toggle(event) {
+                    const rect = event.target.getBoundingClientRect();
+                    this.dropdown.x = rect.left;
+                    this.dropdown.y = rect.bottom + window.scrollY + 5;
+                    this.open = !this.open;
+
+                    setTimeout(() => {
+                        if (feather) feather.replace();
+                    }, 10);
+                },
+
+                submitForm() {
+                    document.getElementById('statusFilterForm').submit();
+                }
+            };
+        }
     </script>
 @endpush
