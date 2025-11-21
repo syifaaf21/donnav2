@@ -240,49 +240,52 @@ class DocumentControlController extends Controller
 
     public function approve(Request $request, DocumentMapping $mapping)
     {
+        // Hanya admin atau super admin yang bisa approve
         if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
             abort(403, 'Only admin or super admin can approve documents.');
         }
 
-
-        $request->validate([
-            'obsolete_date' => 'required|date|after_or_equal:today',
-            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
-        ], [
-            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
-            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
-            'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
-        ]);
-
-
+        // Ambil status "Active" atau buat kalau belum ada
         $statusActive = Status::firstOrCreate(
             ['name' => 'Active'],
             ['description' => 'Document is active']
         );
 
+        // Ambil periode tahun dari mapping lama, default 1 tahun kalau null
+        $periodYears = $mapping->period_years ?? 1;
+
+        // Hitung tanggal obsolete baru otomatis
+        $lastObsoleteDate = $mapping->obsolete_date ?? now();
+        $newObsoleteDate = \Carbon\Carbon::parse($lastObsoleteDate)->addYears($periodYears);
+
+        // Hitung reminder otomatis, misal 1 bulan sebelum obsolete
+        $newReminderDate = $newObsoleteDate->copy()->subMonth();
+
+        // Update mapping
         $mapping->update([
             'status_id' => $statusActive->id,
-            'obsolete_date' => $request->obsolete_date,
-            'reminder_date' => $request->reminder_date,
+            'obsolete_date' => $newObsoleteDate,
+            'reminder_date' => $newReminderDate,
+            'user_id' => Auth::id(), // siapa yang approve
         ]);
 
-        // Ambil semua user di department terkait, kecuali user yang melakukan approve
+        // Ambil semua user di department terkait, kecuali user yang approve
         $departmentUsers = User::where('department_id', $mapping->department_id)
-            ->whereNotIn('id', [Auth::id()]) // kecuali user yang approve
+            ->whereNotIn('id', [Auth::id()])
             ->get();
 
-        // Kirim notifikasi
+        // Kirim notifikasi ke user department
         Notification::send($departmentUsers, new DocumentActionNotification(
-            'approved',
-            Auth::user()->name,
-            null,
-            $mapping->document->name,
+            'approved',                       // aksi
+            Auth::user()->name,                // admin yang approve
+            null,                              // bisa dipakai untuk optional info
+            $mapping->document->name,          // nama document
             route('document-control.department', $mapping->department->name) // url
         ));
 
-
-        return back()->with('success', 'Document approved successfully.');
+        return back()->with('success', 'Document approved successfully!');
     }
+
 
     public function reject(Request $request, DocumentMapping $mapping)
     {

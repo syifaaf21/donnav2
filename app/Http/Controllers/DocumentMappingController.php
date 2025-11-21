@@ -896,6 +896,7 @@ class DocumentMappingController extends Controller
             'department.*' => 'exists:tm_departments,id',
             'obsolete_date' => 'required|date|after_or_equal:today',
             'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'period_years' => 'required|integer|min:1',
             'notes' => 'required|string|max:500',
             'files' => 'nullable|array',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
@@ -934,6 +935,7 @@ class DocumentMappingController extends Controller
                 'department_id' => $deptId,
                 'version' => 0,
                 'notes' => $cleanNotes,
+                'period_years' => $validated['period_years'],
             ]);
 
             // Simpan file
@@ -976,63 +978,70 @@ class DocumentMappingController extends Controller
 
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)
-    {
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
-            abort(403);
-        }
-
-        // Validasi input
-        $validator = Validator::make($request->all(), [
-            'document_name' => 'required|string|max:255',
-            'department_id' => 'required|exists:tm_departments,id',
-            'obsolete_date' => 'required|date|after_or_equal:today',
-            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
-            'notes' => 'required|string|max:500',
-        ], [
-            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
-            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
-            'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
-        ]);
-
-
-        // ❗ Kalau gagal validasi, langsung return back — jangan lanjut ke bawah
-        if ($validator->fails()) {
-            // Hapus old input bawaan Laravel supaya tidak mengisi modal Add
-            $request->session()->forget('_old_input');
-
-            // Simpan error dan input khusus untuk modal Edit tertentu
-            return back()
-                ->withErrors($validator)
-                ->with('editModalId', $mapping->id)
-                ->with('editOldInputs.' . $mapping->id, $request->all());
-        }
-
-        $validated = $validator->validated();
-
-        // Update document name
-        if ($mapping->document) {
-            $mapping->document->update([
-                'name' => $validated['document_name'],
-            ]);
-        }
-
-        $cleanNotes = trim($validated['notes'] ?? '');
-        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
-            $cleanNotes = null;
-        }
-        // Update mapping
-        $mapping->update([
-            'department_id' => $validated['department_id'],
-            'obsolete_date' => $validated['obsolete_date'],
-            'reminder_date' => $validated['reminder_date'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
-
-        return redirect()->route('master.document-control.index')
-            ->with('success', 'Document updated successfully!');
+{
+    if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        abort(403);
     }
 
+    // Validasi input
+    $validator = Validator::make($request->all(), [
+        'document_name' => 'required|string|max:255',
+        'department_id' => 'required|exists:tm_departments,id',
+        'obsolete_date' => 'required|date|after_or_equal:today',
+        'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+        'notes' => 'required|string|max:500',
+        'period_years' => 'nullable|integer|min:1',
+    ], [
+        'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+        'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
+        'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
+    ]);
 
+    if ($validator->fails()) {
+        $request->session()->forget('_old_input');
+        return back()
+            ->withErrors($validator)
+            ->with('editModalId', $mapping->id)
+            ->with('editOldInputs.' . $mapping->id, $request->all());
+    }
+
+    $validated = $validator->validated();
+
+    // Update document name
+    if ($mapping->document) {
+        $mapping->document->update([
+            'name' => $validated['document_name'],
+        ]);
+    }
+
+    $cleanNotes = trim($validated['notes'] ?? '');
+    if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
+        $cleanNotes = null;
+    }
+
+    // Cek status Active
+    $isActive = $mapping->status && strtolower($mapping->status->name) === 'active';
+
+    // Data yang boleh diupdate
+    $updateData = [
+        'department_id' => $validated['department_id'],
+        'obsolete_date' => $validated['obsolete_date'],
+        'reminder_date' => $validated['reminder_date'],
+        'notes' => $cleanNotes,
+    ];
+
+    // Jika bukan Active → period_years boleh diupdate
+    if (!$isActive && isset($validated['period_years'])) {
+        $updateData['period_years'] = $validated['period_years'];
+    }
+
+    $mapping->update($updateData);
+
+    return redirect()->route('master.document-control.index')
+        ->with('success', 'Document updated successfully!');
+}
+
+    // Bulk Delete Document Control
     public function bulkDestroy(Request $request)
     {
         // Validasi

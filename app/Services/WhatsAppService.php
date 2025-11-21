@@ -13,7 +13,7 @@ class WhatsAppService
 
     public function __construct()
     {
-        $this->url = config('services.whatsapp.url');         // e.g. https://app.fastwa.com/api/v1/…/send_group
+        $this->url = config('services.whatsapp.url'); 
         $this->token = config('services.whatsapp.token');
         $this->defaultGroupId = config('services.whatsapp.group_id');
     }

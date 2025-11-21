@@ -99,6 +99,7 @@
                             <th class="px-4 py-2">Department</th>
                             <th class="px-4 py-2">Obsolete</th>
                             <th class="px-4 py-2">Reminder Date</th>
+                            <th class="px-4 py-2">Document Period</th>
                             <th class="px-4 py-2 text-center">Action</th>
                         </tr>
                     </thead>
@@ -116,6 +117,13 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if ($mapping->period_years)
+                                        {{ $mapping->period_years }} {{ $mapping->period_years == 1 ? 'Year' : 'Years' }}
+                                    @else
+                                        -
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 flex space-x-2">
                                     @if ($mapping->files->count())

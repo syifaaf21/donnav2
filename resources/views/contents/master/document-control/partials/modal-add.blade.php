@@ -45,25 +45,38 @@
                         $today = now()->format('Y-m-d');
                     @endphp
                     <div class="row g-2 mt-2">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="obsolete_date" class="form-label">Obsolete Date <span
                                     class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('obsolete_date') is-invalid @enderror"
-                                id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}" min="{{ $today }}" required>
+                                id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}"
+                                min="{{ $today }}" required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="reminder_date" class="form-label">Reminder Date <span
                                     class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('reminder_date') is-invalid @enderror"
-                                id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}" min="{{ $today }}" required>
+                                id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}"
+                                min="{{ $today }}" required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        <div class="col-md-4">
+                            <label for="period_years" class="form-label">Period (Years) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" min="1"
+                                class="form-control @error('period_years') is-invalid @enderror" id="period_years"
+                                name="period_years" value="{{ old('period_years', 1) }}" required>
+                            @error('period_years')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
+
                     {{-- Notes --}}
                     <div class="col-12 mt-3">
                         <label class="form-label">Notes <span class="text-danger">*</span></label>
