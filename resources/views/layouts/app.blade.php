@@ -30,7 +30,6 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.1/dist/cdn.min.js"></script>
 
     @stack('styles')
 </head>
@@ -41,8 +40,7 @@
     @include('components.flash-message')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper"
-        class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-gray-50 rounded-xl mt-2">
+    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-white rounded-xl mt-2">
         @include('layouts.partials.navbar')
 
         <!-- Content -->

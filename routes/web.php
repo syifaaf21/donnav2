@@ -71,9 +71,12 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 
     // Document Review
     Route::prefix('document-review')->name('document-review.')->group(function () {
-        Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
-        Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
-        Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
+        // Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
+        Route::get('/', [DocumentMappingController::class, 'reviewIndex2'])->name('index2');
+        // Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
+        Route::post('/store', [DocumentMappingController::class, 'storeReview2'])->name('store2');
+        // Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
+        Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview2'])->name('update2');
         Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
         Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');

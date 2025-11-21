@@ -138,7 +138,7 @@
                         </li>
 
                         <li>
-                            <a href="{{ route('master.document-review.index') }}"
+                            <a href="{{ route('master.document-review.index2') }}"
                                 class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 text-sm
                                 {{ Route::is('master.document-review.*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
                                 <i data-feather="search" class="menu-icon w-4 h-4 text-gray-100"></i>
