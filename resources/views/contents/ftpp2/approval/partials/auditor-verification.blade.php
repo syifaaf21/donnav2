@@ -10,7 +10,7 @@
     <tr>
         <td class="border border-black">
             <textarea name="effectiveness_verification" x-model="form.effectiveness_verification"
-                class="w-full h-32 p-1 resize-none"></textarea>
+                class="w-full h-40 border border-gray-400 rounded p-1"></textarea>
         </td>
         <td class="border border-black p-2">
             <div class="text-lg font-bold">
@@ -28,53 +28,87 @@
         <td class="border border-black p-2">
             <div class="my-4">
                 <template x-if="!form.lead_auditor_ack">
-                    <div class="flex flex-col gap-2">
-                        <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
-                            onclick="verifyLeadAuditor()" :disabled="form.status_id != 10"
-                            :class="form.status_id != 10 ? 'opacity-50 cursor-not-allowed' : ''">
+                    <div class="flex flex-col gap-3">
+
+                        <!-- VERIFY BUTTON -->
+                        <button type="button" onclick="verifyLeadAuditor()" :disabled="form.status_id != 10"
+                            :class="form.status_id != 10 ? 'opacity-40 cursor-not-allowed' : ''"
+                            class="flex items-center justify-center gap-2 px-4 py-2
+                           bg-blue-600 hover:bg-blue-700 text-white rounded-lg
+                           transition-all shadow-sm hover:shadow">
+
+                            <i data-feather="check-circle" class="w-4 h-4"></i>
                             Verify
                         </button>
-                        <button type="button" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded"
-                            onclick="returnForRevision()" :disabled="form.status_id != 10"
-                            :class="form.status_id != 10 ? 'opacity-50 cursor-not-allowed' : ''">
+
+                        <!-- RETURN BUTTON -->
+                        <button type="button" onclick="returnForRevision()" :disabled="form.status_id != 10"
+                            :class="form.status_id != 10 ? 'opacity-40 cursor-not-allowed' : ''"
+                            class="flex items-center justify-center gap-2 px-4 py-2
+                           bg-red-600 hover:bg-red-700 text-white rounded-lg
+                           transition-all shadow-sm hover:shadow">
+
+                            <i data-feather="x-circle" class="w-4 h-4"></i>
                             Return
                         </button>
                     </div>
                 </template>
+
                 <template x-if="form.lead_auditor_signature">
                     <img :src="form.lead_auditor_signature_url" class="mx-auto mt-1 h-24 object-contain">
                 </template>
             </div>
+
+            <!-- NAME FIELD -->
             <div class="items-center">
                 <span class="font-semibold my-1">Lead Auditor</span>
-                <input type="text" x-model="form.lead_auditor_name" value="{{ auth()->user()->name }}">
+                <input type="text" x-model="form.lead_auditor_name" value="{{ auth()->user()->name }}"
+                    class="w-full mt-1 border border-gray-300 rounded p-1 text-center">
             </div>
         </td>
+
         <td class="border border-black p-2">
             <div class="my-4">
                 <template x-if="!form.auditor_verified">
-                    <div class="flex flex-col gap-2">
-                        <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
-                            onclick="verifyAuditor()" :disabled="form.status_id != 9"
-                            :class="form.status_id != 9 ? 'opacity-50 cursor-not-allowed' : ''">
+                    <div class="flex flex-col gap-3">
+
+                        <!-- VERIFY BUTTON -->
+                        <button type="button" onclick="verifyAuditor()" :disabled="form.status_id != 9"
+                            :class="form.status_id != 9 ? 'opacity-40 cursor-not-allowed' : ''"
+                            class="flex items-center justify-center gap-2 px-4 py-2
+                           bg-blue-600 hover:bg-blue-700 text-white rounded-lg
+                           transition-all shadow-sm hover:shadow">
+
+                            <i data-feather="check-circle" class="w-4 h-4"></i>
                             Verify
                         </button>
-                        <button type="button" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded"
-                            onclick="returnForRevision()" :disabled="form.status_id != 9"
-                            :class="form.status_id != 9 ? 'opacity-50 cursor-not-allowed' : ''">
+
+                        <!-- RETURN BUTTON -->
+                        <button type="button" onclick="returnForRevision()" :disabled="form.status_id != 9"
+                            :class="form.status_id != 9 ? 'opacity-40 cursor-not-allowed' : ''"
+                            class="flex items-center justify-center gap-2 px-4 py-2
+                           bg-red-600 hover:bg-red-700 text-white rounded-lg
+                           transition-all shadow-sm hover:shadow">
+
+                            <i data-feather="x-circle" class="w-4 h-4"></i>
                             Return
                         </button>
                     </div>
                 </template>
+
                 <template x-if="form.auditor_signature">
                     <img :src="form.auditor_signature_url" class="mx-auto mt-1 h-24 object-contain">
                 </template>
             </div>
+
+            <!-- NAME FIELD -->
             <div class="items-center">
                 <span class="font-semibold my-1">Auditor</span>
-                <input type="text" x-model="form.auditor_name" value="{{ auth()->user()->name }}">
+                <input type="text" x-model="form.auditor_name" value="{{ auth()->user()->name }}"
+                    class="w-full mt-1 border border-gray-300 rounded p-1 text-center">
             </div>
         </td>
+
     </tr>
 </table>
 

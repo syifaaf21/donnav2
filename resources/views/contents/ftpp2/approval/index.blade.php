@@ -2,6 +2,24 @@
 @section('title', 'FTPP')
 
 @section('content')
+    {{-- Breadcrumbs --}}
+    <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li>
+                <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-folder me-1"></i>FTPP
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-medium">Approval</li>
+        </ol>
+    </nav>
     <div x-data="ftppApp()" class="container mx-auto my-2 px-4">
         {{-- Back button --}}
         <div class="mb-3">
@@ -11,17 +29,13 @@
                 <span class="ml-2">Back</span>
             </a>
         </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
             {{-- LEFT SIDE --}}
             <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow-sm p-4 overflow-auto h-[90vh]">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-lg font-semibold text-gray-700">FTPP List</h2>
-                    {{-- @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
-                        <button @click="createNew()" class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
-                            + Add
-                        </button>
-                    {{-- @endif --}}
+                    <h2 class="text-lg font-semibold text-gray-700">FTPP Approval List</h2>
                 </div>
 
                 <!-- 🔍 Single Search Bar -->
@@ -71,9 +85,18 @@
                         @endif --}}
 
                         {{-- HEADER --}}
-                        <div class="text-center font-bold text-lg mb-2">
-                            FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
-                        </div>
+                        <table class="header-table border border-black rounded mb-2 w-full">
+                            <tr>
+                                <td class="header-logo border border-black">
+                                    <img src="{{ asset('images/logo-aiia.png') }}" alt="AISIN Logo" class="w-40 h-auto">
+                                </td>
+                                <td class="header-title text-center">
+                                    <h6>
+                                        FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
+                                    </h6>
+                                </td>
+                            </tr>
+                        </table>
 
                         @include('contents.ftpp2.approval.partials.auditor-input')
                         @include('contents.ftpp2.approval.partials.auditee-input')
@@ -194,7 +217,10 @@
                         const proc = finding.process?.name;
                         const prod = finding.product?.name;
 
-                        this.form._plant_display = [dept, proc, prod].filter(Boolean).join(' / ') || '-';
+                        this.form._plant_display = [dept, proc, prod]
+                            .filter(Boolean)
+                            .map(t => t.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()))
+                            .join(' / ') || '-';
 
                         //
                         // ✅ AUDITEE

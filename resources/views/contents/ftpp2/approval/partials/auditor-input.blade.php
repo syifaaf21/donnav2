@@ -28,11 +28,11 @@
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold w-1/3">Department / Process / Product:</td>
                     <td class="py-2">
-                        <button type="button"
+                        {{-- <button type="button"
                             class="px-3 py-1 border text-gray-400 rounded bg-gray-100 cursor-not-allowed"
                             disabled>
                             Select Department / Process / Product by Plant
-                        </button>
+                        </button> --}}
                         <input type="hidden" id="selectedPlant" name="plant">
                         <input type="hidden" id="selectedDepartment" name="department_id" x-model="form.department_id">
                         <input type="hidden" id="selectedProcess" name="process_id" x-model="form.process_id">
@@ -43,11 +43,11 @@
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Auditee:</td>
                     <td class="py-2">
-                        <button type="button"
+                        {{-- <button type="button"
                             class="px-3 py-1 border text-gray-400 rounded bg-gray-100 cursor-not-allowed"
                             disabled>
                             Select Auditee
-                        </button>
+                        </button> --}}
 
                         <!-- Hasil pilihan -->
                         <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
@@ -123,10 +123,10 @@
                     <div class="flex items-end gap-2 mb-1">
                         <!-- Tombol Trigger (disabled view only) -->
                         <div class="ml-auto">
-                            <button type="button" disabled
+                            {{-- <button type="button" disabled
                                 class="px-3 py-1 border text-gray-400 rounded bg-gray-100 cursor-not-allowed">
                                 Select Clause
-                            </button>
+                            </button> --}}
                         </div>
                     </div>
                     <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
@@ -171,8 +171,6 @@
         </td>
     </tr>
 </table>
-
-
 
 {{-- icon feather init --}}
 <script>
