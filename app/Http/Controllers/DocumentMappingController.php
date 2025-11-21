@@ -897,7 +897,7 @@ class DocumentMappingController extends Controller
             'period_years' => 'required|integer|min:1',
             'notes' => 'required|string|max:500',
             'files' => 'nullable|array',
-            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx, jpg,jpeg,png|max:20480',
         ], [
             'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
             'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',

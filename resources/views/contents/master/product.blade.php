@@ -143,7 +143,7 @@
                                 </div>
 
                                 {{-- Plant --}}
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                                     <select name="plant" class="form-select" required>
                                         @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
@@ -267,8 +267,32 @@
         </script>
     @endif
     <script>
-        // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
+            // Initialize TomSelect for PLANT in Add Modal
+            const addSelect = document.querySelector('#addProductModal select[name="plant"]');
+            if (addSelect) {
+                new TomSelect(addSelect, {
+                    create: false,
+                    maxItems: 1,
+                    allowEmptyOption: false,
+                    placeholder: "Select Plant"
+                });
+            }
+
+            // Initialize TomSelect for PLANT in each Edit Modal
+            document.querySelectorAll('[id^="editProductModal-"]').forEach(modal => {
+                const select = modal.querySelector('select[name="plant"]');
+
+                if (select) {
+                    new TomSelect(select, {
+                        create: false,
+                        maxItems: 1,
+                        allowEmptyOption: false,
+                        placeholder: "Select Plant"
+                    });
+                }
+            });
+            // Clear Search functionality
             const clearBtn = document.getElementById("clearSearch");
             const searchInput = document.getElementById("searchInput");
             const searchForm = document.getElementById("searchForm");

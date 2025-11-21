@@ -403,10 +403,12 @@ class DocumentReviewController extends Controller
             })
             ->get();
 
+        $plant = $this->getPlantFromMapping($mapping);
         $url = route('document-review.showFolder', [
-            'plant' => $mapping->partNumber->plant ?? 'unknown',
+            'plant'  => $plant,
             'docCode' => base64_encode($mapping->document->code ?? ''),
         ]);
+
 
         Notification::send($targetUsers, new DocumentActionNotification(
             action: 'approved',
@@ -416,10 +418,17 @@ class DocumentReviewController extends Controller
             departmentName: $mapping->department?->name,
         ));
 
-        return redirect()->route('document-review.showFolder', [
-            'plant' => $mapping->partNumber->plant,
-            'docCode' => base64_encode($mapping->document->code),
-        ])->with('success', "Document '{$mapping->document_number}' approved successfully!");
+       return redirect()->route('document-review.index')
+    ->with('success', "Document '{$mapping->document_number}' approved successfully!");
+    }
+
+    private function getPlantFromMapping($mapping)
+    {
+        return $mapping->partNumber?->plant
+            ?? $mapping->productModel?->plant;  // PASTI ADA
+
+        // Jika tidak punya part number → plant dari model (pasti ada)
+        return $mapping->productModel?->plant;
     }
 
     public function reject(Request $request, $id)

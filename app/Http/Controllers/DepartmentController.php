@@ -19,8 +19,10 @@ class DepartmentController extends Controller
         }
 
         $departments = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $codes = Department::pluck('code')->unique();
+        $plants = Department::pluck('plant')->unique();
 
-        return view('contents.master.department', compact('departments'));
+        return view('contents.master.department', compact('departments', 'codes', 'plants'));
     }
 
     public function store(Request $request)

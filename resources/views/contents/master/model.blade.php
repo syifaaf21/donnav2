@@ -102,19 +102,88 @@
 
 
     {{-- Edit Modals --}}
-@foreach ($models as $model)
-    <div class="modal fade" id="editModelModal-{{ $model->id }}" tabindex="-1"
-        aria-labelledby="editModelModalLabel-{{ $model->id }}" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg = modal besar --}}
-            <form action="{{ route('master.models.update', $model->id) }}" method="POST">
+    @foreach ($models as $model)
+        <div class="modal fade" id="editModelModal-{{ $model->id }}" tabindex="-1"
+            aria-labelledby="editModelModalLabel-{{ $model->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg = modal besar --}}
+                <form action="{{ route('master.models.update', $model->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+
+                        {{-- Header --}}
+                        <div class="modal-header bg-light text-dark rounded-top-4">
+                            <h5 class="modal-title fw-semibold" id="editModelModalLabel-{{ $model->id }}">
+                                <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Model
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        {{-- Body --}}
+                        <div class="modal-body p-5">
+                            <div class="row g-4">
+                                {{-- Model Name --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Model Name <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="name"
+                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                        value="{{ $model->name }}" required>
+                                    @error('name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Plant --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
+                                    <select name="plant"
+                                        class="form-select tom-plant rounded-3 @error('plant') is-invalid @enderror"
+                                        required>
+                                        <option value="">-- Select Plant --</option>
+                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                            <option value="{{ $plant }}" @selected($model->plant === $plant)>
+                                                {{ $plant }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('plant')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Footer --}}
+                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                            <button type="button"
+                                class="px-4 py-2 border border-gray-400 rounded-lg text-gray-700 hover:bg-gray-200"
+                                data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                                Save Changes
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
+
+    {{-- Add Modal --}}
+    <div class="modal fade" id="addModelModal" tabindex="-1" aria-labelledby="addModelModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg agar besar juga --}}
+            <form action="{{ route('master.models.store') }}" method="POST">
                 @csrf
-                @method('PUT')
                 <div class="modal-content border-0 shadow-lg rounded-4">
 
                     {{-- Header --}}
                     <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" id="editModelModalLabel-{{ $model->id }}">
-                            <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Model
+                        <h5 class="modal-title fw-semibold" id="addModelModalLabel">
+                            <i class="bi bi-plus-circle me-2 text-primary"></i>Add New Model
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -127,7 +196,7 @@
                                 <label class="form-label fw-medium">Model Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name"
                                     class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                    value="{{ $model->name }}" required>
+                                    value="{{ old('name') }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -136,12 +205,11 @@
                             {{-- Plant --}}
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                                <select name="plant"
-                                    class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
+                                <select name="plant" class="form-select rounded-3" required>
                                     <option value="">-- Select Plant --</option>
-                                    @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                        <option value="{{ $plant }}" @selected($model->plant === $plant)>
-                                            {{ $plant }}
+                                    @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
+                                        <option value="{{ $optPlant }}" @selected(old('plant') === $optPlant)>
+                                            {{ $optPlant }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -159,90 +227,32 @@
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                            Save Changes
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Submit
                         </button>
                     </div>
-
                 </div>
             </form>
         </div>
     </div>
-@endforeach
-
-{{-- Add Modal --}}
-<div class="modal fade" id="addModelModal" tabindex="-1" aria-labelledby="addModelModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg agar besar juga --}}
-        <form action="{{ route('master.models.store') }}" method="POST">
-            @csrf
-            <div class="modal-content border-0 shadow-lg rounded-4">
-
-                {{-- Header --}}
-                <div class="modal-header bg-light text-dark rounded-top-4">
-                    <h5 class="modal-title fw-semibold" id="addModelModalLabel">
-                        <i class="bi bi-plus-circle me-2 text-primary"></i>Add New Model
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                {{-- Body --}}
-                <div class="modal-body p-5">
-                    <div class="row g-4">
-                        {{-- Model Name --}}
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Model Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name"
-                                class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                value="{{ old('name') }}" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        {{-- Plant --}}
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                            <select name="plant"
-                                class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
-                                <option value="">-- Select Plant --</option>
-                                @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                    <option value="{{ $plant }}" @selected(old('plant') === $plant)>
-                                        {{ $plant }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('plant')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-400 rounded-lg text-gray-700 hover:bg-gray-200"
-                        data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                        Submit
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 @endsection
 
 
 @push('scripts')
     <x-sweetalert-confirm />
     <script>
-        // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
+            const addSelect = document.querySelector('#addProductModal select[name="plant"]');
+            if (addSelect) {
+                new TomSelect(addSelect, {
+                    create: false,
+                    maxItems: 1,
+                    allowEmptyOption: false,
+                    placeholder: "Select Plant"
+                });
+            }
+
+            // Clear Search functionality
             const clearBtn = document.getElementById("clearSearch");
             const searchInput = document.getElementById("searchInput");
             const searchForm = document.getElementById("searchForm");
@@ -287,14 +297,12 @@
             });
         });
         //Tooltip
-        document.addEventListener('DOMContentLoaded', function() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-            tooltipTriggerList.map(function(el) {
-                return new bootstrap.Tooltip(el, {
-                    title: el.getAttribute('data-bs-title'),
-                    placement: 'top',
-                    trigger: 'hover'
-                });
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+        tooltipTriggerList.map(function(el) {
+            return new bootstrap.Tooltip(el, {
+                title: el.getAttribute('data-bs-title'),
+                placement: 'top',
+                trigger: 'hover'
             });
         });
     </script>

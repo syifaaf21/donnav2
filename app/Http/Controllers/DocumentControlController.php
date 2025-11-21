@@ -168,7 +168,7 @@ class DocumentControlController extends Controller
         }
 
         $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+           'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:20480',
         ]);
 
         $mapping->load('document');

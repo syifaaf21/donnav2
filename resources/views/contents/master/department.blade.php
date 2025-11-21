@@ -135,22 +135,26 @@
                             <!-- Code -->
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                                <input type="text" name="code"
-                                    class="form-control rounded-3 @error('code') is-invalid @enderror"
-                                    value="{{ old('code', $department->code) }}" required>
+                                <select name="code" id="edit-code-select-{{ $department->id }}"
+                                    class="form-select rounded-3 @error('code') is-invalid @enderror" required>
+                                    @foreach ($codes as $code)
+                                        <option value="{{ $code }}"
+                                            {{ old('code', $department->code) == $code ? 'selected' : '' }}>
+                                            {{ $code }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 @error('code')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <!-- Plant -->
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                                <select name="plant" class="form-select rounded-3 @error('plant') is-invalid @enderror"
-                                    required>
-                                    <option value="" disabled
-                                        {{ old('plant', $department->plant) ? '' : 'selected' }}>-- Select Plant --
-                                    </option>
+                                <select name="plant" id="edit-plant-select-{{ $department->id }}"
+                                    class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
+
                                     <option value="Unit"
                                         {{ old('plant', $department->plant) == 'Unit' ? 'selected' : '' }}>Unit</option>
                                     <option value="Body"
@@ -158,9 +162,13 @@
                                     <option value="Electric"
                                         {{ old('plant', $department->plant) == 'Electric' ? 'selected' : '' }}>Electric
                                     </option>
-                                    <option value="All"
-                                        {{ old('plant', $department->plant) == 'All' ? 'selected' : '' }}>ALL</option>
+                                    <option value="ALL"
+                                        {{ old('plant', $department->plant) == 'ALL' ? 'selected' : '' }}>ALL</option>
+
                                 </select>
+                                @error('plant')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -198,30 +206,50 @@
                 <div class="modal-body p-5">
                     <div class="row g-3">
                         <!-- Name -->
-                        <div class="col-md-6"> <label class="form-label fw-medium">Name <span class="text-danger">*</span></label> <input type="text"
-                                name="name" class="form-control rounded-3 @error('name') is-invalid @enderror"
+                        <div class="col-md-6"> <label class="form-label fw-medium">Name <span
+                                    class="text-danger">*</span></label> <input type="text" name="name"
+                                class="form-control rounded-3 @error('name') is-invalid @enderror"
                                 value="{{ old('name') }}" required> @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <!-- Code -->
-                        <div class="col-md-6"> <label class="form-label fw-medium">Code <span class="text-danger">*</span></label> <input type="text"
-                                name="code" class="form-control rounded-3 @error('code') is-invalid @enderror"
-                                value="{{ old('code') }}" required> @error('code')
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
+                            <select id="code-select" name="code" class="form-select" required>
+                                <option value="" disabled selected>-- Select Code --</option>
+
+                                @foreach ($codes as $code)
+                                    <option value="{{ $code }}" {{ old('code') == $code ? 'selected' : '' }}>
+                                        {{ $code }}
+                                    </option>
+                                @endforeach
+
+                                @if (old('code') && !$codes->contains(old('code')))
+                                    <option value="{{ old('code') }}" selected>{{ old('code') }}</option>
+                                @endif
+                            </select>
+                            @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <!-- Plant -->
-                        <div class="col-md-6"> <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label> <select name="plant"
-                                class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
-                                <option value="" disabled {{ old('plant') ? '' : 'selected' }}>-- Select Plant --
-                                </option>
+                        <div class="col-md-12">
+                            <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
+                            <select id="plant-select" name="plant" class="form-select" required>
+                                <option value="" disabled selected>-- Select Plant --</option>
+
                                 <option value="Unit" {{ old('plant') == 'Unit' ? 'selected' : '' }}>Unit</option>
                                 <option value="Body" {{ old('plant') == 'Body' ? 'selected' : '' }}>Body</option>
                                 <option value="Electric" {{ old('plant') == 'Electric' ? 'selected' : '' }}>Electric
                                 </option>
-                                <option value="All" {{ old('plant') == 'All' ? 'selected' : '' }}>ALL</option>
-                            </select> @error('plant')
+                                <option value="ALL" {{ old('plant') == 'ALL' ? 'selected' : '' }}>ALL</option>
+
+                                @if (old('plant') && !in_array(old('plant'), ['Unit', 'Body', 'Electric', 'All']))
+                                    <option value="{{ old('plant') }}" selected>{{ old('plant') }}</option>
+                                @endif
+                            </select>
+                            @error('plant')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -264,6 +292,52 @@
 
         // Clear search
         document.addEventListener("DOMContentLoaded", function() {
+
+            // TomSelect for CODE (creatable)
+            new TomSelect("#code-select", {
+                create: true,
+                persist: false,
+                maxItems: 1,
+                placeholder: "Type or select code...",
+                allowEmptyOption: true,
+            });
+
+            // TomSelect for PLANT (creatable + predefined options)
+            new TomSelect("#plant-select", {
+                create: true,
+                persist: false,
+                maxItems: 1,
+                placeholder: "Choose or add plant...",
+                allowEmptyOption: true, // ← penting
+            });
+
+            // TomSelect for EDIT modal (NO CREATE)
+            document.querySelectorAll('[id^="editDepartmentModal-"]').forEach(modal => {
+                const id = modal.getAttribute("id").replace("editDepartmentModal-", "");
+
+                const codeSelect = modal.querySelector(`#edit-code-select-${id}`);
+                const plantSelect = modal.querySelector(`#edit-plant-select-${id}`);
+
+                if (codeSelect) {
+                    new TomSelect(codeSelect, {
+                        create: true, // <-- TIDAK BOLEH CREATE BARU
+                        maxItems: 1,
+                        placeholder: "Select code...",
+                        allowEmptyOption: false
+                    });
+                }
+
+                if (plantSelect) {
+                    new TomSelect(plantSelect, {
+                        create: true, // <-- TIDAK BOLEH CREATE BARU
+                        maxItems: 1,
+                        placeholder: "Select plant...",
+                        allowEmptyOption: false
+                    });
+                }
+            });
+
+
             const clearBtn = document.getElementById("clearSearch");
             const searchInput = document.getElementById("searchInput");
             const searchForm = document.getElementById("searchForm");
