@@ -3,152 +3,355 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="container my-3">
-    {{-- Summary Cards --}}
-    <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm border-0 text-center h-100 py-2">
-                <div class="card-body p-2">
-                    <small class="text-muted">Total Documents</small>
-                    <div class="fw-bold text-primary fs-5">{{ $totalDocuments }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm border-0 text-center h-100 py-2">
-                <div class="card-body p-2">
-                    <small class="text-muted">Need Review</small>
-                    <div class="fw-bold text-warning fs-5">{{ $needReviewDocuments }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm border-0 text-center h-100 py-2">
-                <div class="card-body p-2">
-                    <small class="text-muted">Document Control</small>
-                    <div class="fw-bold text-success fs-5">{{ $documentControls }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm border-0 text-center h-100 py-2">
-                <div class="card-body p-2">
-                    <small class="text-muted">Document Review</small>
-                    <div class="fw-bold text-danger fs-5">{{ $documentReviews }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="container my-3">
 
-    {{-- Pie Chart & Obsolete Table Side by Side --}}
-    <div class="row mb-3">
-        <div class="col-md-4 d-flex align-items-stretch">
-            <div class="card shadow-sm border-0 w-100">
-                <div class="card-body p-2">
-                    <small class="text-center mb-2 fw-bold d-block">Active vs Obsolete Documents</small>
-                    <div class="d-flex justify-content-center">
-                        <canvas id="activeObsoletePie" height="180" width="400" style="max-width:400px;"></canvas>
+        {{-- ===== SUMMARY CARDS ===== --}}
+        <div class="row g-3 mb-3">
+            @php
+                $cards = [
+                    [
+                        'label' => 'Total Documents',
+                        'value' => $totalDocuments + $totalFtpp,
+                        'color' => 'primary',
+                        'icon' => 'bi-files',
+                    ],
+                    [
+                        'label' => 'FTPP',
+                        'value' => $ftpp,
+                        'color' => 'warning text-dark',
+                        'icon' => 'bi-exclamation-circle',
+                    ],
+                    [
+                        'label' => 'Document Control',
+                        'value' => $documentControls,
+                        'color' => 'success',
+                        'icon' => 'bi-gear',
+                    ],
+                    [
+                        'label' => 'Document Review',
+                        'value' => $documentReviews,
+                        'color' => 'danger',
+                        'icon' => 'bi-clipboard-check',
+                    ],
+                ];
+            @endphp
+
+            @foreach ($cards as $c)
+                <div class="col-6 col-md-3">
+                    <div class="card shadow border-0 text-center h-100 py-3">
+                        <div class="card-body p-2">
+                            <div class="text-{{ $c['color'] }} fs-4 mb-1">
+                                <i class="bi {{ $c['icon'] }}"></i>
+                            </div>
+                            <small class="text-muted">{{ $c['label'] }}</small>
+                            <div class="fw-bold fs-5 mt-1 text-{{ $c['color'] }}">{{ $c['value'] }}</div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- ===== PIE CHART + OBSOLETE TABLE ===== --}}
+        <div class="row g-3 mb-3">
+            <div class="col-md-4 d-flex">
+                <div class="card shadow border-0 w-100">
+                    <div class="card-body p-3">
+                        <div class="fw-bold mb-2 d-flex align-items-center gap-1">
+                            <i data-feather="pie-chart" class="me-1 w-5 h-5"></i>
+                            <span class="text-gray-800">Active vs Obsolete Documents</span>
+                        </div>
+
+                        <div class="d-flex justify-content-center">
+                            <canvas id="activeObsoletePie" style="max-width: 280px; max-height: 280px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8 d-flex">
+                <div class="card shadow border-0 w-100">
+                    <div class="card-body p-3">
+                        <div class="fw-bold mb-2 d-flex align-items-center gap-1">
+                            <i data-feather="trash-2" class="me-1 w-5 h-5"></i>
+                            <span class="text-gray-800">Obsolete Documents</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle text-center mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small">Document Name</th>
+                                        <th class="small">Status</th>
+                                        <th class="small">Obsoleted At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($obsoleteDocuments as $doc)
+                                        <tr>
+                                            <td class="small">{{ $doc->document->name ?? '-' }}</td>
+                                            <td><span class="badge bg-danger">{{ $doc->status->name ?? '-' }}</span></td>
+                                            <td class="small">
+                                                {{ $doc->obsolete_date ? \Carbon\Carbon::parse($doc->obsolete_date)->format('d M Y') : '-' }}
+                                            </td>
+
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-muted small">No obsolete documents found.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body p-2">
-                    <small class="fw-bold mb-2 d-block">🗑️ Obsolete Documents</small>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle text-center mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="small">Title</th>
-                                    <th class="small">Category</th>
-                                    <th class="small">Status</th>
-                                    <th class="small">Obsoleted At</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($obsoleteDocuments as $doc)
-                                    <tr>
-                                        <td class="small">{{ $doc->title }}</td>
-                                        <td class="small">{{ $doc->category->name ?? '-' }}</td>
-                                        <td><span class="badge bg-danger">{{ $doc->status->name ?? '-' }}</span></td>
-                                        <td class="small">{{ $doc->obsoleted_at ? $doc->obsoleted_at->format('d M Y H:i') : '-' }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-muted small">No obsolete documents found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    {{-- Latest Documents --}}
-    <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body p-2">
-            <small class="fw-bold mb-2 d-block">📄 Latest Documents</small>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle text-center mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="small">Title</th>
-                            <th class="small">Category</th>
-                            <th class="small">Status</th>
-                            <th class="small">Uploaded At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($latestDocuments as $doc)
-                            <tr>
-                                <td class="small">{{ $doc->title }}</td>
-                                <td class="small">{{ $doc->category->name ?? '-' }}</td>
-                                <td>
-                                    <span class="badge
-                                        @if($doc->status->name == 'Active') bg-success
-                                        @elseif($doc->status->name == 'Rejected') bg-danger
-                                        @elseif($doc->status->name == 'Need Review') bg-warning text-dark
-                                        @else bg-secondary @endif">
-                                        {{ $doc->status->name ?? '-' }}
-                                    </span>
-                                </td>
-                                <td class="small">{{ $doc->created_at->format('d M Y H:i') }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-muted small">No documents found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+        {{-- ===== Documents ===== --}}
+
+        {{-- Control Documents Chart --}}
+        <div class="card shadow border-0 p-3 mb-4">
+            <h5 class="fw-bold mb-2">Control Documents</h5>
+            <canvas id="controlDocsChart" height="300"></canvas>
+
         </div>
+
+        {{-- Review Documents Chart --}}
+        <div class="card shadow border-0 p-3 mb-4">
+            <h5 class="fw-bold mb-2">Review Documents</h5>
+            <canvas id="reviewDocsChart" height="300"></canvas>
+        </div>
+
+        {{-- ===== FTPP ===== --}}
+        <div class="card shadow border-0 p-3 mb-4">
+            <h5 class="fw-bold mb-2">FTPP Status Summary</h5>
+            <canvas id="ftppStatusChart" height="250"></canvas>
+        </div>
+
     </div>
-</div>
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const ctx = document.getElementById('activeObsoletePie').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['Active', 'Obsolete'],
-            datasets: [{
-                data: [{{ $activeDocuments }}, {{ $obsoleteDocuments->count() ?? 0 }}],
-                backgroundColor: ['#28a745', '#dc3545'],
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' }
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        /* ===================== PIE CHART ===================== */
+        new Chart(document.getElementById('activeObsoletePie'), {
+            type: 'pie',
+            data: {
+                labels: ['Active', 'Obsolete'],
+                datasets: [{
+                    data: [
+                        {{ $activeDocuments ?? 0 }},
+                        {{ $obsoleteDocuments->count() ?? 0 }}
+                    ],
+                    backgroundColor: ['#28a745', '#dc3545'],
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 12,
+                            usePointStyle: true
+                        }
+                    }
+                }
             }
-        }
-    });
-</script>
+        });
+
+        /* ===================== BAR CHART ===================== */
+        const ctx = document.getElementById('ftppStatusChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    'Open',
+                    'Submitted',
+                    'Checked by Dept Head',
+                    'Approved by Auditor',
+                    'Need Revision',
+                    'Close'
+                ],
+                datasets: [{
+                    label: 'Total Findings',
+                    data: [
+                        {{ $chartData['Open'] ?? 0 }},
+                        {{ $chartData['Submitted'] ?? 0 }},
+                        {{ $chartData['Checked by Dept Head'] ?? 0 }},
+                        {{ $chartData['Approved by Auditor'] ?? 0 }},
+                        {{ $chartData['Need Revision'] ?? 0 }},
+                        {{ $chartData['Close'] ?? 0 }},
+                    ],
+
+                    backgroundColor: [
+                        '#dc3545', // Open
+                        '#fd7e14', // Submitted
+                        '#0d6efd', // Checked
+                        '#198754', // Approved
+                        '#6c757d', // Need Revision
+                        '#6c757d' // Close
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    barThickness: 28 // biar lebih rapih
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            padding: 6
+                        },
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 0
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        const departments = @json($departments); // Semua department
+        const departmentsReview = @json($departmentsReview); // Hanya Body, Unit, Electric
+        const controlDocuments = @json($controlDocuments);
+        const reviewDocuments = @json($reviewDocuments);
+
+        // Labels
+        const controlLabels = Object.values(departments);
+        const reviewLabels = Object.values(departmentsReview);
+
+        // Shorten labels (2 kata max)
+        const shortControlLabels = controlLabels.map(name => {
+            const words = name.split(' ');
+            return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
+        });
+        const shortReviewLabels = reviewLabels.map(name => {
+            const words = name.split(' ');
+            return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
+        });
+
+        // Data array sesuai urutan label
+        const controlData = Object.keys(departments).map(id => controlDocuments[id] ?? 0);
+        const reviewData = Object.keys(departmentsReview).map(id => reviewDocuments[id] ?? 0);
+
+        // Render Control Documents Chart
+        new Chart(document.getElementById('controlDocsChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: shortControlLabels,
+                datasets: [{
+                    label: 'Control Documents',
+                    data: controlData,
+                    backgroundColor: '#0d6efd',
+                    borderRadius: 6,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Render Review Documents Chart
+        new Chart(document.getElementById('reviewDocsChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: shortReviewLabels,
+                datasets: [{
+                    label: 'Review Documents',
+                    data: reviewData,
+                    backgroundColor: '#198754',
+                    borderRadius: 6,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 @endpush
