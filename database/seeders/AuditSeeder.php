@@ -14,8 +14,8 @@ class AuditSeeder extends Seeder
     public function run(): void
     {
         DB::table('tm_audit_types')->insert([
-            ['name' => 'System Management LK3'],
-            ['name' => 'System Management Mutu'],
+            ['name' => 'System Management LK3 (ISO 14001 & ISO 45001)'],
+            ['name' => 'System Management Mutu (IATF 16949)'],
         ]);
     }
 }
