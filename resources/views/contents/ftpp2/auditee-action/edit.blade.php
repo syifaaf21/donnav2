@@ -13,7 +13,7 @@
                 <span class="ml-2">Back</span>
             </a>
         </div>
-        
+
         <form action="{{ route('ftpp.auditee-action.update', $finding->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -34,12 +34,12 @@
                             <div class="mt-2 space-y-2">
                                 <div class="flex flex-col space-y-1">
                                     <label class="text-gray-600">Why-<span x-text="i"></span> (Mengapa):</label>
-                                    <input type="text" name="why[]"
+                                    <input type="text" :name="'why_' + i + '_mengapa'"
                                         class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
                                         x-model="form['why_'+i+'_mengapa']">
 
                                     <label class="text-gray-600">Cause (Karena):</label>
-                                    <input type="text" name="cause[]"
+                                    <input type="text" :name="'cause_' + i + '_karena'"
                                         class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
                                         x-model="form['cause_'+i+'_karena']">
                                 </div>
@@ -81,20 +81,20 @@
                                 <tr class="corrective-row">
                                     <td class="border border-gray-200 text-center" x-text="i"></td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="corrective_activity[]" class="w-full p-1 border-none"
-                                            x-model="form['corrective_'+i+'_activity']">
+                                        <input type="text" :name="'corrective_' + i + '_activity'"
+                                            class="w-full p-1 border-none" x-model="form['corrective_'+i+'_activity']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="corrective_pic[]" class="w-full p-1 border-none"
-                                            x-model="form['corrective_'+i+'_pic']">
+                                        <input type="text" :name="'corrective_pic[' + i + ']'"
+                                            class="w-full p-1 border-none" x-model="form['corrective_'+i+'_pic']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="corrective_planning_date[]"
+                                        <input type="date" :name="'corrective_planning[' + i + ']'"
                                             class="w-full p-1 border-none" x-model="form['corrective_'+i+'_planning']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="corrective_actual_date[]" class="w-full p-1 border-none"
-                                            x-model="form['corrective_'+i+'_actual']">
+                                        <input type="date" :name="'corrective_actual[' + i + ']'"
+                                            class="w-full p-1 border-none" x-model="form['corrective_'+i+'_actual']">
                                     </td>
                                 </tr>
                             </template>
@@ -109,19 +109,19 @@
                                 <tr class="preventive-row">
                                     <td class="border border-gray-200 text-center" x-text="i"></td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="preventive_activity[]" class="w-full p-1 border-none"
-                                            x-model="form['preventive_'+i+'_activity']">
+                                        <input type="text" :name="'preventive_' + i + '_activity'"
+                                            class="w-full p-1 border-none" x-model="form['preventive_'+i+'_activity']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="text" name="preventive_pic[]" class="w-full p-1 border-none"
-                                            x-model="form['preventive_'+i+'_pic']">
+                                        <input type="text" :name="'preventive_pic[' + i + ']'"
+                                            class="w-full p-1 border-none" x-model="form['preventive_'+i+'_pic']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="preventive_planning_date[]"
+                                        <input type="date" :name="'preventive_planning[' + i + ']'"
                                             class="w-full p-1 border-none" x-model="form['preventive_'+i+'_planning']">
                                     </td>
                                     <td class="border border-gray-200">
-                                        <input type="date" name="preventive_actual_date[]"
+                                        <input type="date" :name="'preventive_actual[' + i + ']'"
                                             class="w-full p-1 border-none" x-model="form['preventive_'+i+'_actual']">
                                     </td>
                                 </tr>
@@ -468,6 +468,7 @@
                             }
                         });
                     }
+                    console.log("Auditee Action:", this.form.auditeeAction);
                 },
 
                 loadSubAudit() {
