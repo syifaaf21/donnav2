@@ -3,8 +3,7 @@
 <input type="hidden" name="pic" value="{{ auth()->user()->id }}">
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
-
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-4 my-2">
         <!-- LEFT: 5 WHY -->
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
             <div class="font-semibold text-lg text-gray-900">AUDITEE</div>
@@ -35,8 +34,6 @@
                 </div>
             </div>
         </div>
-
-
         <!-- RIGHT COLUMN: Corrective + Preventive + Yokoten -->
         <div class="space-y-6">
 
@@ -47,9 +44,9 @@
                     <tr class="bg-gray-100 font-semibold text-center">
                         <td class="border border-gray-200 p-1 w-8">No</td>
                         <td class="border border-gray-200 p-1">Activity</td>
-                        <td class="border border-gray-200 p-1 w-32">PIC</td>
-                        <td class="border border-gray-200 p-1 w-28">Planning</td>
-                        <td class="border border-gray-200 p-1 w-28">Actual</td>
+                        <td class="border border-gray-200 p-1 w-20">PIC</td>
+                        <td class="border border-gray-200 p-1 w-20">Planning</td>
+                        <td class="border border-gray-200 p-1 w-20">Actual</td>
                     </tr>
 
                     <!-- Corrective -->

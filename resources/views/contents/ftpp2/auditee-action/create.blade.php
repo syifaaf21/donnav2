@@ -6,6 +6,24 @@
 @endphp
 @section('content')
     <div class="container mx-auto my-2 px-4">
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li>
+                    <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-folder me-1"></i>FTPP
+                    </a>
+                </li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">Assign Auditee Action</li>
+            </ol>
+        </nav>
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow-sm space-y-6 mt-2">
             {{-- Back button --}}
             <div class="mb-3">
@@ -15,6 +33,9 @@
                     <span class="ml-2">Back</span>
                 </a>
             </div>
+
+            <h4>Assign Auditee Action</h4>
+
             <div x-data="editFtppApp()" x-init="init()">
                 <form action="{{ route('ftpp.auditee-action.store', $finding->id) }}" method="POST">
                     @csrf
@@ -232,7 +253,7 @@
                                     '/').pop() ?? '';
 
                                 if ((f.file_path ?? filename).match(
-                                    /\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
+                                        /\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
                                     // Image preview
                                     previewImageContainer2.innerHTML += `
                                         <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded" />
