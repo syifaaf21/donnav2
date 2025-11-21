@@ -196,55 +196,64 @@
 </form>
 <!-- Sidebar Klausul -->
 <div id="sidebarKlausul"
-    class="fixed top-0 right-0 w-full md:w-1/4 h-full bg-white shadow-lg p-5 hidden overflow-y-auto">
+    class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="font-semibold text-lg text-gray-700">Select Clause</h2>
-        <button type="button" onclick="closeSidebar()" class="text-gray-600 hover:text-red-500">
-            <i data-feather="x"></i>
+    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
+        <h2 class="font-semibold text-lg text-gray-800">Select Clause</h2>
+        <button type="button" onclick="closeSidebar()" class="text-gray-600 hover:text-red-500 transition">
+            <i data-feather="x" class="w-5 h-5"></i>
         </button>
     </div>
 
     <!-- Clause -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Clause:</label>
-    <select id="selectKlausul" class="border border-gray-300 p-2 w-full rounded mb-4">
+    <select id="selectKlausul"
+        class="border border-gray-300 p-2 w-full rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 mb-4">
         <option value="">-- Choose Clause --</option>
     </select>
 
     <!-- Head Clause -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Head Clause:</label>
-    <select id="selectHead" class="border border-gray-300 p-2 w-full rounded mb-4" disabled>
+    <select id="selectHead"
+        class="border border-gray-300 p-2 w-full rounded-lg bg-gray-50 disabled:opacity-50 mb-4"
+        disabled>
         <option value="">-- Choose Head Clause --</option>
     </select>
 
     <!-- Sub Clause -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Sub Clause:</label>
-    <select id="selectSub" class="border border-gray-300 p-2 w-full rounded mb-4" disabled>
+    <select id="selectSub"
+        class="border border-gray-300 p-2 w-full rounded-lg bg-gray-50 disabled:opacity-50 mb-4"
+        disabled>
         <option value="">-- Choose Sub Clause --</option>
     </select>
 
     <!-- Submit Button -->
     <button type="button" onclick="addSubKlausul()"
-        class="bg-blue-500 text-white px-4 py-2 w-2/3 rounded hover:bg-blue-600 transition mt-2">
-        Add
+        class="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
+               hover:bg-blue-700 transition shadow">
+        <i data-feather="plus" class="w-4 h-4"></i> Add
     </button>
 </div>
 
 {{-- Sidebar Select Dept/Proc/Prod by Plant --}}
 <div id="sidebarPlant"
-    class="fixed top-0 right-0 w-full md:w-1/4 h-full bg-white shadow-lg p-5 hidden overflow-y-auto">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold text-gray-700">Select Plant / Department</h2>
-        <button type="button" onclick="closePlantSidebar()" class="text-gray-600 hover:text-red-500">
-            <i data-feather="x"></i> <!-- Feather icon -->
+    class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
+
+    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
+        <h2 class="text-lg font-semibold text-gray-800">Select Plant / Department</h2>
+        <button type="button" onclick="closePlantSidebar()" class="text-gray-600 hover:text-red-500 transition">
+            <i data-feather="x" class="w-5 h-5"></i>
         </button>
     </div>
 
     <!-- Plant -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Plant:</label>
-    <select id="plantSelect" class="border border-gray-300 p-2 w-full rounded mb-4">
+    <select id="plantSelect"
+        class="border border-gray-300 p-2 w-full rounded-lg mb-4 bg-gray-50 focus:ring-blue-500 focus:border-blue-500">
         <option value="">-- Choose Plant --</option>
         <option value="Body">Body</option>
         <option value="Unit">Unit</option>
@@ -254,8 +263,8 @@
 
     <!-- Department -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Department:</label>
-    <select id="sidebarDepartment" class="tom-select w-full border rounded p-2"
-        placeholder="Search or select department..." disabled>
+    <select id="sidebarDepartment"
+        class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4" disabled>
         @foreach ($departments as $dept)
             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
         @endforeach
@@ -263,8 +272,8 @@
 
     <!-- Process -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Process:</label>
-    <select id="sidebarProcess" class="tom-select w-full border rounded p-2"
-        placeholder="Search or select process..." disabled>
+    <select id="sidebarProcess"
+        class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4" disabled>
         @foreach ($processes as $proc)
             <option value="{{ $proc->id }}">{{ ucfirst($proc->name) }}</option>
         @endforeach
@@ -272,38 +281,39 @@
 
     <!-- Product -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Product:</label>
-    <select id="sidebarProduct" class="tom-select w-full border rounded p-2"
-        placeholder="Search or select product..." disabled>
+    <select id="sidebarProduct"
+        class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4" disabled>
         @foreach ($products as $product)
             <option value="{{ $product->id }}">{{ $product->name }}</option>
         @endforeach
     </select>
 
-    <!-- Submit -->
     <button type="button" onclick="submitSidebarPlant()"
-        class="bg-blue-500 text-white mt-2 px-4 py-2 w-2/3 rounded hover:bg-blue-600">
-        Add
+        class="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
+               hover:bg-blue-700 shadow transition">
+        <i data-feather="plus" class="w-4 h-4"></i> Add
     </button>
 </div>
 
 {{-- Sidebar select auditee --}}
 <div id="auditeeSidebar"
-    class="fixed top-0 right-0 w-full md:w-1/4 h-full bg-white shadow-lg p-5 hidden overflow-y-auto">
+    class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
 
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold text-gray-700">Select Auditee</h2>
-        <button type="button" onclick="closeAuditeeSidebar()" class="text-gray-600 hover:text-red-500">
-            <i data-feather="x"></i>
+    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
+        <h2 class="text-lg font-semibold text-gray-800">Select Auditee</h2>
+        <button type="button" onclick="closeAuditeeSidebar()" class="text-gray-600 hover:text-red-500 transition">
+            <i data-feather="x" class="w-5 h-5"></i>
         </button>
     </div>
 
-    <!-- ✅ Select untuk Tom Select -->
-    <select id="auditeeSelect" multiple placeholder="Search or select auditee..."
-        class="w-full border rounded p-2"></select>
+    <select id="auditeeSelect" multiple
+        class="w-full border rounded-lg p-2 bg-gray-50" placeholder="Search or select auditee..."></select>
 
     <button type="button" onclick="saveAuditeeSelection()"
-        class="mt-4 bg-blue-500 text-white px-4 py-2 w-full rounded hover:bg-blue-600">
-        Add
+        class="flex items-center justify-center gap-2 mt-4 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
+               hover:bg-blue-700 transition shadow">
+        <i data-feather="plus" class="w-4 h-4"></i> Add
     </button>
 </div>
 

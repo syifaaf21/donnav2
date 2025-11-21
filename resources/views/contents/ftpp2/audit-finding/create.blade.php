@@ -5,6 +5,24 @@
     $role = strtolower(auth()->user()->role->name);
 @endphp
 @section('content')
+    {{-- Breadcrumbs --}}
+    <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li>
+                <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                   <i class="bi bi-folder me-1"></i>FTPP
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-medium">Create New Finding</li>
+        </ol>
+    </nav>
 
     <div class="bg-white p-6 border border-gray-200 rounded-lg shadow-sm space-y-6 mt-2">
         {{-- Back button --}}
@@ -15,6 +33,8 @@
                 <span class="ml-2">Back</span>
             </a>
         </div>
+
+        <h4>Create New Finding</h4>
 
         {{-- Show create-audit-finding for: super admin, admin, auditor --}}
         @if (in_array($role, ['super admin', 'admin', 'auditor']))
