@@ -53,21 +53,35 @@
                         @endphp
 
                         {{-- Reminder Date --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-medium">Reminder Date <span class="text-danger">*</span></label>
                             <input type="date" name="reminder_date" class="form-control border-1 shadow-sm"
-                                value="{{ session('editOldInputs.' . $mapping->id . '.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}" min="{{ $today }}"required>
+                                value="{{ session('editOldInputs.' . $mapping->id . '.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}"
+                                min="{{ $today }}"required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         {{-- Obsolete --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-medium">Obsolete Date <span class="text-danger">*</span></label>
                             <input type="date" name="obsolete_date" class="form-control border-1 shadow-sm"
-                                value="{{ session('editOldInputs.' . $mapping->id . '.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}" min="{{ $today }}"required>
+                                value="{{ session('editOldInputs.' . $mapping->id . '.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}"
+                                min="{{ $today }}"required>
                             @error('obsolete_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        {{-- Period (Years) --}}
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Period (Years) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" name="period_years" min="1"
+                                class="form-control border-1 shadow-sm"
+                                value="{{ session('editOldInputs.' . $mapping->id . '.period_years', $mapping->period_years) }}"
+                                @if (strtolower($mapping->status->name) === 'active') disabled @endif required>
+                            @error('period_years')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

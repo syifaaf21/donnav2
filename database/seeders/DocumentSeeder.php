@@ -30,7 +30,7 @@ class DocumentSeeder extends Seeder
 
         // Children of QCPC
         $qcw = Document::create([
-            'name' => 'Quality Control Work Instruction Sheet',
+            'name' => 'Quality Check Work Instruction Sheet',
             'code' => 'QCWIS',
             'parent_id' => $qcpc->id,
             'type' => 'review',

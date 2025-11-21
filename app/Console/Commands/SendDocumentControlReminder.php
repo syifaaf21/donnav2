@@ -15,7 +15,7 @@ class SendDocumentControlReminder extends Command
     public function handle(WhatsAppService $wa)
     {
         $today = Carbon::now();
-        if (!$today->isWednesday()) {
+        if (!$today->isMonday()) {
             $this->info("Not Monday, skipping WhatsApp reminder.");
             return;
         }
@@ -85,7 +85,7 @@ class SendDocumentControlReminder extends Command
 
         // Format pesan
         $message = "📌 *DOCUMENT CONTROL REMINDER*\n";
-        $message .= "_(TESTING)_\n\n";
+        $message .= "_(Automated  Whatsapp Notification)_\n\n";
 
 
         $formatCategory = function ($label, $docsByDept) use (&$message) {
@@ -111,26 +111,26 @@ class SendDocumentControlReminder extends Command
         foreach ($categories['active'] as $dept => $docs) {
             foreach ($docs as $doc) {
                 $daysLeft = Carbon::parse($doc->obsolete_date)->diffInDays($now);
-                $doc->_message = "    - *{$doc->document->name}* → ⚠️ {$daysLeft} day(s) left until obsolete\n";
+                $doc->_message = "    - *{$doc->document->name}* → ⚠️ {$daysLeft} day(s) left until expired\n";
             }
         }
         foreach ($categories['obsolete_today'] as $dept => $docs) {
             foreach ($docs as $doc) {
-                $doc->_message = "    - *{$doc->document->name}* → Obsolete today\n";
+                $doc->_message = "    - *{$doc->document->name}* → Expired today\n";
             }
         }
         foreach ($categories['overdue'] as $dept => $docs) {
             foreach ($docs as $doc) {
                 $daysOver = Carbon::parse($doc->obsolete_date)->diffInDays($now);
-                $doc->_message = "    - *{$doc->document->name}* → Overdue by {$daysOver} day(s)  ❗\n";
+                $doc->_message = "    - *{$doc->document->name}* → Expired by {$daysOver} day(s)  ❗\n";
             }
         }
 
         // Tambahkan kategori ke pesan
         $formatCategory("⏳ *UNCOMPLETE DOCUMENTS (File not Uploaded)*", $categories['uncomplete']);
-        $formatCategory("🔔 *DOCUMENTS OBSOLENCE REMINDER*", $categories['active']);
-        $formatCategory("⚠️ *DOCUMENTS OBSOLETE TODAY*", $categories['obsolete_today']);
-        $formatCategory("⏰ *OVERDUE DOCUMENTS*", $categories['overdue']);
+        $formatCategory("🔔 *DOCUMENTS EXPIRED REMINDER*", $categories['active']);
+        $formatCategory("⚠️ *DOCUMENTS EXPIRED TODAY*", $categories['obsolete_today']);
+        $formatCategory("⏰ *EXPIRED DOCUMENTS*", $categories['overdue']);
 
         // Footer
         $message .= "*Action Required:* Please submit and verify to MS Department.\n";

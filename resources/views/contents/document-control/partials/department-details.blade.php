@@ -113,7 +113,7 @@
                                                     <div class="py-1 text-sm max-h-80 overflow-y-auto">
                                                         @foreach ($mapping->files_for_modal as $file)
                                                             <button type="button"
-                                                                class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
+                                                                class=" w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
                                                                 data-file="{{ $file['url'] }}"
                                                                 data-doc-title="{{ $file['name'] }}">
                                                                 📄 {{ $file['name'] }}
@@ -124,7 +124,7 @@
                                             @elseif(count($mapping->files_for_modal) === 1)
                                                 @php $file = $mapping->files_for_modal[0]; @endphp
                                                 <button type="button"
-                                                    class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-cyan-500 hover:bg-cyan-600 text-white view-file-btn"
+                                                    class="action-btn inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-cyan-500 hover:bg-cyan-600 text-white view-file-btn"
                                                     data-file="{{ $file['url'] }}" title="View File">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
@@ -132,7 +132,7 @@
                                         </div>
                                         <!-- Upload -->
                                         <button type="button"
-                                            class="btn-revise inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
+                                            class="action-btn btn-revise inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
                                             data-docid="{{ $mapping->id }}"
                                             data-doc-title="{{ $mapping->document->name }}"
                                             data-status="{{ $mapping->status->name }}" title="Upload"
@@ -141,17 +141,21 @@
                                         </button>
                                         <!-- Approve / Reject -->
                                         @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+                                            <form
+                                                action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
+                                                method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="button"
+                                                    class="action-btn btn-approve inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600"
+                                                    data-status="{{ $mapping->status->name }}"
+                                                    data-obsolete="{{ $mapping->obsolete_date }}"
+                                                    data-period="{{ $mapping->period_years }}"
+                                                    onclick="confirmApprove(this)" title="Approve">
+                                                    <i class="bi bi-check2-circle"></i>
+                                                </button>
+                                            </form>
                                             <button type="button"
-                                                class="btn-approve inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600"
-                                                data-bs-toggle="modal" data-bs-target="#approveModal"
-                                                data-docid="{{ $mapping->id }}"
-                                                data-doc-title="{{ $mapping->document->name }}"
-                                                data-status="{{ $mapping->status->name }}" title="Approve"
-                                                data-approve-url="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}">
-                                                <i class="bi bi-check2-circle"></i>
-                                            </button>
-                                            <button type="button"
-                                                class="btn-reject inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600"
+                                                class="action-btn btn-reject inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600"
                                                 data-docid="{{ $mapping->id }}"
                                                 data-doc-title="{{ $mapping->document->name }}"
                                                 data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
@@ -218,6 +222,25 @@
     /* Tambahan: untuk isi dropdown agar tidak transparan juga */
     .dropdown-fixed .py-1 {
         background-color: #fff;
+    }
+
+    .action-btn {
+        width: 34px;
+        /* fix width */
+        height: 34px;
+        /* fix height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 !important;
+        /* hilangkan perbedaan padding */
+        border-radius: 6px;
+        /* biar rapi */
+    }
+
+    .action-btn i {
+        font-size: 16px;
+        /* bikin semua icon seragam */
     }
 </style>
 @push('scripts')
@@ -533,5 +556,33 @@
                 }
             });
         });
+
+        function confirmApprove(btn) {
+            const form = btn.closest('form');
+            const periodYears = btn.dataset.period || 0;
+
+            Swal.fire({
+                title: "Approve Document?",
+                html: `
+            <div class="text-sm">
+                Are you sure you want to approve this document?<br><br>
+                <strong>This document will be obsolete in:</strong><br>
+                <span style="font-size: 1.1rem; color:#0d6efd; font-weight:600;">
+                    ${periodYears} year(s)
+                </span>
+            </div>
+        `,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#16a34a",
+                cancelButtonColor: "#dc2626",
+                confirmButtonText: "Yes, approve it",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
     </script>
 @endpush

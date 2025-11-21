@@ -159,7 +159,7 @@
                                         {{ old('plant', $department->plant) == 'Electric' ? 'selected' : '' }}>Electric
                                     </option>
                                     <option value="All"
-                                        {{ old('plant', $department->plant) == 'All' ? 'selected' : '' }}>All</option>
+                                        {{ old('plant', $department->plant) == 'All' ? 'selected' : '' }}>ALL</option>
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -220,7 +220,7 @@
                                 <option value="Body" {{ old('plant') == 'Body' ? 'selected' : '' }}>Body</option>
                                 <option value="Electric" {{ old('plant') == 'Electric' ? 'selected' : '' }}>Electric
                                 </option>
-                                <option value="All" {{ old('plant') == 'All' ? 'selected' : '' }}>All</option>
+                                <option value="All" {{ old('plant') == 'All' ? 'selected' : '' }}>ALL</option>
                             </select> @error('plant')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

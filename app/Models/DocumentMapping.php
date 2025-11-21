@@ -23,6 +23,7 @@ class DocumentMapping extends Model
         'reminder_date',
         'deadline',
         'obsolete_date',
+        'period_years',
         'status_id',
         'notes',
         'user_id',
