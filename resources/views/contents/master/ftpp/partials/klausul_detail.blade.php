@@ -17,8 +17,8 @@
                     <td class="px-3 py-2 border-b">{{ $head->code }}</td>
                     <td class="px-3 py-2 border-b">{{ $head->name }}</td>
                     <td class="px-3 py-2 border-b text-center">
-                        <button class="text-blue-600 hover:underline">Edit</button> |
-                        <button class="text-red-600 hover:underline">Delete</button>
+                        <button type="button" class="text-blue-600 hover:underline">Edit</button> |
+                        <button type="button" class="text-red-600 hover:underline">Delete</button>
                     </td>
                 </tr>
             @endforeach

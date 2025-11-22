@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('tm_processes', function (Blueprint $table) {
-            $table->enum('plant', ['Body', 'Unit', 'Electric'])->after('code')->nullable();
+            $table->enum('plant', ['All', 'Body', 'Electric', 'Unit',])->after('code')->nullable();
         });
     }
 

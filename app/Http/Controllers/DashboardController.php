@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditFinding;
+use App\Models\Department;
 use App\Models\Document;
 use App\Models\User;
 use App\Models\DocumentMapping;
@@ -13,10 +15,9 @@ class DashboardController extends Controller
     {
         // Hitung total dokumen
         $totalDocuments = DocumentMapping::count();
+        $totalFtpp = AuditFinding::count();
 
-        $needReviewDocuments = DocumentMapping::whereHas('status', function ($q) {
-            $q->where('name', 'Need Review');
-        })->count();
+        $ftpp = AuditFinding::count();
 
         $activeDocuments = DocumentMapping::whereHas('status', function ($q) {
             $q->where('name', 'Active');
@@ -34,25 +35,60 @@ class DashboardController extends Controller
         // Hitung user
         $totalUsers = User::count();
 
-        // Ambil 5 dokumen terbaru
-        $latestDocuments = DocumentMapping::with('status')
-            ->latest()
-            ->take(5)
-            ->get();
+        // Semua department untuk Control Documents
+        $departments = Department::pluck('name', 'id')->toArray();
+
+        // Hanya department dengan plant Body, Unit, Electric untuk Review Documents
+        $departmentsReview = Department::whereIn('plant', ['Body', 'Unit', 'Electric'])
+            ->pluck('name', 'id')->toArray();
+
+        // Jumlah dokumen control per department keyed by department_id
+        $controlDocuments = DocumentMapping::selectRaw('department_id, COUNT(*) as total')
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+            ->groupBy('department_id')
+            ->pluck('total', 'department_id')
+            ->toArray();
+
+        // Jumlah dokumen review per department keyed by department_id
+        $reviewDocuments = DocumentMapping::selectRaw('department_id, COUNT(*) as total')
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->groupBy('department_id')
+            ->pluck('total', 'department_id')
+            ->toArray();
+
 
         $obsoleteDocuments = DocumentMapping::whereHas('status', function ($q) {
             $q->where('name', 'Obsolete');
         })->get();
 
+
+        $chartData = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
+            ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
+            ->whereIn('tm_statuses.name', [
+                'Open',
+                'Submitted',
+                'Checked by Dept Head',
+                'Approved by Auditor',
+                'Need Revision',
+                'Close'
+            ])
+            ->groupBy('tm_statuses.name')
+            ->pluck('total', 'status');
+
         return view('contents.index', compact(
             'totalDocuments',
-            'needReviewDocuments',
+            'totalFtpp',
+            'departments',
+            'departmentsReview',
+            'controlDocuments',
+            'reviewDocuments',
+            'ftpp',
             'documentControls',
             'documentReviews',
             'activeDocuments',
             'totalUsers',
-            'latestDocuments',
-            'obsoleteDocuments'
+            'obsoleteDocuments',
+            'chartData',
         ));
     }
 }

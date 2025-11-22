@@ -13,6 +13,7 @@ class CorrectiveAction extends Model
 
     protected $fillable =
     [
+        'pic',
         'auditee_action_id',
         'activity',
         'planning_date',

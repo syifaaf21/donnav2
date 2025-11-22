@@ -1,3 +1,4 @@
+
 {{-- Auditor --}}
 <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
     {{-- Search Bar --}}
@@ -23,6 +24,7 @@
                     <th class="px-4 py-2">Name</th>
                     <th class="px-4 py-2">Email</th>
                     <th class="px-4 py-2">Department</th>
+                    <th>Audit Type</th>
                     <th class="px-4 py-2">Action</th>
                 </tr>
             </thead>
@@ -34,13 +36,15 @@
                             <td class="px-4 py-2">{{ ucwords(strtolower($user->name)) }}</td>
                             <td class="px-4 py-2">{{ $user->email }}</td>
                             <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $user->auditType->name ?? '-' }}</td>
                             <td class="px-4 py-2 flex gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal"
-                                    data-bs-target="#editUserModal-{{ $user->id }}" data-bs-title="Edit User"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                </button>
+                                data-id="{{ $user->id }}"
+                                data-bs-title="Edit User"
+                                class="btn-edit-user bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
                                 {{-- Delete Button --}}
                                 @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
                                     <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
@@ -71,4 +75,5 @@
 <div class="mt-4" id="pagination-links">
     {{ $users->withQueryString()->links('vendor.pagination.tailwind') }}
 </div>
+
 <x-sweetalert-confirm />

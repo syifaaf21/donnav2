@@ -12,19 +12,19 @@ class SubKlausul extends Model
     protected $table = 'tm_sub_klausuls';
 
     protected $fillable =
-    [
-        'head_klausul_id',
-        'code',
-        'name',
-    ];
+        [
+            'head_klausul_id',
+            'code',
+            'name',
+        ];
 
     public function headKlausul()
     {
         return $this->belongsTo(HeadKlausul::class, 'head_klausul_id', 'id');
     }
 
-    public function auditFinding()
+    public function auditFindings()
     {
-        return $this->hasMany(AuditFinding::class);
+        return $this->belongsToMany(AuditFinding::class, 'tt_audit_finding_sub_klausul', 'sub_klausul_id', 'audit_finding_id');
     }
 }

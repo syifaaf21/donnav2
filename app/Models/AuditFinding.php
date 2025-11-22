@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AuditFinding extends Model
+class  AuditFinding extends Model
 {
     use HasFactory;
 
@@ -16,11 +16,10 @@ class AuditFinding extends Model
             'audit_type_id',
             'sub_audit_type_id',
             'finding_category_id',
-            'sub_klausul_id',
             'department_id',
             'process_id',
+            'product_id',
             'auditor_id',
-            'auditee_id',
             'registration_number',
             'finding_description',
             'status_id',
@@ -29,17 +28,17 @@ class AuditFinding extends Model
 
     public function auditeeAction()
     {
-        return $this->hasMany(AuditeeAction::class);
+        return $this->hasOne(AuditeeAction::class);
     }
 
     public function audit()
     {
-        return $this->belongsTo(Audit::class);
+        return $this->belongsTo(Audit::class, 'audit_type_id');
     }
 
     public function subAudit()
     {
-        return $this->belongsTo(SubAudit::class);
+        return $this->belongsTo(SubAudit::class, 'sub_audit_type_id');
     }
 
     public function findingCategory()
@@ -47,9 +46,9 @@ class AuditFinding extends Model
         return $this->belongsTo(FindingCategory::class);
     }
 
-    public function subKlausul()
+    public function subKlausuls()
     {
-        return $this->belongsTo(SubKlausul::class);
+        return $this->belongsToMany(SubKlausul::class, 'tt_audit_finding_sub_klausul', 'audit_finding_id', 'sub_klausul_id');
     }
 
     public function department()
@@ -62,17 +61,15 @@ class AuditFinding extends Model
         return $this->belongsTo(Process::class);
     }
 
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     public function auditor()
     {
         return $this->belongsTo(User::class, 'auditor_id')->whereHas('role', function ($q) {
             $q->where('name', 'auditor');
-        });
-    }
-
-    public function auditee()
-    {
-        return $this->belongsTo(User::class, 'auditee_id')->whereHas('role', function ($q) {
-            $q->where('name', 'auditee');
         });
     }
 
@@ -84,5 +81,10 @@ class AuditFinding extends Model
     public function file()
     {
         return $this->hasMany(DocumentFile::class);
+    }
+
+    public function auditee()
+    {
+        return $this->belongsToMany(User::class, 'tt_audit_finding_auditee', 'audit_finding_id', 'auditee_id');
     }
 }

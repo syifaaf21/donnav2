@@ -1,6 +1,6 @@
 <header class="flex items-center justify-between mx-12 py-3">
     <div class="flex items-center gap-3">
-        <button id="openSidebarBtn" class="md:hidden">
+        <button id="openSidebarBtn" type="button" class="md:hidden">
             <i data-feather="menu"></i>
         </button>
         <h1 class="text-lg font-semibold">@yield('title', 'Dashboard')</h1>
@@ -9,7 +9,7 @@
     <div class="flex items-center gap-4 ml-auto ">
         <!-- Notification Dropdown -->
         <div class="relative">
-            <button id="notificationBtn" class="relative focus:outline-none">
+            <button id="notificationBtn" type="button" class="relative focus:outline-none">
                 <i data-feather="bell" class="w-6 h-6"></i>
 
                 @php
@@ -53,7 +53,7 @@
 
         <!-- Profile dropdown -->
         <div class="relative bg-white shadow rounded-xl border border-gray-100">
-            <button id="profileDropdownBtn"
+            <button id="profileDropdownBtn" type="button"
                 class="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm focus:outline-none">
                 <div
                     class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold uppercase">

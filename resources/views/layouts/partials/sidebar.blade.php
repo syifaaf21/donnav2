@@ -38,28 +38,28 @@
 
 {{-- SCRIPT SIDEBAR TOGGLING --}}
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const toggles = document.querySelectorAll(".collapse-toggle");
+    document.addEventListener("DOMContentLoaded", () => {
+        const toggles = document.querySelectorAll(".collapse-toggle");
 
-    toggles.forEach(toggle => {
-        toggle.addEventListener("click", () => {
-            const targetId = toggle.getAttribute("data-target");
-            const menu = document.getElementById(targetId);
+        toggles.forEach(toggle => {
+            toggle.addEventListener("click", () => {
+                const targetId = toggle.getAttribute("data-target");
+                const menu = document.getElementById(targetId);
 
-            if (!menu) return;
+                if (!menu) return;
 
-            // show/hide
-            menu.classList.toggle("hidden");
+                // show/hide
+                menu.classList.toggle("hidden");
 
-            // rotate chevron
-            const icon = toggle.querySelector("i[data-feather='chevron-right']");
-            if (icon) {
-                icon.style.transition = "transform .2s";
-                icon.style.transform = menu.classList.contains("hidden")
-                    ? "rotate(0deg)"
-                    : "rotate(90deg)";
-            }
+                // rotate chevron
+                const icon = toggle.querySelector("i[data-feather='chevron-right']");
+                if (icon) {
+                    icon.style.transition = "transform .2s";
+                    icon.style.transform = menu.classList.contains("hidden") ?
+                        "rotate(0deg)" :
+                        "rotate(90deg)";
+                }
+            });
         });
     });
-});
 </script>

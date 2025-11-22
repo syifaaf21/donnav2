@@ -17,4 +17,9 @@ class Status extends Model
     {
         return $this->hasMany(DocumentMapping::class);
     }
+
+    public function auditFinding()
+    {
+        return $this->hasMany(AuditFinding::class);
+    }
 }

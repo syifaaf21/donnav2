@@ -16,11 +16,10 @@ return new class extends Migration
             $table->foreignId('audit_type_id')->constrained('tm_audit_types')->onDelete('cascade');
             $table->foreignId('sub_audit_type_id')->nullable()->constrained('tm_sub_audit_types')->onDelete('cascade');
             $table->foreignId('finding_category_id')->constrained('tm_finding_categories')->onDelete('cascade');
-            $table->foreignId('sub_klausul_id')->constrained('tm_sub_klausuls')->onDelete('cascade');
             $table->foreignId('department_id')->constrained('tm_departments')->onDelete('cascade');
             $table->foreignId('process_id')->nullable()->constrained('tm_processes')->onDelete('cascade');
+            $table->foreignId('product_id')->nullable()->constrained('tm_products')->onDelete('cascade');
             $table->foreignId('auditor_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('auditee_id')->constrained('users')->onDelete('cascade');
             $table->string('registration_number');
             $table->text('finding_description');
             $table->foreignId('status_id')->default(6)->constrained('tm_statuses')->onDelete('cascade');

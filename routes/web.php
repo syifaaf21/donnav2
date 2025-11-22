@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AuditeeActionController;
+use App\Http\Controllers\AuditFindingController;
 use App\Http\Controllers\AuditTypeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentControlController;
@@ -10,6 +12,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
+use App\Http\Controllers\Ftpp2Controller;
+use App\Http\Controllers\FtppAprovalController;
 use App\Http\Controllers\FtppController;
 use App\Http\Controllers\FtppMasterController;
 use App\Http\Controllers\KlausulController;
@@ -64,7 +68,39 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
     Route::resource('models', ModelController::class);
     Route::resource('processes', ProcessController::class);
     Route::resource('hierarchy', DocumentController::class);
-    Route::resource('users', UserController::class);
+
+    // Document Review
+    Route::prefix('document-review')->name('document-review.')->group(function () {
+        // Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
+        Route::get('/', [DocumentMappingController::class, 'reviewIndex2'])->name('index2');
+        // Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
+        Route::post('/store', [DocumentMappingController::class, 'storeReview2'])->name('store2');
+        // Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
+        Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview2'])->name('update2');
+        Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
+        Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
+        Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');
+        Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
+    });
+
+    // Document Control
+    Route::prefix('document-control')->name('document-control.')->group(function () {
+        Route::get('/', [DocumentMappingController::class, 'controlIndex'])->name('index');
+        Route::post('/store', [DocumentMappingController::class, 'storeControl'])->name('store');
+        Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
+        Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveControl'])->name('approve');
+        Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateControl'])->name('update');
+        Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
+        Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
+    });
+
+    Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])->name('bulkDestroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Master FTPP & related
+    |--------------------------------------------------------------------------
+    */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
         Route::get('/', [FtppMasterController::class, 'index'])->name('index');
         Route::get('/load/{section}/{id?}', [FtppMasterController::class, 'loadSection'])->name('load');
@@ -93,6 +129,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
             Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
         });
     });
+    Route::resource('users', UserController::class);
 });
 
 /*
@@ -155,50 +192,63 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Master FTPP & related
+    | FTPP & related
     |--------------------------------------------------------------------------
     */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
-
-        // Master FTTP
+        Route::get('/{id}/preview-pdf', [FtppController::class, 'previewPdf'])->name('previewPdf');
+        Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
+        Route::get('/search', [FtppController::class, 'search'])->name('search');
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
-        Route::post('/', [FtppController::class, 'store'])->name('store');
+        Route::delete('/{id}', [FtppController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
-        Route::get('/api/klausul', [KlausulController::class, 'getAll']);
-    });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Document Mapping Review & Control
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('master')->name('master.')->group(function () {
-        // Document Review
-        Route::prefix('document-review')->name('document-review.')->group(function () {
-            // Route::get('/', [DocumentMappingController::class, 'reviewIndex'])->name('index');
-            Route::get('/', [DocumentMappingController::class, 'reviewIndex2'])->name('index2');
-            // Route::post('/store', [DocumentMappingController::class, 'storeReview'])->name('store');
-            Route::post('/store', [DocumentMappingController::class, 'storeReview2'])->name('store2');
-            // Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview'])->name('update');
-            Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateReview2'])->name('update2');
-            Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
-            Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
-            Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');
-            Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
+        Route::prefix('audit-finding')->name('audit-finding.')->group(function () {
+            // Audit Finding routes
+            Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
+            Route::post('/store', [AuditFindingController::class, 'store'])
+                ->name('store');
         });
 
-        // Document Control
-        Route::prefix('document-control')->name('document-control.')->group(function () {
-            Route::get('/', [DocumentMappingController::class, 'controlIndex'])->name('index');
-            Route::post('/store', [DocumentMappingController::class, 'storeControl'])->name('store');
-            Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
-            Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveControl'])->name('approve');
-            Route::put('/update/{mapping}', [DocumentMappingController::class, 'updateControl'])->name('update');
-            Route::delete('/destroy/{mapping}', [DocumentMappingController::class, 'destroy'])->name('destroy');
-            Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
+        Route::prefix('auditee-action')->name('auditee-action.')->group(function () {
+            // Auditee Action routes
+            Route::get('/{id}', [AuditeeActionController::class, 'create'])->name('create');
+            Route::post('/store', [AuditeeActionController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [AuditeeActionController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [AuditeeActionController::class, 'update'])->name('update');
         });
 
-        Route::post('/bulk-destroy', [DocumentMappingController::class, 'bulkDestroy'])->name('bulkDestroy');
+
     });
+    Route::prefix('approval')->name('approval.')->group(function () {
+        Route::get('/get-data/{auditTypeId}', [FtppAprovalController::class, 'getData']);
+        Route::get('/', [FtppAprovalController::class, 'index'])->name('index');
+        Route::get('/{id}', [FtppAprovalController::class, 'edit'])->name('edit');
+        Route::post('/', [FtppAprovalController::class, 'store'])->name('store');
+        Route::post('/ldr-spv-sign', [FtppAprovalController::class, 'ldrSpvSign'])->name('ldr-spv-sign');
+        Route::post('/dept-head-sign', [FtppAprovalController::class, 'deptheadSign'])->name('dept-head-sign');
+        Route::put('/{id}', [FtppAprovalController::class, 'update'])->name('update');
+    });
+
+    Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
+    Route::get('/head-klausul/{klausulId}', [FtppController::class, 'getHeadKlausul']);
+    Route::get('/sub-klausul/{headId}', [FtppController::class, 'getSubKlausul']);
+
+    Route::get('/get-departments/{plant}', [FtppController::class, 'getDepartments']);
+    Route::get('/get-processes/{plant}', [FtppController::class, 'getProcesses']);
+    Route::get('/get-products/{plant}', [FtppController::class, 'getProducts']);
+
+    Route::get('/get-auditee/{departmentId}', [FtppController::class, 'getAuditee']);
+
+    Route::post('/auditor-verify', [FtppAprovalController::class, 'auditorVerify']);
+    Route::post('/auditor-return', [FtppAprovalController::class, 'auditorReturn']);
+    Route::post('/lead-auditor-acknowledge', [FtppAprovalController::class, 'leadAuditorAcknowledge']);
+
+    // Route::get('/test-pdf/{id}', function ($id) {
+    //     $finding = \App\Models\AuditFinding::with(['auditeeAction.file'])->findOrFail($id);
+    //     return view('contents.ftpp2.pdf', compact('finding'));
+    // });
+
 });

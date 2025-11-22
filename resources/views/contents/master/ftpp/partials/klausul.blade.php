@@ -54,7 +54,7 @@
                                             <button data-head-id="{{ $head->id }}"
                                                 data-head-name="{{ $head->name }}"
                                                 data-sub='@json($head->subKlausul)'
-                                                class="btn-edit-klausul bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded transition">
+                                                class="btn-edit-klausul bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
                                                 <i data-feather="edit" class="w-4 h-4"></i>
                                             </button>
                                             |
@@ -192,7 +192,7 @@
             document.querySelectorAll('.delete-form').forEach(form => {
                 form.addEventListener('submit', e => {
                     e.preventDefault();
-                    if (confirm('Delete this Head Klausul and all its Sub Klausuls?')) form
+                    if (confirm('Are you sure you want to delete this data?')) form
                         .submit();
                 });
             });

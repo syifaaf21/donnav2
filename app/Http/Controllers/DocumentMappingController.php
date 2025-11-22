@@ -307,7 +307,8 @@ class DocumentMappingController extends Controller
         ]);
 
         $cleanNotes = trim($validated['notes'] ?? '');
-        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') $cleanNotes = null;
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '')
+            $cleanNotes = null;
 
         // **Validasi: minimal part number atau model/product/process harus diisi**
         if (empty($validated['part_number_id']) && (empty($validated['model_id']) || empty($validated['product_id']) || empty($validated['process_id']))) {
@@ -408,7 +409,8 @@ class DocumentMappingController extends Controller
         ]);
 
         $cleanNotes = trim($validated['notes'] ?? '');
-        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') $cleanNotes = null;
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '')
+            $cleanNotes = null;
 
         // Validasi: minimal part number atau model/product/process harus diisi
         if (empty($validated['part_number_id']) && (empty($validated['model_id']) || empty($validated['product_id']) || empty($validated['process_id']))) {
