@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -24,8 +25,8 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'code' => 'required|string|max:50',
+            'name' => 'required|string|max:100|unique:tm_products,name',
+            'code' => 'required|string|max:50|unique:tm_products,code',
             'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
@@ -35,17 +36,23 @@ class ProductController extends Controller
     }
 
     public function update(Request $request, Product $product)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'code' => 'required|string|max:50',
-            'plant' => 'required|in:Body,Unit,Electric',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:100|unique:tm_products,name,' . $product->id,
+        'code' => 'required|string|max:50|unique:tm_products,code,' . $product->id,
+        'plant' => 'required|in:Body,Unit,Electric',
+    ]);
 
-        $product->update($validated);
-
-        return redirect()->back()->with('success', 'Product updated successfully.');
+    if ($validator->fails()) {
+        return redirect()->back()
+            ->withErrors($validator)
+            ->withInput()
+            ->with('edit_modal', $product->id); // <<< penting
     }
+
+    $product->update($validator->validated());
+    return redirect()->back()->with('success', 'Product updated successfully.');
+}
 
     public function destroy(Product $product)
     {

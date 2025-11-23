@@ -3,45 +3,57 @@
 @section('title', 'Document Review')
 
 @section('content')
-    <div class="p-6 bg-gray-50 min-h-screen space-y-6">
+    {{-- Main Container: Modern background and clean padding --}}
+    <div class="p-8 bg-gray-50 min-h-screen space-y-8">
 
         {{-- Flash Message --}}
         <x-flash-message />
 
-        {{-- Breadcrumb --}}
-        <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        {{-- Breadcrumb (Tetap Sama) --}}
+        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
             <ol class="list-reset flex items-center space-x-2">
                 <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
+                    <a href="{{ route('dashboard') }}"
+                        class="text-blue-600 hover:text-blue-800 transition-colors duration-150 flex items-center gap-1">
                         <i class="bi bi-house-door"></i>
                         Dashboard
                     </a>
                 </li>
                 <li class="text-gray-400">/</li>
-                <li class="text-gray-700 font-semibold">Document Review</li>
+                <li class="text-gray-900 font-semibold flex items-center gap-1">
+                    Document Review
+                </li>
             </ol>
         </nav>
 
-        {{-- Plant Tabs --}}
-        <div class="overflow-x-auto mb-4">
-            <ul class="flex space-x-2 border-b border-gray-200" role="tablist">
+        {{-- Plant Tabs Container --}}
+        <div class="overflow-x-auto">
+            {{-- ✅ Border dihilangkan dari UL agar tab aktif bisa menempel sempurna --}}
+            <ul class="flex space-x-1 border-b border-gray-200" role="tablist">
                 @php $lastTab = old('last_selected_plant') ?? null; @endphp
                 @foreach ($groupedByPlant as $plant => $documentsByCode)
                     @php
                         $slug = \Illuminate\Support\Str::slug($plant);
                         $isActive = ($loop->first && !$lastTab) || ($lastTab && $lastTab === $slug);
                     @endphp
-                    <li role="presentation">
+                    <li role="presentation" class="flex-shrink-0">
                         <button
-                            class="nav-link relative px-4 py-2 text-sm font-medium transition-colors duration-200
-                        {{ $isActive ? 'text-blue-600 after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-blue-600' : 'text-gray-600 hover:text-blue-600' }}"
-                            id="tab-{{ $slug }}" data-bs-toggle="tab"
+                            class="nav-link relative px-5 py-3 text-sm tracking-wide transition-all duration-300 ease-in-out border-b-0
+                            {{-- Class Logic (Matches JS for Active/Inactive) --}}
+                            {{ $isActive
+                                ? 'bg-white text-blue-700 border border-gray-200 border-b-0 -mb-px font-bold rounded-t-lg shadow-md' // ✅ shadow-md untuk tab aktif
+                                : 'text-gray-600 hover:text-blue-700 hover:bg-gray-100 bg-gray-50 border-b border-gray-200' }}"
+                            // ✅ hover dan bg-gray-50 id="tab-{{ $slug }}" data-bs-toggle="tab"
                             data-bs-target="#tab-content-{{ $slug }}" type="button" role="tab"
                             aria-controls="tab-content-{{ $slug }}"
                             aria-selected="{{ $isActive ? 'true' : 'false' }}">
+
+                            {{-- ✅ Ikon Dihapus --}}
                             {{ ucfirst($plant) }}
-                            {{-- Optionally: jumlah dokumen per tab --}}
-                            <span class="ml-1 text-xs text-gray-400">
+
+                            <span
+                                class="ml-2 text-xs font-semibold 
+                                {{ $isActive ? 'text-blue-600' : 'text-gray-500' }}">
                                 ({{ $documentsByCode->count() }})
                             </span>
                         </button>
@@ -50,8 +62,9 @@
             </ul>
         </div>
 
-        {{-- Tab Content --}}
-        <div class="tab-content bg-white border rounded-b-xl shadow-sm p-6">
+        {{-- Tab Content Container --}}
+        <div
+            class="tab-content bg-white border border-gray-200 rounded-b-xl rounded-tr-xl shadow-xl p-6 transition-all duration-300">
             @foreach ($groupedByPlant as $plant => $documentsByCode)
                 @php
                     $slug = \Illuminate\Support\Str::slug($plant);
@@ -79,8 +92,56 @@
 
 @push('scripts')
     <script>
+        // ✅ REVISI AKTIF: Border 4 sisi (top, left, right) dan shadow-md
+        const ACTIVE_TAB_CLASSES = [
+            "bg-white", "text-blue-700", "border", "border-gray-200",
+            "border-b-0", "-mb-px", "font-bold", "shadow-md"
+        ];
+        // ✅ REVISI NON-AKTIF: Lebih sederhana, background abu-abu, hover biru
+        const INACTIVE_TAB_CLASSES = [
+            "text-gray-600", "hover:text-blue-700", "hover:bg-gray-100",
+            "bg-gray-50"
+        ];
+        const ACTIVE_TEXT_COUNT_CLASSES = ["text-blue-600", "font-bold"];
+        const INACTIVE_TEXT_COUNT_CLASSES = ["text-gray-500", "font-semibold"];
+
+
+        function updateTabState(button, content, isActive) {
+            const spanCount = button.querySelector("span.ml-2");
+
+            // 1. Update Button Classes
+            button.classList.toggle("active", isActive);
+
+            // Mengganti kelas aktif dan tidak aktif
+            ACTIVE_TAB_CLASSES.forEach(cls => button.classList.toggle(cls, isActive));
+            INACTIVE_TAB_CLASSES.forEach(cls => button.classList.toggle(cls, !isActive));
+
+            // Khusus untuk border-bottom pada tab non-aktif
+            if (isActive) {
+                // Hapus border-b pada tab aktif agar menempel ke content container
+                button.classList.remove("border-b");
+            } else {
+                // Tambahkan border-b pada tab non-aktif
+                button.classList.add("border-b");
+            }
+
+            button.setAttribute("aria-selected", isActive ? "true" : "false");
+
+            // 2. Update Content Pane Classes
+            if (content) {
+                content.classList.toggle("show", isActive);
+                content.classList.toggle("active", isActive);
+            }
+
+            // 3. Update Count Span Classes
+            if (spanCount) {
+                ACTIVE_TEXT_COUNT_CLASSES.forEach(cls => spanCount.classList.toggle(cls, isActive));
+                INACTIVE_TEXT_COUNT_CLASSES.forEach(cls => spanCount.classList.toggle(cls, !isActive));
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
-            // Expand/collapse tree node
+            // Expand/collapse tree node (Logika ini sudah benar)
             document.querySelectorAll(".tree-toggle").forEach(btn => {
                 btn.addEventListener("click", function() {
                     const childList = this.closest('li').querySelector("ul");
@@ -89,51 +150,57 @@
                 });
             });
 
-            // Tab localStorage
             const tabButtons = document.querySelectorAll(".nav-link");
             const tabPanes = document.querySelectorAll(".tab-pane");
 
-            // Restore last selected tab
+            // --- 1. RESTORE LAST SELECTED TAB ---
             const lastTab = localStorage.getItem("last_selected_plant");
+            let isRestored = false;
+
             if (lastTab) {
                 const lastPlantButton = document.getElementById("tab-" + lastTab);
                 const lastPlantContent = document.getElementById("tab-content-" + lastTab);
+
                 if (lastPlantButton && lastPlantContent) {
+                    // Reset semua tab ke status non-aktif
                     tabButtons.forEach(btn => {
-                        btn.classList.remove("active", "bg-white", "text-blue-600", "border-t", "border-l",
-                            "border-r", "-mb-px", "font-semibold");
-                        btn.setAttribute("aria-selected", "false");
+                        const content = document.querySelector(btn.dataset.bsTarget);
+                        updateTabState(btn, content, false);
                     });
-                    tabPanes.forEach(pane => {
-                        pane.classList.remove("show", "active");
-                    });
-                    lastPlantButton.classList.add("active", "bg-white", "text-blue-600", "border-t", "border-l",
-                        "border-r", "-mb-px", "font-semibold");
-                    lastPlantButton.setAttribute("aria-selected", "true");
-                    lastPlantContent.classList.add("show", "active");
+
+                    // Aktifkan tab yang tersimpan di localStorage
+                    updateTabState(lastPlantButton, lastPlantContent, true);
+                    isRestored = true;
                 }
             }
 
-            // Update localStorage on tab change
+            // Jika tidak ada localStorage yang valid, aktifkan tab pertama (yang sudah ditangani Blade)
+            if (!isRestored) {
+                const firstButton = tabButtons[0];
+                const firstContent = document.querySelector(firstButton.dataset.bsTarget);
+                if (firstButton) {
+                    updateTabState(firstButton, firstContent, true);
+                }
+            }
+
+
+            // --- 2. UPDATE LOCALSTORAGE ON TAB CHANGE ---
             tabButtons.forEach(btn => {
-                btn.addEventListener("click", function() {
+                btn.addEventListener("click", function(e) {
+                    e.preventDefault(); // Mencegah default jika menggunakan data-bs-toggle native
+
                     const plantSlug = this.id.replace("tab-", "");
                     localStorage.setItem("last_selected_plant", plantSlug);
 
-                    // Update active classes manually
+                    // Reset semua tab
                     tabButtons.forEach(b => {
-                        b.classList.remove("active", "bg-white", "text-blue-600",
-                            "border-t", "border-l", "border-r", "-mb-px",
-                            "font-semibold");
-                        b.setAttribute("aria-selected", "false");
+                        const content = document.querySelector(b.dataset.bsTarget);
+                        updateTabState(b, content, false);
                     });
-                    tabPanes.forEach(p => p.classList.remove("show", "active"));
 
-                    this.classList.add("active", "bg-white", "text-blue-600", "border-t",
-                        "border-l", "border-r", "-mb-px", "font-semibold");
-                    this.setAttribute("aria-selected", "true");
+                    // Aktifkan tab yang baru diklik
                     const content = document.querySelector(this.dataset.bsTarget);
-                    if (content) content.classList.add("show", "active");
+                    updateTabState(this, content, true);
                 });
             });
         });

@@ -12,7 +12,7 @@ class DocumentReviewController extends Controller
     public function index(Request $request)
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
-        $plants = array_filter($plants, fn($p) => in_array($p, ['Body', 'Unit', 'Electric']));
+        // $plants = array_filter($plants, fn($p) => in_array($p, ['Body', 'Unit', 'Electric']));
         // AMBIL SEMUA DOKUMEN DENGAN ANAK-CUCU
         $documents = Document::with('childrenRecursive')->where('type', 'review')->get();
 

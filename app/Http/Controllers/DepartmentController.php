@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class DepartmentController extends Controller
 {
@@ -28,7 +29,7 @@ class DepartmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:tm_departments,name',
             'code' => 'required|string|max:10',
             'plant' => 'required|string|max:10',
         ]);
@@ -40,13 +41,20 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
+         $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:tm_departments,name,' . $department->id,
             'code' => 'required|string|max:10',
             'plant' => 'required|string|max:10',
         ]);
 
-        $department->update($validated);
+         if ($validator->fails()) {
+        return redirect()->back()
+            ->withErrors($validator)
+            ->withInput()
+            ->with('edit_modal', $department->id); // <<< penting
+    }
+
+        $department->update($validator->validated());
 
         session()->flash('edit_modal', $department->id);
 

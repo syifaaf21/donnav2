@@ -1031,9 +1031,9 @@ class DocumentMappingController extends Controller
     ];
 
     // Jika bukan Active → period_years boleh diupdate
-    if (!$isActive && isset($validated['period_years'])) {
-        $updateData['period_years'] = $validated['period_years'];
-    }
+    if (!$isActive && array_key_exists('period_years', $validated)) {
+    $updateData['period_years'] = $validated['period_years'];
+}
 
     $mapping->update($updateData);
 

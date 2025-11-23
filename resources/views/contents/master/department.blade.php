@@ -35,68 +35,62 @@
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
                 </form>
             </div>
 
-            {{-- Table --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Name</th>
-                            <th class="px-4 py-2">Code</th>
-                            <th class="px-4 py-2">Plant</th>
-                            <th class="px-4 py-2 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($departments as $department)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-4 py-2">
-                                    {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
-                                </td>
-                                <td class="px-4 py-2">{{ $department->name }}</td>
-                                <td class="px-4 py-2">{{ $department->code }}</td>
-                                <td class="px-4 py-2">{{ $department->plant }}</td>
-                                <td class="px-4 py-2 text-center">
-                                    <button type="button" data-bs-toggle="modal"
-                                        data-bs-target="#editDepartmentModal-{{ $department->id }}"
-                                        data-bs-title="Edit Department"
-                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                    </button>
-
-                                    <form action="{{ route('master.departments.destroy', $department->id) }}" method="POST"
-                                        class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" data-bs-title="Delete Department"
-                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
+            <div id="tableContainer">
+                {{-- Table --}}
+                <div class="overflow-x-auto overflow-y-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
                             <tr>
-                                <td colspan="5" class="text-center text-gray-500 py-4">No departments found.</td>
+                                <th class="px-4 py-2">No</th>
+                                <th class="px-4 py-2">Name</th>
+                                <th class="px-4 py-2">Code</th>
+                                <th class="px-4 py-2">Plant</th>
+                                <th class="px-4 py-2 text-center">Actions</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            {{-- Pagination --}}
-            <div class="mt-4">
-                {{ $departments->withQueryString()->links('vendor.pagination.tailwind') }}
+                        </thead>
+                        <tbody>
+                            @forelse ($departments as $department)
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-2">
+                                        {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
+                                    </td>
+                                    <td class="px-4 py-2">{{ ucwords($department->name) }}</td>
+                                    <td class="px-4 py-2">{{ $department->code }}</td>
+                                    <td class="px-4 py-2">{{ $department->plant }}</td>
+                                    <td class="px-4 py-2 text-center">
+                                        <button type="button" data-bs-toggle="modal"
+                                            data-bs-target="#editDepartmentModal-{{ $department->id }}"
+                                            data-bs-title="Edit Department"
+                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            <i data-feather="edit" class="w-4 h-4"></i>
+                                        </button>
+
+                                        <form action="{{ route('master.departments.destroy', $department->id) }}"
+                                            method="POST" class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" data-bs-title="Delete Department"
+                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-gray-500 py-4">No departments found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                {{-- Pagination --}}
+                <div class="mt-4">
+                    {{ $departments->withQueryString()->links('vendor.pagination.tailwind') }}
+                </div>
             </div>
         </div>
     </div>
@@ -124,7 +118,7 @@
                             <!-- Name -->
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name"
+                                <input type="text" name="name" placeholder="Enter department name"
                                     class="form-control rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ old('name', $department->name) }}" required>
                                 @error('name')
@@ -206,8 +200,9 @@
                 <div class="modal-body p-5">
                     <div class="row g-3">
                         <!-- Name -->
-                        <div class="col-md-6"> <label class="form-label fw-medium">Name <span
-                                    class="text-danger">*</span></label> <input type="text" name="name"
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" placeholder="Enter department name"
                                 class="form-control rounded-3 @error('name') is-invalid @enderror"
                                 value="{{ old('name') }}" required> @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -269,29 +264,11 @@
         </div>
     </div>
 @endsection
-
+<x-sweetalert-confirm />
 @push('scripts')
     <script>
-        // SweetAlert for delete confirmation
-        document.querySelectorAll('.delete-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'This action cannot be undone.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) this.submit();
-                });
-            });
-        });
-
-        // Clear search
         document.addEventListener("DOMContentLoaded", function() {
+            bindDeleteSweetAlert();
 
             // TomSelect for CODE (creatable)
             new TomSelect("#code-select", {
@@ -320,7 +297,7 @@
 
                 if (codeSelect) {
                     new TomSelect(codeSelect, {
-                        create: true, // <-- TIDAK BOLEH CREATE BARU
+                        create: true,
                         maxItems: 1,
                         placeholder: "Select code...",
                         allowEmptyOption: false
@@ -329,7 +306,7 @@
 
                 if (plantSelect) {
                     new TomSelect(plantSelect, {
-                        create: true, // <-- TIDAK BOLEH CREATE BARU
+                        create: true,
                         maxItems: 1,
                         placeholder: "Select plant...",
                         allowEmptyOption: false
@@ -337,18 +314,110 @@
                 }
             });
 
+            function bindDeleteSweetAlert() {
+                document.querySelectorAll('.delete-form').forEach(form => {
+                    form.removeEventListener('submit', form._swalHandler); // hapus handler lama jika ada
 
-            const clearBtn = document.getElementById("clearSearch");
-            const searchInput = document.getElementById("searchInput");
-            const searchForm = document.getElementById("searchForm");
+                    const handler = e => {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: 'This action cannot be undone.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Yes, delete it!'
+                        }).then(result => {
+                            if (result.isConfirmed) form.submit();
+                        });
+                    };
 
-            if (clearBtn && searchInput && searchForm) {
-                clearBtn.addEventListener("click", function() {
-                    searchInput.value = "";
-                    searchForm.submit();
+                    form.addEventListener('submit', handler);
+                    form._swalHandler = handler; // simpan reference handler untuk bisa di-remove nanti
                 });
             }
 
+            const searchInput = document.getElementById("searchInput");
+            const clearBtn = document.getElementById("clearSearch");
+            const tableContainer = document.getElementById("tableContainer");
+
+            let typingTimer;
+            const delay = 300;
+
+            function fetchData(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const dom = new DOMParser().parseFromString(html, "text/html");
+
+                        // Update table + pagination
+                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                        // Re-bind pagination after replacing DOM
+                        bindPagination();
+                        bindDeleteSweetAlert();
+
+                        // Re-init Feather Icons
+                        if (window.feather) {
+                            feather.replace();
+                        }
+
+                        // Re-init Bootstrap tooltip (jika ada)
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+                        tooltipTriggerList.map(function(el) {
+                            return new bootstrap.Tooltip(el, {
+                                title: el.getAttribute('data-bs-title'),
+                                placement: 'top',
+                                trigger: 'hover'
+                            });
+                        });
+                    });
+            }
+
+            // Live search
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(() => {
+                    let query = searchInput.value;
+                    let url =
+                        `{{ route('master.departments.index') }}?search=${encodeURIComponent(query)}`;
+                    fetchData(url);
+                }, delay);
+            });
+
+            // Enter key search
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    let query = searchInput.value;
+                    let url =
+                        `{{ route('master.departments.index') }}?search=${encodeURIComponent(query)}`;
+                    fetchData(url);
+                }
+            });
+
+            // Clear search
+            clearBtn.addEventListener("click", function() {
+                searchInput.value = "";
+                fetchData(`{{ route('master.departments.index') }}`);
+            });
+
+            // AJAX pagination
+            function bindPagination() {
+                document.querySelectorAll("#tableContainer .pagination a").forEach(link => {
+                    link.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        fetchData(this.href);
+                    });
+                });
+            }
+
+            bindPagination();
             //Cancel button modal
             const addDepartmentModal = document.getElementById("addDepartmentModal");
             const formAdd = addDepartmentModal.querySelector("form");
@@ -394,7 +463,7 @@
     @if ($errors->any() && session('edit_modal'))
         <script>
             document.addEventListener("DOMContentLoaded", function() {
-                new bootstrap.Modal(document.getElementById("editDeparmentModal-{{ session('edit_modal') }}")).show();
+                new bootstrap.Modal(document.getElementById("editDepartmentModal-{{ session('edit_modal') }}")).show();
             });
         </script>
     @endif
