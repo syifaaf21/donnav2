@@ -275,20 +275,23 @@ class AuditeeActionController extends Controller
         DB::beginTransaction();
 
         try {
-            $auditeeAction = AuditeeAction::findOrFail($id);
-
-            // UPDATE parent
-            $auditeeAction->update([
-                'pic' => $validated['pic'] ?? '-',
-                'root_cause' => $validated['root_cause'],
-                'yokoten' => $validated['yokoten'],
-                'yokoten_area' => $validated['yokoten_area'] ?? null,
-            ]);
+            // Find or create AuditeeAction by audit_finding_id (route param is the finding id)
+            $auditeeAction = AuditeeAction::updateOrCreate(
+                ['audit_finding_id' => $id],
+                [
+                    'pic' => $validated['pic'] ?? '-',
+                    'root_cause' => $validated['root_cause'],
+                    'yokoten' => $validated['yokoten'],
+                    'yokoten_area' => $validated['yokoten_area'] ?? null,
+                ]
+            );
 
             /* =====================================================
              * 1️⃣ UPDATE WHY (5 WHY)
              * ===================================================== */
-            WhyCauses::where('auditee_action_id', $id)->delete();
+            // use the actual auditee action id when deleting children
+            $aid = $auditeeAction->id;
+            WhyCauses::where('auditee_action_id', $aid)->delete();
 
             for ($i = 1; $i <= 5; $i++) {
                 $why = $request->input("why_{$i}_mengapa");
@@ -306,7 +309,7 @@ class AuditeeActionController extends Controller
             /* =====================================================
              * 2️⃣ UPDATE Corrective Action (hapus & replace)
              * ===================================================== */
-            CorrectiveAction::where('auditee_action_id', $id)->delete();
+            CorrectiveAction::where('auditee_action_id', $aid)->delete();
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("corrective_{$i}_activity");
@@ -324,7 +327,7 @@ class AuditeeActionController extends Controller
             /* =====================================================
              * 3️⃣ UPDATE Preventive Action
              * ===================================================== */
-            PreventiveAction::where('auditee_action_id', $id)->delete();
+            PreventiveAction::where('auditee_action_id', $aid)->delete();
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("preventive_{$i}_activity");
@@ -348,8 +351,50 @@ class AuditeeActionController extends Controller
                     $df = DocumentFile::find($rid);
                     if ($df && $df->auditee_action_id == $auditeeAction->id) {
                         try {
-                            if ($df->file_path && Storage::disk('public')->exists($df->file_path)) {
-                                Storage::disk('public')->delete($df->file_path);
+                            $original = $df->file_path ?? '';
+                            $candidates = [];
+
+                            if ($original !== '') {
+                                $candidates[] = $original;
+                                $candidates[] = ltrim($original, '/');
+                                // if stored as full URL like https://.../storage/..., extract path after '/storage/'
+                                if (preg_match('#/storage/(.*)$#', $original, $m)) {
+                                    $candidates[] = $m[1];
+                                }
+                                // if stored as public/storage/..., normalize
+                                $candidates[] = preg_replace('#^public/storage/#', '', $original);
+                                $candidates[] = basename($original);
+                            }
+
+                            $deleted = false;
+                            foreach (array_filter(array_unique($candidates)) as $p) {
+                                try {
+                                    if ($p === '')
+                                        continue;
+                                    if (Storage::disk('public')->exists($p)) {
+                                        Storage::disk('public')->delete($p);
+                                        $deleted = true;
+                                        break;
+                                    }
+                                    // try direct filesystem path: storage/app/public/{p}
+                                    $fsPath = storage_path('app/public/' . $p);
+                                    if (file_exists($fsPath)) {
+                                        @unlink($fsPath);
+                                        $deleted = true;
+                                        break;
+                                    }
+                                } catch (\Throwable $inner) {
+                                    \Log::debug("Attempt to delete file candidate failed for {$p}: " . $inner->getMessage());
+                                }
+                            }
+
+                            if (!$deleted && $original) {
+                                // final fallback: attempt delete using original value
+                                try {
+                                    Storage::disk('public')->delete($original);
+                                } catch (\Throwable $inner) {
+                                    \Log::warning("Final delete attempt failed for {$original}: " . $inner->getMessage());
+                                }
                             }
                         } catch (\Throwable $e) {
                             \Log::warning("Failed to delete file for DocumentFile id={$rid}: " . $e->getMessage());
@@ -416,6 +461,66 @@ class AuditeeActionController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Delete a single attachment (AJAX)
+     */
+    public function destroyAttachment(Request $request, $id)
+    {
+        try {
+            $df = DocumentFile::findOrFail($id);
+
+            // Optional: ensure the user can delete (skip complex auth here)
+            $original = $df->file_path ?? '';
+            $candidates = [];
+
+            if ($original !== '') {
+                $candidates[] = $original;
+                $candidates[] = ltrim($original, '/');
+                if (preg_match('#/storage/(.*)$#', $original, $m)) {
+                    $candidates[] = $m[1];
+                }
+                $candidates[] = preg_replace('#^public/storage/#', '', $original);
+                $candidates[] = basename($original);
+            }
+
+            $deleted = false;
+            foreach (array_filter(array_unique($candidates)) as $p) {
+                try {
+                    if ($p === '')
+                        continue;
+                    if (Storage::disk('public')->exists($p)) {
+                        Storage::disk('public')->delete($p);
+                        $deleted = true;
+                        break;
+                    }
+                    $fsPath = storage_path('app/public/' . $p);
+                    if (file_exists($fsPath)) {
+                        @unlink($fsPath);
+                        $deleted = true;
+                        break;
+                    }
+                } catch (\Throwable $inner) {
+                    \Log::debug("Attempt to delete file candidate failed for {$p}: " . $inner->getMessage());
+                }
+            }
+
+            if (!$deleted && $original) {
+                try {
+                    Storage::disk('public')->delete($original);
+                } catch (\Throwable $inner) {
+                    \Log::warning("Final delete attempt failed for {$original}: " . $inner->getMessage());
+                }
+            }
+
+            $df->delete();
+
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            \Log::error('destroyAttachment error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**

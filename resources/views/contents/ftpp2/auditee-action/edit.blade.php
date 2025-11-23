@@ -617,7 +617,9 @@
 
                     wrapper.append(icon, name, btn);
                     previewFileContainer2.appendChild(wrapper);
-                    if (typeof feather !== 'undefined' && feather.replace) feather.replace();
+                    if (typeof feather !== 'undefined' && feather.replace) {
+                        feather.replace();
+                    }
                 });
             }
 
@@ -652,20 +654,38 @@
             attachDocs2?.addEventListener('click', () => fileInput2.click());
             attachBoth2?.addEventListener('click', () => combinedInput2.click());
 
-            // markRemoveAttachment for existing files
+            // markRemoveAttachment for existing files — confirm then delete via AJAX
             window.markRemoveAttachment = function(id) {
-                const el = document.getElementById('existing-file-' + id);
-                if (el) el.remove();
-                const existingInput = document.getElementById('existing-attachment-input-' + id);
-                if (existingInput) existingInput.remove();
-                const form = document.querySelector('form');
-                if (form) {
-                    const inp = document.createElement('input');
-                    inp.type = 'hidden';
-                    inp.name = 'remove_attachments[]';
-                    inp.value = id;
-                    form.appendChild(inp);
-                }
+                if (!confirm(
+                        'Are you sure you want to delete this attachment? This will remove the file from storage and the database.'
+                    )) return;
+
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                fetch(`/ftpp/auditee-action/attachment/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrf || '',
+                        'Accept': 'application/json',
+                    }
+                }).then(res => res.json()).then(json => {
+                    if (json && json.success) {
+                        const el = document.getElementById('existing-file-' + id);
+                        if (el) el.remove();
+                        const existingInput = document.getElementById('existing-attachment-input-' + id);
+                        if (existingInput) existingInput.remove();
+                        // optional: show a brief message
+                        try {
+                            alert('Attachment deleted');
+                        } catch (e) {}
+                    } else {
+                        console.error('Failed to delete attachment', json);
+                        alert('Failed to delete attachment');
+                    }
+                }).catch(err => {
+                    console.error('Error deleting attachment', err);
+                    alert('Error deleting attachment');
+                });
             };
         })();
     </script>

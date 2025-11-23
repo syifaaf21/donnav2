@@ -210,6 +210,13 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
             Route::post('/store', [AuditFindingController::class, 'store'])
                 ->name('store');
+            Route::get('/{id}/edit', [AuditFindingController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [AuditFindingController::class, 'update'])->name('update');
+            // Immediate delete endpoints for UI remove buttons (AJAX)
+            Route::delete('/{id}/auditee/{auditee}', [AuditFindingController::class, 'destroyAuditee'])->name('auditee.destroy');
+            Route::delete('/{id}/sub-klausul/{sub}', [AuditFindingController::class, 'destroySubKlausul'])->name('subklausul.destroy');
+            // Attachment delete (AJAX)
+            Route::delete('/attachment/{id}', [AuditFindingController::class, 'destroyAttachment'])->name('attachment.destroy');
         });
 
         Route::prefix('auditee-action')->name('auditee-action.')->group(function () {
@@ -218,6 +225,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/store', [AuditeeActionController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [AuditeeActionController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AuditeeActionController::class, 'update'])->name('update');
+            // Attachment delete (AJAX)
+            Route::delete('/attachment/{id}', [AuditeeActionController::class, 'destroyAttachment'])->name('attachment.destroy');
         });
 
 

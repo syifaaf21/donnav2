@@ -104,7 +104,7 @@
             <!-- ACTION BUTTONS -->
             <div class="flex items-center gap-3">
 
-                @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
+                @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor']))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 text-white font-medium
                        shadow hover:bg-blue-800 hover:shadow-md transition-all duration-150">
@@ -240,7 +240,14 @@
 
                                                         <!-- ITEM: Assign Auditee Action -->
                                                         @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
-
+                                                        @if ($statusName === 'open')
+                                                            <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
+                                                                @click="open = false"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                <i data-feather="edit" class="w-4 h-4"></i>
+                                                                Edit Audit Finding
+                                                            </a>
+                                                        @endif
                                                         @if ($statusName === 'need revision')
                                                             <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
                                                                 @click="open = false"
@@ -263,18 +270,19 @@
                                                                 Assign Auditee Action
                                                             </a>
                                                         @endif
-                                                        <!-- ITEM: Delete -->
-                                                        <form method="POST"
-                                                            action="{{ route('ftpp.destroy', $finding->id) }}"
-                                                            onsubmit="return confirm('Delete this record?')">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit" @click="open = false"
-                                                                class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
-                                                                <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                                Delete
-                                                            </button>
-                                                        </form>
-
+                                                        @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                            <!-- ITEM: Delete -->
+                                                            <form method="POST"
+                                                                action="{{ route('ftpp.destroy', $finding->id) }}"
+                                                                onsubmit="return confirm('Delete this record?')">
+                                                                @csrf @method('DELETE')
+                                                                <button type="submit" @click="open = false"
+                                                                    class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        @endif
                                                     </div>
                                                 </template>
                                             </div>
@@ -371,12 +379,12 @@
                                         :style="\`top:\${y}px; left:\${x}px; width:170px;\`">
 
                                         ${statusName.toLowerCase() !== 'open' ? `
-                                            <button type="button"
-                                                @click="open = false; $dispatch('open-show-modal', ${f.id})"
-                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                    <i data-feather="eye" class="w-4 h-4"></i> Show
-                                            </button>
-                                        ` : ''}
+                                                        <button type="button"
+                                                            @click="open = false; $dispatch('open-show-modal', ${f.id})"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                        </button>
+                                                    ` : ''}
 
                                         <a href="/ftpp/${f.id}/download"
                                             @click="open = false"
@@ -386,17 +394,17 @@
 
                                         ${f.status.toLowerCase() === 'need revision'
                                             ? `
-                                                <a href="/ftpp/auditee-action/${f.id}/edit"
-                                                    @click="open = false"
-                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                    <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
-                                                </a>`
+                                                            <a href="/ftpp/auditee-action/${f.id}/edit"
+                                                                @click="open = false"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
+                                                            </a>`
                                             : `
-                                                <a href="/ftpp/auditee-action/${f.id}"
-                                                    @click="open = false"
-                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                    <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
-                                                </a>`
+                                                            <a href="/ftpp/auditee-action/${f.id}"
+                                                                @click="open = false"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
+                                                            </a>`
                                         }
 
                                         <form method="POST" action="/ftpp/${f.id}"
