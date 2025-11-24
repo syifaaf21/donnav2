@@ -509,20 +509,21 @@
                         fetch(`/document-review/${docId}/files`)
                             .then(res => res.json())
                             .then(data => {
-                                if (data.files && data.files.length > 0) {
+                                if (data.success && data.files.length > 0) {
+                                    // Ambil hanya file terakhir
+                                    const latestFile = data.files[data.files.length - 1];
+
                                     filesContainer.innerHTML = `
-                        <label class="form-label fw-semibold">Existing Files</label>
-                        <ul class="list-group">
-                            ${data.files.map(f => `
-                                                                                                                                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                                                        <span>📄 ${f.name}</span>
-                                                                                                                                                                            <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                                                                                                                <i class="bi bi-eye"></i> View
-                                                                                                                                                                            </a>
-                                                                                                                                                                    </li>
-                                                                                                                                                                    `).join('')}
-                        </ul>
-                                   `;
+                <label class="form-label fw-semibold">Existing File</label>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>📄 ${latestFile.original_name}</span>
+                        <a href="/storage/${latestFile.file_path}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </li>
+                </ul>
+            `;
                                 } else {
                                     filesContainer.innerHTML =
                                         '<p class="text-muted">No files available for revision.</p>';

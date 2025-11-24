@@ -1,7 +1,8 @@
 {{-- ✅ Modal Revise Document --}}
 <div class="modal fade" id="reviseModal" tabindex="-1" aria-labelledby="reviseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form method="POST" action="" enctype="multipart/form-data" id="reviseForm" class="modal-content border-0 rounded-4 shadow-lg">
+        <form method="POST" action="" enctype="multipart/form-data" id="reviseForm"
+            class="modal-content border-0 rounded-4 shadow-lg">
             @csrf
             {{-- Header --}}
             <div class="modal-header bg-light text-dark rounded-top-4">
@@ -13,15 +14,24 @@
 
             {{-- Body --}}
             <div class="modal-body p-4" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
-                {{-- List Files (diisi via JS) --}}
-                <div class="existing-files-container">
-                    <p class="text-muted">No files available for revision.</p>
+
+                {{-- List existing files (filled by JS) --}}
+                <div class="existing-files-container mb-3"></div>
+
+                {{-- Upload new file --}}
+                <div class="mt-3">
+                    <label class="form-label fw-semibold">Upload New File (Optional)</label>
+                    <input type="file" name="file" class="form-control">
+                    <small class="text-muted">Jika Anda upload file baru, file lama akan digantikan.</small>
                 </div>
+
 
                 {{-- Notes revisi --}}
                 <div class="mt-3">
-                    <label for="notesInput" class="form-label fw-semibold">Notes Revision <span class="text-danger">*</span></label>
-                    <input type="text" name="notes" id="notesInput" class="form-control border-1 shadow-sm" placeholder="Catatan revisi untuk file ini..." required>
+                    <label for="notesInput" class="form-label fw-semibold">Notes Revision <span
+                            class="text-danger">*</span></label>
+                    <input type="text" name="notes" id="notesInput" class="form-control border-1 shadow-sm"
+                        placeholder="Catatan revisi untuk file ini..." required>
                 </div>
             </div>
 

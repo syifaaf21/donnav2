@@ -158,13 +158,15 @@ Route::middleware('auth')->group(function () {
     | Document Review Routes
     |--------------------------------------------------------------------------
     */
-     Route::prefix('document-review')->name('document-review.')->group(function () {
+    Route::prefix('document-review')->name('document-review.')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
         Route::get('/folder/{plant}/{docCode}', [DocumentReviewController::class, 'showFolder'])
             ->name('showFolder');
         Route::get('/filters', [DocumentReviewController::class, 'getFilters']);
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
+        Route::get('/{id}/files', [DocumentReviewController::class, 'getFiles'])
+            ->name('get-files');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
@@ -178,12 +180,11 @@ Route::middleware('auth')->group(function () {
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
-
     });
 
     Route::prefix('archive')->name('archive.')->group(function () {
         Route::get('/archived', [DocumentControlController::class, 'archived'])
-        ->name('archived');
+            ->name('archived');
     });
 
     /*
@@ -225,8 +226,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/edit', [AuditeeActionController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AuditeeActionController::class, 'update'])->name('update');
         });
-
-
     });
     Route::prefix('approval')->name('approval.')->group(function () {
         Route::get('/get-data/{auditTypeId}', [FtppAprovalController::class, 'getData']);

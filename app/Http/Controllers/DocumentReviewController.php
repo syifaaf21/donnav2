@@ -307,75 +307,69 @@ class DocumentReviewController extends Controller
 
     public function revise(Request $request, $id)
     {
-        auth()->user()->department_id;
-        $mapping = DocumentMapping::with('document')->findOrFail($id);
+        $mapping = DocumentMapping::with('files', 'document')->findOrFail($id);
+
         if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
             abort(403);
         }
 
         $request->validate([
-            'files.*' => 'nullable|file|mimes:pdf,docx|max:10240',
+            'file' => 'nullable|file|mimes:pdf,docx|max:10240',
             'notes' => 'required|string|max:500',
         ]);
 
-        $mapping->load('document');
+        // Jika ada file baru diupload, create record baru
+        if ($request->hasFile('file')) {
+            $uploadedFile = $request->file('file');
 
-        // Jika file ada yg diupload, proses simpan file baru dan hapus file lama
-        $files = $request->file('files', []);
-
-        foreach ($files as $fileId => $uploadedFile) {
-            if (!$uploadedFile) continue;
-
-            $oldFile = $mapping->files()->where('id', $fileId)->first();
-            if (!$oldFile) continue;
-
-            // Hapus file lama jika ada
-            if ($oldFile->file_path && Storage::disk('public')->exists($oldFile->file_path)) {
-                Storage::disk('public')->delete($oldFile->file_path);
-            }
-
-            // Simpan file baru
             $folder = $mapping->document && $mapping->document->type === 'control'
                 ? 'document-controls'
                 : 'document-reviews';
 
-            $filename = $mapping->document_number . '_rev_' . time() . "_{$fileId}." . $uploadedFile->getClientOriginalExtension();
+            $filename = $mapping->document_number . '_rev_' . time() . '.' . $uploadedFile->getClientOriginalExtension();
             $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
-            $oldFile->update([
-                'file_path' => $newPath,
+            // Simpan file baru
+            $mapping->files()->create([
                 'original_name' => $uploadedFile->getClientOriginalName(),
+                'file_path' => $newPath,
                 'file_type' => $uploadedFile->getClientMimeType(),
-                'uploaded_by' => Auth::id(),
+                'uploaded_by' => auth()->id(),
             ]);
         }
 
         // Update notes
         $mapping->notes = $request->notes;
 
-        // Setelah update file dan notes
-        // $needReviewStatus = Status::where('name', 'Need Review')->first();
-        // $mapping->status_id = $needReviewStatus->id;
+        // Update status
         $needReviewStatus = Status::where('name', 'Need Review')->first();
-        if (!$needReviewStatus) {
-            throw new \Exception("Status 'Need Review' tidak ditemukan.");
-        }
+        if (!$needReviewStatus) throw new \Exception("Status 'Need Review' tidak ditemukan.");
         $mapping->status_id = $needReviewStatus->id;
 
-
         $mapping->user_id = Auth::id();
-        if (!$mapping->document_id) {
-            throw new \Exception("Missing document_id on this document mapping.");
-        }
-
         $mapping->save();
-
-        $allUsers = \App\Models\User::all();
-        Notification::send($allUsers, new DocumentRevisedNotification($mapping->document_number, auth()->user()->name));
-
 
         return redirect()->back()->with('success', 'Document revised successfully!');
     }
+
+
+    public function getFiles($id)
+    {
+        $mapping = DocumentMapping::with('files')->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'files' => $mapping->files->map(function ($file) {
+                return [
+                    'id' => $file->id,
+                    'original_name' => $file->original_name,
+                    'file_path' => $file->file_path,
+                ];
+            }),
+        ]);
+    }
+
+
 
     public function approveWithDates(Request $request, $id)
     {
@@ -418,8 +412,8 @@ class DocumentReviewController extends Controller
             departmentName: $mapping->department?->name,
         ));
 
-       return redirect()->route('document-review.index')
-    ->with('success', "Document '{$mapping->document_number}' approved successfully!");
+        return redirect()->route('document-review.index')
+            ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
 
     private function getPlantFromMapping($mapping)
