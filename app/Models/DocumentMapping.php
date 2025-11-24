@@ -43,43 +43,43 @@ class DocumentMapping extends Model
         return $this->hasOne(DocumentFile::class)->latestOfMany();
     }
 
-   public function getFilesForModalAttribute()
-{
-    // Hanya file aktif untuk ditampilkan di UI (view tombol/dropdown)
-    $allFiles = $this->files()
-        ->where('is_active', true)
-        ->orderBy('created_at', 'asc')
-        ->get();
+    public function getFilesForModalAttribute()
+    {
+        // Hanya file aktif untuk ditampilkan di UI (view tombol/dropdown)
+        $allFiles = $this->files()
+            ->where('is_active', true)
+            ->orderBy('created_at', 'asc')
+            ->get();
 
-    return $allFiles->map(function ($file) {
-        return [
-            'id' => $file->id,
-            'name' => $file->original_name,
-            'document_name' => $this->document->name,
-            'url' => Storage::url($file->file_path),
-            'is_active' => (int) $file->is_active,
-            'created_at' => $file->created_at->toDateTimeString(),
-        ];
-    })->values()->toArray();
-}
+        return $allFiles->map(function ($file) {
+            return [
+                'id' => $file->id,
+                'name' => $file->original_name,
+                'document_name' => $this->document->name,
+                'url' => Storage::url($file->file_path),
+                'is_active' => (int) $file->is_active,
+                'created_at' => $file->created_at->toDateTimeString(),
+            ];
+        })->values()->toArray();
+    }
 
-/** Jika butuh semua file (aktif + nonaktif) untuk audit/modal detail: */
-public function getFilesForModalAllAttribute()
-{
-    $allFiles = $this->files()->orderBy('created_at', 'asc')->get();
+    /** Jika butuh semua file (aktif + nonaktif) untuk audit/modal detail: */
+    public function getFilesForModalAllAttribute()
+    {
+        $allFiles = $this->files()->orderBy('created_at', 'asc')->get();
 
-    return $allFiles->map(function ($file) {
-        return [
-            'id' => $file->id,
-            'name' => $file->original_name,
-            'document_name' => $this->document->name,
-            'url' => Storage::url($file->file_path),
-            'is_active' => (int) $file->is_active,
-            'replaced_by_id' => $file->replaced_by_id,
-            'created_at' => $file->created_at->toDateTimeString(),
-        ];
-    })->values()->toArray();
-}
+        return $allFiles->map(function ($file) {
+            return [
+                'id' => $file->id,
+                'name' => $file->original_name,
+                'document_name' => $this->document->name,
+                'url' => Storage::url($file->file_path),
+                'is_active' => (int) $file->is_active,
+                'replaced_by_id' => $file->replaced_by_id,
+                'created_at' => $file->created_at->toDateTimeString(),
+            ];
+        })->values()->toArray();
+    }
 
     public function document()
     {
@@ -88,22 +88,42 @@ public function getFilesForModalAllAttribute()
 
     public function partNumber()
     {
-        return $this->belongsTo(PartNumber::class, 'part_number_id');
+        return $this->belongsToMany(
+            PartNumber::class,
+            'tt_document_mapping_part_numbers', // nama tabel pivot
+            'document_mapping_id',       // FK di pivot ke document_mapping
+            'part_number_id'                   // FK di pivot ke model
+        )->withTimestamps();
     }
 
     public function productModel()
     {
-        return $this->belongsTo(ProductModel::class, 'model_id');
+        return $this->belongsToMany(
+            ProductModel::class,
+            'tt_document_mapping_models', // nama tabel pivot
+            'document_mapping_id',       // FK di pivot ke document_mapping
+            'model_id'                   // FK di pivot ke model
+        )->withTimestamps();
     }
 
     public function product()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsToMany(
+            Product::class,
+            'tt_document_mapping_products', // nama tabel pivot
+            'document_mapping_id',       // FK di pivot ke document_mapping
+            'product_id'                   // FK di pivot ke model
+        )->withTimestamps();
     }
 
     public function process()
     {
-        return $this->belongsTo(Process::class, 'process_id');
+        return $this->belongsToMany(
+            Process::class,
+            'tt_document_mapping_processes', // nama tabel pivot
+            'document_mapping_id',       // FK di pivot ke document_mapping
+            'process_id'                   // FK di pivot ke model
+        )->withTimestamps();
     }
 
     public function department()

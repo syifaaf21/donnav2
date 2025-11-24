@@ -192,26 +192,30 @@ class DocumentMappingController extends Controller
             }
 
             if ($request->filled('part_number_id')) {
-                $query->where('part_number_id', $request->part_number_id);
+                $query->whereHas('partNumber', function ($q) use ($request) {
+                    $q->whereIn('id', (array) $request->part_number_id);
+                });
             }
 
             if ($request->filled('model_id')) {
-                $query->where('model_id', $request->model_id);
+                $query->whereHas('productModel', fn($q) => $q->whereIn('id', (array) $request->model_id));
             }
 
             if ($request->filled('product_id')) {
-                $query->where('product_id', $request->product_id);
+                $query->whereHas('product', fn($q) => $q->whereIn('id', (array) $request->product_id));
             }
 
             if ($request->filled('process_id')) {
-                $query->where('process_id', $request->process_id);
+                $query->whereHas('process', fn($q) => $q->whereIn('id', (array) $request->process_id));
             }
 
             if ($request->filled('status_id')) {
                 $query->where('status_id', $request->status_id);
             }
 
-            $groupedByPlant[$plant] = $query->orderBy('created_at', 'asc')->get();
+            $groupedByPlant[$plant] = $query->get()->filter(function ($mapping) use ($plant) {
+                return $mapping->partNumber->contains(fn($p) => strtolower($p->plant) === strtolower($plant));
+            });
         }
 
         // 🔹 Tab khusus untuk mapping tanpa part number (manual entry)
@@ -225,7 +229,7 @@ class DocumentMappingController extends Controller
             'files',
             'parent',
         ])->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->whereNull('part_number_id');
+            ->whereDoesntHave('partNumber');
 
         // 🔹 Filter search global
         if (!empty($search)) {
@@ -249,17 +253,19 @@ class DocumentMappingController extends Controller
             $queryManual->where('document_number', $request->document_number);
         }
 
+        // 🔹 Filter modal untuk manual entry
         if ($request->filled('model_id')) {
-            $queryManual->where('model_id', $request->model_id);
+            $queryManual->whereHas('productModel', fn($q) => $q->whereIn('id', (array) $request->model_id));
         }
 
         if ($request->filled('product_id')) {
-            $queryManual->where('product_id', $request->product_id);
+            $queryManual->whereHas('product', fn($q) => $q->whereIn('id', (array) $request->product_id));
         }
 
         if ($request->filled('process_id')) {
-            $queryManual->where('process_id', $request->process_id);
+            $queryManual->whereHas('process', fn($q) => $q->whereIn('id', (array) $request->process_id));
         }
+
 
         if ($request->filled('status_id')) {
             $queryManual->where('status_id', $request->status_id);
@@ -293,10 +299,14 @@ class DocumentMappingController extends Controller
         $validated = $request->validate([
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
-            'model_id' => 'nullable|exists:tm_models,id',
-            'product_id' => 'nullable|exists:tm_products,id',
-            'process_id' => 'nullable|exists:tm_processes,id',
-            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
+            'model_id.*' => 'nullable|exists:tm_models,id',
+            'model_id' => 'nullable|array',
+            'product_id.*' => 'nullable|exists:tm_products,id',
+            'product_id' => 'nullable|array',
+            'process_id.*' => 'nullable|exists:tm_processes,id',
+            'process_id' => 'nullable|array',
+            'part_number_id' => 'nullable|array',
+            'part_number_id.*' => 'nullable|exists:tm_part_numbers,id',
             'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
             'files' => 'required',
@@ -311,9 +321,12 @@ class DocumentMappingController extends Controller
             $cleanNotes = null;
 
         // **Validasi: minimal part number atau model/product/process harus diisi**
-        if (empty($validated['part_number_id']) && (empty($validated['model_id']) || empty($validated['product_id']) || empty($validated['process_id']))) {
-            return back()->withErrors(['part_number_id' => 'Please select a Part Number or fill Model, Product, and Process manually.'])->withInput();
+        if (empty($validated['part_number_id']) && empty($validated['model_id']) && empty($validated['product_id']) && empty($validated['process_id'])) {
+            return back()->withErrors([
+                'part_number_id' => 'Please select a Part Number or fill at least one of Model, Product, or Process manually.'
+            ])->withInput();
         }
+
 
         // **Validasi parent jika diisi**
         if (!empty($validated['parent_id'])) {
@@ -343,10 +356,10 @@ class DocumentMappingController extends Controller
             'document_id' => $validated['document_id'],
             'document_number' => $validated['document_number'],
             'parent_id' => $validated['parent_id'] ?? null,
-            'model_id' => $validated['model_id'] ?? null,
-            'product_id' => $validated['product_id'] ?? null,
-            'process_id' => $validated['process_id'] ?? null,
-            'part_number_id' => $validated['part_number_id'] ?? null,
+            // 'model_id' => $validated['model_id'] ?? null,
+            // 'product_id' => $validated['product_id'] ?? null,
+            // 'process_id' => $validated['process_id'] ?? null,
+            // 'part_number_id' => $validated['part_number_id'] ?? null,
             'department_id' => $validated['department_id'],
             'reminder_date' => null,
             'deadline' => null,
@@ -354,6 +367,17 @@ class DocumentMappingController extends Controller
             'status_id' => Status::where('name', 'Need Review')->first()->id,
             'notes' => $cleanNotes,
         ]);
+
+        $models = $validated['model_id'] ?? [];
+        $products = $validated['product_id'] ?? [];
+        $processes = $validated['process_id'] ?? [];
+        $partNumbers = $validated['part_number_id'] ?? [];
+
+        $mapping->partNumber()->sync($partNumbers);
+        $mapping->productModel()->sync($models);
+        $mapping->product()->sync($products);
+        $mapping->process()->sync($processes);
+
 
         // Upload file
         if ($request->hasFile('files')) {
@@ -978,68 +1002,68 @@ class DocumentMappingController extends Controller
 
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)
-{
-    if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
-        abort(403);
-    }
+    {
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            abort(403);
+        }
 
-    // Validasi input
-    $validator = Validator::make($request->all(), [
-        'document_name' => 'required|string|max:255',
-        'department_id' => 'required|exists:tm_departments,id',
-        'obsolete_date' => 'required|date|after_or_equal:today',
-        'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
-        'notes' => 'required|string|max:500',
-        'period_years' => 'nullable|integer|min:1',
-    ], [
-        'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
-        'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
-        'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
-    ]);
-
-    if ($validator->fails()) {
-        $request->session()->forget('_old_input');
-        return back()
-            ->withErrors($validator)
-            ->with('editModalId', $mapping->id)
-            ->with('editOldInputs.' . $mapping->id, $request->all());
-    }
-
-    $validated = $validator->validated();
-
-    // Update document name
-    if ($mapping->document) {
-        $mapping->document->update([
-            'name' => $validated['document_name'],
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'document_name' => 'required|string|max:255',
+            'department_id' => 'required|exists:tm_departments,id',
+            'obsolete_date' => 'required|date|after_or_equal:today',
+            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'notes' => 'required|string|max:500',
+            'period_years' => 'nullable|integer|min:1',
+        ], [
+            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
+            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
+            'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+
+        if ($validator->fails()) {
+            $request->session()->forget('_old_input');
+            return back()
+                ->withErrors($validator)
+                ->with('editModalId', $mapping->id)
+                ->with('editOldInputs.' . $mapping->id, $request->all());
+        }
+
+        $validated = $validator->validated();
+
+        // Update document name
+        if ($mapping->document) {
+            $mapping->document->update([
+                'name' => $validated['document_name'],
+            ]);
+        }
+
+        $cleanNotes = trim($validated['notes'] ?? '');
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
+            $cleanNotes = null;
+        }
+
+        // Cek status Active
+        $isActive = $mapping->status && strtolower($mapping->status->name) === 'active';
+
+        // Data yang boleh diupdate
+        $updateData = [
+            'department_id' => $validated['department_id'],
+            'obsolete_date' => $validated['obsolete_date'],
+            'reminder_date' => $validated['reminder_date'],
+            'notes' => $cleanNotes,
+        ];
+
+        // Jika bukan Active → period_years boleh diupdate
+        if (!$isActive && array_key_exists('period_years', $validated)) {
+            $updateData['period_years'] = $validated['period_years'];
+        }
+
+        $mapping->update($updateData);
+
+        return redirect()->route('master.document-control.index')
+            ->with('success', 'Document updated successfully!');
     }
-
-    $cleanNotes = trim($validated['notes'] ?? '');
-    if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
-        $cleanNotes = null;
-    }
-
-    // Cek status Active
-    $isActive = $mapping->status && strtolower($mapping->status->name) === 'active';
-
-    // Data yang boleh diupdate
-    $updateData = [
-        'department_id' => $validated['department_id'],
-        'obsolete_date' => $validated['obsolete_date'],
-        'reminder_date' => $validated['reminder_date'],
-        'notes' => $cleanNotes,
-    ];
-
-    // Jika bukan Active → period_years boleh diupdate
-    if (!$isActive && array_key_exists('period_years', $validated)) {
-    $updateData['period_years'] = $validated['period_years'];
-}
-
-    $mapping->update($updateData);
-
-    return redirect()->route('master.document-control.index')
-        ->with('success', 'Document updated successfully!');
-}
 
     // Bulk Delete Document Control
     public function bulkDestroy(Request $request)

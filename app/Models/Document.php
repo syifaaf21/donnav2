@@ -60,18 +60,16 @@ class Document extends Model
         }
         return $count;
     }
-
     public function allMappingsForPlant($plant)
     {
-        // pastikan gunakan relationship mapping() yang sudah didefinisikan
-        return $this->mapping->filter(function ($mapping) use ($plant) {
-            if ($mapping->partNumber) {
-                return strtolower($mapping->partNumber->plant ?? '') === strtolower($plant);
-            }
-            if ($mapping->productModel) {
-                return strtolower($mapping->productModel->plant ?? '') === strtolower($plant);
-            }
-            return false;
+        $plantLower = strtolower($plant);
+
+        return $this->mapping->filter(function ($mapping) use ($plantLower) {
+
+            $hasPartPlant = $mapping->partNumber->contains(fn($pn) => strtolower($pn->plant) === $plantLower);
+            $hasModelPlant = $mapping->productModel->contains(fn($model) => strtolower($model->plant) === $plantLower);
+
+            return $hasPartPlant || $hasModelPlant;
         });
     }
 }

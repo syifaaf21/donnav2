@@ -94,8 +94,8 @@
                             {{-- Model --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Model <span class="text-danger">*</span></label>
-                                <select id="model_select" name="model_id" class="form-select border-1 shadow-sm"
-                                    disabled required>
+                                <select id="model_select" name="model_id[]" multiple
+                                    class="form-select border-1 shadow-sm" disabled required>
                                     <option value="">-- Select Model --</option>
                                     @foreach ($models as $model)
                                         <option value="{{ $model->id }}">{{ $model->name }}</option>
@@ -106,8 +106,8 @@
                             {{-- Product --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Product</label>
-                                <select id="product_select" name="product_id" class="form-select border-1 shadow-sm"
-                                    disabled>
+                                <select id="product_select" name="product_id[]" multiple
+                                    class="form-select border-1 shadow-sm" disabled>
                                     <option value="">-- Select Product --</option>
                                     @foreach ($products as $product)
                                         <option value="{{ $product->id }}">{{ $product->name }}</option>
@@ -118,7 +118,7 @@
                             {{-- Process --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Process</label>
-                                <select id="process_select" name="process_id"
+                                <select id="process_select" name="process_id[]" multiple
                                     class="form-select border-1 shadow-sm text-capitalize" disabled>
                                     <option value="">-- Select Process --</option>
                                     @foreach ($processes as $process)
@@ -131,7 +131,7 @@
                             {{-- Part Number (Optional) --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Part Number (Optional)</label>
-                                <select id="partNumber_select" name="part_number_id"
+                                <select id="partNumber_select" name="part_number_id[]" multiple
                                     class="form-select border-1 shadow-sm" disabled>
                                     <option value="">-- Select Part Number --</option>
                                     @foreach ($partNumbers as $part)
@@ -244,30 +244,34 @@
             });
             const tsPart = new TomSelect('#partNumber_select', {
                 create: false,
+                maxItems: null,
                 sortField: {
                     field: 'text',
-                    direction: 'asc'
+                    direction: 'asc',
                 }
             });
             const tsProduct = new TomSelect('#product_select', {
                 create: false,
+                maxItems: null,
                 sortField: {
                     field: 'text',
-                    direction: 'asc'
+                    direction: 'asc',
                 }
             });
             const tsModel = new TomSelect('#model_select', {
                 create: false,
+                maxItems: null,
                 sortField: {
                     field: 'text',
-                    direction: 'asc'
+                    direction: 'asc',
                 }
             });
             const tsProcess = new TomSelect('#process_select', {
                 create: false,
+                maxItems: null,
                 sortField: {
                     field: 'text',
-                    direction: 'asc'
+                    direction: 'asc',
                 }
             });
             const tsDept = new TomSelect('#department_select', {
@@ -348,9 +352,8 @@
             });
 
             // --- When Part Number selected ---
-            tsPart.on('change', async function(partId) {
-                if (!partId) {
-                    // If part cleared: empty & disable autofilled fields
+            tsPart.on('change', async function(partIds) {
+                if (!partIds || partIds.length === 0) {
                     tsProduct.clear(true);
                     tsModel.clear(true);
                     tsProcess.clear(true);
@@ -360,45 +363,55 @@
                     return;
                 }
 
-                // Fetch details of selected part number
-                const detail = await safeFetchJson(
-                    `/api/part-number-details/${encodeURIComponent(partId)}`);
+                // Pastikan partIds selalu array
+                if (!Array.isArray(partIds)) partIds = [partIds];
 
-                if (detail && !detail.error) {
-                    // Auto-fill Product, Model, and Process
-                    if (detail.product) {
-                        tsProduct.addOption({
-                            value: detail.product.id,
-                            text: detail.product.name
-                        });
-                        tsProduct.setValue(detail.product.id);
-                    }
-                    if (detail.model) {
-                        tsModel.addOption({
-                            value: detail.model.id,
-                            text: detail.model.name
-                        });
-                        tsModel.setValue(detail.model.id);
-                    }
-                    if (detail.process) {
-                        tsProcess.addOption({
-                            value: detail.process.id,
-                            text: detail.process.name
-                        });
-                        tsProcess.setValue(detail.process.id);
-                    }
+                let allProducts = [];
+                let allModels = [];
+                let allProcesses = [];
 
-                    // Keep them enabled so user can adjust if needed
-                    tsProduct.enable();
-                    tsModel.enable();
-                    tsProcess.enable();
-                } else {
-                    // If failed: clear all related fields
-                    tsProduct.clear(true);
-                    tsModel.clear(true);
-                    tsProcess.clear(true);
+                // Ambil detail tiap part number
+                for (const partId of partIds) {
+                    const detail = await safeFetchJson(
+                        `/api/part-number-details/${encodeURIComponent(partId)}`);
+                    if (detail && !detail.error) {
+                        if (detail.product) allProducts.push(detail.product);
+                        if (detail.model) allModels.push(detail.model);
+                        if (detail.process) allProcesses.push(detail.process);
+                    }
                 }
+
+                // Hapus duplikat berdasarkan ID
+                const uniqueById = (arr, idField = 'id') => [...new Map(arr.map(item => [item[idField],
+                    item
+                ])).values()];
+                const formatForTomSelect = (arr) => arr.map(i => ({
+                    value: i.id,
+                    text: i.text
+                }));
+
+                // Product
+                tsProduct.clearOptions();
+                tsProduct.addOptions(formatForTomSelect(uniqueById(allProducts)));
+                tsProduct.setValue(uniqueById(allProducts).map(p => p.id));
+                tsProduct.enable();
+
+                // Model
+                tsModel.clearOptions();
+                tsModel.addOptions(formatForTomSelect(uniqueById(allModels)));
+                tsModel.setValue(uniqueById(allModels).map(m => m.id));
+                tsModel.enable();
+
+                // Process
+                tsProcess.clearOptions();
+                tsProcess.addOptions(formatForTomSelect(uniqueById(allProcesses)));
+                tsProcess.setValue(uniqueById(allProcesses).map(p => p.id));
+                tsProcess.enable();
+
+
+
             });
+
 
             const quill = new Quill('#quill_editor', {
                 theme: 'snow',
@@ -453,7 +466,7 @@
                 <input type="file" name="files[]" class="form-control border-1 shadow-sm" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
                 <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
             `;
-                   container.prepend(newInputGroup);
+                    container.prepend(newInputGroup);
 
                 }
 
@@ -468,4 +481,14 @@
             @endif
         });
     </script>
+@endpush
+@push('styles')
+    <style>
+        /* Biarkan tag TomSelect wrap ke baris baru */
+        .ts-control {
+            flex-wrap: wrap !important;
+            min-height: 38px;
+            /* optional, agar tinggi input tetap nyaman */
+        }
+    </style>
 @endpush
