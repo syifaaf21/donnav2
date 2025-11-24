@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    feather.replace(); // cukup sekali
+    feather.replace(); // Render feather sekali saja
 
     const sidebar = document.getElementById("sidebar");
     const toggleBtn = document.getElementById("toggleSidebar");
@@ -7,18 +7,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const logo = document.getElementById("sidebarLogo");
     const profileIcon = document.getElementById("profileIcon");
 
+    const collapsedWidth = "w-20";
+    const expandedWidth = "w-64";
+
+    /* ----------------------------
+       SIDEBAR COLLAPSE / EXPAND
+    ----------------------------- */
+
     function collapseSidebar() {
-        sidebar.classList.add("w-20");
-        sidebar.classList.remove("w-64");
+        sidebar.classList.remove(expandedWidth);
+        sidebar.classList.add(collapsedWidth);
 
         sidebarTexts.forEach(t => t.classList.add("hidden"));
 
-        // change logo
-        if (logo.dataset.icon) {
-            console.log("Collapse → Ganti logo ke:", logo.dataset.icon); // DEBUG
-            logo.src = logo.dataset.icon;
-        }
-
+        logo.src = logo.dataset.icon;
         logo.style.width = "32px";
         logo.style.margin = "0 auto";
 
@@ -26,27 +28,46 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function expandSidebar() {
-        sidebar.classList.add("w-64");
-        sidebar.classList.remove("w-20");
+        sidebar.classList.remove(collapsedWidth);
+        sidebar.classList.add(expandedWidth);
 
         sidebarTexts.forEach(t => t.classList.remove("hidden"));
 
-        if (logo.dataset.full) {
-            console.log("Expand → Ganti logo ke:", logo.dataset.full); // DEBUG
-            logo.src = logo.dataset.full;
-        }
-
+        logo.src = logo.dataset.full;
         logo.style.width = "150px";
         logo.style.margin = "0";
-
-        profileIcon.classList.remove("scale-90");
     }
 
-    toggleBtn.addEventListener("click", () => {
-        if (sidebar.classList.contains("w-64")) {
-            collapseSidebar();
-        } else {
-            expandSidebar();
-        }
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            if (sidebar.classList.contains(expandedWidth)) collapseSidebar();
+            else expandSidebar();
+        });
+    }
+
+    /* ----------------------------
+       DROPDOWN COLLAPSE (MASTER)
+    ----------------------------- */
+
+    document.querySelectorAll(".collapse-toggle").forEach(btn => {
+        const targetId = btn.dataset.collapse;
+        const target = document.getElementById(targetId);
+
+        btn.addEventListener("click", () => {
+
+            // Jika sidebar collapsed → expand dulu
+            if (sidebar.classList.contains(collapsedWidth)) {
+                expandSidebar();
+            }
+
+            // Toggle submenu
+            target.classList.toggle("hidden");
+
+            // Rotate icon
+            const icon = btn.querySelector("i[data-feather]");
+            if (icon) {
+                icon.classList.toggle("rotate-90");
+            }
+        });
     });
 });

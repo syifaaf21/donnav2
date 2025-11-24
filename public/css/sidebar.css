@@ -108,3 +108,8 @@
         border-radius: 10px; /* Tambah ini juga kalau mau tetap rounded di mobile */
     }
 }
+.rotate-90 {
+    transform: rotate(90deg);
+    transition: 0.3s;
+}
+

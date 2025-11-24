@@ -54,7 +54,7 @@
         <li>
             <a type="button"
                 class="collapse-toggle menu-item w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800 text-left font-medium"
-                data-target="masterDataMenu">
+                data-collapse="masterDataMenu">
                 <div class="flex items-center gap-3">
                     <i data-feather="database" class="menu-icon w-4 h-4 text-gray-100"></i>
                     <span class="sidebar-text text-gray-100">Master Data</span>
@@ -121,7 +121,7 @@
                 <li>
                     <a type="button"
                         class="collapse-toggle menu-item w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800 text-left font-medium"
-                        data-target="documentsDropdown">
+                        data-collapse="documentsDropdown">
                         <div class="flex items-center gap-3">
                             <i data-feather="file-text" class="menu-icon w-4 h-4 text-gray-100"></i>
                             <span class="sidebar-text text-gray-100">Document</span>
