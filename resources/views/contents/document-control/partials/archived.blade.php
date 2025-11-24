@@ -150,7 +150,7 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const searchInput = document.getElementById('archiveSearchInput');
                 const tableWrapper = document.getElementById('archivedTableWrapper');
-                const routeUrl = "{{ route('document-control.archived') }}";
+                const routeUrl = "{{ route('archive.archived') }}";
                 let timeout = null;
 
                 if (searchInput && tableWrapper) {
