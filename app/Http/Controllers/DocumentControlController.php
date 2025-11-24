@@ -157,7 +157,6 @@ class DocumentControlController extends Controller
         ]);
     }
 
-
     public function revise(Request $request, DocumentMapping $mapping)
     {
         $uploadedFiles = $request->file('revision_files', []);
@@ -168,7 +167,7 @@ class DocumentControlController extends Controller
         }
 
         $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+           'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:20480',
         ]);
 
         $mapping->load('document');
@@ -206,6 +205,7 @@ class DocumentControlController extends Controller
                     $oldFile->update([
                         'replaced_by_id' => $newFile->id,
                         'is_active' => false,
+                        'marked_for_deletion_at' => now()->addYears(1),
                     ]);
                 }
             }
@@ -237,6 +237,65 @@ class DocumentControlController extends Controller
         return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
 
+    // ... di DocumentControlController@archived
+
+    public function archived(Request $request)
+    {
+        $query = DocumentMapping::with([
+            'document', 
+            'department', 
+            'status', 
+            // Load files secara spesifik: is_active=false DAN belum waktunya hard delete
+            'files' => function ($q) {
+                $q->where('is_active', false)
+                  ->where('marked_for_deletion_at', '>', now()); 
+            }
+        ])
+            ->whereHas('document', fn($q) => $q->where('type', 'control'));
+
+        // Filter: Hanya tampilkan mapping yang memiliki status 'Obsolete' ATAU memiliki file yang sedang diarsip
+        $query->where(function ($q) {
+            // $q->whereHas('status', fn($q2) => $q2->where('name', 'Obsolete'));
+            
+            // Atau memiliki file lama yang belum melewati masa hard delete (1 tahun)
+            $q->orWhereHas('files', fn($q2) => $q2->where('is_active', false)
+                ->where('marked_for_deletion_at', '>', now()) 
+            );
+        });
+
+        // Filter department kalau bukan Admin atau Super Admin
+        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+            $query->where('department_id', Auth::user()->department_id);
+        }
+
+        // LOGIKA SEARCH
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('files', fn($q2) => $q2->where('original_name', 'like', "%$search%"));
+            });
+        }
+        // --- PENGGUNAAN PAGINATE ---
+        // Gunakan paginate dan tambahkan parameter query yang ada
+        $documentsMapping = $query->paginate(15)->appends($request->query()); 
+        
+        $departments = Department::all();
+        if ($request->ajax()) {
+             // Mengembalikan view yang sama, yang sekarang berisi konten tabel saja jika diakses melalui AJAX
+            return view('contents.document-control.partials.archived', compact(
+            'documentsMapping',
+            'departments'
+            ));        
+        }
+
+        return view('contents.document-control.partials.archived', compact(
+            'documentsMapping',
+            'departments'
+            )); 
+        
+    }
 
     public function approve(Request $request, DocumentMapping $mapping)
     {

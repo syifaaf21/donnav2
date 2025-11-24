@@ -180,13 +180,13 @@
                                 };
                             @endphp
                             <td class="px-4 py-2">
-                                <span class="{{ $statusClass }}">{{ ucfirst($statusName ?: '-') }}</span>
+                                <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
                             </td>
                             <td class="px-4 py-2 text-center">
 
                                 <div class="flex justify-center items-center gap-2 relative">
 
-                                    {{-- ================= FILE BUTTON (TETAP DI LUAR) ================= --}}
+                                    {{-- ================= FILE BUTTON ================= --}}
                                     <div class="relative inline-block overflow-visible">
                                         @php
                                             $files = $doc->files
@@ -231,7 +231,7 @@
                                         @endif
                                     </div>
 
-                                    {{-- ================== TITIK 3 (ALL OTHER ACTIONS) ================== --}}
+                                    {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                     <div class="relative inline-block text-left">
                                         <button type="button"
                                             onclick="document.getElementById('actionMenu-{{ $doc->id }}').classList.toggle('hidden')"

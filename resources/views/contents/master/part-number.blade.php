@@ -35,14 +35,6 @@
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
                 </form>
                 <div class="ml-2 relative">
                     <select id="filterPlant"
@@ -57,61 +49,63 @@
                 </div>
             </div>
 
-            {{-- Table --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Part Number</th>
-                            <th class="px-4 py-2">Product</th>
-                            <th class="px-4 py-2">Model</th>
-                            <th class="px-4 py-2">Process</th>
-                            <th class="px-4 py-2">Plant</th>
-                            <th class="px-4 py-2 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($partNumbers as $part)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-4 py-2">
-                                    {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
-                                </td>
-                                <td class="px-4 py-2">{{ $part->part_number }}</td>
-                                <td class="px-4 py-2">{{ $part->product->name ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
-                                <td class="px-4 py-2 text-center">
-                                    <button type="button" data-bs-toggle="modal"
-                                        data-bs-target="#editPartNumberModal-{{ $part->id }}"
-                                        data-bs-title="Edit Part Number"
-                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                    </button>
-                                    <form action="{{ route('master.part_numbers.destroy', $part->id) }}" method="POST"
-                                        class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded"
-                                            data-bs-title="Delete Part Number">
-                                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
+            <div id="tableContainer">
+                {{-- Table --}}
+                <div class="overflow-x-auto overflow-y-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
                             <tr>
-                                <td colspan="7" class="text-center text-gray-500 py-4">No part numbers found.</td>
+                                <th class="px-4 py-2">No</th>
+                                <th class="px-4 py-2">Part Number</th>
+                                <th class="px-4 py-2">Product</th>
+                                <th class="px-4 py-2">Model</th>
+                                <th class="px-4 py-2">Process</th>
+                                <th class="px-4 py-2">Plant</th>
+                                <th class="px-4 py-2 text-center">Actions</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- Pagination --}}
-            <div class="mt-4">
-                {{ $partNumbers->withQueryString()->links('vendor.pagination.tailwind') }}
+                        </thead>
+                        <tbody>
+                            @forelse ($partNumbers as $part)
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-2">
+                                        {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
+                                    </td>
+                                    <td class="px-4 py-2">{{ $part->part_number }}</td>
+                                    <td class="px-4 py-2">{{ $part->product->name ?? '-' }}</td>
+                                    <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
+                                    <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
+                                    <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
+                                    <td class="px-4 py-2 text-center">
+                                        <button type="button" data-bs-toggle="modal"
+                                            data-bs-target="#editPartNumberModal-{{ $part->id }}"
+                                            data-bs-title="Edit Part Number"
+                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            <i data-feather="edit" class="w-4 h-4"></i>
+                                        </button>
+                                        <form action="{{ route('master.part_numbers.destroy', $part->id) }}" method="POST"
+                                            class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded"
+                                                data-bs-title="Delete Part Number">
+                                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center text-gray-500 py-4">No part numbers found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                {{-- Pagination --}}
+                <div class="mt-4">
+                    {{ $partNumbers->withQueryString()->links('vendor.pagination.tailwind') }}
+                </div>
             </div>
         </div>
     </div>
@@ -591,48 +585,81 @@
                 myModal.show();
             @endif
 
-            //Clear Seacrh
-            const clearBtn = document.getElementById("clearSearch");
+            // ===================== GLOBAL SELECTORS =====================
+            const tableContainer = document.getElementById("tableContainer");
             const searchInput = document.getElementById("searchInput");
-            const searchForm = document.getElementById("searchForm");
+            const clearBtn = document.getElementById("clearSearch");
+            const filterPlant = document.getElementById("filterPlant");
+            let timer;
+            const delay = 300;
 
-            if (clearBtn && searchInput && searchForm) {
-                clearBtn.addEventListener("click", function() {
-                    searchInput.value = "";
-                    searchForm.submit();
+            // ===================== URL BUILDER =====================
+            function buildURL(pageUrl = null) {
+                const search = encodeURIComponent(searchInput.value || "");
+                const plant = encodeURIComponent(filterPlant.value || "");
+
+                // Jika pagination memberikan URL
+                if (pageUrl) {
+                    const urlObj = new URL(pageUrl);
+                    urlObj.searchParams.set("search", search);
+                    urlObj.searchParams.set("plant", plant);
+                    return urlObj.toString();
+                }
+
+                // Default (tanpa pagination)
+                return `{{ route('master.part_numbers.index') }}?search=${search}&plant=${plant}`;
+            }
+
+            // ===================== AJAX FETCH =====================
+            function fetchData(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const dom = new DOMParser().parseFromString(html, "text/html");
+                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                        bindPagination();
+
+                        if (window.feather) feather.replace();
+                    });
+            }
+
+            // ===================== LIVE SEARCH =====================
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    fetchData(buildURL());
+                }, delay);
+            });
+
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    fetchData(buildURL());
+                }
+            });
+
+            // ===================== FILTER PLANT =====================
+            filterPlant.addEventListener("change", function() {
+                fetchData(buildURL());
+            });
+
+            // ===================== AJAX PAGINATION =====================
+            function bindPagination() {
+                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
+                    a.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        const finalURL = buildURL(this.href);
+                        fetchData(finalURL);
+                    });
                 });
             }
 
-            // Filter Plant
-            const filterPlant = document.getElementById('filterPlant');
-
-            if (filterPlant && searchForm) {
-                filterPlant.addEventListener('change', function() {
-                    // Tambahkan input hidden search ke form filter
-                    const existingInput = searchForm.querySelector('input[name="search"]');
-                    if (!existingInput) {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'search';
-                        input.value = searchInput.value;
-                        searchForm.appendChild(input);
-                    } else {
-                        existingInput.value = searchInput.value;
-                    }
-
-                    // Tambahkan hidden input plant
-                    let plantInput = searchForm.querySelector('input[name="plant"]');
-                    if (!plantInput) {
-                        plantInput = document.createElement('input');
-                        plantInput.type = 'hidden';
-                        plantInput.name = 'plant';
-                        searchForm.appendChild(plantInput);
-                    }
-                    plantInput.value = this.value;
-
-                    searchForm.submit();
-                });
-            }
+            bindPagination();
 
         });
     </script>

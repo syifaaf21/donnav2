@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
         // Opsional: jalankan di background
+        $schedule->command('archive:delete-expired')->daily();
     }
 
     protected function commands()

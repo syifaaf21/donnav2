@@ -37,150 +37,139 @@
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
-                    <button type="submit"
-                        class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" id="clearSearch"
-                        class="absolute right-16 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
                 </form>
 
                 {{-- Filter Button --}}
-                <div class="relative ml-2">
+                <div class="relative ml-3">
                     <button id="filterBtn" type="button"
-                        class="flex items-center gap-1 px-3 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                        <i class="bi bi-funnel"></i>
+                        class="flex items-center gap-1 px-3 py-2 bg-gray-100 border rounded-lg text-gray-600
+                       hover:bg-gray-200 hover:text-gray-800 transition">
+                        <i class="bi bi-funnel-fill"></i>
                     </button>
 
-                    <!-- Dropdown filter -->
-                    <div id="filterDropdown"
-                        class="hidden fixed bg-white border border-gray-300 rounded shadow-lg z-50 max-h-[70vh] overflow-y-auto p-3"
-                        style="min-width: 220px;">
-                        <form method="GET" action="{{ route('master.document-control.index') }}">
+                    {{-- Dropdown Filter --}}
+                    <div id="filterDropdown" class="hidden bg-white w-64 border rounded-lg shadow-xl p-4 z-50"
+                        style="position: fixed; top: 65px; right: 40px;">
+
+                        <form id="filterForm">
                             <input type="hidden" name="search" value="{{ request('search') }}">
 
-                            @foreach ($departments as $department)
-                                <div class="flex items-center mb-2">
-                                    <input type="checkbox" name="department[]" value="{{ $department->id }}"
-                                        id="dept_{{ $department->id }}" class="form-checkbox"
-                                        {{ is_array(request('department')) && in_array($department->id, request('department')) ? 'checked' : '' }}>
-                                    <label for="dept_{{ $department->id }}" class="ml-2 text-gray-700">
-                                        {{ $department->name }}
-                                    </label>
-                                </div>
-                            @endforeach
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                                Filter by Department
+                            </h3>
 
-                            <!-- Button Apply + Clear -->
-                            <div class="flex justify-between mt-3">
-                                <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                                    Apply
-                                </button>
-                                <button type="button" id="clearFilter"
-                                    class="px-3 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
-                                    Clear
-                                </button>
+                            <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                @foreach ($departments as $department)
+                                    <label class="flex items-center gap-2 cursor-pointer text-gray-700 text-sm">
+                                        <input type="checkbox" name="department[]" value="{{ $department->id }}"
+                                            class="rounded text-blue-600 border-gray-300 focus:ring-blue-500 departmentCheck"
+                                            {{ is_array(request('department')) && in_array($department->id, request('department')) ? 'checked' : '' }}>
+                                        <span>{{ $department->name }}</span>
+                                    </label>
+                                @endforeach
                             </div>
+
                         </form>
                     </div>
                 </div>
             </div>
-            {{-- Table --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="px-4 py-2">
-                                <input type="checkbox" id="selectAll" class="form-checkbox">
-                            </th>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Document Name</th>
-                            <th class="px-4 py-2">Department</th>
-                            <th class="px-4 py-2">Obsolete</th>
-                            <th class="px-4 py-2">Reminder Date</th>
-                            <th class="px-4 py-2">Document Period</th>
-                            <th class="px-4 py-2 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @forelse($documentMappings as $mapping)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4">
-                                    <input type="checkbox" class="row-checkbox form-checkbox" value="{{ $mapping->id }}">
-                                </td>
-                                <td class="px-6 py-4">{{ $loop->iteration }}</td>
-                                <td class="px-6 py-4">{{ $mapping->document->name ?? '-' }}</td>
-                                <td class="px-6 py-4">{{ $mapping->department->name ?? '-' }}</td>
-                                <td class="px-6 py-4">
-                                    {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if ($mapping->period_years)
-                                        {{ $mapping->period_years }} {{ $mapping->period_years == 1 ? 'Year' : 'Years' }}
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 flex space-x-2">
-                                    @if ($mapping->files->count())
-                                        <div class="relative inline-block">
-                                            <button type="button"
-                                                class="btn btn-outline-secondary btn-sm view-files-btn relative flex items-center justify-center w-8 h-8"
-                                                data-mapping-id="{{ $mapping->id }}"
-                                                data-files='@json(
-                                                    $mapping->files->map(fn($file) => [
-                                                            'name' => $file->file_name ?? basename($file->file_path),
-                                                            'url' => asset('storage/' . $file->file_path),
-                                                        ]))'>
-                                                <i class="bi bi-paperclip text-lg"></i>
-
-                                                @if ($mapping->files->count() > 1)
-                                                    <span
-                                                        class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow">
-                                                        {{ $mapping->files->count() }}
-                                                    </span>
-                                                @endif
-                                            </button>
-                                        </div>
-                                    @else
-                                        <span class="text-gray-500">No File</span>
-                                    @endif
-
-
-                                    <div class="flex items-center gap-2">
-                                        @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
-                                            <button type="button"
-                                                class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
-                                                data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
-                                                <i data-feather="edit" class="w-4 h-4"></i>
-                                            </button>
-                                            <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
-                                                method="POST" class="inline delete-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @include('contents.master.document-control.partials.modal-edit')
-                        @empty
+            <div id="tableContainer">
+                {{-- Table --}}
+                <div class="overflow-x-auto overflow-y-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
                             <tr>
-                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No Data</td>
+                                <th class="px-4 py-2">
+                                    <input type="checkbox" id="selectAll" class="form-checkbox">
+                                </th>
+                                <th class="px-4 py-2">No</th>
+                                <th class="px-4 py-2">Document Name</th>
+                                <th class="px-4 py-2">Department</th>
+                                <th class="px-4 py-2">Obsolete</th>
+                                <th class="px-4 py-2">Reminder Date</th>
+                                <th class="px-4 py-2">Document Period</th>
+                                <th class="px-4 py-2 text-center action-column">Action</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            @forelse($documentMappings as $mapping)
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <input type="checkbox" class="row-checkbox form-checkbox"
+                                            value="{{ $mapping->id }}">
+                                    </td>
+                                    <td class="px-6 py-4">{{ $loop->iteration }}</td>
+                                    <td class="px-6 py-4">{{ $mapping->document->name ?? '-' }}</td>
+                                    <td class="px-6 py-4">{{ $mapping->department->name ?? '-' }}</td>
+                                    <td class="px-6 py-4">
+                                        {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if ($mapping->period_years)
+                                            {{ $mapping->period_years }}
+                                            {{ $mapping->period_years == 1 ? 'Year' : 'Years' }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 flex space-x-2 whitespace-nowrap action-column">
+                                        @if ($mapping->files->count())
+                                            <div class="relative inline-block">
+                                                <button type="button"
+                                                    class="btn btn-outline-secondary btn-sm view-files-btn relative flex items-center justify-center w-8 h-8"
+                                                    data-mapping-id="{{ $mapping->id }}"
+                                                    data-files='@json(
+                                                        $mapping->files->map(fn($file) => [
+                                                                'name' => $file->file_name ?? basename($file->file_path),
+                                                                'url' => asset('storage/' . $file->file_path),
+                                                            ]))'>
+                                                    <i class="bi bi-paperclip text-lg"></i>
 
+                                                    @if ($mapping->files->count() > 1)
+                                                        <span
+                                                            class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow">
+                                                            {{ $mapping->files->count() }}
+                                                        </span>
+                                                    @endif
+                                                </button>
+                                            </div>
+                                        @else
+                                            <span class="text-gray-500">No File</span>
+                                        @endif
+
+                                        <div class="flex items-center gap-2">
+                                            @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+                                                <button type="button"
+                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200 shrink-0"
+                                                    data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
+                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                </button>
+                                                <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
+                                                    method="POST" class="inline delete-form">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded shrink-0">
+                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                                @include('contents.master.document-control.partials.modal-edit')
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No Data</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             {{-- Pagination --}}
             <div class="mt-4">
                 {{ $documentMappings->withQueryString()->links('vendor.pagination.tailwind') }}
@@ -664,11 +653,24 @@
                 document.getElementById('fileViewer').src = '';
             });
 
+            // =======================
+            // AJAX SEARCH
+            // =======================
+            let searchTimeout = null;
+
+            const searchInput = document.getElementById('searchInput');
             const filterBtn = document.getElementById('filterBtn');
             const filterDropdown = document.getElementById('filterDropdown');
-            const clearFilterBtn = document.getElementById('clearFilter');
-            const searchInput = document.getElementById('searchInput');
             const searchForm = document.getElementById('searchForm');
+            const clearFilterBtn = document.getElementById('clearFilter');
+
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(searchTimeout);
+
+                searchTimeout = setTimeout(() => {
+                    submitFilterSearchAjax();
+                }, 300);
+            });
 
             // Tampilkan / sembunyikan dropdown filter
             filterBtn.addEventListener('click', () => {
@@ -690,18 +692,82 @@
                 }
             });
 
-            // Klik di luar untuk menutup dropdown
-            document.addEventListener('click', (e) => {
-                if (!filterBtn.contains(e.target) && !filterDropdown.contains(e.target)) {
-                    filterDropdown.classList.add('hidden');
-                }
+            // AUTO SUBMIT FILTER (AJAX)
+            document.querySelectorAll('.departmentCheck').forEach(chk => {
+                chk.addEventListener('change', function() {
+                    submitFilterSearchAjax();
+
+                });
             });
 
-            // Clear filter (hanya reset checkbox, tidak reset search)
-            clearFilterBtn.addEventListener('click', () => {
-                const checkboxes = filterDropdown.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(cb => cb.checked = false);
+            // CLEAR FILTER
+            document.getElementById("clearFilter").addEventListener("click", function() {
+                document.querySelectorAll('.departmentCheck').forEach(chk => chk.checked = false);
+                submitFilterSearchAjax();
+
             });
+
+            // AJAX function
+            function submitFilterSearchAjax() {
+                let params = new URLSearchParams();
+
+                params.append("search", searchInput.value);
+
+                let selectedDepartments = [];
+                document.querySelectorAll(".departmentCheck:checked").forEach(chk => {
+                    params.append("department[]", chk.value);
+                    selectedDepartments.push(chk.value);
+                });
+
+                fetch("{{ route('master.document-control.index') }}?" + params.toString(), {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        const newDom = new DOMParser().parseFromString(html, "text/html");
+                        document.getElementById("tableContainer").innerHTML =
+                            newDom.getElementById("tableContainer").innerHTML;
+
+                        // Restore checked filter
+                        selectedDepartments.forEach(dep => {
+                            const box = document.querySelector(`.departmentCheck[value="${dep}"]`);
+                            if (box) box.checked = true;
+                        });
+
+                        // Re-bind listeners
+                        rebindListeners();
+                        feather.replace();
+                    });
+            }
+
+            function rebindListeners() {
+
+                // Re-bind department filters
+                document.querySelectorAll('.departmentCheck').forEach(chk => {
+                    chk.addEventListener('change', submitFilterSearchAjax);
+                });
+
+                const clearBtn = document.getElementById("clearFilter");
+                if (clearBtn) {
+                    clearBtn.addEventListener("click", function() {
+                        document.querySelectorAll('.departmentCheck').forEach(chk => chk.checked = false);
+                        submitFilterSearchAjax();
+                    });
+                }
+
+                // === FIX PENTING ===
+                // Re-bind file viewer
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const fileUrl = this.dataset.file;
+                        const iframe = document.getElementById('fileViewer');
+                        iframe.src = fileUrl;
+                    });
+                });
+            }
 
             // Submit form filter → sinkronkan search terbaru
             const filterForm = filterDropdown.querySelector('form');
@@ -714,7 +780,7 @@
             const clearSearchBtn = document.getElementById('clearSearch');
             clearSearchBtn.addEventListener('click', () => {
                 searchInput.value = '';
-                searchForm.submit();
+                submitFilterSearchAjax();
             });
         });
     </script>
@@ -752,6 +818,12 @@
             /* atau sesuai kebutuhan */
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .action-column {
+            min-width: 120px;
+            /* atau sesuai kebutuhan */
             white-space: nowrap;
         }
     </style>

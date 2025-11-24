@@ -453,7 +453,8 @@
                 <input type="file" name="files[]" class="form-control border-1 shadow-sm" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
                 <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
             `;
-                    container.appendChild(newInputGroup);
+                   container.prepend(newInputGroup);
+
                 }
 
                 if (e.target && e.target.classList.contains('remove-file-btn')) {

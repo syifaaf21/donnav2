@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ProductModel;
+use Illuminate\Support\Facades\Validator;
 
 class ModelController extends Controller
 {
@@ -34,13 +35,19 @@ class ModelController extends Controller
 
     public function update(Request $request, ProductModel $model)
     {
-        $validated = $request->validate([
+       $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100|unique:tm_models,name,' . $model->id,
             'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
-        $model->update($validated);
+        if ($validator->fails()) {
+    return redirect()->back()
+        ->withErrors($validator)
+        ->with('edit_modal', $model->id)  // ⬅ penting!
+        ->withInput();
+}
 
+    $model->update($validator->validated());
         return redirect()->back()->with('success', 'Model updated successfully.');
     }
 

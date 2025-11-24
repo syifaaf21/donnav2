@@ -35,86 +35,149 @@
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
                 </form>
             </div>
 
-            {{-- Table --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Name</th>
-                            <th class="px-4 py-2">Plant</th>
-                            <th class="px-4 py-2 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($models as $model)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-4 py-2">
-                                    {{ ($models->currentPage() - 1) * $models->perPage() + $loop->iteration }}
-                                </td>
-                                <td class="px-4 py-2">{{ $model->name }}</td>
-                                <td class="px-4 py-2">{{ $model->plant }}</td>
-                                <td class="px-4 py-2 flex justify-center gap-2">
-                                    {{-- Edit Button --}}
-                                    <button type="button" data-bs-toggle="modal"
-                                        data-bs-target="#editModelModal-{{ $model->id }}" data-bs-title="Edit Model"
-                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                    </button>
-                                    {{-- Delete Button --}}
-                                    <form action="{{ route('master.models.destroy', $model->id) }}" method="POST"
-                                        class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" data-bs-title="Delete Model"
-                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
+            <div id="tableContainer">
+                {{-- Table --}}
+                <div class="overflow-x-auto overflow-y-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
                             <tr>
-                                <td colspan="4" class="text-center text-gray-500 py-4">No models found.</td>
+                                <th class="px-4 py-2">No</th>
+                                <th class="px-4 py-2">Name</th>
+                                <th class="px-4 py-2">Plant</th>
+                                <th class="px-4 py-2 text-center">Actions</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- Pagination --}}
-            <div class="mt-4">
-                {{ $models->withQueryString()->links('vendor.pagination.tailwind') }}
+                        </thead>
+                        <tbody>
+                            @forelse ($models as $model)
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-2">
+                                        {{ ($models->currentPage() - 1) * $models->perPage() + $loop->iteration }}
+                                    </td>
+                                    <td class="px-4 py-2">{{ $model->name }}</td>
+                                    <td class="px-4 py-2">{{ $model->plant }}</td>
+                                    <td class="px-4 py-2 flex justify-center gap-2">
+                                        {{-- Edit Button --}}
+                                        <button type="button" data-bs-toggle="modal"
+                                            data-bs-target="#editModelModal-{{ $model->id }}" data-bs-title="Edit Model"
+                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            <i data-feather="edit" class="w-4 h-4"></i>
+                                        </button>
+                                        {{-- Delete Button --}}
+                                        <form action="{{ route('master.models.destroy', $model->id) }}" method="POST"
+                                            class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" data-bs-title="Delete Model"
+                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-gray-500 py-4">No models found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                {{-- Pagination --}}
+                <div class="mt-4">
+                    {{ $models->withQueryString()->links('vendor.pagination.tailwind') }}
+                </div>
             </div>
         </div>
     </div>
 
 
     {{-- Edit Modals --}}
-@foreach ($models as $model)
-    <div class="modal fade" id="editModelModal-{{ $model->id }}" tabindex="-1"
-        aria-labelledby="editModelModalLabel-{{ $model->id }}" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg = modal besar --}}
-            <form action="{{ route('master.models.update', $model->id) }}" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-content border-0 shadow-lg rounded-4">
+    @foreach ($models as $model)
+        <div class="modal fade" id="editModelModal-{{ $model->id }}" tabindex="-1"
+            aria-labelledby="editModelModalLabel-{{ $model->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg = modal besar --}}
+                <form action="{{ route('master.models.update', $model->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="_form" value="edit">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
 
+                        {{-- Header --}}
+                        <div class="modal-header bg-light text-dark rounded-top-4">
+                            <h5 class="modal-title fw-semibold" id="editModelModalLabel-{{ $model->id }}">
+                                <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Model
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        {{-- Body --}}
+                        <div class="modal-body p-5">
+                            <div class="row g-4">
+                                {{-- Model Name --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Model Name <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="name" placeholder="Enter model name"
+                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                        value="{{ $model->name }}" required>
+                                    @error('name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Plant --}}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
+                                    <select name="plant"
+                                        class="form-select tom-plant rounded-3 @error('plant') is-invalid @enderror"
+                                        required>
+                                        <option value="">-- Select Plant --</option>
+                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                            <option value="{{ $plant }}" @selected($model->plant === $plant)>
+                                                {{ $plant }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('plant')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Footer --}}
+                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                            <button type="button"
+                                class="px-4 py-2 border border-gray-400 rounded-lg text-gray-700 hover:bg-gray-200"
+                                data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                                Save Changes
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
+
+    {{-- Add Modal --}}
+    <div class="modal fade" id="addModelModal" tabindex="-1" aria-labelledby="addModelModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg agar besar juga --}}
+            <form action="{{ route('master.models.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="_form" value="add">
+                <div class="modal-content border-0 shadow-lg rounded-4">
                     {{-- Header --}}
                     <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" id="editModelModalLabel-{{ $model->id }}">
-                            <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Model
+                        <h5 class="modal-title fw-semibold" id="addModelModalLabel">
+                            <i class="bi bi-plus-circle me-2 text-primary"></i>Add New Model
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -125,9 +188,9 @@
                             {{-- Model Name --}}
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Model Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name"
+                                <input type="text" name="name" placeholder="Enter model name"
                                     class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                    value="{{ $model->name }}" required>
+                                    value="{{ old('name') }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -136,12 +199,11 @@
                             {{-- Plant --}}
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                                <select name="plant"
-                                    class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
+                                <select name="plant" class="form-select rounded-3 tom-plant" required>
                                     <option value="">-- Select Plant --</option>
-                                    @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                        <option value="{{ $plant }}" @selected($model->plant === $plant)>
-                                            {{ $plant }}
+                                    @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
+                                        <option value="{{ $optPlant }}" @selected(old('plant') === $optPlant)>
+                                            {{ $optPlant }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -159,143 +221,179 @@
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                            Save Changes
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                            Submit
                         </button>
                     </div>
-
                 </div>
             </form>
         </div>
     </div>
-@endforeach
-
-{{-- Add Modal --}}
-<div class="modal fade" id="addModelModal" tabindex="-1" aria-labelledby="addModelModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg agar besar juga --}}
-        <form action="{{ route('master.models.store') }}" method="POST">
-            @csrf
-            <div class="modal-content border-0 shadow-lg rounded-4">
-
-                {{-- Header --}}
-                <div class="modal-header bg-light text-dark rounded-top-4">
-                    <h5 class="modal-title fw-semibold" id="addModelModalLabel">
-                        <i class="bi bi-plus-circle me-2 text-primary"></i>Add New Model
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                {{-- Body --}}
-                <div class="modal-body p-5">
-                    <div class="row g-4">
-                        {{-- Model Name --}}
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Model Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name"
-                                class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                value="{{ old('name') }}" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        {{-- Plant --}}
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                            <select name="plant"
-                                class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
-                                <option value="">-- Select Plant --</option>
-                                @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                    <option value="{{ $plant }}" @selected(old('plant') === $plant)>
-                                        {{ $plant }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('plant')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-400 rounded-lg text-gray-700 hover:bg-gray-200"
-                        data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                        Submit
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 @endsection
 
 
 @push('scripts')
     <x-sweetalert-confirm />
     <script>
-        // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
-            const clearBtn = document.getElementById("clearSearch");
+
+            const plantSelects = document.querySelectorAll('.tom-plant');
+
+            plantSelects.forEach(select => {
+                new TomSelect(select, {
+                    create: false,
+                    maxItems: 1,
+                    allowEmptyOption: false,
+                    placeholder: "Select Plant",
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
+                    }
+                });
+            });
+
+            // ===================== AJAX LIVE SEARCH =====================
+            function bindDeleteConfirm() {
+                document.querySelectorAll('.delete-form').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "This action cannot be undone.",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, delete it!',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Setelah konfirmasi, submit form
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+            }
+            const tableContainer = document.getElementById("tableContainer");
             const searchInput = document.getElementById("searchInput");
-            const searchForm = document.getElementById("searchForm");
+            const clearBtn = document.getElementById("clearSearch");
 
-            if (clearBtn && searchInput && searchForm) {
-                clearBtn.addEventListener("click", function() {
-                    searchInput.value = "";
-                    searchForm.submit();
+            let timer;
+            const delay = 300;
+
+            function fetchData(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const dom = new DOMParser().parseFromString(html, "text/html");
+                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                        bindPagination();
+
+                        if (window.feather) feather.replace();
+                        bindDeleteConfirm();
+
+                        // Tooltip
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+                        tooltipTriggerList.map(function(el) {
+                            return new bootstrap.Tooltip(el, {
+                                title: el.getAttribute('data-bs-title'),
+                                placement: 'top',
+                                trigger: 'hover'
+                            });
+                        });
+                    });
+            }
+
+            // Search input
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    let q = searchInput.value;
+                    let url = `{{ route('master.models.index') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }, delay);
+            });
+
+            // Enter key
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    let q = searchInput.value;
+                    let url = `{{ route('master.models.index') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }
+            });
+
+            // Clear Search
+            clearBtn.addEventListener("click", function() {
+                searchInput.value = "";
+                fetchData(`{{ route('master.models.index') }}`);
+            });
+
+            // ===================== AJAX PAGINATION =====================
+            function bindPagination() {
+                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
+                    a.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        fetchData(this.href);
+                    });
                 });
             }
 
-            //Cancel button modal
-            const addDepartmentModal = document.getElementById("addModelModal");
-            const formAdd = addDepartmentModal.querySelector("form");
+            bindPagination();
 
-            if (addDepartmentModal && formAdd) {
-                // Reset form ketika modal ditutup
-                addDepartmentModal.addEventListener('hidden.bs.modal', function() {
+            // Reset form ketika modal ditutup (Add)
+            const addModelModal = document.getElementById("addModelModal");
+            const formAdd = addModelModal.querySelector("form");
+
+            if (addModelModal && formAdd) {
+                addModelModal.addEventListener('hidden.bs.modal', function() {
                     formAdd.reset();
-
-                    // Hapus is-invalid dan error message
-                    formAdd.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
-                        'is-invalid'));
-                    formAdd.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
                 });
             }
 
+            // Reset Edit Modals
             const editModals = document.querySelectorAll('[id^="editModelModal-"]');
             editModals.forEach(modal => {
                 const form = modal.querySelector("form");
-
                 if (form) {
                     modal.addEventListener('hidden.bs.modal', function() {
                         form.reset();
-
-                        // Hapus class is-invalid dan error feedback
-                        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
-                            'is-invalid'));
-                        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
                     });
                 }
             });
+
         });
-        //Tooltip
-        document.addEventListener('DOMContentLoaded', function() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-            tooltipTriggerList.map(function(el) {
-                return new bootstrap.Tooltip(el, {
-                    title: el.getAttribute('data-bs-title'),
-                    placement: 'top',
-                    trigger: 'hover'
-                });
+
+        // Tooltip
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+        tooltipTriggerList.map(function(el) {
+            return new bootstrap.Tooltip(el, {
+                title: el.getAttribute('data-bs-title'),
+                placement: 'top',
+                trigger: 'hover'
             });
         });
     </script>
+    @if ($errors->any() && old('_form') === 'add')
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                new bootstrap.Modal(document.getElementById("addModelModal")).show();
+            });
+        </script>
+    @endif
+
+    @if ($errors->any() && session('edit_modal'))
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                let modalId = "editModelModal-{{ session('edit_modal') }}";
+                let modal = new bootstrap.Modal(document.getElementById(modalId));
+                modal.show();
+            });
+        </script>
+    @endif
 @endpush

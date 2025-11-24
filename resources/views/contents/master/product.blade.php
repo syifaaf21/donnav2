@@ -35,67 +35,60 @@
                     <input type="text" name="search" id="searchInput"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Search..." value="{{ request('search') }}">
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
                 </form>
             </div>
-
-            {{-- Table --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Name</th>
-                            <th class="px-4 py-2">Code</th>
-                            <th class="px-4 py-2">Plant</th>
-                            <th class="px-4 py-2 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($products as $product)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-4 py-2">
-                                    {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}
-                                </td>
-                                <td class="px-4 py-2">{{ $product->name }}</td>
-                                <td class="px-4 py-2">{{ $product->code }}</td>
-                                <td class="px-4 py-2">{{ $product->plant }}</td>
-                                <td class="px-4 py-2 text-center">
-                                    <button type="button" data-bs-toggle="modal"
-                                        data-bs-target="#editProductModal-{{ $product->id }}" data-bs-title="Edit Product"
-                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
-                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                    </button>
-                                    <form action="{{ route('master.products.destroy', $product->id) }}" method="POST"
-                                        class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" data-bs-title="Delete Product"
-                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
+            <div id="tableContainer">
+                {{-- Table --}}
+                <div class="overflow-x-auto overflow-y-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
                             <tr>
-                                <td colspan="5" class="text-center text-gray-500 py-4">No products found.</td>
+                                <th class="px-4 py-2">No</th>
+                                <th class="px-4 py-2">Name</th>
+                                <th class="px-4 py-2">Code</th>
+                                <th class="px-4 py-2">Plant</th>
+                                <th class="px-4 py-2 text-center">Actions</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- Pagination --}}
-            <div class="mt-4">
-                {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
+                        </thead>
+                        <tbody>
+                            @forelse ($products as $product)
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-2">
+                                        {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}
+                                    </td>
+                                    <td class="px-4 py-2">{{ ucwords($product->name) }}</td>
+                                    <td class="px-4 py-2">{{ $product->code }}</td>
+                                    <td class="px-4 py-2">{{ $product->plant }}</td>
+                                    <td class="px-4 py-2 text-center">
+                                        <button type="button" data-bs-toggle="modal"
+                                            data-bs-target="#editProductModal-{{ $product->id }}"
+                                            data-bs-title="Edit Product"
+                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            <i data-feather="edit" class="w-4 h-4"></i>
+                                        </button>
+                                        <form action="{{ route('master.products.destroy', $product->id) }}" method="POST"
+                                            class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" data-bs-title="Delete Product"
+                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-gray-500 py-4">No products found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                {{-- Pagination --}}
+                <div class="mt-4">
+                    {{ $products->withQueryString()->links('vendor.pagination.tailwind') }}
+                </div>
             </div>
         </div>
     </div>
@@ -123,9 +116,9 @@
                                 {{-- Name --}}
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="name"
+                                    <input type="text" name="name" placeholder="Enter product name"
                                         class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                        value="{{ ucwords($product->name) }}" required>
+                                        value="{{ $product->name }}" required>
                                     @error('name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -134,7 +127,7 @@
                                 {{-- Code --}}
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                                    <input type="text" name="code"
+                                    <input type="text" name="code" placeholder="Enter product code"
                                         class="form-control rounded-3 @error('code') is-invalid @enderror"
                                         value="{{ $product->code }}" required>
                                     @error('code')
@@ -143,7 +136,7 @@
                                 </div>
 
                                 {{-- Plant --}}
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
                                     <select name="plant" class="form-select" required>
                                         @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
@@ -267,18 +260,131 @@
         </script>
     @endif
     <script>
-        // Clear Search functionality
         document.addEventListener("DOMContentLoaded", function() {
-            const clearBtn = document.getElementById("clearSearch");
-            const searchInput = document.getElementById("searchInput");
-            const searchForm = document.getElementById("searchForm");
-
-            if (clearBtn && searchInput && searchForm) {
-                clearBtn.addEventListener("click", function() {
-                    searchInput.value = "";
-                    searchForm.submit();
+            // Initialize TomSelect for PLANT in Add Modal
+            const addSelect = document.querySelector('#addProductModal select[name="plant"]');
+            if (addSelect) {
+                new TomSelect(addSelect, {
+                    create: false,
+                    maxItems: 1,
+                    allowEmptyOption: false,
+                    placeholder: "Select Plant"
                 });
             }
+
+            // Initialize TomSelect for PLANT in each Edit Modal
+            document.querySelectorAll('[id^="editProductModal-"]').forEach(modal => {
+                const select = modal.querySelector('select[name="plant"]');
+
+                if (select) {
+                    new TomSelect(select, {
+                        create: false,
+                        maxItems: 1,
+                        allowEmptyOption: false,
+                        placeholder: "Select Plant"
+                    });
+                }
+            });
+
+            function bindDeleteConfirm() {
+                document.querySelectorAll('.delete-form').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "This action cannot be undone.",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, delete it!',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Setelah konfirmasi, submit form
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+            }
+            const searchInput = document.getElementById("searchInput");
+            const clearBtn = document.getElementById("clearSearch");
+            const tableContainer = document.getElementById("tableContainer");
+
+            let timer;
+            const delay = 300;
+
+            function fetchData(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const dom = new DOMParser().parseFromString(html, "text/html");
+
+                        // Replace isi table & pagination
+                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                        // Rebind pagination links
+                        bindPagination();
+
+                        // Re-init feather icons
+                        if (window.feather) {
+                            feather.replace();
+                        }
+
+                        bindDeleteConfirm();
+                        // Re-init tooltips
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+                        tooltipTriggerList.map(function(el) {
+                            return new bootstrap.Tooltip(el, {
+                                title: el.getAttribute('data-bs-title'),
+                                placement: 'top',
+                                trigger: 'hover'
+                            });
+                        });
+                    });
+            }
+
+            // ========== LIVE SEARCH ==========
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    let q = searchInput.value;
+                    let url =
+                        `{{ route('master.products.index') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }, delay);
+            });
+
+            // Enter submit via AJAX
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    let q = searchInput.value;
+                    let url = `{{ route('master.products.index') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }
+            });
+
+            // Clear Search
+            clearBtn.addEventListener("click", function() {
+                searchInput.value = "";
+                fetchData(`{{ route('master.products.index') }}`);
+            });
+
+            // ========== AJAX PAGINATION ==========
+            function bindPagination() {
+                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
+                    a.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        fetchData(this.href);
+                    });
+                });
+            }
+
+            bindPagination();
 
             //Cancel button modal
             const addDepartmentModal = document.getElementById("addProductModal");

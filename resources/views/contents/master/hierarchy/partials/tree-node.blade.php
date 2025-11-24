@@ -21,7 +21,7 @@
                 <i data-feather="file-text" class="w-4 h-4 text-blue-500 mr-1"></i>
             @endif
 
-            <span class="text-gray-800 font-medium">{{ $document->name }}</span>
+            <span class="text-gray-800 font-medium">{{ ucwords($document->name) }}</span>
         </div>
     </td>
 

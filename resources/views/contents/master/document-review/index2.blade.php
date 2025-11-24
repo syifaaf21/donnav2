@@ -57,14 +57,6 @@
                         <input type="text" name="search" id="searchInput"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                             placeholder="Search..." value="{{ request('search') }}">
-                        <button type="submit"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <button type="button" id="clearSearch"
-                            class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
                     </form>
 
                     {{-- Filter Icon --}}
@@ -179,46 +171,46 @@
             </div>
         </div>
 
-
-        {{-- Table per Plant --}}
-        <div class="overflow-x-auto max-h-[60vh]">
-            @foreach ($groupedByPlant as $plant => $documents)
-                @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                <div x-show="activeTab === '{{ $slug }}'" x-transition>
-                    <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
-                        <thead class="bg-gray-50 sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-2 text-left font-semibold">No</th>
-                                <th class="px-4 py-2 text-left font-semibold">Document Number</th>
-                                <th class="px-4 py-2 text-left font-semibold">Part Number</th>
-                                <th class="px-4 py-2 text-left font-semibold">Product</th>
-                                <th class="px-4 py-2 text-left font-semibold">Model</th>
-                                <th class="px-4 py-2 text-left font-semibold">Process</th>
-                                <th class="px-4 py-2 text-left font-semibold">Reminder Date</th>
-                                <th class="px-4 py-2 text-left font-semibold">Deadline</th>
-                                <th class="px-4 py-2 text-center font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
-                            @if ($documents->isEmpty())
+        <div id="tableContainer">
+            {{-- Table per Plant --}}
+            <div class="overflow-x-auto max-h-[60vh]">
+                @foreach ($groupedByPlant as $plant => $documents)
+                    @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
+                    <div x-show="activeTab === '{{ $slug }}'" x-transition>
+                        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
                                 <tr>
-                                    <td colspan="9" class="text-center text-gray-400 py-6">
-                                        <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-2"></i>
-                                        No Document found for this tab.
-                                    </td>
+                                    <th class="px-4 py-2 text-left font-semibold">No</th>
+                                    <th class="px-4 py-2 text-left font-semibold">Document Number</th>
+                                    <th class="px-4 py-2 text-left font-semibold">Part Number</th>
+                                    <th class="px-4 py-2 text-left font-semibold">Product</th>
+                                    <th class="px-4 py-2 text-left font-semibold">Model</th>
+                                    <th class="px-4 py-2 text-left font-semibold">Process</th>
+                                    <th class="px-4 py-2 text-left font-semibold">Reminder Date</th>
+                                    <th class="px-4 py-2 text-left font-semibold">Deadline</th>
+                                    <th class="px-4 py-2 text-center font-semibold">Actions</th>
                                 </tr>
-                            @else
-                                @foreach ($documents as $index => $doc)
-                                    <tr class="hover:bg-blue-50 transition">
-                                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                        <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
-                                        <td class="px-4 py-2">{{ $doc->partNumber->part_number ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ $doc->product->name ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ $doc->productModel->name ?? '-' }}</td>
-                                        <td class="px-4 py-2 capitalize">{{ $doc->process->name ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
-                                        <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
-                                        {{-- <td class="px-4 py-2">
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                @if ($documents->isEmpty())
+                                    <tr>
+                                        <td colspan="9" class="text-center text-gray-400 py-6">
+                                            <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-2"></i>
+                                            No Document found for this tab.
+                                        </td>
+                                    </tr>
+                                @else
+                                    @foreach ($documents as $index => $doc)
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">{{ $index + 1 }}</td>
+                                            <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
+                                            <td class="px-4 py-2">{{ $doc->partNumber->part_number ?? '-' }}</td>
+                                            <td class="px-4 py-2">{{ $doc->product->name ?? '-' }}</td>
+                                            <td class="px-4 py-2">{{ $doc->productModel->name ?? '-' }}</td>
+                                            <td class="px-4 py-2 capitalize">{{ $doc->process->name ?? '-' }}</td>
+                                            <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
+                                            <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
+                                            {{-- <td class="px-4 py-2">
                                             @php
                                                 $statusClasses = [
                                                     'approved' =>
@@ -243,64 +235,65 @@
                                                 <span class="text-gray-400">-</span>
                                             @endif
                                         </td> --}}
-                                        <td class="px-4 py-2 text-center">
-                                            <div class="relative inline-block overflow-visible">
-                                                @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
-                                                @if (count($files) > 1)
-                                                    <button id="viewFilesBtn-{{ $doc->id }}" type="button"
-                                                        class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
-                                                        title="View File">
-                                                        <i data-feather="file-text" class="w-6 h-6"></i>
-                                                        <span
-                                                            class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                                                            {{ count($files) }}
-                                                        </span>
-                                                    </button>
-                                                    <div id="viewFilesDropdown-{{ $doc->id }}"
-                                                        class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
-                                                        <div class="py-1 text-sm max-h-80 overflow-y-auto">
-                                                            @foreach ($files as $file)
-                                                                <button type="button"
-                                                                    class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                    data-file="{{ $file['url'] }}" title="View File">
-                                                                    📄 {{ $file['name'] }}
-                                                                </button>
-                                                            @endforeach
+                                            <td class="px-4 py-2 text-center">
+                                                <div class="relative inline-block overflow-visible">
+                                                    @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
+                                                    @if (count($files) > 1)
+                                                        <button id="viewFilesBtn-{{ $doc->id }}" type="button"
+                                                            class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
+                                                            title="View File">
+                                                            <i data-feather="file-text" class="w-6 h-6"></i>
+                                                            <span
+                                                                class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                                {{ count($files) }}
+                                                            </span>
+                                                        </button>
+                                                        <div id="viewFilesDropdown-{{ $doc->id }}"
+                                                            class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                            <div class="py-1 text-sm max-h-80 overflow-y-auto">
+                                                                @foreach ($files as $file)
+                                                                    <button type="button"
+                                                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
+                                                                        data-file="{{ $file['url'] }}"
+                                                                        title="View File">
+                                                                        📄 {{ $file['name'] }}
+                                                                    </button>
+                                                                @endforeach
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                @elseif(count($files) === 1)
-                                                    <button type="button"
-                                                        class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
-                                                        data-file="{{ $files[0]['url'] }}" title="View File">
-                                                        <i data-feather="file-text" class="w-4 h-4"></i>
-                                                    </button>
-                                                @endif
-                                            </div>
-                                            <button data-bs-toggle="modal"
-                                                data-bs-target="#editDocumentModal-{{ $doc->id }}"
-                                                class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
-                                                title="Edit">
-                                                <i data-feather="edit" class="w-4 h-4"></i>
-                                            </button>
-                                            <form action="{{ route('master.document-review.destroy', $doc->id) }}"
-                                                method="POST" class="delete-form d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" title="Delete Document"
-                                                    class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                    @elseif(count($files) === 1)
+                                                        <button type="button"
+                                                            class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                            data-file="{{ $files[0]['url'] }}" title="View File">
+                                                            <i data-feather="file-text" class="w-4 h-4"></i>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                                <button data-bs-toggle="modal"
+                                                    data-bs-target="#editDocumentModal-{{ $doc->id }}"
+                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
+                                                    title="Edit">
+                                                    <i data-feather="edit" class="w-4 h-4"></i>
                                                 </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-            @endforeach
+                                                <form action="{{ route('master.document-review.destroy', $doc->id) }}"
+                                                    method="POST" class="delete-form d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" title="Delete Document"
+                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                @endforeach
+            </div>
         </div>
-    </div>
     </div>
 
     {{-- 📄 All Edit Modals --}}
@@ -345,65 +338,146 @@
             }
         }
 
-        // Clear search input
         document.addEventListener('DOMContentLoaded', function() {
-            // Clear search input
-            const clearBtn = document.getElementById('clearSearch');
-            const searchInput = document.getElementById('searchInput');
-            clearBtn.addEventListener('click', () => {
-                searchInput.value = '';
-                document.getElementById('searchForm').submit(); // penting
+            // ===================== LIVE SEARCH & AJAX =====================
+            const tableContainer = document.getElementById("tableContainer");
+            const searchInput = document.getElementById("searchInput");
+            const clearBtn = document.getElementById("clearSearch");
+            let timer;
+            const delay = 300;
+
+            function fetchData(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const dom = new DOMParser().parseFromString(html, "text/html");
+                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                        bindPagination();
+                        rebind();
+
+                        if (window.feather) feather.replace();
+
+                        // Tooltip
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+                        tooltipTriggerList.map(el => {
+                            return new bootstrap.Tooltip(el, {
+                                title: el.getAttribute('data-bs-title'),
+                                placement: 'top',
+                                trigger: 'hover'
+                            });
+                        });
+                    });
+            }
+
+            // ===================== SEARCH =====================
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    const q = searchInput.value;
+                    const url =
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }, delay);
             });
 
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const q = searchInput.value;
+                    const url =
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }
+            });
 
-            document.querySelectorAll('.view-file-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const fileUrl = this.dataset.file; // sesuaikan dengan data-file
-                    const viewer = document.getElementById('fileViewer');
-                    viewer.src = fileUrl;
-                    const modal = new bootstrap.Modal(document.getElementById('viewFileModal'));
-                    modal.show();
+            // Clear search
+            clearBtn?.addEventListener("click", function() {
+                searchInput.value = "";
+                fetchData(`{{ route('master.document-review.index2') }}`);
+            });
+
+            // ===================== PAGINATION =====================
+            function bindPagination() {
+                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
+                    a.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        fetchData(this.href);
+                    });
                 });
-            });
+            }
+
+            bindPagination();
 
 
-            // Clear iframe saat modal ditutup
-            const viewModal = document.getElementById('viewFileModal');
-            viewModal.addEventListener('hidden.bs.modal', () => {
-                document.getElementById('fileViewer').src = '';
-            });
-            document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+            // ===================== REBIND ALL LISTENERS AFTER AJAX =====================
+            function rebind() {
 
-                    const isVisible = !dropdown.classList.contains('hidden');
+                // --- FILE VIEW BUTTON ---
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const fileUrl = this.dataset.file;
+                        const viewer = document.getElementById('fileViewer');
+                        viewer.src = fileUrl;
 
-                    // Tutup semua dropdown lain
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                        .add('hidden'));
-
-                    // Kalau yang diklik sedang terbuka → tutup saja
-                    if (isVisible) {
-                        dropdown.classList.add('hidden');
-                        return;
-                    }
-
-                    // Hitung posisi
-                    const rect = btn.getBoundingClientRect();
-                    const offsetX = -120;
-                    dropdown.style.position = 'fixed';
-                    dropdown.style.top = `${rect.bottom + 6}px`;
-                    dropdown.style.left = `${rect.left + offsetX}px`;
-                    dropdown.classList.remove('hidden');
-                    dropdown.classList.add('dropdown-fixed');
+                        const modal = new bootstrap.Modal(document.getElementById('viewFileModal'));
+                        modal.show();
+                    });
                 });
-            });
 
-            // Tutup dropdown saat scroll
+                // --- FILE VIEW MODAL CLEAR ---
+                const viewModal = document.getElementById('viewFileModal');
+                viewModal.addEventListener('hidden.bs.modal', () => {
+                    document.getElementById('fileViewer').src = '';
+                });
+
+                // --- DROPDOWN REBIND ---
+                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+
+                        const isVisible = !dropdown.classList.contains('hidden');
+
+                        document.querySelectorAll('[id^="viewFilesDropdown"]')
+                            .forEach(d => d.classList.add('hidden'));
+
+                        if (isVisible) {
+                            dropdown.classList.add('hidden');
+                            return;
+                        }
+
+                        const rect = btn.getBoundingClientRect();
+                        const offsetX = -120;
+                        dropdown.style.position = 'fixed';
+                        dropdown.style.top = `${rect.bottom + 6}px`;
+                        dropdown.style.left = `${rect.left + offsetX}px`;
+                        dropdown.classList.remove('hidden');
+                        dropdown.classList.add('dropdown-fixed');
+                    });
+                });
+            }
+
+            // Rebind first load
+            rebind();
+
+            // --- CLOSE DROPDOWN WHEN SCROLL OR OUTSIDE CLICK ---
             window.addEventListener('scroll', () => {
                 document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
                     'hidden'));
+            });
+
+            document.addEventListener('click', function(e) {
+                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
+                    const btn = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
+                    if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
             });
 
             // Tutup dropdown saat klik di luar

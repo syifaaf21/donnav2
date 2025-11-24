@@ -158,7 +158,7 @@ Route::middleware('auth')->group(function () {
     | Document Review Routes
     |--------------------------------------------------------------------------
     */
-    Route::prefix('document-review')->name('document-review.')->group(function () {
+     Route::prefix('document-review')->name('document-review.')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
         Route::get('/folder/{plant}/{docCode}', [DocumentReviewController::class, 'showFolder'])
@@ -178,6 +178,8 @@ Route::middleware('auth')->group(function () {
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
+        Route::get('/archived', [DocumentControlController::class, 'archived'])
+    ->name('archived');
     });
 
     /*

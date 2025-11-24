@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Process;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProcessController extends Controller
 {
@@ -37,7 +38,7 @@ class ProcessController extends Controller
     {
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:tm_processes,name',
             'code' => 'required|string|max:50',
             'plant' => 'required|in:Body,Unit,Electric',
         ]);
@@ -53,16 +54,20 @@ class ProcessController extends Controller
      */
     public function update(Request $request, Process $process)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
+         $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:tm_processes,name,' . $process->id,
             'code' => 'required|string|max:50',
             'plant' => 'required|in:Body,Unit,Electric',
         ]);
 
-        $process->update($validated);
+         if ($validator->fails()) {
+        return redirect()->back()
+            ->withErrors($validator)
+            ->withInput()
+            ->with('edit_modal', $process->id); // <<< penting
+    }
 
-        // Untuk membuka kembali modal jika terjadi error
-        session()->flash('edit_modal', $process->id);
+        $process->update($validator->validated());
 
         return redirect()->back()->with('success', 'Process updated successfully.');
     }

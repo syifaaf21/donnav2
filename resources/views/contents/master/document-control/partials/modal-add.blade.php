@@ -108,6 +108,7 @@
                     <button type="button" class="btn btn-outline-success btn-sm mt-2" id="add-file">
                         <i class="bi bi-plus"></i> Add File
                     </button>
+                    <p class="text-xs text-gray-500 mt-1">Allowed formats: PDF, DOCX, XLSX, JPG, PNG, JPEG</p>
 
                     {{-- Modal Footer --}}
                     <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4 mt-3">
