@@ -353,6 +353,7 @@ class DocumentMappingController extends Controller
         }
 
         $mapping = DocumentMapping::create([
+            'plant' => $request->plant,
             'document_id' => $validated['document_id'],
             'document_number' => $validated['document_number'],
             'parent_id' => $validated['parent_id'] ?? null,
@@ -420,63 +421,90 @@ class DocumentMappingController extends Controller
 
         $mapping = DocumentMapping::findOrFail($id);
 
+        // Validasi
         $validated = $request->validate([
-            'document_id' => 'required|exists:tm_documents,id',
-            'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
-            'model_id' => 'nullable|exists:tm_models,id',
-            'product_id' => 'nullable|exists:tm_products,id',
-            'process_id' => 'nullable|exists:tm_processes,id',
-            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
-            'department_id' => 'required|exists:tm_departments,id',
-            'notes' => 'nullable|string|max:500',
-            'parent_id' => 'nullable|exists:tt_document_mappings,id',
+            'plant'              => 'required|in:body,unit,electric',
+            'document_id'        => 'required|exists:tm_documents,id',
+            'document_number'    => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
+            'model_id'           => 'nullable|array',
+            'model_id.*'         => 'exists:tm_models,id',
+            'product_id'         => 'nullable|array',
+            'product_id.*'       => 'exists:tm_products,id',
+            'process_id'         => 'nullable|array',
+            'process_id.*'       => 'exists:tm_processes,id',
+            'part_number_id'     => 'nullable|array',
+            'part_number_id.*'   => 'exists:tm_part_numbers,id',
+            'department_id'      => 'required|exists:tm_departments,id',
+            'notes'              => 'nullable|string|max:500',
+            'parent_id'          => 'nullable|exists:tt_document_mappings,id',
         ]);
 
+        // Bersihkan notes jika kosong
         $cleanNotes = trim($validated['notes'] ?? '');
-        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '')
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
             $cleanNotes = null;
-
-        // Validasi: minimal part number atau model/product/process harus diisi
-        if (empty($validated['part_number_id']) && (empty($validated['model_id']) || empty($validated['product_id']) || empty($validated['process_id']))) {
-            return back()->withErrors(['part_number_id' => 'Please select a Part Number or fill Model, Product, and Process manually.'])->withInput();
         }
 
-        // Validasi parent jika diisi
+        // Validasi minimal input
+        if (
+            empty($validated['part_number_id']) &&
+            empty($validated['model_id']) &&
+            empty($validated['product_id']) &&
+            empty($validated['process_id'])
+        ) {
+            return back()->withErrors([
+                'part_number_id' =>
+                'Please select a Part Number or fill at least one of Model, Product, or Process.'
+            ])->withInput();
+        }
+
+        // Validasi parent document (jika ada)
         if (!empty($validated['parent_id'])) {
             $parent = DocumentMapping::find($validated['parent_id']);
+
             if (!$parent) {
                 return back()->withErrors(['parent_id' => 'Parent document not found'])->withInput();
             }
 
-            if ($validated['part_number_id']) {
-                if ($parent->part_number_id != $validated['part_number_id']) {
-                    return back()->withErrors(['parent_id' => 'Parent document does not match selected part number'])->withInput();
+            // Validasi kesesuaian parent
+            if (!empty($validated['part_number_id'])) {
+
+                $parentPartIds = $parent->partNumber->pluck('id')->toArray();
+
+                if (array_diff($validated['part_number_id'], $parentPartIds)) {
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Part Number'])->withInput();
                 }
             } else {
+
                 if (
-                    $parent->model_id != $validated['model_id'] ||
-                    $parent->product_id != $validated['product_id'] ||
-                    $parent->process_id != $validated['process_id']
+                    $parent->productModel->pluck('id')->sort()->values()->toArray() != ($validated['model_id'] ?? []) ||
+                    $parent->product->pluck('id')->sort()->values()->toArray()       != ($validated['product_id'] ?? []) ||
+                    $parent->process->pluck('id')->sort()->values()->toArray()      != ($validated['process_id'] ?? [])
                 ) {
-                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Model/Product/Process combination'])->withInput();
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Model/Product/Process'])->withInput();
                 }
             }
         }
 
+        // Update data utama
         $mapping->update([
-            'document_id' => $validated['document_id'],
+            'plant'           => $validated['plant'],
+            'document_id'     => $validated['document_id'],
             'document_number' => $validated['document_number'],
-            'parent_id' => $validated['parent_id'] ?? null,
-            'model_id' => $validated['model_id'] ?? null,
-            'product_id' => $validated['product_id'] ?? null,
-            'process_id' => $validated['process_id'] ?? null,
-            'part_number_id' => $validated['part_number_id'] ?? null,
-            'department_id' => $validated['department_id'],
-            'notes' => $cleanNotes,
+            'department_id'   => $validated['department_id'],
+            'parent_id'       => $validated['parent_id'] ?? null,
+            'notes'           => $cleanNotes,
         ]);
+
+        // UPDATE RELASI PIVOT
+        $mapping->productModel()->sync($validated['model_id'] ?? []);
+        $mapping->product()->sync($validated['product_id'] ?? []);
+        $mapping->process()->sync($validated['process_id'] ?? []);
+        $mapping->partNumber()->sync($validated['part_number_id'] ?? []);
 
         return back()->with('success', 'Document review updated successfully!');
     }
+
 
     // ================= Store Review (Admin) =================
     public function storeReview(Request $request)
