@@ -81,38 +81,38 @@ class DocumentReviewController extends Controller
         // 2. Filter berdasarkan dropdown (part / model / process / product)
         $documents = $documents->filter(function ($doc) use ($request) {
 
-            // jika tidak pilih part number → filter bebas
+            // Jika tidak pilih part number → filter bebas
             if (!$request->part_number) {
 
                 $matchProduct = !$request->product || (
-                    (strtolower(trim($doc->partNumber?->product?->name ?? '')) === strtolower(trim($request->product))) ||
-                    (strtolower(trim($doc->product?->name ?? '')) === strtolower(trim($request->product)))
+                    $doc->product->contains(fn($p) => strtolower(trim($p->name ?? '')) === strtolower(trim($request->product))) ||
+                    $doc->partNumber->contains(fn($pn) => strtolower(trim($pn->product?->name ?? '')) === strtolower(trim($request->product)))
                 );
 
                 $matchModel = !$request->model || (
-                    (strtolower(trim($doc->partNumber?->productModel?->name ?? '')) === strtolower(trim($request->model))) ||
-                    (strtolower(trim($doc->productModel?->name ?? '')) === strtolower(trim($request->model)))
+                    $doc->productModel->contains(fn($m) => strtolower(trim($m->name ?? '')) === strtolower(trim($request->model))) ||
+                    $doc->partNumber->contains(fn($pn) => strtolower(trim($pn->productModel?->name ?? '')) === strtolower(trim($request->model)))
                 );
 
                 $matchProcess = !$request->process || (
-                    (strtolower(trim($doc->partNumber?->process?->name ?? '')) === strtolower(trim($request->process))) ||
-                    (strtolower(trim($doc->process?->name ?? '')) === strtolower(trim($request->process)))
+                    $doc->process->contains(fn($p) => strtolower(trim($p->name ?? '')) === strtolower(trim($request->process))) ||
+                    $doc->partNumber->contains(fn($pn) => strtolower(trim($pn->process?->name ?? '')) === strtolower(trim($request->process)))
                 );
 
-
-                return $matchModel && $matchProcess && $matchProduct;
+                return $matchProduct && $matchModel && $matchProcess;
             }
 
-            // jika part number dipilih → filter ketat
-            $matchPartNumber = ($doc->partNumber?->part_number === $request->part_number);
+            // Jika part number dipilih → filter ketat
+            $matchPartNumber = $doc->partNumber->contains(fn($pn) => $pn->part_number === $request->part_number);
+            $matchProduct    = !$request->product || $doc->partNumber->contains(fn($pn) => $pn->product?->name === $request->product);
+            $matchModel      = !$request->model   || $doc->partNumber->contains(fn($pn) => $pn->productModel?->name === $request->model);
+            $matchProcess    = !$request->process || $doc->partNumber->contains(fn($pn) => $pn->process?->name === $request->process);
 
-            $matchModel   = !$request->model   || ($doc->partNumber?->productModel?->name === $request->model);
-            $matchProcess = !$request->process || ($doc->partNumber?->process?->name === $request->process);
-            $matchProduct = !$request->product || ($doc->partNumber?->product?->name === $request->product);
-
-            return $matchPartNumber && $matchModel && $matchProcess && $matchProduct;
+            return $matchPartNumber && $matchProduct && $matchModel && $matchProcess;
         });
 
+
+        // 3. Search bar (q)
         // 3. Search bar (q)
         if ($request->filled('q')) {
 
@@ -120,7 +120,15 @@ class DocumentReviewController extends Controller
 
             $documents = $documents->filter(function ($doc) use ($search) {
 
+                // Helper function untuk cek collection
+                $containsInCollection = fn($collection, $property) =>
+                $collection->contains(
+                    fn($item) =>
+                    str_contains(strtolower($item?->$property ?? ''), $search)
+                );
+
                 return
+                    // Dokumen langsung
                     str_contains(strtolower($doc->document_number ?? ''), $search)
                     || str_contains(strtolower($doc->notes ?? ''), $search)
                     || str_contains(strtolower($doc->document?->name ?? ''), $search)
@@ -128,24 +136,25 @@ class DocumentReviewController extends Controller
                     || str_contains(strtolower($doc->user?->name ?? ''), $search)
                     || str_contains(strtolower($doc->status?->name ?? ''), $search)
 
-                    // Part number
-                    || str_contains(strtolower($doc->partNumber?->part_number ?? ''), $search)
+                    // PartNumber
+                    || $containsInCollection($doc->partNumber, 'part_number')
 
                     // Product
-                    || str_contains(strtolower($doc->partNumber?->product?->name ?? ''), $search)
-                    || str_contains(strtolower($doc->product?->name ?? ''), $search)
-                    || str_contains(strtolower($doc->product?->code ?? ''), $search)
+                    || $containsInCollection($doc->partNumber->pluck('product'), 'name')
+                    || $containsInCollection($doc->product, 'name')
+                    || $containsInCollection($doc->product, 'code')
 
                     // Model
-                    || str_contains(strtolower($doc->partNumber?->productModel?->name ?? ''), $search)
-                    || str_contains(strtolower($doc->productModel?->name ?? ''), $search)
+                    || $containsInCollection($doc->partNumber->pluck('productModel'), 'name')
+                    || $containsInCollection($doc->productModel, 'name')
 
                     // Process
-                    || str_contains(strtolower($doc->partNumber?->process?->name ?? ''), $search)
-                    || str_contains(strtolower($doc->partNumber?->process?->code ?? ''), $search)
-                    || str_contains(strtolower($doc->process?->name ?? ''), $search);
+                    || $containsInCollection($doc->partNumber->pluck('process'), 'name')
+                    || $containsInCollection($doc->partNumber->pluck('process'), 'code')
+                    || $containsInCollection($doc->process, 'name');
             });
         }
+
 
         // 4. Set dropdown dependent (harus setelah search)
         if ($request->part_number) {
@@ -244,34 +253,36 @@ class DocumentReviewController extends Controller
     {
         return collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
 
-            $mappingsByPlant = $documentMappings->filter(function ($item) use ($plant) {
+            $plantLower = strtolower($plant);
 
-                // 1️⃣ Jika ada Part Number → pakai plant dari Part Number
-                if ($item->partNumber) {
-                    return strtolower($item->partNumber->plant ?? '') === strtolower($plant);
-                }
+            // Filter mappings sesuai plant
+            $mappingsByPlant = $documentMappings->filter(function ($item) use ($plantLower) {
 
-                // 2️⃣ Jika tidak ada Part Number → pakai plant dari Model
-                if ($item->productModel) {
-                    return strtolower($item->productModel->plant ?? '') === strtolower($plant);
-                }
+                $hasPartPlant = $item->partNumber->contains(fn($pn) => strtolower($pn->plant) === $plantLower);
+                $hasModelPlant = $item->productModel->contains(fn($model) => strtolower($model->plant) === $plantLower);
 
-                return false;
+                return $hasPartPlant || $hasModelPlant;
             });
 
-            // Group berdasarkan document code
+            // Ambil semua kode dokumen dari master + mapping (safe)
+            $codesFromMaster = $documentsMaster->pluck('code');
+            $codesFromMapping = $mappingsByPlant->map(fn($m) => $m->document?->code)->filter();
+
+            $allCodes = $codesFromMaster->merge($codesFromMapping)->unique();
+
+            // Group mapping berdasarkan kode dokumen
             $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
 
-            // Pastikan semua kode dokumen master tetap ada (meskipun kosong)
+            // Buat ordered collection agar semua kode tetap muncul
             $orderedGrouped = collect();
-            $documentsMaster->each(
-                fn($doc) =>
-                $orderedGrouped->put($doc->code, $groupedDocs->get($doc->code, collect()))
-            );
+            foreach ($allCodes as $code) {
+                $orderedGrouped->put($code, $groupedDocs->get($code, collect()));
+            }
 
             return [$plant => $orderedGrouped];
         });
     }
+
 
 
 
@@ -398,6 +409,7 @@ class DocumentReviewController extends Controller
             ->get();
 
         $plant = $this->getPlantFromMapping($mapping);
+
         $url = route('document-review.showFolder', [
             'plant'  => $plant,
             'docCode' => base64_encode($mapping->document->code ?? ''),
@@ -418,12 +430,12 @@ class DocumentReviewController extends Controller
 
     private function getPlantFromMapping($mapping)
     {
-        return $mapping->partNumber?->plant
-            ?? $mapping->productModel?->plant;  // PASTI ADA
-
-        // Jika tidak punya part number → plant dari model (pasti ada)
-        return $mapping->productModel?->plant;
+        // Ambil plant dari partNumber pertama yang ada, kalau nggak ada ambil dari productModel
+        return $mapping->partNumber->first()?->plant
+            ?? $mapping->productModel->first()?->plant
+            ?? 'unknown'; // fallback kalau nggak ada
     }
+
 
     public function reject(Request $request, $id)
     {
@@ -444,8 +456,11 @@ class DocumentReviewController extends Controller
             })
             ->get();
 
+        // Gunakan method private yang sama
+        $plant = $this->getPlantFromMapping($mapping);
+
         $url = route('document-review.showFolder', [
-            'plant' => $mapping->partNumber->plant ?? 'unknown',
+            'plant' => $plant,
             'docCode' => base64_encode($mapping->document->code ?? ''),
         ]);
 

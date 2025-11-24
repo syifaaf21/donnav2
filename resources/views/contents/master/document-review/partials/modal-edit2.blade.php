@@ -48,15 +48,21 @@
                                         <label class="form-label fw-medium">Plant <span
                                                 class="text-danger">*</span></label>
                                         <select name="plant" class="form-select tom-select" required>
+                                            @php
+                                                $selectedPlant =
+                                                    $mapping->partNumber->first()?->plant ?? ($mapping->plant ?? '');
+                                            @endphp
+
                                             <option value="body"
-                                                {{ strtolower($mapping->partNumber->plant ?? '') == 'body' ? 'selected' : '' }}>
-                                                Body</option>
+                                                {{ strtolower($selectedPlant) == 'body' ? 'selected' : '' }}>Body
+                                            </option>
                                             <option value="unit"
-                                                {{ strtolower($mapping->partNumber->plant ?? '') == 'unit' ? 'selected' : '' }}>
-                                                Unit</option>
+                                                {{ strtolower($selectedPlant) == 'unit' ? 'selected' : '' }}>Unit
+                                            </option>
                                             <option value="electric"
-                                                {{ strtolower($mapping->partNumber->plant ?? '') == 'electric' ? 'selected' : '' }}>
+                                                {{ strtolower($selectedPlant) == 'electric' ? 'selected' : '' }}>
                                                 Electric</option>
+
                                         </select>
                                     </div>
 

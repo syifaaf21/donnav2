@@ -154,10 +154,38 @@
                         <tr class="border-b hover:bg-gray-50 transition">
                             <td class="px-4 py-2">{{ $loop->iteration }}</td>
                             <td class="px-4 py-2">{{ $doc->document_number ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $doc->partNumber->part_number ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $doc->product->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $doc->productModel->name ?? '-' }}</td>
-                            <td class="px-4 py-2 capitalize">{{ $doc->process->code ?? '-' }}</td>
+                            <td class="px-4 py-2">
+                                @if ($doc->partNumber->isNotEmpty())
+                                    {{ $doc->partNumber->pluck('part_number')->join(', ') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-2">
+                                @if ($doc->product->isNotEmpty())
+                                    {{ $doc->product->pluck('name')->join(', ') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-2">
+                                @if ($doc->productModel->isNotEmpty())
+                                    {{ $doc->productModel->pluck('name')->join(', ') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-2 capitalize">
+                                @if ($doc->process->isNotEmpty())
+                                    {{ $doc->process->pluck('code')->join(', ') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
                             <td class="max-w-[250px]">
                                 <div class="max-h-24 overflow-y-auto">
                                     {!! $doc->notes ?? '-' !!}

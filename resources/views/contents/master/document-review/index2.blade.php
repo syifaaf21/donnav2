@@ -204,10 +204,19 @@
                                         <tr class="hover:bg-blue-50 transition">
                                             <td class="px-4 py-2">{{ $index + 1 }}</td>
                                             <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
-                                            <td class="px-4 py-2">{{ $doc->partNumber->part_number ?? '-' }}</td>
-                                            <td class="px-4 py-2">{{ $doc->product->name ?? '-' }}</td>
-                                            <td class="px-4 py-2">{{ $doc->productModel->name ?? '-' }}</td>
-                                            <td class="px-4 py-2 capitalize">{{ $doc->process->name ?? '-' }}</td>
+                                            <td class="px-4 py-2">
+                                                {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
+                                            </td>
+
+                                            <td class="px-4 py-2">{{ $doc->product->pluck('name')->join(', ') ?: '-' }}
+                                            </td>
+
+                                            <td class="px-4 py-2">
+                                                {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
+
+                                            <td class="px-4 py-2 capitalize">
+                                                {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
+                                            </td>
                                             <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
                                             <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
                                             {{-- <td class="px-4 py-2">
