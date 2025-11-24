@@ -34,7 +34,7 @@
     @stack('styles')
 </head>
 
-<body class="bg-sidebar text-gray-800">
+<body class="bg-slate-800 text-gray-800">
 
     @include('layouts.partials.sidebar')
     @include('components.flash-message')

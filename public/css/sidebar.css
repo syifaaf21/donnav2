@@ -19,20 +19,25 @@
 #sidebar.w-20 .sidebar-text {
     opacity: 0;
 }
+
 /* main wrapper follows width */
 #mainWrapper {
     margin-left: 16rem;
     transition: margin-left .3s ease-in-out;
 }
 
-#sidebar.w-20 ~ #mainWrapper {
+#sidebar.w-20~#mainWrapper {
     margin-left: 5rem !important;
 }
 
 /* Logo transition */
 #sidebarLogo {
     transition: all .3s ease;
+    min-width: 40px;
+    padding-top: 16px;
+    padding-bottom: 16px;
 }
+
 /* Dropdown toggle */
 #profileDropup {
     display: none;
@@ -66,7 +71,7 @@
 
 #sidebar::-webkit-scrollbar-thumb {
     background-color: #d1d5db;
-    border-radius: 10px;
+    border-radius: 5px;
 }
 
 /* Main content adjustments */
@@ -76,7 +81,7 @@
     transition: margin-left 0.3s ease-in-out;
 }
 
-#sidebar.w-20 + #mainWrapper {
+#sidebar.w-20+#mainWrapper {
     margin-left: 5rem;
     border-radius: 10px;
 }
@@ -85,7 +90,6 @@
     transform: rotate(90deg);
     transition: transform 0.3s;
 }
-
 
 @media (max-width: 768px) {
     #sidebar {
@@ -105,11 +109,7 @@
 
     #mainWrapper {
         margin-left: 0;
-        border-radius: 10px; /* Tambah ini juga kalau mau tetap rounded di mobile */
+        border-radius: 10px;
+        /* Tambah ini juga kalau mau tetap rounded di mobile */
     }
 }
-.rotate-90 {
-    transform: rotate(90deg);
-    transition: 0.3s;
-}
-

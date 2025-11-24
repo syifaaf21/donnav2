@@ -1,16 +1,16 @@
 <!-- Sidebar Content (no outer <aside>, layout provides the <aside>) -->
 <aside id="sidebar"
-    class="fixed md:relative z-40 bg-sidebar h-screen flex flex-col transition-all duration-300 ease-in-out w-64">
+    class="fixed md:relative z-40 bg-sidebar  rounded h-screen flex flex-col transition-all duration-300 ease-in-out w-64">
 
-    <div class="bg-white flex items-center justify-between px-4 border-b m-2 rounded-lg">
+    <div class=" shadow-lg flex items-center justify-between px-4 border-b rounded-lg">
         <div class="flex items-center gap-2">
-            <img src="{{ asset('images/madonna.png') }}" alt="Logo" id="sidebarLogo" style="width: 150px; height: 100px;"
-                class="object-contain transition-all duration-300" data-full="{{ asset('images/madonna.png') }}"
-                data-icon="{{ asset('images/madonna1.png') }}" style="width: auto; height: 64px;" />
+            <img src="{{ asset('images/madonna-inverse.png') }}" alt="Logo" id="sidebarLogo" style="width: 150px; height: auto;"
+                class="object-contain transition-all duration-300" data-full="{{ asset('images/madonna-inverse.png') }}"
+                data-icon="{{ asset('images/madonna-logo.png') }}"/>
         </div>
 
         <button id="toggleSidebar"
-            class="hidden md:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-200 transition border border-gray-200">
+            class="hidden md:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-200 transition border border-gray-200 rotate">
             <i data-feather="chevron-left"></i>
         </button>
     </div>
