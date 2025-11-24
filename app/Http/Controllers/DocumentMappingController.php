@@ -288,6 +288,25 @@ class DocumentMappingController extends Controller
         ));
     }
 
+    public function getFilterOptions(Request $request)
+    {
+        $tab = $request->input('tab');  // Get the tab value
+        // \Log::info("Selected Tab: " . $tab);  // Log the selected tab to make sure it's correct
+
+        // Filter data based on the selected tab
+        $partNumbers = PartNumber::where('plant', $tab)->get();
+        $models = ProductModel::where('plant', $tab)->get();
+        $products = Product::where('plant', $tab)->get();
+        $processes = Process::where('plant', $tab)->get();
+
+        return response()->json([
+            'partNumbers' => $partNumbers,
+            'models' => $models,
+            'products' => $products,
+            'processes' => $processes,
+        ]);
+    }
+
     public function storeReview2(Request $request)
     {
         session()->forget('openModal');

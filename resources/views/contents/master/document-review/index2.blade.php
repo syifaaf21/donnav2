@@ -195,7 +195,7 @@
                                 @if ($documents->isEmpty())
                                     <tr>
                                         <td colspan="9" class="text-center text-gray-400 py-6">
-                                            <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-2"></i>
+                                            <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
                                             No Document found for this tab.
                                         </td>
                                     </tr>
@@ -361,7 +361,12 @@
                             "X-Requested-With": "XMLHttpRequest"
                         }
                     })
-                    .then(res => res.text())
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return res.text();
+                    })
                     .then(html => {
                         const dom = new DOMParser().parseFromString(html, "text/html");
                         tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
@@ -380,6 +385,9 @@
                                 trigger: 'hover'
                             });
                         });
+                    })
+                    .catch(error => {
+                        console.error("Error fetching data:", error);
                     });
             }
 
@@ -388,8 +396,7 @@
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     const q = searchInput.value;
-                    const url =
-                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                    const url = `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
                     fetchData(url);
                 }, delay);
             });
@@ -398,8 +405,7 @@
                 if (e.key === "Enter") {
                     e.preventDefault();
                     const q = searchInput.value;
-                    const url =
-                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                    const url = `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
                     fetchData(url);
                 }
             });
@@ -422,11 +428,8 @@
 
             bindPagination();
 
-
             // ===================== REBIND ALL LISTENERS AFTER AJAX =====================
             function rebind() {
-
-                // --- FILE VIEW BUTTON ---
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const fileUrl = this.dataset.file;
@@ -471,13 +474,11 @@
                 });
             }
 
-            // Rebind first load
             rebind();
 
-            // --- CLOSE DROPDOWN WHEN SCROLL OR OUTSIDE CLICK ---
+            // ===================== CLOSE DROPDOWN WHEN SCROLL OR OUTSIDE CLICK =====================
             window.addEventListener('scroll', () => {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
-                    'hidden'));
+                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add('hidden'));
             });
 
             document.addEventListener('click', function(e) {
@@ -489,15 +490,7 @@
                 });
             });
 
-            // Tutup dropdown saat klik di luar
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                        dropdown.classList.add('hidden');
-                    }
-                });
-            });
+            // ===================== HANDLE FILTER OPTIONS =====================
             const tsDocumentName = new TomSelect("#filterDocumentName", {
                 maxItems: 1,
                 placeholder: "Select Document Name"
@@ -532,13 +525,78 @@
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) searchInput.value = '';
 
-                // Submit form untuk reload tanpa filter
+                // Submit form to reload without filter
                 document.getElementById('filterFormModal').submit();
             });
 
+            document.querySelectorAll('.tab-button').forEach(tabButton => {
+                tabButton.addEventListener('click', function() {
+                    const tab = this.dataset.tab;
+                    localStorage.setItem('activeTab', tab);
+
+                    // Update filter options when the tab changes
+                    updateFilterOptions(tab);
+
+                    // Update the active tab visually
+                    document.querySelectorAll('.tab-button').forEach(button => {
+                        button.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+
+            // ===================== UPDATE FILTER OPTIONS =====================
+            function updateFilterOptions(tab) {
+                const url = `{{ route('master.document-review.get-filter-options') }}?tab=${tab}`;
+                console.log("Fetching data from: ", url); // Log the URL to ensure it's correct
+
+                fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data); // Log the response data to check if it's correct
+                        if (data) {
+                            // Update filters here
+                            updateSelectOptions('#filterPartNumber', data.partNumbers);
+                            updateSelectOptions('#filterModel', data.models);
+                            updateSelectOptions('#filterProduct', data.products);
+                            updateSelectOptions('#filterProcess', data.processes);
+                        }
+                    })
+                    .catch(err => console.error("Error fetching filter options:", err));
+            }
+
+            // Helper function to update the select options dynamically
+            function updateSelectOptions(selector, options) {
+                const selectElement = document.querySelector(selector);
+
+                const tomSelectInstance = TomSelect.instances[selectElement.id];
+                if (tomSelectInstance) {
+                    tomSelectInstance.clearOptions();
+                    options.forEach(option => {
+                        tomSelectInstance.addOption({
+                            value: option.id,
+                            text: option.name
+                        });
+                    });
+                    tomSelectInstance.setValue('');
+                } else {
+                    console.error(`TomSelect instance not found for ${selector}`);
+                }
+            }
+
+            // Initialize filter options based on the active tab
+            const activeTab = localStorage.getItem('activeTab') ||
+                '{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}';
+            updateFilterOptions(activeTab);
         });
     </script>
 @endpush
+
 <style>
     /* --- Dropdown fix style --- */
     .dropdown-fixed {

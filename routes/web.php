@@ -81,6 +81,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
         Route::post('/reject/{mapping}', [DocumentMappingController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentMappingController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/revise/{mapping}', [DocumentMappingController::class, 'revise'])->name('revise');
+        Route::get('/get-filter-options', [DocumentMappingController::class, 'getFilterOptions'])->name('get-filter-options');
     });
 
     // Document Control
