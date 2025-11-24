@@ -57,7 +57,7 @@ class FtppController extends Controller
         }
 
         // order and paginate
-        $findings = $query->orderBy('updated_at')->paginate(15);
+        $findings = $query->orderBy('updated_at')->paginate(10);
         // preserve filters in pagination links
         $findings->appends($request->except('page'));
 

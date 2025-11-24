@@ -178,8 +178,12 @@ Route::middleware('auth')->group(function () {
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
+
+    });
+
+    Route::prefix('archive')->name('archive.')->group(function () {
         Route::get('/archived', [DocumentControlController::class, 'archived'])
-    ->name('archived');
+        ->name('archived');
     });
 
     /*

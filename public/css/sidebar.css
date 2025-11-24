@@ -1,9 +1,6 @@
 #sidebar {
     transition: all 0.3s ease-in-out;
     z-index: 100;
-}
-
-#sidebar {
     position: fixed;
     top: 0;
     left: 0;
@@ -22,7 +19,20 @@
 #sidebar.w-20 .sidebar-text {
     opacity: 0;
 }
+/* main wrapper follows width */
+#mainWrapper {
+    margin-left: 16rem;
+    transition: margin-left .3s ease-in-out;
+}
 
+#sidebar.w-20 ~ #mainWrapper {
+    margin-left: 5rem !important;
+}
+
+/* Logo transition */
+#sidebarLogo {
+    transition: all .3s ease;
+}
 /* Dropdown toggle */
 #profileDropup {
     display: none;

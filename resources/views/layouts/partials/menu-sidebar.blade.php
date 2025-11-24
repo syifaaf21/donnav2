@@ -18,16 +18,6 @@
             <span class="sidebar-text">Document Control</span>
         </a>
     </li>
-    @if (in_array(strtolower(auth()->user()->role->name), ['super admin', 'admin']))
-        <li>
-            <a href="{{ route('document-control.archived') }}"
-                class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all
-        {{ Route::is('document-control*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
-                <i data-feather="settings" class="menu-icon w-4 h-4 text-gray-100"></i>
-                <span class="sidebar-text">Archive</span>
-            </a>
-        </li>
-    @endif
 
     <li>
         <a href="{{ route('document-review.index') }}"
@@ -38,15 +28,6 @@
         </a>
     </li>
 
-    {{-- <li>
-        <a href="{{ route('ftpp.index') }}"
-            class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all
-        {{ Route::is('ftpp*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
-            <i data-feather="alert-octagon" class="menu-icon w-4 h-4 text-gray-100"></i>
-            <span class="sidebar-text">FTPP</span>
-        </a>
-    </li> --}}
-
     <li>
         <a href="{{ route('ftpp.index') }}"
             class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all {{ Route::is('ftpp*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
@@ -54,6 +35,17 @@
             <span class="sidebar-text text-gray-100">FTPP</span>
         </a>
     </li>
+
+    @if (in_array(strtolower(auth()->user()->role->name), ['super admin', 'admin']))
+        <li>
+            <a href="{{ route('archive.archived') }}"
+                class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all
+                {{ Route::is('archive.archived*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
+                <i data-feather="settings" class="menu-icon w-4 h-4 text-gray-100"></i>
+                <span class="sidebar-text">Archive</span>
+            </a>
+        </li>
+    @endif
 
     <hr class="my-2 border-gray-200">
 

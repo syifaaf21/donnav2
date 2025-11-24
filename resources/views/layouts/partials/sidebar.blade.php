@@ -1,10 +1,12 @@
 <!-- Sidebar Content (no outer <aside>, layout provides the <aside>) -->
 <aside id="sidebar"
-    class="fixed md:relative z-40 bg-sidebar h-screen flex flex-col transition-all duration-300 ease-in-out">
+    class="fixed md:relative z-40 bg-sidebar h-screen flex flex-col transition-all duration-300 ease-in-out w-64">
 
-    <div class="flex items-center justify-between px-4 border-b">
+    <div class="bg-white flex items-center justify-between px-4 border-b m-2 rounded-lg">
         <div class="flex items-center gap-2">
-            <img src="{{ asset('images/madonna1.png') }}" class="h-14 object-contain">
+            <img src="{{ asset('images/madonna.png') }}" alt="Logo" id="sidebarLogo" style="width: 150px; height: 100px;"
+                class="object-contain transition-all duration-300" data-full="{{ asset('images/madonna.png') }}"
+                data-icon="{{ asset('images/madonna1.png') }}" style="width: auto; height: 64px;" />
         </div>
 
         <button id="toggleSidebar"
@@ -34,32 +36,3 @@
         </div>
     </div>
 </aside>
-
-
-{{-- SCRIPT SIDEBAR TOGGLING --}}
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const toggles = document.querySelectorAll(".collapse-toggle");
-
-        toggles.forEach(toggle => {
-            toggle.addEventListener("click", () => {
-                const targetId = toggle.getAttribute("data-target");
-                const menu = document.getElementById(targetId);
-
-                if (!menu) return;
-
-                // show/hide
-                menu.classList.toggle("hidden");
-
-                // rotate chevron
-                const icon = toggle.querySelector("i[data-feather='chevron-right']");
-                if (icon) {
-                    icon.style.transition = "transform .2s";
-                    icon.style.transform = menu.classList.contains("hidden") ?
-                        "rotate(0deg)" :
-                        "rotate(90deg)";
-                }
-            });
-        });
-    });
-</script>
