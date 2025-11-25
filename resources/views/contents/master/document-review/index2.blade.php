@@ -2,7 +2,7 @@
 @section('title', 'Master Document Review')
 
 @section('content')
-    <div class="container mx-auto px-4 py-4" x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
+    <div class="mx-auto px-4 py-4" x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
 
         {{-- Header: Breadcrumbs + Add Button --}}
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
@@ -337,18 +337,134 @@
 @push('scripts')
     <x-sweetalert-confirm />
     <script>
-        function documentReviewTabs(defaultTab) {
+        // Simpan data filter dari controller
+        window.filterDataByPlant = @json($filterDataByPlant);
+
+        // Tab manager
+        function documentReviewTabs() {
             return {
-                activeTab: localStorage.getItem('activeTab') || defaultTab,
+                activeTab: localStorage.getItem('activeTab') || 'body',
                 setActiveTab(tab) {
                     this.activeTab = tab;
                     localStorage.setItem('activeTab', tab);
+                    updateFiltersForPlant(tab);
                 }
-            }
+            };
+        }
+        window.documentTabs = documentReviewTabs();
+
+        // Data master fallback
+        window.allPartNumbers = @json($partNumbers->map(fn($p) => ['id' => $p->id, 'label' => $p->part_number]));
+        window.allModels = @json($models->map(fn($m) => ['id' => $m->id, 'label' => $m->name]));
+        window.allProducts = @json($products->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+        window.allProcesses = @json($processes->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+
+        function slugToPlant(slug) {
+            return {
+                "body": "Body",
+                "unit": "Unit",
+                "electric": "Electric",
+                "other-manual-entry": "Other / Manual Entry"
+            } [slug] || null;
         }
 
+        // Update dropdown berdasarkan plant
+        function updateFiltersForPlant(slug) {
+            const plantName = slugToPlant(slug);
+            if (!plantName) return;
+
+            const data = window.filterDataByPlant[plantName] || {};
+
+            if (plantName === "Other / Manual Entry") {
+                updateTomSelect('#filterPartNumber', window.allPartNumbers);
+                updateTomSelect('#filterModel', window.allModels);
+                updateTomSelect('#filterProduct', window.allProducts);
+                updateTomSelect('#filterProcess', window.allProcesses);
+                return;
+            }
+
+            updateTomSelect('#filterPartNumber', data.part_numbers || window.allPartNumbers);
+            updateTomSelect('#filterModel', data.models || window.allModels);
+            updateTomSelect('#filterProduct', data.products || window.allProducts);
+            updateTomSelect('#filterProcess', data.processes || window.allProcesses);
+        }
+
+        // Helper TomSelect
+        function updateTomSelect(selector, items) {
+            const el = document.querySelector(selector);
+            if (!el) return;
+            if (el.tomselect) el.tomselect.destroy();
+
+            el.innerHTML = '<option value="">All</option>';
+
+            items.forEach(i => {
+                const option = document.createElement('option');
+                option.value = i.id;
+
+                // Jika field process, ubah label menjadi Title Case
+                if (selector === '#filterProcess') {
+                    option.textContent = i.label.split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                } else {
+                    option.textContent = i.label;
+                }
+
+                el.appendChild(option);
+            });
+
+            new TomSelect(selector, {
+                maxItems: 1,
+                placeholder: "Select"
+            });
+        }
         document.addEventListener('DOMContentLoaded', function() {
-            // ===================== LIVE SEARCH & AJAX =====================
+            // Inisialisasi TomSelect
+            const tsDocumentName = new TomSelect("#filterDocumentName", {
+                maxItems: 1,
+                placeholder: "Select Document Name"
+            });
+            const tsPartNumber = new TomSelect("#filterPartNumber", {
+                maxItems: 1,
+                placeholder: "Select Part Number"
+            });
+            const tsModel = new TomSelect("#filterModel", {
+                maxItems: 1,
+                placeholder: "Select Model"
+            });
+            const tsProduct = new TomSelect("#filterProduct", {
+                maxItems: 1,
+                placeholder: "Select Product"
+            });
+            const tsProcess = new TomSelect("#filterProcess", {
+                maxItems: 1,
+                placeholder: "Select Process"
+            });
+            // Cascade filter: PN → Model/Product/Process
+            function cascadeFromPartNumber(value) {
+                const activeTab = window.documentTabs.activeTab;
+                const plantName = slugToPlant(activeTab);
+                const plantData = window.filterDataByPlant[plantName];
+                if (!plantData) return;
+
+                const selectedPN = plantData.part_numbers.find(pn => pn.id == value);
+
+                if (selectedPN) {
+                    updateTomSelect('#filterModel', selectedPN.models.length ? selectedPN.models : plantData
+                        .models);
+                    updateTomSelect('#filterProduct', selectedPN.products.length ? selectedPN.products : plantData
+                        .products);
+                    updateTomSelect('#filterProcess', selectedPN.processes.length ? selectedPN.processes : plantData
+                        .processes);
+                } else {
+                    updateTomSelect('#filterModel', plantData.models);
+                    updateTomSelect('#filterProduct', plantData.products);
+                    updateTomSelect('#filterProcess', plantData.processes);
+                }
+            }
+
+            tsPartNumber.on('change', cascadeFromPartNumber);
+            // AJAX Live Search & Pagination
             const tableContainer = document.getElementById("tableContainer");
             const searchInput = document.getElementById("searchInput");
             const clearBtn = document.getElementById("clearSearch");
@@ -372,26 +488,10 @@
                         tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
 
                         bindPagination();
-                        rebind();
-
-                        if (window.feather) feather.replace();
-
-                        // Tooltip
-                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-                        tooltipTriggerList.map(el => {
-                            return new bootstrap.Tooltip(el, {
-                                title: el.getAttribute('data-bs-title'),
-                                placement: 'top',
-                                trigger: 'hover'
-                            });
-                        });
-                    })
-                    .catch(error => {
-                        console.error("Error fetching data:", error);
+                        rebindListeners();
                     });
             }
 
-            // ===================== SEARCH =====================
             searchInput.addEventListener("keyup", function() {
                 clearTimeout(timer);
                 timer = setTimeout(() => {
@@ -404,19 +504,17 @@
             searchInput.addEventListener("keydown", function(e) {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    const q = searchInput.value;
-                    const url = `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
-                    fetchData(url);
+                    fetchData(
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(searchInput.value)}`
+                    );
                 }
             });
 
-            // Clear search
             clearBtn?.addEventListener("click", function() {
                 searchInput.value = "";
                 fetchData(`{{ route('master.document-review.index2') }}`);
             });
 
-            // ===================== PAGINATION =====================
             function bindPagination() {
                 document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
                     a.addEventListener("click", function(e) {
@@ -425,174 +523,70 @@
                     });
                 });
             }
+            // Rebind listeners after AJAX
+            function rebindListeners() {
+                // Feather icons
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
 
-            bindPagination();
-
-            // ===================== REBIND ALL LISTENERS AFTER AJAX =====================
-            function rebind() {
+                // File view buttons (single file)
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        const fileUrl = this.dataset.file;
-                        const viewer = document.getElementById('fileViewer');
-                        viewer.src = fileUrl;
-
-                        const modal = new bootstrap.Modal(document.getElementById('viewFileModal'));
-                        modal.show();
+                        const fileViewer = document.getElementById('fileViewer');
+                        fileViewer.src = this.dataset.file;
+                        new bootstrap.Modal(document.getElementById('viewFileModal')).show();
                     });
                 });
 
-                // --- FILE VIEW MODAL CLEAR ---
-                const viewModal = document.getElementById('viewFileModal');
-                viewModal.addEventListener('hidden.bs.modal', () => {
-                    document.getElementById('fileViewer').src = '';
-                });
-
-                // --- DROPDOWN REBIND ---
+                // Dropdown toggle for multiple files
                 document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
-
-                        const isVisible = !dropdown.classList.contains('hidden');
-
-                        document.querySelectorAll('[id^="viewFilesDropdown"]')
-                            .forEach(d => d.classList.add('hidden'));
-
-                        if (isVisible) {
-                            dropdown.classList.add('hidden');
-                            return;
-                        }
-
-                        const rect = btn.getBoundingClientRect();
-                        const offsetX = -120;
-                        dropdown.style.position = 'fixed';
-                        dropdown.style.top = `${rect.bottom + 6}px`;
-                        dropdown.style.left = `${rect.left + offsetX}px`;
-                        dropdown.classList.remove('hidden');
-                        dropdown.classList.add('dropdown-fixed');
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const id = this.id.replace('viewFilesBtn-', '');
+                        const dropdown = document.getElementById('viewFilesDropdown-' + id);
+                        if (dropdown) dropdown.classList.toggle('hidden');
                     });
+                });
+
+                // Delete confirmation
+                document.querySelectorAll('.delete-form').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "This will permanently delete the document!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Yes, delete it!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+                document.querySelectorAll('#tableContainer button').forEach(btn => {
+                    btn.classList.add('inline-flex', 'items-center', 'justify-center');
+                    btn.style.minWidth = "2.5rem"; // supaya tombol tidak mengecil
                 });
             }
 
-            rebind();
-
-            // ===================== CLOSE DROPDOWN WHEN SCROLL OR OUTSIDE CLICK =====================
-            window.addEventListener('scroll', () => {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add('hidden'));
-            });
-
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const btn = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
-                        dropdown.classList.add('hidden');
-                    }
-                });
-            });
-
-            // ===================== HANDLE FILTER OPTIONS =====================
-            const tsDocumentName = new TomSelect("#filterDocumentName", {
-                maxItems: 1,
-                placeholder: "Select Document Name"
-            });
-            const tsPartNumber = new TomSelect("#filterPartNumber", {
-                maxItems: 1,
-                placeholder: "Select Part Number"
-            });
-            const tsModel = new TomSelect("#filterModel", {
-                maxItems: 1,
-                placeholder: "Select Model"
-            });
-            const tsProduct = new TomSelect("#filterProduct", {
-                maxItems: 1,
-                placeholder: "Select Product"
-            });
-            const tsProcess = new TomSelect("#filterProcess", {
-                maxItems: 1,
-                placeholder: "Select Process"
-            });
-
-            // --- Clear filter modal ---
+            // Clear filters modal
             document.getElementById('clearFilterModal').addEventListener('click', function() {
-                // Clear all TomSelect fields
                 tsDocumentName.clear();
                 tsPartNumber.clear();
                 tsModel.clear();
                 tsProduct.clear();
                 tsProcess.clear();
-
-                // Optional: reset search input
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) searchInput.value = '';
-
-                // Submit form to reload without filter
                 document.getElementById('filterFormModal').submit();
             });
-
-            document.querySelectorAll('.tab-button').forEach(tabButton => {
-                tabButton.addEventListener('click', function() {
-                    const tab = this.dataset.tab;
-                    localStorage.setItem('activeTab', tab);
-
-                    // Update filter options when the tab changes
-                    updateFilterOptions(tab);
-
-                    // Update the active tab visually
-                    document.querySelectorAll('.tab-button').forEach(button => {
-                        button.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                });
-            });
-
-            // ===================== UPDATE FILTER OPTIONS =====================
-            function updateFilterOptions(tab) {
-                const url = `{{ route('master.document-review.get-filter-options') }}?tab=${tab}`;
-                console.log("Fetching data from: ", url); // Log the URL to ensure it's correct
-
-                fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data); // Log the response data to check if it's correct
-                        if (data) {
-                            // Update filters here
-                            updateSelectOptions('#filterPartNumber', data.partNumbers);
-                            updateSelectOptions('#filterModel', data.models);
-                            updateSelectOptions('#filterProduct', data.products);
-                            updateSelectOptions('#filterProcess', data.processes);
-                        }
-                    })
-                    .catch(err => console.error("Error fetching filter options:", err));
-            }
-
-            // Helper function to update the select options dynamically
-            function updateSelectOptions(selector, options) {
-                const selectElement = document.querySelector(selector);
-
-                const tomSelectInstance = TomSelect.instances[selectElement.id];
-                if (tomSelectInstance) {
-                    tomSelectInstance.clearOptions();
-                    options.forEach(option => {
-                        tomSelectInstance.addOption({
-                            value: option.id,
-                            text: option.name
-                        });
-                    });
-                    tomSelectInstance.setValue('');
-                } else {
-                    console.error(`TomSelect instance not found for ${selector}`);
-                }
-            }
-
-            // Initialize filter options based on the active tab
-            const activeTab = localStorage.getItem('activeTab') ||
-                '{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}';
-            updateFilterOptions(activeTab);
+            // Inisialisasi dropdown sesuai tab aktif
+            updateFiltersForPlant(window.documentTabs.activeTab);
         });
     </script>
 @endpush
@@ -606,7 +600,7 @@
         /* warna putih solid */
         border: 1px solid rgba(0, 0, 0, 0.1) !important;
         border-radius: 8px !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 6px 16px rgba(233, 217, 217, 0.2);
         opacity: 1 !important;
         visibility: visible !important;
     }

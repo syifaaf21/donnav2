@@ -171,12 +171,11 @@
 
                             {{-- File Upload --}}
                             <div class="col-12 mt-10">
-                                <label class="form-label fw-medium">Upload File <span
-                                        class="text-danger">*</span></label>
+                                <label class="form-label fw-medium">Upload File</label>
                                 <div id="file-upload-container">
                                     <div class="input-group mb-2">
                                         <input type="file" name="files[]" class="form-control border-1 shadow-sm"
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx">
                                     </div>
                                     <button class="btn btn-outline-success btn-sm mt-2 add-file-btn" type="button">+
                                         Add
@@ -235,6 +234,7 @@
                     direction: 'asc'
                 }
             });
+
             const tsPlant = new TomSelect('#plant_select', {
                 create: false,
                 sortField: {
@@ -242,38 +242,49 @@
                     direction: 'asc'
                 }
             });
+
+            // Multiple selects with remove button
             const tsPart = new TomSelect('#partNumber_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
             const tsProduct = new TomSelect('#product_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
             const tsModel = new TomSelect('#model_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
             const tsProcess = new TomSelect('#process_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
+            // Single select department (tidak perlu remove button)
             const tsDept = new TomSelect('#department_select', {
                 create: false,
                 sortField: {

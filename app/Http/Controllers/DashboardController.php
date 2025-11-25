@@ -75,6 +75,22 @@ class DashboardController extends Controller
             ->groupBy('tm_statuses.name')
             ->pluck('total', 'status');
 
+        // Data tambahan per department untuk tooltip
+        $controlExtraData = [];
+        foreach ($departments as $id => $name) {
+            $controlExtraData[$id] = [
+                'obsolete'   => DocumentMapping::where('department_id', $id)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
+                    ->count(),
+                'needReview' => DocumentMapping::where('department_id', $id)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                    ->count(),
+                'uncomplete' => DocumentMapping::where('department_id', $id)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                    ->count(),
+            ];
+        }
+
         return view('contents.index', compact(
             'totalDocuments',
             'totalFtpp',
@@ -89,6 +105,7 @@ class DashboardController extends Controller
             'totalUsers',
             'obsoleteDocuments',
             'chartData',
+            'controlExtraData',
         ));
     }
 }

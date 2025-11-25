@@ -21,7 +21,7 @@
                 {{-- Upload new file --}}
                 <div class="mt-3">
                     <label class="form-label fw-semibold">Upload New File (Optional)</label>
-                    <input type="file" name="file" class="form-control">
+                    <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
                     <small class="text-muted">Jika Anda upload file baru, file lama akan digantikan.</small>
                 </div>
 

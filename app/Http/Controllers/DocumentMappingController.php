@@ -134,6 +134,7 @@ class DocumentMappingController extends Controller
 
     public function reviewIndex2(Request $request)
     {
+        // Master data
         $documentsMaster = Document::with('childrenRecursive')
             ->where('type', 'review')
             ->get();
@@ -145,12 +146,16 @@ class DocumentMappingController extends Controller
         $processes = Process::all();
         $products = Product::all();
 
-        // Ambil list plant unik
+        // Daftar plant unik
         $plants = ['Body', 'Unit', 'Electric'];
-
         $groupedByPlant = [];
+        $filterDataByPlant = [];
+
+        $search = trim($request->search);
 
         foreach ($plants as $plant) {
+
+            // ===================== QUERY DOCUMENT MAPPINGS =====================
             $query = DocumentMapping::with([
                 'document.parent',
                 'document.children',
@@ -160,7 +165,8 @@ class DocumentMappingController extends Controller
                 'user',
                 'files',
                 'parent',
-            ])->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ])
+                ->whereHas('document', fn($q) => $q->where('type', 'review'))
                 ->whereHas(
                     'partNumber',
                     fn($q2) =>
@@ -168,7 +174,6 @@ class DocumentMappingController extends Controller
                 );
 
             // 🔹 Filter search global
-            $search = trim($request->search);
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('document_number', 'like', "%{$search}%")
@@ -193,32 +198,75 @@ class DocumentMappingController extends Controller
 
             if ($request->filled('part_number_id')) {
                 $query->whereHas('partNumber', function ($q) use ($request) {
-                    $q->whereIn('id', (array) $request->part_number_id);
+                    $q->whereIn('tm_part_numbers.id', (array) $request->part_number_id);
                 });
             }
 
             if ($request->filled('model_id')) {
-                $query->whereHas('productModel', fn($q) => $q->whereIn('id', (array) $request->model_id));
+                $query->whereHas(
+                    'productModel',
+                    fn($q) =>
+                    $q->whereIn('tm_models.id', (array) $request->model_id)
+                );
             }
 
             if ($request->filled('product_id')) {
-                $query->whereHas('product', fn($q) => $q->whereIn('id', (array) $request->product_id));
+                $query->whereHas(
+                    'product',
+                    fn($q) =>
+                    $q->whereIn('tm_products.id', (array) $request->product_id)
+                );
             }
 
             if ($request->filled('process_id')) {
-                $query->whereHas('process', fn($q) => $q->whereIn('id', (array) $request->process_id));
+                $query->whereHas(
+                    'process',
+                    fn($q) =>
+                    $q->whereIn('tm_processes.id', (array) $request->process_id)
+                );
             }
 
             if ($request->filled('status_id')) {
                 $query->where('status_id', $request->status_id);
             }
 
-            $groupedByPlant[$plant] = $query->get()->filter(function ($mapping) use ($plant) {
-                return $mapping->partNumber->contains(fn($p) => strtolower($p->plant) === strtolower($plant));
-            });
+            // Simpan hasil per plant
+            $groupedByPlant[$plant] = $query->get()->filter(
+                fn($mapping) =>
+                $mapping->partNumber->contains(fn($p) => strtolower($p->plant) === strtolower($plant))
+            );
+
+            // ===================== FILTER DATA UNTUK DROPDOWN (DENGAN RELASI PART NUMBER) =====================
+            $partNumbersPlant = PartNumber::with(['productModel', 'product', 'process'])
+                ->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                ->get();
+
+            $filterDataByPlant[$plant] = [
+                'part_numbers' => $partNumbersPlant->map(fn($pn) => [
+                    'id' => $pn->id,
+                    'label' => $pn->part_number,
+                    'models' => $pn->productModel ? [['id' => $pn->productModel->id, 'label' => $pn->productModel->name]] : [],
+                    'products' => $pn->product ? [['id' => $pn->product->id, 'label' => $pn->product->name]] : [],
+                    'processes' => $pn->process ? [['id' => $pn->process->id, 'label' => $pn->process->name]] : [],
+                ]),
+
+
+                // Tetap simpan master list lengkap untuk fallback
+                'models' => ProductModel::whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                    ->get()
+                    ->map(fn($m) => ['id' => $m->id, 'label' => $m->name]),
+
+                'products' => Product::whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                    ->get()
+                    ->map(fn($p) => ['id' => $p->id, 'label' => $p->name]),
+
+                'processes' => Process::whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                    ->get()
+                    ->map(fn($p) => ['id' => $p->id, 'label' => $p->name]),
+            ];
         }
 
-        // 🔹 Tab khusus untuk mapping tanpa part number (manual entry)
+        // ===================== MANUAL ENTRY / OTHER =====================
         $queryManual = DocumentMapping::with([
             'document.parent',
             'document.children',
@@ -228,10 +276,10 @@ class DocumentMappingController extends Controller
             'user',
             'files',
             'parent',
-        ])->whereHas('document', fn($q) => $q->where('type', 'review'))
+        ])
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->whereDoesntHave('partNumber');
 
-        // 🔹 Filter search global
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
@@ -240,7 +288,6 @@ class DocumentMappingController extends Controller
             });
         }
 
-        // 🔹 Filter modal
         if ($request->filled('document_name')) {
             $queryManual->whereHas(
                 'document',
@@ -253,31 +300,40 @@ class DocumentMappingController extends Controller
             $queryManual->where('document_number', $request->document_number);
         }
 
-        // 🔹 Filter modal untuk manual entry
         if ($request->filled('model_id')) {
-            $queryManual->whereHas('productModel', fn($q) => $q->whereIn('id', (array) $request->model_id));
+            $queryManual->whereHas(
+                'productModel',
+                fn($q) =>
+                $q->whereIn('id', (array) $request->model_id)
+            );
         }
 
         if ($request->filled('product_id')) {
-            $queryManual->whereHas('product', fn($q) => $q->whereIn('id', (array) $request->product_id));
+            $queryManual->whereHas(
+                'product',
+                fn($q) =>
+                $q->whereIn('id', (array) $request->product_id)
+            );
         }
 
         if ($request->filled('process_id')) {
-            $queryManual->whereHas('process', fn($q) => $q->whereIn('id', (array) $request->process_id));
+            $queryManual->whereHas(
+                'process',
+                fn($q) =>
+                $q->whereIn('id', (array) $request->process_id)
+            );
         }
-
 
         if ($request->filled('status_id')) {
             $queryManual->where('status_id', $request->status_id);
         }
 
         $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
-
-        // 🔹 Tambahkan tab Other / Manual Entry
         $groupedByPlant['Other / Manual Entry'] = $manualMappings;
 
         return view('contents.master.document-review.index2', compact(
             'groupedByPlant',
+            'filterDataByPlant',
             'documentsMaster',
             'partNumbers',
             'statuses',
@@ -328,7 +384,7 @@ class DocumentMappingController extends Controller
             'part_number_id.*' => 'nullable|exists:tm_part_numbers,id',
             'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
-            'files' => 'required',
+            'files' => 'nullable',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
             'parent_id' => 'nullable|exists:tt_document_mappings,id'
         ], [
@@ -372,6 +428,7 @@ class DocumentMappingController extends Controller
         }
 
         $mapping = DocumentMapping::create([
+            'plant' => $request->plant,
             'document_id' => $validated['document_id'],
             'document_number' => $validated['document_number'],
             'parent_id' => $validated['parent_id'] ?? null,
@@ -383,7 +440,7 @@ class DocumentMappingController extends Controller
             'reminder_date' => null,
             'deadline' => null,
             'obsolete_date' => null,
-            'status_id' => Status::where('name', 'Need Review')->first()->id,
+            'status_id' => Status::where('name', 'Uncomplete')->first()->id,
             'notes' => $cleanNotes,
         ]);
 
@@ -439,63 +496,90 @@ class DocumentMappingController extends Controller
 
         $mapping = DocumentMapping::findOrFail($id);
 
+        // Validasi
         $validated = $request->validate([
-            'document_id' => 'required|exists:tm_documents,id',
-            'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
-            'model_id' => 'nullable|exists:tm_models,id',
-            'product_id' => 'nullable|exists:tm_products,id',
-            'process_id' => 'nullable|exists:tm_processes,id',
-            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
-            'department_id' => 'required|exists:tm_departments,id',
-            'notes' => 'nullable|string|max:500',
-            'parent_id' => 'nullable|exists:tt_document_mappings,id',
+            'plant'              => 'required|in:body,unit,electric',
+            'document_id'        => 'required|exists:tm_documents,id',
+            'document_number'    => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
+            'model_id'           => 'nullable|array',
+            'model_id.*'         => 'exists:tm_models,id',
+            'product_id'         => 'nullable|array',
+            'product_id.*'       => 'exists:tm_products,id',
+            'process_id'         => 'nullable|array',
+            'process_id.*'       => 'exists:tm_processes,id',
+            'part_number_id'     => 'nullable|array',
+            'part_number_id.*'   => 'exists:tm_part_numbers,id',
+            'department_id'      => 'required|exists:tm_departments,id',
+            'notes'              => 'nullable|string|max:500',
+            'parent_id'          => 'nullable|exists:tt_document_mappings,id',
         ]);
 
+        // Bersihkan notes jika kosong
         $cleanNotes = trim($validated['notes'] ?? '');
-        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '')
+        if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
             $cleanNotes = null;
-
-        // Validasi: minimal part number atau model/product/process harus diisi
-        if (empty($validated['part_number_id']) && (empty($validated['model_id']) || empty($validated['product_id']) || empty($validated['process_id']))) {
-            return back()->withErrors(['part_number_id' => 'Please select a Part Number or fill Model, Product, and Process manually.'])->withInput();
         }
 
-        // Validasi parent jika diisi
+        // Validasi minimal input
+        if (
+            empty($validated['part_number_id']) &&
+            empty($validated['model_id']) &&
+            empty($validated['product_id']) &&
+            empty($validated['process_id'])
+        ) {
+            return back()->withErrors([
+                'part_number_id' =>
+                'Please select a Part Number or fill at least one of Model, Product, or Process.'
+            ])->withInput();
+        }
+
+        // Validasi parent document (jika ada)
         if (!empty($validated['parent_id'])) {
             $parent = DocumentMapping::find($validated['parent_id']);
+
             if (!$parent) {
                 return back()->withErrors(['parent_id' => 'Parent document not found'])->withInput();
             }
 
-            if ($validated['part_number_id']) {
-                if ($parent->part_number_id != $validated['part_number_id']) {
-                    return back()->withErrors(['parent_id' => 'Parent document does not match selected part number'])->withInput();
+            // Validasi kesesuaian parent
+            if (!empty($validated['part_number_id'])) {
+
+                $parentPartIds = $parent->partNumber->pluck('id')->toArray();
+
+                if (array_diff($validated['part_number_id'], $parentPartIds)) {
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Part Number'])->withInput();
                 }
             } else {
+
                 if (
-                    $parent->model_id != $validated['model_id'] ||
-                    $parent->product_id != $validated['product_id'] ||
-                    $parent->process_id != $validated['process_id']
+                    $parent->productModel->pluck('id')->sort()->values()->toArray() != ($validated['model_id'] ?? []) ||
+                    $parent->product->pluck('id')->sort()->values()->toArray()       != ($validated['product_id'] ?? []) ||
+                    $parent->process->pluck('id')->sort()->values()->toArray()      != ($validated['process_id'] ?? [])
                 ) {
-                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Model/Product/Process combination'])->withInput();
+                    return back()->withErrors(['parent_id' => 'Parent document does not match selected Model/Product/Process'])->withInput();
                 }
             }
         }
 
+        // Update data utama
         $mapping->update([
-            'document_id' => $validated['document_id'],
+            'plant'           => $validated['plant'],
+            'document_id'     => $validated['document_id'],
             'document_number' => $validated['document_number'],
-            'parent_id' => $validated['parent_id'] ?? null,
-            'model_id' => $validated['model_id'] ?? null,
-            'product_id' => $validated['product_id'] ?? null,
-            'process_id' => $validated['process_id'] ?? null,
-            'part_number_id' => $validated['part_number_id'] ?? null,
-            'department_id' => $validated['department_id'],
-            'notes' => $cleanNotes,
+            'department_id'   => $validated['department_id'],
+            'parent_id'       => $validated['parent_id'] ?? null,
+            'notes'           => $cleanNotes,
         ]);
+
+        // UPDATE RELASI PIVOT
+        $mapping->productModel()->sync($validated['model_id'] ?? []);
+        $mapping->product()->sync($validated['product_id'] ?? []);
+        $mapping->process()->sync($validated['process_id'] ?? []);
+        $mapping->partNumber()->sync($validated['part_number_id'] ?? []);
 
         return back()->with('success', 'Document review updated successfully!');
     }
+
 
     // ================= Store Review (Admin) =================
     public function storeReview(Request $request)
@@ -949,14 +1033,6 @@ class DocumentMappingController extends Controller
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
 
-
-        // Simpan Document
-        $newDocument = Document::create([
-            'name' => $validated['document_name'],
-            'parent_id' => null,
-            'type' => 'control',
-        ]);
-
         $cleanNotes = trim($validated['notes'] ?? '');
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
             $cleanNotes = null;
@@ -969,6 +1045,12 @@ class DocumentMappingController extends Controller
 
         // Loop tiap departemen
         foreach ($validated['department'] as $deptId) {
+            // Simpan Document
+            $newDocument = Document::create([
+                'name' => $validated['document_name'],
+                'parent_id' => null,
+                'type' => 'control',
+            ]);
             $mapping = DocumentMapping::create([
                 'document_id' => $newDocument->id,
                 'status_id' => $status->id,

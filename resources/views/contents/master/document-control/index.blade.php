@@ -33,10 +33,25 @@
         <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
             {{-- Search Bar --}}
             <div class="p-4 border-b border-gray-100 flex justify-end items-center space-x-2">
-                <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
-                    <input type="text" name="search" id="searchInput"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Search..." value="{{ request('search') }}">
+                <form method="GET" id="searchForm" class="flex items-center w-full sm:w-96 relative">
+
+                    <input type="text" name="search" value="{{ request('search') }}" id="searchInput"
+                        placeholder="Search..."
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+               focus:outline-none focus:ring-2 focus:ring-sky-500">
+
+                    <!-- Search icon -->
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500">
+                        <i class="bi bi-search"></i>
+                    </button>
+
+                    <!-- Clear button -->
+                    <button type="button" id="clearSearch"
+                        class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500"
+                        onclick="document.getElementById('searchInput').value=''; document.getElementById('searchForm').submit();">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
                 </form>
 
                 {{-- Filter Button --}}
@@ -230,6 +245,9 @@
             const globalDropdown = document.getElementById('globalFileDropdown');
             const globalFileList = document.getElementById('globalFileList');
 
+            /** =======================
+             * VIEW FILE DROPDOWN
+             * ======================= */
             document.querySelectorAll('.view-files-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     const files = JSON.parse(this.dataset.files);
@@ -240,15 +258,14 @@
                         li.className =
                             'flex justify-between items-center p-1 hover:bg-gray-100 rounded';
                         li.innerHTML = `
-                            <span class="truncate">${file.name}</span>
-                            <a href="${file.url}" target="_blank" class="text-blue-600 hover:underline ml-2">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                        `;
+                    <span class="truncate">${file.name}</span>
+                    <a href="${file.url}" target="_blank" class="text-blue-600 hover:underline ml-2">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                `;
                         globalFileList.appendChild(li);
                     });
 
-                    // Hitung posisi tombol
                     const rect = btn.getBoundingClientRect();
                     globalDropdown.style.top = `${rect.bottom + window.scrollY}px`;
                     globalDropdown.style.left = `${rect.left + window.scrollX}px`;
@@ -256,14 +273,14 @@
                 });
             });
 
-            // Klik di luar untuk tutup
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.view-files-btn') && !e.target.closest('#globalFileDropdown')) {
                     globalDropdown.classList.add('hidden');
                 }
             });
+
             /** =======================
-             * FUNCTION: Initialize TomSelect
+             * Initialize TomSelect
              * ======================= */
             function initTomSelect(container) {
                 container.querySelectorAll('.tomselect').forEach(selectEl => {
@@ -286,7 +303,7 @@
             }
 
             /** =======================
-             * FUNCTION: Initialize Quill Editor
+             * Initialize Quill Editor
              * ======================= */
             function initQuill(editorDiv, hiddenInput) {
                 if (!editorDiv || editorDiv.classList.contains('quill-initialized')) return;
@@ -320,30 +337,23 @@
                     }
                 });
 
-                // Set nilai awal dari hidden input
                 quill.root.innerHTML = hiddenInput.value || '';
 
-                // Sinkron saat submit
                 const form = editorDiv.closest('form');
                 if (form) {
                     form.addEventListener('submit', () => {
                         let content = quill.root.innerHTML;
-
-                        // Hapus konten kosong <p><br></p>
-                        if (content === '<p><br></p>') content = '';
-                        hiddenInput.value = content;
+                        hiddenInput.value = (content === '<p><br></p>') ? '' : content;
                     });
                 }
 
-                // Optional: sinkron real-time saat user mengetik
                 quill.on('text-change', () => {
-                    let content = quill.root.innerHTML;
-                    hiddenInput.value = (content === '<p><br></p>') ? '' : content;
+                    hiddenInput.value = (quill.root.innerHTML === '<p><br></p>') ? '' : quill.root
+                        .innerHTML;
                 });
 
                 editorDiv.classList.add('quill-initialized');
             }
-
 
             /** =======================
              * MODAL: Add Document
@@ -352,8 +362,6 @@
             if (addModalEl) {
                 addModalEl.addEventListener('shown.bs.modal', () => {
                     initTomSelect(addModalEl);
-
-                    // ✅ Perbaikan utama: tambahkan delay sebelum inisialisasi Quill
                     setTimeout(() => {
                         const editorDiv = document.getElementById('quill_editor_add');
                         const hiddenInput = document.getElementById('notes_input_add');
@@ -361,12 +369,10 @@
                     }, 100);
                 });
 
-                // ===== RESET MODAL ADD saat ditutup =====
                 addModalEl.addEventListener('hidden.bs.modal', () => {
                     const form = addModalEl.querySelector('form');
                     form.reset();
 
-                    // Reset Quill
                     const editorDiv = document.getElementById('quill_editor_add');
                     const hiddenInput = document.getElementById('notes_input_add');
                     const quill = Quill.find(editorDiv);
@@ -375,10 +381,8 @@
                         hiddenInput.value = '';
                     }
 
-                    // Reset TomSelect
                     addModalEl.querySelectorAll('.tomselect').forEach(sel => sel.tomselect.clear());
 
-                    // Reset file fields
                     const fileContainer = document.getElementById("file-fields");
                     if (fileContainer) {
                         fileContainer.innerHTML = `
@@ -391,77 +395,17 @@
                 `;
                     }
 
-                    // Remove error classes
                     addModalEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
                         'is-invalid'));
                 });
-            }
 
-            /** =======================
-             * MODAL: Edit Document
-             * ======================= */
-            document.querySelectorAll('[id^="editModal"]').forEach(modal => {
-                modal.addEventListener('shown.bs.modal', function() {
-                    initTomSelect(modal);
-
-                    const mappingId = modal.dataset.mappingId;
-                    if (!mappingId) return;
-
-                    setTimeout(() => {
-                        const editorDiv = document.getElementById(
-                            `quill_editor_edit${mappingId}`);
-                        const hiddenInput = document.getElementById(
-                            `notes_input_edit${mappingId}`);
-
-                        initQuill(editorDiv, hiddenInput);
-                    }, 50);
-                    // Tambah validasi error display
-                    modal.querySelectorAll('input, select, textarea').forEach(el => {
-                        const errorDiv = el.closest('.col-md-6, .col-12')?.querySelector(
-                            '.invalid-feedback');
-                        if (errorDiv && errorDiv.textContent.trim() !== '') {
-                            el.classList.add('is-invalid');
-                        }
-                    });
-                });
-
-                modal.addEventListener('hidden.bs.modal', () => {
-                    modal.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
-                        'is-invalid'));
-                });
-            });
-
-            /** =======================
-             * SHOW MODAL IF VALIDATION ERRORS
-             * ======================= */
-            @if ($errors->any())
-                @if (session('editModalId'))
-                    const editModalEl = document.getElementById('editModal{{ session('editModalId') }}');
-                    if (editModalEl) {
-                        const modal = new bootstrap.Modal(editModalEl);
-                        modal.show();
-                    }
-                @else
-                    const addModalElShow = document.getElementById('addDocumentControlModal');
-                    if (addModalElShow) {
-                        const modal = new bootstrap.Modal(addModalElShow);
-                        modal.show();
-                    }
-                @endif
-            @endif
-
-            /** =======================
-             * CANCEL BUTTON (Add Modal)
-             * ======================= */
-            if (addModalEl) {
+                // CANCEL BUTTON
                 const cancelBtn = addModalEl.querySelector('[data-bs-dismiss="modal"]');
                 const form = addModalEl.querySelector('form');
-
                 if (cancelBtn && form) {
                     cancelBtn.addEventListener('click', () => {
                         form.reset();
 
-                        // Reset Quill
                         const editorDiv = document.getElementById('quill_editor_add');
                         const hiddenInput = document.getElementById('notes_input_add');
                         const quill = Quill.find(editorDiv);
@@ -470,10 +414,8 @@
                             hiddenInput.value = '';
                         }
 
-                        // Reset TomSelect
                         addModalEl.querySelectorAll('.tomselect').forEach(sel => sel.tomselect.clear());
 
-                        // Reset file fields
                         const fileContainer = document.getElementById("file-fields");
                         if (fileContainer) {
                             fileContainer.innerHTML = `
@@ -493,50 +435,41 @@
             }
 
             /** =======================
-             * ADD FILE INPUT DYNAMICALLY
+             * MODAL: Edit Document
              * ======================= */
-            const addFileBtn = document.getElementById('add-file');
-            const fileContainer = document.getElementById('file-fields');
+            document.querySelectorAll('[id^="editModal"]').forEach(modal => {
+                modal.addEventListener('shown.bs.modal', function() {
+                    initTomSelect(modal);
 
-            if (addFileBtn && fileContainer) {
-                addFileBtn.addEventListener('click', function() {
-                    const newFileGroup = document.createElement('div');
-                    newFileGroup.classList.add('col-md-12', 'd-flex', 'align-items-center', 'mb-2',
-                        'file-input-group');
-                    newFileGroup.innerHTML = `
-                    <input type="file" class="form-control" name="files[]" required>
-                    <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                `;
-                    fileContainer.appendChild(newFileGroup);
-                    updateRemoveButtons();
-                });
+                    const mappingId = modal.dataset.mappingId;
+                    if (!mappingId) return;
 
-                // Fungsi untuk aktifkan tombol "hapus file"
-                function updateRemoveButtons() {
-                    const fileGroups = fileContainer.querySelectorAll('.file-input-group');
-                    fileGroups.forEach((group, index) => {
-                        const removeBtn = group.querySelector('.remove-file');
-                        if (removeBtn) {
-                            removeBtn.classList.toggle('d-none', fileGroups.length === 1);
-                            removeBtn.onclick = () => {
-                                group.remove();
-                                updateRemoveButtons();
-                            };
+                    setTimeout(() => {
+                        const editorDiv = document.getElementById(
+                            `quill_editor_edit${mappingId}`);
+                        const hiddenInput = document.getElementById(
+                            `notes_input_edit${mappingId}`);
+                        initQuill(editorDiv, hiddenInput);
+                    }, 50);
+
+                    modal.querySelectorAll('input, select, textarea').forEach(el => {
+                        const errorDiv = el.closest('.col-md-6, .col-12')?.querySelector(
+                            '.invalid-feedback');
+                        if (errorDiv && errorDiv.textContent.trim() !== '') {
+                            el.classList.add('is-invalid');
                         }
                     });
-                }
+                });
 
-                // Inisialisasi pertama
-                updateRemoveButtons();
-            }
-
+                modal.addEventListener('hidden.bs.modal', () => {
+                    modal.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
+                        'is-invalid'));
+                });
+            });
 
             /** =======================
-             * BULK DELETE (Snackbar)
-             * =======================
-             */
+             * BULK DELETE & SNACKBAR
+             * ======================= */
             const selectAll = document.getElementById('selectAll');
             const snackbar = document.getElementById('snackbar');
             const selectedCount = document.getElementById('selectedCount');
@@ -562,7 +495,6 @@
                 }
             }
 
-            // ✅ Checkbox select all
             if (selectAll) {
                 selectAll.addEventListener('change', function() {
                     getRowCheckboxes().forEach(cb => cb.checked = this.checked);
@@ -570,27 +502,20 @@
                 });
             }
 
-            // ✅ Checkbox per-row
             document.addEventListener('change', function(e) {
                 if (e.target.classList.contains('row-checkbox')) {
                     if (!e.target.checked && selectAll) selectAll.checked = false;
-
-                    const all = getRowCheckboxes();
-                    if (selectAll) selectAll.checked = all.every(cb => cb.checked);
-
+                    if (selectAll) selectAll.checked = getRowCheckboxes().every(cb => cb.checked);
                     updateSnackbar();
                 }
             });
 
-            // ✅ Handler submit bulk delete
             if (bulkDeleteForm) {
                 bulkDeleteForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-
                     const checkedBoxes = getRowCheckboxes().filter(cb => cb.checked);
                     if (!checkedBoxes.length) return;
 
-                    // isi ulang kontainer id
                     bulkIdsContainer.innerHTML = '';
                     checkedBoxes.forEach(cb => {
                         const input = document.createElement('input');
@@ -600,7 +525,6 @@
                         bulkIdsContainer.appendChild(input);
                     });
 
-                    // SweetAlert konfirmasi
                     Swal.fire({
                         title: 'Delete selected documents?',
                         text: `You are about to delete ${checkedBoxes.length} document(s). This action cannot be undone.`,
@@ -611,180 +535,129 @@
                         confirmButtonText: 'Yes, delete them'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Submit via fetch biar tetap smooth
                             fetch(bulkDeleteForm.action, {
-                                    method: 'POST',
-                                    body: new FormData(bulkDeleteForm),
-                                })
-                                .then(response => {
-                                    if (response.redirected) {
-                                        // Redirect (Laravel redirect()->route()) akan tetap jalan
-                                        window.location.href = response.url;
-                                    } else {
-                                        throw new Error('Unexpected response');
-                                    }
-                                })
-                                .catch(() => {
-                                    Swal.fire({
-                                        title: 'Error',
-                                        text: 'Failed to delete documents. Please try again.',
-                                        icon: 'error',
-                                    });
-                                });
+                                method: 'POST',
+                                body: new FormData(bulkDeleteForm),
+                            }).then(response => {
+                                if (response.redirected) window.location.href = response
+                                    .url;
+                                else throw new Error('Unexpected response');
+                            }).catch(() => {
+                                Swal.fire('Error',
+                                    'Failed to delete documents. Please try again.',
+                                    'error');
+                            });
                         }
                     });
                 });
             }
 
-            // Inisialisasi pertama
             updateSnackbar();
 
-            document.querySelectorAll('.view-file-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const fileUrl = this.dataset.file;
-                    const iframe = document.getElementById('fileViewer');
-                    iframe.src = fileUrl;
+            /** =======================
+             * FILE INPUT DYNAMICALLY
+             * ======================= */
+            const addFileBtn = document.getElementById('add-file');
+            const fileContainer = document.getElementById('file-fields');
+            if (addFileBtn && fileContainer) {
+                addFileBtn.addEventListener('click', function() {
+                    const newFileGroup = document.createElement('div');
+                    newFileGroup.classList.add('col-md-12', 'd-flex', 'align-items-center', 'mb-2',
+                        'file-input-group');
+                    newFileGroup.innerHTML = `
+                <input type="file" class="form-control" name="files[]" required>
+                <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+                    fileContainer.appendChild(newFileGroup);
+                    updateRemoveButtons();
+                });
+
+                function updateRemoveButtons() {
+                    const fileGroups = fileContainer.querySelectorAll('.file-input-group');
+                    fileGroups.forEach((group, index) => {
+                        const removeBtn = group.querySelector('.remove-file');
+                        if (removeBtn) {
+                            removeBtn.classList.toggle('d-none', fileGroups.length === 1);
+                            removeBtn.onclick = () => {
+                                group.remove();
+                                updateRemoveButtons();
+                            };
+                        }
+                    });
+                }
+                updateRemoveButtons();
+            }
+
+            /** =======================
+             * SEARCH & FILTER (FORM SUBMIT BIASA)
+             * ======================= */
+            const searchInput = document.getElementById('searchInput');
+            const filterCheckboxes = document.querySelectorAll('.departmentCheck');
+
+            // Submit search on enter
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') searchInput.form.submit();
+                });
+            }
+
+            // Submit filter when checkbox changes
+            filterCheckboxes.forEach(chk => {
+                chk.addEventListener('change', function() {
+                    this.form.submit();
                 });
             });
 
-            // Optional: reset src saat modal ditutup supaya tidak tetap loaded
-            const modal = document.getElementById('viewFileModal');
-            modal.addEventListener('hidden.bs.modal', () => {
-                document.getElementById('fileViewer').src = '';
-            });
-
             // =======================
-            // AJAX SEARCH
+            // FILTER DROPDOWN TOGGLE
             // =======================
-            let searchTimeout = null;
-
-            const searchInput = document.getElementById('searchInput');
             const filterBtn = document.getElementById('filterBtn');
             const filterDropdown = document.getElementById('filterDropdown');
-            const searchForm = document.getElementById('searchForm');
-            const clearFilterBtn = document.getElementById('clearFilter');
 
-            searchInput.addEventListener("keyup", function() {
-                clearTimeout(searchTimeout);
+            if (filterBtn && filterDropdown) {
+                filterBtn.addEventListener('click', () => {
+                    filterDropdown.classList.toggle('hidden');
 
-                searchTimeout = setTimeout(() => {
-                    submitFilterSearchAjax();
-                }, 300);
-            });
+                    if (!filterDropdown.classList.contains('hidden')) {
+                        const rect = filterBtn.getBoundingClientRect();
+                        const dropdownWidth = filterDropdown.offsetWidth;
+                        let left = rect.left;
+                        const top = rect.bottom + window.scrollY;
 
-            // Tampilkan / sembunyikan dropdown filter
-            filterBtn.addEventListener('click', () => {
-                filterDropdown.classList.toggle('hidden');
-
-                if (!filterDropdown.classList.contains('hidden')) {
-                    const rect = filterBtn.getBoundingClientRect();
-                    const dropdownWidth = filterDropdown.offsetWidth;
-                    let left = rect.left;
-                    const top = rect.bottom + window.scrollY;
-
-                    // Pastikan dropdown tidak keluar viewport kanan
-                    if (left + dropdownWidth > window.innerWidth - 100) {
-                        left = window.innerWidth - dropdownWidth - 120;
-                    }
-
-                    filterDropdown.style.top = `${top}px`;
-                    filterDropdown.style.left = `${left}px`;
-                }
-            });
-
-            // AUTO SUBMIT FILTER (AJAX)
-            document.querySelectorAll('.departmentCheck').forEach(chk => {
-                chk.addEventListener('change', function() {
-                    submitFilterSearchAjax();
-
-                });
-            });
-
-            // CLEAR FILTER
-            document.getElementById("clearFilter").addEventListener("click", function() {
-                document.querySelectorAll('.departmentCheck').forEach(chk => chk.checked = false);
-                submitFilterSearchAjax();
-
-            });
-
-            // AJAX function
-            function submitFilterSearchAjax() {
-                let params = new URLSearchParams();
-
-                params.append("search", searchInput.value);
-
-                let selectedDepartments = [];
-                document.querySelectorAll(".departmentCheck:checked").forEach(chk => {
-                    params.append("department[]", chk.value);
-                    selectedDepartments.push(chk.value);
-                });
-
-                fetch("{{ route('master.document-control.index') }}?" + params.toString(), {
-                        method: "GET",
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest"
+                        // Pastikan dropdown tidak keluar viewport kanan
+                        if (left + dropdownWidth > window.innerWidth - 100) {
+                            left = window.innerWidth - dropdownWidth - 120;
                         }
-                    })
-                    .then(response => response.text())
-                    .then(html => {
-                        const newDom = new DOMParser().parseFromString(html, "text/html");
-                        document.getElementById("tableContainer").innerHTML =
-                            newDom.getElementById("tableContainer").innerHTML;
 
-                        // Restore checked filter
-                        selectedDepartments.forEach(dep => {
-                            const box = document.querySelector(`.departmentCheck[value="${dep}"]`);
-                            if (box) box.checked = true;
-                        });
-
-                        // Re-bind listeners
-                        rebindListeners();
-                        feather.replace();
-                    });
-            }
-
-            function rebindListeners() {
-
-                // Re-bind department filters
-                document.querySelectorAll('.departmentCheck').forEach(chk => {
-                    chk.addEventListener('change', submitFilterSearchAjax);
+                        filterDropdown.style.top = `${top}px`;
+                        filterDropdown.style.left = `${left}px`;
+                    }
                 });
 
-                const clearBtn = document.getElementById("clearFilter");
-                if (clearBtn) {
-                    clearBtn.addEventListener("click", function() {
-                        document.querySelectorAll('.departmentCheck').forEach(chk => chk.checked = false);
-                        submitFilterSearchAjax();
-                    });
-                }
-
-                // === FIX PENTING ===
-                // Re-bind file viewer
-                document.querySelectorAll('.view-file-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const fileUrl = this.dataset.file;
-                        const iframe = document.getElementById('fileViewer');
-                        iframe.src = fileUrl;
-                    });
+                // Klik di luar untuk tutup dropdown
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('#filterDropdown') && !e.target.closest('#filterBtn')) {
+                        filterDropdown.classList.add('hidden');
+                    }
                 });
             }
 
-            // Submit form filter → sinkronkan search terbaru
-            const filterForm = filterDropdown.querySelector('form');
-            filterForm.addEventListener('submit', (e) => {
-                const hiddenSearch = filterForm.querySelector('input[name="search"]');
-                hiddenSearch.value = searchInput.value; // update hidden search
-            });
 
-            // Clear search
-            const clearSearchBtn = document.getElementById('clearSearch');
-            clearSearchBtn.addEventListener('click', () => {
-                searchInput.value = '';
-                submitFilterSearchAjax();
-            });
+            // Clear search/filter
+            const clearFilterBtn = document.getElementById('clearFilter');
+            if (clearFilterBtn) {
+                clearFilterBtn.addEventListener('click', () => {
+                    filterCheckboxes.forEach(chk => chk.checked = false);
+                    if (searchInput) searchInput.value = '';
+                    searchInput?.form.submit();
+                });
+            }
         });
     </script>
 @endpush
+
 @push('styles')
     <style>
         #quill_editor {

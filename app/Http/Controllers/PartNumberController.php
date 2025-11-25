@@ -54,7 +54,7 @@ class PartNumberController extends Controller
             'product_id' => 'required|exists:tm_products,id',
             'model_id' => 'required|exists:tm_models,id',
             'process_id' => 'required|exists:tm_processes,id',
-            'plant' => 'required|in:body,unit,electric'
+            'plant' => 'required|in:Body,Unit,Electric'
         ]);
 
         if ($validator->fails()) {
@@ -92,7 +92,7 @@ class PartNumberController extends Controller
             'product_id' => 'required|exists:tm_products,id',
             'model_id' => 'required|exists:tm_models,id',
             'process_id' => 'required|exists:tm_processes,id',
-            'plant' => 'required|in:body,unit,electric'
+            'plant' => 'required|in:Body,Unit,Electric'
         ]);
 
         if ($validator->fails()) {

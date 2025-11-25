@@ -30,7 +30,12 @@ class PartNumber extends Model
     }
     public function documentMappings()
     {
-        return $this->hasMany(DocumentMapping::class);
+        return $this->belongsToMany(
+            DocumentMapping::class,
+            'tt_document_mapping_part_numbers',
+            'part_number_id',
+            'document_mapping_id'
+        );
     }
     public function process()
     {

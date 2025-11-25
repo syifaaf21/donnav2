@@ -1,7 +1,17 @@
 @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
     @foreach ($groupedByPlant as $plant => $documents)
         @foreach ($documents as $mapping)
-            <div class="modal fade" id="editDocumentModal-{{ $mapping->id }}" tabindex="-1"
+            @php
+                $model_ids = $mapping->productModel->pluck('id')->toArray();
+                $product_ids = $mapping->product->pluck('id')->toArray();
+                $process_ids = $mapping->process->pluck('id')->toArray();
+                $part_ids = $mapping->partNumber->pluck('id')->toArray();
+
+            @endphp
+
+            <div class="modal fade" id="editDocumentModal-{{ $mapping->id }}"
+                data-model-ids='@json($model_ids)' data-product-ids='@json($product_ids)'
+                data-process-ids='@json($process_ids)' data-part-ids='@json($part_ids)'
                 aria-labelledby="editDocumentModalLabel-{{ $mapping->id }}" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content border-0 rounded-4 shadow-lg">
@@ -22,6 +32,7 @@
                                 @csrf
                                 @method('PUT')
                                 <div class="row g-3">
+
                                     {{-- Document Name --}}
                                     <div class="col-md-4">
                                         <label class="form-label fw-medium">Document Name <span
@@ -38,7 +49,8 @@
 
                                     {{-- Document Number --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Document Number</label>
+                                        <label class="form-label fw-medium">Document Number <span
+                                                class="text-danger">*</span></label>
                                         <input type="text" name="document_number" class="form-control"
                                             value="{{ $mapping->document_number }}">
                                     </div>
@@ -48,21 +60,12 @@
                                         <label class="form-label fw-medium">Plant <span
                                                 class="text-danger">*</span></label>
                                         <select name="plant" class="form-select tom-select" required>
-                                            @php
-                                                $selectedPlant =
-                                                    $mapping->partNumber->first()?->plant ?? ($mapping->plant ?? '');
-                                            @endphp
-
-                                            <option value="body"
-                                                {{ strtolower($selectedPlant) == 'body' ? 'selected' : '' }}>Body
-                                            </option>
-                                            <option value="unit"
-                                                {{ strtolower($selectedPlant) == 'unit' ? 'selected' : '' }}>Unit
-                                            </option>
+                                            <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>
+                                                Body</option>
+                                            <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>
+                                                Unit</option>
                                             <option value="electric"
-                                                {{ strtolower($selectedPlant) == 'electric' ? 'selected' : '' }}>
-                                                Electric</option>
-
+                                                {{ $mapping->plant == 'electric' ? 'selected' : '' }}>Electric</option>
                                         </select>
                                     </div>
 
@@ -82,12 +85,12 @@
 
                                     {{-- Model --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Model</label>
-                                        <select name="model_id" class="form-select tom-select">
-                                            <option value="">-- Select Model --</option>
+                                        <label class="form-label fw-medium">Model <span
+                                                class="text-danger">*</span></label>
+                                        <select name="model_id[]" multiple class="form-select tom-select">
                                             @foreach ($models as $model)
                                                 <option value="{{ $model->id }}"
-                                                    {{ $mapping->model_id == $model->id ? 'selected' : '' }}>
+                                                    {{ in_array($model->id, $model_ids) ? 'selected' : '' }}>
                                                     {{ $model->name }}
                                                 </option>
                                             @endforeach
@@ -97,11 +100,10 @@
                                     {{-- Product --}}
                                     <div class="col-md-4">
                                         <label class="form-label fw-medium">Product</label>
-                                        <select name="product_id" class="form-select tom-select">
-                                            <option value="">-- Select Product --</option>
+                                        <select name="product_id[]" multiple class="form-select tom-select">
                                             @foreach ($products as $product)
                                                 <option value="{{ $product->id }}"
-                                                    {{ $mapping->product_id == $product->id ? 'selected' : '' }}>
+                                                    {{ in_array($product->id, $product_ids) ? 'selected' : '' }}>
                                                     {{ $product->name }}
                                                 </option>
                                             @endforeach
@@ -111,11 +113,11 @@
                                     {{-- Process --}}
                                     <div class="col-md-4">
                                         <label class="form-label fw-medium">Process</label>
-                                        <select name="process_id" class="form-select tom-select text-capitalize">
-                                            <option value="">-- Select Process --</option>
+                                        <select name="process_id[]" multiple
+                                            class="form-select tom-select text-capitalize">
                                             @foreach ($processes as $process)
                                                 <option value="{{ $process->id }}"
-                                                    {{ $mapping->process_id == $process->id ? 'selected' : '' }}>
+                                                    {{ in_array($process->id, $process_ids) ? 'selected' : '' }}>
                                                     {{ $process->name }}
                                                 </option>
                                             @endforeach
@@ -125,11 +127,10 @@
                                     {{-- Part Number --}}
                                     <div class="col-md-4">
                                         <label class="form-label fw-medium">Part Number</label>
-                                        <select name="part_number_id" class="form-select tom-select">
-                                            <option value="">-- Select Part Number --</option>
+                                        <select name="part_number_id[]" multiple class="form-select tom-select">
                                             @foreach ($partNumbers as $part)
                                                 <option value="{{ $part->id }}"
-                                                    {{ $mapping->part_number_id == $part->id ? 'selected' : '' }}>
+                                                    {{ in_array($part->id, $part_ids) ? 'selected' : '' }}>
                                                     {{ $part->part_number }}
                                                 </option>
                                             @endforeach
@@ -145,9 +146,8 @@
                                             class="bg-white border-1 shadow-sm rounded"
                                             style="min-height: 100px; max-height: 130px; overflow-y: auto;">
                                         </div>
-                                        <small class="text-muted">You can format your notes with bold, italic, colors,
-                                            and more.</small>
                                     </div>
+
                                 </div>
                             </form>
                         </div>
@@ -166,11 +166,11 @@
     @endforeach
 @endif
 
+
 @push('scripts')
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
-            /* ----------- Helpers ----------- */
             async function fetchJson(url) {
                 try {
                     const res = await fetch(url);
@@ -184,10 +184,7 @@
 
             function createTS(el, opts = {}) {
                 if (!el) return null;
-
-                // Prevent double initialization
                 if (el.tomselect) return el.tomselect;
-
                 return new TomSelect(el, Object.assign({
                     allowEmptyOption: true,
                     maxOptions: 100,
@@ -198,12 +195,10 @@
             function setOptions(ts, items = []) {
                 if (!ts) return;
                 ts.clearOptions();
-                (items || []).forEach(i => {
-                    ts.addOption({
-                        value: i.id,
-                        text: i.text ?? i.name ?? i.part_number ?? String(i.id),
-                    });
-                });
+                (items || []).forEach(i => ts.addOption({
+                    value: i.id,
+                    text: i.text ?? i.name ?? i.part_number ?? String(i.id)
+                }));
                 ts.refreshOptions(false);
             }
 
@@ -223,85 +218,69 @@
                 const el = document.getElementById(idEditor);
                 const hidden = document.getElementById(idInput);
                 if (!el || !hidden) return;
-
                 const quill = new Quill(el, {
                     theme: "snow",
                     modules: {
                         toolbar: [
+                            ['bold', 'italic', 'underline'],
                             [{
-                                font: []
+                                list: 'ordered'
                             }, {
-                                size: []
+                                list: 'bullet'
                             }],
-                            ["bold", "italic", "underline", "strike"],
                             [{
                                 color: []
                             }, {
                                 background: []
                             }],
-                            [{
-                                list: "ordered"
-                            }, {
-                                list: "bullet"
-                            }],
-                            [{
-                                align: []
-                            }],
-                            ["clean"]
+                            ['clean']
                         ]
                     }
                 });
-
                 quill.root.innerHTML = hidden.value ?? "";
-
                 const form = hidden.closest("form");
-                if (form) {
-                    form.addEventListener("submit", () => {
-                        hidden.value = quill.root.innerHTML;
-                    });
-                }
+                if (form) form.addEventListener("submit", () => {
+                    hidden.value = quill.root.innerHTML;
+                });
             }
 
-            /* INIT FOR ALL EDIT FORMS
-             */
             document.querySelectorAll('[id^="editForm-"]').forEach(form => {
-
                 const id = form.id.split("-").pop();
-
-                // GET ALL FIELDS
                 const plantEl = form.querySelector('[name="plant"]');
-                const modelEl = form.querySelector('[name="model_id"]');
-                const prodEl = form.querySelector('[name="product_id"]');
-                const procEl = form.querySelector('[name="process_id"]');
-                const partEl = form.querySelector('[name="part_number_id"]');
+                const modelEl = form.querySelector('[name="model_id[]"]');
+                const prodEl = form.querySelector('[name="product_id[]"]');
+                const procEl = form.querySelector('[name="process_id[]"]');
+                const partEl = form.querySelector('[name="part_number_id[]"]');
                 const deptEl = form.querySelector('[name="department_id"]');
                 const docEl = form.querySelector('[name="document_id"]');
 
-                // INIT TOMSELECT
                 const tsPlant = createTS(plantEl);
-                const tsModel = createTS(modelEl);
-                const tsProduct = createTS(prodEl);
-                const tsProcess = createTS(procEl);
-                const tsPart = createTS(partEl);
+                const tsModel = createTS(modelEl, {
+                    maxItems: null
+                });
+                const tsProduct = createTS(prodEl, {
+                    maxItems: null
+                });
+                const tsProcess = createTS(procEl, {
+                    maxItems: null
+                });
+                const tsPart = createTS(partEl, {
+                    maxItems: null
+                });
                 const tsDept = createTS(deptEl);
                 const tsDoc = createTS(docEl);
 
-                // LOAD ALL BASED ON PLANT
                 async function loadByPlant(plant) {
-
                     if (!plant) {
                         disableAndClear(tsModel);
                         disableAndClear(tsProduct);
                         disableAndClear(tsProcess);
                         disableAndClear(tsPart);
-
                         tsDept.clear(true);
                         tsDept.disable();
                         return;
                     }
-
                     const p = encodeURIComponent(plant);
-
                     const [models, products, processes, departments, parts] = await Promise.all([
                         fetchJson(`/api/models?plant=${p}`),
                         fetchJson(`/api/products?plant=${p}`),
@@ -309,13 +288,11 @@
                         fetchJson(`/api/departments?plant=${p}`),
                         fetchJson(`/api/part-numbers?plant=${p}`)
                     ]);
-
                     setOptions(tsModel, models || []);
                     setOptions(tsProduct, products || []);
                     setOptions(tsProcess, processes || []);
                     setOptions(tsDept, departments || []);
                     setOptions(tsPart, parts || []);
-
                     enableTS(tsModel);
                     enableTS(tsProduct);
                     enableTS(tsProcess);
@@ -323,88 +300,82 @@
                     enableTS(tsDept);
                 }
 
-                /*
-                   ON PLANT CHANGE (MAIN LOGIC)
-                - */
                 tsPlant.on("change", async val => {
-
-                    // Hard reset dulu
                     disableAndClear(tsModel);
                     disableAndClear(tsProduct);
                     disableAndClear(tsProcess);
                     disableAndClear(tsPart);
-
                     tsDept.clear(true);
                     tsDept.disable();
-
                     if (!val) return;
-
                     await loadByPlant(val);
                 });
 
-                /*
-                   PART NUMBER CHANGE
-                - */
                 tsPart.on("change", async val => {
-
-                    if (!val) {
+                    if (!val || val.length === 0) {
                         disableAndClear(tsModel);
                         disableAndClear(tsProduct);
                         disableAndClear(tsProcess);
-
-                        tsDept.clear(true);
                         tsDept.enable();
                         return;
                     }
-
-                    const detail = await fetchJson(
-                        `/api/part-number-details/${encodeURIComponent(val)}`);
-                    if (!detail) return;
-
-                    // Auto-fill model
-                    if (detail.model?.id) {
-                        tsModel.addOption({
-                            value: detail.model.id,
-                            text: detail.model.name
-                        });
-                        tsModel.setValue(detail.model.id, true);
-                        tsModel.enable();
+                    if (!Array.isArray(val)) val = [val];
+                    let allProducts = [],
+                        allModels = [],
+                        allProcesses = [];
+                    for (const partId of val) {
+                        const detail = await fetchJson(
+                            `/api/part-number-details/${encodeURIComponent(partId)}`);
+                        if (detail && !detail.error) {
+                            if (detail.product) allProducts.push(detail.product);
+                            if (detail.model) allModels.push(detail.model);
+                            if (detail.process) allProcesses.push(detail.process);
+                        }
                     }
+                    const uniqueById = arr => [...new Map(arr.map(i => [i.id, i])).values()];
+                    const formatTS = arr => arr.map(i => ({
+                        value: i.id,
+                        text: i.name ?? i.part_number ?? String(i.id)
+                    }));
 
-                    // Auto-fill product
-                    if (detail.product?.id) {
-                        tsProduct.addOption({
-                            value: detail.product.id,
-                            text: detail.product.name
-                        });
-                        tsProduct.setValue(detail.product.id, true);
-                        tsProduct.enable();
-                    }
+                    tsProduct.clearOptions();
+                    tsProduct.addOptions(formatTS(uniqueById(allProducts)));
+                    tsProduct.setValue(uniqueById(allProducts).map(p => p.id));
+                    tsProduct.enable();
 
-                    // Auto-fill process
-                    if (detail.process?.id) {
-                        tsProcess.addOption({
-                            value: detail.process.id,
-                            text: detail.process.name
-                        });
-                        tsProcess.setValue(detail.process.id, true);
-                        tsProcess.enable();
-                    }
+                    tsModel.clearOptions();
+                    tsModel.addOptions(formatTS(uniqueById(allModels)));
+                    tsModel.setValue(uniqueById(allModels).map(m => m.id));
+                    tsModel.enable();
+
+                    tsProcess.clearOptions();
+                    tsProcess.addOptions(formatTS(uniqueById(allProcesses)));
+                    tsProcess.setValue(uniqueById(allProcesses).map(p => p.id));
+                    tsProcess.enable();
                 });
 
-                /*INIT QUILL EDITOR */
                 const modalEl = document.getElementById(`editDocumentModal-${id}`);
-
-                modalEl.addEventListener("shown.bs.modal", () => {
-
-                    // Cegah double-init
+                modalEl.addEventListener("shown.bs.modal", async () => {
+                    // Inisialisasi Quill hanya 1x
                     if (modalEl.dataset.quillInitialized === "1") return;
-
                     initQuill(`quill_editor_edit${id}`, `notes_input_edit${id}`);
+
+                    // Set multi-select default value
+                    const modelIds = JSON.parse(modalEl.dataset.modelIds || "[]");
+                    const productIds = JSON.parse(modalEl.dataset.productIds || "[]");
+                    const processIds = JSON.parse(modalEl.dataset.processIds || "[]");
+                    const partIds = JSON.parse(modalEl.dataset.partIds || "[]");
+
+                    // Set value hanya untuk modal ini
+                    tsModel.setValue(modelIds);
+                    tsProduct.setValue(productIds);
+                    tsProcess.setValue(processIds);
+                    tsPart.setValue(partIds);
 
                     modalEl.dataset.quillInitialized = "1";
                 });
-            }); // END LOOP FORM
+
+            });
         });
     </script>
 @endpush
