@@ -171,12 +171,11 @@
 
                             {{-- File Upload --}}
                             <div class="col-12 mt-10">
-                                <label class="form-label fw-medium">Upload File <span
-                                        class="text-danger">*</span></label>
+                                <label class="form-label fw-medium">Upload File</label>
                                 <div id="file-upload-container">
                                     <div class="input-group mb-2">
                                         <input type="file" name="files[]" class="form-control border-1 shadow-sm"
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx">
                                     </div>
                                     <button class="btn btn-outline-success btn-sm mt-2 add-file-btn" type="button">+
                                         Add

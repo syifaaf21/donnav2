@@ -365,7 +365,7 @@ class DocumentMappingController extends Controller
             'part_number_id.*' => 'nullable|exists:tm_part_numbers,id',
             'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
-            'files' => 'required',
+            'files' => 'nullable',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
             'parent_id' => 'nullable|exists:tt_document_mappings,id'
         ], [
@@ -1014,14 +1014,6 @@ class DocumentMappingController extends Controller
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
 
-
-        // Simpan Document
-        $newDocument = Document::create([
-            'name' => $validated['document_name'],
-            'parent_id' => null,
-            'type' => 'control',
-        ]);
-
         $cleanNotes = trim($validated['notes'] ?? '');
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
             $cleanNotes = null;
@@ -1034,6 +1026,12 @@ class DocumentMappingController extends Controller
 
         // Loop tiap departemen
         foreach ($validated['department'] as $deptId) {
+            // Simpan Document
+            $newDocument = Document::create([
+                'name' => $validated['document_name'],
+                'parent_id' => null,
+                'type' => 'control',
+            ]);
             $mapping = DocumentMapping::create([
                 'document_id' => $newDocument->id,
                 'status_id' => $status->id,

@@ -256,6 +256,27 @@
                 }, 300);
             });
 
+            const searchInput = document.getElementById('searchInput');
+            const searchLabel = document.querySelector('label[for="searchInput"]');
+
+            function updateSearchLabelState() {
+                if (searchInput && searchLabel) {
+                    if (searchInput.value.trim() !== '') {
+                        searchLabel.classList.add('-top-3', 'text-xs', 'text-sky-600');
+                        searchLabel.classList.remove('top-2.5', 'text-sm');
+                    } else {
+                        searchLabel.classList.remove('-top-3', 'text-xs', 'text-sky-600');
+                        searchLabel.classList.add('top-2.5', 'text-sm');
+                    }
+                }
+            }
+
+            // Jalankan saat halaman load
+            updateSearchLabelState();
+
+            // Jalankan setiap AJAX selesai update search bar
+            document.addEventListener("ajaxSearchUpdate", updateSearchLabelState);
+
             function liveSearch(url = null) {
                 const search = searchInputEl.value;
                 const requestUrl = url ?? (`${filterForm.action}?search=${encodeURIComponent(search)}`);
@@ -275,9 +296,95 @@
 
                         if (newTable && current) {
                             current.innerHTML = newTable.innerHTML;
+                            document.dispatchEvent(new Event("ajaxSearchUpdate"));
+                            rebindTableEvents();
                         }
                     });
             }
+
+            function rebindTableEvents() {
+
+                // =========================
+                // Rebind Reject button
+                // =========================
+                document.querySelectorAll('.btn-reject').forEach(btn => {
+                    btn.onclick = function() {
+                        const rejectUrl = this.dataset.rejectUrl;
+                        const rejectDocInput = document.getElementById('rejectDocumentId');
+                        const rejectNotesInput = document.getElementById('rejectNotes');
+                        const rejectForm = document.getElementById('rejectForm');
+
+                        rejectDocInput.value = this.dataset.docid;
+                        rejectQuill.setText('');
+                        rejectForm.action = rejectUrl;
+
+                        new bootstrap.Modal(document.getElementById('rejectModal')).show();
+                    };
+                });
+
+                // =========================
+                // Rebind dropdown file
+                // =========================
+                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+
+                        const isVisible = !dropdown.classList.contains('hidden');
+
+                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
+                            .add('hidden'));
+
+                        if (isVisible) {
+                            dropdown.classList.add('hidden');
+                            return;
+                        }
+
+                        const rect = btn.getBoundingClientRect();
+                        dropdown.style.position = 'fixed';
+                        dropdown.style.top = `${rect.bottom + 6}px`;
+                        dropdown.style.left = `${rect.left - 120}px`;
+                        dropdown.classList.remove('hidden');
+                        dropdown.classList.add('dropdown-fixed');
+                    };
+                });
+
+                // =========================
+                // Rebind open file preview
+                // =========================
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.onclick = function() {
+                        document.getElementById('previewTitle').textContent = this.dataset.docTitle;
+                        document.getElementById('previewIframe').src = this.dataset.file;
+
+                        new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                    };
+                });
+
+                // =========================
+                // Rebind Revise modal button
+                // =========================
+                document.querySelectorAll('.btn-revise').forEach(btn => {
+                    btn.onclick = function() {
+                        openReviseModal(this);
+                    };
+                });
+
+                // =========================
+                // Rebind Approve button
+                // =========================
+                document.querySelectorAll('.btn-approve').forEach(btn => {
+                    btn.onclick = function() {
+                        confirmApprove(this);
+                    };
+                });
+
+                // =========================
+                // Re-apply status button disable/enable
+                // =========================
+                updateActionButtonsByStatus(document);
+            }
+
 
             document.addEventListener("click", function(e) {
                 if (e.target.closest(".pagination a")) {
@@ -290,7 +397,6 @@
 
             const baseUrl = window.location.origin; // gunakan sesuai routing kamu
 
-            const searchInput = document.getElementById('searchInput');
             const filterForm = document.getElementById('filterForm');
             const clearBtn = document.getElementById('clearSearch');
 
@@ -538,6 +644,9 @@
             document.addEventListener('click', function(e) {
                 const btn = e.target.closest('.view-file-btn');
                 if (!btn) return;
+                // Tutup semua dropdown file
+                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
+                    'hidden'));
 
                 const fileUrl = btn.dataset.file;
                 const docTitle = btn.dataset.docTitle || 'File Preview';
@@ -555,6 +664,12 @@
                     viewFullBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
                 }
             });
+            document.addEventListener('hidden.bs.modal', function() {
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+            });
+
         });
 
         function confirmApprove(btn) {
