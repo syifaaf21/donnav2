@@ -24,12 +24,13 @@ class DocumentControlController extends Controller
             ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
         // Filter department kalau bukan Admin atau Super Admin
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
-            $query->where('department_id', Auth::user()->department_id);
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
+            $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
+            $query->whereHas('department', fn($q) => $q->whereIn('id', $userDeptIds));
         }
 
         // Filter department kalau Admin atau Super Admin pilih
-        if (in_array(Auth::user()->role->name, ['Admin', 'Super Admin']) && $request->filled('department_id')) {
+        if (in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']) && $request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
@@ -60,10 +61,10 @@ class DocumentControlController extends Controller
         foreach ($toBeObsoleted as $mapping) {
 
             // Ambil user department terkait
-            $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+            $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))->get();
 
             // Ambil semua admin
-            $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+            $adminUsers = User::whereHas('roles', fn($q) => $q->where('name', 'Admin'))->get();
 
             // Gabungkan keduanya dan hapus duplikat
             $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
@@ -220,8 +221,8 @@ class DocumentControlController extends Controller
 
         //Notif ke admin
         $uploader = Auth::user();
-        if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
-            $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
+        if (!in_array(strtolower($uploader->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
+            $admins = User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
             foreach ($admins as $admin) {
                 $admin->notify(new DocumentActionNotification(
                     'revised',
@@ -264,8 +265,9 @@ class DocumentControlController extends Controller
         });
 
         // Filter department kalau bukan Admin atau Super Admin
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
-            $query->where('department_id', Auth::user()->department_id);
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
+            $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
+            $query->whereHas('department', fn($q) => $q->whereIn('id', $userDeptIds));
         }
 
         // LOGIKA SEARCH
@@ -297,7 +299,7 @@ class DocumentControlController extends Controller
     public function approve(Request $request, DocumentMapping $mapping)
     {
         // Hanya admin atau super admin yang bisa approve
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403, 'Only admin or super admin can approve documents.');
         }
 
@@ -326,8 +328,8 @@ class DocumentControlController extends Controller
         ]);
 
         // Ambil semua user di department terkait, kecuali user yang approve
-        $departmentUsers = User::where('department_id', $mapping->department_id)
-            ->whereNotIn('id', [Auth::id()])
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))
+            ->where('id', '!=', Auth::id())
             ->get();
 
         // Kirim notifikasi ke user department
@@ -345,7 +347,7 @@ class DocumentControlController extends Controller
 
     public function reject(Request $request, DocumentMapping $mapping)
     {
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403, 'Only admin can reject documents.');
         }
 
@@ -364,8 +366,8 @@ class DocumentControlController extends Controller
         ]);
 
         // Notifikasi ke semua user bahwa dokumen di-reject
-        $departmentUsers = User::where('department_id', $mapping->department_id)
-            ->whereNotIn('id', [Auth::id()]) // kecuali user yang approve
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))
+            ->where('id', '!=', Auth::id()) // kecuali user yang approve
             ->get();
         Notification::send($departmentUsers, new DocumentActionNotification(
             'rejected',

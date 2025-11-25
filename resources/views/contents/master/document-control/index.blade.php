@@ -156,7 +156,7 @@
                                         @endif
 
                                         <div class="flex items-center gap-2">
-                                            @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+                                            @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']))
                                                 <button type="button"
                                                     class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200 shrink-0"
                                                     data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">

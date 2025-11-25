@@ -271,7 +271,7 @@
                                             class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
 
                                             {{-- Edit --}}
-                                            @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']) ||
+                                            @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']) ||
                                                     auth()->user()->department_id === $doc->department_id)
                                                 <button type="button"
                                                     class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
@@ -283,7 +283,7 @@
                                             @endif
 
                                             {{-- Approve --}}
-                                            @if (in_array(strtolower(Auth::user()->role->name), ['admin', 'super admin']))
+                                            @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']))
                                                 <button type="button"
                                                     class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-green-600
     disabled:text-green-300 disabled:hover:bg-white btn-approve"

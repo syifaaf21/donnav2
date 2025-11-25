@@ -2,7 +2,7 @@
 @section('title', 'FTPP')
 
 @php
-    $role = strtolower(auth()->user()->role->name);
+    $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
 @endphp
 @section('content')
     <div class="container mx-auto my-2 px-4">

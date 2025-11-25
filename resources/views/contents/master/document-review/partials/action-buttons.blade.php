@@ -58,7 +58,7 @@
     </div>
 
     {{-- Admin Actions --}}
-    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+    @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
         {{-- Edit --}}
         <button type="button" data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}"
             data-bs-title="Edit Document"
@@ -71,8 +71,7 @@
             class="delete-form d-inline">
             @csrf
             @method('DELETE')
-            <button type="submit" title="Delete Document"
-                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+            <button type="submit" title="Delete Document" class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
                 <i data-feather="trash-2" class="w-4 h-4"></i>
             </button>
         </form>

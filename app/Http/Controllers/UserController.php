@@ -18,17 +18,17 @@ class UserController extends Controller
         $tab = $request->input('tab', 'all');
         $perPage = $request->input('per_page', 10); // default 10 per page
 
-        $query = User::with(['role', 'department']);
+        $query = User::with(['roles', 'departments']);
 
         // Filter berdasarkan tab
         switch ($tab) {
             case 'depthead':
-                $query->whereHas('role', fn($q) => $q->where('name', 'Dept Head'));
+                $query->whereHas('roles', fn($q) => $q->where('name', 'Dept Head'));
                 $view = 'contents.master.user.partials.dept-head';
                 break;
 
             case 'auditor':
-                $query->whereHas('role', fn($q) => $q->where('name', 'Auditor'));
+                $query->whereHas('roles', fn($q) => $q->where('name', 'Auditor'));
                 $view = 'contents.master.user.partials.auditor';
                 break;
 
@@ -44,7 +44,7 @@ class UserController extends Controller
                     ->orWhere('npk', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('role', fn($r) => $r->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('departments', fn($d) => $d->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));
                 ;
             });
@@ -104,16 +104,24 @@ class UserController extends Controller
             ? $request->department_id
             : Department::firstOrCreate(['name' => $request->department_id])->id;
 
-        // Simpan user
-        User::create([
+        // Simpan user (roles & department handled via pivot)
+        $user = User::create([
             'name' => $request->name,
             'npk' => $request->npk,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $roleId,
-            'department_id' => $departmentId,
             'audit_type_id' => is_numeric($request->audit_type_id) ? $request->audit_type_id : null,
         ]);
+
+        // Sync role pivot
+        if ($roleId) {
+            $user->roles()->sync([$roleId]);
+        }
+
+        // Sync department relation (many-to-many)
+        if ($departmentId) {
+            $user->departments()->sync([$departmentId]);
+        }
 
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
     }
@@ -156,13 +164,31 @@ class UserController extends Controller
                 ->with('edit_modal', $user->id);
         }
 
-        $data = $request->only(['name', 'npk', 'email', 'role_id', 'department_id', 'audit_type_id']);
+        // Handle role and department input (allow text -> firstOrCreate)
+        $roleId = is_numeric($request->role_id)
+            ? $request->role_id
+            : Role::firstOrCreate(['name' => $request->role_id])->id;
+
+        $departmentId = is_numeric($request->department_id)
+            ? $request->department_id
+            : Department::firstOrCreate(['name' => $request->department_id])->id;
+
+        $data = $request->only(['name', 'npk', 'email', 'audit_type_id']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
+
+        // Sync department relation (many-to-many)
+        if (isset($departmentId)) {
+            $user->departments()->sync([$departmentId]);
+        }
+        // Sync role pivot
+        if (isset($roleId)) {
+            $user->roles()->sync([$roleId]);
+        }
         return redirect()->route('master.users.index')->with('success', 'User updated successfully.');
     }
 

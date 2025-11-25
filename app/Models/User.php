@@ -23,8 +23,6 @@ class User extends Authenticatable
         'npk',
         'email',
         'password',
-        'role_id',
-        'department_id',
         'audit_type_id',
     ];
 
@@ -47,11 +45,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime'
     ];
 
-    public function role()
+    // Many-to-many relation: users <-> roles (pivot: tt_user_role)
+    public function roles()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsToMany(Role::class, 'tt_user_role', 'user_id', 'role_id');
     }
 
+    // Many-to-many relation: users <-> departments (pivot: tt_user_department)
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'tt_user_department', 'user_id', 'department_id');

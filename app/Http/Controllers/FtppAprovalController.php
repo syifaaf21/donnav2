@@ -30,7 +30,7 @@ class FtppAprovalController extends Controller
         $processes = Process::select('id', 'name')->get();
         $products = Product::select('id', 'name')->get();
 
-        $auditors = User::whereHas('role', fn($q) => $q->where('name', 'auditor'))
+        $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
             ->select('id', 'name')->get();
 
         $auditTypes = Audit::with('subAudit')->get();
@@ -73,7 +73,7 @@ class FtppAprovalController extends Controller
         // Generate kode lengkap
         $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/01";
 
-        $auditors = User::where('role_id', 4) // Role auditor
+        $auditors = User::whereHas('roles', fn($q) => $q->where('id', 4)) // Role auditor
             ->where('audit_type_id', $auditTypeId)
             ->get();
 
@@ -154,7 +154,7 @@ class FtppAprovalController extends Controller
     public function getAuditee($departmentId)
     {
         // Ambil auditee berdasarkan department
-        $auditees = User::where('department_id', $departmentId)->get(['id', 'name']);
+        $auditees = User::whereHas('departments', fn($q) => $q->where('id', $departmentId))->get(['id', 'name']);
 
         return response()->json($auditees);
     }

@@ -65,8 +65,8 @@ class FtppController extends Controller
         $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
         $totalCount = AuditFinding::count();
         $departments = Department::orderBy('name')->get();
-        // auditors: users with role 'auditor' if role relation exists, else all users
-        $auditors = User::whereHas('role', function ($q) {
+        // auditors: users with role 'auditor'
+        $auditors = User::whereHas('roles', function ($q) {
             $q->where('name', 'auditor');
         })->orderBy('name')->get();
 
@@ -132,7 +132,7 @@ class FtppController extends Controller
         // Generate kode lengkap
         $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/01";
 
-        $auditors = User::where('role_id', 4) // Role auditor
+        $auditors = User::whereHas('roles', fn($q) => $q->where('id', 4)) // Role auditor
             ->where('audit_type_id', $auditTypeId)
             ->get();
 
@@ -213,7 +213,7 @@ class FtppController extends Controller
     public function getAuditee($departmentId)
     {
         // Ambil auditee berdasarkan department
-        $auditees = User::where('department_id', $departmentId)->get(['id', 'name']);
+        $auditees = User::whereHas('departments', fn($q) => $q->where('id', $departmentId))->get(['id', 'name']);
 
         return response()->json($auditees);
     }

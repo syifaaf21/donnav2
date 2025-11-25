@@ -37,8 +37,8 @@
                         <td class="px-4 py-2">{{ ucwords(strtolower($user->name)) }}</td>
                         <td class="px-4 py-2">{{ $user->npk }}</td>
                         <td class="px-4 py-2">{{ $user->email }}</td>
-                        <td class="px-4 py-2">{{ $user->role->name ?? '-' }}</td>
-                        <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
+                        <td class="px-4 py-2">{{ $user->roles->pluck('name')->first() ?? '-' }}</td>
+                        <td class="px-4 py-2">{{ $user->departments->pluck('name')->join(', ') ?: '-' }}</td>
                         <td class="px-4 py-2 flex gap-2">
                             {{-- Edit Button: use delegated handler to load single shared modal via AJAX --}}
                             <button type="button"
@@ -47,7 +47,7 @@
                                 <i data-feather="edit" class="w-4 h-4"></i>
                             </button>
                             {{-- Delete Button --}}
-                            @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+                            @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
                                 <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
                                     class="d-inline delete-form">
                                     @csrf

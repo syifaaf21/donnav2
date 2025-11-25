@@ -2,7 +2,7 @@
 @section('title', 'FTPP')
 
 @php
-    $role = strtolower(auth()->user()->role->name);
+    $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
 @endphp
 @section('content')
     {{-- Breadcrumbs --}}
@@ -16,7 +16,7 @@
             <li>/</li>
             <li>
                 <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
-                   <i class="bi bi-folder me-1"></i>FTPP
+                    <i class="bi bi-folder me-1"></i>FTPP
                 </a>
             </li>
             <li>/</li>

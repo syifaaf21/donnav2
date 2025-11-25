@@ -54,13 +54,13 @@
                     Select Auditee
                 </button>
 
-                 <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
-                 </div>
+                <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
+                </div>
 
-                 <!-- Hidden holder for selected auditees (NOT submitted directly).
+                <!-- Hidden holder for selected auditees (NOT submitted directly).
                      We avoid naming this input so only the dynamic `auditee_ids[]` inputs
                      created by `saveHeaderOnly()` are included in the POST request. -->
-                 <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
+                <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
             </div>
 
             <!-- AUDITOR -->
@@ -147,7 +147,7 @@
 
                     <!-- Attachment button (paperclip) -->
                     <div class="relative inline-block">
-                        @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
+                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin', 'Auditor']))
                             <button id="attachBtn" type="button"
                                 class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
                                 aria-haspopup="true" aria-expanded="false" title="Attach files">
@@ -180,11 +180,10 @@
 
                     <!-- Hidden file inputs -->
                     <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
-                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple
-                        class="hidden">
+                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple class="hidden">
                     <!-- Optional combined input -->
-                    <input type="file" id="combinedInput" name="attachments[]"
-                        accept="image/*,.pdf" multiple class="hidden">
+                    <input type="file" id="combinedInput" name="attachments[]" accept="image/*,.pdf" multiple
+                        class="hidden">
                 </div>
                 <button type="button" onclick="saveHeaderOnly()"
                     class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
@@ -216,16 +215,14 @@
 
     <!-- Head Clause -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Head Clause:</label>
-    <select id="selectHead"
-        class="border border-gray-300 p-2 w-full rounded-lg bg-gray-50 disabled:opacity-50 mb-4"
+    <select id="selectHead" class="border border-gray-300 p-2 w-full rounded-lg bg-gray-50 disabled:opacity-50 mb-4"
         disabled>
         <option value="">-- Choose Head Clause --</option>
     </select>
 
     <!-- Sub Clause -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Sub Clause:</label>
-    <select id="selectSub"
-        class="border border-gray-300 p-2 w-full rounded-lg bg-gray-50 disabled:opacity-50 mb-4"
+    <select id="selectSub" class="border border-gray-300 p-2 w-full rounded-lg bg-gray-50 disabled:opacity-50 mb-4"
         disabled>
         <option value="">-- Choose Sub Clause --</option>
     </select>
@@ -263,8 +260,8 @@
 
     <!-- Department -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Department:</label>
-    <select id="sidebarDepartment"
-        class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4" disabled>
+    <select id="sidebarDepartment" class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4"
+        disabled>
         @foreach ($departments as $dept)
             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
         @endforeach
@@ -272,8 +269,8 @@
 
     <!-- Process -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Process:</label>
-    <select id="sidebarProcess"
-        class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4" disabled>
+    <select id="sidebarProcess" class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4"
+        disabled>
         @foreach ($processes as $proc)
             <option value="{{ $proc->id }}">{{ ucfirst($proc->name) }}</option>
         @endforeach
@@ -281,8 +278,8 @@
 
     <!-- Product -->
     <label class="block text-sm font-medium text-gray-700 mb-1">Product:</label>
-    <select id="sidebarProduct"
-        class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4" disabled>
+    <select id="sidebarProduct" class="tom-select w-full border rounded-lg p-2 bg-gray-50 disabled:opacity-50 mb-4"
+        disabled>
         @foreach ($products as $product)
             <option value="{{ $product->id }}">{{ $product->name }}</option>
         @endforeach
@@ -307,8 +304,8 @@
         </button>
     </div>
 
-    <select id="auditeeSelect" multiple
-        class="w-full border rounded-lg p-2 bg-gray-50" placeholder="Search or select auditee..."></select>
+    <select id="auditeeSelect" multiple class="w-full border rounded-lg p-2 bg-gray-50"
+        placeholder="Search or select auditee..."></select>
 
     <button type="button" onclick="saveAuditeeSelection()"
         class="flex items-center justify-center gap-2 mt-4 bg-blue-600 text-white px-4 py-2 w-full rounded-lg

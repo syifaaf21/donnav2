@@ -367,7 +367,7 @@ class DocumentMappingController extends Controller
     {
         session()->forget('openModal');
 
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -490,7 +490,7 @@ class DocumentMappingController extends Controller
 
     public function updateReview2(Request $request, $id)
     {
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -498,20 +498,20 @@ class DocumentMappingController extends Controller
 
         // Validasi
         $validated = $request->validate([
-            'plant'              => 'required|in:body,unit,electric',
-            'document_id'        => 'required|exists:tm_documents,id',
-            'document_number'    => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
-            'model_id'           => 'nullable|array',
-            'model_id.*'         => 'exists:tm_models,id',
-            'product_id'         => 'nullable|array',
-            'product_id.*'       => 'exists:tm_products,id',
-            'process_id'         => 'nullable|array',
-            'process_id.*'       => 'exists:tm_processes,id',
-            'part_number_id'     => 'nullable|array',
-            'part_number_id.*'   => 'exists:tm_part_numbers,id',
-            'department_id'      => 'required|exists:tm_departments,id',
-            'notes'              => 'nullable|string|max:500',
-            'parent_id'          => 'nullable|exists:tt_document_mappings,id',
+            'plant' => 'required|in:body,unit,electric',
+            'document_id' => 'required|exists:tm_documents,id',
+            'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
+            'model_id' => 'nullable|array',
+            'model_id.*' => 'exists:tm_models,id',
+            'product_id' => 'nullable|array',
+            'product_id.*' => 'exists:tm_products,id',
+            'process_id' => 'nullable|array',
+            'process_id.*' => 'exists:tm_processes,id',
+            'part_number_id' => 'nullable|array',
+            'part_number_id.*' => 'exists:tm_part_numbers,id',
+            'department_id' => 'required|exists:tm_departments,id',
+            'notes' => 'nullable|string|max:500',
+            'parent_id' => 'nullable|exists:tt_document_mappings,id',
         ]);
 
         // Bersihkan notes jika kosong
@@ -529,7 +529,7 @@ class DocumentMappingController extends Controller
         ) {
             return back()->withErrors([
                 'part_number_id' =>
-                'Please select a Part Number or fill at least one of Model, Product, or Process.'
+                    'Please select a Part Number or fill at least one of Model, Product, or Process.'
             ])->withInput();
         }
 
@@ -553,8 +553,8 @@ class DocumentMappingController extends Controller
 
                 if (
                     $parent->productModel->pluck('id')->sort()->values()->toArray() != ($validated['model_id'] ?? []) ||
-                    $parent->product->pluck('id')->sort()->values()->toArray()       != ($validated['product_id'] ?? []) ||
-                    $parent->process->pluck('id')->sort()->values()->toArray()      != ($validated['process_id'] ?? [])
+                    $parent->product->pluck('id')->sort()->values()->toArray() != ($validated['product_id'] ?? []) ||
+                    $parent->process->pluck('id')->sort()->values()->toArray() != ($validated['process_id'] ?? [])
                 ) {
                     return back()->withErrors(['parent_id' => 'Parent document does not match selected Model/Product/Process'])->withInput();
                 }
@@ -563,12 +563,12 @@ class DocumentMappingController extends Controller
 
         // Update data utama
         $mapping->update([
-            'plant'           => $validated['plant'],
-            'document_id'     => $validated['document_id'],
+            'plant' => $validated['plant'],
+            'document_id' => $validated['document_id'],
             'document_number' => $validated['document_number'],
-            'department_id'   => $validated['department_id'],
-            'parent_id'       => $validated['parent_id'] ?? null,
-            'notes'           => $cleanNotes,
+            'department_id' => $validated['department_id'],
+            'parent_id' => $validated['parent_id'] ?? null,
+            'notes' => $cleanNotes,
         ]);
 
         // UPDATE RELASI PIVOT
@@ -587,7 +587,7 @@ class DocumentMappingController extends Controller
         session()->forget('openModal');
 
         // 1️⃣ Pastikan hanya Admin yang bisa akses
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -847,7 +847,7 @@ class DocumentMappingController extends Controller
     public function updateReview(Request $request, DocumentMapping $mapping)
     {
         session()->forget('openModal');
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403);
         }
 
@@ -912,7 +912,7 @@ class DocumentMappingController extends Controller
     // ================= Delete Review (Admin) =================
     public function destroy(DocumentMapping $mapping)
     {
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403);
         }
 
@@ -943,7 +943,7 @@ class DocumentMappingController extends Controller
 
     public function reject(DocumentMapping $mapping)
     {
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403);
         }
 
@@ -1104,7 +1104,7 @@ class DocumentMappingController extends Controller
     // Update Document Control
     public function updateControl(Request $request, DocumentMapping $mapping)
     {
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403);
         }
 
