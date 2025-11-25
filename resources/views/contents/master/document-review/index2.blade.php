@@ -195,7 +195,7 @@
                                 @if ($documents->isEmpty())
                                     <tr>
                                         <td colspan="9" class="text-center text-gray-400 py-6">
-                                            <i data-feather="folder-x" class="mx-auto w-6 h-6 mb-2"></i>
+                                            <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
                                             No Document found for this tab.
                                         </td>
                                     </tr>

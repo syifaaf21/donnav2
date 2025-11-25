@@ -234,6 +234,7 @@
                     direction: 'asc'
                 }
             });
+
             const tsPlant = new TomSelect('#plant_select', {
                 create: false,
                 sortField: {
@@ -241,38 +242,49 @@
                     direction: 'asc'
                 }
             });
+
+            // Multiple selects with remove button
             const tsPart = new TomSelect('#partNumber_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
             const tsProduct = new TomSelect('#product_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
             const tsModel = new TomSelect('#model_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
             const tsProcess = new TomSelect('#process_select', {
                 create: false,
                 maxItems: null,
+                plugins: ['remove_button'], // <- enable remove button
                 sortField: {
                     field: 'text',
-                    direction: 'asc',
+                    direction: 'asc'
                 }
             });
+
+            // Single select department (tidak perlu remove button)
             const tsDept = new TomSelect('#department_select', {
                 create: false,
                 sortField: {
@@ -280,6 +292,7 @@
                     direction: 'asc'
                 }
             });
+
 
             tsDocument.setValue(@json(old('document_id')));
             tsPlant.setValue(@json(old('plant')));
