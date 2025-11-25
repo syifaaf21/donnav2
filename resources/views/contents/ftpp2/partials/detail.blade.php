@@ -113,11 +113,19 @@
                 @if (isset($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1)
                     <img src="/images/mgr-approve.png" class="signature" alt="Dept Head Approved">
                 @endif
+                <div>
+                    <div>Dept. Head</div>
+                    {{ $finding->auditeeAction->deptHead->name ?? '-' }}
+                </div>
             </td>
             <td class="border p-1 text-center">
                 @if (isset($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1)
                     <img src="/images/usr-approve.png" class="signature" alt="Leader/Spv Approved">
                 @endif
+                <div>
+                    <div>Leader/Spv</div>
+                    {{ $finding->auditeeAction->user->name ?? '-' }}
+                </div>
             </td>
 
         </tr>

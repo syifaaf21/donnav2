@@ -40,7 +40,7 @@
                     <select id="filterPlant"
                         class="form-select border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px] bg-gray-100">
                         <option value="">All Plants</option>
-                        @foreach (['body', 'unit', 'electric'] as $plant)
+                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
                             <option value="{{ $plant }}" {{ request('plant') == $plant ? 'selected' : '' }}>
                                 {{ ucfirst($plant) }}
                             </option>
@@ -142,7 +142,7 @@
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
                                         <option value="">Select Plant</option>
-                                        @foreach (['body', 'unit', 'electric'] as $plant)
+                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
                                             <option value="{{ $plant }}"
                                                 {{ $part->plant == $plant ? 'selected' : '' }}>
                                                 {{ ucfirst($plant) }}
@@ -186,8 +186,7 @@
                                     <select name="process_id" id="process_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
-                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>--
-                                            Select Process --</option>
+                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>Select Process</option>
                                         @foreach ($processes as $process)
                                             <option value="{{ $process->id }}"
                                                 {{ $part->process_id == $process->id ? 'selected' : '' }}>
@@ -246,7 +245,7 @@
                                 <select id="plant" name="plant"
                                     class="form-select @error('plant') is-invalid @enderror" required>
                                     <option value="" disabled selected>-- Select Plant --</option>
-                                    @foreach (['body', 'unit', 'electric'] as $plant)
+                                    @foreach (['Body', 'Unit', 'Electric'] as $plant)
                                         <option value="{{ $plant }}"
                                             {{ old('plant') == $plant ? 'selected' : '' }}>
                                             {{ ucfirst($plant) }}
@@ -297,8 +296,7 @@
                                 <select id="process_id" name="process_id"
                                     class="form-select @error('process_id') is-invalid @enderror"
                                     placeholder="Search or create process..." required disabled>
-                                    <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>--
-                                        Select Process --</option>
+                                    <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>Select Process</option>
                                     @foreach ($processes as $process)
                                         <option value="{{ $process->id }}"
                                             {{ old('process_id') == $process->id ? 'selected' : '' }}>

@@ -117,6 +117,7 @@
                 formLoaded: false,
                 mode: 'create',
                 selectedId: null,
+                userRole: "{{ strtolower(auth()->user()->role->name) }}",
                 form: {
                     status_id: 7,
                     audit_type_id: "",

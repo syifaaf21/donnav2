@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tm_products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('plant', ['All', 'Body', 'Unit', 'Electric']);
+            $table->enum('plant', ['ALL', 'Body', 'Unit', 'Electric']);
             $table->timestamps();
         });
     }

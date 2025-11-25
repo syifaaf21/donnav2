@@ -163,9 +163,6 @@
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                @error('plant')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
                         </div>
                     </div>

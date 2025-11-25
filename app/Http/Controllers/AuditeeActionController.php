@@ -103,6 +103,7 @@ class AuditeeActionController extends Controller
                     'root_cause' => $validated['root_cause'],
                     'yokoten' => $validated['yokoten'],
                     'yokoten_area' => $validated['yokoten_area'] ?? null,
+                    'ldr_spv_id' => auth()->user()->id,
                 ]
             );
 
@@ -206,12 +207,12 @@ class AuditeeActionController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Auditee Action updated',
+                    'message' => 'Auditee Action submitted successfully.',
                     'id' => $auditeeAction->id
                 ]);
             }
 
-            return back()->with('success', 'Auditee Action updated');
+            return back()->with('success', 'Auditee Action submitted successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
             // log error agar lebih mudah debug
@@ -283,6 +284,7 @@ class AuditeeActionController extends Controller
                     'root_cause' => $validated['root_cause'],
                     'yokoten' => $validated['yokoten'],
                     'yokoten_area' => $validated['yokoten_area'] ?? null,
+                    'ldr_spv_id' => auth()->user()->id,
                 ]
             );
 

@@ -14,15 +14,16 @@
 
     <!-- Jika belum approve -->
     <template x-if="!form.dept_head_signature">
-        <button type="button" class="px-3 py-1 bg-blue-600 text-white text-xs rounded"
-            @click="approveDeptHead(form.auditee_action_id)">
+        <button type="button" :disabled="form.status_id != 8 || (userRole !== 'dept head' && userRole !== 'admin')"
+            :class="form.status_id != 8 || (userRole !== 'dept head' && userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
+            class="px-3 py-1 bg-blue-600 text-white text-xs rounded" @click="approveDeptHead(form.auditee_action_id)">
             Approve
         </button>
     </template>
 
     <div>
         <span class="font-semibold my-1">Dept. Head</span>
-        <input type="text" class="text-center" value="{{ auth()->user()->name }}">
+        <input type="text" class="text-center" value="{{ $finding->auditeeAction->deptHead->name ?? '-' }}" readonly>
     </div>
 </td>
 
@@ -36,7 +37,7 @@
 
     <div>
         <span class="font-semibold my-1">Leader/Spv</span>
-        <input type="text" class="text-center" value="{{ auth()->user()->name }}">
+        <input type="text" class="text-center" value="{{ $finding->auditeeAction->user->name ?? '-' }}" readonly>
     </div>
 </td>
 

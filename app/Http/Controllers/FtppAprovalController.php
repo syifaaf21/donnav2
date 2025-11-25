@@ -489,6 +489,7 @@ class FtppAprovalController extends Controller
 
         $action = AuditeeAction::findOrFail($request->auditee_action_id);
         $action->dept_head_signature = true;
+        $action->dept_head_id = auth()->id();
         $action->save();
 
         // update status
@@ -592,6 +593,7 @@ class FtppAprovalController extends Controller
         // ✅ Simpan effectiveness verification
         $action->effectiveness_verification = $request->effectiveness_verification;
         $action->verified_by_auditor = true;
+        $action->auditor_id = auth()->id();
         $action->save();
 
         // ✅ Update status finding
@@ -637,6 +639,7 @@ class FtppAprovalController extends Controller
         $finding = AuditFinding::findOrFail($action->audit_finding_id);
 
         $action->acknowledge_by_lead_auditor = true;
+        $action->lead_auditor_id = auth()->id();
         $action->save();
 
         $finding->status_id = 11; // closed

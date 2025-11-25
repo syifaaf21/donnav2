@@ -36,7 +36,10 @@
                     style="max-width:120px; height:auto;">
                 <br>
             @endif
-            {{ $finding->auditeeAction->lead_auditor_id ?? '-' }}
+            <div>
+                <div>Lead Auditor</div>
+                {{ $finding->auditeeAction->leadAuditor->name ?? '-' }}
+            </div>
         </td>
 
         <td class="border p-1 text-center">
@@ -45,7 +48,10 @@
                     style="max-width:120px; height:auto;">
                 <br>
             @endif
-            {{ $finding->auditeeAction->auditor_id ?? '-' }}
+            <div>
+                <div>Auditor</div>
+                {{ $finding->auditeeAction->auditor->name ?? '-' }}
+            </div>
         </td>
     </tr>
 </table>

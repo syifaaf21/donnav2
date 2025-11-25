@@ -293,8 +293,8 @@
             <td class="w-2/3">
                 <b>Yokoten?</b> {{ $finding->auditeeAction->yokoten ? 'Yes' : 'No' }} <br>
             </td>
-            <td class="text-center font-semibold">Dept. Head</td>
-            <td class="text-center font-semibold">Leader/Spv</td>
+            <td class="text-center font-semibold">Checked</td>
+            <td class="text-center font-semibold">Created</td>
         </tr>
         <tr>
             <td>
@@ -308,6 +308,11 @@
                 @elseif (isset($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1)
                     <img src="{{ public_path('images/mgr-approve.png') }}" class="signature" alt="Dept Head Approved">
                 @endif
+                <div>
+                    <div>Dept. Head</div>
+                    {{ $finding->auditeeAction->deptHead->name ?? '-' }}
+                </div>
+
             </td>
             <td class="text-center">
                 @if (!empty($finding->ldr_spv_signature_url))
@@ -315,10 +320,13 @@
                 @elseif (isset($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1)
                     <img src="{{ public_path('images/usr-approve.png') }}" class="signature" alt="Leader/Spv Approved">
                 @endif
+                <div>
+                    <div>Leader/Spv</div>
+                    {{ $finding->auditeeAction->user->name ?? '-' }}
+                </div>
             </td>
         </tr>
     </table>
-
     {{-- ==================== AUDITOR VERIFICATION ==================== --}}
     <table class="w-full border text-sm mt-2 text-center">
         <tr class="font-semibold bg-gray">
@@ -357,7 +365,10 @@
                 @elseif ($finding->auditeeAction->lead_auditor_id == 1)
                     <img src="/images/stamp-lead-auditor.png" class="signature"><br>
                 @endif
-                {{ $finding->auditeeAction->lead_auditor_id ?? '-' }}
+                <div>
+                    <div>Lead Auditor</div>
+                    {{ $finding->auditeeAction->leadAuditor->name ?? '-' }}
+                </div>
             </td>
             <td>
                 @if (!empty($finding->verified_by_auditor_url))
@@ -365,7 +376,10 @@
                 @elseif ($finding->auditeeAction->auditor_id == 1)
                     <img src="/images/stamp-internal-auditor.png" class="signature"><br>
                 @endif
-                {{ $finding->auditeeAction->auditor_id ?? '-' }}
+                <div>
+                    <div>Auditor</div>
+                    {{ $finding->auditeeAction->auditor->name ?? '-' }}
+                </div>
             </td>
         </tr>
     </table>

@@ -113,7 +113,7 @@
                     </a>
                 @endif
 
-                @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor', 'Dept-Head']))
+                @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor', 'Dept Head']))
                     <a href="{{ route('approval.index') }}"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-600 text-white font-medium
                        shadow hover:bg-gray-700 hover:shadow-md transition-all duration-150">

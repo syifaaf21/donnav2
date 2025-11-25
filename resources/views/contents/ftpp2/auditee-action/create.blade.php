@@ -46,7 +46,7 @@
                     ])
 
                     {{-- Show create-auditee-action for: super admin, admin, user --}}
-                    @if (in_array($role, ['super admin', 'admin', 'user']))
+                    @if (in_array($role, ['super admin', 'admin', 'user', 'supervisor', 'leader']))
                         @php
                             $statusNeedsReview =
                                 ($finding->status->need_review ?? null) === true ||

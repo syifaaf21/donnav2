@@ -24,6 +24,10 @@ class AuditeeAction extends Model
         'effectiveness_verification',
         'ldr_spv_signature',
         'dept_head_signature',
+        'ldr_spv_id',
+        'dept_head_id',
+        'auditor_id',
+        'lead_auditor_id',
     ];
 
     public function auditFinding()
@@ -54,5 +58,25 @@ class AuditeeAction extends Model
     public function file()
     {
         return $this->hasMany(DocumentFile::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'ldr_spv_id');
+    }
+
+    public function deptHead(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dept_head_id');
+    }
+
+    public function auditor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'auditor_id');
+    }
+    
+    public function leadAuditor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'lead_auditor_id');
     }
 }

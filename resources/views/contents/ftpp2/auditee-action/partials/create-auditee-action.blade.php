@@ -112,7 +112,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="font-semibold text-gray-900">Yokoten?</label>
+                        <label class="font-semibold text-gray-900">Yokoten? <span class="text-danger">*</span></label>
                         <div class="flex gap-6">
                             <label><input type="radio" name="yokoten" value="1" x-model="form.yokoten">
                                 Yes</label>
@@ -359,6 +359,35 @@
     }
 
     async function updateAuditeeAction(isApprove = false) {
+
+        // -----------------------------
+        // VALIDATION (BLOCK SAVE)
+        // -----------------------------
+
+        const auditFindingId = document.querySelector('input[name="audit_finding_id"]')?.value;
+        const rootCause = document.querySelector('textarea[x-model="form.root_cause"]')?.value || '';
+        const yokotenChosen = document.querySelector('input[name="yokoten"]:checked');
+        const yokotenVal = yokotenChosen ? yokotenChosen.value : null;
+        const yokotenArea = document.querySelector('textarea[name="yokoten_area"]')?.value || '';
+
+        let err = [];
+
+        if (!auditFindingId) err.push("Audit Finding ID is required.");
+        if (!rootCause.trim()) err.push("Root Cause cannot be empty.");
+        if (yokotenVal === null) err.push("Yokoten selection is required.");
+        if (yokotenVal == "1" && !yokotenArea.trim()) {
+            err.push("Yokoten Area must be filled when Yokoten = Yes.");
+        }
+
+        if (err.length > 0) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Required Fields Missing',
+                html: err.join("<br>"),
+            });
+            return; // ⛔ STOP submit
+        }
+        
         const token = document.querySelector('meta[name="csrf-token"]').content;
         const formData = new FormData();
 
