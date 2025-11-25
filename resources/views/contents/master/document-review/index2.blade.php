@@ -337,167 +337,89 @@
 @push('scripts')
     <x-sweetalert-confirm />
     <script>
-        function documentReviewTabs(defaultTab) {
+        // Simpan data filter dari controller
+        window.filterDataByPlant = @json($filterDataByPlant);
+
+        // Tab manager
+        function documentReviewTabs() {
             return {
-                activeTab: localStorage.getItem('activeTab') || defaultTab,
+                activeTab: localStorage.getItem('activeTab') || 'body',
                 setActiveTab(tab) {
                     this.activeTab = tab;
                     localStorage.setItem('activeTab', tab);
+                    updateFiltersForPlant(tab);
                 }
-            }
+            };
+        }
+        window.documentTabs = documentReviewTabs();
+
+        // Data master fallback
+        window.allPartNumbers = @json($partNumbers->map(fn($p) => ['id' => $p->id, 'label' => $p->part_number]));
+        window.allModels = @json($models->map(fn($m) => ['id' => $m->id, 'label' => $m->name]));
+        window.allProducts = @json($products->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+        window.allProcesses = @json($processes->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+
+        function slugToPlant(slug) {
+            return {
+                "body": "Body",
+                "unit": "Unit",
+                "electric": "Electric",
+                "other-manual-entry": "Other / Manual Entry"
+            } [slug] || null;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // ===================== LIVE SEARCH & AJAX =====================
-            const tableContainer = document.getElementById("tableContainer");
-            const searchInput = document.getElementById("searchInput");
-            const clearBtn = document.getElementById("clearSearch");
-            let timer;
-            const delay = 300;
+        // Update dropdown berdasarkan plant
+        function updateFiltersForPlant(slug) {
+            const plantName = slugToPlant(slug);
+            if (!plantName) return;
 
-            function fetchData(url) {
-                fetch(url, {
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest"
-                        }
-                    })
-                    .then(res => res.text())
-                    .then(html => {
-                        const dom = new DOMParser().parseFromString(html, "text/html");
-                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+            const data = window.filterDataByPlant[plantName] || {};
 
-                        bindPagination();
-                        rebind();
-
-                        if (window.feather) feather.replace();
-
-                        // Tooltip
-                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-                        tooltipTriggerList.map(el => {
-                            return new bootstrap.Tooltip(el, {
-                                title: el.getAttribute('data-bs-title'),
-                                placement: 'top',
-                                trigger: 'hover'
-                            });
-                        });
-                    });
+            if (plantName === "Other / Manual Entry") {
+                updateTomSelect('#filterPartNumber', window.allPartNumbers);
+                updateTomSelect('#filterModel', window.allModels);
+                updateTomSelect('#filterProduct', window.allProducts);
+                updateTomSelect('#filterProcess', window.allProcesses);
+                return;
             }
 
-            // ===================== SEARCH =====================
-            searchInput.addEventListener("keyup", function() {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    const q = searchInput.value;
-                    const url =
-                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
-                    fetchData(url);
-                }, delay);
-            });
+            updateTomSelect('#filterPartNumber', data.part_numbers || window.allPartNumbers);
+            updateTomSelect('#filterModel', data.models || window.allModels);
+            updateTomSelect('#filterProduct', data.products || window.allProducts);
+            updateTomSelect('#filterProcess', data.processes || window.allProcesses);
+        }
 
-            searchInput.addEventListener("keydown", function(e) {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    const q = searchInput.value;
-                    const url =
-                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
-                    fetchData(url);
+        // Helper TomSelect
+        function updateTomSelect(selector, items) {
+            const el = document.querySelector(selector);
+            if (!el) return;
+            if (el.tomselect) el.tomselect.destroy();
+
+            el.innerHTML = '<option value="">All</option>';
+
+            items.forEach(i => {
+                const option = document.createElement('option');
+                option.value = i.id;
+
+                // Jika field process, ubah label menjadi Title Case
+                if (selector === '#filterProcess') {
+                    option.textContent = i.label.split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                } else {
+                    option.textContent = i.label;
                 }
+
+                el.appendChild(option);
             });
 
-            // Clear search
-            clearBtn?.addEventListener("click", function() {
-                searchInput.value = "";
-                fetchData(`{{ route('master.document-review.index2') }}`);
+            new TomSelect(selector, {
+                maxItems: 1,
+                placeholder: "Select"
             });
-
-            // ===================== PAGINATION =====================
-            function bindPagination() {
-                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
-                    a.addEventListener("click", function(e) {
-                        e.preventDefault();
-                        fetchData(this.href);
-                    });
-                });
-            }
-
-            bindPagination();
-
-
-            // ===================== REBIND ALL LISTENERS AFTER AJAX =====================
-            function rebind() {
-
-                // --- FILE VIEW BUTTON ---
-                document.querySelectorAll('.view-file-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const fileUrl = this.dataset.file;
-                        const viewer = document.getElementById('fileViewer');
-                        viewer.src = fileUrl;
-
-                        const modal = new bootstrap.Modal(document.getElementById('viewFileModal'));
-                        modal.show();
-                    });
-                });
-
-                // --- FILE VIEW MODAL CLEAR ---
-                const viewModal = document.getElementById('viewFileModal');
-                viewModal.addEventListener('hidden.bs.modal', () => {
-                    document.getElementById('fileViewer').src = '';
-                });
-
-                // --- DROPDOWN REBIND ---
-                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
-
-                        const isVisible = !dropdown.classList.contains('hidden');
-
-                        document.querySelectorAll('[id^="viewFilesDropdown"]')
-                            .forEach(d => d.classList.add('hidden'));
-
-                        if (isVisible) {
-                            dropdown.classList.add('hidden');
-                            return;
-                        }
-
-                        const rect = btn.getBoundingClientRect();
-                        const offsetX = -120;
-                        dropdown.style.position = 'fixed';
-                        dropdown.style.top = `${rect.bottom + 6}px`;
-                        dropdown.style.left = `${rect.left + offsetX}px`;
-                        dropdown.classList.remove('hidden');
-                        dropdown.classList.add('dropdown-fixed');
-                    });
-                });
-            }
-
-            // Rebind first load
-            rebind();
-
-            // --- CLOSE DROPDOWN WHEN SCROLL OR OUTSIDE CLICK ---
-            window.addEventListener('scroll', () => {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
-                    'hidden'));
-            });
-
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const btn = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
-                        dropdown.classList.add('hidden');
-                    }
-                });
-            });
-
-            // Tutup dropdown saat klik di luar
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                        dropdown.classList.add('hidden');
-                    }
-                });
-            });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi TomSelect
             const tsDocumentName = new TomSelect("#filterDocumentName", {
                 maxItems: 1,
                 placeholder: "Select Document Name"
@@ -518,24 +440,149 @@
                 maxItems: 1,
                 placeholder: "Select Process"
             });
+            // Cascade filter: PN → Model/Product/Process
+            function cascadeFromPartNumber(value) {
+                const activeTab = window.documentTabs.activeTab;
+                const plantName = slugToPlant(activeTab);
+                const plantData = window.filterDataByPlant[plantName];
+                if (!plantData) return;
 
-            // --- Clear filter modal ---
+                const selectedPN = plantData.part_numbers.find(pn => pn.id == value);
+
+                if (selectedPN) {
+                    updateTomSelect('#filterModel', selectedPN.models.length ? selectedPN.models : plantData
+                        .models);
+                    updateTomSelect('#filterProduct', selectedPN.products.length ? selectedPN.products : plantData
+                        .products);
+                    updateTomSelect('#filterProcess', selectedPN.processes.length ? selectedPN.processes : plantData
+                        .processes);
+                } else {
+                    updateTomSelect('#filterModel', plantData.models);
+                    updateTomSelect('#filterProduct', plantData.products);
+                    updateTomSelect('#filterProcess', plantData.processes);
+                }
+            }
+
+            tsPartNumber.on('change', cascadeFromPartNumber);
+            // AJAX Live Search & Pagination
+            const tableContainer = document.getElementById("tableContainer");
+            const searchInput = document.getElementById("searchInput");
+            const clearBtn = document.getElementById("clearSearch");
+            let timer;
+            const delay = 300;
+
+            function fetchData(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const dom = new DOMParser().parseFromString(html, "text/html");
+                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                        bindPagination();
+                        rebindListeners();
+                    });
+            }
+
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    const q = searchInput.value;
+                    const url =
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }, delay);
+            });
+
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    fetchData(
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(searchInput.value)}`
+                    );
+                }
+            });
+
+            clearBtn?.addEventListener("click", function() {
+                searchInput.value = "";
+                fetchData(`{{ route('master.document-review.index2') }}`);
+            });
+
+            function bindPagination() {
+                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
+                    a.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        fetchData(this.href);
+                    });
+                });
+            }
+            // Rebind listeners after AJAX
+            function rebindListeners() {
+                // Feather icons
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+
+                // File view buttons (single file)
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const fileViewer = document.getElementById('fileViewer');
+                        fileViewer.src = this.dataset.file;
+                        new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                    });
+                });
+
+                // Dropdown toggle for multiple files
+                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const id = this.id.replace('viewFilesBtn-', '');
+                        const dropdown = document.getElementById('viewFilesDropdown-' + id);
+                        if (dropdown) dropdown.classList.toggle('hidden');
+                    });
+                });
+
+                // Delete confirmation
+                document.querySelectorAll('.delete-form').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "This will permanently delete the document!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Yes, delete it!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+                document.querySelectorAll('#tableContainer button').forEach(btn => {
+                    btn.classList.add('inline-flex', 'items-center', 'justify-center');
+                    btn.style.minWidth = "2.5rem"; // supaya tombol tidak mengecil
+                });
+            }
+
+            // Clear filters modal
             document.getElementById('clearFilterModal').addEventListener('click', function() {
-                // Clear all TomSelect fields
                 tsDocumentName.clear();
                 tsPartNumber.clear();
                 tsModel.clear();
                 tsProduct.clear();
                 tsProcess.clear();
-
-                // Optional: reset search input
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) searchInput.value = '';
-
-                // Submit form untuk reload tanpa filter
                 document.getElementById('filterFormModal').submit();
             });
-
+            // Inisialisasi dropdown sesuai tab aktif
+            updateFiltersForPlant(window.documentTabs.activeTab);
         });
     </script>
 @endpush
@@ -548,7 +595,7 @@
         /* warna putih solid */
         border: 1px solid rgba(0, 0, 0, 0.1) !important;
         border-radius: 8px !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 6px 16px rgba(233, 217, 217, 0.2);
         opacity: 1 !important;
         visibility: visible !important;
     }

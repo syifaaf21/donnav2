@@ -20,4 +20,8 @@ class ProductModel extends Model
     {
         return $this->hasMany(PartNumber::class, 'model_id', 'id');
     }
+    public function documentMappings()
+    {
+        return $this->belongsToMany(DocumentMapping::class, 'tt_document_mapping_models', 'model_id', 'document_mapping_id');
+    }
 }

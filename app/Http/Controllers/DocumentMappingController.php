@@ -134,6 +134,7 @@ class DocumentMappingController extends Controller
 
     public function reviewIndex2(Request $request)
     {
+        // Master data
         $documentsMaster = Document::with('childrenRecursive')
             ->where('type', 'review')
             ->get();
@@ -145,12 +146,16 @@ class DocumentMappingController extends Controller
         $processes = Process::all();
         $products = Product::all();
 
-        // Ambil list plant unik
+        // Daftar plant unik
         $plants = ['Body', 'Unit', 'Electric'];
-
         $groupedByPlant = [];
+        $filterDataByPlant = [];
+
+        $search = trim($request->search);
 
         foreach ($plants as $plant) {
+
+            // ===================== QUERY DOCUMENT MAPPINGS =====================
             $query = DocumentMapping::with([
                 'document.parent',
                 'document.children',
@@ -160,7 +165,8 @@ class DocumentMappingController extends Controller
                 'user',
                 'files',
                 'parent',
-            ])->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ])
+                ->whereHas('document', fn($q) => $q->where('type', 'review'))
                 ->whereHas(
                     'partNumber',
                     fn($q2) =>
@@ -168,7 +174,6 @@ class DocumentMappingController extends Controller
                 );
 
             // 🔹 Filter search global
-            $search = trim($request->search);
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('document_number', 'like', "%{$search}%")
@@ -193,32 +198,75 @@ class DocumentMappingController extends Controller
 
             if ($request->filled('part_number_id')) {
                 $query->whereHas('partNumber', function ($q) use ($request) {
-                    $q->whereIn('id', (array) $request->part_number_id);
+                    $q->whereIn('tm_part_numbers.id', (array) $request->part_number_id);
                 });
             }
 
             if ($request->filled('model_id')) {
-                $query->whereHas('productModel', fn($q) => $q->whereIn('id', (array) $request->model_id));
+                $query->whereHas(
+                    'productModel',
+                    fn($q) =>
+                    $q->whereIn('tm_models.id', (array) $request->model_id)
+                );
             }
 
             if ($request->filled('product_id')) {
-                $query->whereHas('product', fn($q) => $q->whereIn('id', (array) $request->product_id));
+                $query->whereHas(
+                    'product',
+                    fn($q) =>
+                    $q->whereIn('tm_products.id', (array) $request->product_id)
+                );
             }
 
             if ($request->filled('process_id')) {
-                $query->whereHas('process', fn($q) => $q->whereIn('id', (array) $request->process_id));
+                $query->whereHas(
+                    'process',
+                    fn($q) =>
+                    $q->whereIn('tm_processes.id', (array) $request->process_id)
+                );
             }
 
             if ($request->filled('status_id')) {
                 $query->where('status_id', $request->status_id);
             }
 
-            $groupedByPlant[$plant] = $query->get()->filter(function ($mapping) use ($plant) {
-                return $mapping->partNumber->contains(fn($p) => strtolower($p->plant) === strtolower($plant));
-            });
+            // Simpan hasil per plant
+            $groupedByPlant[$plant] = $query->get()->filter(
+                fn($mapping) =>
+                $mapping->partNumber->contains(fn($p) => strtolower($p->plant) === strtolower($plant))
+            );
+
+            // ===================== FILTER DATA UNTUK DROPDOWN (DENGAN RELASI PART NUMBER) =====================
+            $partNumbersPlant = PartNumber::with(['productModel', 'product', 'process'])
+                ->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                ->get();
+
+            $filterDataByPlant[$plant] = [
+                'part_numbers' => $partNumbersPlant->map(fn($pn) => [
+                    'id' => $pn->id,
+                    'label' => $pn->part_number,
+                    'models' => $pn->productModel ? [['id' => $pn->productModel->id, 'label' => $pn->productModel->name]] : [],
+                    'products' => $pn->product ? [['id' => $pn->product->id, 'label' => $pn->product->name]] : [],
+                    'processes' => $pn->process ? [['id' => $pn->process->id, 'label' => $pn->process->name]] : [],
+                ]),
+
+
+                // Tetap simpan master list lengkap untuk fallback
+                'models' => ProductModel::whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                    ->get()
+                    ->map(fn($m) => ['id' => $m->id, 'label' => $m->name]),
+
+                'products' => Product::whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                    ->get()
+                    ->map(fn($p) => ['id' => $p->id, 'label' => $p->name]),
+
+                'processes' => Process::whereRaw('LOWER(plant) = ?', [strtolower($plant)])
+                    ->get()
+                    ->map(fn($p) => ['id' => $p->id, 'label' => $p->name]),
+            ];
         }
 
-        // 🔹 Tab khusus untuk mapping tanpa part number (manual entry)
+        // ===================== MANUAL ENTRY / OTHER =====================
         $queryManual = DocumentMapping::with([
             'document.parent',
             'document.children',
@@ -228,10 +276,10 @@ class DocumentMappingController extends Controller
             'user',
             'files',
             'parent',
-        ])->whereHas('document', fn($q) => $q->where('type', 'review'))
+        ])
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->whereDoesntHave('partNumber');
 
-        // 🔹 Filter search global
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
@@ -240,7 +288,6 @@ class DocumentMappingController extends Controller
             });
         }
 
-        // 🔹 Filter modal
         if ($request->filled('document_name')) {
             $queryManual->whereHas(
                 'document',
@@ -253,31 +300,40 @@ class DocumentMappingController extends Controller
             $queryManual->where('document_number', $request->document_number);
         }
 
-        // 🔹 Filter modal untuk manual entry
         if ($request->filled('model_id')) {
-            $queryManual->whereHas('productModel', fn($q) => $q->whereIn('id', (array) $request->model_id));
+            $queryManual->whereHas(
+                'productModel',
+                fn($q) =>
+                $q->whereIn('id', (array) $request->model_id)
+            );
         }
 
         if ($request->filled('product_id')) {
-            $queryManual->whereHas('product', fn($q) => $q->whereIn('id', (array) $request->product_id));
+            $queryManual->whereHas(
+                'product',
+                fn($q) =>
+                $q->whereIn('id', (array) $request->product_id)
+            );
         }
 
         if ($request->filled('process_id')) {
-            $queryManual->whereHas('process', fn($q) => $q->whereIn('id', (array) $request->process_id));
+            $queryManual->whereHas(
+                'process',
+                fn($q) =>
+                $q->whereIn('id', (array) $request->process_id)
+            );
         }
-
 
         if ($request->filled('status_id')) {
             $queryManual->where('status_id', $request->status_id);
         }
 
         $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
-
-        // 🔹 Tambahkan tab Other / Manual Entry
         $groupedByPlant['Other / Manual Entry'] = $manualMappings;
 
         return view('contents.master.document-review.index2', compact(
             'groupedByPlant',
+            'filterDataByPlant',
             'documentsMaster',
             'partNumbers',
             'statuses',

@@ -22,4 +22,13 @@ class Process extends Model
     {
         return $this->hasMany(AuditFinding::class);
     }
+    public function documentMappings()
+    {
+        return $this->belongsToMany(
+            DocumentMapping::class,
+            'tt_document_mapping_processes',
+            'process_id',
+            'document_mapping_id'
+        );
+    }
 }
