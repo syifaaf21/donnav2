@@ -93,8 +93,8 @@
                             </div>
 
                             <!-- Hidden holder for selected auditees (NOT submitted directly).
-                                                                                                                                             We avoid naming this input so only the dynamic `auditee_ids[]` inputs
-                                                                                                                                             created by `saveHeaderOnly()` are included in the POST request. -->
+                                                                                                                                                 We avoid naming this input so only the dynamic `auditee_ids[]` inputs
+                                                                                                                                                 created by `saveHeaderOnly()` are included in the POST request. -->
                             <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
                         </div>
 
@@ -185,7 +185,7 @@
 
                                 <!-- Attachment button (paperclip) -->
                                 <div class="relative inline-block">
-                                    @if (in_array(optional(auth()->user()->role)->name, ['Admin', 'Auditor']))
+                                    @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin', 'Auditor']))
                                         <button id="attachBtn" type="button"
                                             class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
                                             aria-haspopup="true" aria-expanded="false" title="Attach files">

@@ -59,7 +59,7 @@ class AuditeeActionController extends Controller
         $processes = Process::select('id', 'name')->get();
         $products = Product::select('id', 'name')->get();
 
-        $auditors = User::whereHas('role', fn($q) => $q->where('name', 'auditor'))
+        $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
             ->select('id', 'name')->get();
 
         $auditTypes = Audit::with('subAudit')->get();

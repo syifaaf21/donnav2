@@ -140,7 +140,7 @@
                                             <i class="bi bi-upload"></i>
                                         </button>
                                         <!-- Approve / Reject -->
-                                        @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+                                        @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
                                             <form
                                                 action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
                                                 method="POST" class="d-inline">

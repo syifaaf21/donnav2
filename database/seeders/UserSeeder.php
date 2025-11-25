@@ -32,56 +32,57 @@ class UserSeeder extends Seeder
         }
 
         // === SUPER ADMIN ===
-        User::create([
+        $user = User::create([
             'npk' => '000000',
             'name' => 'Super Admin',
             'email' => 'superadmin@example.com',
             'password' => Hash::make('super123'),
-            'role_id' => $superAdminRoleId,
-            'department_id' => $superAdminDept->id,
         ]);
+        // attach role and department via pivot
+        $user->roles()->sync([$superAdminRoleId]);
+        $user->departments()->sync([$superAdminDept->id]);
 
         // === ADMIN ===
-        User::create([
+        $user = User::create([
             'npk' => '111111',
             'name' => 'Admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('admin123'),
-            'role_id' => $adminRole->id,
-            'department_id' => $adminDept->id,
         ]);
+        $user->roles()->sync([$adminRole->id]);
+        $user->departments()->sync([$adminDept->id]);
 
         // === USER BIASA ===
-        User::create([
+        $user = User::create([
             'npk' => '222222',
             'name' => 'Regular User',
             'email' => 'user@example.com',
             'password' => Hash::make('user123'),
-            'role_id' => $userRoleId,
-            'department_id' => $defaultDept->id,
         ]);
+        $user->roles()->sync([$userRoleId]);
+        $user->departments()->sync([$defaultDept->id]);
 
         // === AUDITOR ===
-        User::create([
+        $user = User::create([
             'npk' => '333332',
             'name' => 'Auditor LK3 User',
             'email' => 'auditor@example.com',
             'password' => Hash::make('audit123'),
-            'role_id' => $auditorRoleId,
-            'department_id' => $defaultDept->id,
             'audit_type_id' => 1,
         ]);
+        $user->roles()->sync([$auditorRoleId]);
+        $user->departments()->sync([$defaultDept->id]);
 
         // === AUDITOR ===
-        User::create([
+        $user = User::create([
             'npk' => '333333',
             'name' => 'Auditor Mutu User',
             'email' => 'auditor@example.com',
             'password' => Hash::make('audit123'),
-            'role_id' => $auditorRoleId,
-            'department_id' => $defaultDept->id,
             'audit_type_id' => 2,
         ]);
+        $user->roles()->sync([$auditorRoleId]);
+        $user->departments()->sync([$defaultDept->id]);
 
         // === SUPERVISORS (AUDITEE) ===
         $supervisors = [
@@ -112,26 +113,30 @@ class UserSeeder extends Seeder
                 continue;
             }
 
-            User::create([
+            $user = User::create([
                 'npk' => str_pad($sup['npk'], 6, '0', STR_PAD_LEFT),
                 'name' => $sup['name'],
                 'email' => null,
                 'password' => Hash::make('aiia123'),
-                'role_id' => $spvRoleId,
-                'department_id' => $department->id,
+                'audit_type_id' => null,
             ]);
+
+            // attach role and department
+            $user->roles()->sync([$spvRoleId]);
+            $user->departments()->sync([$department->id]);
         }
 
         // === LEADER ===
         $leaderDept = Department::where('name', 'Maintenance')->first();
-        User::create([
+        $user = User::create([
             'npk' => '444444',
             'name' => 'Leader User',
             'email' => 'leader@example.com',
             'password' => Hash::make('aiia123'),
-            'role_id' => $leaderRoleId,
-            'department_id' => $leaderDept ? $leaderDept->id : $defaultDept->id,
+            'audit_type_id' => null,
         ]);
+        $user->roles()->sync([$leaderRoleId]);
+        $user->departments()->sync([$leaderDept ? $leaderDept->id : $defaultDept->id]);
 
         // === DEPT HEADS ===
         $users = [
@@ -195,11 +200,11 @@ class UserSeeder extends Seeder
                 'name' => $userData['name'],
                 'email' => null,
                 'password' => Hash::make('aiia123'),
-                'role_id' => $deptHeadRoleId,
-                'department_id' => $departmentIds[0], // Simpan department utama
+                'audit_type_id' => null,
             ]);
 
-            // Simpan semua department ke pivot
+            // attach primary role and save all departments to pivot
+            $user->roles()->sync([$deptHeadRoleId]);
             $user->departments()->sync($departmentIds);
         }
     }

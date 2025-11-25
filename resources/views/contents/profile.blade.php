@@ -23,12 +23,12 @@
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-600">Role</label>
-                    <input type="text" value="{{ Auth::user()->role->name ?? '-' }}" disabled
+                    <input type="text" value="{{ Auth::user()->roles->pluck('name')->first() ?? '-' }}" disabled
                         class="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-700">
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-600">Department</label>
-                    <input type="text" value="{{ Auth::user()->department->name ?? '-' }}" disabled
+                    <input type="text" value="{{ Auth::user()->departments->pluck('name')->join(', ') ?: '-' }}" disabled
                         class="w-full mt-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-700">
                 </div>
             </div>

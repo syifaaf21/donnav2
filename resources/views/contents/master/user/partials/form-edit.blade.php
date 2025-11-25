@@ -74,7 +74,8 @@
                         class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
                         <option value="">Select Role</option>
                         @foreach ($roles as $role)
-                            <option value="{{ $role->id }}" {{ $user->role_id == $role->id ? 'selected' : '' }}>
+                            <option value="{{ $role->id }}"
+                                {{ $user->roles->contains('id', $role->id) ? 'selected' : '' }}>
                                 {{ $role->name }}
                             </option>
                         @endforeach
@@ -87,7 +88,7 @@
                 <!-- Audit Type (shown only when Role = Auditor) -->
                 @php
                     $auditTypes = \App\Models\Audit::select('id', 'name')->get();
-                    $roleName = $user->role->name ?? null;
+                    $roleName = $user->roles->pluck('name')->first() ?? null;
                     if (old('role_id')) {
                         $r = collect($roles)->firstWhere('id', (int) old('role_id'));
                         $roleName = $r->name ?? $roleName;
@@ -122,7 +123,7 @@
                         <option value="">Select Department</option>
                         @foreach ($departments as $department)
                             <option value="{{ $department->id }}"
-                                {{ $user->department_id == $department->id ? 'selected' : '' }}>
+                                {{ $user->departments->contains('id', $department->id) ? 'selected' : '' }}>
                                 {{ $department->name }}
                             </option>
                         @endforeach

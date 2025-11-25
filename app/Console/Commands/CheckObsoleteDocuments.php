@@ -33,10 +33,10 @@ class CheckObsoleteDocuments extends Command
             $mapping->update(['status_id' => $obsoleteStatus->id]);
 
             // Ambil semua user di department dokumen
-            $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+            $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))->get();
 
             // Ambil semua admin
-            $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+            $adminUsers = User::whereHas('roles', fn($q) => $q->where('name', 'Admin'))->get();
 
             // Gabungkan dan hapus duplikat
             $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');

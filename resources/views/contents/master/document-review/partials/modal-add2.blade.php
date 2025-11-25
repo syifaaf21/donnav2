@@ -1,4 +1,4 @@
-@if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+@if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <form action="{{ route('master.document-review.store2') }}" method="POST" enctype="multipart/form-data"
