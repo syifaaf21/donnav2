@@ -3,7 +3,7 @@
 @section('title', 'Document Control')
 
 @section('content')
-    <div class="container mx-auto my-4 px-4">
+    <div class=" mx-auto my-4 px-4">
         {{-- 🔹 Header + Breadcrumb --}}
         <div class="flex justify-between items-center mb-6">
             <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
@@ -77,8 +77,6 @@
         title="Scroll to top">
         <i class="bi bi-chevron-up text-lg"></i>
     </button>
-
-
 @endsection
 
 

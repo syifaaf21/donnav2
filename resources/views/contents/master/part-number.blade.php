@@ -2,7 +2,7 @@
 @section('title', 'Part Number')
 
 @section('content')
-    <div class="container mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2">
         {{-- Header --}}
         <div class="flex justify-between items-center mb-3">
             {{-- Breadcrumbs --}}
@@ -186,7 +186,8 @@
                                     <select name="process_id" id="process_edit_{{ $part->id }}"
                                         class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required>
-                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>Select Process</option>
+                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>Select
+                                            Process</option>
                                         @foreach ($processes as $process)
                                             <option value="{{ $process->id }}"
                                                 {{ $part->process_id == $process->id ? 'selected' : '' }}>
@@ -296,7 +297,8 @@
                                 <select id="process_id" name="process_id"
                                     class="form-select @error('process_id') is-invalid @enderror"
                                     placeholder="Search or create process..." required disabled>
-                                    <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>Select Process</option>
+                                    <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>Select
+                                        Process</option>
                                     @foreach ($processes as $process)
                                         <option value="{{ $process->id }}"
                                             {{ old('process_id') == $process->id ? 'selected' : '' }}>
@@ -583,6 +585,31 @@
                 myModal.show();
             @endif
 
+            function bindDeleteSweetAlert() {
+                document.querySelectorAll('.delete-form').forEach(form => {
+                    // Hapus handler lama jika ada (penting untuk re-bind)
+                    form.removeEventListener('submit', form._swalHandler);
+
+                    const handler = e => {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: 'This action cannot be undone.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Yes, delete it!'
+                        }).then(result => {
+                            if (result.isConfirmed) form.submit();
+                        });
+                    };
+
+                    form.addEventListener('submit', handler);
+                    form._swalHandler = handler; // Simpan reference handler untuk bisa di-remove nanti
+                });
+            }
+
             // ===================== GLOBAL SELECTORS =====================
             const tableContainer = document.getElementById("tableContainer");
             const searchInput = document.getElementById("searchInput");
@@ -621,6 +648,7 @@
                         tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
 
                         bindPagination();
+                        bindDeleteSweetAlert();
 
                         if (window.feather) feather.replace();
                     });

@@ -156,7 +156,7 @@
                             </div>
 
                             {{-- Notes --}}
-                            <div class="col-12 mb-3">
+                            <div class="col-12 mb-10">
                                 <label class="form-label fw-medium">Notes</label>
                                 <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
                                 <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"

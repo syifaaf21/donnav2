@@ -43,7 +43,7 @@ class DocumentActionNotification extends Notification
         $byUserFormatted = ucwords(strtolower($this->byUser));
         $departmentFormatted = $this->departmentName ? ucwords(strtolower($this->departmentName)) : null;
 
-        $title = $this->documentNumber ?? ($this->documentName ? ucwords(strtolower($this->documentName)) : 'A Document');
+        $title = $this->documentNumber ?? ($this->documentName ?($this->documentName) : 'A Document');
 
 
         $message = '';

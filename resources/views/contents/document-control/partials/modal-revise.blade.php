@@ -11,7 +11,8 @@
         </div>
 
         <!-- Form -->
-        <form id="reviseFormDynamic" method="POST" enctype="multipart/form-data" class="px-4 py-4 space-y-4">
+        <form id="reviseFormDynamic" method="POST" enctype="multipart/form-data"
+            class="px-4 py-4 space-y-4 max-h-[80vh] overflow-y-auto">
             @csrf
 
             <!-- Existing Files (dynamically rendered by JS) -->

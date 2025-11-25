@@ -270,16 +270,24 @@ class DocumentControlController extends Controller
 
         // LOGIKA SEARCH
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                    ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                    ->orWhereHas('files', fn($q2) => $q2->where('original_name', 'like', "%$search%"));
-            });
-        }
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                
+                // <<< INI BAGIAN KRITIS YANG HARUS DIMODIFIKASI >>>
+                ->orWhereHas('files', function($q2) use ($search) {
+                    $q2->where('original_name', 'like', "%$search%")
+                       ->where('is_active', false) // HANYA mencari file yang non-aktif (arsip)
+                       ->where('marked_for_deletion_at', '>', now()); // HANYA mencari file yang belum di-hard delete
+                });
+                // <<< AKHIR MODIFIKASI >>>
+
+        });
+    }
         // --- PENGGUNAAN PAGINATE ---
         // Gunakan paginate dan tambahkan parameter query yang ada
-        $documentsMapping = $query->paginate(2)->appends($request->query());
+        $documentsMapping = $query->paginate(10)->appends($request->query());
 
         $departments = Department::all();
         if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {

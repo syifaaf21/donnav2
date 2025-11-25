@@ -9,7 +9,7 @@
     @section('title', 'Archived Document')
 
     @section('content')
-        <div class="container mx-auto px-4 py-6">
+        <div class="mx-auto px-4 py-6">
 
             {{-- Breadcrumb --}}
             <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
@@ -42,7 +42,7 @@
                         {{ request('search')
                             ? '-top-3 text-xs text-sky-600'
                             : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                        peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                                 Search archived documents...
                             </label>
                         </div>
