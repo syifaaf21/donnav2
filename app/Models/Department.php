@@ -17,9 +17,9 @@ class Department extends Model
         'plant',
     ];
 
-    public function user()
+    public function users()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsToMany(User::class, 'tt_user_department', 'department_id', 'user_id');
     }
 
     public function mapping()

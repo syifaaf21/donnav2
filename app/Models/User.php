@@ -52,9 +52,9 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function department()
+    public function departments()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsToMany(Department::class, 'tt_user_department', 'user_id', 'department_id');
     }
 
     public function auditFindingsAsAuditee()

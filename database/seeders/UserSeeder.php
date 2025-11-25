@@ -23,8 +23,8 @@ class UserSeeder extends Seeder
 
         // Ambil department berdasarkan nama
         $superAdminDept = Department::where('name', 'Engineering Body')->first();
-        $adminDept      = Department::where('name', 'Engineering Body')->first();
-        $defaultDept    = Department::where('name', 'Engineering Body')->first();
+        $adminDept = Department::where('name', 'Engineering Body')->first();
+        $defaultDept = Department::where('name', 'Engineering Body')->first();
 
         if (!$superAdminDept || !$adminDept || !$defaultDept) {
             $this->command->error("Department Engineering Body tidak ditemukan. Jalankan DepartmentSeeder dulu!");
@@ -116,7 +116,7 @@ class UserSeeder extends Seeder
                 'npk' => str_pad($sup['npk'], 6, '0', STR_PAD_LEFT),
                 'name' => $sup['name'],
                 'email' => null,
-                'password' => Hash::make('auditee123'),
+                'password' => Hash::make('aiia123'),
                 'role_id' => $spvRoleId,
                 'department_id' => $department->id,
             ]);
@@ -125,7 +125,7 @@ class UserSeeder extends Seeder
         // === LEADER ===
         $leaderDept = Department::where('name', 'Maintenance')->first();
         User::create([
-            'npk' => '555555',
+            'npk' => '444444',
             'name' => 'Leader User',
             'email' => 'leader@example.com',
             'password' => Hash::make('aiia123'),
@@ -135,58 +135,72 @@ class UserSeeder extends Seeder
 
         // === DEPT HEADS ===
         $users = [
-            ['name' => 'JONI FERNANDO', 'departments' => ['QA BODY']],
-            ['name' => 'DANI PURNOMO', 'departments' => ['QA UNIT']],
-            ['name' => 'BONIFASIUS RICKY PURWANTO', 'departments' => ['QA ELECTRIC', 'ENG ELECTRIC']],
-            ['name' => 'LUTFI DAHLAN', 'departments' => ['ENG BODY']],
-            ['name' => 'RICKY PRAMUDITYA', 'departments' => ['ENG UNIT']],
-            ['name' => 'TEGAR AVRILLA KHARISMAWAN', 'departments' => ['MAINTENANCE']],
-            ['name' => 'ARMENDO RACHMAWAN', 'departments' => ['PRD BODY']],
-            ['name' => 'CAHYANA SUHERLAN', 'departments' => ['PRD UNIT']],
-            ['name' => 'ARIF KURNIAWAN DWI HARYADI', 'departments' => ['PRD ELECTRIC', 'PPIC ELECTRIC', 'PSD']],
-            ['name' => 'FERRY AVIANTO', 'departments' => ['IT DEVELOPMENT']],
-            ['name' => 'FAQIH SETYO AJI', 'departments' => ['PPIC']],
-            ['name' => 'JUNJUNAN TRI SETIA', 'departments' => ['MANAGEMENT SYSTEM']],
+            ['name' => 'Joni Fernando', 'departments' => ['Qa Body'], 'npk' => '555551'],
+            ['name' => 'Dani Purnomo', 'departments' => ['Qa Unit'], 'npk' => '555552'],
+            ['name' => 'Bonifasius Ricky Purwanto', 'departments' => ['Qa Electric', 'Eng Electric'], 'npk' => '555553'],
+            ['name' => 'Lutfi Dahlan', 'departments' => ['Eng Body'], 'npk' => '000023'],
+            ['name' => 'Ricky Pramuditya', 'departments' => ['Eng Unit'], 'npk' => '100050'],
+            ['name' => 'Tegar Avrilla Kharismawan', 'departments' => ['Maintenance'], 'npk' => '000026'],
+            ['name' => 'Armendo Rachmawan', 'departments' => ['Prd Body'], 'npk' => '555554'],
+            ['name' => 'Cahyana Suherlan', 'departments' => ['Prd Unit'], 'npk' => '555555'],
+            ['name' => 'Arif Kurniawan Dwi Haryadi', 'departments' => ['Prd Electric', 'Ppic Electric', 'Psd'], 'npk' => '000019'],
+            ['name' => 'Ferry Avianto', 'departments' => ['It Development'], 'npk' => '000020'],
+            ['name' => 'Faqih Setyo Aji', 'departments' => ['Ppic'], 'npk' => '555556'],
+            ['name' => 'Junjunan Tri Setia', 'departments' => ['Management System'], 'npk' => '000024'],
         ];
 
-        $npk = 100001;
-
         foreach ($users as $userData) {
+
+            // Kumpulkan ID department untuk user ini
+            $departmentIds = [];
+
             foreach ($userData['departments'] as $deptName) {
 
+                $d = strtoupper($deptName);
+
                 $department = match (true) {
-                    str_contains($deptName, 'QA BODY') => Department::where('name', 'Quality Body')->first(),
-                    str_contains($deptName, 'QA UNIT') => Department::where('name', 'Quality Unit')->first(),
-                    str_contains($deptName, 'QA ELECTRIC') => Department::where('name', 'Quality Electric')->first(),
-                    str_contains($deptName, 'ENG BODY') => Department::where('name', 'Engineering Body')->first(),
-                    str_contains($deptName, 'ENG UNIT') => Department::where('name', 'Engineering Unit')->first(),
-                    str_contains($deptName, 'ENG ELECTRIC') => Department::where('name', 'Engineering Electric')->first(),
-                    str_contains($deptName, 'MAINTENANCE') => Department::where('name', 'Maintenance')->first(),
-                    str_contains($deptName, 'PRD BODY') => Department::where('name', 'Production Body')->first(),
-                    str_contains($deptName, 'PRD UNIT') => Department::where('name', 'Production Unit')->first(),
-                    str_contains($deptName, 'PRD ELECTRIC') => Department::where('name', 'Production Electric')->first(),
-                    str_contains($deptName, 'PPIC ELECTRIC') => Department::where('name', 'PPIC Electric')->first(),
-                    str_contains($deptName, 'PPIC') => Department::where('name', 'PPIC-PC')->first(),
-                    str_contains($deptName, 'PSD') => Department::where('name', 'Production System & Development')->first(),
-                    str_contains($deptName, 'IT DEVELOPMENT') => Department::where('name', 'IT Development')->first(),
-                    str_contains($deptName, 'MANAGEMENT SYSTEM') => Department::where('name', 'Management System')->first(),
-                    default => null
+                    str_contains($d, 'QA BODY') => Department::where('name', 'Quality Body')->first(),
+                    str_contains($d, 'QA UNIT') => Department::where('name', 'Quality Unit')->first(),
+                    str_contains($d, 'QA ELECTRIC') => Department::where('name', 'Quality Electric')->first(),
+                    str_contains($d, 'ENG BODY') => Department::where('name', 'Engineering Body')->first(),
+                    str_contains($d, 'ENG UNIT') => Department::where('name', 'Engineering Unit')->first(),
+                    str_contains($d, 'ENG ELECTRIC') => Department::where('name', 'Engineering Electric')->first(),
+                    str_contains($d, 'MAINTENANCE') => Department::where('name', 'Maintenance')->first(),
+                    str_contains($d, 'PRD BODY') => Department::where('name', 'Production Body')->first(),
+                    str_contains($d, 'PRD UNIT') => Department::where('name', 'Production Unit')->first(),
+                    str_contains($d, 'PRD ELECTRIC') => Department::where('name', 'Production Electric')->first(),
+                    str_contains($d, 'PPIC ELECTRIC') => Department::where('name', 'PPIC Electric')->first(),
+                    str_contains($d, 'PPIC') => Department::where('name', 'PPIC-PC')->first(),
+                    str_contains($d, 'PSD') => Department::where('name', 'Production System & Development')->first(),
+                    str_contains($d, 'IT DEVELOPMENT') => Department::where('name', 'IT Development')->first(),
+                    str_contains($d, 'MANAGEMENT SYSTEM') => Department::where('name', 'Management System')->first(),
+                    default => null,
                 };
 
-                if (!$department) {
-                    $this->command->warn("Department not found for {$deptName}");
-                    continue;
+                if ($department) {
+                    $departmentIds[] = $department->id;
+                } else {
+                    $this->command->warn("Department not found: {$deptName}");
                 }
-
-                User::create([
-                    'npk' => $npk++,
-                    'name' => $userData['name'],
-                    'email' => null,
-                    'password' => Hash::make('aiia123'),
-                    'role_id' => $deptHeadRoleId,
-                    'department_id' => $department->id,
-                ]);
             }
+
+            if (empty($departmentIds)) {
+                $this->command->warn("User {$userData['name']} tidak punya department valid, skip.");
+                continue;
+            }
+
+            // buat user
+            $user = User::create([
+                'npk' => $userData['npk'],
+                'name' => $userData['name'],
+                'email' => null,
+                'password' => Hash::make('aiia123'),
+                'role_id' => $deptHeadRoleId,
+                'department_id' => $departmentIds[0], // Simpan department utama
+            ]);
+
+            // Simpan semua department ke pivot
+            $user->departments()->sync($departmentIds);
         }
     }
 }
