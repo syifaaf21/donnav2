@@ -235,6 +235,7 @@
         const departmentsReview = @json($departmentsReview); // Hanya Body, Unit, Electric
         const controlDocuments = @json($controlDocuments);
         const reviewDocuments = @json($reviewDocuments);
+        const controlExtraData = @json($controlExtraData);
 
         // Labels
         const controlLabels = Object.values(departments);
@@ -274,8 +275,23 @@
                         display: false
                     },
                     tooltip: {
-                        enabled: true
+                        enabled: true,
+                        callbacks: {
+                            label: function(context) {
+                                const deptId = Object.keys(departments)[context.dataIndex];
+                                const mainValue = context.raw;
+                                const extra = controlExtraData[deptId] || {};
+                                let lines = [`Total: ${mainValue}`];
+                                if (extra.obsolete !== undefined) lines.push(`Obsolete: ${extra.obsolete}`);
+                                if (extra.needReview !== undefined) lines.push(
+                                    `Need Review: ${extra.needReview}`);
+                                if (extra.uncomplete !== undefined) lines.push(
+                                    `Uncomplete: ${extra.uncomplete}`);
+                                return lines;
+                            }
+                        }
                     }
+
                 },
                 scales: {
                     y: {
@@ -302,7 +318,10 @@
                     }
                 }
             }
+
         });
+
+
 
         // Render Review Documents Chart
         new Chart(document.getElementById('reviewDocsChart').getContext('2d'), {

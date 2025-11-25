@@ -83,16 +83,44 @@ class UserSeeder extends Seeder
             'audit_type_id' => 2,
         ]);
 
-        // === SUPERVISOR ===
-        $spvDept = Department::where('name', 'Maintenance')->first();
-        User::create([
-            'npk' => '444444',
-            'name' => 'Supervisor User',
-            'email' => 'spv@example.com',
-            'password' => Hash::make('aiia123'),
-            'role_id' => $spvRoleId,
-            'department_id' => $spvDept ? $spvDept->id : $defaultDept->id,
-        ]);
+        // === SUPERVISORS (AUDITEE) ===
+        $supervisors = [
+            ['name' => 'Yamin Muhaemin', 'dept' => 'Quality Body', 'npk' => 199],
+            ['name' => 'Zaenuddin Hafidh Karyana', 'dept' => 'Quality Unit', 'npk' => 119],
+            ['name' => 'Endi Ependi', 'dept' => 'Quality Electric', 'npk' => 601],
+            ['name' => 'Reza Khaerudin', 'dept' => 'Engineering Body', 'npk' => 543],
+            ['name' => 'IKHSANUDIN', 'dept' => 'Engineering Unit', 'npk' => 1724],
+            ['name' => 'Yakobus Piere Aditya Putra', 'dept' => 'Engineering Electric', 'npk' => 552],
+            ['name' => 'Wahyu Bagus Hartanto', 'dept' => 'Maintenance', 'npk' => 118],
+            ['name' => 'Angga Saputra', 'dept' => 'Production Unit', 'npk' => 909],
+            ['name' => 'M. Saiful Romandhon', 'dept' => 'Production Unit', 'npk' => 554],
+            ['name' => 'Indra Muhammad Zulkarnaen', 'dept' => 'Production Electric', 'npk' => 452],
+            ['name' => 'Heru Maheko Putra', 'dept' => 'Production System & Development', 'npk' => 76],
+            ['name' => 'Imam Mahfud', 'dept' => 'IT Development', 'npk' => 813],
+            ['name' => 'Rizal Fahlepi', 'dept' => 'PPIC Receiving', 'npk' => 124],
+            ['name' => 'Rio Ibrahim Nasution', 'dept' => 'PPIC Delivery', 'npk' => 549],
+            ['name' => 'Saiful Akhmad Safari', 'dept' => 'PPIC Electric', 'npk' => 449],
+            ['name' => 'Ardiansyah Yuli Saputro', 'dept' => 'PPIC-PC', 'npk' => 461],
+            ['name' => 'Arif Setiyono', 'dept' => 'Management System', 'npk' => 27],
+        ];
+
+        foreach ($supervisors as $sup) {
+            $department = Department::where('name', $sup['dept'])->first();
+
+            if (!$department) {
+                $this->command->warn("Department not found for supervisor: {$sup['dept']}");
+                continue;
+            }
+
+            User::create([
+                'npk' => str_pad($sup['npk'], 6, '0', STR_PAD_LEFT),
+                'name' => $sup['name'],
+                'email' => null,
+                'password' => Hash::make('auditee123'),
+                'role_id' => $spvRoleId,
+                'department_id' => $department->id,
+            ]);
+        }
 
         // === LEADER ===
         $leaderDept = Department::where('name', 'Maintenance')->first();
