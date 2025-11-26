@@ -63,20 +63,21 @@ class DocumentReviewController extends Controller
 
         // Group documents
         $documentsByCode = $this->getDocumentsGroupedByPlantAndCode();
-        $plantGroup      = $documentsByCode->get($plant) ?? collect();
+        $plantGroup = $documentsByCode->get($plant) ?? collect();
 
         $normalizedDocCode = trim(strtolower($docCode));
-        $matchedCode       = $plantGroup->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
+        $matchedCode = $plantGroup->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
 
-        if (!$matchedCode) abort(404);
+        if (!$matchedCode)
+            abort(404);
 
         $documents = $plantGroup->get($matchedCode, collect());
 
         // 1. Semua dropdown berdasarkan plant
         $allPartNumbers = PartNumber::where('plant', $plant)->pluck('part_number')->unique()->values();
-        $allModels      = ProductModel::where('plant', $plant)->pluck('name')->unique()->values();
-        $allProcesses   = Process::where('plant', $plant)->pluck('name')->unique()->values();
-        $allProducts    = Product::where('plant', $plant)->pluck('name')->unique()->sort()->values();
+        $allModels = ProductModel::where('plant', $plant)->pluck('name')->unique()->values();
+        $allProcesses = Process::where('plant', $plant)->pluck('name')->unique()->values();
+        $allProducts = Product::where('plant', $plant)->pluck('name')->unique()->sort()->values();
 
         // 2. Filter berdasarkan dropdown (part / model / process / product)
         $documents = $documents->filter(function ($doc) use ($request) {
@@ -104,9 +105,9 @@ class DocumentReviewController extends Controller
 
             // Jika part number dipilih → filter ketat
             $matchPartNumber = $doc->partNumber->contains(fn($pn) => $pn->part_number === $request->part_number);
-            $matchProduct    = !$request->product || $doc->partNumber->contains(fn($pn) => $pn->product?->name === $request->product);
-            $matchModel      = !$request->model   || $doc->partNumber->contains(fn($pn) => $pn->productModel?->name === $request->model);
-            $matchProcess    = !$request->process || $doc->partNumber->contains(fn($pn) => $pn->process?->name === $request->process);
+            $matchProduct = !$request->product || $doc->partNumber->contains(fn($pn) => $pn->product?->name === $request->product);
+            $matchModel = !$request->model || $doc->partNumber->contains(fn($pn) => $pn->productModel?->name === $request->model);
+            $matchProcess = !$request->process || $doc->partNumber->contains(fn($pn) => $pn->process?->name === $request->process);
 
             return $matchPartNumber && $matchProduct && $matchModel && $matchProcess;
         });
@@ -164,14 +165,14 @@ class DocumentReviewController extends Controller
                 ->where('plant', $plant)
                 ->first();
 
-            $models    = collect([$related?->productModel?->name])->filter()->values();
+            $models = collect([$related?->productModel?->name])->filter()->values();
             $processes = collect([$related?->process?->name])->filter()->values();
-            $products  = collect([$related?->product?->name])->filter()->values();
+            $products = collect([$related?->product?->name])->filter()->values();
         } else {
 
-            $models    = $allModels;
+            $models = $allModels;
             $processes = $allProcesses;
-            $products  = $allProducts;
+            $products = $allProducts;
         }
 
         // 5. Pagination manual (karena Collection)
@@ -195,19 +196,19 @@ class DocumentReviewController extends Controller
             $perPage,
             $page,
             [
-                'path'  => url()->current(),
+                'path' => url()->current(),
                 'query' => $request->query(),
             ]
         );
 
         return view('contents.document-review.partials.folder', [
-            'plant'       => $plant,
-            'docCode'     => $matchedCode,
+            'plant' => $plant,
+            'docCode' => $matchedCode,
             'documents' => $documentsPaginated,
             'partNumbers' => $allPartNumbers,
-            'models'      => $models,
-            'processes'   => $processes,
-            'products'    => $products,
+            'models' => $models,
+            'processes' => $processes,
+            'products' => $products,
         ]);
     }
 
@@ -218,9 +219,9 @@ class DocumentReviewController extends Controller
         // Jika part number tidak dipilih → return full list
         if (!$request->part_number) {
             return response()->json([
-                'models'    => ProductModel::where('plant', $plant)->pluck('name')->unique()->values(),
+                'models' => ProductModel::where('plant', $plant)->pluck('name')->unique()->values(),
                 'processes' => Process::where('plant', $plant)->pluck('name')->unique()->values(),
-                'products'  => Product::where('plant', $plant)->pluck('name')->unique()->values(),
+                'products' => Product::where('plant', $plant)->pluck('name')->unique()->values(),
             ]);
         }
 
@@ -239,9 +240,9 @@ class DocumentReviewController extends Controller
         }
 
         return response()->json([
-            'models'    => [$part->productModel?->name],
+            'models' => [$part->productModel?->name],
             'processes' => [$part->process?->name],
-            'products'  => [$part->product?->name],
+            'products' => [$part->product?->name],
         ]);
     }
 
@@ -330,7 +331,11 @@ class DocumentReviewController extends Controller
     {
         $mapping = DocumentMapping::with('files', 'document')->findOrFail($id);
 
-        if (!in_array(Auth::user()->role->name, ['User', 'Admin'])) {
+        if (!Auth::check())
+            abort(403);
+
+        $userRoleNames = Auth::user()->roles->pluck('name')->map(fn($n) => strtolower($n));
+        if ($userRoleNames->intersect(collect(['user', 'admin']))->count() === 0) {
             abort(403);
         }
 
@@ -389,8 +394,10 @@ class DocumentReviewController extends Controller
         // Update notes
         $mapping->notes = $request->notes;
 
-        // Update status → Need Review
-        $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
+        // Update status
+        $needReviewStatus = Status::where('name', 'Need Review')->first();
+        if (!$needReviewStatus)
+            throw new \Exception("Status 'Need Review' tidak ditemukan.");
         $mapping->status_id = $needReviewStatus->id;
         $mapping->user_id = Auth::id();
         $mapping->save();
@@ -429,24 +436,22 @@ class DocumentReviewController extends Controller
 
         $mapping->timestamps = false;
         $mapping->updateQuietly([
-            'status_id'     => $approvedStatus->id ?? $mapping->status_id,
+            'status_id' => $approvedStatus->id ?? $mapping->status_id,
             'reminder_date' => $validated['reminder_date'],
-            'deadline'      => $validated['deadline'],
-            'user_id'       => auth()->id(),
+            'deadline' => $validated['deadline'],
+            'user_id' => auth()->id(),
         ]);
         $mapping->timestamps = true;
 
         // Hanya user departemen terkait (kecuali Admin/Super Admin)
-        $targetUsers = User::where('department_id', $mapping->department_id)
-            ->whereNotIn('role_id', function ($query) {
-                $query->select('id')->from('tm_roles')->whereIn('name', ['Admin', 'Super Admin']);
-            })
+        $targetUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+            ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
         $plant = $this->getPlantFromMapping($mapping);
 
         $url = route('document-review.showFolder', [
-            'plant'  => $plant,
+            'plant' => $plant,
             'docCode' => base64_encode($mapping->document->code ?? ''),
         ]);
 
@@ -485,10 +490,8 @@ class DocumentReviewController extends Controller
         ]);
         $mapping->timestamps = true;
 
-        $targetUsers = User::where('department_id', $mapping->department_id)
-            ->whereNotIn('role_id', function ($query) {
-                $query->select('id')->from('tm_roles')->whereIn('name', ['Admin', 'Super Admin']);
-            })
+        $targetUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+            ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
         // Gunakan method private yang sama

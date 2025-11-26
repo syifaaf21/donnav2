@@ -36,11 +36,11 @@
         </a>
     </li>
 
-    @if (in_array(strtolower(auth()->user()->role->name), ['super admin', 'admin']))
+    @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['super admin', 'admin']))
         <li>
-            <a href="{{ route('archive.archived') }}"
+            <a href="{{ route('archive.index') }}"
                 class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-all
-                {{ Route::is('archive.archived*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
+                {{ Route::is('archive*') ? 'bg-slate-800 text-gray-100' : 'text-gray-100' }}">
                 <i data-feather="settings" class="menu-icon w-4 h-4 text-gray-100"></i>
                 <span class="sidebar-text">Archive</span>
             </a>
@@ -50,7 +50,7 @@
     <hr class="my-2 border-gray-200">
 
     <!-- Master Data -->
-    @if (in_array(strtolower(auth()->user()->role->name), ['super admin', 'admin']))
+    @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['super admin', 'admin']))
         <li>
             <a type="button"
                 class="collapse-toggle menu-item w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-800 text-left font-medium"

@@ -68,7 +68,7 @@ class  AuditFinding extends Model
 
     public function auditor()
     {
-        return $this->belongsTo(User::class, 'auditor_id')->whereHas('role', function ($q) {
+        return $this->belongsTo(User::class, 'auditor_id')->whereHas('roles', function ($q) {
             $q->where('name', 'auditor');
         });
     }

@@ -104,7 +104,7 @@
             <!-- ACTION BUTTONS -->
             <div class="flex items-center gap-3">
 
-                @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor']))
+                @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 text-white font-medium
                        shadow hover:bg-blue-800 hover:shadow-md transition-all duration-150">
@@ -113,7 +113,7 @@
                     </a>
                 @endif
 
-                @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor', 'Dept Head']))
+                @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Dept Head']))
                     <a href="{{ route('approval.index') }}"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-600 text-white font-medium
                        shadow hover:bg-gray-700 hover:shadow-md transition-all duration-150">
@@ -270,7 +270,7 @@
                                                                 Assign Auditee Action
                                                             </a>
                                                         @endif
-                                                        @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                                                             <!-- ITEM: Delete -->
                                                             <form method="POST"
                                                                 action="{{ route('ftpp.destroy', $finding->id) }}"
@@ -379,12 +379,12 @@
                                         :style="\`top:\${y}px; left:\${x}px; width:170px;\`">
 
                                         ${statusName.toLowerCase() !== 'open' ? `
-                                                        <button type="button"
-                                                            @click="open = false; $dispatch('open-show-modal', ${f.id})"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                <i data-feather="eye" class="w-4 h-4"></i> Show
-                                                        </button>
-                                                    ` : ''}
+                                                                    <button type="button"
+                                                                        @click="open = false; $dispatch('open-show-modal', ${f.id})"
+                                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                                    </button>
+                                                                ` : ''}
 
                                         <a href="/ftpp/${f.id}/download"
                                             @click="open = false"
@@ -394,17 +394,17 @@
 
                                         ${f.status.toLowerCase() === 'need revision'
                                             ? `
-                                                            <a href="/ftpp/auditee-action/${f.id}/edit"
-                                                                @click="open = false"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
-                                                            </a>`
+                                                                        <a href="/ftpp/auditee-action/${f.id}/edit"
+                                                                            @click="open = false"
+                                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
+                                                                        </a>`
                                             : `
-                                                            <a href="/ftpp/auditee-action/${f.id}"
-                                                                @click="open = false"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
-                                                            </a>`
+                                                                        <a href="/ftpp/auditee-action/${f.id}"
+                                                                            @click="open = false"
+                                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
+                                                                        </a>`
                                         }
 
                                         <form method="POST" action="/ftpp/${f.id}"
@@ -491,7 +491,7 @@
             return {
                 isOpen: false,
                 loading: false,
-                content: '',
+                pdfUrl: null,
                 currentId: null,
 
                 openShowModal(id) {
@@ -499,17 +499,25 @@
                     this.loading = true;
                     this.currentId = id;
 
-                    fetch(`/ftpp/${id}`)
-                        .then(res => res.text())
-                        .then(html => {
-                            this.content = html;
-                            this.loading = false;
-                        });
+                    // Use preview-pdf route in iframe (no HTML fetch)
+                    this.pdfUrl = `/ftpp/${id}/preview-pdf`;
+
+                    // Wait briefly to allow iframe to start loading, then hide loading.
+                    // You can also listen for iframe load event if needed.
+                    const iframe = document.getElementById('previewFrame');
+                    if (iframe) {
+                        iframe.onload = () => { this.loading = false; };
+                    } else {
+                        // fallback: remove loading after 800ms
+                        setTimeout(() => { this.loading = false; }, 800);
+                    }
                 },
 
                 close() {
                     this.isOpen = false;
-                    this.content = '';
+                    this.pdfUrl = null;
+                    this.loading = false;
+                    this.currentId = null;
                 },
             };
         }

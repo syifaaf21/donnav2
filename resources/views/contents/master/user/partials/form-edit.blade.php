@@ -70,24 +70,25 @@
                 <!-- Role -->
                 <div class="col-md-6">
                     <label class="form-label fw-medium">Role</label>
-                    <select name="role_id" id="role_select_edit_{{ $user->id }}"
-                        class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
-                        <option value="">Select Role</option>
+                    <select name="role_ids[]" id="role_select_edit_{{ $user->id }}"
+
+                        class="form-select rounded-3 @error('role_ids') is-invalid @enderror" multiple required>
                         @foreach ($roles as $role)
-                            <option value="{{ $role->id }}" {{ $user->role_id == $role->id ? 'selected' : '' }}>
+                            <option value="{{ $role->id }}"
+                                {{ $user->roles->contains('id', $role->id) ? 'selected' : '' }}>
                                 {{ $role->name }}
                             </option>
                         @endforeach
                     </select>
 
-                    @error('role_id')
+                    @error('role_ids')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <!-- Audit Type (shown only when Role = Auditor) -->
                 @php
                     $auditTypes = \App\Models\Audit::select('id', 'name')->get();
-                    $roleName = $user->role->name ?? null;
+                    $roleName = $user->roles->pluck('name')->first() ?? null;
                     if (old('role_id')) {
                         $r = collect($roles)->firstWhere('id', (int) old('role_id'));
                         $roleName = $r->name ?? $roleName;
@@ -95,7 +96,8 @@
                 @endphp
 
                 <div class="col-md-6" id="auditTypeContainerEdit_{{ $user->id }}"
-                    style="display: {{ strtolower($roleName ?? '') === 'auditor' ? 'block' : 'none' }};">
+
+                    style="display: {{ $user->roles->pluck('name')->map(fn($n)=>strtolower($n))->contains('auditor') ? 'block' : 'none' }};">
                     <label class="form-label fw-medium">Audit Type</label>
                     <select name="audit_type_id" id="audit_type_select_edit_{{ $user->id }}"
                         class="form-select rounded-3 @error('audit_type_id') is-invalid @enderror">
@@ -104,6 +106,7 @@
                             Audit Type --</option>
                         @foreach ($auditTypes as $a)
                             <option value="{{ $a->id }}"
+
                                 {{ (old('audit_type_id') ? old('audit_type_id') == $a->id : $user->audit_type_id == $a->id) ? 'selected' : '' }}>
                                 {{ $a->name }}
                             </option>
@@ -117,17 +120,18 @@
                 <!-- Department -->
                 <div class="col-md-6">
                     <label class="form-label fw-medium">Department</label>
-                    <select name="department_id" id="department_select_edit_{{ $user->id }}"
-                        class="form-select rounded-3 @error('department_id') is-invalid @enderror" required>
-                        <option value="">Select Department</option>
+                    <select name="department_ids[]" id="department_select_edit_{{ $user->id }}"
+
+                        class="form-select rounded-3 @error('department_ids') is-invalid @enderror" multiple required>
                         @foreach ($departments as $department)
                             <option value="{{ $department->id }}"
-                                {{ $user->department_id == $department->id ? 'selected' : '' }}>
+
+                                {{ $user->departments->contains('id', $department->id) ? 'selected' : '' }}>
                                 {{ $department->name }}
                             </option>
                         @endforeach
                     </select>
-                    @error('department_id')
+                    @error('department_ids')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -141,9 +145,9 @@
                     if (!roleSelect || !auditTypeContainer) return;
 
                     function toggleAuditType() {
-                        const sel = roleSelect.options[roleSelect.selectedIndex];
-                        const text = (sel?.text || '').toLowerCase();
-                        if (text.includes('auditor')) {
+                        const selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
+                        const hasAuditor = selected.some(t => t.includes('auditor'));
+                        if (hasAuditor) {
                             auditTypeContainer.style.display = 'block';
                             if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');
                         } else {

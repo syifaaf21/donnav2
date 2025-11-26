@@ -23,7 +23,8 @@
         <div class="bg-white shadow-lg rounded-2xl border border-gray-100 p-6">
             {{-- Filter --}}
             <form method="GET" id="filterForm" class="mb-6">
-                @if (auth()->user()->role->name == 'Admin' || auth()->user()->role->name == 'Super Admin')
+                @if (auth()->user()->roles->pluck('name')->contains('Admin') ||
+                        auth()->user()->roles->pluck('name')->contains('Super Admin'))
                     <div class="flex justify-end w-full">
                         <div class="w-96 rounded-2xl">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>

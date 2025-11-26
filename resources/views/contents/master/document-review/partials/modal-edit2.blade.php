@@ -1,4 +1,4 @@
-@if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+@if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
     @foreach ($groupedByPlant as $plant => $documents)
         @foreach ($documents as $mapping)
             @php

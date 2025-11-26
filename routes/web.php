@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuditeeActionController;
 use App\Http\Controllers\AuditFindingController;
 use App\Http\Controllers\AuditTypeController;
@@ -184,8 +185,10 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('archive')->name('archive.')->group(function () {
-        Route::get('/archived', [DocumentControlController::class, 'archived'])
-            ->name('archived');
+        Route::get('/', [ArchiveController::class, 'index'])
+            ->name('index');
+        Route::get('/search', [ArchiveController::class, 'search'])->name('search');
+        Route::get('/review', [ArchiveController::class, 'review'])->name('review');
     });
 
     /*

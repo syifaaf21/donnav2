@@ -8,7 +8,7 @@
                 </h5>
             </div>
 
-            <form id="rejectFormNotesOnly" method="POST">
+            <form id="rejectForm" method="POST">
                 @csrf
                 <input type="hidden" name="doc_id" id="rejectDocumentId">
 
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Submit form: pindahkan konten Quill ke input hidden
-    var form = document.getElementById('rejectFormNotesOnly');
+    var form = document.getElementById('rejectForm');
     form.addEventListener('submit', function(e) {
         document.getElementById('rejectNotes').value = quill.root.innerHTML.trim();
     });

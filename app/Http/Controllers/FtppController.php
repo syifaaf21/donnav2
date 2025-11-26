@@ -65,8 +65,8 @@ class FtppController extends Controller
         $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
         $totalCount = AuditFinding::count();
         $departments = Department::orderBy('name')->get();
-        // auditors: users with role 'auditor' if role relation exists, else all users
-        $auditors = User::whereHas('role', function ($q) {
+        // auditors: users with role 'auditor'
+        $auditors = User::whereHas('roles', function ($q) {
             $q->where('name', 'auditor');
         })->orderBy('name')->get();
 
@@ -132,7 +132,7 @@ class FtppController extends Controller
         // Generate kode lengkap
         $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/01";
 
-        $auditors = User::where('role_id', 4) // Role auditor
+        $auditors = User::whereHas('roles', fn($q) => $q->where('tm_roles.id', 4)) // Role auditor
             ->where('audit_type_id', $auditTypeId)
             ->get();
 
@@ -213,7 +213,7 @@ class FtppController extends Controller
     public function getAuditee($departmentId)
     {
         // Ambil auditee berdasarkan department
-        $auditees = User::where('department_id', $departmentId)->get(['id', 'name']);
+        $auditees = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $departmentId))->get(['id', 'name']);
 
         return response()->json($auditees);
     }
@@ -233,60 +233,181 @@ class FtppController extends Controller
 
     public function previewPdf($id)
     {
-        $finding = AuditFinding::with(['auditeeAction.file'])->findOrFail($id);
+        // Ambil data finding beserta relasi
+        $finding = AuditFinding::with([
+            'audit',
+            'subAudit',
+            'findingCategory',
+            'auditor',
+            'auditee',
+            'department',
+            'process',
+            'product',
+            'subKlausuls',
+            'file',
+            'status',
+            'auditeeAction',
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
+            'auditeeAction.file', // lampiran
+        ])->findOrFail($id);
+
+        // Set stamp image URLs when signature/approval flags are set (value == 1)
+        if ($finding->auditeeAction) {
+            // Dept head signature (show manager approval image)
+            if (!empty($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1) {
+                $finding->dept_head_signature_url = public_path('images/mgr-approve.png');
+            }
+
+            // Leader / Supervisor signature (show user approval image)
+            if (!empty($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1) {
+                $finding->ldr_spv_signature_url = public_path('images/usr-approve.png');
+            }
+
+            // Acknowledge by lead auditor: if flag present on finding or auditeeAction, show lead auditor stamp
+            if (
+                (!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1)
+                || (!empty($finding->auditeeAction->acknowledge_by_lead_auditor) && $finding->auditeeAction->acknowledge_by_lead_auditor == 1)
+            ) {
+                $finding->acknowledge_by_lead_auditor_url = public_path('images/stamp-lead-auditor.png');
+            }
+
+            // Verified by auditor: if flag present on finding or auditeeAction, show internal auditor stamp
+            if (
+                (!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1)
+                || (!empty($finding->auditeeAction->verified_by_auditor) && $finding->auditeeAction->verified_by_auditor == 1)
+            ) {
+                $finding->verified_by_auditor_url = public_path('images/stamp-internal-auditor.png');
+            }
+        } else {
+            // In case auditeeAction is absent but flags are on the finding
+            if (!empty($finding->dept_head_signature) && $finding->dept_head_signature == 1) {
+                $finding->dept_head_signature_url = public_path('images/mgr-approve.png');
+            }
+            if (!empty($finding->ldr_spv_signature) && $finding->ldr_spv_signature == 1) {
+                $finding->ldr_spv_signature_url = public_path('images/usr-approve.png');
+            }
+            if (!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1) {
+                $finding->acknowledge_by_lead_auditor_url = public_path('images/stamp-lead-auditor.png');
+            }
+            if (!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1) {
+                $finding->verified_by_auditor_url = public_path('images/stamp-internal-auditor.png');
+            }
+        }
+
+        // --- Ensure all attachment items have a full filesystem URL so DomPDF can embed images ---
+        if ($finding->file) {
+            foreach ($finding->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
+                $diskPath = storage_path('app/public/' . $file->file_path);
+
+                // Prefer public/storage (symlink) because DomPDF chroot includes public path by default.
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    // fallback to absolute file URI (may require chroot override)
+                    $file->full_url = 'file://' . $diskPath;
+                } else {
+                    $file->full_url = null;
+                }
+            }
+        }
+
+        // Tambah filesystem path untuk semua lampiran pada auditeeAction (lampiran auditee) so DomPDF can embed them
+        if ($finding->auditeeAction && $finding->auditeeAction->file) {
+            foreach ($finding->auditeeAction->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
+                $diskPath = storage_path('app/public/' . $file->file_path);
+
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    $file->full_url = 'file://' . $diskPath;
+                } else {
+                    $file->full_url = null;
+                }
+            }
+        }
+        // --- end attach full_url block ---
 
         // Generate main PDF
+        // ensure DomPDF can access local files: enable remote and set chroot to project base
         $mainPdf = PDF::setOptions([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
+            'chroot' => base_path(), // allow access to public/storage and storage paths
         ])->loadView('contents.ftpp2.pdf', compact('finding'))->output();
+
+        if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
+            // FPDI not installed — return main PDF directly for preview
+            $tmpMain = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_main_' . uniqid() . '.pdf';
+            file_put_contents($tmpMain, $mainPdf);
+            return response()->file($tmpMain);
+        }
 
         $merger = new \setasign\Fpdi\Fpdi();
 
-        // Simpan sementara main PDF
-        $tmpMain = storage_path('app/temp_main.pdf');
+        // save main PDF to a unique temp file
+        $tmpMain = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_main_' . uniqid() . '.pdf';
         file_put_contents($tmpMain, $mainPdf);
 
+        // import main PDF pages properly (importPage -> getTemplateSize -> AddPage -> useTemplate)
         $pageCount = $merger->setSourceFile($tmpMain);
         for ($i = 1; $i <= $pageCount; $i++) {
-            $merger->AddPage();
-            $merger->importPage($i);
+            $tplId = $merger->importPage($i);
+            $size = $merger->getTemplateSize($tplId);
+            $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+            $merger->AddPage($orientation, [$size['width'], $size['height']]);
+            $merger->useTemplate($tplId);
         }
 
-        // Tambahkan file attachment AuditFinding
-        foreach ($finding->attachments ?? [] as $file) {
-            $path = storage_path('app/public/ftpp/audit_finding_attachments/' . $file->filename);
-            if (file_exists($path)) {
-                $pages = $merger->setSourceFile($path);
-                for ($i = 1; $i <= $pages; $i++) {
-                    $merger->AddPage();
-                    $merger->importPage($i);
+        // Collect attachment PDF paths from finding->file and auditeeAction->file
+        $pdfFilesToAppend = [];
+
+        if (!empty($finding->file)) {
+            foreach ($finding->file as $file) {
+                $path = storage_path('app/public/' . $file->file_path);
+                if (file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
+                    $pdfFilesToAppend[] = $path;
                 }
             }
         }
 
-        // Tambahkan file attachment AuditeeAction
-        if ($finding->auditeeAction) {
-            $auditeeFiles = $finding->auditeeAction->file ?? [];
-            foreach ($auditeeFiles as $file) {
-                if (!empty($file->filename)) {
-                    $path = storage_path('app/public/ftpp/auditee_action_attachments/' . $file->filename);
-                    if (file_exists($path)) {
-                        $pages = $merger->setSourceFile($path);
-                        for ($i = 1; $i <= $pages; $i++) {
-                            $merger->AddPage();
-                            $merger->importPage($i);
-                        }
-                    }
+        if (!empty($finding->auditeeAction) && !empty($finding->auditeeAction->file)) {
+            foreach ($finding->auditeeAction->file as $file) {
+                $path = storage_path('app/public/' . $file->file_path);
+                if (file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
+                    $pdfFilesToAppend[] = $path;
                 }
             }
         }
 
-        // Simpan file sementara untuk preview
-        $tmpMerged = storage_path('app/temp_merged.pdf');
+        // Append each PDF file correctly
+        foreach ($pdfFilesToAppend as $pf) {
+            try {
+                $pc = $merger->setSourceFile($pf);
+                for ($p = 1; $p <= $pc; $p++) {
+                    $tplId = $merger->importPage($p);
+                    $size = $merger->getTemplateSize($tplId);
+                    $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                    $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                    $merger->useTemplate($tplId);
+                }
+            } catch (\Throwable $e) {
+                \Log::warning("Failed to append PDF {$pf}: " . $e->getMessage());
+                // continue with other files
+            }
+        }
+
+        // Save merged to unique temp file and return for iframe preview
+        $tmpMerged = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_merged_' . uniqid() . '.pdf';
         $merger->Output($tmpMerged, 'F');
 
-        return response()->file($tmpMerged); // iframe bisa load PDF merge
+        // cleanup main temp
+        @unlink($tmpMain);
+
+        return response()->file($tmpMerged);
     }
 
     /**
@@ -387,11 +508,15 @@ class FtppController extends Controller
         // Tambah filesystem path untuk semua lampiran pada audit finding (images/files) so DomPDF can embed them
         if ($finding->file) {
             foreach ($finding->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
                 $diskPath = storage_path('app/public/' . $file->file_path);
-                if (file_exists($diskPath)) {
-                    $file->full_url = $diskPath;
+
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    $file->full_url = 'file://' . $diskPath;
                 } else {
-                    $file->full_url = public_path('storage/' . $file->file_path);
+                    $file->full_url = null;
                 }
             }
         }
@@ -399,11 +524,15 @@ class FtppController extends Controller
         // Tambah filesystem path untuk semua lampiran pada auditeeAction (lampiran auditee) so DomPDF can embed them
         if ($finding->auditeeAction && $finding->auditeeAction->file) {
             foreach ($finding->auditeeAction->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
                 $diskPath = storage_path('app/public/' . $file->file_path);
-                if (file_exists($diskPath)) {
-                    $file->full_url = $diskPath;
+
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    $file->full_url = 'file://' . $diskPath;
                 } else {
-                    $file->full_url = public_path('storage/' . $file->file_path);
+                    $file->full_url = null;
                 }
             }
         }

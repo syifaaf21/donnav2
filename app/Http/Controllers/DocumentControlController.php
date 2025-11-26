@@ -24,12 +24,14 @@ class DocumentControlController extends Controller
             ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
         // Filter department kalau bukan Admin atau Super Admin
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
-            $query->where('department_id', Auth::user()->department_id);
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
+            $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
+            // qualify column to avoid ambiguity in generated SQL
+            $query->whereHas('department', fn($q) => $q->whereIn('tm_departments.id', $userDeptIds));
         }
 
         // Filter department kalau Admin atau Super Admin pilih
-        if (in_array(Auth::user()->role->name, ['Admin', 'Super Admin']) && $request->filled('department_id')) {
+        if (in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']) && $request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
@@ -60,10 +62,11 @@ class DocumentControlController extends Controller
         foreach ($toBeObsoleted as $mapping) {
 
             // Ambil user department terkait
-            $departmentUsers = User::where('department_id', $mapping->department_id)->get();
+            // qualify the column name to avoid ambiguity in the EXISTS subquery
+            $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))->get();
 
             // Ambil semua admin
-            $adminUsers = User::whereHas('role', fn($q) => $q->where('name', 'Admin'))->get();
+            $adminUsers = User::whereHas('roles', fn($q) => $q->where('name', 'Admin'))->get();
 
             // Gabungkan keduanya dan hapus duplikat
             $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
@@ -195,7 +198,8 @@ class DocumentControlController extends Controller
                 'original_name' => $uploadedFile->getClientOriginalName(),
                 'file_type' => $uploadedFile->getClientMimeType(),
                 'uploaded_by' => Auth::id(),
-                'is_active' => true,
+                'is_active' => false,
+
             ]);
 
             // Mark old file as inactive and link to replacer
@@ -220,8 +224,8 @@ class DocumentControlController extends Controller
 
         //Notif ke admin
         $uploader = Auth::user();
-        if (!in_array($uploader->role->name, ['Admin', 'Super Admin'])) {
-            $admins = User::whereHas('role', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
+        if (!in_array(strtolower($uploader->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
+            $admins = User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
             foreach ($admins as $admin) {
                 $admin->notify(new DocumentActionNotification(
                     'revised',
@@ -237,75 +241,10 @@ class DocumentControlController extends Controller
         return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
 
-    public function archived(Request $request)
-    {
-        $query = DocumentMapping::with([
-            'document',
-            'department',
-            'status',
-            // Load files secara spesifik: is_active=false DAN belum waktunya hard delete
-            'files' => function ($q) {
-                $q->where('is_active', false)
-                    ->where('marked_for_deletion_at', '>', now());
-            }
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'control'));
-
-        // Filter: Hanya tampilkan mapping yang memiliki file yang sedang diarsip
-        $query->where(function ($q) {
-            // $q->whereHas('status', fn($q2) => $q2->where('name', 'Obsolete'));
-
-            // Atau memiliki file lama yang belum melewati masa hard delete (1 tahun)
-            $q->orWhereHas(
-                'files',
-                fn($q2) => $q2->where('is_active', false)
-                    ->where('marked_for_deletion_at', '>', now())
-            );
-        });
-
-        // Filter department kalau bukan Admin atau Super Admin
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
-            $query->where('department_id', Auth::user()->department_id);
-        }
-
-        // LOGIKA SEARCH
-        if ($request->filled('search')) {
-        $search = $request->search;
-        $query->where(function ($q) use ($search) {
-            $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                
-                // <<< INI BAGIAN KRITIS YANG HARUS DIMODIFIKASI >>>
-                ->orWhereHas('files', function($q2) use ($search) {
-                    $q2->where('original_name', 'like', "%$search%")
-                       ->where('is_active', false) // HANYA mencari file yang non-aktif (arsip)
-                       ->where('marked_for_deletion_at', '>', now()); // HANYA mencari file yang belum di-hard delete
-                });
-                // <<< AKHIR MODIFIKASI >>>
-
-        });
-    }
-        // --- PENGGUNAAN PAGINATE ---
-        // Gunakan paginate dan tambahkan parameter query yang ada
-        $documentsMapping = $query->paginate(10)->appends($request->query());
-
-        $departments = Department::all();
-        if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-            return view('contents.document-control.partials.archived-table', compact(
-                'documentsMapping',
-                'departments'
-            ))->render();
-        }
-        return view('contents.document-control.partials.archived', compact(
-            'documentsMapping',
-            'departments'
-        ));
-    }
-
     public function approve(Request $request, DocumentMapping $mapping)
     {
         // Hanya admin atau super admin yang bisa approve
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403, 'Only admin or super admin can approve documents.');
         }
 
@@ -333,9 +272,13 @@ class DocumentControlController extends Controller
             'user_id' => Auth::id(), // siapa yang approve
         ]);
 
+        // Mark associated files as active in `tt_document_files`
+        // (set is_active = true for all files related to this mapping)
+        $mapping->files()->update(['is_active' => true]);
+
         // Ambil semua user di department terkait, kecuali user yang approve
-        $departmentUsers = User::where('department_id', $mapping->department_id)
-            ->whereNotIn('id', [Auth::id()])
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+            ->where('id', '!=', Auth::id())
             ->get();
 
         // Kirim notifikasi ke user department
@@ -353,7 +296,7 @@ class DocumentControlController extends Controller
 
     public function reject(Request $request, DocumentMapping $mapping)
     {
-        if (!in_array(Auth::user()->role->name, ['Admin', 'Super Admin'])) {
+        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             abort(403, 'Only admin can reject documents.');
         }
 
@@ -372,8 +315,12 @@ class DocumentControlController extends Controller
         ]);
 
         // Notifikasi ke semua user bahwa dokumen di-reject
-        $departmentUsers = User::where('department_id', $mapping->department_id)
-            ->whereNotIn('id', [Auth::id()]) // kecuali user yang approve
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+            ->where('id', '!=', Auth::id()) // kecuali user yang approve
+            ->get();
+        // qualify for ambiguity
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+            ->where('id', '!=', Auth::id())
             ->get();
         Notification::send($departmentUsers, new DocumentActionNotification(
             'rejected',

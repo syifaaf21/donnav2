@@ -29,13 +29,13 @@
             </thead>
             <tbody>
                 @forelse ($users as $user)
-                    @if ($user->role->name === 'Auditor')
+                    @if ($user->roles->pluck('name')->contains('Auditor'))
                         <tr class="border-b hover:bg-gray-50">
                             <td class="px-4 py-2">
                                 {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
                             <td class="px-4 py-2">{{ ucwords(strtolower($user->name)) }}</td>
                             <td class="px-4 py-2">{{ $user->email }}</td>
-                            <td class="px-4 py-2">{{ $user->department->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $user->departments->pluck('name')->join(', ') ?: '-' }}</td>
                             <td class="px-4 py-2">{{ $user->auditType->name ?? '-' }}</td>
                             <td class="px-4 py-2 flex gap-2">
                                 {{-- Edit Button --}}
@@ -45,7 +45,7 @@
                                     <i data-feather="edit" class="w-4 h-4"></i>
                                 </button>
                                 {{-- Delete Button --}}
-                                @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+                                @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
                                     <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
                                         class="d-inline delete-form">
                                         @csrf
@@ -62,7 +62,7 @@
                     @endif
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center text-gray-500 py-4">No auditors found.</td>
+                        <td colspan="6" class="text-center text-gray-500 py-4">No auditors found.</td>
                     </tr>
                 @endforelse
             </tbody>

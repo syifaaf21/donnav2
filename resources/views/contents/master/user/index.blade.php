@@ -179,12 +179,13 @@
             // TomSelect untuk modal Add - Role
             new TomSelect('#role_select', {
                 create: false,
-                maxItems: 1,
+                // allow multiple selections by not limiting maxItems
+                maxItems: null,
                 valueField: 'id',
                 labelField: 'text',
                 searchField: 'text',
                 preload: true,
-                placeholder: 'Select or search a role',
+                placeholder: 'Select or search roles',
                 load: function(query, callback) {
                     let url = '/api/roles?q=' + encodeURIComponent(query);
                     fetch(url)
@@ -197,12 +198,12 @@
             // TomSelect untuk modal Add - Department
             new TomSelect('#department_select', {
                 create: false,
-                maxItems: 1,
+                maxItems: null,
                 valueField: 'id',
                 labelField: 'text',
                 searchField: 'text',
                 preload: true,
-                placeholder: 'Select or search a department',
+                placeholder: 'Select or search departments',
                 load: function(query, callback) {
                     let url = '/api/departments?q=' + encodeURIComponent(query);
                     fetch(url)
@@ -215,13 +216,13 @@
             // TomSelect untuk modal Edit (semua modal edit role select)
             document.querySelectorAll('select[id^="role_select_edit_"]').forEach(function(el) {
                 new TomSelect(el, {
-                    create: false, // TIDAK boleh create baru
-                    maxItems: 1,
+                    create: false,
+                    maxItems: null,
                     valueField: 'id',
                     labelField: 'text',
                     searchField: 'text',
                     preload: true,
-                    placeholder: 'Select a role',
+                    placeholder: 'Select roles',
                     load: function(query, callback) {
                         let url = '/api/roles?q=' + encodeURIComponent(query);
                         fetch(url)
@@ -235,13 +236,13 @@
             // TomSelect untuk modal Edit (semua modal edit department select)
             document.querySelectorAll('select[id^="department_select_edit_"]').forEach(function(el) {
                 new TomSelect(el, {
-                    create: false, // TIDAK boleh create baru
-                    maxItems: 1,
+                    create: false,
+                    maxItems: null,
                     valueField: 'id',
                     labelField: 'text',
                     searchField: 'text',
                     preload: true,
-                    placeholder: 'Select a department',
+                    placeholder: 'Select departments',
                     load: function(query, callback) {
                         let url = '/api/departments?q=' + encodeURIComponent(query);
                         fetch(url)
@@ -374,11 +375,11 @@
                         // Reinit TomSelect untuk select di dalam modal edit
                         new TomSelect(`#role_select_edit_${userId}`, {
                             create: false,
-                            maxItems: 1
+                            maxItems: null
                         });
                         new TomSelect(`#department_select_edit_${userId}`, {
                             create: false,
-                            maxItems: 1
+                            maxItems: null
                         });
 
                         if (typeof feather !== 'undefined') feather.replace();

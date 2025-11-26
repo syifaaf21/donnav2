@@ -18,17 +18,17 @@ class UserController extends Controller
         $tab = $request->input('tab', 'all');
         $perPage = $request->input('per_page', 10); // default 10 per page
 
-        $query = User::with(['role', 'department']);
+        $query = User::with(['roles', 'departments']);
 
         // Filter berdasarkan tab
         switch ($tab) {
             case 'depthead':
-                $query->whereHas('role', fn($q) => $q->where('name', 'Dept Head'));
+                $query->whereHas('roles', fn($q) => $q->where('name', 'Dept Head'));
                 $view = 'contents.master.user.partials.dept-head';
                 break;
 
             case 'auditor':
-                $query->whereHas('role', fn($q) => $q->where('name', 'Auditor'));
+                $query->whereHas('roles', fn($q) => $q->where('name', 'Auditor'));
                 $view = 'contents.master.user.partials.auditor';
                 break;
 
@@ -43,8 +43,8 @@ class UserController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('npk', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhereHas('role', fn($r) => $r->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('department', fn($d) => $d->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('roles', fn($r) => $r->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('departments', fn($d) => $d->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));
                 ;
             });
@@ -84,8 +84,8 @@ class UserController extends Controller
                 'min:8',
                 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
             ],
-            'role_id' => 'required',
-            'department_id' => 'required',
+            'role_ids' => 'required|array|min:1',
+            'department_ids' => 'required|array|min:1',
             'audit_type_id' => 'nullable',
         ], [
             'password.required' => 'Password is required.',
@@ -94,26 +94,43 @@ class UserController extends Controller
             'password.regex' => 'Password must contain uppercase, lowercase, number, and special character.',
         ]);
 
-        // Cek Role: apakah existing ID atau teks baru
-        $roleId = is_numeric($request->role_id)
-            ? $request->role_id
-            : Role::firstOrCreate(['name' => $request->role_id])->id;
+        // Resolve role ids (allow passing either existing ids or new names)
+        $rawRoles = (array) $request->input('role_ids', []);
+        $roleIds = [];
+        foreach ($rawRoles as $r) {
+            if (is_numeric($r)) {
+                $roleIds[] = (int) $r;
+            } elseif (!empty($r)) {
+                $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
+            }
+        }
 
-        // Cek Department: apakah existing ID atau teks baru
-        $departmentId = is_numeric($request->department_id)
-            ? $request->department_id
-            : Department::firstOrCreate(['name' => $request->department_id])->id;
+        // Resolve department ids (allow either existing ids or new names)
+        $rawDeps = (array) $request->input('department_ids', []);
+        $departmentIds = [];
+        foreach ($rawDeps as $d) {
+            if (is_numeric($d)) {
+                $departmentIds[] = (int) $d;
+            } elseif (!empty($d)) {
+                $departmentIds[] = Department::firstOrCreate(['name' => $d])->id;
+            }
+        }
 
-        // Simpan user
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'npk' => $request->npk,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $roleId,
-            'department_id' => $departmentId,
             'audit_type_id' => is_numeric($request->audit_type_id) ? $request->audit_type_id : null,
         ]);
+
+        if (!empty($roleIds)) {
+            $user->roles()->sync(array_values($roleIds));
+        }
+
+        if (!empty($departmentIds)) {
+            $user->departments()->sync(array_values($departmentIds));
+        }
 
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
     }
@@ -138,8 +155,8 @@ class UserController extends Controller
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users,npk,' . $user->id,
             'email' => 'nullable|email|unique:users,email,' . $user->id,
-            'role_id' => 'required',
-            'department_id' => 'required',
+            'role_ids' => 'required|array|min:1',
+            'department_ids' => 'required|array|min:1',
             'audit_type_id' => 'nullable',
         ];
 
@@ -156,13 +173,43 @@ class UserController extends Controller
                 ->with('edit_modal', $user->id);
         }
 
-        $data = $request->only(['name', 'npk', 'email', 'role_id', 'department_id', 'audit_type_id']);
+        // Resolve multiple roles & departments (allow new names)
+        $rawRoles = (array) $request->input('role_ids', []);
+        $roleIds = [];
+        foreach ($rawRoles as $r) {
+            if (is_numeric($r)) {
+                $roleIds[] = (int) $r;
+            } elseif (!empty($r)) {
+                $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
+            }
+        }
+
+        $rawDeps = (array) $request->input('department_ids', []);
+        $departmentIds = [];
+        foreach ($rawDeps as $d) {
+            if (is_numeric($d)) {
+                $departmentIds[] = (int) $d;
+            } elseif (!empty($d)) {
+                $departmentIds[] = Department::firstOrCreate(['name' => $d])->id;
+            }
+        }
+
+        $data = $request->only(['name', 'npk', 'email', 'audit_type_id']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
+
+        if (!empty($departmentIds)) {
+            $user->departments()->sync(array_values($departmentIds));
+        }
+
+        if (!empty($roleIds)) {
+            $user->roles()->sync(array_values($roleIds));
+        }
+
         return redirect()->route('master.users.index')->with('success', 'User updated successfully.');
     }
 

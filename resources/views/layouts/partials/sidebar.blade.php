@@ -4,9 +4,10 @@
 
     <div class=" shadow-lg flex items-center justify-between px-4 border-b rounded-lg">
         <div class="flex items-center gap-2">
-            <img src="{{ asset('images/madonna-inverse.png') }}" alt="Logo" id="sidebarLogo" style="width: 150px; height: auto;"
-                class="object-contain transition-all duration-300" data-full="{{ asset('images/madonna-inverse.png') }}"
-                data-icon="{{ asset('images/madonna-logo.png') }}"/>
+            <img src="{{ asset('images/madonna-inverse.png') }}" alt="Logo" id="sidebarLogo"
+                style="width: 150px; height: auto;" class="object-contain transition-all duration-300"
+                data-full="{{ asset('images/madonna-inverse.png') }}"
+                data-icon="{{ asset('images/madonna-logo.png') }}" />
         </div>
 
         <button id="toggleSidebar"
@@ -30,7 +31,7 @@
             <div class="ml-2">
                 <div x-show="open" class="sidebar-text mt-3">
                     <p class="font-semibold text-gray-200 leading-none mb-1">{{ Auth::user()->name }}</p>
-                    <p class="text-xs text-gray-100">{{ Auth::user()->role->name ?? 'User' }}</p>
+                    <p class="text-xs text-gray-100">{{ Auth::user()->roles->pluck('name')->first() ?? 'User' }}</p>
                 </div>
             </div>
         </div>

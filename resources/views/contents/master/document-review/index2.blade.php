@@ -306,7 +306,7 @@
     </div>
 
     {{-- 📄 All Edit Modals --}}
-    @if (in_array(auth()->user()->role->name, ['Admin', 'Super Admin']))
+    @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
         @foreach ($groupedByPlant as $plant => $documents)
             @foreach ($documents as $doc)
                 @include('contents.master.document-review.partials.modal-edit2', [
@@ -496,7 +496,8 @@
                 clearTimeout(timer);
                 timer = setTimeout(() => {
                     const q = searchInput.value;
-                    const url = `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                    const url =
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
                     fetchData(url);
                 }, delay);
             });
