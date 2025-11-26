@@ -8,16 +8,32 @@
                 </h5>
             </div>
 
-            <form id="rejectForm" method="POST">
+            <form id="rejectForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="doc_id" id="rejectDocumentId">
+
                 <div class="modal-body p-4">
+                    <!-- Notes -->
                     <div class="mb-3">
                         <label for="rejectNotes" class="form-label fw-semibold">Notes</label>
-                        <div id="quillRejectEditor" style="height: 200px;"></div>
-                        <input type="hidden" name="notes" id="rejectNotes">
+                        <div id="quillRejectEditor" style="height: 150px;"></div>
+                        <input type="hidden" name="notes" id="rejectNotes" required>
+                    </div>
+
+                    <!-- Upload Files -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Upload Files (optional)</label>
+                        <div id="rejectFilesContainer" class="mb-2"></div>
+                        <button type="button" id="rejectAddFile"
+                                class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-plus-circle me-1"></i> Add File
+                        </button>
+                        <p class="text-muted mt-1 small">
+                            Allowed formats: PDF, DOCX, XLSX | Max 20MB
+                        </p>
                     </div>
                 </div>
+
                 <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Cancel
@@ -30,3 +46,4 @@
         </div>
     </div>
 </div>
+

@@ -17,7 +17,7 @@
                         <div class="col-md-4">
                             <label for="document_name" class="form-label">Document Name <span
                                     class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('document_name') is-invalid @enderror"
+                            <input type="text"  placeholder="Input document name" class="form-control @error('document_name') is-invalid @enderror"
                                 id="document_name" name="document_name" value="{{ old('document_name') }}" required>
                             @error('document_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -87,7 +87,7 @@
                         <small class="text-muted">You can format your notes with bold, italic, underline, colors, and
                             more.</small>
                     </div>
-                    {{-- File --}}
+                    {{-- File
                     <div class="row g-2 mt-2" id="file-fields">
                         <label for="reminder_date" class="form-label">Upload File</label>
                         <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
@@ -108,7 +108,7 @@
                     <button type="button" class="btn btn-outline-success btn-sm mt-2" id="add-file">
                         <i class="bi bi-plus"></i> Add File
                     </button>
-                    <p class="text-xs text-gray-500 mt-1">Allowed formats: PDF, DOCX, XLSX, JPG, PNG, JPEG</p>
+                    <p class="text-xs text-gray-500 mt-1">Allowed formats: PDF, DOCX, XLSX, JPG, PNG, JPEG</p> --}}
 
                     {{-- Modal Footer --}}
                     <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4 mt-3">
