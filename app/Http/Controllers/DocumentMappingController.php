@@ -472,8 +472,8 @@ class DocumentMappingController extends Controller
         }
 
         // Kirim notifikasi
-        $users = User::where('department_id', $validated['department_id'])
-            ->whereHas('role', fn($q) => $q->whereNotIn('name', ['Admin', 'Super Admin']))
+        $users = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $validated['department_id']))
+            ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
         // foreach ($users as $user) {
@@ -659,10 +659,8 @@ class DocumentMappingController extends Controller
         }
 
         // 7️⃣ Kirim notifikasi ke semua user di departemen yang dipilih (kecuali Admin & Super Admin)
-        $users = User::where('department_id', $validated['department_id'])
-            ->whereHas('role', function ($q) {
-                $q->whereNotIn('name', ['Admin', 'Super Admin']);
-            })
+        $users = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $validated['department_id']))
+            ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
         foreach ($users as $user) {
@@ -1081,10 +1079,8 @@ class DocumentMappingController extends Controller
             }
 
             // Kirim notifikasi ke semua user di departemen terkait
-            $users = User::where('department_id', $deptId)
-                ->whereHas('role', function ($q) {
-                    $q->whereNotIn('name', ['Admin', 'Super Admin']);
-                })
+            $users = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $deptId))
+                ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
                 ->get();
 
             foreach ($users as $user) {

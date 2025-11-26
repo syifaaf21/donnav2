@@ -37,7 +37,7 @@
                         <td class="px-4 py-2">{{ ucwords(strtolower($user->name)) }}</td>
                         <td class="px-4 py-2">{{ $user->npk }}</td>
                         <td class="px-4 py-2">{{ $user->email }}</td>
-                        <td class="px-4 py-2">{{ $user->roles->pluck('name')->first() ?? '-' }}</td>
+                        <td class="px-4 py-2">{{ $user->roles->pluck('name')->join(', ') ?: '-' }}</td>
                         <td class="px-4 py-2">{{ $user->departments->pluck('name')->join(', ') ?: '-' }}</td>
                         <td class="px-4 py-2 flex gap-2">
                             {{-- Edit Button: use delegated handler to load single shared modal via AJAX --}}

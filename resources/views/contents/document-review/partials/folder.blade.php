@@ -271,8 +271,27 @@
                                             class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
 
                                             {{-- Edit --}}
-                                            @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']) ||
-                                                    auth()->user()->department_id === $doc->department_id)
+                                            @php
+                                                // Roles
+                                                $roles = auth()
+                                                    ->user()
+                                                    ->roles->pluck('name')
+                                                    ->map(fn($r) => strtolower($r))
+                                                    ->toArray();
+                                                $isAdminOrSuper =
+                                                    in_array('admin', $roles) || in_array('super admin', $roles);
+
+                                                // Ambil semua department user (many-to-many)
+                                                $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
+
+                                                // Ambil department dokumen
+                                                $docDeptId = $doc->department_id ?? ($doc->department->id ?? null);
+
+                                                // Cek apakah user punya department yg sama dengan dokumen
+                                                $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
+                                            @endphp
+
+                                            @if ($isAdminOrSuper || $sameDepartment)
                                                 <button type="button"
                                                     class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
         disabled:text-yellow-300 disabled:hover:bg-white"

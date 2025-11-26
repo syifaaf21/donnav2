@@ -26,7 +26,8 @@ class DocumentControlController extends Controller
         // Filter department kalau bukan Admin atau Super Admin
         if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
-            $query->whereHas('department', fn($q) => $q->whereIn('id', $userDeptIds));
+            // qualify column to avoid ambiguity in generated SQL
+            $query->whereHas('department', fn($q) => $q->whereIn('tm_departments.id', $userDeptIds));
         }
 
         // Filter department kalau Admin atau Super Admin pilih
@@ -61,7 +62,8 @@ class DocumentControlController extends Controller
         foreach ($toBeObsoleted as $mapping) {
 
             // Ambil user department terkait
-            $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))->get();
+            // qualify the column name to avoid ambiguity in the EXISTS subquery
+            $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))->get();
 
             // Ambil semua admin
             $adminUsers = User::whereHas('roles', fn($q) => $q->where('name', 'Admin'))->get();
@@ -267,7 +269,8 @@ class DocumentControlController extends Controller
         // Filter department kalau bukan Admin atau Super Admin
         if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
-            $query->whereHas('department', fn($q) => $q->whereIn('id', $userDeptIds));
+            // qualify column to avoid ambiguity in generated SQL
+            $query->whereHas('department', fn($q) => $q->whereIn('tm_departments.id', $userDeptIds));
         }
 
         // LOGIKA SEARCH
@@ -276,7 +279,7 @@ class DocumentControlController extends Controller
         $query->where(function ($q) use ($search) {
             $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
                 ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                
+
                 // <<< INI BAGIAN KRITIS YANG HARUS DIMODIFIKASI >>>
                 ->orWhereHas('files', function($q2) use ($search) {
                     $q2->where('original_name', 'like', "%$search%")
@@ -336,7 +339,7 @@ class DocumentControlController extends Controller
         ]);
 
         // Ambil semua user di department terkait, kecuali user yang approve
-        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
             ->where('id', '!=', Auth::id())
             ->get();
 
@@ -374,8 +377,12 @@ class DocumentControlController extends Controller
         ]);
 
         // Notifikasi ke semua user bahwa dokumen di-reject
-        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
             ->where('id', '!=', Auth::id()) // kecuali user yang approve
+            ->get();
+        // qualify for ambiguity
+        $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+            ->where('id', '!=', Auth::id())
             ->get();
         Notification::send($departmentUsers, new DocumentActionNotification(
             'rejected',

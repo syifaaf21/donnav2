@@ -43,7 +43,7 @@ class UserController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('npk', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhereHas('role', fn($r) => $r->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('roles', fn($r) => $r->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('departments', fn($d) => $d->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));
                 ;
@@ -84,8 +84,8 @@ class UserController extends Controller
                 'min:8',
                 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
             ],
-            'role_id' => 'required',
-            'department_id' => 'required',
+            'role_ids' => 'required|array|min:1',
+            'department_ids' => 'required|array|min:1',
             'audit_type_id' => 'nullable',
         ], [
             'password.required' => 'Password is required.',
@@ -94,17 +94,28 @@ class UserController extends Controller
             'password.regex' => 'Password must contain uppercase, lowercase, number, and special character.',
         ]);
 
-        // Cek Role: apakah existing ID atau teks baru
-        $roleId = is_numeric($request->role_id)
-            ? $request->role_id
-            : Role::firstOrCreate(['name' => $request->role_id])->id;
+        // Resolve role ids (allow passing either existing ids or new names)
+        $rawRoles = (array) $request->input('role_ids', []);
+        $roleIds = [];
+        foreach ($rawRoles as $r) {
+            if (is_numeric($r)) {
+                $roleIds[] = (int) $r;
+            } elseif (!empty($r)) {
+                $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
+            }
+        }
 
-        // Cek Department: apakah existing ID atau teks baru
-        $departmentId = is_numeric($request->department_id)
-            ? $request->department_id
-            : Department::firstOrCreate(['name' => $request->department_id])->id;
+        // Resolve department ids (allow either existing ids or new names)
+        $rawDeps = (array) $request->input('department_ids', []);
+        $departmentIds = [];
+        foreach ($rawDeps as $d) {
+            if (is_numeric($d)) {
+                $departmentIds[] = (int) $d;
+            } elseif (!empty($d)) {
+                $departmentIds[] = Department::firstOrCreate(['name' => $d])->id;
+            }
+        }
 
-        // Simpan user (roles & department handled via pivot)
         $user = User::create([
             'name' => $request->name,
             'npk' => $request->npk,
@@ -113,14 +124,12 @@ class UserController extends Controller
             'audit_type_id' => is_numeric($request->audit_type_id) ? $request->audit_type_id : null,
         ]);
 
-        // Sync role pivot
-        if ($roleId) {
-            $user->roles()->sync([$roleId]);
+        if (!empty($roleIds)) {
+            $user->roles()->sync(array_values($roleIds));
         }
 
-        // Sync department relation (many-to-many)
-        if ($departmentId) {
-            $user->departments()->sync([$departmentId]);
+        if (!empty($departmentIds)) {
+            $user->departments()->sync(array_values($departmentIds));
         }
 
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
@@ -146,8 +155,8 @@ class UserController extends Controller
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users,npk,' . $user->id,
             'email' => 'nullable|email|unique:users,email,' . $user->id,
-            'role_id' => 'required',
-            'department_id' => 'required',
+            'role_ids' => 'required|array|min:1',
+            'department_ids' => 'required|array|min:1',
             'audit_type_id' => 'nullable',
         ];
 
@@ -164,14 +173,26 @@ class UserController extends Controller
                 ->with('edit_modal', $user->id);
         }
 
-        // Handle role and department input (allow text -> firstOrCreate)
-        $roleId = is_numeric($request->role_id)
-            ? $request->role_id
-            : Role::firstOrCreate(['name' => $request->role_id])->id;
+        // Resolve multiple roles & departments (allow new names)
+        $rawRoles = (array) $request->input('role_ids', []);
+        $roleIds = [];
+        foreach ($rawRoles as $r) {
+            if (is_numeric($r)) {
+                $roleIds[] = (int) $r;
+            } elseif (!empty($r)) {
+                $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
+            }
+        }
 
-        $departmentId = is_numeric($request->department_id)
-            ? $request->department_id
-            : Department::firstOrCreate(['name' => $request->department_id])->id;
+        $rawDeps = (array) $request->input('department_ids', []);
+        $departmentIds = [];
+        foreach ($rawDeps as $d) {
+            if (is_numeric($d)) {
+                $departmentIds[] = (int) $d;
+            } elseif (!empty($d)) {
+                $departmentIds[] = Department::firstOrCreate(['name' => $d])->id;
+            }
+        }
 
         $data = $request->only(['name', 'npk', 'email', 'audit_type_id']);
 
@@ -181,14 +202,14 @@ class UserController extends Controller
 
         $user->update($data);
 
-        // Sync department relation (many-to-many)
-        if (isset($departmentId)) {
-            $user->departments()->sync([$departmentId]);
+        if (!empty($departmentIds)) {
+            $user->departments()->sync(array_values($departmentIds));
         }
-        // Sync role pivot
-        if (isset($roleId)) {
-            $user->roles()->sync([$roleId]);
+
+        if (!empty($roleIds)) {
+            $user->roles()->sync(array_values($roleIds));
         }
+
         return redirect()->route('master.users.index')->with('success', 'User updated successfully.');
     }
 

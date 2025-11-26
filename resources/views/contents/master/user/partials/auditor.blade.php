@@ -29,7 +29,7 @@
             </thead>
             <tbody>
                 @forelse ($users as $user)
-                    @if ($user->roles->pluck('name')->first() === 'Auditor')
+                    @if ($user->roles->pluck('name')->contains('Auditor'))
                         <tr class="border-b hover:bg-gray-50">
                             <td class="px-4 py-2">
                                 {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
@@ -62,7 +62,7 @@
                     @endif
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center text-gray-500 py-4">No auditors found.</td>
+                        <td colspan="6" class="text-center text-gray-500 py-4">No auditors found.</td>
                     </tr>
                 @endforelse
             </tbody>

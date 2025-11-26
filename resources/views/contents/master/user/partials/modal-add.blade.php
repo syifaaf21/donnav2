@@ -88,18 +88,16 @@
                         <!-- Role -->
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Role <span class="text-danger">*</span></label>
-                            <select id="role_select" name="role_id"
-                                class="form-select rounded-3 @error('role_id') is-invalid @enderror" required>
-                                <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>-- Select Role
-                                    --</option>
+                            <select id="role_select" name="role_ids[]"
+                                class="form-select rounded-3 @error('role_ids') is-invalid @enderror" multiple required>
                                 @foreach ($roles as $role)
                                     <option value="{{ $role->id }}"
-                                        {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                        {{ in_array($role->id, (array) old('role_ids', [])) ? 'selected' : '' }}>
                                         {{ $role->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('role_id')
+                            @error('role_ids')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -116,7 +114,7 @@
                         @endphp
 
                         <div class="col-md-6" id="auditTypeContainer"
-                            style="display: {{ strtolower($oldRoleName ?? '') === 'auditor' ? 'block' : 'none' }};">
+                            style="display: none;">
                             <label class="form-label fw-medium">Audit Type <span class="text-danger">*</span></label>
                             <select id="audit_type_select" name="audit_type_id"
                                 class="form-select rounded-3 @error('audit_type_id') is-invalid @enderror">
@@ -135,19 +133,16 @@
                         <!-- Department -->
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
-                            <select id="department_select" name="department_id"
-                                class="form-select rounded-3 @error('department_id') is-invalid @enderror" required>
-                                <option value="" disabled {{ old('department_id') ? '' : 'selected' }}>
-                                    -- Select Department --
-                                </option>
+                            <select id="department_select" name="department_ids[]"
+                                class="form-select rounded-3 @error('department_ids') is-invalid @enderror" multiple required>
                                 @foreach ($departments as $department)
                                     <option value="{{ $department->id }}"
-                                        {{ old('department_id') == $department->id ? 'selected' : '' }}>
+                                        {{ in_array($department->id, (array) old('department_ids', [])) ? 'selected' : '' }}>
                                         {{ $department->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('department_id')
+                            @error('department_ids')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -162,9 +157,9 @@
                         if (!roleSelect || !auditTypeContainer) return;
 
                         function toggleAuditType() {
-                            const sel = roleSelect.options[roleSelect.selectedIndex];
-                            const text = (sel?.text || '').toLowerCase();
-                            if (text.includes('auditor')) {
+                            const selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
+                            const hasAuditor = selected.some(t => t.includes('auditor'));
+                            if (hasAuditor) {
                                 auditTypeContainer.style.display = 'block';
                                 if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');
                             } else {

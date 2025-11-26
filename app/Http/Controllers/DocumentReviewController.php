@@ -408,7 +408,7 @@ class DocumentReviewController extends Controller
         $mapping->timestamps = true;
 
         // Hanya user departemen terkait (kecuali Admin/Super Admin)
-        $targetUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))
+        $targetUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
@@ -454,7 +454,7 @@ class DocumentReviewController extends Controller
         ]);
         $mapping->timestamps = true;
 
-        $targetUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))
+        $targetUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 

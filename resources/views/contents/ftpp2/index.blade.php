@@ -491,7 +491,7 @@
             return {
                 isOpen: false,
                 loading: false,
-                content: '',
+                pdfUrl: null,
                 currentId: null,
 
                 openShowModal(id) {
@@ -499,17 +499,25 @@
                     this.loading = true;
                     this.currentId = id;
 
-                    fetch(`/ftpp/${id}`)
-                        .then(res => res.text())
-                        .then(html => {
-                            this.content = html;
-                            this.loading = false;
-                        });
+                    // Use preview-pdf route in iframe (no HTML fetch)
+                    this.pdfUrl = `/ftpp/${id}/preview-pdf`;
+
+                    // Wait briefly to allow iframe to start loading, then hide loading.
+                    // You can also listen for iframe load event if needed.
+                    const iframe = document.getElementById('previewFrame');
+                    if (iframe) {
+                        iframe.onload = () => { this.loading = false; };
+                    } else {
+                        // fallback: remove loading after 800ms
+                        setTimeout(() => { this.loading = false; }, 800);
+                    }
                 },
 
                 close() {
                     this.isOpen = false;
-                    this.content = '';
+                    this.pdfUrl = null;
+                    this.loading = false;
+                    this.currentId = null;
                 },
             };
         }
