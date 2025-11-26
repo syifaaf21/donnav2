@@ -123,10 +123,10 @@ class DocumentReviewController extends Controller
 
                 // Helper function untuk cek collection
                 $containsInCollection = fn($collection, $property) =>
-                    $collection->contains(
-                        fn($item) =>
-                        str_contains(strtolower($item?->$property ?? ''), $search)
-                    );
+                $collection->contains(
+                    fn($item) =>
+                    str_contains(strtolower($item?->$property ?? ''), $search)
+                );
 
                 return
                     // Dokumen langsung
@@ -390,12 +390,7 @@ class DocumentReviewController extends Controller
                 }
             }
         }
-        // Hapus semua file reject terkait mapping ini
-        $rejectFiles = $mapping->files()->where('original_name', 'like', '%_reject_%')->get();
-        foreach ($rejectFiles as $file) {
-            Storage::disk('public')->delete($file->file_path);
-            $file->delete();
-        }
+
         // Update notes
         $mapping->notes = $request->notes;
 
@@ -484,43 +479,14 @@ class DocumentReviewController extends Controller
 
     public function reject(Request $request, $id)
     {
-        $mapping = DocumentMapping::with('department', 'files')->findOrFail($id);
-        $rejectedStatus = Status::firstOrCreate(['name' => 'Rejected']);
+        $mapping = DocumentMapping::with('department')->findOrFail($id);
+        $rejectedStatus = Status::where('name', 'Rejected')->first();
 
-        // Validasi file reject
-        $request->validate([
-            'reject_files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
-            'notes' => 'required|string|max:500',
-        ]);
-
-        $uploadedFiles = $request->file('reject_files', []);
-
-        $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
-
-        foreach ($uploadedFiles as $uploadedFile) {
-            $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $uploadedFile->getClientOriginalExtension();
-            $timestamp = now()->format('Ymd_His');
-
-            // Tambahkan prefix _reject_
-            $filename = $baseName . '_reject_' . $timestamp . '.' . $extension;
-            $path = $uploadedFile->storeAs($folder, $filename, 'public');
-
-            $mapping->files()->create([
-                'file_path' => $path,
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'file_type' => $uploadedFile->getClientMimeType(),
-                'uploaded_by' => Auth::id(),
-                'is_active' => true, // aktif saat reject
-            ]);
-        }
-
-        // Update status & notes
         $mapping->timestamps = false;
         $mapping->updateQuietly([
-            'status_id' => $rejectedStatus->id,
+            'status_id' => $rejectedStatus->id ?? $mapping->status_id,
             'notes' => $request->notes,
-            'user_id' => Auth::id(),
+            'user_id' => auth()->id(),
         ]);
         $mapping->timestamps = true;
 
@@ -528,6 +494,7 @@ class DocumentReviewController extends Controller
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
+        // Gunakan method private yang sama
         $plant = $this->getPlantFromMapping($mapping);
 
         $url = route('document-review.showFolder', [
@@ -538,7 +505,7 @@ class DocumentReviewController extends Controller
         Notification::send($targetUsers, new DocumentActionNotification(
             action: 'rejected',
             byUser: auth()->user()->name,
-            documentNumber: $mapping->document_number,
+            documentNumber: $mapping->document_number, // Hanya document_number
             url: $url,
             departmentName: $mapping->department?->name,
         ));

@@ -198,7 +198,8 @@ class DocumentControlController extends Controller
                 'original_name' => $uploadedFile->getClientOriginalName(),
                 'file_type' => $uploadedFile->getClientMimeType(),
                 'uploaded_by' => Auth::id(),
-                'is_active' => true,
+                'is_active' => false,
+
             ]);
 
             // Mark old file as inactive and link to replacer
@@ -240,73 +241,6 @@ class DocumentControlController extends Controller
         return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
 
-    public function archived(Request $request)
-    {
-        $query = DocumentMapping::with([
-            'document',
-            'department',
-            'status',
-            // Load files secara spesifik: is_active=false DAN belum waktunya hard delete
-            'files' => function ($q) {
-                $q->where('is_active', false)
-                    ->where('marked_for_deletion_at', '>', now());
-            }
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'control'));
-
-        // Filter: Hanya tampilkan mapping yang memiliki file yang sedang diarsip
-        $query->where(function ($q) {
-            // $q->whereHas('status', fn($q2) => $q2->where('name', 'Obsolete'));
-
-            // Atau memiliki file lama yang belum melewati masa hard delete (1 tahun)
-            $q->orWhereHas(
-                'files',
-                fn($q2) => $q2->where('is_active', false)
-                    ->where('marked_for_deletion_at', '>', now())
-            );
-        });
-
-        // Filter department kalau bukan Admin atau Super Admin
-        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
-            $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
-            // qualify column to avoid ambiguity in generated SQL
-            $query->whereHas('department', fn($q) => $q->whereIn('tm_departments.id', $userDeptIds));
-        }
-
-        // LOGIKA SEARCH
-        if ($request->filled('search')) {
-        $search = $request->search;
-        $query->where(function ($q) use ($search) {
-            $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
-
-                // <<< INI BAGIAN KRITIS YANG HARUS DIMODIFIKASI >>>
-                ->orWhereHas('files', function($q2) use ($search) {
-                    $q2->where('original_name', 'like', "%$search%")
-                       ->where('is_active', false) // HANYA mencari file yang non-aktif (arsip)
-                       ->where('marked_for_deletion_at', '>', now()); // HANYA mencari file yang belum di-hard delete
-                });
-                // <<< AKHIR MODIFIKASI >>>
-
-        });
-    }
-        // --- PENGGUNAAN PAGINATE ---
-        // Gunakan paginate dan tambahkan parameter query yang ada
-        $documentsMapping = $query->paginate(10)->appends($request->query());
-
-        $departments = Department::all();
-        if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-            return view('contents.document-control.partials.archived-table', compact(
-                'documentsMapping',
-                'departments'
-            ))->render();
-        }
-        return view('contents.document-control.partials.archived', compact(
-            'documentsMapping',
-            'departments'
-        ));
-    }
-
     public function approve(Request $request, DocumentMapping $mapping)
     {
         // Hanya admin atau super admin yang bisa approve
@@ -337,6 +271,10 @@ class DocumentControlController extends Controller
             'reminder_date' => $newReminderDate,
             'user_id' => Auth::id(), // siapa yang approve
         ]);
+
+        // Mark associated files as active in `tt_document_files`
+        // (set is_active = true for all files related to this mapping)
+        $mapping->files()->update(['is_active' => true]);
 
         // Ambil semua user di department terkait, kecuali user yang approve
         $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))

@@ -711,15 +711,6 @@
                         `/document-review/${docId}/reject`;
                 });
 
-                let quillReject = new Quill('#quillRejectEditor', {
-                    theme: 'snow'
-                });
-
-                document.getElementById('rejectForm').addEventListener('submit', function() {
-                    let html = quillReject.root.innerHTML;
-                    document.getElementById('rejectNotes').value = html;
-                });
-
                 function openRejectModal(docId, plant, docCode, notes) {
                     document.getElementById('rejectDocumentId').value = docId;
                     document.getElementById('rejectPlant').value = plant;

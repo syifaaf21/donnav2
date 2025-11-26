@@ -1,4 +1,4 @@
-<!-- Reject Document Modal -->
+<!-- Reject Document Modal (Notes Only) -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
         <div class="modal-content border-0 rounded-4 shadow-lg">
@@ -8,29 +8,16 @@
                 </h5>
             </div>
 
-            <form id="rejectForm" method="POST" enctype="multipart/form-data">
+            <form id="rejectForm" method="POST">
                 @csrf
                 <input type="hidden" name="doc_id" id="rejectDocumentId">
 
                 <div class="modal-body p-4">
                     <!-- Notes -->
                     <div class="mb-3">
-                        <label for="rejectNotes" class="form-label fw-semibold">Notes</label>
+                        <label for="rejectNotes" class="form-label fw-semibold">Notes <span class="text-danger">*</span></label>
                         <div id="quillRejectEditor" style="height: 150px;"></div>
                         <input type="hidden" name="notes" id="rejectNotes" required>
-                    </div>
-
-                    <!-- Upload Files -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Upload Files (optional)</label>
-                        <div id="rejectFilesContainer" class="mb-2"></div>
-                        <button type="button" id="rejectAddFile"
-                                class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-plus-circle me-1"></i> Add File
-                        </button>
-                        <p class="text-muted mt-1 small">
-                            Allowed formats: PDF, DOCX, XLSX | Max 20MB
-                        </p>
                     </div>
                 </div>
 
@@ -47,3 +34,24 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inisialisasi Quill
+    var quill = new Quill('#quillRejectEditor', {
+        theme: 'snow',
+        placeholder: 'Write the rejection notes...',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                ['link']
+            ]
+        }
+    });
+
+    // Submit form: pindahkan konten Quill ke input hidden
+    var form = document.getElementById('rejectForm');
+    form.addEventListener('submit', function(e) {
+        document.getElementById('rejectNotes').value = quill.root.innerHTML.trim();
+    });
+});
+</script>
