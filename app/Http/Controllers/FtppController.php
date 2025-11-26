@@ -233,12 +233,110 @@ class FtppController extends Controller
 
     public function previewPdf($id)
     {
-        $finding = AuditFinding::with(['auditeeAction.file', 'file'])->findOrFail($id);
+        // Ambil data finding beserta relasi
+        $finding = AuditFinding::with([
+            'audit',
+            'subAudit',
+            'findingCategory',
+            'auditor',
+            'auditee',
+            'department',
+            'process',
+            'product',
+            'subKlausuls',
+            'file',
+            'status',
+            'auditeeAction',
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
+            'auditeeAction.file', // lampiran
+        ])->findOrFail($id);
+
+        // Set stamp image URLs when signature/approval flags are set (value == 1)
+        if ($finding->auditeeAction) {
+            // Dept head signature (show manager approval image)
+            if (!empty($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1) {
+                $finding->dept_head_signature_url = public_path('images/mgr-approve.png');
+            }
+
+            // Leader / Supervisor signature (show user approval image)
+            if (!empty($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1) {
+                $finding->ldr_spv_signature_url = public_path('images/usr-approve.png');
+            }
+
+            // Acknowledge by lead auditor: if flag present on finding or auditeeAction, show lead auditor stamp
+            if (
+                (!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1)
+                || (!empty($finding->auditeeAction->acknowledge_by_lead_auditor) && $finding->auditeeAction->acknowledge_by_lead_auditor == 1)
+            ) {
+                $finding->acknowledge_by_lead_auditor_url = public_path('images/stamp-lead-auditor.png');
+            }
+
+            // Verified by auditor: if flag present on finding or auditeeAction, show internal auditor stamp
+            if (
+                (!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1)
+                || (!empty($finding->auditeeAction->verified_by_auditor) && $finding->auditeeAction->verified_by_auditor == 1)
+            ) {
+                $finding->verified_by_auditor_url = public_path('images/stamp-internal-auditor.png');
+            }
+        } else {
+            // In case auditeeAction is absent but flags are on the finding
+            if (!empty($finding->dept_head_signature) && $finding->dept_head_signature == 1) {
+                $finding->dept_head_signature_url = public_path('images/mgr-approve.png');
+            }
+            if (!empty($finding->ldr_spv_signature) && $finding->ldr_spv_signature == 1) {
+                $finding->ldr_spv_signature_url = public_path('images/usr-approve.png');
+            }
+            if (!empty($finding->acknowledge_by_lead_auditor) && $finding->acknowledge_by_lead_auditor == 1) {
+                $finding->acknowledge_by_lead_auditor_url = public_path('images/stamp-lead-auditor.png');
+            }
+            if (!empty($finding->verified_by_auditor) && $finding->verified_by_auditor == 1) {
+                $finding->verified_by_auditor_url = public_path('images/stamp-internal-auditor.png');
+            }
+        }
+
+        // --- Ensure all attachment items have a full filesystem URL so DomPDF can embed images ---
+        if ($finding->file) {
+            foreach ($finding->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
+                $diskPath = storage_path('app/public/' . $file->file_path);
+
+                // Prefer public/storage (symlink) because DomPDF chroot includes public path by default.
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    // fallback to absolute file URI (may require chroot override)
+                    $file->full_url = 'file://' . $diskPath;
+                } else {
+                    $file->full_url = null;
+                }
+            }
+        }
+
+        // Tambah filesystem path untuk semua lampiran pada auditeeAction (lampiran auditee) so DomPDF can embed them
+        if ($finding->auditeeAction && $finding->auditeeAction->file) {
+            foreach ($finding->auditeeAction->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
+                $diskPath = storage_path('app/public/' . $file->file_path);
+
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    $file->full_url = 'file://' . $diskPath;
+                } else {
+                    $file->full_url = null;
+                }
+            }
+        }
+        // --- end attach full_url block ---
 
         // Generate main PDF
+        // ensure DomPDF can access local files: enable remote and set chroot to project base
         $mainPdf = PDF::setOptions([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
+            'chroot' => base_path(), // allow access to public/storage and storage paths
         ])->loadView('contents.ftpp2.pdf', compact('finding'))->output();
 
         if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
@@ -410,11 +508,15 @@ class FtppController extends Controller
         // Tambah filesystem path untuk semua lampiran pada audit finding (images/files) so DomPDF can embed them
         if ($finding->file) {
             foreach ($finding->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
                 $diskPath = storage_path('app/public/' . $file->file_path);
-                if (file_exists($diskPath)) {
-                    $file->full_url = $diskPath;
+
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    $file->full_url = 'file://' . $diskPath;
                 } else {
-                    $file->full_url = public_path('storage/' . $file->file_path);
+                    $file->full_url = null;
                 }
             }
         }
@@ -422,11 +524,15 @@ class FtppController extends Controller
         // Tambah filesystem path untuk semua lampiran pada auditeeAction (lampiran auditee) so DomPDF can embed them
         if ($finding->auditeeAction && $finding->auditeeAction->file) {
             foreach ($finding->auditeeAction->file as $file) {
+                $publicPath = public_path('storage/' . $file->file_path);
                 $diskPath = storage_path('app/public/' . $file->file_path);
-                if (file_exists($diskPath)) {
-                    $file->full_url = $diskPath;
+
+                if (file_exists($publicPath)) {
+                    $file->full_url = $publicPath;
+                } elseif (file_exists($diskPath)) {
+                    $file->full_url = 'file://' . $diskPath;
                 } else {
-                    $file->full_url = public_path('storage/' . $file->file_path);
+                    $file->full_url = null;
                 }
             }
         }

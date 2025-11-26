@@ -1,49 +1,84 @@
-{{-- ✅ Modal Revise Document --}}
-<div class="modal fade" id="reviseModal" tabindex="-1" aria-labelledby="reviseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form method="POST" action="" enctype="multipart/form-data" id="reviseForm"
-            class="modal-content border-0 rounded-4 shadow-lg">
+<!-- Modal Revise -->
+<div id="modal-revise" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg relative">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center px-4 py-3 border-b">
+            <h3 class="text-lg font-semibold text-gray-700">
+                Upload Document Revision
+            </h3>
+            <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeReviseModal()">✕</button>
+        </div>
+
+        <!-- Form -->
+        <form id="reviseFormDynamic" method="POST" enctype="multipart/form-data"
+            class="px-4 py-4 space-y-4 max-h-[80vh] overflow-y-auto">
             @csrf
-            {{-- Header --}}
-            <div class="modal-header bg-light text-dark rounded-top-4">
-                <h5 class="modal-title fw-semibold" id="reviseModalLabel">
-                    <i class="bi bi-arrow-clockwise me-2"></i> Edit Document
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
 
-            {{-- Body --}}
-            <div class="modal-body p-4" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+            <!-- Existing Files -->
+            <div id="reviseFilesContainer" class="mb-4"></div>
 
-                {{-- List existing files (filled by JS) --}}
-                <div class="existing-files-container mb-3"></div>
+            <!-- Add New Files -->
+            <div class="mb-4">
+                <div id="new-files-container"></div>
 
-                {{-- Upload new file --}}
-                <div class="mt-3">
-                    <label class="form-label fw-semibold">Upload New File (Optional)</label>
-                    <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx">
-                    <small class="text-muted">Jika Anda upload file baru, file lama akan digantikan.</small>
-                </div>
-
-
-                {{-- Notes revisi --}}
-                <div class="mt-3">
-                    <label for="notesInput" class="form-label fw-semibold">Notes Revision <span
-                            class="text-danger">*</span></label>
-                    <input type="text" name="notes" id="notesInput" class="form-control border-1 shadow-sm"
-                        placeholder="Catatan revisi untuk file ini..." required>
-                </div>
-            </div>
-
-            {{-- Footer --}}
-            <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i> Close
+                <button type="button" id="add-file"
+                    class="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition">
+                    + Add File
                 </button>
-                <button type="submit" class="btn btn-warning px-4">
-                    <i class="bi bi-save2 me-1"></i> Submit
+
+                <p class="text-xs text-gray-500 mt-1">
+                    Allowed formats: PDF, DOCX, XLSX
+                </p>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Notes Revision <span
+                        class="text-red-500">*</span></label>
+
+                <!-- Quill container -->
+                <div id="quillEditor" class="bg-white border border-gray-300 rounded p-2" style="height: 150px;">
+                </div>
+
+                <!-- Hidden input untuk submit -->
+                <input type="hidden" name="notes" id="notesInput" required>
+            </div>
+
+
+            <!-- Footer -->
+            <div class="flex justify-between items-center border-t pt-3">
+                <button type="button"
+                    class="px-4 py-1.5 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+                    onclick="closeReviseModal()">
+                    Cancel
+                </button>
+
+                <button type="submit" class="px-4 py-1.5 bg-sky-600 text-white rounded hover:bg-sky-700 transition">
+                    Submit
                 </button>
             </div>
         </form>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi Quill
+        var quill = new Quill('#quillEditor', {
+            theme: 'snow',
+            placeholder: 'Write your revision notes...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline'], // basic formatting
+                    ['link'] // link
+                ]
+            }
+        });
+
+        // Saat submit, pindahkan konten Quill ke input hidden
+        var form = document.getElementById('reviseFormDynamic');
+        form.addEventListener('submit', function(e) {
+            document.getElementById('notesInput').value = quill.root.innerHTML.trim();
+        });
+    });
+</script>

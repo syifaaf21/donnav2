@@ -251,12 +251,16 @@
                                                 </div>
                                             </div>
                                         @elseif(count($files) === 1)
+                                            @php
+                                                $fileUrl = $files[0]['url'] ?? '#';
+                                            @endphp
                                             <button type="button" title="View File"
                                                 class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 text-white bg-cyan-500 hover:bg-cyan-600 view-file-btn"
-                                                data-file="{{ $files[0]['url'] }}">
+                                                data-file="{{ $fileUrl }}">
                                                 <i data-feather="file-text" class="w-4 h-4"></i>
                                             </button>
                                         @endif
+
                                     </div>
 
                                     {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
@@ -293,8 +297,8 @@
 
                                             @if ($isAdminOrSuper || $sameDepartment)
                                                 <button type="button"
-                                                    class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
-        disabled:text-yellow-300 disabled:hover:bg-white"
+                                                    class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
+    disabled:text-yellow-300 disabled:hover:bg-white"
                                                     data-doc-id="{{ $doc->id }}" title="Edit Document"
                                                     @if ($statusName === 'need review') disabled @endif>
                                                     <i class="bi bi-pencil mr-2"></i> Edit
@@ -537,54 +541,147 @@
                         }
                     });
                 });
-                // === Modal Revise / Edit Document ===
-                document.querySelectorAll('button[data-doc-id]').forEach(btn => {
+                // === MODAL REVISE (Document Review) ===
+
+                const reviseModal = document.getElementById('modal-revise');
+                const reviseForm = document.getElementById('reviseFormDynamic');
+                const filesContainer = document.getElementById('reviseFilesContainer');
+                const newFilesContainer = document.getElementById('new-files-container');
+                const addFileBtn = document.getElementById('add-file');
+
+                /**
+                 * OPEN MODAL
+                 * Triggered by any button: <button data-doc-id="123">
+                 */
+                document.querySelectorAll('.open-revise-modal').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const docId = btn.getAttribute('data-doc-id');
-                        const reviseModal = new bootstrap.Modal(document.getElementById('reviseModal'));
-                        const reviseForm = document.getElementById('reviseForm');
-                        const filesContainer = document.querySelector('.existing-files-container');
 
-                        // Ubah action form
-                        reviseForm.action =
-                            `/document-review/${docId}/revise`; // ubah sesuai route kamu
+                        // Set form action
+                        reviseForm.action = `/document-review/${docId}/revise`;
 
-                        // Kosongkan isi dulu
-                        filesContainer.innerHTML = '<p class="text-muted">Loading files...</p>';
+                        // Reset dynamic fields
+                        filesContainer.innerHTML =
+                            "<p class='text-sm text-gray-500'>Loading files...</p>";
+                        newFilesContainer.innerHTML = "";
 
-                        // Ambil data file via AJAX
+                        // Load existing files from backend
                         fetch(`/document-review/${docId}/files`)
                             .then(res => res.json())
                             .then(data => {
-                                if (data.success && data.files.length > 0) {
-                                    // Ambil hanya file terakhir
-                                    const latestFile = data.files[data.files.length - 1];
-
-                                    filesContainer.innerHTML = `
-                <label class="form-label fw-semibold">Existing File</label>
-                <ul class="list-group">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>📄 ${latestFile.original_name}</span>
-                        <a href="/storage/${latestFile.file_path}" target="_blank" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye"></i> View
-                        </a>
-                    </li>
-                </ul>
-            `;
-                                } else {
+                                if (!data.success || data.files.length === 0) {
                                     filesContainer.innerHTML =
-                                        '<p class="text-muted">No files available for revision.</p>';
+                                        `<p class="text-sm text-gray-500">No existing files.</p>`;
+                                    return;
                                 }
+
+                                // Render file list
+                                filesContainer.innerHTML = `
+                        <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
+                        <div class="space-y-2">
+                        ${data.files.map(file => `
+                                                                            <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
+                                                                                <span class="text-sm">📄 ${file.original_name}</span>
+
+                                                                                <div class="flex gap-2">
+                                                                                    <a href="/storage/${file.file_path}"
+                                                                                       target="_blank"
+                                                                                       class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                       View
+                                                                                    </a>
+
+                                                                                    <button type="button"
+                                                                                        class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                        data-file-id="${file.id}">
+                                                                                        Replace
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        `).join('')}
+                        </div>
+                    `;
                             })
-                            .catch(err => {
-                                console.error('Error loading files:', err);
+                            .catch(() => {
                                 filesContainer.innerHTML =
-                                    '<p class="text-danger">Failed to load files.</p>';
+                                    `<p class="text-sm text-red-500">Failed to load file list.</p>`;
                             });
 
-                        reviseModal.show();
+                        // Show modal
+                        reviseModal.classList.remove('hidden');
                     });
                 });
+
+
+                /**
+                 * CLOSE MODAL
+                 */
+                window.closeReviseModal = function() {
+                    reviseModal.classList.add('hidden');
+                    newFilesContainer.innerHTML = "";
+                };
+
+
+                /**
+                 * ADD FILE BUTTON (Manual Add – Not tied to replacing existing file)
+                 */
+                addFileBtn.addEventListener('click', () => {
+                    newFilesContainer.insertAdjacentHTML('beforeend', renderNewFileInput());
+                });
+
+
+                /**
+                 * REPLACE BUTTON (Linked to existing file)
+                 */
+                filesContainer.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('replace-btn')) return;
+
+                    const fileId = e.target.getAttribute('data-file-id');
+
+                    newFilesContainer.insertAdjacentHTML(
+                        'beforeend',
+                        renderNewFileInput(fileId)
+                    );
+                });
+
+
+                /**
+                 * TEMPLATE: Input File Baru
+                 */
+                function renderNewFileInput(oldFileId = null) {
+                    return `
+                        <div class="border rounded p-3 bg-white shadow-sm relative mt-2">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                New File ${oldFileId ? "(Replacing existing file)" : ""}
+                            </label>
+
+                            <input type="file"
+                                name="revision_files[]"
+                                required
+                                class="block w-full border border-gray-300 rounded p-1 text-sm">
+
+                            ${oldFileId ? `
+                                                                                <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
+                                                                            ` : `
+                                                                                <input type="hidden" name="revision_file_ids[]" value="">
+                                                                            `}
+
+                                    <button type="button"
+                                            class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">
+                                        ✕
+                                    </button>
+                                </div>
+                            `;
+                }
+
+                /**
+                 * REMOVE DYNAMIC FILE INPUT
+                 */
+                newFilesContainer.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('remove-file-btn')) {
+                        e.target.parentElement.remove();
+                    }
+                });
+
 
                 // === APPROVE MODAL ===
                 document.querySelectorAll('.btn-approve').forEach(btn => {

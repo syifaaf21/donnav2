@@ -170,7 +170,7 @@
                             </div>
 
                             {{-- File Upload --}}
-                            <div class="col-12 mt-10">
+                            {{-- <div class="col-12 mt-10">
                                 <label class="form-label fw-medium">Upload File</label>
                                 <div id="file-upload-container">
                                     <div class="input-group mb-2">
@@ -183,7 +183,7 @@
                                 </div>
                                 <small class="text-muted d-block mt-1">Allowed Format: PDF, DOCX, EXCEL</small>
                                 <div class="invalid-feedback">At least one file is required.</div>
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
 
