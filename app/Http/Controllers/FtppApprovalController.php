@@ -22,7 +22,7 @@ use App\Models\WhyCauses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class FtppAprovalController extends Controller
+class FtppApprovalController extends Controller
 {
     public function index()
     {
@@ -40,24 +40,43 @@ class FtppAprovalController extends Controller
         $findingCategories = FindingCategory::all();
 
         $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
-        $findings = AuditFinding::with([
+
+        $user = auth()->user();
+        $userDeptIds = $user->departments->pluck('id')->toArray();
+
+        // jika user adalah admin, super admin, atau auditor => tampilkan semua findings
+        $isPrivileged = $user->roles()->whereIn('name', ['admin', 'super admin', 'auditor'])->exists();
+
+        $query = AuditFinding::with([
             'auditee',
             'auditor',
             'findingCategory',
-            'department',   // 👈 tambahkan ini
-            'status',        // 👈 dan ini
+            'department',
+            'status',
             'auditeeAction',
             'auditeeAction.deptHead',
             'auditeeAction.auditor',
             'auditeeAction.leadAuditor',
-            'auditeeAction.auditor',
-        ])
-            ->orderByDesc('created_at')
-            ->get();
+        ])->orderByDesc('created_at');
 
-        $user = auth()->user();
+        if (! $isPrivileged) {
+            $query->whereIn('department_id', $userDeptIds);
+        }
 
-        return view('contents.ftpp2.approval.index', compact('findings', 'departments', 'processes', 'products', 'auditors', 'klausuls', 'auditTypes', 'findingCategories', 'user', 'subAudit'));
+        $findings = $query->get();
+
+        return view('contents.ftpp2.approval.index', compact(
+            'findings',
+            'departments',
+            'processes',
+            'products',
+            'auditors',
+            'klausuls',
+            'auditTypes',
+            'findingCategories',
+            'user',
+            'subAudit'
+        ));
     }
 
     public function getData($auditTypeId)

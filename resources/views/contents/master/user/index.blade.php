@@ -26,7 +26,7 @@
         </div>
 
         {{-- Tabs --}}
-        <ul class="nav nav-tabs mb-3" id="userTabs" role="tablist">
+        <ul class="nav nav-tabs" id="userTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane"
                     type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">

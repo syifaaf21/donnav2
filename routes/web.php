@@ -12,8 +12,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FindingCategoryController;
-use App\Http\Controllers\Ftpp2Controller;
-use App\Http\Controllers\FtppAprovalController;
+use App\Http\Controllers\FtppApprovalController;
 use App\Http\Controllers\FtppController;
 use App\Http\Controllers\FtppMasterController;
 use App\Http\Controllers\KlausulController;
@@ -238,13 +237,13 @@ Route::middleware('auth')->group(function () {
         });
     });
     Route::prefix('approval')->name('approval.')->group(function () {
-        Route::get('/get-data/{auditTypeId}', [FtppAprovalController::class, 'getData']);
-        Route::get('/', [FtppAprovalController::class, 'index'])->name('index');
-        Route::get('/{id}', [FtppAprovalController::class, 'edit'])->name('edit');
-        Route::post('/', [FtppAprovalController::class, 'store'])->name('store');
-        Route::post('/ldr-spv-sign', [FtppAprovalController::class, 'ldrSpvSign'])->name('ldr-spv-sign');
-        Route::post('/dept-head-sign', [FtppAprovalController::class, 'deptheadSign'])->name('dept-head-sign');
-        Route::put('/{id}', [FtppAprovalController::class, 'update'])->name('update');
+        Route::get('/get-data/{auditTypeId}', [FtppApprovalController::class, 'getData']);
+        Route::get('/', [FtppApprovalController::class, 'index'])->name('index');
+        Route::get('/{id}', [FtppApprovalController::class, 'edit'])->name('edit');
+        Route::post('/', [FtppApprovalController::class, 'store'])->name('store');
+        Route::post('/ldr-spv-sign', [FtppApprovalController::class, 'ldrSpvSign'])->name('ldr-spv-sign');
+        Route::post('/dept-head-sign', [FtppApprovalController::class, 'deptheadSign'])->name('dept-head-sign');
+        Route::put('/{id}', [FtppApprovalController::class, 'update'])->name('update');
     });
 
     Route::get('/filter-klausul/{auditType}', [FtppController::class, 'filterKlausul']);
@@ -257,9 +256,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/get-auditee/{departmentId}', [FtppController::class, 'getAuditee']);
 
-    Route::post('/auditor-verify', [FtppAprovalController::class, 'auditorVerify']);
-    Route::post('/auditor-return', [FtppAprovalController::class, 'auditorReturn']);
-    Route::post('/lead-auditor-acknowledge', [FtppAprovalController::class, 'leadAuditorAcknowledge']);
+    Route::post('/auditor-verify', [FtppApprovalController::class, 'auditorVerify']);
+    Route::post('/auditor-return', [FtppApprovalController::class, 'auditorReturn']);
+    Route::post('/lead-auditor-acknowledge', [FtppApprovalController::class, 'leadAuditorAcknowledge']);
 
     // Route::get('/test-pdf/{id}', function ($id) {
     //     $finding = \App\Models\AuditFinding::with(['auditeeAction.file'])->findOrFail($id);
