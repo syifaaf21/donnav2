@@ -4,7 +4,7 @@
 @section('content')
     <div class="p-2" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
         <div class="mb-6">
-            <h4 class="text-gray-800">Audit Findings Monitoring & Auditee Actions</h4>
+            <div class="fw-semibold text-gray-800">Audit Findings Monitoring & Auditee Actions</div>
         </div>
 
         <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -241,12 +241,14 @@
                                                         <!-- ITEM: Assign Auditee Action -->
                                                         @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
                                                         @if ($statusName === 'open')
-                                                            <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
-                                                                @click="open = false"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
-                                                                <i data-feather="edit" class="w-4 h-4"></i>
-                                                                Edit Audit Finding
-                                                            </a>
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                                <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                                    Edit Audit Finding
+                                                                </a>
+                                                            @endif
                                                         @endif
                                                         @if ($statusName === 'need revision')
                                                             <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
@@ -263,12 +265,14 @@
                                                                 Edit Auditee Action
                                                             </a>
                                                         @else
-                                                            <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
-                                                                @click="open = false"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                <i data-feather="edit-2" class="w-4 h-4"></i>
-                                                                Assign Auditee Action
-                                                            </a>
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
+                                                                <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                                    Assign Auditee Action
+                                                                </a>
+                                                            @endif
                                                         @endif
                                                         @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                                                             <!-- ITEM: Delete -->
@@ -379,12 +383,12 @@
                                         :style="\`top:\${y}px; left:\${x}px; width:170px;\`">
 
                                         ${statusName.toLowerCase() !== 'open' ? `
-                                                                    <button type="button"
-                                                                        @click="open = false; $dispatch('open-show-modal', ${f.id})"
-                                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                            <i data-feather="eye" class="w-4 h-4"></i> Show
-                                                                    </button>
-                                                                ` : ''}
+                                                                            <button type="button"
+                                                                                @click="open = false; $dispatch('open-show-modal', ${f.id})"
+                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                    <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                                            </button>
+                                                                        ` : ''}
 
                                         <a href="/ftpp/${f.id}/download"
                                             @click="open = false"
@@ -394,17 +398,17 @@
 
                                         ${f.status.toLowerCase() === 'need revision'
                                             ? `
-                                                                        <a href="/ftpp/auditee-action/${f.id}/edit"
-                                                                            @click="open = false"
-                                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                            <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
-                                                                        </a>`
+                                                                                <a href="/ftpp/auditee-action/${f.id}/edit"
+                                                                                    @click="open = false"
+                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                    <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
+                                                                                </a>`
                                             : `
-                                                                        <a href="/ftpp/auditee-action/${f.id}"
-                                                                            @click="open = false"
-                                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                            <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
-                                                                        </a>`
+                                                                                <a href="/ftpp/auditee-action/${f.id}"
+                                                                                    @click="open = false"
+                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                    <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
+                                                                                </a>`
                                         }
 
                                         <form method="POST" action="/ftpp/${f.id}"
@@ -506,10 +510,14 @@
                     // You can also listen for iframe load event if needed.
                     const iframe = document.getElementById('previewFrame');
                     if (iframe) {
-                        iframe.onload = () => { this.loading = false; };
+                        iframe.onload = () => {
+                            this.loading = false;
+                        };
                     } else {
                         // fallback: remove loading after 800ms
-                        setTimeout(() => { this.loading = false; }, 800);
+                        setTimeout(() => {
+                            this.loading = false;
+                        }, 800);
                     }
                 },
 

@@ -129,6 +129,11 @@
             <canvas id="ftppStatusChart" height="250"></canvas>
         </div>
 
+        <div class="card shadow border-0 p-3 mb-4">
+            <h5 class="fw-bold mb-2">Findings per Department</h5>
+            <canvas id="findingLineChart" height="300"></canvas>
+        </div>
+
     </div>
     <button id="scrollUpBtn"
         class="fixed bottom-5 right-5 w-12 h-12 bg-sky-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-sky-600 transition-opacity"
@@ -326,8 +331,6 @@
 
         });
 
-
-
         // Render Review Documents Chart
         new Chart(document.getElementById('reviewDocsChart').getContext('2d'), {
             type: 'bar',
@@ -377,6 +380,67 @@
                 }
             }
         });
+
+        /* ===================== FINDING PER DEPARTMENT — LINE CHART ===================== */
+            const findingLabels = @json($deptLabels);
+            const findingData = @json($deptTotals);
+
+            const shortFindingLabels = findingLabels.map(name => {
+                const words = name.split(' ');
+                return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
+            });
+
+            new Chart(document.getElementById('findingLineChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: shortFindingLabels,
+                    datasets: [{
+                        label: 'Total Findings',
+                        data: findingData,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13,110,253,0.2)',
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                padding: 10,
+                            }
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            grid: {
+                                color: '#e9ecef'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
         document.addEventListener('DOMContentLoaded', function() {
             const scrollBtn = document.getElementById('scrollUpBtn');
 

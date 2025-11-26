@@ -47,6 +47,10 @@ class FtppAprovalController extends Controller
             'department',   // 👈 tambahkan ini
             'status',        // 👈 dan ini
             'auditeeAction',
+            'auditeeAction.deptHead',
+            'auditeeAction.auditor',
+            'auditeeAction.leadAuditor',
+            'auditeeAction.auditor',
         ])
             ->orderByDesc('created_at')
             ->get();

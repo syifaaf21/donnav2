@@ -1,3 +1,8 @@
+@php
+    $finding = $findings->first();
+    $action = $finding?->auditeeAction;
+@endphp
+
 {{-- TANDA TANGAN --}}
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <table class="w-full border border-black text-sm mt-2 text-center">
@@ -31,7 +36,8 @@
                     <div class="flex flex-col gap-3">
 
                         <!-- VERIFY BUTTON -->
-                        <button type="button" onclick="verifyLeadAuditor()" :disabled="form.status_id != 10 || (userRole !== 'admin')"
+                        <button type="button" onclick="verifyLeadAuditor()"
+                            :disabled="form.status_id != 10 || (userRole !== 'admin')"
                             :class="form.status_id != 10 || (userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-blue-600 hover:bg-blue-700 text-white rounded-lg
@@ -42,7 +48,8 @@
                         </button>
 
                         <!-- RETURN BUTTON -->
-                        <button type="button" onclick="returnForRevision()" :disabled="form.status_id != 10 || (userRole !== 'admin')"
+                        <button type="button" onclick="returnForRevision()"
+                            :disabled="form.status_id != 10 || (userRole !== 'admin')"
                             :class="form.status_id != 10 || (userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-red-600 hover:bg-red-700 text-white rounded-lg
@@ -60,10 +67,10 @@
             </div>
 
             <!-- NAME FIELD -->
-            <div class="items-center">
+            <div>
                 <span class="font-semibold my-1">Lead Auditor</span>
-                <input type="text" x-model="form.lead_auditor_name" value="{{ $finding->auditeeAction->leadAuditor->name ?? '-' }}"
-                    class="w-full mt-1 border border-gray-300 rounded p-1 text-center" readonly>
+                <input type="text" class="text-center"
+                    value="{{ $finding->auditeeAction->leadAuditor->name ?? '-' }}" readonly>
             </div>
         </td>
 
@@ -73,8 +80,10 @@
                     <div class="flex flex-col gap-3">
 
                         <!-- VERIFY BUTTON -->
-                        <button type="button" onclick="verifyAuditor()" :disabled="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin')"
-                            :class="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
+                        <button type="button" onclick="verifyAuditor()"
+                            :disabled="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin')"
+                            :class="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin') ?
+                                'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-blue-600 hover:bg-blue-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">
@@ -84,8 +93,10 @@
                         </button>
 
                         <!-- RETURN BUTTON -->
-                        <button type="button" onclick="returnForRevision()" :disabled="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin')"
-                            :class="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
+                        <button type="button" onclick="returnForRevision()"
+                            :disabled="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin')"
+                            :class="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin') ?
+                                'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-red-600 hover:bg-red-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">
@@ -102,10 +113,10 @@
             </div>
 
             <!-- NAME FIELD -->
-            <div class="items-center">
+            <div>
                 <span class="font-semibold my-1">Auditor</span>
-                <input type="text" x-model="form.auditor_name" value="{{ $finding->auditeeAction->auditor->name ?? '-' }}"
-                    class="w-full mt-1 border border-gray-300 rounded p-1 text-center" readonly>
+                <input type="text" class="text-center" value="{{ $finding->auditeeAction->auditor->name ?? '-' }}"
+                    readonly>
             </div>
         </td>
 

@@ -3,8 +3,7 @@
     class="fixed inset-0 w-screen h-screen overflow-auto bg-black/60 flex items-center justify-center z-[9999]">
     <!-- Close button di luar container -->
     <button type="button" @click="close()"
-        class="absolute top-4 right-4 bg-white rounded-full shadow px-3 py-1 text-gray-700
-               hover:bg-red-500 hover:text-white z-[10001]">
+        class="absolute top-4 right-4 bg-white rounded-full shadow px-3 py-1 text-gray-700 hover:bg-gray-700 hover:text-gray-100 hover:shadow z-[10001]">
         <i class="bi bi-x"></i>
     </button>
 

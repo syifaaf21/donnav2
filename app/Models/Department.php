@@ -32,8 +32,8 @@ class Department extends Model
         return $this->hasMany(Document::class);
     }
 
-    public function auditFinding()
+    public function auditFindings()
     {
-        return $this->hasMany(AuditFinding::class);
+        return $this->hasMany(AuditFinding::class, 'department_id');
     }
 }

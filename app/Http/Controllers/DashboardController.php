@@ -79,7 +79,7 @@ class DashboardController extends Controller
         $controlExtraData = [];
         foreach ($departments as $id => $name) {
             $controlExtraData[$id] = [
-                'obsolete'   => DocumentMapping::where('department_id', $id)
+                'obsolete' => DocumentMapping::where('department_id', $id)
                     ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
                     ->count(),
                 'needReview' => DocumentMapping::where('department_id', $id)
@@ -90,6 +90,12 @@ class DashboardController extends Controller
                     ->count(),
             ];
         }
+
+        $findingsPerDepartment = Department::withCount('auditFindings')->get();
+
+        $deptLabels = $findingsPerDepartment->pluck('name');
+        $deptTotals = $findingsPerDepartment->pluck('audit_findings_count');
+
 
         return view('contents.index', compact(
             'totalDocuments',
@@ -106,6 +112,8 @@ class DashboardController extends Controller
             'obsoleteDocuments',
             'chartData',
             'controlExtraData',
+            'deptLabels',
+            'deptTotals'
         ));
     }
 }

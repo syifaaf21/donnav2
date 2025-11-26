@@ -298,7 +298,7 @@
                                             @if ($isAdminOrSuper || $sameDepartment)
                                                 <button type="button"
                                                     class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
-    disabled:text-yellow-300 disabled:hover:bg-white"
+                                                        disabled:text-yellow-300 disabled:hover:bg-white"
                                                     data-doc-id="{{ $doc->id }}" title="Edit Document"
                                                     @if ($statusName === 'need review') disabled @endif>
                                                     <i class="bi bi-pencil mr-2"></i> Edit
@@ -309,7 +309,7 @@
                                             @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']))
                                                 <button type="button"
                                                     class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-green-600
-    disabled:text-green-300 disabled:hover:bg-white btn-approve"
+                                                        disabled:text-green-300 disabled:hover:bg-white btn-approve"
                                                     data-id="{{ $doc->id }}"
                                                     @if ($statusName !== 'need review') disabled @endif>
                                                     <i class="bi bi-check2-circle mr-2"></i> Approve
@@ -318,7 +318,7 @@
                                                 {{-- Reject --}}
                                                 <button type="button"
                                                     class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-red-600
-    disabled:text-red-300 disabled:hover:bg-white"
+                                                        disabled:text-red-300 disabled:hover:bg-white"
                                                     data-bs-toggle="modal" data-bs-target="#rejectModal"
                                                     data-id="{{ $doc->id }}"
                                                     @if ($statusName !== 'need review') disabled @endif>
