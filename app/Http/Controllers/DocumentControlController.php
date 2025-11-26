@@ -198,8 +198,7 @@ class DocumentControlController extends Controller
                 'original_name' => $uploadedFile->getClientOriginalName(),
                 'file_type' => $uploadedFile->getClientMimeType(),
                 'uploaded_by' => Auth::id(),
-                'is_active' => false,
-
+                'is_active' => true,
             ]);
 
             // Mark old file as inactive and link to replacer
@@ -271,10 +270,6 @@ class DocumentControlController extends Controller
             'reminder_date' => $newReminderDate,
             'user_id' => Auth::id(), // siapa yang approve
         ]);
-
-        // Mark associated files as active in `tt_document_files`
-        // (set is_active = true for all files related to this mapping)
-        $mapping->files()->update(['is_active' => true]);
 
         // Ambil semua user di department terkait, kecuali user yang approve
         $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
