@@ -12,21 +12,48 @@
             <div class="flex items-center gap-2 w-full md:w-1/3">
 
                 <!-- SEARCH -->
-                <div class="relative flex-1">
-                    <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input id="live-search" type="text" placeholder="Search..." autocomplete="off"
-                        class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 shadow-sm
-                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                    <button type="button" id="clearSearch"
-                        class="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 hidden">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
-                </div>
+                <form method="GET" id="searchForm" class="w-full">
+
+                    <div class="relative w-96">
+                        <!-- Input -->
+                        <input type="text" name="search" id="searchInput"
+                            class="peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
+            text-sm text-gray-700 shadow-sm transition-all duration-200
+            focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            placeholder="Type to search..." value="{{ request('search') }}">
+
+                        <!-- Floating Label -->
+                        <label for="searchInput"
+                            class="absolute left-4 px-1 bg-white text-gray-400 rounded transition-all duration-150
+                                pointer-events-none
+                                {{ request('search')
+                                    ? '-top-3 text-xs text-sky-600'
+                                    : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
+                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            Type to search...
+                        </label>
+
+                        <!-- Clear Button -->
+                        @if (request('search'))
+                            <a href="{{ route('ftpp.index') }}"
+                                class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5
+                                    rounded-lg text-gray-400
+                                    hover:text-red-600 transition">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </a>
+                        @endif
+
+                        <!-- Search Button -->
+                        <button type="submit"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                                rounded-lg text-gray-400 hover:text-blue-700 transition">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </form>
 
                 <!-- FILTER BUTTON -->
-                <div x-data="statusFilter()" class="relative">
+                <div x-data="statusFilter()" x-init="init()" class="relative">
                     <button @click="toggle($event)"
                         class="bg-white border border-gray-200 rounded-xl shadow p-2 hover:bg-gray-100 transition">
                         <i data-feather="filter" class="w-5 h-5"></i>
@@ -43,8 +70,15 @@
                             </div>
 
                             <form id="statusFilterForm" method="GET">
+                                {{-- preserve other request params (handle arrays correctly) --}}
                                 @foreach (request()->except(['page', 'status_id']) as $key => $val)
-                                    <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                                    @if (is_array($val))
+                                        @foreach ($val as $v)
+                                            <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                                        @endforeach
+                                    @else
+                                        <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                                    @endif
                                 @endforeach
 
                                 <div class="max-h-64 overflow-y-auto px-2 py-1 space-y-2">
@@ -53,8 +87,7 @@
                                     <label
                                         class="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
                                         <div class="flex items-center gap-2">
-                                            <input type="checkbox" value="all" x-model="selected" @change="submitForm"
-                                                :checked="{{ request()->filled('status_id') ? 'false' : 'true' }}">
+                                            <input type="checkbox" value="all" x-model="selected" @change="onAllChange">
                                             <span>All</span>
                                         </div>
                                         <span class="text-xs bg-gray-200 text-gray-800 px-2 py-0.5 rounded-full">
@@ -66,7 +99,6 @@
                                     @foreach ($statuses as $status)
                                         @php
                                             $name = strtolower($status->name);
-                                            $isChecked = in_array($status->id, (array) request()->status_id);
                                             $icons = [
                                                 'open' => 'alert-circle',
                                                 'submitted' => 'upload-cloud',
@@ -82,7 +114,7 @@
                                                 class="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
                                                 <div class="flex items-center gap-2">
                                                     <input type="checkbox" name="status_id[]" value="{{ $status->id }}"
-                                                        @change="submitForm" {{ $isChecked ? 'checked' : '' }}>
+                                                        x-model="selected" @change="onStatusChange">
                                                     <i data-feather="{{ $icons[$name] }}" class="w-4 h-4"></i>
                                                     <span class="capitalize">{{ $status->name }}</span>
                                                 </div>
@@ -164,149 +196,151 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @php
-                                    // collect user's department ids (pivot relation)
-                                    $userDeptIds = auth()->user()->departments->pluck('id')->map(fn($v) => (int)$v)->toArray();
-                                    // collect user's role names (lowercase)
-                                    $userRoles = auth()->user()->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray();
-                                    $exemptRoles = ['super admin', 'admin', 'auditor'];
-                                    $canSeeAll = (bool) count(array_intersect($userRoles, $exemptRoles));
-                                @endphp
-                                 @forelse($findings as $finding)
-                                    @if($canSeeAll || in_array((int)$finding->department_id, $userDeptIds))
-                                  <tr>
-                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                 {{ $finding->registration_number ?? '-' }}</td>
-                                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                             @php
-                                                 $statusColors = [
-                                                     'open' => 'bg-red-500 text-white',
-                                                     'submitted' => 'bg-yellow-500 text-gray-900',
-                                                     'checked by dept head' => 'bg-yellow-500 text-gray-900',
-                                                     'need revision' => 'bg-yellow-500 text-gray-900',
-                                                     'approved by auditor' => 'bg-blue-500 text-white',
-                                                     'close' => 'bg-green-500 text-white',
-                                                 ];
-                                                 $statusName = optional($finding->status)->name ?? '-';
-                                                 $statusClass = $statusColors[strtolower($statusName)] ?? '';
-                                             @endphp
-                                             <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
-                                             </td>
-                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                 {{ optional($finding->department)->name ?? '-' }}</td>
-                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                 {{ optional($finding->auditor)->name ?? '-' }}</td>
-                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                 @if ($finding->auditee && $finding->auditee->isNotEmpty())
-                                                     {{ $finding->auditee->pluck('name')->join(', ') }}
-                                                 @else
-                                                     -
-                                                 @endif
-                                             </td>
-                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                 {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
-                                             </td>
-                                             <td class="flex px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                 <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
-                                                     <!-- BUTTON -->
-                                                     <button type="button"
-                                                         @click.prevent="
+
+                                @forelse($findings as $finding)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ $finding->registration_number ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            @php
+                                                $statusColors = [
+                                                    'open' => 'bg-red-500 text-white',
+                                                    'submitted' => 'bg-yellow-500 text-gray-900',
+                                                    'checked by dept head' => 'bg-yellow-500 text-gray-900',
+                                                    'need revision' => 'bg-yellow-500 text-gray-900',
+                                                    'approved by auditor' => 'bg-blue-500 text-white',
+                                                    'close' => 'bg-green-500 text-white',
+                                                ];
+                                                $statusName = optional($finding->status)->name ?? '-';
+                                                $statusClass = $statusColors[strtolower($statusName)] ?? '';
+                                            @endphp
+                                            <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ optional($finding->department)->name ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ optional($finding->auditor)->name ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            @if ($finding->auditee && $finding->auditee->isNotEmpty())
+                                                {{ $finding->auditee->pluck('name')->join(', ') }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
+                                        </td>
+                                        <td class="flex px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
+                                                <!-- BUTTON -->
+                                                <button type="button"
+                                                    @click.prevent="
                                                              open = true;
                                                              const rect = $event.target.getBoundingClientRect();
                                                              x = rect.right - 160;          // lebih presisi horizontal
                                                              y = rect.bottom + window.scrollY; // fix posisi vertical & scroll
                                                          "
-                                                         class="p-1.5 hover:bg-gray-100 rounded-full transition">
-                                                         <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
-                                                     </button>
+                                                    class="p-1.5 hover:bg-gray-100 rounded-full transition">
+                                                    <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
+                                                </button>
 
-                                                     <!-- DROPDOWN -->
-                                                     <template x-teleport="body">
-                                                         <div x-show="open" @click.outside="open = false"
-                                                             x-transition.opacity.duration.150ms
-                                                             class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
-                                                             :style="`top:${y}px; left:${x}px; width:170px;`">
+                                                <!-- DROPDOWN -->
+                                                <template x-teleport="body">
+                                                    <div x-show="open" @click.outside="open = false"
+                                                        x-transition.opacity.duration.150ms
+                                                        class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
+                                                        :style="`top:${y}px; left:${x}px; width:170px;`">
 
-                                                         @if (strtolower(optional($finding->status)->name ?? '') !== 'open')
-                                                             <!-- ITEM: Show -->
-                                                             <button type="button"
-                                                                 @click="
+                                                        @if (strtolower(optional($finding->status)->name ?? '') !== 'open')
+                                                            <!-- ITEM: Show -->
+                                                            <button type="button"
+                                                                @click="
                                                                  open = false;
                                                                  $dispatch('open-show-modal', {{ $finding->id }})"
-                                                                 class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                 <i data-feather="eye" class="w-4 h-4"></i>
-                                                                 Show
-                                                             </button>
-                                                         @endif
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="eye" class="w-4 h-4"></i>
+                                                                Show
+                                                            </button>
+                                                        @endif
 
-                                                         <!-- ITEM: Download -->
-                                                         <a href="{{ route('ftpp.download', $finding->id) }}"
-                                                             @click="open = false"
-                                                             class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
-                                                             <i data-feather="download" class="w-4 h-4"></i>
-                                                             Download
-                                                         </a>
+                                                        <!-- ITEM: Download -->
+                                                        <a href="{{ route('ftpp.download', $finding->id) }}"
+                                                            @click="open = false"
+                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
+                                                            <i data-feather="download" class="w-4 h-4"></i>
+                                                            Download
+                                                        </a>
 
-                                                         <!-- ITEM: Assign Auditee Action -->
-                                                         @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
-                                                         @if ($statusName === 'open')
-                                                             @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                                                                 <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
-                                                                     @click="open = false"
-                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
-                                                                     <i data-feather="edit" class="w-4 h-4"></i>
-                                                                     Edit Audit Finding
-                                                                 </a>
-                                                             @endif
-                                                         @endif
-                                                         @if ($statusName === 'need revision')
-                                                             <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
-                                                                 @click="open = false"
-                                                                 class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                 <i data-feather="edit" class="w-4 h-4"></i>
-                                                                 Revise Auditee Action
-                                                             </a>
-                                                         @elseif ($statusName === 'submitted')
-                                                             <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
-                                                                 @click="open = false"
-                                                                 class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
-                                                                 <i data-feather="edit" class="w-4 h-4"></i>
-                                                                 Edit Auditee Action
-                                                             </a>
-                                                         @else
-                                                             @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
-                                                                 <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
-                                                                     @click="open = false"
-                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                     <i data-feather="edit-2" class="w-4 h-4"></i>
-                                                                     Assign Auditee Action
-                                                                 </a>
-                                                             @endif
-                                                         @endif
-                                                         @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                                                             <!-- ITEM: Delete -->
-                                                             <form method="POST"
-                                                                 action="{{ route('ftpp.destroy', $finding->id) }}"
-                                                                 onsubmit="return confirm('Delete this record?')">
-                                                                 @csrf @method('DELETE')
-                                                                 <button type="submit" @click="open = false"
-                                                                     class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
-                                                                     <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                                     Delete
-                                                                 </button>
-                                                             </form>
-                                                         @endif
-                                                     </div>
-                                                 </template>
-                                             </div>
-                                         </td>
-                                     </tr>
-                                    @endif
-                                 @empty
-                                     <tr>
-                                         <td class="px-6 py-4 text-sm text-gray-500" colspan="7">No records found.</td>
-                                     </tr>
-                                 @endforelse
+                                                        <!-- ITEM: Assign Auditee Action -->
+                                                        @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
+                                                        @if ($statusName === 'open')
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                                <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                                    Edit Audit Finding
+                                                                </a>
+                                                            @endif
+                                                        @endif
+                                                        @if ($statusName === 'need revision')
+                                                            <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                                @click="open = false"
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                <i data-feather="edit" class="w-4 h-4"></i>
+                                                                Revise Auditee Action
+                                                            </a>
+                                                        @elseif ($statusName === 'submitted')
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, [
+                                                                    'Super Admin',
+                                                                    'Admin',
+                                                                    'Auditor',
+                                                                    'Supervisor',
+                                                                    'Leader',
+                                                                    'User',
+                                                                ]))
+                                                                <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                                    Edit Auditee Action
+                                                                </a>
+                                                            @endif
+                                                        @else
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
+                                                                <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                                    Assign Auditee Action
+                                                                </a>
+                                                            @endif
+                                                        @endif
+                                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                            <!-- ITEM: Delete (SweetAlert confirm) -->
+                                                            <form id="delete-form-{{ $finding->id }}" method="POST"
+                                                                action="{{ route('ftpp.destroy', $finding->id) }}"
+                                                                onsubmit="return false;">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="button" @click="open = false"
+                                                                    onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
+                                                                    class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-500" colspan="7">No records found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -324,183 +358,6 @@
 @endsection
 @push('scripts')
     <script>
-        (function() {
-            const input = document.getElementById('live-search');
-            if (!input) return;
-
-            let timeout = null;
-            const route = "{{ route('ftpp.search') }}";
-
-            const statusColors = {
-                'open': 'bg-red-500 text-white',
-                'submitted': 'bg-yellow-500 text-gray-900',
-                'checked by dept head': 'bg-yellow-500 text-gray-900',
-                'need revision': 'bg-yellow-500 text-gray-900',
-                'approve by auditor': 'bg-blue-500 text-white',
-                'close': 'bg-green-500 text-white'
-            };
-
-            function renderRow(f, csrf) {
-                const statusName = f.status?.name ?? '-';
-                const cls = statusColors[f.status.toLowerCase()] ?? '';
-
-                const department = f.department?.name ?? '-';
-                const auditor = f.auditor?.name ?? '-';
-
-                const auditee = Array.isArray(f.auditee) && f.auditee.length ?
-                    f.auditee.map(a => a.name).join(', ') :
-                    '-';
-
-                const due = f.due_date ?
-                    new Date(f.due_date).toISOString().slice(0, 10).replace(/-/g, '/') :
-                    '-';
-
-                return `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${f.registration_number ?? '-'}
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
-                            <span class="${cls} p-1 rounded">${f.status}</span>
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.department}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.auditor}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.auditee}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${f.due_date}</td>
-
-                        <td class="flex px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
-
-                                <!-- BUTTON -->
-                                <button type="button"
-                                    @click.prevent="
-                                        open = true;
-                                        const rect = $event.target.getBoundingClientRect();
-                                        x = rect.right - 160;
-                                        y = rect.bottom + window.scrollY;
-                                    "
-                                    class="p-1.5 hover:bg-gray-100 rounded-full transition">
-                                    <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
-                                </button>
-
-                                <!-- DROPDOWN -->
-                                <template x-teleport="body">
-                                    <div x-show="open" @click.outside="open = false"
-                                        x-transition.opacity.duration.150ms
-                                        class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
-                                        :style="\`top:\${y}px; left:\${x}px; width:170px;\`">
-
-                                        ${statusName.toLowerCase() !== 'open' ? `
-                                                                            <button type="button"
-                                                                                @click="open = false; $dispatch('open-show-modal', ${f.id})"
-                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                                    <i data-feather="eye" class="w-4 h-4"></i> Show
-                                                                            </button>
-                                                                        ` : ''}
-
-                                        <a href="/ftpp/${f.id}/download"
-                                            @click="open = false"
-                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
-                                            <i data-feather="download" class="w-4 h-4"></i> Download
-                                        </a>
-
-                                        ${f.status.toLowerCase() === 'need revision'
-                                            ? `
-                                                                                <a href="/ftpp/auditee-action/${f.id}/edit"
-                                                                                    @click="open = false"
-                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                                    <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
-                                                                                </a>`
-                                            : `
-                                                                                <a href="/ftpp/auditee-action/${f.id}"
-                                                                                    @click="open = false"
-                                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                                    <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
-                                                                                </a>`
-                                        }
-
-                                        <form method="POST" action="/ftpp/${f.id}"
-                                            onsubmit="return confirm('Delete this record?')">
-                                            <input type="hidden" name="_token" value="${csrf}">
-                                            <input type="hidden" name="_method" value="DELETE">
-
-                                            <button type="submit"
-                                                @click="open = false"
-                                                class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
-                                                <i data-feather="trash-2" class="w-4 h-4"></i> Delete
-                                            </button>
-                                        </form>
-
-                                    </div>
-                                </template>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-
-            function renderRows(items) {
-                const tbody = document.querySelector("table tbody");
-                if (!tbody) return;
-
-                if (!items.length) {
-                    tbody.innerHTML =
-                        '<tr><td class="px-6 py-4 text-sm text-gray-500" colspan="7">No records found.</td></tr>';
-                    return;
-                }
-
-                const csrf = document.querySelector('meta[name="csrf-token"]').content;
-
-                tbody.innerHTML = items.map(f => renderRow(f, csrf)).join('');
-
-                feather.replace();
-            }
-
-            input.addEventListener('input', function(e) {
-                const v = e.target.value.trim();
-                clearTimeout(timeout);
-
-                timeout = setTimeout(() => {
-                    if (!v) {
-                        window.location = "{{ route('ftpp.index') }}";
-                        return;
-                    }
-
-                    fetch(route + '?q=' + encodeURIComponent(v))
-                        .then(r => r.json())
-                        .then(data => renderRows(data))
-                        .catch(err => console.error(err));
-                }, 300);
-            });
-        })();
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const input = document.getElementById("live-search");
-            const clearBtn = document.getElementById("clearSearch");
-
-            if (!input || !clearBtn) return;
-
-            // Tampil atau hilangkan tombol X
-            input.addEventListener("input", function() {
-                if (input.value.trim() !== "") {
-                    clearBtn.classList.remove("hidden");
-                } else {
-                    clearBtn.classList.add("hidden");
-                }
-            });
-
-            // Fungsi hapus input + reset data
-            clearBtn.addEventListener("click", function() {
-                input.value = "";
-                clearBtn.classList.add("hidden");
-
-                // Jika mau reload data default:
-                window.location = "{{ route('ftpp.index') }}";
-            });
-        });
-
         function showModal() {
             return {
                 isOpen: false,
@@ -539,32 +396,14 @@
                 },
             };
         }
-
-        // function showModal() {
-        //     return {
-        //         isOpen: false,
-        //         pdfUrl: null,
-
-        //         openShowModal(id) {
-        //             this.isOpen = true;
-
-        //             // URL ke route preview PDF
-        //             this.pdfUrl = `/ftpp/${id}/preview-pdf`;
-        //         },
-
-        //         close() {
-        //             this.isOpen = false;
-        //             this.pdfUrl = null;
-        //         },
-        //     };
-        // }
     </script>
     <script>
         function statusFilter() {
             return {
                 open: false,
 
-                selected: [], // ← WAJIB supaya x-model tidak error
+                // inisialisasi selected dari request; jika tidak ada request status_id, default = ['all']
+                selected: @json(request()->filled('status_id') ? (array) request()->status_id : ['all']),
 
                 dropdown: {
                     x: 0,
@@ -582,10 +421,81 @@
                     }, 10);
                 },
 
+                init() {
+                    // set initial checkbox state based on "selected" array
+                    const allChecked = this.selected.includes('all');
+                    const inputs = document.querySelectorAll('#statusFilterForm input[name="status_id[]"]');
+                    inputs.forEach(i => {
+                        if (allChecked) {
+                            i.checked = false;
+                        } else {
+                            i.checked = this.selected.includes(i.value);
+                        }
+                    });
+                },
+
+                // jika user pilih "All", pastikan status checkbox individual tidak terkirim
+                onAllChange() {
+                    // jika 'all' sekarang ada di selected -> remove name dari status checkboxes
+                    const isAll = this.selected.includes('all');
+                    const inputs = document.querySelectorAll('#statusFilterForm input[name="status_id[]"]');
+                    inputs.forEach(i => {
+                        if (isAll) {
+                            i.removeAttribute('name');
+                            i.checked = false;
+                        } else {
+                            i.setAttribute('name', 'status_id[]');
+                        }
+                    });
+                    // jika all dipilih, pastikan selected hanya berisi 'all'
+                    if (isAll) this.selected = ['all'];
+                    this.submitForm();
+                },
+
+                onStatusChange() {
+                    // bila ada satu atau lebih status terpilih => pastikan 'all' dikeluarkan
+                    const isAllIndex = this.selected.indexOf('all');
+                    if (isAllIndex !== -1) {
+                        this.selected.splice(isAllIndex, 1);
+                    }
+                    // restore name attribute for status inputs before submit
+                    const inputs = document.querySelectorAll(
+                        '#statusFilterForm input[type="checkbox"][value]:not([value="all"])');
+                    inputs.forEach(i => i.setAttribute('name', 'status_id[]'));
+                    this.submitForm();
+                },
+
                 submitForm() {
                     document.getElementById('statusFilterForm').submit();
                 }
             };
+        }
+    </script>
+    {{-- define once: SweetAlert confirm helper (fallback to native confirm if Swal unavailable) --}}
+    <script>
+        if (typeof confirmSweetDelete === 'undefined') {
+            function confirmSweetDelete(formId) {
+                if (typeof Swal === 'undefined') {
+                    if (confirm('Delete this record?')) {
+                        document.getElementById(formId).submit();
+                    }
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById(formId).submit();
+                    }
+                });
+            }
         }
     </script>
 @endpush

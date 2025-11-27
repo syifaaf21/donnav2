@@ -2,10 +2,10 @@
 @section('title', 'User')
 
 @section('content')
-    <div class="px-6 py-4">
+    <div class="px-6">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-4">
-            <nav class="text-sm text-gray-500">
+        <div class="flex justify-between items-center  w-1/4 mb-4">
+            <nav class="bg-white pr-5 pt-2 border border-gray-100 shadow rounded-lg text-sm text-gray-500">
                 <ol class="flex items-center space-x-2">
                     <li><a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
                             <i class="bi bi-house-door"></i> Dashboard</a>
@@ -16,51 +16,68 @@
                     <li class="text-gray-700 font-medium">User</li>
                 </ol>
             </nav>
-
-            {{-- Add User Button --}}
-            <button type="button" data-bs-toggle="modal" data-bs-target="#addUserModal"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add User</span>
-            </button>
         </div>
 
-        {{-- Tabs --}}
-        <ul class="nav nav-tabs" id="userTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane"
-                    type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">
-                    All Users
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="depthead-tab" data-bs-toggle="tab" data-bs-target="#depthead-tab-pane"
-                    type="button" role="tab" aria-controls="depthead-tab-pane" aria-selected="false">
-                    Department Heads
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="auditor-tab" data-bs-toggle="tab" data-bs-target="#auditor-tab-pane"
-                    type="button" role="tab" aria-controls="auditor-tab-pane" aria-selected="false">
-                    Auditors
-                </button>
-            </li>
-        </ul>
-        {{-- Tab Contents --}}
-        <div class="tab-content" id="userTabsContent">
-            <div class="tab-pane fade show active" id="all-tab-pane" role="tabpanel" aria-labelledby="all-tab">
-                <div id="ajaxUserTableAll">
-                    @include('contents.master.user.partials.all')
+        {{-- Enhanced Tabs Container --}}
+        <div class="bg-white shadow-lg rounded-lg border border-gray-100">
+            {{-- Card Header: title + subtle description --}}
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">User Management</h3>
+                    <p class="text-sm text-gray-500 mt-0.5">Browse and manage users by category.</p>
+                </div>
+                <div class="text-sm text-gray-500 hidden sm:block">
+                    {{-- Add User Button --}}
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#addUserModal"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Add User</span>
+                    </button>
                 </div>
             </div>
-            <div class="tab-pane fade" id="depthead-tab-pane" role="tabpanel" aria-labelledby="depthead-tab">
-                <div id="ajaxUserTableDeptHead">
-                    @include('contents.master.user.partials.dept-head')
-                </div>
+
+            {{-- Tabs --}}
+            <div class="px-4 pt-4">
+                <ul class="nav nav-tabs nav-tabs-line" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane"
+                            type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">
+                            <i class="bi bi-people-fill me-1"></i> All Users
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="depthead-tab" data-bs-toggle="tab" data-bs-target="#depthead-tab-pane"
+                            type="button" role="tab" aria-controls="depthead-tab-pane" aria-selected="false">
+                            <i class="bi bi-person-badge me-1"></i> Department Heads
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="auditor-tab" data-bs-toggle="tab" data-bs-target="#auditor-tab-pane"
+                            type="button" role="tab" aria-controls="auditor-tab-pane" aria-selected="false">
+                            <i class="bi bi-shield-check me-1"></i> Auditors
+                        </button>
+                    </li>
+                </ul>
             </div>
-            <div class="tab-pane fade" id="auditor-tab-pane" role="tabpanel" aria-labelledby="auditor-tab">
-                <div id="ajaxUserTableAuditor">
-                    @include('contents.master.user.partials.auditor')
+
+            {{-- Tab Contents --}}
+            <div class="p-4">
+                <div class="tab-content" id="userTabsContent">
+                    <div class="tab-pane fade show active" id="all-tab-pane" role="tabpanel" aria-labelledby="all-tab">
+                        <div id="ajaxUserTableAll" class="space-y-3">
+                            @include('contents.master.user.partials.all')
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="depthead-tab-pane" role="tabpanel" aria-labelledby="depthead-tab">
+                        <div id="ajaxUserTableDeptHead" class="space-y-3">
+                            @include('contents.master.user.partials.dept-head')
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="auditor-tab-pane" role="tabpanel" aria-labelledby="auditor-tab">
+                        <div id="ajaxUserTableAuditor" class="space-y-3">
+                            @include('contents.master.user.partials.auditor')
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

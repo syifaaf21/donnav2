@@ -29,35 +29,68 @@ class FtppController extends Controller
 {
     public function index(Request $request)
     {
-        // Build base query
+        // Build base query with eager loads
         $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee']);
 
-        // Filters
-        if ($request->filled('registration_number')) {
-            $query->where('registration_number', 'like', '%' . $request->input('registration_number') . '%');
+        // --- Apply department restriction for non-privileged users ---
+        $user = auth()->user();
+        if ($user) {
+            $userRoles = $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray();
+            $exemptRoles = ['super admin', 'admin', 'auditor'];
+            $canSeeAll = (bool) count(array_intersect($userRoles, $exemptRoles));
+
+            if (! $canSeeAll) {
+                // support pivot departments or single department_id
+                $userDeptIds = $user->departments->pluck('id')->toArray();
+                if (empty($userDeptIds) && !empty($user->department_id)) {
+                    $userDeptIds = [(int) $user->department_id];
+                }
+
+                if (!empty($userDeptIds)) {
+                    $query->whereIn('department_id', $userDeptIds);
+                } else {
+                    // ensure empty result when user has no department
+                    $query->whereRaw('0 = 1');
+                }
+            }
         }
 
         if ($request->filled('status_id')) {
-            $query->where('status_id', $request->input('status_id'));
+            $statusIds = (array) $request->input('status_id');
+            if (!empty($statusIds)) {
+                $query->whereIn('status_id', $statusIds);
+            }
         }
 
-        if ($request->filled('department_id')) {
-            $query->where('department_id', $request->input('department_id'));
-        }
-
-        if ($request->filled('auditor_id')) {
-            $query->where('auditor_id', $request->input('auditor_id'));
-        }
-
-        if ($request->filled('auditee')) {
-            $auditee = $request->input('auditee');
-            $query->whereHas('auditee', function ($q) use ($auditee) {
-                $q->where('name', 'like', '%' . $auditee . '%');
+        // Optional free-text search across several columns/relations (kept safe: department filter already applied)
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('registration_number', 'like', "%{$search}%")
+                    ->orWhereHas('auditee', function ($qa) use ($search) {
+                        $qa->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('auditor', function ($qat) use ($search) {
+                        $qat->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('department', function ($qd) use ($search) {
+                        $qd->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('status', function ($qs) use ($search) {
+                        $qs->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
+        if ($request->filled('status_id')) {
+            $statusIds = (array) $request->input('status_id');
+            if (!empty($statusIds)) {
+                $query->whereIn('status_id', $statusIds);
+            }
+        }
+
         // order and paginate
-        $findings = $query->orderBy('updated_at')->paginate(10);
+        $findings = $query->orderBy('updated_at', 'desc')->paginate(10);
         // preserve filters in pagination links
         $findings->appends($request->except('page'));
 
@@ -71,48 +104,6 @@ class FtppController extends Controller
         })->orderBy('name')->get();
 
         return view('contents.ftpp2.index', compact('findings', 'statuses', 'departments', 'auditors', 'totalCount'));
-    }
-
-    /**
-     * AJAX live search endpoint for a single query input.
-     */
-    public function search(Request $request)
-    {
-        $q = $request->input('q');
-
-        $results = AuditFinding::with(['status', 'department', 'auditor', 'auditee'])
-            ->when($q, function ($query, $q) {
-                $query->where('registration_number', 'like', "%{$q}%")
-                    ->orWhereHas('auditee', function ($q2) use ($q) {
-                        $q2->where('name', 'like', "%{$q}%");
-                    })
-                    ->orWhereHas('auditor', function ($q3) use ($q) {
-                        $q3->where('name', 'like', "%{$q}%");
-                    })
-                    ->orWhereHas('department', function ($q4) use ($q) {
-                        $q4->where('name', 'like', "%{$q}%");
-                    })
-                    ->orWhereHas('status', function ($q5) use ($q) {
-                        $q5->where('name', 'like', "%{$q}%");
-                    });
-            })
-            ->orderBy('registration_number')
-            ->limit(50)
-            ->get();
-
-        $payload = $results->map(function ($f) {
-            return [
-                'id' => $f->id,
-                'registration_number' => $f->registration_number,
-                'status' => optional($f->status)->name,
-                'department' => optional($f->department)->name,
-                'auditor' => optional($f->auditor)->name,
-                'auditee' => $f->auditee->pluck('name')->join(', '),
-                'due_date' => $f->due_date ? \Carbon\Carbon::parse($f->due_date)->format('Y/m/d') : null,
-            ];
-        });
-
-        return response()->json($payload);
     }
 
     public function getData($auditTypeId)
@@ -644,5 +635,4 @@ class FtppController extends Controller
             }
         }
     }
-
 }

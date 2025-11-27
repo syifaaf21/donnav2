@@ -35,23 +35,34 @@
             <div class="p-4 border-b border-gray-100 flex justify-end items-center space-x-2">
                 <form method="GET" id="searchForm" class="flex items-center w-full sm:w-96 relative">
 
-                    <input type="text" name="search" value="{{ request('search') }}" id="searchInput"
-                        placeholder="Search..."
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
-               focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <input type="text" name="search"
+                        class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
+                        text-sm text-gray-700 shadow-sm transition-all duration-200
+                        focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                        placeholder="Type to search..." value="{{ request('search') }}">
 
-                    <!-- Search icon -->
+                    <!-- Floating Label -->
+                    <label for="searchInput"
+                        class="absolute left-4 px-1 bg-white text-gray-400 rounded transition-all duration-150
+                        pointer-events-none
+                        {{ request('search')
+                            ? '-top-3 text-xs text-sky-600'
+                            : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                        Type to search...
+                    </label>
+
                     <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500">
-                        <i class="bi bi-search"></i>
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-blue-700 transition">
+                        <i data-feather="search" class="w-5 h-5"></i>
                     </button>
 
                     <!-- Clear button -->
-                    <button type="button" id="clearSearch"
-                        class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500"
-                        onclick="document.getElementById('searchInput').value=''; document.getElementById('searchForm').submit();">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
+                    @if (request('search'))
+                        <a href="{{ route('master.document-control.index') }}"
+                            class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
+                            <i data-feather="x" class="w-5 h-5"></i>
+                        </a>
+                    @endif
                 </form>
 
                 {{-- Filter Button --}}
@@ -646,9 +657,9 @@
 
 
             // Clear search/filter
-            const clearFilterBtn = document.getElementById('clearFilter');
-            if (clearFilterBtn) {
-                clearFilterBtn.addEventListener('click', () => {
+            const clearSearchBtn = document.getElementById('clearSearch');
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', () => {
                     filterCheckboxes.forEach(chk => chk.checked = false);
                     if (searchInput) searchInput.value = '';
                     searchInput?.form.submit();

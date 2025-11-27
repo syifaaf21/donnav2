@@ -34,20 +34,24 @@
     @stack('styles')
 </head>
 
-<body class="bg-sidebar text-gray-800">
+<body class="bg-gray-50 text-gray-800">
 
     @include('layouts.partials.sidebar')
     @include('components.flash-message')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 bg-white rounded-xl mt-2">
+    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 mr-2 my-2">
         @include('layouts.partials.navbar')
 
         <!-- Content -->
         <main class="flex-1 p-6">
             @yield('content')
         </main>
+
+        @include('layouts.partials.footer')
     </div>
+
+    
 
     {{-- <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script> --}}
 

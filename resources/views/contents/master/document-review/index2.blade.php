@@ -32,194 +32,243 @@
             @include('contents.master.document-review.partials.modal-add2')
         </div>
 
-        {{-- Tabs + Search + Filter --}}
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
-            <div class="flex flex-wrap justify-between items-center border-b border-gray-100 p-3 md:p-4 gap-2">
-                {{-- Tabs di kiri --}}
-                <div class="flex flex-wrap gap-2">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden min-h-[600px]">
+            {{-- Tabs + Search + Filter --}}
+            <div class="flex items-center px-3 py-2">
+                {{-- Tabs (left) --}}
+                <nav role="tablist" aria-label="Plant tabs" class="flex items-center flex-1 overflow-auto">
                     @foreach ($groupedByPlant as $plant => $documents)
                         @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                        <button type="button" @click="setActiveTab('{{ $slug }}')"
+                        <button type="button" @click="setActiveTab('{{ $slug }}')" role="tab"
+                            aria-controls="tableContainer" :aria-selected="activeTab === '{{ $slug }}'"
                             :class="activeTab === '{{ $slug }}'
                                 ?
-                                'bg-blue-50 text-blue-700 border-b-2 border-blue-600' :
-                                'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                            class="px-4 py-2 rounded-t-lg border border-gray-200 text-sm font-medium transition">
-                            {{ ucwords(strtolower($plant)) }}
+                                'bg-gradient-to-b from-blue-200 to-white text-blue shadow-md' :
+                                ' text-gray-600 hover:bg-gray-200'"
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg border-t border-gray-200 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1">
+                            <span class="truncate max-w-[10rem]">{{ ucwords(strtolower($plant)) }}</span>
+                            <span
+                                class="inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-100 text-blue-700">
+                                {{ $documents->count() }}
+                            </span>
                         </button>
                     @endforeach
-                </div>
+                </nav>
 
-                {{-- Search + Filter di kanan --}}
-                <div class="flex items-center gap-2 ml-auto">
+                {{-- Search + Filter (right) --}}
+                <div class="flex items-center gap-2 ml-auto mt-2">
                     {{-- Search Bar --}}
-                    <form id="searchForm" method="GET" class="relative w-60 md:w-80">
-                        <input type="text" name="search" id="searchInput"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                            placeholder="Search..." value="{{ request('search') }}">
+                    <form id="searchForm" method="GET" class="flex items-end w-auto">
+                        <div class="relative w-96">
+                            <input type="text" name="search" id="searchInput"
+                                class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
+             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                                placeholder="Type to search..." value="{{ request('search') }}">
+
+                            <label for="searchInput"
+                                class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
+             text-gray-400 text-sm
+             {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                Type to search...
+                            </label>
+                        </div>
                     </form>
 
                     {{-- Filter Icon --}}
-                    <button
-                        class="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition shadow-md"
-                        data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <button type="button"
+                        class="flex items-center gap-2 px-3 py-2 mb-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition shadow-md"
+                        data-bs-toggle="modal" data-bs-target="#filterModal" aria-haspopup="dialog"
+                        aria-controls="filterModal" title="Open filters">
                         <i class="bi bi-funnel"></i>
+                        <span class="hidden md:inline text-sm">Filter</span>
                     </button>
                 </div>
             </div>
-        </div>
 
-        {{-- Filter Modal --}}
-        <div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content rounded-xl shadow-xl border-0 overflow-hidden">
-                    <form id="filterFormModal" method="GET" class="bg-white">
-                        <div class="modal-header border-b px-6 py-4">
-                            <h5 class="text-lg font-semibold text-gray-800">
-                                <i class="bi bi-funnel-fill text-blue-600 me-2"></i> Filter Documents
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
+            <script>
+                // show/hide clear button for search input (UI-only, doesn't change logic)
+                document.addEventListener('DOMContentLoaded', function() {
+                    const searchInput = document.getElementById('searchInput');
+                    const clearBtn = document.getElementById('clearSearch');
+                    if (!searchInput || !clearBtn) return;
 
-                        <div class="modal-body px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {{-- Document Name --}}
-                            <div class="flex flex-col">
-                                <label for="filterDocumentName" class="text-sm font-medium text-gray-700 mb-1">Document
-                                    Name</label>
-                                <select name="document_name" id="filterDocumentName"
-                                    class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">All Document Names</option>
-                                    @foreach ($documentsMaster as $doc)
-                                        <option value="{{ $doc->name }}"
-                                            {{ request('document_name') == $doc->name ? 'selected' : '' }}>
-                                            {{ $doc->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                    function toggleClear() {
+                        if (searchInput.value && searchInput.value.trim().length) {
+                            clearBtn.classList.remove('hidden');
+                            clearBtn.setAttribute('aria-hidden', 'false');
+                        } else {
+                            clearBtn.classList.add('hidden');
+                            clearBtn.setAttribute('aria-hidden', 'true');
+                        }
+                    }
+
+                    searchInput.addEventListener('input', toggleClear);
+                    toggleClear();
+
+                    clearBtn.addEventListener('click', function() {
+                        searchInput.value = '';
+                        searchInput.dispatchEvent(new Event('keyup')); // reuse existing logic
+                        toggleClear();
+                    });
+                });
+            </script>
+
+            {{-- Filter Modal --}}
+            <div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-xl shadow-xl border-0 overflow-hidden">
+                        <form id="filterFormModal" method="GET" class="bg-white">
+                            <div class="modal-header border-b px-6 py-4">
+                                <h5 class="text-lg font-semibold text-gray-800">
+                                    <i class="bi bi-funnel-fill text-blue-600 me-2"></i> Filter Documents
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
                             </div>
 
-                            {{-- Part Number --}}
-                            <div class="flex flex-col">
-                                <label for="filterPartNumber" class="text-sm font-medium text-gray-700 mb-1">Part
-                                    Number</label>
-                                <select name="part_number_id" id="filterPartNumber"
-                                    class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">All Part Numbers</option>
-                                    @foreach ($partNumbers as $pn)
-                                        <option value="{{ $pn->id }}"
-                                            {{ request('part_number_id') == $pn->id ? 'selected' : '' }}>
-                                            {{ $pn->part_number }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div class="modal-body px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {{-- Document Name --}}
+                                <div class="flex flex-col">
+                                    <label for="filterDocumentName" class="text-sm font-medium text-gray-700 mb-1">Document
+                                        Name</label>
+                                    <select name="document_name" id="filterDocumentName"
+                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Document Names</option>
+                                        @foreach ($documentsMaster as $doc)
+                                            <option value="{{ $doc->name }}"
+                                                {{ request('document_name') == $doc->name ? 'selected' : '' }}>
+                                                {{ $doc->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                {{-- Part Number --}}
+                                <div class="flex flex-col">
+                                    <label for="filterPartNumber" class="text-sm font-medium text-gray-700 mb-1">Part
+                                        Number</label>
+                                    <select name="part_number_id" id="filterPartNumber"
+                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Part Numbers</option>
+                                        @foreach ($partNumbers as $pn)
+                                            <option value="{{ $pn->id }}"
+                                                {{ request('part_number_id') == $pn->id ? 'selected' : '' }}>
+                                                {{ $pn->part_number }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                {{-- Model --}}
+                                <div class="flex flex-col">
+                                    <label for="filterModel" class="text-sm font-medium text-gray-700 mb-1">Model</label>
+                                    <select name="model_id" id="filterModel"
+                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Models</option>
+                                        @foreach ($models as $model)
+                                            <option value="{{ $model->id }}"
+                                                {{ request('model_id') == $model->id ? 'selected' : '' }}>
+                                                {{ $model->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                {{-- Product --}}
+                                <div class="flex flex-col">
+                                    <label for="filterProduct"
+                                        class="text-sm font-medium text-gray-700 mb-1">Product</label>
+                                    <select name="product_id" id="filterProduct"
+                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Products</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{ $product->id }}"
+                                                {{ request('product_id') == $product->id ? 'selected' : '' }}>
+                                                {{ $product->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                {{-- Process --}}
+                                <div class="flex flex-col">
+                                    <label for="filterProcess"
+                                        class="text-sm font-medium text-gray-700 mb-1">Process</label>
+                                    <select name="process_id" id="filterProcess"
+                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Processes</option>
+                                        @foreach ($processes as $process)
+                                            <option value="{{ $process->id }}"
+                                                {{ request('process_id') == $process->id ? 'selected' : '' }}>
+                                                {{ $process->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
 
-                            {{-- Model --}}
-                            <div class="flex flex-col">
-                                <label for="filterModel" class="text-sm font-medium text-gray-700 mb-1">Model</label>
-                                <select name="model_id" id="filterModel"
-                                    class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">All Models</option>
-                                    @foreach ($models as $model)
-                                        <option value="{{ $model->id }}"
-                                            {{ request('model_id') == $model->id ? 'selected' : '' }}>
-                                            {{ $model->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div class="modal-footer flex justify-end gap-3 px-6 py-4 border-t">
+                                <button type="button" id="clearFilterModal"
+                                    class="px-4 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 transition">Clear</button>
+                                <button type="submit"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Apply</button>
                             </div>
-
-                            {{-- Product --}}
-                            <div class="flex flex-col">
-                                <label for="filterProduct" class="text-sm font-medium text-gray-700 mb-1">Product</label>
-                                <select name="product_id" id="filterProduct"
-                                    class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">All Products</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product->id }}"
-                                            {{ request('product_id') == $product->id ? 'selected' : '' }}>
-                                            {{ $product->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Process --}}
-                            <div class="flex flex-col">
-                                <label for="filterProcess" class="text-sm font-medium text-gray-700 mb-1">Process</label>
-                                <select name="process_id" id="filterProcess"
-                                    class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">All Processes</option>
-                                    @foreach ($processes as $process)
-                                        <option value="{{ $process->id }}"
-                                            {{ request('process_id') == $process->id ? 'selected' : '' }}>
-                                            {{ $process->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="modal-footer flex justify-end gap-3 px-6 py-4 border-t">
-                            <button type="button" id="clearFilterModal"
-                                class="px-4 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 transition">Clear</button>
-                            <button type="submit"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Apply</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="tableContainer">
-            {{-- Table per Plant --}}
-            <div class="overflow-x-auto max-h-[60vh]">
-                @foreach ($groupedByPlant as $plant => $documents)
-                    @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                    <div x-show="activeTab === '{{ $slug }}'" x-transition>
-                        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
-                            <thead class="bg-gray-50 sticky top-0 z-10">
-                                <tr>
-                                    <th class="px-4 py-2 text-left font-semibold">No</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Document Number</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Part Number</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Product</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Model</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Process</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Reminder Date</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Deadline</th>
-                                    <th class="px-4 py-2 text-center font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
-                                @if ($documents->isEmpty())
+            <div id="tableContainer">
+                {{-- Table per Plant --}}
+                <div class="overflow-x-auto max-h-[60vh]">
+                    @foreach ($groupedByPlant as $plant => $documents)
+                        @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
+                        <div x-show="activeTab === '{{ $slug }}'" x-transition>
+                            <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+                                <thead class="bg-gray-50 sticky top-0 z-10">
                                     <tr>
-                                        <td colspan="9" class="text-center text-gray-400 py-6">
-                                            <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
-                                            No Document found for this tab.
-                                        </td>
+                                        <th class="px-4 py-2 text-left font-semibold">No</th>
+                                        <th class="px-4 py-2 text-left font-semibold">Document Number</th>
+                                        <th class="px-4 py-2 text-left font-semibold">Part Number</th>
+                                        <th class="px-4 py-2 text-left font-semibold">Product</th>
+                                        <th class="px-4 py-2 text-left font-semibold">Model</th>
+                                        <th class="px-4 py-2 text-left font-semibold">Process</th>
+                                        <th class="px-4 py-2 text-left font-semibold">Reminder Date</th>
+                                        <th class="px-4 py-2 text-left font-semibold">Deadline</th>
+                                        <th class="px-4 py-2 text-center font-semibold">Actions</th>
                                     </tr>
-                                @else
-                                    @foreach ($documents as $index => $doc)
-                                        <tr class="hover:bg-blue-50 transition">
-                                            <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                            <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
-                                            <td class="px-4 py-2">
-                                                {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    @if ($documents->isEmpty())
+                                        <tr>
+                                            <td colspan="9" class="text-center text-gray-400 py-6">
+                                                <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
+                                                No Document found for this tab.
                                             </td>
+                                        </tr>
+                                    @else
+                                        @foreach ($documents as $index => $doc)
+                                            <tr class="hover:bg-blue-50 transition">
+                                                <td class="px-4 py-2">{{ $index + 1 }}</td>
+                                                <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
+                                                <td class="px-4 py-2">
+                                                    {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
+                                                </td>
 
-                                            <td class="px-4 py-2">{{ $doc->product->pluck('name')->join(', ') ?: '-' }}
-                                            </td>
+                                                <td class="px-4 py-2">
+                                                    {{ $doc->product->pluck('name')->join(', ') ?: '-' }}
+                                                </td>
 
-                                            <td class="px-4 py-2">
-                                                {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
+                                                <td class="px-4 py-2">
+                                                    {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
 
-                                            <td class="px-4 py-2 capitalize">
-                                                {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
-                                            </td>
-                                            <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
-                                            <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
-                                            {{-- <td class="px-4 py-2">
+                                                <td class="px-4 py-2 capitalize">
+                                                    {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
+                                                </td>
+                                                <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}
+                                                </td>
+                                                <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
+                                                {{-- <td class="px-4 py-2">
                                             @php
                                                 $statusClasses = [
                                                     'approved' =>
@@ -244,63 +293,64 @@
                                                 <span class="text-gray-400">-</span>
                                             @endif
                                         </td> --}}
-                                            <td class="px-4 py-2 text-center">
-                                                <div class="relative inline-block overflow-visible">
-                                                    @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
-                                                    @if (count($files) > 1)
-                                                        <button id="viewFilesBtn-{{ $doc->id }}" type="button"
-                                                            class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
-                                                            title="View File">
-                                                            <i data-feather="file-text" class="w-6 h-6"></i>
-                                                            <span
-                                                                class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                                                                {{ count($files) }}
-                                                            </span>
-                                                        </button>
-                                                        <div id="viewFilesDropdown-{{ $doc->id }}"
-                                                            class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
-                                                            <div class="py-1 text-sm max-h-80 overflow-y-auto">
-                                                                @foreach ($files as $file)
-                                                                    <button type="button"
-                                                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                        data-file="{{ $file['url'] }}"
-                                                                        title="View File">
-                                                                        📄 {{ $file['name'] }}
-                                                                    </button>
-                                                                @endforeach
+                                                <td class="px-4 py-2 text-center">
+                                                    <div class="relative inline-block overflow-visible">
+                                                        @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
+                                                        @if (count($files) > 1)
+                                                            <button id="viewFilesBtn-{{ $doc->id }}" type="button"
+                                                                class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
+                                                                title="View File">
+                                                                <i data-feather="file-text" class="w-6 h-6"></i>
+                                                                <span
+                                                                    class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                                    {{ count($files) }}
+                                                                </span>
+                                                            </button>
+                                                            <div id="viewFilesDropdown-{{ $doc->id }}"
+                                                                class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                                <div class="py-1 text-sm max-h-80 overflow-y-auto">
+                                                                    @foreach ($files as $file)
+                                                                        <button type="button"
+                                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
+                                                                            data-file="{{ $file['url'] }}"
+                                                                            title="View File">
+                                                                            📄 {{ $file['name'] }}
+                                                                        </button>
+                                                                    @endforeach
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    @elseif(count($files) === 1)
-                                                        <button type="button"
-                                                            class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
-                                                            data-file="{{ $files[0]['url'] }}" title="View File">
-                                                            <i data-feather="file-text" class="w-4 h-4"></i>
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                                <button data-bs-toggle="modal"
-                                                    data-bs-target="#editDocumentModal-{{ $doc->id }}"
-                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
-                                                    title="Edit">
-                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                </button>
-                                                <form action="{{ route('master.document-review.destroy', $doc->id) }}"
-                                                    method="POST" class="delete-form d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" title="Delete Document"
-                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                        @elseif(count($files) === 1)
+                                                            <button type="button"
+                                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                                data-file="{{ $files[0]['url'] }}" title="View File">
+                                                                <i data-feather="file-text" class="w-4 h-4"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                    <button data-bs-toggle="modal"
+                                                        data-bs-target="#editDocumentModal-{{ $doc->id }}"
+                                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
+                                                        title="Edit">
+                                                        <i data-feather="edit" class="w-4 h-4"></i>
                                                     </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
-                @endforeach
+                                                    <form action="{{ route('master.document-review.destroy', $doc->id) }}"
+                                                        method="POST" class="delete-form d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" title="Delete Document"
+                                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>

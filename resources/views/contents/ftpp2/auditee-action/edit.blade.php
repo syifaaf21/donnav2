@@ -173,17 +173,12 @@
                                 <div id="attachMenu2"
                                     class="hidden absolute mt-12 w-44 bg-white border rounded-xl shadow-lg z-20">
                                     <button id="attachImages2" type="button"
-                                        class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                         <i data-feather="image" class="w-4 h-4"></i> Upload Images
                                     </button>
                                     <button id="attachDocs2" type="button"
-                                        class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                         <i data-feather="file-text" class="w-4 h-4"></i> Upload Documents
-                                    </button>
-                                    <div class="border-t mt-1"></div>
-                                    <button id="attachBoth2" type="button"
-                                        class="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                        <i data-feather="upload" class="w-4 h-4"></i> Open Combined Picker
                                     </button>
                                 </div>
 
@@ -192,9 +187,6 @@
                                     class="hidden">
                                 <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple
                                     class="hidden">
-                                <input type="file" id="combinedInput2" name="attachments[]" accept="image/*,.pdf"
-                                    multiple class="hidden">
-
                                 {{-- Render existing attachments server-side so users can remove them --}}
                                 @php
                                     $existingFiles =
@@ -532,18 +524,15 @@
             const attachMenu2 = document.getElementById('attachMenu2');
             const attachImages2 = document.getElementById('attachImages2');
             const attachDocs2 = document.getElementById('attachDocs2');
-            const attachBoth2 = document.getElementById('attachBoth2');
             const attachCount2 = document.getElementById('attachCount2');
 
             const photoInput2 = document.getElementById('photoInput2');
             const fileInput2 = document.getElementById('fileInput2');
-            const combinedInput2 = document.getElementById('combinedInput2');
 
             const previewImageContainer2 = document.getElementById('previewImageContainer2');
             const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
-            if (!photoInput2 || !fileInput2 || !combinedInput2) return;
-
+            if (!photoInput2 || !fileInput2) return;
             function updatefileInput2(input, filesArray2) {
                 const dt = new DataTransfer();
                 filesArray2.forEach(file2 => dt.items.add(file2));
@@ -633,16 +622,6 @@
                 updateAttachCount2();
             });
 
-            combinedInput2.addEventListener('change', (e) => {
-                const images = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-                const docs = Array.from(e.target.files).filter(f => !f.type.startsWith('image/'));
-                updatefileInput2(photoInput2, [...Array.from(photoInput2.files), ...images]);
-                updatefileInput2(fileInput2, [...Array.from(fileInput2.files), ...docs]);
-                displayImages2();
-                displayFiles2();
-                updateAttachCount2();
-            });
-
             attachBtn2?.addEventListener('click', (e) => {
                 e.stopPropagation();
                 attachMenu2.classList.toggle('hidden');
@@ -652,7 +631,6 @@
 
             attachImages2?.addEventListener('click', () => photoInput2.click());
             attachDocs2?.addEventListener('click', () => fileInput2.click());
-            attachBoth2?.addEventListener('click', () => combinedInput2.click());
 
             // markRemoveAttachment for existing files — confirm then delete via AJAX
             window.markRemoveAttachment = function(id) {

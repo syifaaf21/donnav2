@@ -15,8 +15,9 @@
             {{-- Level 2: Sub Audit Type (muncul hanya jika audit type dipilih) --}}
             <div id="subAuditType" class="mt-2 ml-4 flex flex-wrap gap-2">
                 @foreach ($subAudit as $sub)
-                    <label class="block">
-                        <input type="radio" name="sub_audit_type_id" value="{{ $sub->id }}" disabled>
+                    <label class="block" x-show="String(form.audit_type_id) === '{{ $sub->audit_type_id }}'">
+                        <input type="radio" name="sub_audit_type_id" value="{{ $sub->id }}"
+                               x-model="form.sub_audit_type_id" disabled>
                         {{ $sub->name }}
                     </label>
                 @endforeach
