@@ -212,13 +212,27 @@
             });
 
             // Initialize TomSelect for dropdowns with class .tomselect
-            new TomSelect('.tomselect', {
-                create: false,
-                sortField: {
-                    field: "text",
-                    direction: "asc"
+            document.addEventListener('shown.bs.modal', function(event) {
+                // Modal Add & semua modal Edit
+                if (
+                    event.target.matches('#createDocumentModal') ||
+                    event.target.matches('[id^="editDocumentModal-"]')
+                ) {
+
+                    event.target.querySelectorAll('select.tomselect').forEach(select => {
+                        if (!select.tomselect) {
+                            new TomSelect(select, {
+                                create: false,
+                                sortField: {
+                                    field: "text",
+                                    direction: "asc"
+                                }
+                            });
+                        }
+                    });
                 }
             });
+
 
             // Reset form and clear TomSelect & validation on modal cancel for all edit modals
             document.querySelectorAll('[id^="editDocumentModal-"]').forEach(modalEl => {
