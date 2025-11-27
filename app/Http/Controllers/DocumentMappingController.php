@@ -529,7 +529,7 @@ class DocumentMappingController extends Controller
         ) {
             return back()->withErrors([
                 'part_number_id' =>
-                    'Please select a Part Number or fill at least one of Model, Product, or Process.'
+                'Please select a Part Number or fill at least one of Model, Product, or Process.'
             ])->withInput();
         }
 
@@ -1015,7 +1015,7 @@ class DocumentMappingController extends Controller
     public function storeControl(Request $request)
     {
         // Validasi
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'document_name' => 'required|string|max:255',
             'department' => 'required|array',
             'department.*' => 'exists:tm_departments,id',
@@ -1030,6 +1030,13 @@ class DocumentMappingController extends Controller
             'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('modal', 'add');  // <== TAMBAHKAN INI
+        }
+        $validated = $validator->validated();
 
         $cleanNotes = trim($validated['notes'] ?? '');
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
@@ -1119,11 +1126,11 @@ class DocumentMappingController extends Controller
         ]);
 
         if ($validator->fails()) {
-            $request->session()->forget('_old_input');
             return back()
                 ->withErrors($validator)
-                ->with('editModalId', $mapping->id)
-                ->with('editOldInputs.' . $mapping->id, $request->all());
+                ->withInput()
+                ->with('modal', 'edit')          // <== TAMBAH
+                ->with('mapping_id', $mapping->id); // <== UNTUK BUKA MODAL TERTENTU
         }
 
         $validated = $validator->validated();

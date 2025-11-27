@@ -83,72 +83,85 @@
     <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form action="{{ route('master.hierarchy.store') }}" method="POST">
+            <form action="{{ route('master.hierarchy.store') }}" method="POST"
+                class="modal-content border-0 shadow-lg rounded-4">
                 @csrf
-                <div class="modal-content border-0 rounded-4 shadow-lg">
-                    <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold">
-                            <i class="bi bi-file-earmark-plus me-2 text-primary"></i> Create New Document
-                        </h5>
+
+                {{-- Header --}}
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold" id="createDocumentModalLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-file-earmark-plus me-2 text-primary"></i> Create New Document
+                    </h5>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-5">
+                    {{-- Document Name --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name"
+                            class="form-control rounded-3 border-0 shadow-sm @error('name') is-invalid @enderror"
+                            value="{{ old('name') }}" placeholder="Enter document name" required>
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    <div class="modal-body px-4 py-3">
-                        {{-- Document Name --}}
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name"
-                                class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                value="{{ old('name') }}" placeholder="Enter document name" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        {{-- Parent Document --}}
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Parent Document</label>
-                            <select name="parent_id"
-                                class="form-select rounded-3 tomselect @error('parent_id') is-invalid @enderror">
-                                <option value="">-- No Parent (Top Level) --</option>
-                                @foreach ($parents as $parentDoc)
-                                    <option value="{{ $parentDoc->id }}"
-                                        {{ old('parent_id') == $parentDoc->id ? 'selected' : '' }}>
-                                        {{ $parentDoc->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('parent_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        {{-- Hidden field: type default ke review --}}
-                        <input type="hidden" name="type" value="review">
-
-
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                            <input type="text" name="code"
-                                class="form-control rounded-3 @error('code') is-invalid @enderror"
-                                value="{{ old('code') }}" required>
-                            @error('code')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                    {{-- Parent Document --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Parent Document</label>
+                        <select name="parent_id"
+                            class="form-select rounded-3 tomselect @error('parent_id') is-invalid @enderror">
+                            <option value="">-- No Parent (Top Level) --</option>
+                            @foreach ($parents as $parentDoc)
+                                <option value="{{ $parentDoc->id }}" @selected(old('parent_id') == $parentDoc->id)>
+                                    {{ $parentDoc->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('parent_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                        <button type="button"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                            data-bs-dismiss="modal">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                            Submit
-                        </button>
+
+                    {{-- Hidden field: type default ke review --}}
+                    <input type="hidden" name="type" value="review">
+
+                    {{-- Code --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
+                        <input type="text" name="code" placeholder="Enter Document Code"
+                            class="form-control rounded-3 border-0 shadow-sm @error('code') is-invalid @enderror"
+                            value="{{ old('code') }}" required>
+                        @error('code')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                    <button type="button"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                        data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        Submit
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+
 @endsection
 @push('scripts')
     <x-sweetalert-confirm />

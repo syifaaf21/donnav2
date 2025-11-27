@@ -35,11 +35,6 @@ class DocumentControlController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
-        // Filter department kalau ada
-        if ($request->filled('department_id')) {
-            $query->where('department_id', $request->department_id);
-        }
-
         // Search global
         if ($request->filled('search')) {
             $search = $request->search;
@@ -108,11 +103,22 @@ class DocumentControlController extends Controller
         $activeDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Active')->count();
         $obsoleteDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Obsolete')->count();
 
-        // Group by department untuk accordion
-        $groupedDocuments = $documentsMapping->groupBy(fn($d) => $d->department->name ?? 'Unknown Department');
-
         // Dropdown filter department
         $departments = Department::all();
+
+        // Jika admin memilih department → tampilkan hanya department tersebut
+        if ($request->filled('department_id')) {
+            $allDepartments = Department::where('id', $request->department_id)->get();
+        } else {
+            $allDepartments = Department::orderBy('name')->get();
+        }
+
+        // Gabungkan department + dokumen
+        $groupedDocuments = $allDepartments->mapWithKeys(function ($dept) use ($documentsMapping) {
+            $docs = $documentsMapping->where('department_id', $dept->id);
+            return [$dept->name => $docs];
+        });
+
 
         return view('contents.document-control.index', compact(
             'documentsMapping',
@@ -268,7 +274,6 @@ class DocumentControlController extends Controller
             'status_id' => $statusActive->id,
             'obsolete_date' => $newObsoleteDate,
             'reminder_date' => $newReminderDate,
-            'user_id' => Auth::id(), // siapa yang approve
         ]);
 
         // Ambil semua user di department terkait, kecuali user yang approve
@@ -296,7 +301,7 @@ class DocumentControlController extends Controller
         }
 
         $request->validate([
-            'notes' => 'nullable|string',
+            'notes' => 'required|string',
         ]);
 
         $statusRejected = Status::firstOrCreate(

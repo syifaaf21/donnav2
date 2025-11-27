@@ -67,108 +67,145 @@
 {{-- MODAL ADD AUDIT --}}
 <div class="modal fade" id="modalAddAudit" tabindex="-1" aria-labelledby="modalAddAuditLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-xl shadow-lg">
-            <div class="modal-header bg-blue-500 text-white rounded-t-xl">
-                <h5 class="modal-title text-sm font-medium" id="modalAddAuditLabel">
-                    <i class="bi bi-plus-circle me-1"></i> Add Audit Type
+        <form action="{{ route('master.ftpp.audit.store') }}" method="POST" class="modal-content rounded-4 shadow-lg">
+            @csrf
+
+            {{-- Header --}}
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalAddAuditLabel"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i> Add Audit Type
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
             </div>
 
-            <form action="{{ route('master.ftpp.audit.store') }}" method="POST">
-                @csrf
-                <div class="modal-body space-y-4">
-
+            {{-- Body --}}
+            <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                <div class="row g-4">
                     {{-- Audit Type --}}
-                    <div>
-                        <label for="audit_name" class="text-sm font-medium text-gray-700">Audit Type</label>
-                        <input type="text" name="name" id="audit_name" required
-                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    <div class="col-md-12">
+                        <label for="audit_name" class="form-label fw-semibold">Audit Type <span
+                                class="text-danger">*</span></label>
+                        <input type="text" name="name" id="audit_name" required placeholder="Enter audit type"
+                            class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
+                            value="{{ old('name') }}">
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     {{-- Sub Audit Type (Dynamic Input) --}}
-                    <div>
-                        <label class="text-sm font-medium text-gray-700">Sub Audit Type</label>
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Sub Audit Type</label>
 
                         <div id="sub-audit-container" class="space-y-2 mt-2">
-                            <div class="flex gap-2 sub-audit-item">
+                            <div class="d-flex gap-2 sub-audit-item">
                                 <input type="text" name="sub_audit[]" placeholder="Enter Sub Audit Type"
-                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
-                                <button type="button"
-                                    class="btn-remove-sub bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md text-sm hidden">
+                                    class="flex-grow-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                <button type="button" class="btn-remove-sub btn btn-sm btn-danger d-none"
+                                    title="Remove Sub Audit">
                                     <i class="bi bi-x"></i>
                                 </button>
                             </div>
                         </div>
 
                         <button type="button" id="btn-add-sub"
-                            class="mt-2 flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            class="mt-2 d-flex align-items-center gap-1 text-primary fw-semibold btn btn-link p-0"
+                            style="font-size: 0.875rem;">
                             <i class="bi bi-plus-circle"></i> Add Sub Audit
                         </button>
                     </div>
                 </div>
+            </div>
 
-                <div class="modal-footer border-t">
-                    <button type="button" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm"
-                        data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit"
-                        class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm">Save</button>
-                </div>
-            </form>
-        </div>
+            {{-- Footer --}}
+            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal"
+                    style="text-decoration: none; transition: background-color 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    Submit
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+
 
 {{-- MODAL EDIT AUDIT --}}
 <div class="modal fade" id="modalEditAudit" tabindex="-1" aria-labelledby="modalEditAuditLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-xl shadow-lg">
-            <div class="modal-header bg-blue-500 text-white rounded-t-xl">
-                <h5 class="modal-title text-sm font-medium" id="modalEditAuditLabel">
-                    <i class="bi bi-pencil-square me-1"></i> Edit Audit Type
+        <form id="formEditAudit" method="POST" class="modal-content rounded-4 shadow-lg">
+            @csrf
+            @method('PUT')
+
+            {{-- Header --}}
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalEditAuditLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Audit Type
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
             </div>
 
-            <form id="formEditAudit" method="POST">
-                @csrf
-                @method('PUT')
-
-                <div class="modal-body space-y-4">
+            {{-- Body --}}
+            <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                <div class="row g-4">
                     {{-- Audit Type --}}
-                    <div>
-                        <label for="edit_audit_name" class="text-sm font-medium text-gray-700">Audit Type</label>
+                    <div class="col-md-12">
+                        <label for="edit_audit_name" class="form-label fw-semibold">Audit Type <span class="text-danger">*</span></label>
                         <input type="text" name="name" id="edit_audit_name" required
-                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     {{-- Sub Audit Type (Dynamic Input) --}}
-                    <div>
-                        <label class="text-sm font-medium text-gray-700">Sub Audit Type</label>
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Sub Audit Type</label>
 
                         <div id="edit-sub-audit-container" class="space-y-2 mt-2">
                             {{-- akan diisi via JavaScript --}}
                         </div>
 
                         <button type="button" id="btn-edit-add-sub"
-                            class="mt-2 flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            class="mt-2 d-flex align-items-center gap-1 text-primary fw-semibold btn btn-link p-0"
+                            style="font-size: 0.875rem;">
                             <i class="bi bi-plus-circle"></i> Add Sub Audit
                         </button>
                     </div>
                 </div>
+            </div>
 
-                <div class="modal-footer border-t">
-                    <button type="button" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm"
-                        data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit"
-                        class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm">Update</button>
-                </div>
-            </form>
-        </div>
+            {{-- Footer --}}
+            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                    data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    Update
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
 
 @push('scripts')
     <script>
@@ -289,7 +326,8 @@
                 try {
                     setTimeout(() => {
                         if (document.querySelectorAll('.modal.show').length === 0) {
-                            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                            document.querySelectorAll('.modal-backdrop').forEach(backdrop =>
+                                backdrop.remove());
                             document.body.classList.remove('modal-open');
                             document.body.style.overflow = '';
                             document.body.style.paddingRight = '';
@@ -300,6 +338,5 @@
                 }
             });
         });
-
     </script>
 @endpush

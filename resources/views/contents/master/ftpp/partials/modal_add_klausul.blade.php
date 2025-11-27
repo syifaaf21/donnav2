@@ -1,60 +1,79 @@
-<!-- Modal Add Klausul (final) -->
+{{-- Modal Add Klausul (final) --}}
 <div class="modal fade" id="modalAddKlausul" tabindex="-1" aria-labelledby="modalAddKlausulLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <form id="form-add-klausul" action="{{ route('master.ftpp.klausul.store') }}" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Klausul & Head</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+        <form id="form-add-klausul" action="{{ route('master.ftpp.klausul.store') }}" method="POST" class="modal-content rounded-4 shadow-lg">
+            @csrf
 
-                <div class="modal-body">
-                    <!-- Klausul -->
-                    <div class="mb-3">
-                        <label class="form-label">Klausul</label>
-                        <select id="select-klausul" name="klausul_id" class="form-select" required></select>
+            {{-- Header --}}
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalAddKlausulLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i> Add Klausul & Head
+                </h5>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
+            </div>
+
+            {{-- Body --}}
+            <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                <div class="row g-4">
+                    {{-- Klausul --}}
+                    <div class="col-md-6">
+                        <label for="select-klausul" class="form-label fw-semibold">Klausul <span class="text-danger">*</span></label>
+                        <select id="select-klausul" name="klausul_id" class="form-select @error('klausul_id') is-invalid @enderror" required></select>
+                        @error('klausul_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    <!-- Head Klausul -->
-                    <div class="mb-3">
-                        <label class="form-label">Head Klausul</label>
-                        <select id="select-head" name="head_klausul_id" class="form-select" required></select>
+                    {{-- Head Klausul --}}
+                    <div class="col-md-6">
+                        <label for="select-head" class="form-label fw-semibold">Head Klausul <span class="text-danger">*</span></label>
+                        <select id="select-head" name="head_klausul_id" class="form-select @error('head_klausul_id') is-invalid @enderror" required></select>
                         <div class="form-text">Type to search or type a new head to create one.</div>
+                        @error('head_klausul_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    <!-- Code untuk Head Klausul (shown when head selected OR new created) -->
-                    <div class="mb-3 d-none" id="group-head-code">
-                        <label class="form-label">Head Code</label>
-                        <input type="text" id="input-head-code" name="head_code" class="form-control"
-                            placeholder="Enter code for this head...">
+                    {{-- Head Code --}}
+                    <div class="col-md-12 d-none" id="group-head-code">
+                        <label for="input-head-code" class="form-label fw-semibold">Head Code</label>
+                        <input type="text" id="input-head-code" name="head_code" class="form-control" placeholder="Enter code for this head...">
                     </div>
 
-                    <!-- Sub Klausul repeater -->
-                    <div class="mb-3">
-                        <label class="form-label">Sub Klausul</label>
+                    {{-- Sub Klausul Repeater --}}
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Sub Klausul</label>
                         <div id="sub-klausul-list" class="d-flex flex-column gap-2">
                             <div class="d-flex gap-2 align-items-center sub-row">
                                 <input type="text" name="sub_codes[]" class="form-control w-25" placeholder="Code">
-                                <input type="text" name="sub_names[]" class="form-control"
-                                    placeholder="Sub klausul name">
-                                <button type="button"
-                                    class="btn btn-outline-danger btn-sm btn-remove-sub-input">×</button>
+                                <input type="text" name="sub_names[]" class="form-control" placeholder="Sub klausul name">
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-sub-input">×</button>
                             </div>
                         </div>
                         <button type="button" id="btn-add-sub" class="btn btn-link p-0 mt-2">+ Add another</button>
                         <div class="form-text">You can add many sub klausul rows (each has code + name).</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
+            {{-- Footer --}}
+            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold" style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    Submit
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -65,6 +84,7 @@
             searchField: "name",
             preload: true,
             create: true,
+            placeholder: "Select or type to add klausul...",
             load: (query, callback) => {
                 fetch(`/api/klausuls?q=${encodeURIComponent(query || "")}`)
                     .then(r => r.json())

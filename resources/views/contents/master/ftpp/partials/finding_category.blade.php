@@ -47,71 +47,101 @@
 {{-- MODAL ADD FINDING CATEGORY --}}
 <div class="modal fade" id="modalAddCategory" tabindex="-1" aria-labelledby="modalAddCategoryLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-xl shadow-lg">
-            <div class="modal-header bg-blue-500 text-white rounded-t-xl">
-                <h5 class="modal-title text-sm font-medium" id="modalAddCategoryLabel">
-                    <i class="bi bi-plus-circle me-1"></i> Add Finding Category
+        <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST" class="modal-content rounded-4 shadow-lg">
+            @csrf
+
+            {{-- Header --}}
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalAddCategoryLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i> Add Finding Category
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
             </div>
 
-            <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST">
-                @csrf
-                <div class="modal-body space-y-3">
-                    <div>
-                        <label for="category_name" class="text-sm font-medium text-gray-700">Category Name</label>
-                        <input type="text" name="name" id="category_name" required
-                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
+            {{-- Body --}}
+            <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label for="category_name" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="category_name" placeholder="Input Category Name"
+                            class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
+            </div>
 
-                <div class="modal-footer border-t">
-                    <button type="button" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm"
-                        data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit"
-                        class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm">Save</button>
-                </div>
-            </form>
-        </div>
+            {{-- Footer --}}
+            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                    data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    Submit
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
 
 {{-- MODAL EDIT FINDING CATEGORY --}}
-<div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel"
-    aria-hidden="true">
+<div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-xl shadow-lg">
-            <div class="modal-header bg-blue-500 text-white rounded-t-xl">
-                <h5 class="modal-title text-sm font-medium" id="modalEditCategoryLabel">
-                    <i class="bi bi-pencil-square me-1"></i> Edit Finding Category
+        <form id="formEditCategory" method="POST" class="modal-content rounded-4 shadow-lg">
+            @csrf
+            @method('PUT')
+
+            {{-- Header --}}
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalEditCategoryLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Finding Category
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
             </div>
 
-            <form id="formEditCategory" method="POST">
-                @csrf
-                @method('PUT')
-
-                <div class="modal-body space-y-3">
-                    <div>
-                        <label for="edit_category_name" class="text-sm font-medium text-gray-700">Category Name</label>
-                        <input type="text" name="name" id="edit_category_name" required
-                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm">
+            {{-- Body --}}
+            <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label for="edit_category_name" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit_category_name" placeholder="Input Category Name" required
+                            class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
+            </div>
 
-                <div class="modal-footer border-t">
-                    <button type="button" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm"
-                        data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit"
-                        class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm">Update</button>
-                </div>
-            </form>
-        </div>
+            {{-- Footer --}}
+            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                    data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
 
 {{-- HIDDEN DELETE FORM --}}
 <form class="delete-form" id="form-delete-category" method="POST" style="display: none;">

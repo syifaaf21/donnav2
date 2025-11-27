@@ -341,7 +341,7 @@ class DocumentReviewController extends Controller
 
         // Validasi
         $request->validate([
-            'revision_files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
             'revision_file_ids.*' => 'nullable|integer',
             'notes' => 'required|string|max:500',
         ]);
@@ -464,7 +464,7 @@ class DocumentReviewController extends Controller
             departmentName: $mapping->department?->name,
         ));
 
-        return redirect()->route('document-review.index')
+        return redirect($url)
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
 
@@ -482,6 +482,9 @@ class DocumentReviewController extends Controller
         $mapping = DocumentMapping::with('department')->findOrFail($id);
         $rejectedStatus = Status::where('name', 'Rejected')->first();
 
+        $request->validate([
+            'notes' => 'required|string'
+        ]);
         $mapping->timestamps = false;
         $mapping->updateQuietly([
             'status_id' => $rejectedStatus->id ?? $mapping->status_id,
@@ -490,6 +493,7 @@ class DocumentReviewController extends Controller
         ]);
         $mapping->timestamps = true;
 
+        // Hanya user departemen terkait (kecuali Admin/Super Admin)
         $targetUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
@@ -510,7 +514,7 @@ class DocumentReviewController extends Controller
             departmentName: $mapping->department?->name,
         ));
 
-        return redirect()->route('document-review.index')
+        return redirect($url)
             ->with('success', "Document '{$mapping->document_number}' has been rejected.");
     }
 }

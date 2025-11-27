@@ -100,37 +100,46 @@
             aria-labelledby="editDepartmentModalLabel-{{ $department->id }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <form action="{{ route('master.departments.update', $department->id) }}" method="POST"
-                    id="editForm-{{ $department->id }}" class="modal-content rounded-xl">
+                    id="editForm-{{ $department->id }}" class="modal-content rounded-4 shadow-lg">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="_form" value="edit">
 
-                    <!-- Header -->
-                    <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" id="editDepartmentModalLabel-{{ $department->id }}">
-                            <i class="bi bi-person-lines-fill me-2"></i>Edit Department
+                    {{-- Header --}}
+                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                        style="background-color: #f5f5f7;">
+                        <h5 class="modal-title fw-semibold text-dark" id="editDepartmentModalLabel-{{ $department->id }}"
+                            style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                           <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Department
                         </h5>
+                        <button type="button"
+                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            data-bs-dismiss="modal" aria-label="Close"
+                            style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        </button>
                     </div>
 
-                    <!-- Body -->
-                    <div class="modal-body p-5">
-                        <div class="row g-3">
-                            <!-- Name -->
+                    {{-- Body --}}
+                    <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                        <div class="row g-4">
+                            {{-- Name --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" placeholder="Enter department name"
-                                    class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                    class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ old('name', $department->name) }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            <!-- Code -->
+                            {{-- Code --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
                                 <select name="code" id="edit-code-select-{{ $department->id }}"
-                                    class="form-select rounded-3 @error('code') is-invalid @enderror" required>
+                                    class="form-select border-0 shadow-sm rounded-3 @error('code') is-invalid @enderror"
+                                    required>
                                     @foreach ($codes as $code)
                                         <option value="{{ $code }}"
                                             {{ old('code', $department->code) == $code ? 'selected' : '' }}>
@@ -143,12 +152,12 @@
                                 @enderror
                             </div>
 
-                            <!-- Plant -->
+                            {{-- Plant --}}
                             <div class="col-md-12">
-                                <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
                                 <select name="plant" id="edit-plant-select-{{ $department->id }}"
-                                    class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
-
+                                    class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
+                                    required>
                                     <option value="Unit"
                                         {{ old('plant', $department->plant) == 'Unit' ? 'selected' : '' }}>Unit</option>
                                     <option value="Body"
@@ -158,7 +167,6 @@
                                     </option>
                                     <option value="ALL"
                                         {{ old('plant', $department->plant) == 'ALL' ? 'selected' : '' }}>ALL</option>
-
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -167,14 +175,15 @@
                         </div>
                     </div>
 
-                    <!-- Footer -->
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                        <button type="button"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                            data-bs-dismiss="modal">
+                    {{-- Footer --}}
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                            style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
                             Save Changes
                         </button>
                     </div>
@@ -187,28 +196,46 @@
     <div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form action="{{ route('master.departments.store') }}" method="POST" class="modal-content rounded-xl">
-                @csrf <input type="hidden" name="_form" value="add">
-                <!-- Header -->
-                <div class="modal-header bg-light text-dark rounded-top-4">
-                    <h5 class="modal-title fw-semibold" id="addDepartmentModalLabel"> <i
-                            class="bi bi-plus-circle me-2 text-primary"></i>Create New Department </h5>
-                </div> <!-- Body -->
-                <div class="modal-body p-5">
-                    <div class="row g-3">
-                        <!-- Name -->
+            <form action="{{ route('master.departments.store') }}" method="POST"
+                class="modal-content rounded-4 shadow-lg">
+                @csrf
+                <input type="hidden" name="_form" value="add">
+
+                {{-- Header --}}
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark" id="addDepartmentModalLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Department
+                    </h5>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                    <div class="row g-4">
+                        {{-- Name --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" placeholder="Enter department name"
-                                class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                value="{{ old('name') }}" required> @error('name')
+                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
+                                value="{{ old('name') }}" required>
+                            @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <!-- Code -->
+
+                        {{-- Code --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                            <select id="code-select" name="code" class="form-select" required>
+                            <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
+                            <select id="code-select" name="code"
+                                class="form-select border-0 shadow-sm rounded-3 @error('code') is-invalid @enderror"
+                                required>
                                 <option value="" disabled selected>-- Select Code --</option>
 
                                 @foreach ($codes as $code)
@@ -225,10 +252,13 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <!-- Plant -->
+
+                        {{-- Plant --}}
                         <div class="col-md-12">
-                            <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                            <select id="plant-select" name="plant" class="form-select" required>
+                            <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                            <select id="plant-select" name="plant"
+                                class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
+                                required>
                                 <option value="" disabled selected>-- Select Plant --</option>
 
                                 <option value="Unit" {{ old('plant') == 'Unit' ? 'selected' : '' }}>Unit</option>
@@ -237,7 +267,7 @@
                                 </option>
                                 <option value="ALL" {{ old('plant') == 'ALL' ? 'selected' : '' }}>ALL</option>
 
-                                @if (old('plant') && !in_array(old('plant'), ['Unit', 'Body', 'Electric', 'All']))
+                                @if (old('plant') && !in_array(old('plant'), ['Unit', 'Body', 'Electric', 'ALL']))
                                     <option value="{{ old('plant') }}" selected>{{ old('plant') }}</option>
                                 @endif
                             </select>
@@ -247,13 +277,15 @@
                         </div>
                     </div>
                 </div>
-                <!-- Footer -->
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                        data-bs-dismiss="modal"> Cancel
+
+                {{-- Footer --}}
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                        data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                        Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
                         Submit
                     </button>
                 </div>

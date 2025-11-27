@@ -15,7 +15,7 @@ class SendDocumentControlReminder extends Command
     public function handle(WhatsAppService $wa)
     {
         $today = Carbon::now();
-        if (!$today->isMonday()) {
+        if (!$today->isThursday()) {
             $this->info("Not Monday, skipping WhatsApp reminder.");
             return;
         }
@@ -90,17 +90,30 @@ class SendDocumentControlReminder extends Command
 
         $formatCategory = function ($label, $docsByDept) use (&$message) {
             if (empty($docsByDept)) return;
-            $deptCounter = 1;
+
             $message .= "$label\n";
+            $deptCounter = 1;
+
             foreach ($docsByDept as $dept => $docs) {
-                $message .= "{$deptCounter}. *{$dept}*\n";
+
+                $message .= "[{$deptCounter}] *{$dept}*\n";
+
+                $docCounter = 1;
                 foreach ($docs as $doc) {
-                    $message .= $doc->_message;
+
+                    // Bersihkan prefix "- " dan pastikan 1 dokumen = 1 baris
+                    $cleanMessage = preg_replace('/^\s*-\s*/', '', trim($doc->_message));
+
+                    $message .= "    {$docCounter}. {$cleanMessage}\n";
+
+                    $docCounter++;
                 }
-                $message .= "\n";
+
+                $message .= "\n"; // Spasi antar department
                 $deptCounter++;
             }
         };
+
 
         // Siapkan _message per kategori
         foreach ($categories['uncomplete'] as $dept => $docs) {
@@ -140,7 +153,7 @@ class SendDocumentControlReminder extends Command
         $sent = $wa->sendGroupMessage($groupId, $message);
 
         if ($sent) {
-            $this->info("WhatsApp message sent successfully to Group ID: $groupId". config('services.whatsapp.group_id'));
+            $this->info("WhatsApp message sent successfully to Group ID: $groupId" . config('services.whatsapp.group_id'));
         } else {
             $this->error("Failed to send WhatsApp message.");
         }

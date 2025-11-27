@@ -40,33 +40,32 @@
         </div>
         <div id="liveTableWrapper">
             <!-- Table -->
-            <div class="overflow-x-auto bg-white rounded-lg shadow p-4">
-                <table class="min-w-full table-auto text-sm text-left text-gray-700 border border-gray-200">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold border-b">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Document Name</th>
-                            <th class="px-4 py-2">Status</th>
-                            <th class="px-4 py-2">Obsolete Date</th>
-                            <th class="px-4 py-2">Updated By</th>
-                            <th class="px-4 py-2">Last Update</th>
-                            <th class="px-4 py-2">Notes</th>
-                            <th class="px-4 py-2 text-center">Actions</th>
+            <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+            <table class="min-w-full text-sm text-gray-700">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Status</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete Date</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last Update</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Notes</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100">
                         @if ($mappings->isEmpty())
-                            {{-- 🛑 KODE BARU: Menampilkan pesan jika tidak ada data --}}
-                            <tr>
-                                <td colspan="9" class="px-4 py-4 text-center text-gray-500 font-medium text-lg">
-                                    ❌ No documents found matching your criteria.
+                            <tr class="hover:bg-gray-50 transition-all duration-150">
+                                <td colspan="9" class="px-4 py-4 text-center text-gray-500text-lg">
+                                    No documents found.
                                 </td>
                             </tr>
                         @else
-                            {{-- 🛑 KODE LAMA: Tetap tampilkan baris data jika ada --}}
+
                             @foreach ($mappings as $mapping)
-                                <tr class="border-b hover:bg-gray-50 transition">
-                                    <td class="px-4 py-2 text-gray-600 text-sm">
+                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                                    <td class="px-4 py-3">
                                         {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                     </td>
                                     <td class="px-4 py-2 text-gray-700 truncate text-sm max-w-xs"
@@ -90,16 +89,16 @@
                                             {{ $mapping->status->name }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-2 text-gray-600 text-sm">
+                                    <td class="px-4 py-3">
                                         {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
                                     </td>
-                                    <td class="px-4 py-2 text-gray-600 text-sm truncate">
+                                    <td class="px-4 py-3 truncate">
                                         {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
                                     </td>
-                                    <td class="px-4 py-2 text-gray-600 text-sm">
+                                    <td class="px-4 py-3">
                                         {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
                                     </td>
-                                    <td class="px-4 py-2 text-gray-600 text-sm max-w-xs">
+                                    <td class="px-4 py-3 max-w-xs">
                                         <div class="overflow-y-auto max-h-16 text-sm">
                                             {!! $mapping->notes ?? '-' !!}
                                         </div>
@@ -454,6 +453,43 @@
             const reviseFilesContainer = document.getElementById('reviseFilesContainer');
             const newFilesContainer = document.getElementById('new-files-container');
             const addFileBtn = document.getElementById('add-file');
+            // ===============================
+            // VALIDASI: Cegah submit jika tidak ada perubahan file
+            // ===============================
+            const reviseFormDynamic = document.getElementById('reviseFormDynamic');
+
+            if (reviseFormDynamic) {
+                reviseFormDynamic.addEventListener('submit', function(e) {
+
+                    // ambil file replace lama
+                    const existingFileInputs = reviseFilesContainer.querySelectorAll('input[type="file"]');
+
+                    // ambil file baru
+                    const newFileInputs = newFilesContainer.querySelectorAll('input[type="file"]');
+
+                    let hasChange = false;
+
+                    // cek apakah ada file lama yang diganti
+                    existingFileInputs.forEach(input => {
+                        if (input.files.length > 0) {
+                            hasChange = true;
+                        }
+                    });
+
+                    // cek file baru
+                    newFileInputs.forEach(input => {
+                        if (input.files.length > 0) {
+                            hasChange = true;
+                        }
+                    });
+
+                    if (!hasChange) {
+                        e.preventDefault();
+                        showReviseError("Please modify at least one file before submitting.");
+                    }
+                });
+            }
+
 
             window.openReviseModal = function(btn) {
                 const mappingId = btn.dataset.docid;
@@ -596,12 +632,25 @@
 
             // Saat submit form, ambil konten Quill dan simpan ke input hidden
             if (rejectForm) {
-                rejectForm.addEventListener('submit', function() {
-                    if (rejectQuill && rejectNotesInput) {
-                        rejectNotesInput.value = rejectQuill.root.innerHTML.trim();
+                rejectForm.addEventListener('submit', function(e) {
+                    const content = rejectQuill.root.innerHTML.trim();
+
+                    // Cek apakah Quill kosong
+                    if (content === "<p><br></p>" || content === "") {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Notes Required',
+                            text: 'Please write rejection notes before submitting.'
+                        });
+                        return;
                     }
+
+                    // Simpan isi Quill
+                    rejectNotesInput.value = content;
                 });
             }
+
 
             // =========================
             // File preview dropdown / view
@@ -685,27 +734,74 @@
             const periodYears = btn.dataset.period || 0;
 
             Swal.fire({
-                title: "Approve Document?",
+                title: `
+            <span style="
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: #1f2937;
+                font-family: 'Inter', sans-serif;
+            ">
+                Approve Document?
+            </span>
+        `,
                 html: `
-            <div class="text-sm">
+            <div style="
+                font-size: 1rem;
+                color: #4b5563;
+                font-family: 'Inter', sans-serif;
+                margin-top: 6px;
+                line-height: 1.55;
+            ">
                 Are you sure you want to approve this document?<br><br>
-                <strong>This document will be obsolete in:</strong><br>
-                <span style="font-size: 1.1rem; color:#0d6efd; font-weight:600;">
+                <strong style="color:#111827;">This document will be obsolete in:</strong><br>
+
+                <span style="
+                    font-size: 1.35rem;
+                    color: #0d6efd;
+                    font-weight: 700;
+                    display: inline-block;
+                    margin-top: 4px;
+                ">
                     ${periodYears} year(s)
                 </span>
             </div>
         `,
                 icon: "warning",
+
                 showCancelButton: true,
-                confirmButtonColor: "#16a34a",
-                cancelButtonColor: "#dc2626",
                 confirmButtonText: "Yes, approve it",
-                cancelButtonText: "Cancel"
+                cancelButtonText: "Cancel",
+
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-4 shadow-lg',
+                    confirmButton: 'btn btn-success fw-semibold px-4 py-2 mx-2',
+                    cancelButton: 'btn btn-outline-secondary fw-semibold px-4 py-2 mx-2'
+                },
+
+                padding: "1.8rem 2rem",
+
+                // **Made wider**
+                width: "480px",
             }).then((result) => {
                 if (result.isConfirmed) {
                     form.submit();
                 }
             });
+        }
+
+
+        function showReviseError(message) {
+            let oldAlert = document.getElementById('revise-alert');
+            if (oldAlert) oldAlert.remove();
+
+            const alertDiv = document.createElement('div');
+            alertDiv.id = 'revise-alert';
+            alertDiv.className = "alert alert-danger mt-3";
+            alertDiv.innerText = message;
+
+            const form = document.getElementById('reviseFormDynamic');
+            form.prepend(alertDiv);
         }
     </script>
 @endpush

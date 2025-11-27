@@ -173,27 +173,37 @@
 
         <div id="tableContainer">
             {{-- Table per Plant --}}
-            <div class="overflow-x-auto max-h-[60vh]">
+            <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 max-h-[60vh]">
                 @foreach ($groupedByPlant as $plant => $documents)
                     @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
                     <div x-show="activeTab === '{{ $slug }}'" x-transition>
-                        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+                        <table class="min-w-full text-sm text-gray-700">
                             <thead class="bg-gray-50 sticky top-0 z-10">
                                 <tr>
-                                    <th class="px-4 py-2 text-left font-semibold">No</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Document Number</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Part Number</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Product</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Model</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Process</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Reminder Date</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Deadline</th>
-                                    <th class="px-4 py-2 text-center font-semibold">Actions</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No
+                                    </th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Document Number</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part
+                                        Number</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Product</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model
+                                    </th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Process</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Reminder Date</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Deadline</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
+                            <tbody class=" divide-y divide-gray-100">
                                 @if ($documents->isEmpty())
-                                    <tr>
+                                    <tr class="hover:bg-gray-50 transition-all duration-150" >
                                         <td colspan="9" class="text-center text-gray-400 py-6">
                                             <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
                                             No Document found for this tab.
@@ -201,25 +211,25 @@
                                     </tr>
                                 @else
                                     @foreach ($documents as $index => $doc)
-                                        <tr class="hover:bg-blue-50 transition">
-                                            <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                            <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
-                                            <td class="px-4 py-2">
+                                        <tr class="hover:bg-gray-50 transition-all duration-150">
+                                            <td class="px-4 py-3">{{ $index + 1 }}</td>
+                                            <td class="px-4 py-3 font-medium">{{ $doc->document_number }}</td>
+                                            <td class="px-4 py-3">
                                                 {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
                                             </td>
 
-                                            <td class="px-4 py-2">{{ $doc->product->pluck('name')->join(', ') ?: '-' }}
+                                            <td class="px-4 py-3">{{ $doc->product->pluck('name')->join(', ') ?: '-' }}
                                             </td>
 
-                                            <td class="px-4 py-2">
+                                            <td class="px-4 py-3">
                                                 {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
 
-                                            <td class="px-4 py-2 capitalize">
+                                            <td class="px-4 py-3 capitalize">
                                                 {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
                                             </td>
-                                            <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
-                                            <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
-                                            {{-- <td class="px-4 py-2">
+                                            <td class="px-4 py-3">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
+                                            <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
+                                            {{-- <td class="px-4 py-3">
                                             @php
                                                 $statusClasses = [
                                                     'approved' =>
@@ -244,7 +254,7 @@
                                                 <span class="text-gray-400">-</span>
                                             @endif
                                         </td> --}}
-                                            <td class="px-4 py-2 text-center">
+                                            <td class="px-4 py-3 text-center">
                                                 <div class="relative inline-block overflow-visible">
                                                     @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
                                                     @if (count($files) > 1)

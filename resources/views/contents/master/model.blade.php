@@ -98,99 +98,37 @@
     @foreach ($models as $model)
         <div class="modal fade" id="editModelModal-{{ $model->id }}" tabindex="-1"
             aria-labelledby="editModelModalLabel-{{ $model->id }}" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg = modal besar --}}
-                <form action="{{ route('master.models.update', $model->id) }}" method="POST">
+            <div class="modal-dialog modal-dialog-centered">
+                <form action="{{ route('master.models.update', $model->id) }}" method="POST"
+                    class="modal-content rounded-4 shadow-lg border-0">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="_form" value="edit">
-                    <div class="modal-content border-0 shadow-lg rounded-4">
 
-                        {{-- Header --}}
-                        <div class="modal-header bg-light text-dark rounded-top-4">
-                            <h5 class="modal-title fw-semibold" id="editModelModalLabel-{{ $model->id }}">
-                                <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Model
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-
-                        {{-- Body --}}
-                        <div class="modal-body p-5">
-                            <div class="row g-4">
-                                {{-- Model Name --}}
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Model Name <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" name="name" placeholder="Enter model name"
-                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                        value="{{ $model->name }}" required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                {{-- Plant --}}
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                                    <select name="plant"
-                                        class="form-select tom-plant rounded-3 @error('plant') is-invalid @enderror"
-                                        required>
-                                        <option value="">-- Select Plant --</option>
-                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                            <option value="{{ $plant }}" @selected($model->plant === $plant)>
-                                                {{ $plant }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('plant')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Footer --}}
-                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                            <button type="button"
-                                class="px-4 py-2 border border-gray-400 rounded-lg text-gray-700 hover:bg-gray-200"
-                                data-bs-dismiss="modal">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                                Save Changes
-                            </button>
-                        </div>
-
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endforeach
-
-    {{-- Add Modal --}}
-    <div class="modal fade" id="addModelModal" tabindex="-1" aria-labelledby="addModelModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered"> {{-- modal-lg agar besar juga --}}
-            <form action="{{ route('master.models.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="_form" value="add">
-                <div class="modal-content border-0 shadow-lg rounded-4">
                     {{-- Header --}}
-                    <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" id="addModelModalLabel">
-                            <i class="bi bi-plus-circle me-2 text-primary"></i>Add New Model
+                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                        style="background-color: #f5f5f7;">
+                        <h5 class="modal-title fw-semibold text-dark" id="editModelModalLabel-{{ $model->id }}"
+                            style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                            <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Model
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button"
+                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            data-bs-dismiss="modal" aria-label="Close"
+                            style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        </button>
                     </div>
 
                     {{-- Body --}}
-                    <div class="modal-body p-5">
+                    <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                         <div class="row g-4">
                             {{-- Model Name --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Model Name <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Model Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" placeholder="Enter model name"
-                                    class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                    value="{{ old('name') }}" required>
+                                    class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
+                                    value="{{ $model->name }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -198,12 +136,14 @@
 
                             {{-- Plant --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                                <select name="plant" class="form-select rounded-3 tom-plant" required>
+                                <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                                <select name="plant"
+                                    class="form-select border-0 shadow-sm rounded-3 tom-plant @error('plant') is-invalid @enderror"
+                                    required>
                                     <option value="">-- Select Plant --</option>
-                                    @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
-                                        <option value="{{ $optPlant }}" @selected(old('plant') === $optPlant)>
-                                            {{ $optPlant }}
+                                    @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                        <option value="{{ $plant }}" @selected($model->plant === $plant)>
+                                            {{ $plant }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -215,16 +155,88 @@
                     </div>
 
                     {{-- Footer --}}
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                        <button type="button"
-                            class="px-4 py-2 border border-gray-400 rounded-lg text-gray-700 hover:bg-gray-200"
-                            data-bs-dismiss="modal">
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                            Submit
+                        <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                            style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                            Save Changes
                         </button>
                     </div>
+
+                </form>
+            </div>
+        </div>
+    @endforeach
+
+    {{-- Add Modal --}}
+    <div class="modal fade" id="addModelModal" tabindex="-1" aria-labelledby="addModelModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{{ route('master.models.store') }}" method="POST"
+                class="modal-content rounded-4 shadow-lg border-0">
+                @csrf
+                <input type="hidden" name="_form" value="add">
+
+                {{-- Header --}}
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark" id="addModelModalLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i>Add New Model
+                    </h5>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                    <div class="row g-4">
+                        {{-- Model Name --}}
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Model Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" placeholder="Enter model name"
+                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
+                                value="{{ old('name') }}" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Plant --}}
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                            <select name="plant" class="form-select border-0 shadow-sm rounded-3 tom-plant" required>
+                                <option value="">-- Select Plant --</option>
+                                @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
+                                    <option value="{{ $optPlant }}" @selected(old('plant') === $optPlant)>
+                                        {{ $optPlant }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('plant')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                        data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                        Submit
+                    </button>
                 </div>
             </form>
         </div>

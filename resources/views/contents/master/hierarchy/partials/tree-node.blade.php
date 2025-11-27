@@ -60,65 +60,75 @@
             @csrf
             @method('PUT')
             <div class="modal-content shadow-lg border-0 rounded-4">
-                <div class="modal-header bg-light text-dark rounded-top-4">
-                    <h5 class="modal-title fw-semibold" id="editDocumentModalLabel-{{ $document->id }}">
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                        style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold" id="editDocumentModalLabel-{{ $document->id }}"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                         <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Document
                     </h5>
-                </div>
-
-                <div class="modal-body px-4 py-3">
-                    {{-- Name --}}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name"
-                            class="form-control rounded-3 @error('name') is-invalid @enderror"
-                            value="{{ old('name', $document->name) }}" required>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    {{-- Parent Document --}}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Parent Document</label>
-                        <select name="parent_id"
-                            class="form-select rounded-3 @error('parent_id') is-invalid @enderror tomselect">
-                            <option value="">-- No Parent (Top Level) --</option>
-                            @foreach ($parents as $parentDoc)
-                                @if (!isset($document) || $parentDoc->id !== $document->id)
-                                    <option value="{{ $parentDoc->id }}"
-                                        {{ old('parent_id', $document->parent_id ?? null) == $parentDoc->id ? 'selected' : '' }}>
-                                        {{ $parentDoc->name }}
-                                    </option>
-                                @endif
-                            @endforeach
-                        </select>
-                        @error('parent_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <input type="hidden" name="type" value="review">
-
-                    {{-- Code --}}
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                        <input type="text" name="code"
-                            class="form-control rounded-3 @error('code') is-invalid @enderror"
-                            value="{{ $document->code }}" required>
-                        @error('code')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
                     <button type="button"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                        data-bs-dismiss="modal">
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                    <div class="row g-4">
+                        {{-- Name --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name"
+                                class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                value="{{ old('name', $document->name) }}" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Parent Document --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Parent Document</label>
+                            <select name="parent_id"
+                                class="form-select rounded-3 @error('parent_id') is-invalid @enderror tomselect">
+                                <option value="">-- No Parent (Top Level) --</option>
+                                @foreach ($parents as $parentDoc)
+                                    @if (!isset($document) || $parentDoc->id !== $document->id)
+                                        <option value="{{ $parentDoc->id }}"
+                                            {{ old('parent_id', $document->parent_id ?? null) == $parentDoc->id ? 'selected' : '' }}>
+                                            {{ $parentDoc->name }}
+                                        </option>
+                                    @endif
+                                @endforeach
+                            </select>
+                            @error('parent_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <input type="hidden" name="type" value="review">
+
+                        {{-- Code --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code"
+                                class="form-control rounded-3 @error('code') is-invalid @enderror"
+                                value="{{ $document->code }}" required>
+                            @error('code')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                        data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
                         Save Changes
                     </button>
                 </div>

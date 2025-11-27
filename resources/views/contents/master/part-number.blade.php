@@ -115,204 +115,104 @@
         <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
             aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    <form action="{{ route('master.part_numbers.update', $part->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="_form" value="edit">
-
-                        <div class="modal-header bg-light text-gray-800 rounded-t-lg">
-                            <h5 class="modal-title flex items-center gap-2 font-semibold"
-                                id="editPartNumberModalLabel-{{ $part->id }}">
-                                <i class="bi bi-pencil-square text-primary"></i> Edit Part Number
-                            </h5>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="block font-medium">Part Number <span class="text-danger">*</span></label>
-                                    <input type="text" name="part_number"
-                                        class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        value="{{ $part->part_number }}" required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="block font-medium">Plant <span class="text-danger">*</span></label>
-                                    <select name="plant" id="plant_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">Select Plant</option>
-                                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                            <option value="{{ $plant }}"
-                                                {{ $part->plant == $plant ? 'selected' : '' }}>
-                                                {{ ucfirst($plant) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="block font-medium">Product <span class="text-danger">*</span></label>
-                                    <select name="product_id" id="product_id_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">Select Product</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}"
-                                                {{ $part->product_id == $product->id ? 'selected' : '' }}>
-                                                {{ $product->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="block font-medium">Model <span class="text-danger">*</span></label>
-                                    <select name="model_id" id="model_id_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="">Select Model</option>
-                                        @foreach ($models as $model)
-                                            <option value="{{ $model->id }}"
-                                                {{ $part->model_id == $model->id ? 'selected' : '' }}>
-                                                {{ $model->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="block font-medium">Process <span class="text-danger">*</span></label>
-                                    <select name="process_id" id="process_edit_{{ $part->id }}"
-                                        class="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required>
-                                        <option value="" disabled {{ $part->process_id ? '' : 'selected' }}>Select
-                                            Process</option>
-                                        @foreach ($processes as $process)
-                                            <option value="{{ $process->id }}"
-                                                {{ $part->process_id == $process->id ? 'selected' : '' }}>
-                                                {{ ucwords($process->name) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                            <button type="button"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                                data-bs-dismiss="modal">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    @endforeach
-
-    {{-- Modal Create --}}
-    <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <form action="{{ route('master.part_numbers.store') }}" method="POST" novalidate>
+                <form action="{{ route('master.part_numbers.update', $part->id) }}" method="POST"
+                    class="modal-content rounded-4 shadow-lg border-0">
                     @csrf
-                    <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title flex items-center gap-2 font-semibold" id="createPartNumberModalLabel">
-                            <i class="bi bi-plus-circle me-2 text-primary"></i> Add New Part Number
+                    @method('PUT')
+                    <input type="hidden" name="_form" value="edit">
+
+                    {{-- Header --}}
+                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                        <h5 class="modal-title fw-semibold" id="editPartNumberModalLabel-{{ $part->id }}"
+                            style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                            <i class="bi bi-pencil-square text-primary me-2"></i>Edit Part Number
                         </h5>
+                        <button type="button"
+                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            data-bs-dismiss="modal" aria-label="Close"
+                            style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label for="part_number" class="form-label fw-semibold">Part Number <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" id="part_number" name="part_number"
-                                    class="form-control @error('part_number') is-invalid @enderror" required autofocus
-                                    placeholder="Enter part number" value="{{ old('part_number') }}">
+
+                    {{-- Body --}}
+                    <div class="modal-body p-5">
+                        <div class="row g-4">
+                            {{-- Part Number --}}
+                            <div class="col-md-12">
+                                <label class="form-label fw-medium">Part Number <span class="text-danger">*</span></label>
+                                <input type="text" name="part_number"
+                                    class="form-control rounded-3 border-0 shadow-sm @error('part_number') is-invalid @enderror"
+                                    value="{{ $part->part_number }}" required>
                                 @error('part_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
+                            {{-- Plant --}}
                             <div class="col-md-6">
-                                <label for="plant" class="form-label fw-semibold">Plant <span
-                                        class="text-danger">*</span></label>
-                                <select id="plant" name="plant"
-                                    class="form-select @error('plant') is-invalid @enderror" required>
-                                    <option value="" disabled selected>-- Select Plant --</option>
+                                <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
+                                <select name="plant" id="plant_edit_{{ $part->id }}"
+                                    class="form-select rounded-3 border-0 shadow-sm @error('plant') is-invalid @enderror"
+                                    required>
+                                    <option value="">Select Plant</option>
                                     @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                                        <option value="{{ $plant }}"
-                                            {{ old('plant') == $plant ? 'selected' : '' }}>
+                                        <option value="{{ $plant }}" @selected($part->plant == $plant)>
                                             {{ ucfirst($plant) }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('plant')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
 
+                            {{-- Product --}}
                             <div class="col-md-6">
-                                <label for="product_id" class="form-label fw-semibold">Product <span
-                                        class="text-danger">*</span></label>
-                                <select id="product_id" name="product_id"
-                                    class="form-select @error('product_id') is-invalid @enderror"
-                                    placeholder="Search or create product..." required disabled>
-                                    @if (old('product_id'))
-                                        <option value="{{ old('product_id') }}" selected>
-                                            {{ old('product_name', 'Selected Product') }}
-                                        </option>
-                                    @endif
-                                </select>
-                                @error('product_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="model_id" class="form-label fw-semibold">Model <span
-                                        class="text-danger">*</span></label>
-                                <select id="model_id" name="model_id"
-                                    class="form-select @error('model_id') is-invalid @enderror"
-                                    placeholder="Search or create model..." required disabled>
-                                    @if (old('model_id'))
-                                        <option value="{{ old('model_id') }}" selected>
-                                            {{ old('model_name', 'Selected Model') }}</option>
-                                    @endif
-                                </select>
-                                @error('model_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="process" class="form-label fw-semibold">Process <span
-                                        class="text-danger">*</span></label>
-                                <select id="process_id" name="process_id"
-                                    class="form-select @error('process_id') is-invalid @enderror"
-                                    placeholder="Search or create process..." required disabled>
-                                    <option value="" disabled {{ old('process_id') ? '' : 'selected' }}>Select
-                                        Process</option>
-                                    @foreach ($processes as $process)
-                                        <option value="{{ $process->id }}"
-                                            {{ old('process_id') == $process->id ? 'selected' : '' }}>
-                                            {{ ucfirst($process->name) }}
+                                <label class="form-label fw-medium">Product <span class="text-danger">*</span></label>
+                                <select name="product_id" id="product_id_edit_{{ $part->id }}"
+                                    class="form-select rounded-3 border-0 shadow-sm @error('product_id') is-invalid @enderror"
+                                    required>
+                                    <option value="">Select Product</option>
+                                    @foreach ($products as $product)
+                                        <option value="{{ $product->id }}" @selected($part->product_id == $product->id)>
+                                            {{ $product->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('process_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                            </div>
+
+                            {{-- Model --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Model <span class="text-danger">*</span></label>
+                                <select name="model_id" id="model_id_edit_{{ $part->id }}"
+                                    class="form-select rounded-3 border-0 shadow-sm @error('model_id') is-invalid @enderror"
+                                    required>
+                                    <option value="">Select Model</option>
+                                    @foreach ($models as $model)
+                                        <option value="{{ $model->id }}" @selected($part->model_id == $model->id)>
+                                            {{ $model->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Process --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Process <span class="text-danger">*</span></label>
+                                <select name="process_id" id="process_edit_{{ $part->id }}"
+                                    class="form-select rounded-3 border-0 shadow-sm @error('process_id') is-invalid @enderror"
+                                    required>
+                                    <option value="" disabled @if (!$part->process_id) selected @endif>
+                                        Select Process</option>
+                                    @foreach ($processes as $process)
+                                        <option value="{{ $process->id }}" @selected($part->process_id == $process->id)>
+                                            {{ ucwords($process->name) }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                     </div>
 
+                    {{-- Footer --}}
                     <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
                         <button type="button"
                             class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
@@ -320,13 +220,144 @@
                             Cancel
                         </button>
                         <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                            Submit
+                            Save Changes
                         </button>
                     </div>
                 </form>
             </div>
         </div>
+    @endforeach
+
+
+    {{-- Modal Create --}}
+    <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form action="{{ route('master.part_numbers.store') }}" method="POST" novalidate
+                class="modal-content border-0 shadow-lg rounded-4">
+                @csrf
+
+                {{-- Header --}}
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold" id="createPartNumberModalLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle text-primary me-2"></i> Add New Part Number
+                    </h5>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-5">
+                    <div class="row g-4">
+                        {{-- Part Number --}}
+                        <div class="col-md-12">
+                            <label for="part_number" class="form-label fw-medium">Part Number <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" id="part_number" name="part_number"
+                                class="form-control rounded-3 border-0 shadow-sm @error('part_number') is-invalid @enderror"
+                                value="{{ old('part_number') }}" required autofocus placeholder="Enter part number">
+                            @error('part_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Plant --}}
+                        <div class="col-md-6">
+                            <label for="plant" class="form-label fw-medium">Plant <span
+                                    class="text-danger">*</span></label>
+                            <select id="plant" name="plant"
+                                class="form-select rounded-3 border-0 shadow-sm @error('plant') is-invalid @enderror"
+                                required>
+                                <option value="" disabled selected>-- Select Plant --</option>
+                                @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                    <option value="{{ $plant }}" @selected(old('plant') == $plant)>
+                                        {{ ucfirst($plant) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('plant')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Product --}}
+                        <div class="col-md-6">
+                            <label for="product_id" class="form-label fw-medium">Product <span
+                                    class="text-danger">*</span></label>
+                            <select id="product_id" name="product_id"
+                                class="form-select rounded-3 border-0 shadow-sm @error('product_id') is-invalid @enderror"
+                                placeholder="Search or create product..." required disabled>
+                                @if (old('product_id'))
+                                    <option value="{{ old('product_id') }}" selected>
+                                        {{ old('product_name', 'Selected Product') }}
+                                    </option>
+                                @endif
+                            </select>
+                            @error('product_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Model --}}
+                        <div class="col-md-6">
+                            <label for="model_id" class="form-label fw-medium">Model <span
+                                    class="text-danger">*</span></label>
+                            <select id="model_id" name="model_id"
+                                class="form-select rounded-3 border-0 shadow-sm @error('model_id') is-invalid @enderror"
+                                placeholder="Search or create model..." required disabled>
+                                @if (old('model_id'))
+                                    <option value="{{ old('model_id') }}" selected>
+                                        {{ old('model_name', 'Selected Model') }}
+                                    </option>
+                                @endif
+                            </select>
+                            @error('model_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Process --}}
+                        <div class="col-md-6">
+                            <label for="process_id" class="form-label fw-medium">Process <span
+                                    class="text-danger">*</span></label>
+                            <select id="process_id" name="process_id"
+                                class="form-select rounded-3 border-0 shadow-sm @error('process_id') is-invalid @enderror"
+                                placeholder="Search or create process..." required disabled>
+                                <option value="" disabled @if (!old('process_id')) selected @endif>Select
+                                    Process</option>
+                                @foreach ($processes as $process)
+                                    <option value="{{ $process->id }}" @selected(old('process_id') == $process->id)>
+                                        {{ ucfirst($process->name) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('process_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                    <button type="button"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
+                        data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
+
 @endsection
 @push('scripts')
     <x-sweetalert-confirm />

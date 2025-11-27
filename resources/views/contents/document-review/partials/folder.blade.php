@@ -3,7 +3,7 @@
 @section('title', "Folder $docCode - " . ucwords($plant))
 
 @section('content')
-    <div class="p-6 bg-gray-50 min-h-screen space-y-6">
+    <div class="p-6 min-h-screen space-y-6">
         <x-flash-message />
 
         <!-- Breadcrumb -->
@@ -131,38 +131,48 @@
         </div>
 
         <!-- Table -->
-        <div class="overflow-x-auto bg-white rounded-lg shadow p-4">
-            <table class="min-w-full table-auto text-sm text-left text-gray-700 border border-gray-200">
-                <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold border-b">
-                    <tr>
-                        <th class="px-4 py-2">No</th>
-                        <th class="px-4 py-2">Document Number</th>
-                        <th class="px-4 py-2">Part Number</th>
-                        <th class="px-4 py-2">Product</th>
-                        <th class="px-4 py-2">Model</th>
-                        <th class="px-4 py-2">Process</th>
-                        <th class="px-4 py-2">Notes</th>
-                        <th class="px-4 py-2">Deadline</th>
-                        <th class="px-4 py-2">Updated By</th>
-                        <th class="px-4 py-2">Last Update</th>
-                        <th class="px-4 py-2">Status</th>
-                        <th class="px-4 py-2 text-center">Actions</th>
+        <!-- New Modern Dribbble-Style Table -->
+        <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+            <table class="min-w-full text-sm text-gray-700">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200">
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Number
+                        </th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part Number</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Product</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Process</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Notes</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Deadline</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last Update</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Status</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                            Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse ($documents as $index => $doc)
-                        <tr class="border-b hover:bg-gray-50 transition">
-                            <td class="px-4 py-2">{{ $loop->iteration }}</td>
-                            <td class="px-4 py-2">{{ $doc->document_number ?? '-' }}</td>
-                            <td class="px-4 py-2">
+
+                <tbody class="divide-y divide-gray-100">
+                    @forelse ($documents as $doc)
+                        <tr class="hover:bg-gray-50 transition-all duration-150">
+                            <td class="px-4 py-3">{{ $loop->iteration }}</td>
+
+                            <td class="px-4 py-3 font-medium text-gray-800">
+                                {{ $doc->document_number ?? '-' }}
+                            </td>
+
+                            <td class="px-4 py-3">
                                 @if ($doc->partNumber->isNotEmpty())
-                                    {{ $doc->partNumber->pluck('part_number')->join(', ') }}
+                                    <span class="inline-block bg-sky-100 text-sky-700 px-2 py-1 rounded-md text-xs">
+                                        {{ $doc->partNumber->pluck('part_number')->join(', ') }}
+                                    </span>
                                 @else
                                     -
                                 @endif
                             </td>
 
-                            <td class="px-4 py-2">
+                            <td class="px-4 py-3">
                                 @if ($doc->product->isNotEmpty())
                                     {{ $doc->product->pluck('name')->join(', ') }}
                                 @else
@@ -170,7 +180,7 @@
                                 @endif
                             </td>
 
-                            <td class="px-4 py-2">
+                            <td class="px-4 py-3">
                                 @if ($doc->productModel->isNotEmpty())
                                     {{ $doc->productModel->pluck('name')->join(', ') }}
                                 @else
@@ -178,7 +188,7 @@
                                 @endif
                             </td>
 
-                            <td class="px-4 py-2 capitalize">
+                            <td class="px-4 py-3 capitalize">
                                 @if ($doc->process->isNotEmpty())
                                     {{ $doc->process->pluck('code')->join(', ') }}
                                 @else
@@ -186,14 +196,20 @@
                                 @endif
                             </td>
 
-                            <td class="max-w-[250px]">
-                                <div class="max-h-24 overflow-y-auto">
+                            <td class="px-4 py-3 max-w-[250px]">
+                                <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug">
                                     {!! $doc->notes ?? '-' !!}
                                 </div>
                             </td>
-                            <td class="px-4 py-2">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $doc->user?->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
+
+                            <td class="px-4 py-3">
+                                <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
+                            </td>
+
+                            <td class="px-4 py-3">{{ $doc->user?->name ?? '-' }}</td>
+
+                            <td class="px-4 py-3">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
+
                             @php
                                 $statusName = strtolower($doc->status?->name ?? '');
                                 $statusClass = match ($statusName) {
@@ -207,13 +223,12 @@
                                         => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
                                 };
                             @endphp
-                            <td class="px-4 py-2">
+                            <td class="px-4 py-3">
                                 <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
                             </td>
-                            <td class="px-4 py-2 text-center">
 
+                            <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center items-center gap-2 relative">
-
                                     {{-- ================= FILE BUTTON ================= --}}
                                     <div class="relative inline-block overflow-visible">
                                         @php
@@ -327,15 +342,14 @@
                                             @endif
                                         </div>
                                     </div>
-
                                 </div>
                             </td>
 
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center py-8 text-gray-400">
-                                <p class="text-sm">No data found. Apply filters to see results.</p>
+                            <td colspan="12" class="text-center py-8 text-gray-400 text-sm">
+                                No data found. Apply filters to see results.
                             </td>
                         </tr>
                     @endforelse
@@ -580,24 +594,24 @@
                         <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
                         <div class="space-y-2">
                         ${data.files.map(file => `
-                                                                            <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
-                                                                                <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
+                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                <div class="flex gap-2">
-                                                                                    <a href="/storage/${file.file_path}"
-                                                                                       target="_blank"
-                                                                                       class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                       View
-                                                                                    </a>
+                                                                                                                        <div class="flex gap-2">
+                                                                                                                            <a href="/storage/${file.file_path}"
+                                                                                                                               target="_blank"
+                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                                               View
+                                                                                                                            </a>
 
-                                                                                    <button type="button"
-                                                                                        class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                        data-file-id="${file.id}">
-                                                                                        Replace
-                                                                                    </button>
-                                                                                </div>
-                                                                            </div>
-                                                                        `).join('')}
+                                                                                                                            <button type="button"
+                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                                data-file-id="${file.id}">
+                                                                                                                                Replace
+                                                                                                                            </button>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                `).join('')}
                         </div>
                     `;
                             })
@@ -660,10 +674,10 @@
                                 class="block w-full border border-gray-300 rounded p-1 text-sm">
 
                             ${oldFileId ? `
-                                                                                <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
-                                                                            ` : `
-                                                                                <input type="hidden" name="revision_file_ids[]" value="">
-                                                                            `}
+                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
+                                                                                                                    ` : `
+                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
+                                                                                                                    `}
 
                                     <button type="button"
                                             class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">
@@ -864,6 +878,17 @@
                 document.addEventListener('click', () => {
                     document.querySelectorAll('[id^="actionMenu-"]').forEach(m => m.classList.add('hidden'));
                 });
+                // === VALIDASI REVISE FORM ===
+                // Fungsi helper untuk menampilkan error
+                function showReviseError(message) {
+                    let oldAlert = document.getElementById('revise-alert');
+                    if (oldAlert) oldAlert.remove();
+                    const alertDiv = document.createElement('div');
+                    alertDiv.id = 'revise-alert';
+                    alertDiv.className = "alert alert-danger mt-3";
+                    alertDiv.innerText = message;
+                    reviseForm.prepend(alertDiv);
+                }
             });
         </script>
     @endpush

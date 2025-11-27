@@ -4,21 +4,27 @@
     <input type="hidden" name="_form" value="edit">
 
     <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header bg-light text-dark rounded-top-4">
-            <h5 class="modal-title fw-semibold" id="editUserModalLabel-{{ $user->id }}">
-                <i class="bi bi-pencil-square text-primary"> </i>Edit User
-            </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                aria-label="Close"></button>
-        </div>
+        <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="editUserModalLabel-{{ $user->id }}"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-pencil-square me-2 text-primary"></i> Edit User
+                </h5>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
+            </div>
 
-        <div class="modal-body p-4">
+        <div class="modal-body p-4" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
             <div class="row g-3">
                 <!-- Name -->
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Name</label>
+                    <label class="form-label fw-semibold">Name</label>
                     <input type="text" name="name"
-                        class="form-control rounded-3 @error('name') is-invalid @enderror" value="{{ $user->name }}"
+                        class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror" value="{{ $user->name }}"
                         required>
                     @error('name')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -27,9 +33,9 @@
 
                 <!-- NPK -->
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">NPK</label>
+                    <label class="form-label fw-semibold">NPK</label>
                     <input type="text" name="npk"
-                        class="form-control rounded-3 @error('npk') is-invalid @enderror" value="{{ $user->npk }}"
+                        class="form-control border-0 shadow-sm rounded-3 @error('npk') is-invalid @enderror" value="{{ $user->npk }}"
                         required pattern="\d{6}" maxlength="6" title="NPK must be exactly 6 digits of number"
                         inputmode="numeric">
                     @error('npk')
@@ -39,9 +45,9 @@
 
                 <!-- Email -->
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Email</label>
+                    <label class="form-label fw-semibold">Email</label>
                     <input type="email" name="email"
-                        class="form-control rounded-3 @error('email') is-invalid @enderror"
+                        class="form-control border-0 shadow-sm rounded-3 @error('email') is-invalid @enderror"
                         pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                         title="Please enter a valid email address (e.g. user@example.com)" value="{{ $user->email }}">
                     @error('email')
@@ -51,9 +57,9 @@
 
                 <!-- Password -->
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Password</label>
-                    <input type="password" name="password"
-                        class="form-control rounded-3 @error('password') is-invalid @enderror" pattern=".{6,}"
+                    <label class="form-label fw-semibold">Password</label>
+                    <input type="password" name="password" placeholder="Input the new password"
+                        class="form-control border-0 shadow-sm rounded-3 @error('password') is-invalid @enderror" pattern=".{6,}"
                         minlength="6" title="Password must be at least 6 characters" value="">
                     <small class="text-muted fst-italic">Leave blank if not changing password</small>
                     @error('password')
@@ -63,16 +69,17 @@
 
                 <!-- Confirm Password -->
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Confirm Password</label>
-                    <input type="password" name="password_confirmation" class="form-control rounded-3" value="">
+                    <label class="form-label fw-semibold">Confirm Password</label>
+                    <input type="password" name="password_confirmation" class="form-control rounded-3" placeholder="Please retype the same password"
+                        minlength="6" value="">
                 </div>
 
                 <!-- Role -->
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Role</label>
+                    <label class="form-label fw-semibold">Role</label>
                     <select name="role_ids[]" id="role_select_edit_{{ $user->id }}"
 
-                        class="form-select rounded-3 @error('role_ids') is-invalid @enderror" multiple required>
+                        class="form-select border-0 shadow-sm rounded-3 @error('role_ids') is-invalid @enderror" multiple required>
                         @foreach ($roles as $role)
                             <option value="{{ $role->id }}"
                                 {{ $user->roles->contains('id', $role->id) ? 'selected' : '' }}>
@@ -98,9 +105,9 @@
                 <div class="col-md-6" id="auditTypeContainerEdit_{{ $user->id }}"
 
                     style="display: {{ $user->roles->pluck('name')->map(fn($n)=>strtolower($n))->contains('auditor') ? 'block' : 'none' }};">
-                    <label class="form-label fw-medium">Audit Type</label>
+                    <label class="form-label fw-semibold">Audit Type</label>
                     <select name="audit_type_id" id="audit_type_select_edit_{{ $user->id }}"
-                        class="form-select rounded-3 @error('audit_type_id') is-invalid @enderror">
+                        class="form-select border-0 shadow-sm rounded-3 @error('audit_type_id') is-invalid @enderror">
                         <option value="" disabled
                             {{ old('audit_type_id', $user->audit_type_id) ? '' : 'selected' }}>-- Select
                             Audit Type --</option>
@@ -119,10 +126,10 @@
 
                 <!-- Department -->
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Department</label>
+                    <label class="form-label fw-semibold">Department</label>
                     <select name="department_ids[]" id="department_select_edit_{{ $user->id }}"
 
-                        class="form-select rounded-3 @error('department_ids') is-invalid @enderror" multiple required>
+                        class="form-select border-0 shadow-sm rounded-3 @error('department_ids') is-invalid @enderror" multiple required>
                         @foreach ($departments as $department)
                             <option value="{{ $department->id }}"
 
@@ -163,14 +170,15 @@
             </script>
         </div>
 
-        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-            <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                data-bs-dismiss="modal">
-                Cancel
-            </button>
-            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                Save Changes
-            </button>
-        </div>
+        <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                    data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    Save Changes
+                </button>
+            </div>
     </div>
 </form>

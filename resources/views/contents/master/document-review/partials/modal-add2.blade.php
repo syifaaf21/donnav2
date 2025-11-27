@@ -4,37 +4,36 @@
             <form action="{{ route('master.document-review.store2') }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
-                <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
 
                     {{-- Modal Header --}}
-                    <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" id="addDocumentModalLabel">
-                            <i class="bi bi-plus-circle me-2"></i> Add Document Review
+                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                        style="background-color: #f5f5f7;">
+                        <h5 class="modal-title fw-semibold text-dark" id="addDocumentModalLabel"
+                            style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                            <i class="bi bi-plus-circle me-2 text-primary"></i> Add Document Review
                         </h5>
+
+                        {{-- Close button --}}
+                        <button type="button"
+                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            data-bs-dismiss="modal" aria-label="Close"
+                            style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        </button>
                     </div>
 
-                    {{-- Notes --}}
-                    {{-- <div class="d-flex align-items-center px-3 py-1 mb-3"
-                        style="background-color: #fff8dc; border: 1px solid #ffeeba; border-left: 4px solid #ffc107; border-radius: 3px; font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #856404;">
-                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning" style="font-size: 1rem;"></i>
-                        <div>
-                            <strong>Notes:</strong> Please create a <b>Parent Document</b> first.
-                            <div class="text-danger ms-1" style="font-size: 0.8rem;">
-                                Child Document cannot be created without Parent Document
-                            </div>
-                        </div>
-                    </div> --}}
-
                     {{-- Modal Body --}}
-                    <div class="modal-body p-4">
-                        <div class="row g-3">
+                    <div class="modal-body p-5 bg-gray-50"
+                        style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                        <div class="row g-4">
 
                             {{-- Document Name --}}
                             <div class="col-md-4">
-                                <label class="form-label fw-medium">Document Name <span
+                                <label class="form-label fw-semibold">Document Name <span
                                         class="text-danger">*</span></label>
                                 <select id="document_select" name="document_id"
-                                    class="form-select border-1 shadow-sm @error('document_id') is-invalid @enderror"
+                                    class="form-select border-0 shadow-sm rounded-3 @error('document_id') is-invalid @enderror"
                                     required>
                                     <option value="">-- Select Document --</option>
                                     @foreach ($documentsMaster as $doc)
@@ -52,20 +51,20 @@
 
                             {{-- Document Number --}}
                             <div class="col-md-4">
-                                <label class="form-label fw-medium">Document Number <span
+                                <label class="form-label fw-semibold">Document Number <span
                                         class="text-danger">*</span></label>
                                 <input type="text" name="document_number" id="document_number"
-                                    class="form-control border-1 shadow-sm @error('document_number') is-invalid @enderror"
+                                    class="form-control border-0 shadow-sm rounded-3 @error('document_number') is-invalid @enderror"
                                     placeholder="Enter document number manually" required>
                                 <div class="invalid-feedback">Document Number is required.</div>
                             </div>
 
                             {{-- Plant --}}
                             <div class="col-md-4">
-                                <label for="plant_select" class="form-label fw-medium">Plant <span
+                                <label for="plant_select" class="form-label fw-semibold">Plant <span
                                         class="text-danger">*</span></label>
                                 <select name="plant" id="plant_select"
-                                    class="form-select border-1 shadow-sm @error('plant') is-invalid @enderror"
+                                    class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
                                     required>
                                     <option value="">-- Select Plant --</option>
                                     <option value="body">Body</option>
@@ -78,74 +77,12 @@
                                     <div class="invalid-feedback">Plant is required.</div>
                                 @enderror
                             </div>
-
-                            {{-- Parent Document --}}
-                            {{-- <div class="col-md-4">
-                                <label class="form-label fw-medium">Parent Document (Optional)</label>
-                                <select id="parent_document_select" name="parent_id" class="form-select border-1 shadow-sm @error('parent_id') is-invalid @enderror">
-                                    <option value="">-- Select Parent Document --</option>
-                                    @foreach ($existingDocuments as $docMap)
-                                        <option value="{{ $docMap->id }}">{{ $docMap->document_number }}</option>
-                                    @endforeach
-                                </select>
-                                <small class="text-muted fst-italic">Only required for child documents.</small>
-                            </div> --}}
-
-                            {{-- Model --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-medium">Model <span class="text-danger">*</span></label>
-                                <select id="model_select" name="model_id[]" multiple
-                                    class="form-select border-1 shadow-sm" disabled required>
-                                    <option value="">-- Select Model --</option>
-                                    @foreach ($models as $model)
-                                        <option value="{{ $model->id }}">{{ $model->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Product --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-medium">Product</label>
-                                <select id="product_select" name="product_id[]" multiple
-                                    class="form-select border-1 shadow-sm" disabled>
-                                    <option value="">-- Select Product --</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Process --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-medium">Process</label>
-                                <select id="process_select" name="process_id[]" multiple
-                                    class="form-select border-1 shadow-sm text-capitalize" disabled>
-                                    <option value="">-- Select Process --</option>
-                                    @foreach ($processes as $process)
-                                        <option value="({{ $process->id }})">{{ $process->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-
-                            {{-- Part Number (Optional) --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-medium">Part Number (Optional)</label>
-                                <select id="partNumber_select" name="part_number_id[]" multiple
-                                    class="form-select border-1 shadow-sm" disabled>
-                                    <option value="">-- Select Part Number --</option>
-                                    @foreach ($partNumbers as $part)
-                                        <option value="{{ $part->id }}">{{ $part->part_number }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
                             {{-- Department --}}
                             <div class="col-md-4">
-                                <label class="form-label fw-medium">Department <span
+                                <label class="form-label fw-semibold">Department <span
                                         class="text-danger">*</span></label>
                                 <select id="department_select" name="department_id"
-                                    class="form-select border-1 shadow-sm @error('department_id') is-invalid @enderror"
+                                    class="form-select border-0 shadow-sm rounded-3 @error('department_id') is-invalid @enderror"
                                     disabled required>
                                     <option value="">-- Select Department --</option>
                                     @foreach ($departments as $dept)
@@ -155,12 +92,61 @@
                                 <div class="invalid-feedback">Department is required.</div>
                             </div>
 
+                            {{-- Model --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Model <span class="text-danger">*</span></label>
+                                <select id="model_select" name="model_id[]" multiple
+                                    class="form-select border-0 shadow-sm rounded-3" disabled required>
+                                    <option value="">-- Select Model --</option>
+                                    @foreach ($models as $model)
+                                        <option value="{{ $model->id }}">{{ $model->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Product --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Product</label>
+                                <select id="product_select" name="product_id[]" multiple
+                                    class="form-select border-0 shadow-sm rounded-3" disabled>
+                                    <option value="">-- Select Product --</option>
+                                    @foreach ($products as $product)
+                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Process --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Process</label>
+                                <select id="process_select" name="process_id[]" multiple
+                                    class="form-select border-0 shadow-sm rounded-3 text-capitalize" disabled>
+                                    <option value="">-- Select Process --</option>
+                                    @foreach ($processes as $process)
+                                        <option value="({{ $process->id }})">{{ $process->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Part Number (Optional) --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Part Number (Optional)</label>
+                                <select id="partNumber_select" name="part_number_id[]" multiple
+                                    class="form-select border-0 shadow-sm rounded-3" disabled>
+                                    <option value="">-- Select Part Number --</option>
+                                    @foreach ($partNumbers as $part)
+                                        <option value="{{ $part->id }}">{{ $part->part_number }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             {{-- Notes --}}
-                            <div class="col-12 mb-10">
-                                <label class="form-label fw-medium">Notes</label>
-                                <input type="hidden" name="notes" id="notes_input_add" value="{{ old('notes') }}">
-                                <div id="quill_editor" class="bg-white border-1 shadow-sm rounded"
-                                    style="min-height: 100px; max-height: 150px; width: 100%; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; border: 1px solid #ddd; border-radius: 4px; padding: 8px; background-color: #fff;">
+                            <div class="col-12 mb-4">
+                                <label class="form-label fw-semibold">Notes</label>
+                                <input type="hidden" name="notes" id="notes_input_add"
+                                    value="{{ old('notes') }}">
+                                <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
+                                    style="min-height: 120px; max-height: 160px; overflow-y: auto; border: 1px solid #e2e8f0;">
                                 </div>
                                 <small class="text-muted">You can format your notes with bold, italic, underline,
                                     colors, and more.</small>
@@ -186,18 +172,24 @@
                             </div> --}}
                         </div>
                     </div>
-
                     {{-- Modal Footer --}}
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                        <button type="button" class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Submit</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                            style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                            Submit
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 @endif
+
 
 {{-- Initialize TomSelect --}}
 @push('scripts')
@@ -430,26 +422,8 @@
                 placeholder: 'Write your notes here...',
                 modules: {
                     toolbar: [
-                        [{
-                            font: []
-                        }, {
-                            size: []
-                        }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{
-                            color: []
-                        }, {
-                            background: []
-                        }],
-                        [{
-                            list: 'ordered'
-                        }, {
-                            list: 'bullet'
-                        }],
-                        [{
-                            align: []
-                        }],
-                        ['clean']
+                        ['bold', 'italic', 'underline', 'strike'],[{list: 'ordered'},
+                        ['clean']]
                     ]
                 }
             });
