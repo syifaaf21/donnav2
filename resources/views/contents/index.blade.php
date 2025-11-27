@@ -81,7 +81,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th class="small">Document Name</th>
-                                        <th class="small">Status</th>
+                                        <th class="small">Department</th>
                                         <th class="small">Obsoleted At</th>
                                     </tr>
                                 </thead>
@@ -89,7 +89,8 @@
                                     @forelse($obsoleteDocuments as $doc)
                                         <tr>
                                             <td class="small">{{ $doc->document->name ?? '-' }}</td>
-                                            <td><span class="badge bg-danger">{{ $doc->status->name ?? '-' }}</span></td>
+                                            <td><span class="badge bg-danger">{{ $doc->department->name ?? '-' }}</span>
+                                            </td>
                                             <td class="small">
                                                 {{ $doc->obsolete_date ? \Carbon\Carbon::parse($doc->obsolete_date)->format('d M Y') : '-' }}
                                             </td>

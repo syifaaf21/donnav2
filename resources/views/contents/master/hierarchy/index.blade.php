@@ -47,13 +47,16 @@
             </div>
 
             {{-- Table --}}
-            <div class="overflow-x-auto overflow-y-auto max-h-96">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="px-4 py-2">Document Name</th>
-                            <th class="px-4 py-2">Code</th>
-                            <th class="px-4 py-2">Actions</th>
+            <div
+                class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                <table class="min-w-full text-sm text-gray-700">
+                    <thead class="sticky top-0 z-10">
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
                     <tbody id="documentTableBody">

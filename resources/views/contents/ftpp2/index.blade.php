@@ -133,32 +133,25 @@
                         <table class="min-w-full text-sm text-gray-700">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200">
-                                    <th
-                                        class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         Registration No
                                     </th>
-                                    <th
-                                        class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         Status
                                     </th>
-                                    <th
-                                        class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         Department
                                     </th>
-                                    <th
-                                        class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         Auditor
                                     </th>
-                                    <th
-                                        class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         Auditee
                                     </th>
-                                    <th
-                                        class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         Due Date
                                     </th>
-                                    <th
-                                        class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                         {{-- Actions --}}
                                     </th>
                                 </tr>
@@ -401,12 +394,12 @@ $userDeptIds = auth()
                                         :style="\`top:\${y}px; left:\${x}px; width:170px;\`">
 
                                         ${statusName.toLowerCase() !== 'open' ? `
-                                                                                <button type="button"
-                                                                                    @click="open = false; $dispatch('open-show-modal', ${f.id})"
-                                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                                        <i data-feather="eye" class="w-4 h-4"></i> Show
-                                                                                </button>
-                                                                            ` : ''}
+                                                                                        <button type="button"
+                                                                                            @click="open = false; $dispatch('open-show-modal', ${f.id})"
+                                                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                                <i data-feather="eye" class="w-4 h-4"></i> Show
+                                                                                        </button>
+                                                                                    ` : ''}
 
                                         <a href="/ftpp/${f.id}/download"
                                             @click="open = false"
@@ -416,17 +409,17 @@ $userDeptIds = auth()
 
                                         ${f.status.toLowerCase() === 'need revision'
                                             ? `
-                                                                                    <a href="/ftpp/auditee-action/${f.id}/edit"
-                                                                                        @click="open = false"
-                                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                                        <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
-                                                                                    </a>`
+                                                                                            <a href="/ftpp/auditee-action/${f.id}/edit"
+                                                                                                @click="open = false"
+                                                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                                <i data-feather="edit" class="w-4 h-4"></i> Revise Auditee Action
+                                                                                            </a>`
                                             : `
-                                                                                    <a href="/ftpp/auditee-action/${f.id}"
-                                                                                        @click="open = false"
-                                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                                        <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
-                                                                                    </a>`
+                                                                                            <a href="/ftpp/auditee-action/${f.id}"
+                                                                                                @click="open = false"
+                                                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                                                <i data-feather="edit-2" class="w-4 h-4"></i> Assign Auditee Action
+                                                                                            </a>`
                                         }
 
                                         <form method="POST" action="/ftpp/${f.id}"

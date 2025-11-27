@@ -7,29 +7,31 @@
 </div>
 
 {{-- Table --}}
-<div class="overflow-x-auto">
-    <table class="min-w-full border border-gray-300 text-sm">
-        <thead class="bg-gray-100">
-            <tr class="text-left">
-                <th class="px-3 py-2 border-b">No</th>
-                <th class="px-3 py-2 border-b">Name</th>
-                <th class="px-3 py-2 border-b text-center w-32">Action</th>
+<div
+    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+    <table class="min-w-full text-sm text-gray-700">
+        <thead class="sticky top-0 z-10">
+            <tr class="bg-gray-50 border-b border-gray-200">
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Action
+                </th>
             </tr>
         </thead>
         <tbody>
             @forelse ($findingCategories as $index => $category)
-                <tr class="hover:bg-gray-50">
-                    <td class="px-3 py-2 border-b">{{ $index + 1 }}</td>
-                    <td class="px-3 py-2 border-b">{{ $category->name }}</td>
-                    <td class="px-3 py-2 border-b text-center">
+                <tr class="hover:bg-gray-50 transition-all duration-150">
+                    <td class="px-4 py-3">{{ $index + 1 }}</td>
+                    <td class="px-4 py-3">{{ $category->name }}</td>
+                    <td class="px-4 py-3 text-center">
                         <div class="flex justify-center gap-2">
                             <button data-id="{{ $category->id }}"
-                                class="btn-edit bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                class="btn-edit w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                 <i data-feather="edit" class="w-4 h-4"></i>
                             </button>
                             |
                             <button data-id="{{ $category->id }}"
-                                class="btn-delete bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                class="btn-delete w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -47,12 +49,15 @@
 {{-- MODAL ADD FINDING CATEGORY --}}
 <div class="modal fade" id="modalAddCategory" tabindex="-1" aria-labelledby="modalAddCategoryLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST" class="modal-content rounded-4 shadow-lg">
+        <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST"
+            class="modal-content rounded-4 shadow-lg">
             @csrf
 
             {{-- Header --}}
-            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
-                <h5 class="modal-title fw-semibold text-dark" id="modalAddCategoryLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalAddCategoryLabel"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                     <i class="bi bi-plus-circle me-2 text-primary"></i> Add Finding Category
                 </h5>
                 <button type="button"
@@ -67,7 +72,8 @@
             <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                 <div class="row g-4">
                     <div class="col-md-12">
-                        <label for="category_name" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
+                        <label for="category_name" class="form-label fw-semibold">Category Name <span
+                                class="text-danger">*</span></label>
                         <input type="text" name="name" id="category_name" placeholder="Input Category Name"
                             class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
                         @error('name')
@@ -79,8 +85,8 @@
 
             {{-- Footer --}}
             <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
-                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
-                    data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal"
+                    style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
                 <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
@@ -94,15 +100,18 @@
 
 
 {{-- MODAL EDIT FINDING CATEGORY --}}
-<div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel" aria-hidden="true">
+<div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form id="formEditCategory" method="POST" class="modal-content rounded-4 shadow-lg">
             @csrf
             @method('PUT')
 
             {{-- Header --}}
-            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
-                <h5 class="modal-title fw-semibold text-dark" id="modalEditCategoryLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalEditCategoryLabel"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                     <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Finding Category
                 </h5>
                 <button type="button"
@@ -117,8 +126,10 @@
             <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                 <div class="row g-4">
                     <div class="col-md-12">
-                        <label for="edit_category_name" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" id="edit_category_name" placeholder="Input Category Name" required
+                        <label for="edit_category_name" class="form-label fw-semibold">Category Name <span
+                                class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit_category_name"
+                            placeholder="Input Category Name" required
                             class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>

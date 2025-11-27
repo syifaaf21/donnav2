@@ -49,8 +49,15 @@
                         <td class="px-4 py-3 text-center">
                             @if ($file->file_path)
                                 <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
-                                    class="text-blue-600 hover:text-blue-800">
-                                    <i class="bi bi-eye text-lg"></i>
+                                    class="inline-flex items-center justify-center 
+                   w-8 h-8 rounded-full 
+                   bg-cyan-500 text-white 
+                   hover:bg-cyan-600 transition-colors 
+                   shadow-md"
+                                    title="View File">
+
+                                    {{-- Perbaikan: Memastikan ikon ditampilkan dengan benar dan terpusat --}}
+                                    <i class="bi bi-eye text-sm"></i>
                                 </a>
                             @else
                                 <span class="text-gray-400">-</span>

@@ -3,10 +3,11 @@
     $parentClass = $parent_id ? 'child-of-' . $parent_id : '';
 @endphp
 
-<tr id="{{ $rowId }}" class="{{ $parentClass }} {{ $parent_id ? 'hidden' : '' }}">
+<tr id="{{ $rowId }}" class="{{ $parentClass }} {{ $parent_id ? 'hidden' : '' }}"
+    class="hover:bg-gray-50 transition-all duration-150">
     {{-- Document Name & toggle --}}
-    <td class="px-4 py-2">
-        <div class="flex items-center" style="margin-left: {{ $level * 20 }}px">
+    <td class="px-4 py-3">
+        <div class="flex items-center" style="margin-left: {{ $level * 30 }}px">
             @if ($document->children->isNotEmpty())
                 <button type="button" class="toggle-children mr-1" data-target="child-of-{{ $document->id }}">
                     <i data-feather="chevron-right" class="w-4 h-4 transition-transform"></i>
@@ -25,15 +26,15 @@
         </div>
     </td>
 
-    <td class="px-4 py-2 text-gray-500">{{ ucwords($document->code) ?: '-' }}</td>
+    <td class="px-4 py-3 text-gray-500">{{ ucwords($document->code) ?: '-' }}</td>
 
     {{-- Actions --}}
-    <td class="px-4 py-2">
-        <div class="flex gap-2">
+    <td class="px-4 py-3 text-center">
+        <div class="flex gap-2 justify-center">
             {{-- Edit Button --}}
             <button type="button" data-bs-toggle="modal" data-bs-target="#editDocumentModal-{{ $document->id }}"
                 data-bs-title="Edit Document"
-                class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                 <i data-feather="edit" class="w-4 h-4"></i>
             </button>
 
@@ -43,7 +44,7 @@
                 @csrf
                 @method('DELETE')
                 <button type="submit" data-bs-title="Delete Document"
-                    class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                    class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                     <i data-feather="trash-2" class="w-4 h-4"></i>
                 </button>
             </form>
@@ -61,7 +62,7 @@
             @method('PUT')
             <div class="modal-content shadow-lg border-0 rounded-4">
                 <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
-                        style="background-color: #f5f5f7;">
+                    style="background-color: #f5f5f7;">
                     <h5 class="modal-title fw-semibold" id="editDocumentModalLabel-{{ $document->id }}"
                         style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                         <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Document

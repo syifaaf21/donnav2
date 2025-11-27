@@ -41,17 +41,22 @@
         <div id="liveTableWrapper">
             <!-- Table -->
             <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
-            <table class="min-w-full text-sm text-gray-700">
-                <thead>
-                    <tr class="bg-gray-50 border-b border-gray-200">
+                <table class="min-w-full text-sm text-gray-700">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200">
                             <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name
+                            </th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Status</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete Date</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last Update</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete Date
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last Update
+                            </th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Notes</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -62,7 +67,6 @@
                                 </td>
                             </tr>
                         @else
-
                             @foreach ($mappings as $mapping)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
                                     <td class="px-4 py-3">
@@ -132,14 +136,14 @@
                                                 @elseif(count($mapping->files_for_modal) === 1)
                                                     @php $file = $mapping->files_for_modal[0]; @endphp
                                                     <button type="button"
-                                                        class="action-btn inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-cyan-500 hover:bg-cyan-600 text-white view-file-btn"
+                                                        class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-cyan-500 text-white hover:bg-cyan-500 transition-colors view-file-btn"
                                                         data-file="{{ $file['url'] }}" title="View File">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                 @endif
                                             </div>
                                             <button type="button"
-                                                class="action-btn btn-revise inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
+                                                class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors"
                                                 data-docid="{{ $mapping->id }}"
                                                 data-doc-title="{{ $mapping->document->name }}"
                                                 data-status="{{ $mapping->status->name }}" title="Upload"
@@ -152,7 +156,7 @@
                                                     method="POST" class="d-inline">
                                                     @csrf
                                                     <button type="button"
-                                                        class="action-btn btn-approve inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600"
+                                                        class="action-btn btn-approve inline-flex items-center w-8 h-8 rounded-full bg-green-500 text-white hover:bg-green-500 transition-colors"
                                                         data-status="{{ $mapping->status->name }}"
                                                         data-obsolete="{{ $mapping->obsolete_date }}"
                                                         data-period="{{ $mapping->period_years }}"
@@ -161,7 +165,7 @@
                                                     </button>
                                                 </form>
                                                 <button type="button"
-                                                    class="action-btn btn-reject inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600"
+                                                    class="action-btn btn-reject inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
                                                     data-docid="{{ $mapping->id }}"
                                                     data-doc-title="{{ $mapping->document->name }}"
                                                     data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"

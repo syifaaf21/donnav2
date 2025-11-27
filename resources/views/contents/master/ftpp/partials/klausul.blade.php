@@ -27,34 +27,40 @@
     @foreach ($klausuls as $index => $klausul)
         <div id="tab-{{ $klausul->id }}" class="tab-content {{ $index === 0 ? '' : 'hidden' }}">
             @if ($klausul->headKlausul->count() > 0)
-                <div class="shadow rounded-lg border border-gray-200">
-                    <table class="min-w-full text-sm text-left text-gray-600">
-                        <thead class="bg-gray-100 text-gray-700 text-xs uppercase font-semibold">
-                            <tr>
-                                <th class="px-4 py-2 text-center w-12">No</th>
-                                <th class="px-4 py-2 w-28">Code</th>
-                                <th class="px-4 py-2">Name</th>
-                                <th class="px-4 py-2 text-center w-36">Action</th>
+                <div
+                    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                    <table class="min-w-full text-sm text-gray-700">
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No
+                                </th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code
+                                </th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach ($klausul->headKlausul as $i => $head)
-                                <tr class="hover:bg-gray-50 cursor-pointer head-row"
+                                <tr class="hover:bg-gray-50 transition-all duration-150 cursor-pointer head-row"
                                     data-collapse-target="subKlausul-{{ $head->id }}">
-                                    <td class="px-4 py-2 text-gray-700">
+                                    <td class="px-4 py-3 text-gray-700">
                                         <div class="flex items-center gap-1">
                                             <i data-feather="chevron-right"
                                                 class="w-4 h-4 rotate-icon transition-transform"></i>{{ $i + 1 }}
                                         </div>
                                     </td>
-                                    <td class="px-4 py-2 font-medium text-gray-900">{{ $head->code }}</td>
-                                    <td class="px-4 py-2 font-medium text-gray-900">{{ $head->name }}</td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $head->code }}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $head->name }}</td>
+                                    <td class="px-4 py-3 text-center">
                                         <div class="flex justify-center gap-2">
                                             <button data-head-id="{{ $head->id }}"
                                                 data-head-name="{{ $head->name }}"
                                                 data-sub='@json($head->subKlausul)'
-                                                class="btn-edit-klausul bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                                class="btn-edit-klausul w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                                 <i data-feather="edit" class="w-4 h-4"></i>
                                             </button>
                                             |
@@ -63,7 +69,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded transition">
+                                                    class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                     <i data-feather="trash-2" class="w-4 h-4"></i>
                                                 </button>
                                             </form>

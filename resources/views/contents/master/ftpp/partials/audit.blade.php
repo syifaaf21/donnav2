@@ -8,24 +8,26 @@
     </button>
 </div>
 
-<div class="overflow-x-auto">
-    <table class="min-w-full border border-gray-200 text-sm">
-        <thead class="bg-gray-100 text-gray-700">
-            <tr>
-                <th class="w-12 text-center border-b border-gray-200 py-2 px-3">No</th>
-                <th class="border-b border-gray-200 py-2 px-3 text-left">Audit Type</th>
-                <th class="border-b border-gray-200 py-2 px-3 text-left">Sub Audit Type</th>
-                <th class="w-48 text-center border-b border-gray-200 py-2 px-3">Action</th>
+<div
+    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+    <table class="min-w-full text-sm text-gray-700">
+        <thead class="sticky top-0 z-10">
+            <tr class="bg-gray-50 border-b border-gray-200">
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Audit Type</th>
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Sub Audit Type</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Action
+                </th>
             </tr>
         </thead>
         <tbody>
             @forelse ($audits as $index => $audit)
-                <tr class="hover:bg-gray-50">
-                    <td class="text-center py-2 px-3 border-b border-gray-200 text-gray-600">
+                <tr class="hover:bg-gray-50 transition-all duration-150">
+                    <td class="px-4 py-3">
                         {{ $index + 1 }}</td>
-                    <td class="py-2 px-3 border-b border-gray-200 font-medium text-gray-800">
+                    <td class="py-2 px-3 ">
                         {{ $audit->name }}</td>
-                    <td class="py-2 px-3 border-b border-gray-200 text-gray-700">
+                    <td class="py-2 px-3">
                         @if ($audit->subAudit->isNotEmpty())
                             <ul class="list-disc list-inside space-y-0.5">
                                 @foreach ($audit->subAudit as $sub)
@@ -36,10 +38,10 @@
                             <span class="text-gray-400">-</span>
                         @endif
                     </td>
-                    <td class="px-3 py-2 border-b text-center">
+                    <td class="px-3 py-2">
                         <div class="flex justify-center gap-2">
                             <button data-id="{{ $audit->id }}" data-name="{{ $audit->name }}"
-                                class="btn-edit bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                class="btn-edit w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                 <i data-feather="edit" class="w-4 h-4"></i>
                             </button>
                             |
@@ -49,7 +51,7 @@
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                    class="bg-red-600 hover:bg-red-700 text-white p-2 rounded transition">
+                                    class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                     <i data-feather="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </form>
@@ -142,15 +144,18 @@
 
 
 {{-- MODAL EDIT AUDIT --}}
-<div class="modal fade" id="modalEditAudit" tabindex="-1" aria-labelledby="modalEditAuditLabel" aria-hidden="true">
+<div class="modal fade" id="modalEditAudit" tabindex="-1" aria-labelledby="modalEditAuditLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form id="formEditAudit" method="POST" class="modal-content rounded-4 shadow-lg">
             @csrf
             @method('PUT')
 
             {{-- Header --}}
-            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
-                <h5 class="modal-title fw-semibold text-dark" id="modalEditAuditLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalEditAuditLabel"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                     <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Audit Type
                 </h5>
                 <button type="button"
@@ -166,7 +171,8 @@
                 <div class="row g-4">
                     {{-- Audit Type --}}
                     <div class="col-md-12">
-                        <label for="edit_audit_name" class="form-label fw-semibold">Audit Type <span class="text-danger">*</span></label>
+                        <label for="edit_audit_name" class="form-label fw-semibold">Audit Type <span
+                                class="text-danger">*</span></label>
                         <input type="text" name="name" id="edit_audit_name" required
                             class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
                         @error('name')

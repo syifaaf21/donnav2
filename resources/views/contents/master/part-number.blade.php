@@ -51,35 +51,41 @@
 
             <div id="tableContainer">
                 {{-- Table --}}
-                <div class="overflow-x-auto overflow-y-auto max-h-96">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-2">No</th>
-                                <th class="px-4 py-2">Part Number</th>
-                                <th class="px-4 py-2">Product</th>
-                                <th class="px-4 py-2">Model</th>
-                                <th class="px-4 py-2">Process</th>
-                                <th class="px-4 py-2">Plant</th>
-                                <th class="px-4 py-2 text-center">Actions</th>
+                <div
+                    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                    <table class="min-w-full text-sm text-gray-700">
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part
+                                    Number</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Product
+                                </th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Process
+                                </th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
+                                <th
+                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($partNumbers as $part)
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-2">
+                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                                    <td class="px-4 py-3">
                                         {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-2">{{ $part->part_number }}</td>
-                                    <td class="px-4 py-2">{{ $part->product->name ?? '-' }}</td>
-                                    <td class="px-4 py-2">{{ $part->productModel->name ?? '-' }}</td>
-                                    <td class="px-4 py-2">{{ ucwords($part->process->name) ?? '-' }}</td>
-                                    <td class="px-4 py-2">{{ ucwords($part->plant) }}</td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-3">{{ $part->part_number }}</td>
+                                    <td class="px-4 py-3">{{ $part->product->name ?? '-' }}</td>
+                                    <td class="px-4 py-3">{{ $part->productModel->name ?? '-' }}</td>
+                                    <td class="px-4 py-3">{{ ucwords($part->process->name) ?? '-' }}</td>
+                                    <td class="px-4 py-3">{{ ucwords($part->plant) }}</td>
+                                    <td class="px-4 py-3 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editPartNumberModal-{{ $part->id }}"
                                             data-bs-title="Edit Part Number"
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                             <i data-feather="edit" class="w-4 h-4"></i>
                                         </button>
                                         <form action="{{ route('master.part_numbers.destroy', $part->id) }}" method="POST"
@@ -87,7 +93,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded"
+                                                class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2"
                                                 data-bs-title="Delete Part Number">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
@@ -122,7 +128,8 @@
                     <input type="hidden" name="_form" value="edit">
 
                     {{-- Header --}}
-                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                        style="background-color: #f5f5f7;">
                         <h5 class="modal-title fw-semibold" id="editPartNumberModalLabel-{{ $part->id }}"
                             style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                             <i class="bi bi-pencil-square text-primary me-2"></i>Edit Part Number
@@ -238,7 +245,8 @@
                 @csrf
 
                 {{-- Header --}}
-                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
                     <h5 class="modal-title fw-semibold" id="createPartNumberModalLabel"
                         style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                         <i class="bi bi-plus-circle text-primary me-2"></i> Add New Part Number

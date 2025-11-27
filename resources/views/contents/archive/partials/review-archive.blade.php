@@ -1,7 +1,7 @@
 <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
-            <table class="min-w-full text-sm text-gray-700">
-                <thead>
-                    <tr class="bg-gray-50 border-b border-gray-200">
+    <table class="min-w-full text-sm text-gray-700">
+        <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Number</th>
                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Archived File</th>
@@ -34,14 +34,19 @@
 
                         <td class="px-4 py-3">
                             <span class="text-red-600 font-semibold">
-                            {{ optional($file->marked_for_deletion_at)->format('Y-m-d') ?? '-' }}
+                                {{ optional($file->marked_for_deletion_at)->format('Y-m-d') ?? '-' }}
                             </span>
                         </td>
 
                         <td class="px-4 py-3 text-center">
                             @if ($file->file_path)
                                 <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
-                                    class="text-blue-500 hover:text-blue-700">
+                                    class="inline-flex items-center justify-center 
+                   w-8 h-8 rounded-full 
+                   bg-cyan-500 text-white 
+                   hover:bg-cyan-600 transition-colors 
+                   shadow-md"
+                                    title="View File">
                                     <i class="bi bi-eye text-lg"></i>
                                 </a>
                             @else

@@ -40,31 +40,34 @@
 
             <div id="tableContainer">
                 {{-- Table --}}
-                <div class="overflow-x-auto overflow-y-auto max-h-96">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-2">No</th>
-                                <th class="px-4 py-2">Name</th>
-                                <th class="px-4 py-2">Code</th>
-                                <th class="px-4 py-2">Plant</th>
-                                <th class="px-4 py-2 text-center">Actions</th>
+                <div
+                    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                    <table class="min-w-full text-sm text-gray-700">
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
+                                <th
+                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($departments as $department)
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-2">
+                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                                    <td class="px-4 py-3">
                                         {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-2">{{ ucwords($department->name) }}</td>
-                                    <td class="px-4 py-2">{{ $department->code }}</td>
-                                    <td class="px-4 py-2">{{ $department->plant }}</td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-3">{{ ucwords($department->name) }}</td>
+                                    <td class="px-4 py-3">{{ $department->code }}</td>
+                                    <td class="px-4 py-3">{{ $department->plant }}</td>
+                                    <td class="px-4 py-3 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editDepartmentModal-{{ $department->id }}"
                                             data-bs-title="Edit Department"
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                             <i data-feather="edit" class="w-4 h-4"></i>
                                         </button>
 
@@ -73,7 +76,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" data-bs-title="Delete Department"
-                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
                                         </form>
@@ -110,7 +113,7 @@
                         style="background-color: #f5f5f7;">
                         <h5 class="modal-title fw-semibold text-dark" id="editDepartmentModalLabel-{{ $department->id }}"
                             style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
-                           <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Department
+                            <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Department
                         </h5>
                         <button type="button"
                             class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
@@ -220,10 +223,11 @@
                 <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                     <div class="row g-4">
                         {{-- Name --}}
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" placeholder="Enter department name"
-                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
+                                style="border-color: #d1d5db; padding: 10px; font-size: 0.95rem;"
+                                class="form-control border-0 shadow-sm rounded-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 @error('name') is-invalid @enderror"
                                 value="{{ old('name') }}" required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -231,12 +235,12 @@
                         </div>
 
                         {{-- Code --}}
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
                             <select id="code-select" name="code"
                                 class="form-select border-0 shadow-sm rounded-3 @error('code') is-invalid @enderror"
                                 required>
-                                <option value="" disabled selected>-- Select Code --</option>
+                                <option value="" disabled selected>-- Select or create code --</option>
 
                                 @foreach ($codes as $code)
                                     <option value="{{ $code }}" {{ old('code') == $code ? 'selected' : '' }}>
@@ -304,7 +308,7 @@
                 create: true,
                 persist: false,
                 maxItems: 1,
-                placeholder: "Type or select code...",
+                placeholder: "Choose or add code...",
                 allowEmptyOption: true,
             });
 
