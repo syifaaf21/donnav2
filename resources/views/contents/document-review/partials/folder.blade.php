@@ -25,25 +25,38 @@
             </ol>
         </nav>
         <!-- Search & Filter Bar -->
-        <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET"
-            class="flex justify-end items-center gap-3 mb-4 w-full flex-wrap">
+        <form id="searchForm" action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
+            method="GET" class="flex justify-end items-center w-auto">
 
             <!-- Search Input (bentuk asli) -->
-            <div class="flex items-center w-full sm:w-96 relative">
+            <div class="relative w-96">
                 <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    placeholder="Search...">
+                    class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
+             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                    placeholder="Type to search...">
 
-                <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500">
-                    <i class="bi bi-search"></i>
+                <label for="searchInput"
+                    class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
+                        text-gray-400 text-sm
+                        {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                    Type to search...
+                </label>
+
+                <button type="submit"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                        rounded-lg text-gray-400 hover:text-blue-700 transition">
+                    <i data-feather="search" class="w-5 h-5"></i>
                 </button>
 
+                @if (request('q'))
                 <button type="button" id="clearSearch"
-                    class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-sky-500"
+                    class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
                     onclick="document.getElementById('searchInput').value=''; this.form.submit();">
-                    <i class="bi bi-x-circle"></i>
+                    <i data-feather="x" class="w-5 h-5"></i>
                 </button>
+                @endif
             </div>
+
             <!-- Filter Button -->
             <button type="button"
                 class="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
@@ -73,7 +86,8 @@
                                 <select name="part_number" id="modalPart" class="form-select rounded-lg py-2">
                                     <option value="">All Part Numbers</option>
                                     @foreach ($partNumbers as $part)
-                                        <option value="{{ $part }}" @selected(request('part_number') == $part)>{{ $part }}
+                                        <option value="{{ $part }}" @selected(request('part_number') == $part)>
+                                            {{ $part }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -594,24 +608,24 @@
                         <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
                         <div class="space-y-2">
                         ${data.files.map(file => `
-                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
-                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
+                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                                        <div class="flex gap-2">
-                                                                                                                            <a href="/storage/${file.file_path}"
-                                                                                                                               target="_blank"
-                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                                                               View
-                                                                                                                            </a>
+                                                                                                                                        <div class="flex gap-2">
+                                                                                                                                            <a href="/storage/${file.file_path}"
+                                                                                                                                               target="_blank"
+                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                                                               View
+                                                                                                                                            </a>
 
-                                                                                                                            <button type="button"
-                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                                                data-file-id="${file.id}">
-                                                                                                                                Replace
-                                                                                                                            </button>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                `).join('')}
+                                                                                                                                            <button type="button"
+                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                                                data-file-id="${file.id}">
+                                                                                                                                                Replace
+                                                                                                                                            </button>
+                                                                                                                                        </div>
+                                                                                                                                    </div>
+                                                                                                                                `).join('')}
                         </div>
                     `;
                             })
@@ -674,10 +688,10 @@
                                 class="block w-full border border-gray-300 rounded p-1 text-sm">
 
                             ${oldFileId ? `
-                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
-                                                                                                                    ` : `
-                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
-                                                                                                                    `}
+                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
+                                                                                                                                    ` : `
+                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
+                                                                                                                                    `}
 
                                     <button type="button"
                                             class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">
