@@ -49,11 +49,11 @@
                 </button>
 
                 @if (request('q'))
-                <button type="button" id="clearSearch"
-                    class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
-                    onclick="document.getElementById('searchInput').value=''; this.form.submit();">
-                    <i data-feather="x" class="w-5 h-5"></i>
-                </button>
+                    <button type="button" id="clearSearch"
+                        class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
+                        onclick="document.getElementById('searchInput').value=''; this.form.submit();">
+                        <i data-feather="x" class="w-5 h-5"></i>
+                    </button>
                 @endif
             </div>
 
@@ -146,9 +146,10 @@
 
         <!-- Table -->
         <!-- New Modern Dribbble-Style Table -->
-        <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+        <div
+            class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
             <table class="min-w-full text-sm text-gray-700">
-                <thead>
+                <thead class="sticky top-0 z-10">
                     <tr class="bg-gray-50 border-b border-gray-200">
                         <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
                         <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Number
@@ -170,17 +171,16 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($documents as $doc)
                         <tr class="hover:bg-gray-50 transition-all duration-150">
-                            <td class="px-4 py-3">{{ $loop->iteration }}</td>
-
+                            <td class="px-4 py-3">
+                                {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->iteration }}
+                            </td>
                             <td class="px-4 py-3 font-medium text-gray-800">
                                 {{ $doc->document_number ?? '-' }}
                             </td>
 
                             <td class="px-4 py-3">
                                 @if ($doc->partNumber->isNotEmpty())
-                                    <span class="inline-block bg-sky-100 text-sky-700 px-2 py-1 rounded-md text-xs">
-                                        {{ $doc->partNumber->pluck('part_number')->join(', ') }}
-                                    </span>
+                                    {{ $doc->partNumber->pluck('part_number')->join(', ') }}
                                 @else
                                     -
                                 @endif
@@ -362,8 +362,12 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="text-center py-8 text-gray-400 text-sm">
-                                No data found. Apply filters to see results.
+                            <td colspan="12">
+                                <div
+                                    class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
+                                    <i class="bi bi-inbox text-4xl"></i>
+                                    <span>No Documents found</span>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -608,24 +612,24 @@
                         <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
                         <div class="space-y-2">
                         ${data.files.map(file => `
-                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
-                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
+                                                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                                                        <div class="flex gap-2">
-                                                                                                                                            <a href="/storage/${file.file_path}"
-                                                                                                                                               target="_blank"
-                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                                                                               View
-                                                                                                                                            </a>
+                                                                                                                                                                        <div class="flex gap-2">
+                                                                                                                                                                            <a href="/storage/${file.file_path}"
+                                                                                                                                                                               target="_blank"
+                                                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                                                                                               View
+                                                                                                                                                                            </a>
 
-                                                                                                                                            <button type="button"
-                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                                                                data-file-id="${file.id}">
-                                                                                                                                                Replace
-                                                                                                                                            </button>
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                `).join('')}
+                                                                                                                                                                            <button type="button"
+                                                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                                                                                data-file-id="${file.id}">
+                                                                                                                                                                                Replace
+                                                                                                                                                                            </button>
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </div>
+                                                                                                                                                                `).join('')}
                         </div>
                     `;
                             })
@@ -688,10 +692,10 @@
                                 class="block w-full border border-gray-300 rounded p-1 text-sm">
 
                             ${oldFileId ? `
-                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
-                                                                                                                                    ` : `
-                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
-                                                                                                                                    `}
+                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
+                                                                                                                                                                    ` : `
+                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
+                                                                                                                                                                    `}
 
                                     <button type="button"
                                             class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">

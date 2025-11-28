@@ -288,16 +288,18 @@
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonText: 'Yes, delete it!',
-                            cancelButtonText: 'Cancel'
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#d33', 
+                            cancelButtonColor: '#3085d6' // optional: warna biru untuk cancel
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                // Setelah konfirmasi, submit form
                                 form.submit();
                             }
                         });
                     });
                 });
             }
+
             const tableContainer = document.getElementById("tableContainer");
             const searchInput = document.getElementById("searchInput");
             const clearBtn = document.getElementById("clearSearch");

@@ -49,8 +49,8 @@
                             class="flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1">
                             <span class="truncate max-w-[10rem]">{{ ucwords(strtolower($plant)) }}</span>
                             <span
-                                class="inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-medium rounded-full bg-blue-100 text-blue-700">
-                                {{ $documents->count() }}
+                                class="inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-100 text-blue-700">
+                                {{ $totalDocumentsByPlant[$plant] ?? 0 }}
                             </span>
                         </button>
                     @endforeach
@@ -221,10 +221,11 @@
 
             <div id="tableContainer">
                 {{-- Table per Plant --}}
-                <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 max-h-[60vh]">
-                    @foreach ($groupedByPlant as $plant => $documents)
-                        @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                        <div x-show="activeTab === '{{ $slug }}'" x-transition>
+                @foreach ($groupedByPlant as $plant => $documents)
+                    @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
+                    <div x-show="activeTab === '{{ $slug }}'" x-transition class="flex flex-col">
+                        <div
+                            class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[60vh]">
                             <table class="min-w-full text-sm text-gray-700">
                                 <thead class="bg-gray-50 sticky top-0 z-10">
                                     <tr>
@@ -263,7 +264,9 @@
                                     @else
                                         @foreach ($documents as $index => $doc)
                                             <tr class="hover:bg-gray-50 transition-all duration-150">
-                                                <td class="px-4 py-3">{{ $index + 1 }}</td>
+                                                <td class="px-4 py-3">
+                                                    {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->index + 1 }}
+                                                </td>
                                                 <td class="px-4 py-3 font-medium">{{ $doc->document_number }}</td>
                                                 <td class="px-4 py-3">
                                                     {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
@@ -279,34 +282,11 @@
                                                 <td class="px-4 py-3 capitalize">
                                                     {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
                                                 </td>
-                                                <td class="px-4 py-3">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}
+                                                <td class="px-4 py-3">
+                                                    {{ $doc->reminder_date?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
-                                                {{-- <td class="px-4 py-3">
-                                            @php
-                                                $statusClasses = [
-                                                    'approved' =>
-                                                        'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
-                                                    'rejected' =>
-                                                        'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
-                                                    'need review' =>
-                                                        'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
-                                                ];
-
-                                                $statusName = strtolower($doc->status?->name ?? '');
-                                                $class =
-                                                    $statusClasses[$statusName] ??
-                                                    'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded';
-                                            @endphp
-
-                                            @if ($doc->status)
-                                                <span class="{{ $class }}">
-                                                    {{ $doc->status->name }}
-                                                </span>
-                                            @else
-                                                <span class="text-gray-400">-</span>
-                                            @endif
-                                        </td> --}}
+                                                <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}
+                                                </td>
                                                 <td class="px-4 py-3 text-center">
                                                     <div class="relative inline-block overflow-visible">
                                                         @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
@@ -343,8 +323,8 @@
                                                     </div>
                                                     <button data-bs-toggle="modal"
                                                         data-bs-target="#editDocumentModal-{{ $doc->id }}"
-                                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
-                                                        title="Edit">
+                                                        class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200 skip-style"
+                                                        title="Edit Document">
                                                         <i data-feather="edit" class="w-4 h-4"></i>
                                                     </button>
                                                     <form action="{{ route('master.document-review.destroy', $doc->id) }}"
@@ -352,7 +332,7 @@
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" title="Delete Document"
-                                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                            class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2 skip-style">
                                                             <i data-feather="trash-2" class="w-4 h-4"></i>
                                                         </button>
                                                     </form>
@@ -363,8 +343,14 @@
                                 </tbody>
                             </table>
                         </div>
-                    @endforeach
-                </div>
+                        {{-- PAGINATION --}}
+                        @if ($documents instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                            <div class="px-4 py-2 bg-gray-50 flex justify-end">
+                                {{ $documents->withQueryString()->links('vendor.pagination.tailwind') }}
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
             </div>
         </div>
 
@@ -633,9 +619,9 @@
                             });
                         });
                     });
-                    document.querySelectorAll('#tableContainer button').forEach(btn => {
+                    document.querySelectorAll('#tableContainer button:not(.skip-style)').forEach(btn => {
                         btn.classList.add('inline-flex', 'items-center', 'justify-center');
-                        btn.style.minWidth = "2.5rem"; // supaya tombol tidak mengecil
+                        btn.style.minWidth = "2.5rem"; // hanya untuk tombol tertentu
                     });
                 }
 

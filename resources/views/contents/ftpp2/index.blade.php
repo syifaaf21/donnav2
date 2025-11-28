@@ -29,7 +29,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -337,8 +337,14 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td class="px-6 py-4 text-sm text-gray-500" colspan="7">No records found.</td>
+                                    <tr colspan="12">
+                                        <td colspan="12">
+                                            <div
+                                                class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
+                                                <i class="bi bi-inbox text-4xl"></i>
+                                                <span>No Records found</span>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>

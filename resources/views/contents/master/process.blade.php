@@ -77,7 +77,7 @@
                                     <td class="px-4 py-3 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editProcessModal-{{ $process->id }}"
-                                            data-bs-title="Edit Process"
+                                            title="Edit Process"
                                             class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                             <i data-feather="edit" class="w-4 h-4"></i>
                                         </button>
@@ -85,7 +85,7 @@
                                             class="d-inline delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" data-bs-title="Delete Process"
+                                            <button type="submit" title="Delete Process"
                                                 class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
@@ -305,7 +305,8 @@
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonText: 'Yes, delete it!',
-                            cancelButtonText: 'Cancel'
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#d33',
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 // Setelah konfirmasi, submit form

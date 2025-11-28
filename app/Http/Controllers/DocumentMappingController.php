@@ -152,6 +152,9 @@ class DocumentMappingController extends Controller
         $filterDataByPlant = [];
 
         $search = trim($request->search);
+        $perPage = 10; // jumlah item per halaman
+        $page = $request->input('page', 1); // halaman sekarang
+        $totalDocumentsByPlant = [];
 
         foreach ($plants as $plant) {
 
@@ -177,9 +180,36 @@ class DocumentMappingController extends Controller
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('document_number', 'like', "%{$search}%")
-                        ->orWhereHas('partNumber', fn($q2) => $q2->where('part_number', 'like', "%{$search}%"))
-                        ->orWhereHas('document', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]))
-                        ->orWhereHas('department', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]));
+                        ->orWhereHas(
+                            'partNumber',
+                            fn($q2) =>
+                            $q2->where('part_number', 'like', "%{$search}%")
+                        )
+                        ->orWhereHas(
+                            'document',
+                            fn($q2) =>
+                            $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"])
+                        )
+                        ->orWhereHas(
+                            'department',
+                            fn($q2) =>
+                            $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"])
+                        )
+                        ->orWhereHas(
+                            'productModel',
+                            fn($q2) =>
+                            $q2->whereRaw('LOWER(tm_models.name) LIKE ?', ["%" . strtolower($search) . "%"])
+                        )
+                        ->orWhereHas(
+                            'product',
+                            fn($q2) =>
+                            $q2->whereRaw('LOWER(tm_products.name) LIKE ?', ["%" . strtolower($search) . "%"])
+                        )
+                        ->orWhereHas(
+                            'process',
+                            fn($q2) =>
+                            $q2->whereRaw('LOWER(tm_processes.name) LIKE ?', ["%" . strtolower($search) . "%"])
+                        );
                 });
             }
 
@@ -230,11 +260,10 @@ class DocumentMappingController extends Controller
                 $query->where('status_id', $request->status_id);
             }
 
+            $totalDocumentsByPlant[$plant] = $query->count();
             // Simpan hasil per plant
-            $groupedByPlant[$plant] = $query->get()->filter(
-                fn($mapping) =>
-                $mapping->partNumber->contains(fn($p) => strtolower($p->plant) === strtolower($plant))
-            );
+            $groupedByPlant[$plant] = $query->orderBy('created_at', 'desc')
+                ->paginate($perPage, ['*'], $plant . '_page');
 
             // ===================== FILTER DATA UNTUK DROPDOWN (DENGAN RELASI PART NUMBER) =====================
             $partNumbersPlant = PartNumber::with(['productModel', 'product', 'process'])
@@ -283,8 +312,31 @@ class DocumentMappingController extends Controller
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
-                    ->orWhereHas('document', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]))
-                    ->orWhereHas('department', fn($q2) => $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"]));
+                    ->orWhereHas(
+                        'document',
+                        fn($q2) =>
+                        $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"])
+                    )
+                    ->orWhereHas(
+                        'department',
+                        fn($q2) =>
+                        $q2->whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($search) . "%"])
+                    )
+                    ->orWhereHas(
+                        'productModel',
+                        fn($q2) =>
+                        $q2->whereRaw('LOWER(tm_models.name) LIKE ?', ["%" . strtolower($search) . "%"])
+                    )
+                    ->orWhereHas(
+                        'product',
+                        fn($q2) =>
+                        $q2->whereRaw('LOWER(tm_products.name) LIKE ?', ["%" . strtolower($search) . "%"])
+                    )
+                    ->orWhereHas(
+                        'process',
+                        fn($q2) =>
+                        $q2->whereRaw('LOWER(tm_processes.name) LIKE ?', ["%" . strtolower($search) . "%"])
+                    );
             });
         }
 
@@ -328,12 +380,16 @@ class DocumentMappingController extends Controller
             $queryManual->where('status_id', $request->status_id);
         }
 
+        $totalDocumentsByPlant['Other / Manual Entry'] = $queryManual->count();
         $manualMappings = $queryManual->orderBy('created_at', 'asc')->get();
-        $groupedByPlant['Other / Manual Entry'] = $manualMappings;
+        $groupedByPlant['Other / Manual Entry'] = $queryManual
+            ->orderBy('created_at', 'asc')
+            ->paginate($perPage, ['*'], 'other_page');
 
         return view('contents.master.document-review.index2', compact(
             'groupedByPlant',
             'filterDataByPlant',
+            'totalDocumentsByPlant',
             'documentsMaster',
             'partNumbers',
             'statuses',

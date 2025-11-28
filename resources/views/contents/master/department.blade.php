@@ -76,7 +76,7 @@
                                     <td class="px-4 py-3 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editDepartmentModal-{{ $department->id }}"
-                                            data-bs-title="Edit Department"
+                                            title="Edit Department"
                                             class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                             <i data-feather="edit" class="w-4 h-4"></i>
                                         </button>
@@ -85,8 +85,8 @@
                                             method="POST" class="d-inline delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" data-bs-title="Delete Department"
-                                                class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
+                                            <button type="submit" title="Delete Department"
+                                                class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
                                         </form>
@@ -324,10 +324,10 @@
 
             // TomSelect for PLANT (creatable + predefined options)
             new TomSelect("#plant-select", {
-                create: true,
+                create: false,
                 persist: false,
                 maxItems: 1,
-                placeholder: "Choose or add plant...",
+                placeholder: "Choose plant...",
                 allowEmptyOption: false, // ← penting
             });
 
@@ -491,15 +491,6 @@
                         form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
                     });
                 }
-            });
-            //Tooltip
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-            tooltipTriggerList.map(function(el) {
-                return new bootstrap.Tooltip(el, {
-                    title: el.getAttribute('data-bs-title'),
-                    placement: 'top',
-                    trigger: 'hover'
-                });
             });
         });
     </script>

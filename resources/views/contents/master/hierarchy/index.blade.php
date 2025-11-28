@@ -80,14 +80,23 @@
                     </thead>
                     <tbody id="documentTableBody">
                         @php $number = 1; @endphp
-                        @foreach ($documents as $document)
-                            @include('contents.master.hierarchy.partials.tree-node', [
-                                'document' => $document,
-                                'level' => 0,
-                                'number' => $number++,
-                                'parent_id' => null,
-                            ])
-                        @endforeach
+                        @if ($documents->count() === 0)
+                            <tr>
+                                <td colspan="3" class="text-center py-6 text-gray-500">
+                                    <i class="bi bi-inbox text-2xl block mb-1"></i>
+                                    No data found
+                                </td>
+                            </tr>
+                        @else
+                            @foreach ($documents as $document)
+                                @include('contents.master.hierarchy.partials.tree-node', [
+                                    'document' => $document,
+                                    'level' => 0,
+                                    'number' => $number++,
+                                    'parent_id' => null,
+                                ])
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>
