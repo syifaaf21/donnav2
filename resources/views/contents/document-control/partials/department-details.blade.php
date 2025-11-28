@@ -62,9 +62,13 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @if ($mappings->isEmpty())
-                            <tr class="hover:bg-gray-50 transition-all duration-150">
-                                <td colspan="9" class="px-4 py-4 text-center text-gray-500text-lg">
-                                    No documents found.
+                            <tr colspan="12">
+                                <td colspan="12">
+                                    <div
+                                        class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
+                                        <i class="bi bi-inbox text-4xl"></i>
+                                        <span>No Documents found</span>
+                                    </div>
                                 </td>
                             </tr>
                         @else

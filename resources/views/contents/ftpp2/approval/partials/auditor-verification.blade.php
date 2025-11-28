@@ -26,7 +26,7 @@
                         'text-green-600': form.status_id == 11,
                         'text-yellow-500': form.status_id != 7 && form.status_id != 11
                     }"
-                    x-text="form.status_id == 7 ? 'OPEN' : (form.status_id == 11 ? 'CLOSE' : (form.status_id == 8 ? 'SUBMITTED' : 'CHECKED BY DEPT HEAD'))">
+                    x-text="form.status_id == 7 ? 'OPEN' : (form.status_id == 11 ? 'CLOSE' : (form.status_id == 8 ? 'SUBMITTED' : (form.status_id == 9 ? 'CHECKED BY DEPT HEAD' : (form.status_id == 10 ? 'APPROVED BY AUDITOR' : ''))))">
                 </span>
             </div>
         </td>

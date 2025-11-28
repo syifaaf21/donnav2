@@ -40,26 +40,30 @@
 
                         <td class="px-4 py-3 text-center">
                             @if ($file->file_path)
-                                <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
-                                    class="inline-flex items-center justify-center 
-                   w-8 h-8 rounded-full 
-                   bg-cyan-500 text-white 
-                   hover:bg-cyan-600 transition-colors 
+                                <button onclick="openFileViewer('{{ asset('storage/' . $file->file_path) }}')"
+                                    class="inline-flex items-center justify-center
+                   w-8 h-8 rounded-full
+                   bg-cyan-500 text-white
+                   hover:bg-cyan-600 transition-colors
                    shadow-md"
                                     title="View File">
+
                                     <i class="bi bi-eye text-lg"></i>
-                                </a>
+                                </button>
                             @else
                                 <span class="text-gray-400">-</span>
                             @endif
                         </td>
-
                     </tr>
                 @endforeach
             @empty
-                <tr>
-                    <td colspan="7" class="text-center py-4">
-                        No archived review documents found.
+                <tr colspan="12">
+                    <td colspan="12">
+                        <div
+                            class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
+                            <i class="bi bi-inbox text-4xl"></i>
+                            <span>No archived review documents found.</span>
+                        </div>
                     </td>
                 </tr>
             @endforelse

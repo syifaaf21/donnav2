@@ -193,14 +193,22 @@
                 {{ $finding->finding_description ?? '-' }}
 
                 {{-- Tampilkan lampiran gambar yang terkait dengan finding ini --}}
-                @foreach ($finding->file as $image)
-                    <div class="image-row mt-2 text-center">
-                        <img src="{{ $image->full_url }}"
-                            style="max-width: 64px; max-height: 64px; display:block; margin:auto;">
-                        <div style="font-size:8px; text-align:center;">
-                            Lampiran Gambar: {{ $image->original_name ?? basename($image->file_path) }}
+                @foreach ($finding->file ?? [] as $image)
+                    @php
+                        $ext = strtolower(
+                            pathinfo($image->file_path ?? ($image->original_name ?? ''), PATHINFO_EXTENSION),
+                        );
+                    @endphp
+
+                    @if (in_array($ext, ['jpg', 'jpeg', 'png']))
+                        <div class="image-row mt-2 text-center">
+                            <img src="{{ $image->full_url }}"
+                                style="max-width: 64px; max-height: 64px; display:block; margin:auto;">
+                            <div style="font-size:8px; text-align:center;">
+                                Lampiran Gambar: {{ $image->original_name ?? basename($image->file_path ?? '') }}
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 @endforeach
 
                 <br><br>
@@ -390,25 +398,36 @@
     {{-- ==================== ATTACHMENTS ================== --}}
     {{-- LAMPIRAN FILE --}}
     @if ($finding->auditeeAction && $finding->auditeeAction->file->count())
-        <div class="page-break"></div>
-        <h6>Attachment and Evidence</h6>
+        <div class="page-break">
+            <div class="font-semibold text-md">Attachment and Evidence: </div>
 
-        @foreach ($finding->auditeeAction->file as $file)
-            @php
-                $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
-            @endphp
+            @foreach ($finding->file as $file)
+                @php
+                    $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                @endphp
 
-            @if (in_array($ext, ['jpg', 'jpeg', 'png']))
-                <div class="mt-2 text-center">
-                    <img src="{{ $file->full_url }}"
-                        style="max-width:400px; max-height:250px; display:block; margin:auto;">
-                    <div class="text-sm" style="font-size:10px; text-align:center;">
-                        {{ $file->original_name ?? basename($file->file_path) }}</div>
-                </div>
-            @else
-                <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
-            @endif
-        @endforeach
+                @if (in_array($ext, ['pdf']))
+                    <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
+                @endif
+            @endforeach
+
+            @foreach ($finding->auditeeAction->file as $file)
+                @php
+                    $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                @endphp
+
+                @if (in_array($ext, ['jpg', 'jpeg', 'png']))
+                    <div class="mt-2 text-center">
+                        <img src="{{ $file->full_url }}"
+                            style="max-width:400px; max-height:250px; display:block; margin:auto;">
+                        <div class="text-sm" style="font-size:10px; text-align:center;">
+                            {{ $file->original_name ?? basename($file->file_path) }}</div>
+                    </div>
+                @else
+                    <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
+                @endif
+            @endforeach
+        </div>
     @endif
 </body>
 

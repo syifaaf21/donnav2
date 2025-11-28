@@ -5,7 +5,7 @@
         <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
             <!-- AUDIT TYPE -->
             <div>
-                <label class="font-semibold block">Audit Type:</label>
+                <label class="font-semibold block">Audit Type: <span class="text-danger">*</span></label>
                 <div class="mt-2 space-y-1">
                     @foreach ($auditTypes as $type)
                         <label class="flex items-center gap-2">
@@ -29,7 +29,7 @@
 
             <!-- DEPARTMENT / PROCESS / PRODUCT -->
             <div class="space-y-1">
-                <label class="font-semibold">Department / Process / Product:</label>
+                <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
 
                 <button type="button" class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white"
                     onclick="openPlantSidebar()">
@@ -47,7 +47,7 @@
 
             <!-- AUDITEE -->
             <div class="space-y-1">
-                <label class="font-semibold">Auditee:</label>
+                <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
                 <button type="button" onclick="openAuditeeSidebar()"
                     class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
@@ -65,7 +65,7 @@
 
             <!-- AUDITOR -->
             <div class="space-y-1">
-                <label class="font-semibold">Auditor / Inisiator:</label>
+                <label class="font-semibold">Auditor / Inisiator: <span class="text-danger">*</span></label>
                 <select name="auditor_id" x-model="form.auditor_id"
                     class="border-b border-gray-400 w-full focus:outline-none">
                     <option value="">-- Choose Auditor --</option>
@@ -77,14 +77,14 @@
 
             <!-- DATE -->
             <div class="space-y-1">
-                <label class="font-semibold">Date:</label>
+                <label class="font-semibold">Date: <span class="text-danger">*</span></label>
                 <input type="date" name="created_at" x-model="form.created_at"
                     class="border-b border-gray-400 w-full focus:outline-none" value="{{ now()->toDateString() }}">
             </div>
 
             <!-- REG NUMBER -->
             <div class="space-y-1">
-                <label class="font-semibold">Registration Number:</label>
+                <label class="font-semibold">Registration Number: <span class="text-danger">*</span></label>
                 <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
                     class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" readonly>
             </div>
@@ -94,7 +94,7 @@
             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
                 <!-- FINDING CATEGORY -->
                 <div>
-                    <label class="font-semibold">Finding Category:</label>
+                    <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
                     <div class="mt-1">
                         @foreach ($findingCategories as $category)
                             <label class="mr-4">
@@ -109,16 +109,16 @@
 
                 <!-- FINDING -->
                 <div>
-                    <label class="font-semibold">Finding / Issue:</label>
+                    <label class="font-semibold">Finding / Issue: <span class="text-danger">*</span></label>
                     <textarea name="finding_description" x-model="form.finding_description" class="w-full border rounded p-2 h-24" required></textarea>
                 </div>
 
                 <div class="flex justify-between items-start">
                     <!-- DUE DATE -->
                     <div>
-                        <label class="font-semibold">Duedate:</label>
+                        <label class="font-semibold">Duedate: <span class="text-danger">*</span></label>
                         <input type="date" name="due_date" x-model="form.due_date"
-                            class="border-b border-gray-400 ml-2" required>
+                            class="border-b border-gray-400 ml-2" required min="{{ now()->toDateString() }}">
                     </div>
 
                     <!-- CLAUSE SELECT -->
@@ -169,21 +169,12 @@
                                 <i data-feather="file-text" class="w-4 h-4"></i>
                                 <span class="text-sm">Upload Documents</span>
                             </button>
-                            <div class="border-t mt-1"></div>
-                            <button id="attachBoth" type="button"
-                                class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                <i data-feather="upload" class="w-4 h-4"></i>
-                                <span class="text-sm">Open Combined Picker</span>
-                            </button>
                         </div>
                     </div>
 
                     <!-- Hidden file inputs -->
                     <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
                     <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple class="hidden">
-                    <!-- Optional combined input -->
-                    <input type="file" id="combinedInput" name="attachments[]" accept="image/*,.pdf" multiple
-                        class="hidden">
                 </div>
                 <button type="button" onclick="saveHeaderOnly()"
                     class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
@@ -810,12 +801,11 @@
         const attachMenu = document.getElementById('attachMenu');
         const attachImages = document.getElementById('attachImages');
         const attachDocs = document.getElementById('attachDocs');
-        const attachBoth = document.getElementById('attachBoth');
         const attachCount = document.getElementById('attachCount');
 
         const photoInput = document.getElementById('photoInput');
         const fileInput = document.getElementById('fileInput');
-        const combinedInput = document.getElementById('combinedInput');
+
 
         const previewImageContainer = document.getElementById('previewImageContainer');
         const previewFileContainer = document.getElementById('previewFileContainer');
@@ -910,17 +900,6 @@
             updateAttachCount();
         });
 
-        // 🔹 Combined Input (Pisahkan otomatis jadi image vs file)
-        combinedInput.addEventListener('change', (e) => {
-            const images = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-            const docs = Array.from(e.target.files).filter(f => !f.type.startsWith('image/'));
-            updateFileInput(photoInput, [...Array.from(photoInput.files), ...images]);
-            updateFileInput(fileInput, [...Array.from(fileInput.files), ...docs]);
-            displayImages();
-            displayFiles();
-            updateAttachCount();
-        });
-
         // 🔹 Toggle menu
         attachBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -931,7 +910,6 @@
 
         attachImages.addEventListener('click', () => photoInput.click());
         attachDocs.addEventListener('click', () => fileInput.click());
-        attachBoth.addEventListener('click', () => combinedInput.click());
     });
 </script>
 
@@ -984,13 +962,10 @@
             });
         }
 
-        // Files are already in the hidden file inputs (photoInput, fileInput, combinedInput) so a normal submit will include them.
-
         // Submit the form normally (will redirect and show flash message from controller)
         form.submit();
     }
 </script>
-
 
 {{-- icon feather init --}}
 <script>

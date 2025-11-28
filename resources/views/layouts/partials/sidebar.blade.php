@@ -1,17 +1,17 @@
 <!-- Sidebar Content (no outer <aside>, layout provides the <aside>) -->
 <aside id="sidebar"
-    class="fixed md:relative z-40 bg-sidebar  rounded h-screen flex flex-col transition-all duration-300 ease-in-out w-64">
+    class="fixed md:relative z-40 bg-white rounded-xl shadow h-screen flex flex-col transition-all duration-300 ease-in-out w-64 m-2">
 
-    <div class=" shadow-lg flex items-center justify-between px-4 border-b rounded-lg">
+    <div class="flex items-center justify-between px-4">
         <div class="flex items-center gap-2">
-            <img src="{{ asset('images/madonna-inverse.png') }}" alt="Logo" id="sidebarLogo"
-                style="width: 150px; height: auto;" class="object-contain transition-all duration-300"
-                data-full="{{ asset('images/madonna-inverse.png') }}"
+            <img src="{{ asset('images/madonna.png') }}" alt="Logo" id="sidebarLogo"
+                style="width: 200px; height: auto;" class="object-contain transition-all duration-300"
+                data-full="{{ asset('images/madonna.png') }}"
                 data-icon="{{ asset('images/madonna-logo.png') }}" />
         </div>
 
         <button id="toggleSidebar"
-            class="hidden md:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-200 transition border border-gray-200 rotate">
+            class="hidden md:flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-200 transition border border-gray-200 text-gray-700 rotate">
             <i data-feather="chevron-left"></i>
         </button>
     </div>
@@ -21,7 +21,7 @@
         @include('layouts.partials.menu-sidebar')
     </nav>
 
-    <!-- Footer User Info -->
+    {{-- <!-- Footer User Info -->
     <div class="relative border-t pl-6 py-2">
         <div class="flex items-center gap-3 cursor-pointer group">
             <div class="w-10 h-10 flex items-center justify-center bg-sky-100 text-sky-700 font-bold rounded-full text-sm transition-all duration-300 transform"
@@ -35,5 +35,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 </aside>

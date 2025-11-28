@@ -1,5 +1,5 @@
 {{-- Modal Revise --}}
-<div id="modal-revise" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+<div id="modal-revise" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
     <div class="bg-white rounded-4 shadow-lg w-full max-w-lg relative">
 
         {{-- Header --}}

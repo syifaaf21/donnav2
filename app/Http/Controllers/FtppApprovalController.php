@@ -515,6 +515,14 @@ class FtppApprovalController extends Controller
         $action->dept_head_id = auth()->id();
         $action->save();
 
+        // Remove effectiveness verification if present and reset auditor flags
+        if (!empty($action->effectiveness_verification) || $action->verified_by_auditor) {
+            $action->effectiveness_verification = null;
+            $action->verified_by_auditor = false;
+            $action->auditor_id = null;
+            $action->save();
+        }
+
         // update status
         $finding = AuditFinding::find($action->audit_finding_id);
         if ($finding)

@@ -156,4 +156,13 @@ class DocumentMapping extends Model
     {
         return $this->hasMany(DocumentFile::class);
     }
+    public function statusHistories()
+    {
+        return $this->hasMany(StatusHistory::class);
+    }
+
+    public function latestStatusHistory()
+    {
+        return $this->hasOne(StatusHistory::class)->latestOfMany();
+    }
 }

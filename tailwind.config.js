@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
         "./src/**/*.{html,js}",
@@ -9,7 +10,7 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                inter: ['Inter', 'sans-serif'],
+                Poppins: ['Poppins', 'sans-serif'],
             },
             colors: {
                 primary: "#4569AD", // blue
@@ -22,6 +23,7 @@ module.exports = {
                 successDark: "#1E7E34", // dark green
                 accent: "#00C853",  // energetic green
                 sidebar: "#1F3F74", // dark blue
+                matcha: "#BED3CC", // light yellow
                 bgLight: "#8EA2D7", // light blue
             },
         },

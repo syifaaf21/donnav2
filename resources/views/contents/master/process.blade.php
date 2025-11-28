@@ -31,10 +31,21 @@
         <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
             {{-- Search Bar --}}
             <div class="p-4 border-b border-gray-100 flex justify-end">
-                <form method="GET" id="searchForm" class="flex items-center w-full max-w-sm relative">
-                    <input type="text" name="search" id="searchInput"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Search..." value="{{ request('search') }}">
+
+                <form id="searchForm" method="GET" class="flex items-end w-auto">
+                    <div class="relative w-96">
+                        <input type="text" name="search" id="searchInput"
+                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
+             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                            placeholder="Type to search..." value="{{ request('search') }}">
+
+                        <label for="searchInput"
+                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
+             text-gray-400 text-sm
+             {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            Type to search...
+                        </label>
+                    </div>
                 </form>
             </div>
 
@@ -66,7 +77,7 @@
                                     <td class="px-4 py-3 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editProcessModal-{{ $process->id }}"
-                                            data-bs-title="Edit Process"
+                                            title="Edit Process"
                                             class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                             <i data-feather="edit" class="w-4 h-4"></i>
                                         </button>
@@ -74,7 +85,7 @@
                                             class="d-inline delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" data-bs-title="Delete Process"
+                                            <button type="submit" title="Delete Process"
                                                 class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>

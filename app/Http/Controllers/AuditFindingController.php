@@ -15,6 +15,7 @@ use App\Models\SubAudit;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class AuditFindingController extends Controller
 {
@@ -69,7 +70,11 @@ class AuditFindingController extends Controller
         // Validate request
         $validated = $request->validate([
             'audit_type_id' => 'required|exists:tm_audit_types,id',
-            'sub_audit_type_id' => 'nullable|exists:tm_sub_audit_types,id',
+            'sub_audit_type_id' => [
+                'nullable',
+                'exists:tm_sub_audit_types,id',
+                Rule::requiredIf(fn() => $request->input('audit_type_id') == 2),
+            ],
             'finding_category_id' => 'required|exists:tm_finding_categories,id',
             'sub_klausul_id' => 'required|array',
             'sub_klausul_id.*' => 'exists:tm_sub_klausuls,id',

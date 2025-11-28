@@ -1,14 +1,11 @@
 <header class="flex items-center justify-between mx-12 py-3">
-    <div class="flex items-center gap-3">
-        <button id="openSidebarBtn" type="button" class="md:hidden">
-            <i data-feather="menu"></i>
-        </button>
+    <div class="item-start bg-white border border-gray-100 px-3 py-1 rounded-lg shadow">
         <h1 class="text-lg font-semibold">@yield('title', 'Dashboard')</h1>
     </div>
 
     <div class="flex items-center gap-4 ml-auto ">
         <!-- Notification Dropdown -->
-        <div class="relative">
+        <div class="relative bg-white shadow rounded-3xl border border-gray-100 px-3 py-2">
             <button id="notificationBtn" type="button" class="relative focus:outline-none">
                 <i data-feather="bell" class="w-6 h-6"></i>
 
@@ -52,7 +49,7 @@
         </div>
 
         <!-- Profile dropdown -->
-        <div class="relative bg-white shadow rounded-xl border border-gray-100">
+        <div class="relative shadow rounded-xl border border-gray-100">
             <button id="profileDropdownBtn" type="button"
                 class="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm focus:outline-none">
                 <div

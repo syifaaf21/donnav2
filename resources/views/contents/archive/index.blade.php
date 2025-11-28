@@ -24,13 +24,14 @@
                 <div class="relative w-96">
                     <input type="text" name="search" id="archiveSearchInput"
                         class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-                        placeholder="Search archived documents..." value="{{ request('search') }}">
+                        placeholder="Search
+                        archived documents..." value="{{ request('search') }}">
                     <label for="archiveSearchInput"
                         class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
                         {{ request('search')
                             ? '-top-3 text-xs text-sky-600'
                             : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                         Search archived documents...
                     </label>
                 </div>
@@ -65,6 +66,26 @@
                 ])
             </div>
 
+        </div>
+        <!-- SLIDER FILE VIEWER (like Notion) -->
+        <div id="fileViewerOverlay" class="fixed inset-0 bg-black/30 z-[9998] hidden" onclick="closeFileViewer()"></div>
+
+        <div id="fileViewerPanel"
+            class="fixed right-0 top-0 h-full w-[70%] max-w-4xl bg-white shadow-2xl z-[9999]
+            translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h2 class="text-lg font-semibold text-gray-700">File Viewer</h2>
+                <button onclick="closeFileViewer()" class="text-gray-500 hover:text-gray-700 text-xl">
+                    &times;
+                </button>
+            </div>
+
+            <!-- File content -->
+            <div class="flex-1 overflow-auto">
+                <iframe id="fileViewerIframe" src="" class="w-full h-full border-0"></iframe>
+            </div>
         </div>
     </div>
 
@@ -183,6 +204,36 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
+        }
+
+        function openFileViewer(url) {
+            const overlay = document.getElementById("fileViewerOverlay");
+            const panel = document.getElementById("fileViewerPanel");
+            const iframe = document.getElementById("fileViewerIframe");
+
+            // Set file URL
+            iframe.src = url;
+
+            // Show overlay
+            overlay.classList.remove("hidden");
+
+            // Slide panel IN
+            panel.classList.remove("translate-x-full");
+        }
+
+        function closeFileViewer() {
+            const overlay = document.getElementById("fileViewerOverlay");
+            const panel = document.getElementById("fileViewerPanel");
+            const iframe = document.getElementById("fileViewerIframe");
+
+            // Slide panel OUT
+            panel.classList.add("translate-x-full");
+
+            // Hide overlay after animation
+            setTimeout(() => {
+                overlay.classList.add("hidden");
+                iframe.src = ""; // Stop PDF from continuing to load
+            }, 300);
         }
     </script>
 
