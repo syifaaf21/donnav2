@@ -1,7 +1,8 @@
-<div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+<div
+    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
     <table class="min-w-full text-sm text-gray-700">
-        <thead>
-            <tr class="bg-gray-50 border-b border-gray-300">
+        <thead class="sticky top-0 z-10">
+            <tr class="bg-gray-50 border-b border-gray-200">
                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name</th>
                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Inactive File</th>
@@ -74,10 +75,8 @@
                 </tr>
             @endforelse
         </tbody>
-
     </table>
-</div>
-
-<div class="mt-4">
-    {{ $controlDocuments->links('vendor.pagination.tailwind') }}
+    <div class="mt-4">
+        {{ $controlDocuments->links('vendor.pagination.tailwind') }}
+    </div>
 </div>

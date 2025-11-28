@@ -7,6 +7,8 @@ use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/** @var \Illuminate\Pagination\LengthAwarePaginator $controlDocuments */
+
 class ArchiveController extends Controller
 {
     public function index(Request $request)
@@ -69,7 +71,7 @@ class ArchiveController extends Controller
 
         // Manual pagination
         $page = $request->input('page_review', 1);
-        $perPage = 10;
+        $perPage = 2;
 
         $reviewDocuments = new \Illuminate\Pagination\LengthAwarePaginator(
             $reviewCollection->forPage($page, $perPage),
@@ -137,7 +139,11 @@ class ArchiveController extends Controller
             });
         }
 
-        $controlDocuments = $controlQuery->paginate(10);
+        $controlDocuments = $controlQuery->paginate(
+            2,
+            ['*'],
+            'page_control' // <-- tambahkan ini
+        )->withQueryString();
 
         // REVIEW ARCHIVE SEARCH
         $reviewCollection = DocumentMapping::with([
@@ -175,6 +181,8 @@ class ArchiveController extends Controller
                 'pageName' => 'page_review'
             ]
         );
+
+        $reviewDocuments->withQueryString();
 
         return response()->json([
             'success' => true,

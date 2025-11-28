@@ -13,31 +13,30 @@
                 <li class="text-gray-700 font-medium">Archive</li>
             </ol>
         </nav>
-        <p class="text-gray-500 mb-6">
-            This list shows outdated files that have been replaced and are within the 1-year retention period before
-            permanent hard deletion.
-        </p>
-
-        {{-- Search --}}
-        <div id="archivedSearchBar" class="flex justify-end w-full mb-4">
-            <form id="archiveFilterForm" class="flex flex-col items-end w-auto space-y-1">
-                <div class="relative w-96">
-                    <input type="text" name="search" id="archiveSearchInput"
-                        class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
+        <div class="bg-white rounded-xl shadow-lg p-4">
+            {{-- Search --}}
+            <div id="archivedSearchBar" class="flex justify-end w-full mb-4">
+                <form id="archiveFilterForm" class="flex flex-col items-end w-auto space-y-1">
+                    <div class="relative w-96">
+                        <input type="text" name="search" id="archiveSearchInput"
+                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
                         placeholder="Search
-                        archived documents..." value="{{ request('search') }}">
-                    <label for="archiveSearchInput"
-                        class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
+                            archived documents..." value="{{ request('search') }}">
+                        <label for="archiveSearchInput"
+                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
                         {{ request('search')
                             ? '-top-3 text-xs text-sky-600'
                             : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
-                        Search archived documents...
-                    </label>
-                </div>
-            </form>
-        </div>
-        <div class="bg-white p-6 rounded shadow">
+                                                                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            Search archived documents...
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <p class="text-gray-500 mb-6">
+                This list shows outdated files that have been replaced and are within the 1-year retention period before
+                permanent hard deletion.
+            </p>
 
             {{-- TAB --}}
             <ul class="flex border-b mb-4">
@@ -65,8 +64,8 @@
                     'reviewDocuments' => $reviewDocuments,
                 ])
             </div>
-
         </div>
+
         <!-- SLIDER FILE VIEWER (like Notion) -->
         <div id="fileViewerOverlay" class="fixed inset-0 bg-black/30 z-[9998] hidden" onclick="closeFileViewer()"></div>
 
