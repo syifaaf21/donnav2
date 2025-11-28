@@ -81,7 +81,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th class="small">Document Name</th>
-                                        <th class="small">Status</th>
+                                        <th class="small">Department</th>
                                         <th class="small">Obsoleted At</th>
                                     </tr>
                                 </thead>
@@ -89,7 +89,8 @@
                                     @forelse($obsoleteDocuments as $doc)
                                         <tr>
                                             <td class="small">{{ $doc->document->name ?? '-' }}</td>
-                                            <td><span class="badge bg-danger">{{ $doc->status->name ?? '-' }}</span></td>
+                                            <td><span class="badge bg-danger">{{ $doc->department->name ?? '-' }}</span>
+                                            </td>
                                             <td class="small">
                                                 {{ $doc->obsolete_date ? \Carbon\Carbon::parse($doc->obsolete_date)->format('d M Y') : '-' }}
                                             </td>
@@ -155,7 +156,7 @@
                         {{ $activeDocuments ?? 0 }},
                         {{ $obsoleteDocuments->count() ?? 0 }}
                     ],
-                    backgroundColor: ['#28a745', '#dc3545'],
+                    backgroundColor: ['#A8E6CF', '#FF8B94'], // soft pastel colors
                 }]
             },
             options: {
@@ -170,6 +171,7 @@
                 }
             }
         });
+
 
         /* ===================== BAR CHART ===================== */
         const ctx = document.getElementById('ftppStatusChart').getContext('2d');
@@ -266,6 +268,16 @@
         const reviewData = Object.keys(departmentsReview).map(id => reviewDocuments[id] ?? 0);
 
         // Render Control Documents Chart
+        // Pastel color set
+        const pastelColors = [
+            '#AEC6CF', '#FFB7B2', '#B5EAD7', '#FFDAC1', '#E2F0CB', '#C7CEEA',
+            '#F7C8E0', '#C6E2D3', '#FFE5B4', '#EAD7F5', '#F5E1A4', '#C8F3FA',
+            '#FFDFD3', '#D7E9F7', '#F2C6DE', '#D9F8C4', '#FAE3B4', '#EBD4FF',
+            '#FFF5BA', '#B8F2E6', '#FAD4C0', '#D5E8F6', '#F6D6D6', '#D3F4BE'
+        ];
+
+
+        // Render Control Documents Chart (Pastel)
         new Chart(document.getElementById('controlDocsChart').getContext('2d'), {
             type: 'bar',
             data: {
@@ -273,7 +285,7 @@
                 datasets: [{
                     label: 'Control Documents',
                     data: controlData,
-                    backgroundColor: '#0d6efd',
+                    backgroundColor: pastelColors, // <--- pastel colors applied here
                     borderRadius: 6,
                     barThickness: 20
                 }]
@@ -291,17 +303,20 @@
                                 const deptId = Object.keys(departments)[context.dataIndex];
                                 const mainValue = context.raw;
                                 const extra = controlExtraData[deptId] || {};
+
                                 let lines = [`Total: ${mainValue}`];
                                 if (extra.obsolete !== undefined) lines.push(`Obsolete: ${extra.obsolete}`);
                                 if (extra.needReview !== undefined) lines.push(
                                     `Need Review: ${extra.needReview}`);
                                 if (extra.uncomplete !== undefined) lines.push(
                                     `Uncomplete: ${extra.uncomplete}`);
+                                if (extra.reject !== undefined) lines.push(
+                                    `Rejected: ${extra.reject}`);
+
                                 return lines;
                             }
                         }
                     }
-
                 },
                 scales: {
                     y: {
@@ -328,8 +343,16 @@
                     }
                 }
             }
-
         });
+
+
+        // Pastel Palette 2 (24 colors)
+        const pastelColorsReview = [
+            '#FFD1DC', '#C1E1C1', '#F7E7CE', '#D5CFE1', '#E0BBE4', '#FFDFD3',
+            '#BEE3DB', '#F2BAC9', '#FFEDC2', '#CDE7F0', '#E3F4E0', '#FFCCE1',
+            '#D7F2BA', '#F6E2B3', '#D9D7F1', '#FAD4C0', '#D3F4FF', '#FFF3CD',
+            '#E8D4EF', '#C8E9F0', '#FFE6CC', '#D9F4E5', '#F3D2D2', '#E6F7D8'
+        ];
 
         // Render Review Documents Chart
         new Chart(document.getElementById('reviewDocsChart').getContext('2d'), {
@@ -339,7 +362,7 @@
                 datasets: [{
                     label: 'Review Documents',
                     data: reviewData,
-                    backgroundColor: '#198754',
+                    backgroundColor: pastelColorsReview,
                     borderRadius: 6,
                     barThickness: 20
                 }]
@@ -382,65 +405,65 @@
         });
 
         /* ===================== FINDING PER DEPARTMENT — LINE CHART ===================== */
-            const findingLabels = @json($deptLabels);
-            const findingData = @json($deptTotals);
+        const findingLabels = @json($deptLabels);
+        const findingData = @json($deptTotals);
 
-            const shortFindingLabels = findingLabels.map(name => {
-                const words = name.split(' ');
-                return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
-            });
+        const shortFindingLabels = findingLabels.map(name => {
+            const words = name.split(' ');
+            return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
+        });
 
-            new Chart(document.getElementById('findingLineChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: shortFindingLabels,
-                    datasets: [{
-                        label: 'Total Findings',
-                        data: findingData,
-                        borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13,110,253,0.2)',
-                        tension: 0.3,
-                        borderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                padding: 10,
-                            }
-                        },
-                        tooltip: {
-                            enabled: true
+        new Chart(document.getElementById('findingLineChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: shortFindingLabels,
+                datasets: [{
+                    label: 'Total Findings',
+                    data: findingData,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13,110,253,0.2)',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            padding: 10,
                         }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            },
-                            grid: {
-                                color: '#e9ecef'
-                            }
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
                         },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            },
-                            grid: {
-                                display: false
-                            }
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            display: false
                         }
                     }
                 }
-            });
+            }
+        });
         document.addEventListener('DOMContentLoaded', function() {
             const scrollBtn = document.getElementById('scrollUpBtn');
 

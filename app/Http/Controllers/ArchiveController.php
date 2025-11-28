@@ -11,9 +11,7 @@ class ArchiveController extends Controller
 {
     public function index(Request $request)
     {
-        // ================================
-        // 1. CONTROL ARCHIVE (new logic)
-        // ================================
+        // 1. CONTROL ARCHIVE
         $controlQuery = DocumentMapping::with([
             'document',
             'department',
@@ -59,9 +57,7 @@ class ArchiveController extends Controller
         $controlDocuments = $controlQuery->paginate(10, ['*'], 'page_control');
 
 
-        // ================================
-        // 2. REVIEW ARCHIVE (same as before)
-        // ================================
+        // 2. REVIEW ARCHIVE
         $reviewCollection = DocumentMapping::with([
             'files' => fn($q) => $q->where('is_active', 0),
             'document',
@@ -100,9 +96,7 @@ class ArchiveController extends Controller
     {
         $query = $request->input('q', '');
 
-        // ================================
         // CONTROL ARCHIVE SEARCH
-        // ================================
         $controlQuery = DocumentMapping::with([
             'document',
             'department',
@@ -145,9 +139,7 @@ class ArchiveController extends Controller
 
         $controlDocuments = $controlQuery->paginate(10);
 
-        // ================================
         // REVIEW ARCHIVE SEARCH
-        // ================================
         $reviewCollection = DocumentMapping::with([
             'files' => fn($q) => $q->where('is_active', 0),
             'document',

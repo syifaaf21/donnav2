@@ -88,6 +88,9 @@ class DashboardController extends Controller
                 'uncomplete' => DocumentMapping::where('department_id', $id)
                     ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
                     ->count(),
+                'reject' => DocumentMapping::where('department_id', $id)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                    ->count(),
             ];
         }
 

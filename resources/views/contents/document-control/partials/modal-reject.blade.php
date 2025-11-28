@@ -1,28 +1,40 @@
-<!-- Reject Document Modal -->
+{{-- Reject Document Modal --}}
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header bg-light text-dark">
-                <h5 class="modal-title d-flex align-items-center" id="rejectModalLabel">
-                    <i class="bi bi-x-circle-fill me-2"></i> Reject Document
+        <div class="modal-content rounded-4 shadow-lg border-0">
+
+            {{-- Header --}}
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;" id="rejectModalLabel">
+                    <i class="bi bi-x-circle-fill me-2 text-primary"></i> Reject Document
                 </h5>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
             </div>
 
-            <form id="rejectForm" method="POST">
+            {{-- Form Body --}}
+            <form id="rejectForm" method="POST" class="px-5 py-4">
                 @csrf
                 <input type="hidden" name="doc_id" id="rejectDocumentId">
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label for="rejectNotes" class="form-label fw-semibold">Notes</label>
-                        <div id="quillRejectEditor" style="height: 200px;"></div>
-                        <input type="hidden" name="notes" id="rejectNotes">
-                    </div>
+
+                <div class="mb-3">
+                    <label for="rejectNotes" class="form-label fw-semibold">Notes <span class="text-danger">*</span></label>
+                    <div id="quillRejectEditor" style="height: 200px;" class="border rounded-2"></div>
+                    <input type="hidden" name="notes" id="rejectNotes" required>
                 </div>
-                <div class="modal-footer border-0 p-3 justify-content-between bg-light rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+
+                {{-- Footer --}}
+                <div class="modal-footer justify-content-between p-3 bg-light border-top rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary fw-semibold" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Cancel
                     </button>
-                    <button type="submit" class="btn btn-danger" id="submitReject">
+                    <button type="submit" class="btn btn-danger fw-semibold" id="submitReject">
                         <i class="bi bi-x-circle-fill me-1"></i> Reject
                     </button>
                 </div>

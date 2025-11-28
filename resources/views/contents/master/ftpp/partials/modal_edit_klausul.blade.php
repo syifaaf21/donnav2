@@ -1,42 +1,60 @@
-<!-- Modal Edit Klausul -->
+{{-- Modal Edit Klausul --}}
 <div class="modal fade" id="modalEditKlausul" tabindex="-1" aria-labelledby="modalEditKlausulLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <form id="form-edit-klausul" method="POST">
-                @csrf
-                @method('PUT')
+        <form id="form-edit-klausul" method="POST" class="modal-content rounded-4 shadow-lg">
+            @csrf
+            @method('PUT')
 
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditKlausulLabel">Edit Klausul</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+            {{-- Header --}}
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalEditKlausulLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Klausul
+                </h5>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
+            </div>
 
-                <div class="modal-body">
-                    <!-- Head Klausul -->
-                    <div class="mb-3">
-                        <label class="form-label">Head Klausul</label>
-                        <input type="text" name="head_name" id="edit-head-name" class="form-control" required>
+            {{-- Body --}}
+            <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                <div class="row g-4">
+                    {{-- Head Klausul --}}
+                    <div class="col-md-12">
+                        <label for="edit-head-name" class="form-label fw-semibold">Head Klausul <span class="text-danger">*</span></label>
+                        <input type="text" name="head_name" id="edit-head-name" class="form-control @error('head_name') is-invalid @enderror" required>
+                        @error('head_name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    <!-- Sub Klausul -->
-                    <div class="mb-3">
-                        <label class="form-label">Sub Klausul</label>
+                    {{-- Sub Klausul --}}
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Sub Klausul</label>
                         <div id="edit-sub-list" class="d-flex flex-column gap-2">
-                            <!-- dynamic items here -->
+                            {{-- dynamic items will be injected via JS --}}
                         </div>
-                        <button type="button" id="btn-add-sub-edit" class="btn btn-link p-0 mt-1">+ Add
-                            another</button>
+                        <button type="button" id="btn-add-sub-edit" class="btn btn-link p-0 mt-2">+ Add another</button>
+                        <div class="form-text">You can add many sub klausul rows (each has code + name).</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                </div>
-            </form>
-        </div>
+            {{-- Footer --}}
+            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold" style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const modalEdit = new bootstrap.Modal(document.getElementById('modalEditKlausul'));

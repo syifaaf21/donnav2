@@ -40,31 +40,34 @@
 
             <div id="tableContainer">
                 {{-- Table --}}
-                <div class="overflow-x-auto overflow-y-auto max-h-96">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-2">No</th>
-                                <th class="px-4 py-2">Name</th>
-                                <th class="px-4 py-2">Code</th>
-                                <th class="px-4 py-2">Plant</th>
-                                <th class="px-4 py-2 text-center">Actions</th>
+                <div
+                    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                    <table class="min-w-full text-sm text-gray-700">
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
+                                <th
+                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($departments as $department)
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-2">
+                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                                    <td class="px-4 py-3">
                                         {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-2">{{ ucwords($department->name) }}</td>
-                                    <td class="px-4 py-2">{{ $department->code }}</td>
-                                    <td class="px-4 py-2">{{ $department->plant }}</td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-3">{{ ucwords($department->name) }}</td>
+                                    <td class="px-4 py-3">{{ $department->code }}</td>
+                                    <td class="px-4 py-3">{{ $department->plant }}</td>
+                                    <td class="px-4 py-3 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editDepartmentModal-{{ $department->id }}"
                                             data-bs-title="Edit Department"
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                             <i data-feather="edit" class="w-4 h-4"></i>
                                         </button>
 
@@ -73,7 +76,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" data-bs-title="Delete Department"
-                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
                                         </form>
@@ -100,37 +103,46 @@
             aria-labelledby="editDepartmentModalLabel-{{ $department->id }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <form action="{{ route('master.departments.update', $department->id) }}" method="POST"
-                    id="editForm-{{ $department->id }}" class="modal-content rounded-xl">
+                    id="editForm-{{ $department->id }}" class="modal-content rounded-4 shadow-lg">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="_form" value="edit">
 
-                    <!-- Header -->
-                    <div class="modal-header bg-light text-dark rounded-top-4">
-                        <h5 class="modal-title fw-semibold" id="editDepartmentModalLabel-{{ $department->id }}">
-                            <i class="bi bi-person-lines-fill me-2"></i>Edit Department
+                    {{-- Header --}}
+                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                        style="background-color: #f5f5f7;">
+                        <h5 class="modal-title fw-semibold text-dark" id="editDepartmentModalLabel-{{ $department->id }}"
+                            style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                            <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Department
                         </h5>
+                        <button type="button"
+                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            data-bs-dismiss="modal" aria-label="Close"
+                            style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        </button>
                     </div>
 
-                    <!-- Body -->
-                    <div class="modal-body p-5">
-                        <div class="row g-3">
-                            <!-- Name -->
+                    {{-- Body --}}
+                    <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                        <div class="row g-4">
+                            {{-- Name --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" placeholder="Enter department name"
-                                    class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                    class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ old('name', $department->name) }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            <!-- Code -->
+                            {{-- Code --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
                                 <select name="code" id="edit-code-select-{{ $department->id }}"
-                                    class="form-select rounded-3 @error('code') is-invalid @enderror" required>
+                                    class="form-select border-0 shadow-sm rounded-3 @error('code') is-invalid @enderror"
+                                    required>
                                     @foreach ($codes as $code)
                                         <option value="{{ $code }}"
                                             {{ old('code', $department->code) == $code ? 'selected' : '' }}>
@@ -143,12 +155,12 @@
                                 @enderror
                             </div>
 
-                            <!-- Plant -->
+                            {{-- Plant --}}
                             <div class="col-md-12">
-                                <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
                                 <select name="plant" id="edit-plant-select-{{ $department->id }}"
-                                    class="form-select rounded-3 @error('plant') is-invalid @enderror" required>
-
+                                    class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
+                                    required>
                                     <option value="Unit"
                                         {{ old('plant', $department->plant) == 'Unit' ? 'selected' : '' }}>Unit</option>
                                     <option value="Body"
@@ -158,7 +170,6 @@
                                     </option>
                                     <option value="ALL"
                                         {{ old('plant', $department->plant) == 'ALL' ? 'selected' : '' }}>ALL</option>
-
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -167,14 +178,15 @@
                         </div>
                     </div>
 
-                    <!-- Footer -->
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                        <button type="button"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                            data-bs-dismiss="modal">
+                    {{-- Footer --}}
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                            style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
                             Save Changes
                         </button>
                     </div>
@@ -187,29 +199,48 @@
     <div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form action="{{ route('master.departments.store') }}" method="POST" class="modal-content rounded-xl">
-                @csrf <input type="hidden" name="_form" value="add">
-                <!-- Header -->
-                <div class="modal-header bg-light text-dark rounded-top-4">
-                    <h5 class="modal-title fw-semibold" id="addDepartmentModalLabel"> <i
-                            class="bi bi-plus-circle me-2 text-primary"></i>Create New Department </h5>
-                </div> <!-- Body -->
-                <div class="modal-body p-5">
-                    <div class="row g-3">
-                        <!-- Name -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+            <form action="{{ route('master.departments.store') }}" method="POST"
+                class="modal-content rounded-4 shadow-lg">
+                @csrf
+                <input type="hidden" name="_form" value="add">
+
+                {{-- Header --}}
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark" id="addDepartmentModalLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Department
+                    </h5>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                    <div class="row g-4">
+                        {{-- Name --}}
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" placeholder="Enter department name"
-                                class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                value="{{ old('name') }}" required> @error('name')
+                                style="border-color: #d1d5db; padding: 10px; font-size: 0.95rem;"
+                                class="form-control border-0 shadow-sm rounded-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 @error('name') is-invalid @enderror"
+                                value="{{ old('name') }}" required>
+                            @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <!-- Code -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                            <select id="code-select" name="code" class="form-select" required>
-                                <option value="" disabled selected>-- Select Code --</option>
+
+                        {{-- Code --}}
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
+                            <select id="code-select" name="code"
+                                class="form-select border-0 shadow-sm rounded-3 @error('code') is-invalid @enderror"
+                                required>
+                                <option value="" disabled selected>-- Select or create code --</option>
 
                                 @foreach ($codes as $code)
                                     <option value="{{ $code }}" {{ old('code') == $code ? 'selected' : '' }}>
@@ -225,10 +256,13 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <!-- Plant -->
+
+                        {{-- Plant --}}
                         <div class="col-md-12">
-                            <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                            <select id="plant-select" name="plant" class="form-select" required>
+                            <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                            <select id="plant-select" name="plant"
+                                class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
+                                required>
                                 <option value="" disabled selected>-- Select Plant --</option>
 
                                 <option value="Unit" {{ old('plant') == 'Unit' ? 'selected' : '' }}>Unit</option>
@@ -237,7 +271,7 @@
                                 </option>
                                 <option value="ALL" {{ old('plant') == 'ALL' ? 'selected' : '' }}>ALL</option>
 
-                                @if (old('plant') && !in_array(old('plant'), ['Unit', 'Body', 'Electric', 'All']))
+                                @if (old('plant') && !in_array(old('plant'), ['Unit', 'Body', 'Electric', 'ALL']))
                                     <option value="{{ old('plant') }}" selected>{{ old('plant') }}</option>
                                 @endif
                             </select>
@@ -247,13 +281,15 @@
                         </div>
                     </div>
                 </div>
-                <!-- Footer -->
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                        data-bs-dismiss="modal"> Cancel
+
+                {{-- Footer --}}
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                        data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                        Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
                         Submit
                     </button>
                 </div>
@@ -272,7 +308,7 @@
                 create: true,
                 persist: false,
                 maxItems: 1,
-                placeholder: "Type or select code...",
+                placeholder: "Choose or add code...",
                 allowEmptyOption: true,
             });
 

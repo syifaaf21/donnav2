@@ -32,7 +32,7 @@
             @include('contents.master.document-review.partials.modal-add2')
         </div>
 
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden min-h-[600px]">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
             {{-- Tabs + Search + Filter --}}
             <div class="flex items-center px-3 py-2">
                 {{-- Tabs (left) --}}
@@ -218,57 +218,65 @@
                 </div>
             </div>
 
-            <div id="tableContainer">
-                {{-- Table per Plant --}}
-                <div class="overflow-x-auto max-h-[60vh]">
-                    @foreach ($groupedByPlant as $plant => $documents)
-                        @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                        <div x-show="activeTab === '{{ $slug }}'" x-transition>
-                            <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
-                                <thead class="bg-gray-50 sticky top-0 z-10">
-                                    <tr>
-                                        <th class="px-4 py-2 text-left font-semibold">No</th>
-                                        <th class="px-4 py-2 text-left font-semibold">Document Number</th>
-                                        <th class="px-4 py-2 text-left font-semibold">Part Number</th>
-                                        <th class="px-4 py-2 text-left font-semibold">Product</th>
-                                        <th class="px-4 py-2 text-left font-semibold">Model</th>
-                                        <th class="px-4 py-2 text-left font-semibold">Process</th>
-                                        <th class="px-4 py-2 text-left font-semibold">Reminder Date</th>
-                                        <th class="px-4 py-2 text-left font-semibold">Deadline</th>
-                                        <th class="px-4 py-2 text-center font-semibold">Actions</th>
+        <div id="tableContainer">
+            {{-- Table per Plant --}}
+            <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 max-h-[60vh]">
+                @foreach ($groupedByPlant as $plant => $documents)
+                    @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
+                    <div x-show="activeTab === '{{ $slug }}'" x-transition>
+                        <table class="min-w-full text-sm text-gray-700">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No
+                                    </th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Document Number</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part
+                                        Number</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Product</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model
+                                    </th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Process</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Reminder Date</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Deadline</th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class=" divide-y divide-gray-100">
+                                @if ($documents->isEmpty())
+                                    <tr class="hover:bg-gray-50 transition-all duration-150" >
+                                        <td colspan="9" class="text-center text-gray-400 py-6">
+                                            <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
+                                            No Document found for this tab.
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-100">
-                                    @if ($documents->isEmpty())
-                                        <tr>
-                                            <td colspan="9" class="text-center text-gray-400 py-6">
-                                                <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
-                                                No Document found for this tab.
+                                @else
+                                    @foreach ($documents as $index => $doc)
+                                        <tr class="hover:bg-gray-50 transition-all duration-150">
+                                            <td class="px-4 py-3">{{ $index + 1 }}</td>
+                                            <td class="px-4 py-3 font-medium">{{ $doc->document_number }}</td>
+                                            <td class="px-4 py-3">
+                                                {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
                                             </td>
-                                        </tr>
-                                    @else
-                                        @foreach ($documents as $index => $doc)
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                                <td class="px-4 py-2 font-medium">{{ $doc->document_number }}</td>
-                                                <td class="px-4 py-2">
-                                                    {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
-                                                </td>
 
-                                                <td class="px-4 py-2">
-                                                    {{ $doc->product->pluck('name')->join(', ') ?: '-' }}
-                                                </td>
+                                            <td class="px-4 py-3">{{ $doc->product->pluck('name')->join(', ') ?: '-' }}
+                                            </td>
 
-                                                <td class="px-4 py-2">
-                                                    {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
+                                            <td class="px-4 py-3">
+                                                {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
 
-                                                <td class="px-4 py-2 capitalize">
-                                                    {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
-                                                </td>
-                                                <td class="px-4 py-2">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}
-                                                </td>
-                                                <td class="px-4 py-2">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
-                                                {{-- <td class="px-4 py-2">
+                                            <td class="px-4 py-3 capitalize">
+                                                {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
+                                            </td>
+                                            <td class="px-4 py-3">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
+                                            <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
+                                            {{-- <td class="px-4 py-3">
                                             @php
                                                 $statusClasses = [
                                                     'approved' =>
@@ -293,64 +301,63 @@
                                                 <span class="text-gray-400">-</span>
                                             @endif
                                         </td> --}}
-                                                <td class="px-4 py-2 text-center">
-                                                    <div class="relative inline-block overflow-visible">
-                                                        @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
-                                                        @if (count($files) > 1)
-                                                            <button id="viewFilesBtn-{{ $doc->id }}" type="button"
-                                                                class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
-                                                                title="View File">
-                                                                <i data-feather="file-text" class="w-6 h-6"></i>
-                                                                <span
-                                                                    class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                                                                    {{ count($files) }}
-                                                                </span>
-                                                            </button>
-                                                            <div id="viewFilesDropdown-{{ $doc->id }}"
-                                                                class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
-                                                                <div class="py-1 text-sm max-h-80 overflow-y-auto">
-                                                                    @foreach ($files as $file)
-                                                                        <button type="button"
-                                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                            data-file="{{ $file['url'] }}"
-                                                                            title="View File">
-                                                                            📄 {{ $file['name'] }}
-                                                                        </button>
-                                                                    @endforeach
-                                                                </div>
-                                                            </div>
-                                                        @elseif(count($files) === 1)
-                                                            <button type="button"
-                                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
-                                                                data-file="{{ $files[0]['url'] }}" title="View File">
-                                                                <i data-feather="file-text" class="w-4 h-4"></i>
-                                                            </button>
-                                                        @endif
-                                                    </div>
-                                                    <button data-bs-toggle="modal"
-                                                        data-bs-target="#editDocumentModal-{{ $doc->id }}"
-                                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
-                                                        title="Edit">
-                                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                                    </button>
-                                                    <form action="{{ route('master.document-review.destroy', $doc->id) }}"
-                                                        method="POST" class="delete-form d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" title="Delete Document"
-                                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                            <td class="px-4 py-3 text-center">
+                                                <div class="relative inline-block overflow-visible">
+                                                    @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
+                                                    @if (count($files) > 1)
+                                                        <button id="viewFilesBtn-{{ $doc->id }}" type="button"
+                                                            class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
+                                                            title="View File">
+                                                            <i data-feather="file-text" class="w-6 h-6"></i>
+                                                            <span
+                                                                class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                                {{ count($files) }}
+                                                            </span>
                                                         </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                    @endforeach
-                </div>
+                                                        <div id="viewFilesDropdown-{{ $doc->id }}"
+                                                            class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                            <div class="py-1 text-sm max-h-80 overflow-y-auto">
+                                                                @foreach ($files as $file)
+                                                                    <button type="button"
+                                                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
+                                                                        data-file="{{ $file['url'] }}"
+                                                                        title="View File">
+                                                                        📄 {{ $file['name'] }}
+                                                                    </button>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @elseif(count($files) === 1)
+                                                        <button type="button"
+                                                            class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                            data-file="{{ $files[0]['url'] }}" title="View File">
+                                                            <i data-feather="file-text" class="w-4 h-4"></i>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                                <button data-bs-toggle="modal"
+                                                    data-bs-target="#editDocumentModal-{{ $doc->id }}"
+                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
+                                                    title="Edit">
+                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                </button>
+                                                <form action="{{ route('master.document-review.destroy', $doc->id) }}"
+                                                    method="POST" class="delete-form d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" title="Delete Document"
+                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>

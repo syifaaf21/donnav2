@@ -1,56 +1,63 @@
-<div class="overflow-x-auto bg-white rounded-lg shadow p-4">
-    <table class="min-w-full table-auto text-sm text-left text-gray-700 border border-gray-200">
-        <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold border-b">
-            <tr>
-                <th class="px-4 py-2">No</th>
-                <th class="px-4 py-2">Document Name</th>
-                <th class="px-4 py-2">Inactive File</th>
-                <th class="px-4 py-2">Department</th>
-                <th class="px-4 py-2">Hard Delete On</th>
-                <th class="px-4 py-2">Action</th>
+<div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+    <table class="min-w-full text-sm text-gray-700">
+        <thead>
+            <tr class="bg-gray-50 border-b border-gray-300">
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name</th>
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Inactive File</th>
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Department</th>
+                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Hard Delete On</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">Action</th>
             </tr>
         </thead>
 
-        <tbody>
+        <tbody class="divide-y divide-gray-100">
             @php
                 $globalIteration = ($controlDocuments->currentPage() - 1) * $controlDocuments->perPage() + 1;
             @endphp
 
             @forelse ($controlDocuments as $mapping)
                 @foreach ($mapping->files->filter(fn($f) => $f->marked_for_deletion_at > now()) as $file)
-                    <tr class="border-b">
+                    <tr class="hover:bg-gray-50 transition-all duration-150">
 
                         <!-- No -->
-                        <td class="px-4 py-2">{{ $globalIteration++ }}</td>
+                        <td class="px-4 py-3">{{ $globalIteration++ }}</td>
 
                         <!-- Document Name -->
-                        <td class="px-4 py-2">
+                        <td class="px-4 py-3">
                             {{ $mapping->document?->name ?? '-' }}
                         </td>
 
                         <!-- Inactive File -->
-                        <td class="px-4 py-2">
+                        <td class="px-4 py-3">
                             {{ $file->original_name }}
                         </td>
 
                         <!-- Department -->
-                        <td class="px-4 py-2">
+                        <td class="px-4 py-3">
                             {{ $mapping->department?->name ?? '-' }}
                         </td>
 
                         <!-- Hard Delete On -->
-                        <td class="px-4 py-2">
+                        <td class="px-4 py-3">
                             <span class="text-red-600 font-semibold">
-                            {{ \Carbon\Carbon::parse($file->marked_for_deletion_at)->format('Y-m-d') }}
+                                {{ \Carbon\Carbon::parse($file->marked_for_deletion_at)->format('Y-m-d') }}
                             </span>
                         </td>
 
                         <!-- Action -->
-                        <td class="px-4 py-2 text-center">
+                        <td class="px-4 py-3 text-center">
                             @if ($file->file_path)
                                 <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
-                                    class="text-blue-600 hover:text-blue-800">
-                                    <i class="bi bi-eye text-lg"></i>
+                                    class="inline-flex items-center justify-center 
+                   w-8 h-8 rounded-full 
+                   bg-cyan-500 text-white 
+                   hover:bg-cyan-600 transition-colors 
+                   shadow-md"
+                                    title="View File">
+
+                                    {{-- Perbaikan: Memastikan ikon ditampilkan dengan benar dan terpusat --}}
+                                    <i class="bi bi-eye text-sm"></i>
                                 </a>
                             @else
                                 <span class="text-gray-400">-</span>

@@ -40,134 +40,145 @@
         </div>
         <div id="liveTableWrapper">
             <!-- Table -->
-            <div class="overflow-x-auto bg-white rounded-lg shadow p-4">
-                <table class="min-w-full table-auto text-sm text-left text-gray-700 border border-gray-200">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold border-b">
-                        <tr>
-                            <th class="px-4 py-2">No</th>
-                            <th class="px-4 py-2">Document Name</th>
-                            <th class="px-4 py-2">Status</th>
-                            <th class="px-4 py-2">Obsolete Date</th>
-                            <th class="px-4 py-2">Updated By</th>
-                            <th class="px-4 py-2">Last Update</th>
-                            <th class="px-4 py-2">Notes</th>
-                            <th class="px-4 py-2 text-center">Actions</th>
+            <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+                <table class="min-w-full text-sm text-gray-700">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Status</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete Date
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last Update
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Notes</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach ($mappings as $mapping)
-                            <tr class="border-b hover:bg-gray-50 transition">
-                                <td class="px-4 py-2 text-gray-600 text-sm">
-                                    {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
+                    <tbody class="divide-y divide-gray-100">
+                        @if ($mappings->isEmpty())
+                            <tr class="hover:bg-gray-50 transition-all duration-150">
+                                <td colspan="9" class="px-4 py-4 text-center text-gray-500text-lg">
+                                    No documents found.
                                 </td>
-                                <td class="px-4 py-2 text-gray-700 truncate text-sm max-w-xs"
-                                    title="{{ $mapping->document->name }}">
-                                    {{ $mapping->document->name }}
-                                </td>
-                                {{-- Status badge --}}
-                                <td class="px-4 py-2">
-                                    @php
-                                        $statusColor = match ($mapping->status->name) {
-                                            'Active' => 'bg-green-100 text-green-800',
-                                            'Need Review' => 'bg-yellow-100 text-yellow-800',
-                                            'Rejected' => 'bg-red-100 text-red-800',
-                                            'Obsolete' => 'bg-gray-200 text-gray-800',
-                                            'Uncomplete' => 'bg-orange-100 text-orange-800',
-                                            default => 'bg-blue-100 text-blue-800',
-                                        };
-                                    @endphp
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
-                                        {{ $mapping->status->name }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-2 text-gray-600 text-sm">
-                                    {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
-                                </td>
-                                <td class="px-4 py-2 text-gray-600 text-sm truncate">
-                                    {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
-                                </td>
-                                <td class="px-4 py-2 text-gray-600 text-sm">
-                                    {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
-                                </td>
-                                <td class="px-4 py-2 text-gray-600 text-sm max-w-xs">
-                                    <div class="overflow-y-auto max-h-16 text-sm">
-                                        {!! $mapping->notes ?? '-' !!}
-                                    </div>
-                                </td>
-                                {{-- Actions --}}
-                                <td class="px-4 py-2 text-center">
-                                    <div class="flex justify-center gap-2 flex-wrap">
-                                        <!-- View Files -->
-                                        <div class="relative inline-block overflow-visible">
-                                            @if (count($mapping->files_for_modal) > 1)
-                                                <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
-                                                    class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
-                                                    <i class="bi bi-file-earmark-text text-2xl"></i>
-                                                    <span
-                                                        class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                                                        {{ count($mapping->files_for_modal) }}
-                                                    </span>
-                                                </button>
-                                                <div id="viewFilesDropdown-{{ $mapping->id }}"
-                                                    class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
-                                                    <div class="py-1 text-sm max-h-80 overflow-y-auto">
-                                                        @foreach ($mapping->files_for_modal as $file)
-                                                            <button type="button"
-                                                                class=" w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
-                                                                data-file="{{ $file['url'] }}"
-                                                                data-doc-title="{{ $file['name'] }}">
-                                                                📄 {{ $file['name'] }}
-                                                            </button>
-                                                        @endforeach
+                            </tr>
+                        @else
+                            @foreach ($mappings as $mapping)
+                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                                    <td class="px-4 py-3">
+                                        {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700 truncate text-sm max-w-xs"
+                                        title="{{ $mapping->document->name }}">
+                                        {{ $mapping->document->name }}
+                                    </td>
+                                    {{-- Status badge --}}
+                                    <td class="px-4 py-2">
+                                        @php
+                                            $statusColor = match ($mapping->status->name) {
+                                                'Active' => 'bg-green-100 text-green-800',
+                                                'Need Review' => 'bg-yellow-100 text-yellow-800',
+                                                'Rejected' => 'bg-red-100 text-red-800',
+                                                'Obsolete' => 'bg-gray-200 text-gray-800',
+                                                'Uncomplete' => 'bg-orange-100 text-orange-800',
+                                                default => 'bg-blue-100 text-blue-800',
+                                            };
+                                        @endphp
+                                        <span
+                                            class="inline-block px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
+                                            {{ $mapping->status->name }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
+                                    </td>
+                                    <td class="px-4 py-3 truncate">
+                                        {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
+                                    </td>
+                                    <td class="px-4 py-3 max-w-xs">
+                                        <div class="overflow-y-auto max-h-16 text-sm">
+                                            {!! $mapping->notes ?? '-' !!}
+                                        </div>
+                                    </td>
+                                    {{-- Actions --}}
+                                    <td class="px-4 py-2 text-center">
+                                        <div class="flex justify-center gap-2 flex-wrap">
+                                            <div class="relative inline-block overflow-visible">
+                                                @if (count($mapping->files_for_modal) > 1)
+                                                    <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
+                                                        class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
+                                                        <i class="bi bi-file-earmark-text text-2xl"></i>
+                                                        <span
+                                                            class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                            {{ count($mapping->files_for_modal) }}
+                                                        </span>
+                                                    </button>
+                                                    <div id="viewFilesDropdown-{{ $mapping->id }}"
+                                                        class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                        <div class="py-1 text-sm max-h-80 overflow-y-auto">
+                                                            @foreach ($mapping->files_for_modal as $file)
+                                                                <button type="button"
+                                                                    class=" w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
+                                                                    data-file="{{ $file['url'] }}"
+                                                                    data-doc-title="{{ $file['name'] }}">
+                                                                    📄 {{ $file['name'] }}
+                                                                </button>
+                                                            @endforeach
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            @elseif(count($mapping->files_for_modal) === 1)
-                                                @php $file = $mapping->files_for_modal[0]; @endphp
+                                                @elseif(count($mapping->files_for_modal) === 1)
+                                                    @php $file = $mapping->files_for_modal[0]; @endphp
+                                                    <button type="button"
+                                                        class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-cyan-500 text-white hover:bg-cyan-500 transition-colors view-file-btn"
+                                                        data-file="{{ $file['url'] }}" title="View File">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                            <button type="button"
+                                                class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors"
+                                                data-docid="{{ $mapping->id }}"
+                                                data-doc-title="{{ $mapping->document->name }}"
+                                                data-status="{{ $mapping->status->name }}" title="Upload"
+                                                data-files='@json($mapping->files_for_modal)' onclick="openReviseModal(this)">
+                                                <i class="bi bi-upload"></i>
+                                            </button>
+                                            @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+                                                <form
+                                                    action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
+                                                    method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="button"
+                                                        class="action-btn btn-approve inline-flex items-center w-8 h-8 rounded-full bg-green-500 text-white hover:bg-green-500 transition-colors"
+                                                        data-status="{{ $mapping->status->name }}"
+                                                        data-obsolete="{{ $mapping->obsolete_date }}"
+                                                        data-period="{{ $mapping->period_years }}"
+                                                        onclick="confirmApprove(this)" title="Approve">
+                                                        <i class="bi bi-check2-circle"></i>
+                                                    </button>
+                                                </form>
                                                 <button type="button"
-                                                    class="action-btn inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-cyan-500 hover:bg-cyan-600 text-white view-file-btn"
-                                                    data-file="{{ $file['url'] }}" title="View File">
-                                                    <i class="bi bi-eye"></i>
+                                                    class="action-btn btn-reject inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                    data-docid="{{ $mapping->id }}"
+                                                    data-doc-title="{{ $mapping->document->name }}"
+                                                    data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
+                                                    data-status="{{ $mapping->status->name }}" title="Reject"
+                                                    data-reject-url="{{ route('document-control.reject', $mapping) }}">
+                                                    <i class="bi bi-x-circle"></i>
                                                 </button>
                                             @endif
                                         </div>
-                                        <!-- Upload -->
-                                        <button type="button"
-                                            class="action-btn btn-revise inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
-                                            data-docid="{{ $mapping->id }}"
-                                            data-doc-title="{{ $mapping->document->name }}"
-                                            data-status="{{ $mapping->status->name }}" title="Upload"
-                                            data-files='@json($mapping->files_for_modal)' onclick="openReviseModal(this)">
-                                            <i class="bi bi-upload"></i>
-                                        </button>
-                                        <!-- Approve / Reject -->
-                                        @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
-                                            <form
-                                                action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
-                                                method="POST" class="d-inline">
-                                                @csrf
-                                                <button type="button"
-                                                    class="action-btn btn-approve inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-green-500 text-white hover:bg-green-600"
-                                                    data-status="{{ $mapping->status->name }}"
-                                                    data-obsolete="{{ $mapping->obsolete_date }}"
-                                                    data-period="{{ $mapping->period_years }}"
-                                                    onclick="confirmApprove(this)" title="Approve">
-                                                    <i class="bi bi-check2-circle"></i>
-                                                </button>
-                                            </form>
-                                            <button type="button"
-                                                class="action-btn btn-reject inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md bg-red-500 text-white hover:bg-red-600"
-                                                data-docid="{{ $mapping->id }}"
-                                                data-doc-title="{{ $mapping->document->name }}"
-                                                data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
-                                                data-status="{{ $mapping->status->name }}" title="Reject"
-                                                data-reject-url="{{ route('document-control.reject', $mapping) }}">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -446,6 +457,43 @@
             const reviseFilesContainer = document.getElementById('reviseFilesContainer');
             const newFilesContainer = document.getElementById('new-files-container');
             const addFileBtn = document.getElementById('add-file');
+            // ===============================
+            // VALIDASI: Cegah submit jika tidak ada perubahan file
+            // ===============================
+            const reviseFormDynamic = document.getElementById('reviseFormDynamic');
+
+            if (reviseFormDynamic) {
+                reviseFormDynamic.addEventListener('submit', function(e) {
+
+                    // ambil file replace lama
+                    const existingFileInputs = reviseFilesContainer.querySelectorAll('input[type="file"]');
+
+                    // ambil file baru
+                    const newFileInputs = newFilesContainer.querySelectorAll('input[type="file"]');
+
+                    let hasChange = false;
+
+                    // cek apakah ada file lama yang diganti
+                    existingFileInputs.forEach(input => {
+                        if (input.files.length > 0) {
+                            hasChange = true;
+                        }
+                    });
+
+                    // cek file baru
+                    newFileInputs.forEach(input => {
+                        if (input.files.length > 0) {
+                            hasChange = true;
+                        }
+                    });
+
+                    if (!hasChange) {
+                        e.preventDefault();
+                        showReviseError("Please modify at least one file before submitting.");
+                    }
+                });
+            }
+
 
             window.openReviseModal = function(btn) {
                 const mappingId = btn.dataset.docid;
@@ -588,12 +636,25 @@
 
             // Saat submit form, ambil konten Quill dan simpan ke input hidden
             if (rejectForm) {
-                rejectForm.addEventListener('submit', function() {
-                    if (rejectQuill && rejectNotesInput) {
-                        rejectNotesInput.value = rejectQuill.root.innerHTML.trim();
+                rejectForm.addEventListener('submit', function(e) {
+                    const content = rejectQuill.root.innerHTML.trim();
+
+                    // Cek apakah Quill kosong
+                    if (content === "<p><br></p>" || content === "") {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Notes Required',
+                            text: 'Please write rejection notes before submitting.'
+                        });
+                        return;
                     }
+
+                    // Simpan isi Quill
+                    rejectNotesInput.value = content;
                 });
             }
+
 
             // =========================
             // File preview dropdown / view
@@ -677,27 +738,74 @@
             const periodYears = btn.dataset.period || 0;
 
             Swal.fire({
-                title: "Approve Document?",
+                title: `
+            <span style="
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: #1f2937;
+                font-family: 'Inter', sans-serif;
+            ">
+                Approve Document?
+            </span>
+        `,
                 html: `
-            <div class="text-sm">
+            <div style="
+                font-size: 1rem;
+                color: #4b5563;
+                font-family: 'Inter', sans-serif;
+                margin-top: 6px;
+                line-height: 1.55;
+            ">
                 Are you sure you want to approve this document?<br><br>
-                <strong>This document will be obsolete in:</strong><br>
-                <span style="font-size: 1.1rem; color:#0d6efd; font-weight:600;">
+                <strong style="color:#111827;">This document will be obsolete in:</strong><br>
+
+                <span style="
+                    font-size: 1.35rem;
+                    color: #0d6efd;
+                    font-weight: 700;
+                    display: inline-block;
+                    margin-top: 4px;
+                ">
                     ${periodYears} year(s)
                 </span>
             </div>
         `,
                 icon: "warning",
+
                 showCancelButton: true,
-                confirmButtonColor: "#16a34a",
-                cancelButtonColor: "#dc2626",
                 confirmButtonText: "Yes, approve it",
-                cancelButtonText: "Cancel"
+                cancelButtonText: "Cancel",
+
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-4 shadow-lg',
+                    confirmButton: 'btn btn-success fw-semibold px-4 py-2 mx-2',
+                    cancelButton: 'btn btn-outline-secondary fw-semibold px-4 py-2 mx-2'
+                },
+
+                padding: "1.8rem 2rem",
+
+                // **Made wider**
+                width: "480px",
             }).then((result) => {
                 if (result.isConfirmed) {
                     form.submit();
                 }
             });
+        }
+
+
+        function showReviseError(message) {
+            let oldAlert = document.getElementById('revise-alert');
+            if (oldAlert) oldAlert.remove();
+
+            const alertDiv = document.createElement('div');
+            alertDiv.id = 'revise-alert';
+            alertDiv.className = "alert alert-danger mt-3";
+            alertDiv.innerText = message;
+
+            const form = document.getElementById('reviseFormDynamic');
+            form.prepend(alertDiv);
         }
     </script>
 @endpush

@@ -101,39 +101,39 @@
             </div>
             <div id="tableContainer">
                 {{-- Table --}}
-                <div class="overflow-x-auto overflow-y-auto max-h-96">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-2">
+                <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+                    <table class="min-w-full text-sm text-gray-700">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                     <input type="checkbox" id="selectAll" class="form-checkbox">
                                 </th>
-                                <th class="px-4 py-2">No</th>
-                                <th class="px-4 py-2">Document Name</th>
-                                <th class="px-4 py-2">Department</th>
-                                <th class="px-4 py-2">Obsolete</th>
-                                <th class="px-4 py-2">Reminder Date</th>
-                                <th class="px-4 py-2">Document Period</th>
-                                <th class="px-4 py-2 text-center action-column">Action</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Department</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Reminder Date</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Period</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody class="divide-y divide-gray-100">
                             @forelse($documentMappings as $mapping)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4">
+                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                                    <td class="px-4 py-3">
                                         <input type="checkbox" class="row-checkbox form-checkbox"
                                             value="{{ $mapping->id }}">
                                     </td>
-                                    <td class="px-6 py-4">{{ $loop->iteration }}</td>
-                                    <td class="px-6 py-4">{{ $mapping->document->name ?? '-' }}</td>
-                                    <td class="px-6 py-4">{{ $mapping->department->name ?? '-' }}</td>
-                                    <td class="px-6 py-4">
+                                    <td class="px-4 py-3">{{ $documentMappings->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3">{{ $mapping->document->name ?? '-' }}</td>
+                                    <td class="px-4 py-3">{{ $mapping->department->name ?? '-' }}</td>
+                                    <td class="px-4 py-3">
                                         {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4">
+                                    <td class="px-4 py-3">
                                         {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4">
+                                    <td class="px-4 py-3">
                                         @if ($mapping->period_years)
                                             {{ $mapping->period_years }}
                                             {{ $mapping->period_years == 1 ? 'Year' : 'Years' }}
@@ -141,7 +141,7 @@
                                             -
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 flex space-x-2 whitespace-nowrap action-column">
+                                    <td class="px-4 py-3 flex space-x-2 whitespace-nowrap action-column">
                                         @if ($mapping->files->count())
                                             <div class="relative inline-block">
                                                 <button type="button"
@@ -189,7 +189,7 @@
                                 @include('contents.master.document-control.partials.modal-edit')
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No Data</td>
+                                    <td colspan="7" class="px-4 py-3 text-center text-gray-500">No Data</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -667,8 +667,24 @@
             }
         });
     </script>
+    @if ($errors->any() && session('modal') === 'add')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const addModal = new bootstrap.Modal(document.getElementById('addDocumentControlModal'));
+                addModal.show();
+            });
+        </script>
+    @endif
+    @if ($errors->any() && session('modal') === 'edit')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const modalId = "editModal{{ session('mapping_id') }}";
+                const editModal = new bootstrap.Modal(document.getElementById(modalId));
+                editModal.show();
+            });
+        </script>
+    @endif
 @endpush
-
 @push('styles')
     <style>
         #quill_editor {

@@ -6,7 +6,6 @@
                 $product_ids = $mapping->product->pluck('id')->toArray();
                 $process_ids = $mapping->process->pluck('id')->toArray();
                 $part_ids = $mapping->partNumber->pluck('id')->toArray();
-
             @endphp
 
             <div class="modal fade" id="editDocumentModal-{{ $mapping->id }}"
@@ -14,30 +13,38 @@
                 data-process-ids='@json($process_ids)' data-part-ids='@json($part_ids)'
                 aria-labelledby="editDocumentModalLabel-{{ $mapping->id }}" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content border-0 rounded-4 shadow-lg">
+                    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
 
                         {{-- Header --}}
-                        <div class="modal-header bg-light text-dark rounded-top-4">
-                            <h5 class="modal-title fw-semibold" id="editDocumentModalLabel-{{ $mapping->id }}">
-                                <i class="bi bi-pencil-square me-2"></i> Edit Document Review
+                        <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                            style="background-color: #f5f5f7;">
+                            <h5 class="modal-title fw-semibold text-dark" id="editDocumentModalLabel-{{ $mapping->id }}"
+                                style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                                <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Document Review
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button"
+                                class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                                data-bs-dismiss="modal" aria-label="Close"
+                                style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                                <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                            </button>
                         </div>
 
                         {{-- Body --}}
-                        <div class="modal-body p-4">
+                        <div class="modal-body p-5 bg-gray-50" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                             <form id="editForm-{{ $mapping->id }}"
                                 action="{{ route('master.document-review.update2', $mapping->id) }}" method="POST"
                                 class="needs-validation" novalidate>
                                 @csrf
                                 @method('PUT')
-                                <div class="row g-3">
+                                <div class="row g-4">
 
                                     {{-- Document Name --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Document Name <span
+                                        <label class="form-label fw-semibold">Document Name <span
                                                 class="text-danger">*</span></label>
-                                        <select name="document_id" class="form-select tom-select" required>
+                                        <select name="document_id"
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select" required>
                                             @foreach ($documentsMaster as $doc)
                                                 <option value="{{ $doc->id }}"
                                                     @if ($mapping->document_id == $doc->id) selected @endif>
@@ -49,31 +56,34 @@
 
                                     {{-- Document Number --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Document Number <span
+                                        <label class="form-label fw-semibold">Document Number <span
                                                 class="text-danger">*</span></label>
-                                        <input type="text" name="document_number" class="form-control"
+                                        <input type="text" name="document_number"
+                                            class="form-control border-0 shadow-sm rounded-3"
                                             value="{{ $mapping->document_number }}">
                                     </div>
 
                                     {{-- Plant --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Plant <span
+                                        <label class="form-label fw-semibold">Plant <span
                                                 class="text-danger">*</span></label>
-                                        <select name="plant" class="form-select tom-select" required>
+                                        <select name="plant" class="form-select border-0 shadow-sm rounded-3 tom-select"
+                                            required>
                                             <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>
                                                 Body</option>
                                             <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>
                                                 Unit</option>
-                                            <option value="electric"
-                                                {{ $mapping->plant == 'electric' ? 'selected' : '' }}>Electric</option>
+                                            <option value="electric" {{ $mapping->plant == 'electric' ? 'selected' : '' }}>
+                                                Electric</option>
                                         </select>
                                     </div>
 
                                     {{-- Department --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Department <span
+                                        <label class="form-label fw-semibold">Department <span
                                                 class="text-danger">*</span></label>
-                                        <select name="department_id" class="form-select tom-select" required>
+                                        <select name="department_id"
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select" required>
                                             @foreach ($departments as $dept)
                                                 <option value="{{ $dept->id }}"
                                                     {{ $mapping->department_id == $dept->id ? 'selected' : '' }}>
@@ -85,9 +95,10 @@
 
                                     {{-- Model --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Model <span
+                                        <label class="form-label fw-semibold">Model <span
                                                 class="text-danger">*</span></label>
-                                        <select name="model_id[]" multiple class="form-select tom-select">
+                                        <select name="model_id[]" multiple
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select">
                                             @foreach ($models as $model)
                                                 <option value="{{ $model->id }}"
                                                     {{ in_array($model->id, $model_ids) ? 'selected' : '' }}>
@@ -99,8 +110,9 @@
 
                                     {{-- Product --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Product</label>
-                                        <select name="product_id[]" multiple class="form-select tom-select">
+                                        <label class="form-label fw-semibold">Product</label>
+                                        <select name="product_id[]" multiple
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select">
                                             @foreach ($products as $product)
                                                 <option value="{{ $product->id }}"
                                                     {{ in_array($product->id, $product_ids) ? 'selected' : '' }}>
@@ -112,9 +124,9 @@
 
                                     {{-- Process --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Process</label>
+                                        <label class="form-label fw-semibold">Process</label>
                                         <select name="process_id[]" multiple
-                                            class="form-select tom-select text-capitalize">
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select text-capitalize">
                                             @foreach ($processes as $process)
                                                 <option value="{{ $process->id }}"
                                                     {{ in_array($process->id, $process_ids) ? 'selected' : '' }}>
@@ -126,8 +138,9 @@
 
                                     {{-- Part Number --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-medium">Part Number</label>
-                                        <select name="part_number_id[]" multiple class="form-select tom-select">
+                                        <label class="form-label fw-semibold">Part Number</label>
+                                        <select name="part_number_id[]" multiple
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select">
                                             @foreach ($partNumbers as $part)
                                                 <option value="{{ $part->id }}"
                                                     {{ in_array($part->id, $part_ids) ? 'selected' : '' }}>
@@ -138,13 +151,13 @@
                                     </div>
 
                                     {{-- Notes --}}
-                                    <div class="col-12 mb-3">
-                                        <label class="form-label fw-medium">Notes</label>
+                                    <div class="col-12 mb-4">
+                                        <label class="form-label fw-semibold">Notes</label>
                                         <input type="hidden" name="notes" id="notes_input_edit{{ $mapping->id }}"
                                             value="{{ old('notes', $mapping->notes) }}">
                                         <div id="quill_editor_edit{{ $mapping->id }}"
-                                            class="bg-white border-1 shadow-sm rounded"
-                                            style="min-height: 100px; max-height: 130px; overflow-y: auto;">
+                                            class="bg-white rounded-3 shadow-sm p-2"
+                                            style="min-height: 100px; max-height: 130px; overflow-y: auto; border: 1px solid #e2e8f0;">
                                         </div>
                                     </div>
 
@@ -153,11 +166,19 @@
                         </div>
 
                         {{-- Footer --}}
-                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                            <button type="button" class="btn btn-outline-secondary"
-                                data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" form="editForm-{{ $mapping->id }}">Save
-                                Changes</button>
+                        <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                            <button type="button"
+                                class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                                data-bs-dismiss="modal"
+                                style="text-decoration: none; transition: background-color 0.3s ease;">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="btn px-5 py-2 rounded-3 fw-semibold"
+                                form="editForm-{{ $mapping->id }}"
+                                style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                                Save Changes
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -165,6 +186,7 @@
         @endforeach
     @endforeach
 @endif
+
 
 
 @push('scripts')
@@ -220,19 +242,10 @@
                 if (!el || !hidden) return;
                 const quill = new Quill(el, {
                     theme: "snow",
+                    placeholder: 'Write your notes here...',
                     modules: {
                         toolbar: [
                             ['bold', 'italic', 'underline'],
-                            [{
-                                list: 'ordered'
-                            }, {
-                                list: 'bullet'
-                            }],
-                            [{
-                                color: []
-                            }, {
-                                background: []
-                            }],
                             ['clean']
                         ]
                     }

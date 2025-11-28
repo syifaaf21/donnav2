@@ -39,31 +39,34 @@
             </div>
             <div id="tableContainer">
                 {{-- Table --}}
-                <div class="overflow-x-auto overflow-y-auto max-h-96">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-2">No</th>
-                                <th class="px-4 py-2">Name</th>
-                                <th class="px-4 py-2">Code</th>
-                                <th class="px-4 py-2">Plant</th>
-                                <th class="px-4 py-2 text-center">Actions</th>
+                <div
+                    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                    <table class="min-w-full text-sm text-gray-700">
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
+                                <th
+                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($products as $product)
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-2">
+                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                                    <td class="px-4 py-3">
                                         {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-2">{{ ucwords($product->name) }}</td>
-                                    <td class="px-4 py-2">{{ $product->code }}</td>
-                                    <td class="px-4 py-2">{{ $product->plant }}</td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-3">{{ ucwords($product->name) }}</td>
+                                    <td class="px-4 py-3">{{ $product->code }}</td>
+                                    <td class="px-4 py-3">{{ $product->plant }}</td>
+                                    <td class="px-4 py-3 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editProductModal-{{ $product->id }}"
                                             data-bs-title="Edit Product"
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                            class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                             <i data-feather="edit" class="w-4 h-4"></i>
                                         </button>
                                         <form action="{{ route('master.products.destroy', $product->id) }}" method="POST"
@@ -71,7 +74,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" data-bs-title="Delete Product"
-                                                class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
                                         </form>
@@ -99,98 +102,117 @@
         <div class="modal fade" id="editProductModal-{{ $product->id }}" tabindex="-1"
             aria-labelledby="editProductModalLabel-{{ $product->id }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
-                <form action="{{ route('master.products.update', $product->id) }}" method="POST">
+                <form action="{{ route('master.products.update', $product->id) }}" method="POST"
+                    class="modal-content rounded-4 shadow-lg border-0">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="_form" value="edit">
 
-                    <div class="modal-content border-0 shadow-lg rounded-4">
-                        <div class="modal-header bg-light text-dark rounded-top-4">
-                            <h5 class="modal-title fw-semibold" id="editProductModalLabel-{{ $product->id }}">
-                                <i class="bi bi-pencil-square me-2"></i>Edit Product
-                            </h5>
-                        </div>
+                    {{-- Header --}}
+                    <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                        style="background-color: #f5f5f7;">
+                        <h5 class="modal-title fw-semibold text-dark" id="editProductModalLabel-{{ $product->id }}"
+                            style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                            <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Product
+                        </h5>
+                        <button type="button"
+                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            data-bs-dismiss="modal" aria-label="Close"
+                            style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        </button>
+                    </div>
 
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                {{-- Name --}}
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="name" placeholder="Enter product name"
-                                        class="form-control rounded-3 @error('name') is-invalid @enderror"
-                                        value="{{ $product->name }}" required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                    {{-- Body --}}
+                    <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                        <div class="row g-4">
+                            {{-- Name --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" placeholder="Enter product name"
+                                    class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
+                                    value="{{ old('name', $product->name) }}" required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                                {{-- Code --}}
-                                <div class="col-md-6">
-                                    <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
-                                    <input type="text" name="code" placeholder="Enter product code"
-                                        class="form-control rounded-3 @error('code') is-invalid @enderror"
-                                        value="{{ $product->code }}" required>
-                                    @error('code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                            {{-- Code --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
+                                <input type="text" name="code" placeholder="Enter product code"
+                                    class="form-control border-0 shadow-sm rounded-3 @error('code') is-invalid @enderror"
+                                    value="{{ old('code', $product->code) }}" required>
+                                @error('code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                                {{-- Plant --}}
-                                <div class="col-md-12">
-                                    <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                                    <select name="plant" class="form-select" required>
-                                        @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
-                                            <option value="{{ $optPlant }}" @selected($product->plant === $optPlant)>
-                                                {{ $optPlant }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            {{-- Plant --}}
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                                <select name="plant" class="form-select border-0 shadow-sm rounded-3" required>
+                                    <option value="">-- Select Plant --</option>
+                                    @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
+                                        <option value="{{ $optPlant }}" @selected(old('plant', $product->plant) === $optPlant)>
+                                            {{ $optPlant }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
-                            <button type="button"
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
-                                data-bs-dismiss="modal">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
-                                Save Changes
-                            </button>
-                        </div>
+                    {{-- Footer --}}
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                            style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                            Save Changes
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     @endforeach
 
+
     {{-- Add Modal --}}
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form action="{{ route('master.products.store') }}" method="POST"
-                class="modal-content border-0 shadow-lg rounded-4">
+                class="modal-content rounded-4 shadow-lg border-0">
                 @csrf
                 <input type="hidden" name="_form" value="add">
+
                 {{-- Header --}}
-                <div
-                    class="modal-header bg-light text-dark rounded-top-4 py-3 px-4 d-flex justify-content-between align-items-center">
-                    <h5 class="modal-title fw-semibold" id="addProductModalLabel">
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark" id="addProductModalLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                         <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Product
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
                 </div>
 
                 {{-- Body --}}
-                <div class="modal-body p-4">
-                    <div class="row g-3">
+                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                    <div class="row g-4">
                         {{-- Name --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Name</label>
+                            <label class="form-label fw-semibold">Name</label>
                             <input type="text" name="name"
-                                class="form-control rounded-3 @error('name') is-invalid @enderror"
+                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
                                 placeholder="Enter product name" value="{{ old('name') }}" required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -199,9 +221,9 @@
 
                         {{-- Code --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Code <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Code <span class="text-danger">*</span></label>
                             <input type="text" name="code"
-                                class="form-control rounded-3 @error('code') is-invalid @enderror"
+                                class="form-control border-0 shadow-sm rounded-3 @error('code') is-invalid @enderror"
                                 placeholder="Enter product code" value="{{ old('code') }}" required>
                             @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -210,8 +232,8 @@
 
                         {{-- Plant --}}
                         <div class="col-md-12">
-                            <label class="form-label fw-medium">Plant <span class="text-danger">*</span></label>
-                            <select name="plant" class="form-select rounded-3" required>
+                            <label class="form-label fw-semibold">Plant <span class="text-danger">*</span></label>
+                            <select name="plant" class="form-select border-0 shadow-sm rounded-3" required>
                                 <option value="">-- Select Plant --</option>
                                 @foreach (['Body', 'Unit', 'Electric'] as $optPlant)
                                     <option value="{{ $optPlant }}" @selected(old('plant') === $optPlant)>
@@ -227,13 +249,13 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-bottom-4 d-flex justify-content-between align-items-center p-4">
-                    <button type="button"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-200"
-                        data-bs-dismiss="modal">
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                        data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
+                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
                         Submit
                     </button>
                 </div>
