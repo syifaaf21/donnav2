@@ -6,15 +6,16 @@
     <div class=" mx-auto p-4">
         {{-- 🔹 Header + Breadcrumb --}}
         <div class="flex justify-between items-center mb-6">
-            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
-                <ol class="flex items-center space-x-2">
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
                     <li>
-                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
-                            <i class="bi bi-house-door"></i> Dashboard
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
                         </a>
                     </li>
-                    <li class="text-gray-400">/</li>
-                    <li class="text-gray-700 font-semibold">Document Control</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">Document Control</li>
                 </ol>
             </nav>
         </div>

@@ -9,20 +9,16 @@
         {{-- Flash Message --}}
         <x-flash-message />
 
-        {{-- Breadcrumb (Tetap Sama) --}}
-        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
-            <ol class="list-reset flex items-center space-x-2">
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
                 <li>
-                    <a href="{{ route('dashboard') }}"
-                        class="text-blue-600 hover:text-blue-800 transition-colors duration-150 flex items-center gap-1">
-                        <i class="bi bi-house-door"></i>
-                        Dashboard
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
                     </a>
                 </li>
-                <li class="text-gray-400">/</li>
-                <li class="text-gray-900 font-semibold flex items-center gap-1">
-                    Document Review
-                </li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">Document Review</li>
             </ol>
         </nav>
 
@@ -36,7 +32,7 @@
                     @foreach ($groupedByPlant as $plant => $documentsByCode)
                         @php
                             $slug = \Illuminate\Support\Str::slug($plant);
-                            $isActive = $loop->first && !$lastTab || $lastTab && $lastTab === $slug;
+                            $isActive = ($loop->first && !$lastTab) || ($lastTab && $lastTab === $slug);
                         @endphp
                         <li role="presentation" class="flex-shrink-0">
                             <button id="tab-{{ $slug }}" type="button" role="tab"
@@ -44,7 +40,7 @@
                                 aria-selected="{{ $isActive ? 'true' : 'false' }}" title="{{ ucfirst($plant) }}"
                                 class="nav-link relative px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1
                         {{ $isActive
-                            ? "bg-gradient-to-b from-blue-200 to-white text-blue-700 -mb-px font-bold"
+                            ? 'bg-gradient-to-b from-blue-200 to-white text-blue-700 -mb-px font-bold'
                             : 'text-gray-600 hover:text-blue-700 hover:border-t hover:border-gray-200' }}"
                                 data-bs-toggle="tab" data-bs-target="#tab-content-{{ $slug }}">
 
@@ -225,7 +221,8 @@
 
     /* Show blue borders and subtle shadow on hover */
     .nav-link:hover {
-        border-left-color: #1d4ed8; /* blue-700 */
+        border-left-color: #1d4ed8;
+        /* blue-700 */
         border-right-color: #1d4ed8;
         color: #1d4ed8;
         box-shadow: 0 -4px 10px rgba(29, 78, 216, 0.1);
@@ -235,7 +232,8 @@
     .nav-link[aria-selected="true"] {
         background-image: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%);
         background-repeat: no-repeat;
-        color: #1d4ed8; /* blue-700 */
+        color: #1d4ed8;
+        /* blue-700 */
         font-weight: 700;
         border-left-color: #1d4ed8;
         border-right-color: #1d4ed8;

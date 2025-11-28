@@ -2,7 +2,20 @@
 @section('title', 'FTPP')
 
 @section('content')
-    <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-lg" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
+    {{-- Breadcrumbs --}}
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-medium">FTPP</li>
+        </ol>
+    </nav>
+    <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-lg" x-data="showModal()"
+        @open-show-modal.window="openShowModal($event.detail)">
         <div class="mb-6">
             <div class="fw-semibold text-gray-800">Audit Findings Monitoring & Auditee Actions</div>
         </div>
@@ -29,7 +42,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -138,8 +151,8 @@
 
                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 text-white font-medium
-                       shadow hover:bg-blue-800 hover:shadow-md transition-all duration-150">
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-100 text-blue-700 border border-blue-700 font-medium
+                       shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                         <i data-feather="plus" class="w-4 h-4"></i>
                         Add Finding
                     </a>
@@ -147,8 +160,8 @@
 
                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Dept Head']))
                     <a href="{{ route('approval.index') }}"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-600 text-white font-medium
-                       shadow hover:bg-gray-700 hover:shadow-md transition-all duration-150">
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-100 text-blue-700 border border-blue-700 font-medium
+                       shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                         <i data-feather="pen-tool" class="w-4 h-4"></i>
                         Approval
                     </a>

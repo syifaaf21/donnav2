@@ -5,8 +5,9 @@
     <div class="mx-auto px-4 py-2">
         {{-- Header --}}
         <div class="flex justify-between items-center mb-3">
+
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -14,7 +15,7 @@
                         </a>
                     </li>
                     <li>/</li>
-                    <li>Master</li>
+                    <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
                     <li class="text-gray-700 font-medium">Department</li>
                 </ol>

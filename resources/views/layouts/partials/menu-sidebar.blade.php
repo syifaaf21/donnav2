@@ -39,9 +39,9 @@
 
     @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['super admin', 'admin']))
         <li>
-            <a href="{{ route('archive.index') }}"
-                class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-200 transition-all
-                {{ Route::is('archive*') ? 'bg-matcha text-gray-700' : 'text-gray-700' }}">
+            <a href="{{ route('archive.index') }}" data-bs-title="Archive"
+                class="menu-item flex items-center gap-3 px-2 py-3 rounded-l-full hover:bg-gray-200 transition-all
+                {{ Route::is('archive*') ? 'bg-matcha shadow-inner text-gray-700' : 'text-gray-700' }}">
                 <i data-feather="archive" class="menu-icon w-4 h-4"></i>
                 <span class="sidebar-text">Archive</span>
             </a>

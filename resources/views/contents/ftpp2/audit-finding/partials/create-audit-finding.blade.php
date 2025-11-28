@@ -31,9 +31,9 @@
             <div class="space-y-1">
                 <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
 
-                <button type="button" class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white"
+                <button type="button" class="px-3 py-1 bg-blue-100 border border-blue-700 text-blue-700 rounded hover:bg-blue-600 hover:text-white"
                     onclick="openPlantSidebar()">
-                    Select Department / Process / Product by Plant
+                    Choose Dept/Process/Product
                 </button>
 
                 <input type="hidden" id="selectedPlant" name="plant">
@@ -50,7 +50,7 @@
                 <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
                 <button type="button" onclick="openAuditeeSidebar()"
-                    class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
+                    class="px-3 py-1  bg-blue-100 border border-blue-700 text-blue-700 rounded hover:bg-blue-600 hover:text-white">
                     Select Auditee
                 </button>
 
@@ -124,7 +124,7 @@
                     <!-- CLAUSE SELECT -->
                     <div class="text-right">
                         <button type="button" onclick="openSidebar()"
-                            class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
+                            class="px-3 py-1  bg-blue-100 border border-blue-700 text-blue-700 rounded hover:bg-blue-600 hover:text-white">
                             Select Clause
                         </button>
 
@@ -186,13 +186,13 @@
 </form>
 <!-- Sidebar Klausul -->
 <div id="sidebarKlausul"
-    class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
-           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
+    class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
     <!-- Header -->
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
         <h2 class="font-semibold text-lg text-gray-800">Select Clause</h2>
-        <button type="button" onclick="closeSidebar()" class="text-gray-600 hover:text-red-500 transition">
+        <button type="button" onclick="closeSidebar()" class="p-2 border border-gray-600 hover:border hover:bg-red-100 rounded-full text-gray-600 hover:text-red-500 transition">
             <i data-feather="x" class="w-5 h-5"></i>
         </button>
     </div>
@@ -228,12 +228,12 @@
 
 {{-- Sidebar Select Dept/Proc/Prod by Plant --}}
 <div id="sidebarPlant"
-    class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
-           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
+    class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
         <h2 class="text-lg font-semibold text-gray-800">Select Plant / Department</h2>
-        <button type="button" onclick="closePlantSidebar()" class="text-gray-600 hover:text-red-500 transition">
+        <button type="button" onclick="closePlantSidebar()" class="p-2 border border-gray-600 hobg-red-100 rounded-full text-gray-600 hover:text-red-500 transition">
             <i data-feather="x" class="w-5 h-5"></i>
         </button>
     </div>
@@ -285,12 +285,12 @@
 
 {{-- Sidebar select auditee --}}
 <div id="auditeeSidebar"
-    class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
-           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
+    class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
         <h2 class="text-lg font-semibold text-gray-800">Select Auditee</h2>
-        <button type="button" onclick="closeAuditeeSidebar()" class="text-gray-600 hover:text-red-500 transition">
+        <button type="button" onclick="closeAuditeeSidebar()" class="p-2 border border-gray-600 hover:border hover:bg-red-100 rounded-full text-gray-600 hover:text-red-500 transition">
             <i data-feather="x" class="w-5 h-5"></i>
         </button>
     </div>

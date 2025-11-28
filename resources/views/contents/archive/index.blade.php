@@ -4,11 +4,14 @@
 
 @section('content')
     <div class="mx-auto px-4 py-6">
-        {{-- Breadcrumb --}}
-        <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
             <ol class="list-reset flex space-x-2">
-                <li><a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center"><i
-                            class="bi bi-house-door me-1"></i> Dashboard</a></li>
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
                 <li>/</li>
                 <li class="text-gray-700 font-medium">Archive</li>
             </ol>
@@ -31,7 +34,7 @@
                         {{ request('search')
                             ? '-top-3 text-xs text-sky-600'
                             : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                        peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                         Search archived documents...
                     </label>
                 </div>
