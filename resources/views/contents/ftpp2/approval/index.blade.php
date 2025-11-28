@@ -2,8 +2,9 @@
 @section('title', 'FTPP')
 
 @section('content')
+<div class="p-4">
     {{-- Breadcrumbs --}}
-    <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -20,11 +21,11 @@
             <li class="text-gray-700 font-medium">Approval</li>
         </ol>
     </nav>
-    <div x-data="ftppApp()" class="container mx-auto my-2 px-4">
+    <div x-data="ftppApp()" class=" bg-white rounded-xl border border-gray-200 shadow-lg p-4">
         {{-- Back button --}}
         <div class="mb-3">
             <a href="{{ route('ftpp.index') }}"
-                class="inline-flex items-center px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-sm text-gray-700">
+                class="inline-flex items-center px-3 py-1.5 bg-blue-100 rounded shadow border border-blue-600 hover:bg-blue-200 text-sm text-blue-600">
                 <i data-feather="arrow-left" class="w-4 h-4"></i>
                 <span class="ml-2">Back</span>
             </a>
@@ -33,7 +34,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
             {{-- LEFT SIDE --}}
-            <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow-sm p-4 overflow-auto h-[90vh]">
+            <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow p-4 overflow-auto h-[90vh]">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-lg font-semibold text-gray-700">FTPP Approval List</h2>
                 </div>
@@ -70,7 +71,7 @@
             </div>
 
             {{-- RIGHT SIDE --}}
-            <div class="lg:col-span-9 bg-white border border-gray-100 rounded-2xl shadow-sm p-3 overflow-auto h-[90vh]">
+            <div class="lg:col-span-9 bg-white border border-gray-100 rounded-2xl shadow p-3 overflow-auto h-[90vh]">
                 <template x-if="!formLoaded">
                     <div class="text-center text-gray-400 mt-20">
                         Choose FTPP from the list or click add
@@ -106,6 +107,7 @@
             </div>
         </div>
     </div>
+</div>
 @endsection
 <x-sweetalert-confirm />
 @push('scripts')

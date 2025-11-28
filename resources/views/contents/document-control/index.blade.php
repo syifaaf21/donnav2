@@ -3,7 +3,7 @@
 @section('title', 'Document Control')
 
 @section('content')
-    <div class=" mx-auto my-4 px-4">
+    <div class=" mx-auto p-4">
         {{-- 🔹 Header + Breadcrumb --}}
         <div class="flex justify-between items-center mb-6">
             <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
@@ -20,7 +20,7 @@
         </div>
 
         {{-- 🔹 Main Card --}}
-        <div class="bg-white shadow-lg rounded-2xl border border-gray-100 p-6">
+        <div class="bg-white shadow-2xl rounded-2xl border border-gray-100 p-6">
             {{-- Filter --}}
             <form method="GET" id="filterForm" class="mb-6">
                 @if (auth()->user()->roles->pluck('name')->contains('Admin') ||

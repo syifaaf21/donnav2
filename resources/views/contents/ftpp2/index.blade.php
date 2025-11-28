@@ -2,7 +2,7 @@
 @section('title', 'FTPP')
 
 @section('content')
-    <div class="p-2" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
+    <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-lg" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
         <div class="mb-6">
             <div class="fw-semibold text-gray-800">Audit Findings Monitoring & Auditee Actions</div>
         </div>
@@ -12,14 +12,14 @@
             <div class="flex items-center gap-2 w-full md:w-1/3">
 
                 <!-- SEARCH -->
-                <form method="GET" id="searchForm" class="w-full">
+                <form method="GET" id="searchForm" class="flex flex-col items-end w-auto space-y-1">
 
                     <div class="relative w-96">
                         <!-- Input -->
                         <input type="text" name="search" id="searchInput"
                             class="peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
-            text-sm text-gray-700 shadow-sm transition-all duration-200
-            focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            text-sm text-gray-700 shadow-sm transition-all duration-200
+                            focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                             placeholder="Type to search..." value="{{ request('search') }}">
 
                         <!-- Floating Label -->
@@ -166,31 +166,31 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Registration No
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-3 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Status
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Department
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Auditor
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Auditee
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Due Date
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         {{-- Actions --}}
                                     </th>
                                 </tr>
@@ -204,12 +204,12 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             @php
                                                 $statusColors = [
-                                                    'open' => 'bg-red-500 text-white',
-                                                    'submitted' => 'bg-yellow-500 text-gray-900',
-                                                    'checked by dept head' => 'bg-yellow-500 text-gray-900',
-                                                    'need revision' => 'bg-yellow-500 text-gray-900',
-                                                    'approved by auditor' => 'bg-blue-500 text-white',
-                                                    'close' => 'bg-green-500 text-white',
+                                                    'open' => 'bg-red-100 text-red-600',
+                                                    'submitted' => 'bg-yellow-100 text-yellow-700',
+                                                    'checked by dept head' => 'bg-yellow-100 text-yellow-700',
+                                                    'need revision' => 'bg-yellow-100 text-yellow-700',
+                                                    'approved by auditor' => 'bg-blue-100 text-blue-600',
+                                                    'close' => 'bg-green-100 text-green-600',
                                                 ];
                                                 $statusName = optional($finding->status)->name ?? '-';
                                                 $statusClass = $statusColors[strtolower($statusName)] ?? '';

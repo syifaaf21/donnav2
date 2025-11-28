@@ -38,17 +38,18 @@
                 {{-- Tabs (left) --}}
                 <nav role="tablist" aria-label="Plant tabs" class="flex items-center flex-1 overflow-auto">
                     @foreach ($groupedByPlant as $plant => $documents)
-                        @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
+                        @php
+                            $slug = \Illuminate\Support\Str::slug($plant);
+                        @endphp
                         <button type="button" @click="setActiveTab('{{ $slug }}')" role="tab"
                             aria-controls="tableContainer" :aria-selected="activeTab === '{{ $slug }}'"
                             :class="activeTab === '{{ $slug }}'
-                                ?
-                                'bg-gradient-to-b from-blue-200 to-white text-blue shadow-md' :
-                                ' text-gray-600 hover:bg-gray-200'"
-                            class="flex items-center gap-2 px-4 py-2 rounded-lg border-t border-gray-200 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1">
+                                ? 'bg-gradient-to-b from-blue-200 to-white fw-semibold text-md shadow-sm transition-shadow duration-200'
+                                : 'text-gray-600 hover:shadow-lg hover:border-x hover:border-t hover:border-gray-100 transition-shadow duration-200'"
+                            class="flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1">
                             <span class="truncate max-w-[10rem]">{{ ucwords(strtolower($plant)) }}</span>
                             <span
-                                class="inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-100 text-blue-700">
+                                class="inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-medium rounded-full bg-blue-100 text-blue-700">
                                 {{ $documents->count() }}
                             </span>
                         </button>
@@ -218,65 +219,70 @@
                 </div>
             </div>
 
-        <div id="tableContainer">
-            {{-- Table per Plant --}}
-            <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 max-h-[60vh]">
-                @foreach ($groupedByPlant as $plant => $documents)
-                    @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
-                    <div x-show="activeTab === '{{ $slug }}'" x-transition>
-                        <table class="min-w-full text-sm text-gray-700">
-                            <thead class="bg-gray-50 sticky top-0 z-10">
-                                <tr>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No
-                                    </th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                        Document Number</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part
-                                        Number</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                        Product</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model
-                                    </th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                        Process</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                        Reminder Date</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                        Deadline</th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                        Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class=" divide-y divide-gray-100">
-                                @if ($documents->isEmpty())
-                                    <tr class="hover:bg-gray-50 transition-all duration-150" >
-                                        <td colspan="9" class="text-center text-gray-400 py-6">
-                                            <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
-                                            No Document found for this tab.
-                                        </td>
+            <div id="tableContainer">
+                {{-- Table per Plant --}}
+                <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 max-h-[60vh]">
+                    @foreach ($groupedByPlant as $plant => $documents)
+                        @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
+                        <div x-show="activeTab === '{{ $slug }}'" x-transition>
+                            <table class="min-w-full text-sm text-gray-700">
+                                <thead class="bg-gray-50 sticky top-0 z-10">
+                                    <tr>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            No
+                                        </th>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Document Number</th>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Part
+                                            Number</th>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Product</th>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Model
+                                        </th>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Process</th>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Reminder Date</th>
+                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Deadline</th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            Actions</th>
                                     </tr>
-                                @else
-                                    @foreach ($documents as $index => $doc)
+                                </thead>
+                                <tbody class=" divide-y divide-gray-100">
+                                    @if ($documents->isEmpty())
                                         <tr class="hover:bg-gray-50 transition-all duration-150">
-                                            <td class="px-4 py-3">{{ $index + 1 }}</td>
-                                            <td class="px-4 py-3 font-medium">{{ $doc->document_number }}</td>
-                                            <td class="px-4 py-3">
-                                                {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
+                                            <td colspan="9" class="text-center text-gray-400 py-6">
+                                                <i data-feather="folder" class="mx-auto w-6 h-6 mb-2"></i>
+                                                No Document found for this tab.
                                             </td>
+                                        </tr>
+                                    @else
+                                        @foreach ($documents as $index => $doc)
+                                            <tr class="hover:bg-gray-50 transition-all duration-150">
+                                                <td class="px-4 py-3">{{ $index + 1 }}</td>
+                                                <td class="px-4 py-3 font-medium">{{ $doc->document_number }}</td>
+                                                <td class="px-4 py-3">
+                                                    {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
+                                                </td>
 
-                                            <td class="px-4 py-3">{{ $doc->product->pluck('name')->join(', ') ?: '-' }}
-                                            </td>
+                                                <td class="px-4 py-3">
+                                                    {{ $doc->product->pluck('name')->join(', ') ?: '-' }}
+                                                </td>
 
-                                            <td class="px-4 py-3">
-                                                {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
+                                                <td class="px-4 py-3">
+                                                    {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
 
-                                            <td class="px-4 py-3 capitalize">
-                                                {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
-                                            </td>
-                                            <td class="px-4 py-3">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}</td>
-                                            <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
-                                            {{-- <td class="px-4 py-3">
+                                                <td class="px-4 py-3 capitalize">
+                                                    {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
+                                                </td>
+                                                <td class="px-4 py-3">{{ $doc->reminder_date?->format('d M Y') ?? '-' }}
+                                                </td>
+                                                <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}</td>
+                                                {{-- <td class="px-4 py-3">
                                             @php
                                                 $statusClasses = [
                                                     'approved' =>
@@ -301,370 +307,371 @@
                                                 <span class="text-gray-400">-</span>
                                             @endif
                                         </td> --}}
-                                            <td class="px-4 py-3 text-center">
-                                                <div class="relative inline-block overflow-visible">
-                                                    @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
-                                                    @if (count($files) > 1)
-                                                        <button id="viewFilesBtn-{{ $doc->id }}" type="button"
-                                                            class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
-                                                            title="View File">
-                                                            <i data-feather="file-text" class="w-6 h-6"></i>
-                                                            <span
-                                                                class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                                                                {{ count($files) }}
-                                                            </span>
-                                                        </button>
-                                                        <div id="viewFilesDropdown-{{ $doc->id }}"
-                                                            class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
-                                                            <div class="py-1 text-sm max-h-80 overflow-y-auto">
-                                                                @foreach ($files as $file)
-                                                                    <button type="button"
-                                                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                        data-file="{{ $file['url'] }}"
-                                                                        title="View File">
-                                                                        📄 {{ $file['name'] }}
-                                                                    </button>
-                                                                @endforeach
+                                                <td class="px-4 py-3 text-center">
+                                                    <div class="relative inline-block overflow-visible">
+                                                        @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
+                                                        @if (count($files) > 1)
+                                                            <button id="viewFilesBtn-{{ $doc->id }}" type="button"
+                                                                class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown mr-2"
+                                                                title="View File">
+                                                                <i data-feather="file-text" class="w-6 h-6"></i>
+                                                                <span
+                                                                    class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                                    {{ count($files) }}
+                                                                </span>
+                                                            </button>
+                                                            <div id="viewFilesDropdown-{{ $doc->id }}"
+                                                                class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                                <div class="py-1 text-sm max-h-80 overflow-y-auto">
+                                                                    @foreach ($files as $file)
+                                                                        <button type="button"
+                                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
+                                                                            data-file="{{ $file['url'] }}"
+                                                                            title="View File">
+                                                                            📄 {{ $file['name'] }}
+                                                                        </button>
+                                                                    @endforeach
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    @elseif(count($files) === 1)
-                                                        <button type="button"
-                                                            class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
-                                                            data-file="{{ $files[0]['url'] }}" title="View File">
-                                                            <i data-feather="file-text" class="w-4 h-4"></i>
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                                <button data-bs-toggle="modal"
-                                                    data-bs-target="#editDocumentModal-{{ $doc->id }}"
-                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
-                                                    title="Edit">
-                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                </button>
-                                                <form action="{{ route('master.document-review.destroy', $doc->id) }}"
-                                                    method="POST" class="delete-form d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" title="Delete Document"
-                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
-                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                        @elseif(count($files) === 1)
+                                                            <button type="button"
+                                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                                data-file="{{ $files[0]['url'] }}" title="View File">
+                                                                <i data-feather="file-text" class="w-4 h-4"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                    <button data-bs-toggle="modal"
+                                                        data-bs-target="#editDocumentModal-{{ $doc->id }}"
+                                                        class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200"
+                                                        title="Edit">
+                                                        <i data-feather="edit" class="w-4 h-4"></i>
                                                     </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
+                                                    <form action="{{ route('master.document-review.destroy', $doc->id) }}"
+                                                        method="POST" class="delete-form d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" title="Delete Document"
+                                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded">
+                                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        {{-- 📄 All Edit Modals --}}
+        @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+            @foreach ($groupedByPlant as $plant => $documents)
+                @foreach ($documents as $doc)
+                    @include('contents.master.document-review.partials.modal-edit2', [
+                        'mapping' => $doc,
+                    ])
                 @endforeach
-            </div>
-        </div>
-    </div>
-
-    {{-- 📄 All Edit Modals --}}
-    @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
-        @foreach ($groupedByPlant as $plant => $documents)
-            @foreach ($documents as $doc)
-                @include('contents.master.document-review.partials.modal-edit2', [
-                    'mapping' => $doc,
-                ])
             @endforeach
-        @endforeach
-    @endif
+        @endif
 
-    {{-- 📄 Modal Fullscreen View File --}}
-    <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content border-0 rounded-0 shadow-none">
-                <div class="modal-header bg-light border-bottom">
-                    <h5 class="modal-title fw-semibold">
-                        <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
+        {{-- 📄 Modal Fullscreen View File --}}
+        <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content border-0 rounded-0 shadow-none">
+                    <div class="modal-header bg-light border-bottom">
+                        <h5 class="modal-title fw-semibold">
+                            <i class="bi bi-file-earmark-text me-2 text-primary"></i> Document Viewer
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0">
+                        <iframe id="fileViewer" src="" width="100%" height="100%"
+                            style="border:none;"></iframe>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-@endsection
+    @endsection
 
-@push('scripts')
-    <x-sweetalert-confirm />
-    <script>
-        // Simpan data filter dari controller
-        window.filterDataByPlant = @json($filterDataByPlant);
+    @push('scripts')
+        <x-sweetalert-confirm />
+        <script>
+            // Simpan data filter dari controller
+            window.filterDataByPlant = @json($filterDataByPlant);
 
-        // Tab manager
-        function documentReviewTabs() {
-            return {
-                activeTab: localStorage.getItem('activeTab') || 'body',
-                setActiveTab(tab) {
-                    this.activeTab = tab;
-                    localStorage.setItem('activeTab', tab);
-                    updateFiltersForPlant(tab);
-                }
-            };
-        }
-        window.documentTabs = documentReviewTabs();
+            // Tab manager
+            function documentReviewTabs() {
+                return {
+                    activeTab: localStorage.getItem('activeTab') || 'body',
+                    setActiveTab(tab) {
+                        this.activeTab = tab;
+                        localStorage.setItem('activeTab', tab);
+                        updateFiltersForPlant(tab);
+                    }
+                };
+            }
+            window.documentTabs = documentReviewTabs();
 
-        // Data master fallback
-        window.allPartNumbers = @json($partNumbers->map(fn($p) => ['id' => $p->id, 'label' => $p->part_number]));
-        window.allModels = @json($models->map(fn($m) => ['id' => $m->id, 'label' => $m->name]));
-        window.allProducts = @json($products->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
-        window.allProcesses = @json($processes->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+            // Data master fallback
+            window.allPartNumbers = @json($partNumbers->map(fn($p) => ['id' => $p->id, 'label' => $p->part_number]));
+            window.allModels = @json($models->map(fn($m) => ['id' => $m->id, 'label' => $m->name]));
+            window.allProducts = @json($products->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+            window.allProcesses = @json($processes->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
 
-        function slugToPlant(slug) {
-            return {
-                "body": "Body",
-                "unit": "Unit",
-                "electric": "Electric",
-                "other-manual-entry": "Other / Manual Entry"
-            } [slug] || null;
-        }
-
-        // Update dropdown berdasarkan plant
-        function updateFiltersForPlant(slug) {
-            const plantName = slugToPlant(slug);
-            if (!plantName) return;
-
-            const data = window.filterDataByPlant[plantName] || {};
-
-            if (plantName === "Other / Manual Entry") {
-                updateTomSelect('#filterPartNumber', window.allPartNumbers);
-                updateTomSelect('#filterModel', window.allModels);
-                updateTomSelect('#filterProduct', window.allProducts);
-                updateTomSelect('#filterProcess', window.allProcesses);
-                return;
+            function slugToPlant(slug) {
+                return {
+                    "body": "Body",
+                    "unit": "Unit",
+                    "electric": "Electric",
+                    "other-manual-entry": "Other / Manual Entry"
+                } [slug] || null;
             }
 
-            updateTomSelect('#filterPartNumber', data.part_numbers || window.allPartNumbers);
-            updateTomSelect('#filterModel', data.models || window.allModels);
-            updateTomSelect('#filterProduct', data.products || window.allProducts);
-            updateTomSelect('#filterProcess', data.processes || window.allProcesses);
-        }
+            // Update dropdown berdasarkan plant
+            function updateFiltersForPlant(slug) {
+                const plantName = slugToPlant(slug);
+                if (!plantName) return;
 
-        // Helper TomSelect
-        function updateTomSelect(selector, items) {
-            const el = document.querySelector(selector);
-            if (!el) return;
-            if (el.tomselect) el.tomselect.destroy();
+                const data = window.filterDataByPlant[plantName] || {};
 
-            el.innerHTML = '<option value="">All</option>';
-
-            items.forEach(i => {
-                const option = document.createElement('option');
-                option.value = i.id;
-
-                // Jika field process, ubah label menjadi Title Case
-                if (selector === '#filterProcess') {
-                    option.textContent = i.label.split(' ')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                        .join(' ');
-                } else {
-                    option.textContent = i.label;
+                if (plantName === "Other / Manual Entry") {
+                    updateTomSelect('#filterPartNumber', window.allPartNumbers);
+                    updateTomSelect('#filterModel', window.allModels);
+                    updateTomSelect('#filterProduct', window.allProducts);
+                    updateTomSelect('#filterProcess', window.allProcesses);
+                    return;
                 }
 
-                el.appendChild(option);
-            });
-
-            new TomSelect(selector, {
-                maxItems: 1,
-                placeholder: "Select"
-            });
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inisialisasi TomSelect
-            const tsDocumentName = new TomSelect("#filterDocumentName", {
-                maxItems: 1,
-                placeholder: "Select Document Name"
-            });
-            const tsPartNumber = new TomSelect("#filterPartNumber", {
-                maxItems: 1,
-                placeholder: "Select Part Number"
-            });
-            const tsModel = new TomSelect("#filterModel", {
-                maxItems: 1,
-                placeholder: "Select Model"
-            });
-            const tsProduct = new TomSelect("#filterProduct", {
-                maxItems: 1,
-                placeholder: "Select Product"
-            });
-            const tsProcess = new TomSelect("#filterProcess", {
-                maxItems: 1,
-                placeholder: "Select Process"
-            });
-            // Cascade filter: PN → Model/Product/Process
-            function cascadeFromPartNumber(value) {
-                const activeTab = window.documentTabs.activeTab;
-                const plantName = slugToPlant(activeTab);
-                const plantData = window.filterDataByPlant[plantName];
-                if (!plantData) return;
-
-                const selectedPN = plantData.part_numbers.find(pn => pn.id == value);
-
-                if (selectedPN) {
-                    updateTomSelect('#filterModel', selectedPN.models.length ? selectedPN.models : plantData
-                        .models);
-                    updateTomSelect('#filterProduct', selectedPN.products.length ? selectedPN.products : plantData
-                        .products);
-                    updateTomSelect('#filterProcess', selectedPN.processes.length ? selectedPN.processes : plantData
-                        .processes);
-                } else {
-                    updateTomSelect('#filterModel', plantData.models);
-                    updateTomSelect('#filterProduct', plantData.products);
-                    updateTomSelect('#filterProcess', plantData.processes);
-                }
+                updateTomSelect('#filterPartNumber', data.part_numbers || window.allPartNumbers);
+                updateTomSelect('#filterModel', data.models || window.allModels);
+                updateTomSelect('#filterProduct', data.products || window.allProducts);
+                updateTomSelect('#filterProcess', data.processes || window.allProcesses);
             }
 
-            tsPartNumber.on('change', cascadeFromPartNumber);
-            // AJAX Live Search & Pagination
-            const tableContainer = document.getElementById("tableContainer");
-            const searchInput = document.getElementById("searchInput");
-            const clearBtn = document.getElementById("clearSearch");
-            let timer;
-            const delay = 300;
+            // Helper TomSelect
+            function updateTomSelect(selector, items) {
+                const el = document.querySelector(selector);
+                if (!el) return;
+                if (el.tomselect) el.tomselect.destroy();
 
-            function fetchData(url) {
-                fetch(url, {
-                        headers: {
-                            "X-Requested-With": "XMLHttpRequest"
-                        }
-                    })
-                    .then(res => {
-                        if (!res.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return res.text();
-                    })
-                    .then(html => {
-                        const dom = new DOMParser().parseFromString(html, "text/html");
-                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+                el.innerHTML = '<option value="">All</option>';
 
-                        bindPagination();
-                        rebindListeners();
-                    });
-            }
+                items.forEach(i => {
+                    const option = document.createElement('option');
+                    option.value = i.id;
 
-            searchInput.addEventListener("keyup", function() {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    const q = searchInput.value;
-                    const url =
-                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
-                    fetchData(url);
-                }, delay);
-            });
+                    // Jika field process, ubah label menjadi Title Case
+                    if (selector === '#filterProcess') {
+                        option.textContent = i.label.split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                            .join(' ');
+                    } else {
+                        option.textContent = i.label;
+                    }
 
-            searchInput.addEventListener("keydown", function(e) {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    fetchData(
-                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(searchInput.value)}`
-                    );
-                }
-            });
-
-            clearBtn?.addEventListener("click", function() {
-                searchInput.value = "";
-                fetchData(`{{ route('master.document-review.index2') }}`);
-            });
-
-            function bindPagination() {
-                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
-                    a.addEventListener("click", function(e) {
-                        e.preventDefault();
-                        fetchData(this.href);
-                    });
-                });
-            }
-            // Rebind listeners after AJAX
-            function rebindListeners() {
-                // Feather icons
-                if (typeof feather !== 'undefined') {
-                    feather.replace();
-                }
-
-                // File view buttons (single file)
-                document.querySelectorAll('.view-file-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const fileViewer = document.getElementById('fileViewer');
-                        fileViewer.src = this.dataset.file;
-                        new bootstrap.Modal(document.getElementById('viewFileModal')).show();
-                    });
+                    el.appendChild(option);
                 });
 
-                // Dropdown toggle for multiple files
-                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const id = this.id.replace('viewFilesBtn-', '');
-                        const dropdown = document.getElementById('viewFilesDropdown-' + id);
-                        if (dropdown) dropdown.classList.toggle('hidden');
-                    });
+                new TomSelect(selector, {
+                    maxItems: 1,
+                    placeholder: "Select"
                 });
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                // Inisialisasi TomSelect
+                const tsDocumentName = new TomSelect("#filterDocumentName", {
+                    maxItems: 1,
+                    placeholder: "Select Document Name"
+                });
+                const tsPartNumber = new TomSelect("#filterPartNumber", {
+                    maxItems: 1,
+                    placeholder: "Select Part Number"
+                });
+                const tsModel = new TomSelect("#filterModel", {
+                    maxItems: 1,
+                    placeholder: "Select Model"
+                });
+                const tsProduct = new TomSelect("#filterProduct", {
+                    maxItems: 1,
+                    placeholder: "Select Product"
+                });
+                const tsProcess = new TomSelect("#filterProcess", {
+                    maxItems: 1,
+                    placeholder: "Select Process"
+                });
+                // Cascade filter: PN → Model/Product/Process
+                function cascadeFromPartNumber(value) {
+                    const activeTab = window.documentTabs.activeTab;
+                    const plantName = slugToPlant(activeTab);
+                    const plantData = window.filterDataByPlant[plantName];
+                    if (!plantData) return;
 
-                // Delete confirmation
-                document.querySelectorAll('.delete-form').forEach(form => {
-                    form.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        Swal.fire({
-                            title: 'Are you sure?',
-                            text: "This will permanently delete the document!",
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            cancelButtonColor: '#3085d6',
-                            confirmButtonText: 'Yes, delete it!'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                form.submit();
+                    const selectedPN = plantData.part_numbers.find(pn => pn.id == value);
+
+                    if (selectedPN) {
+                        updateTomSelect('#filterModel', selectedPN.models.length ? selectedPN.models : plantData
+                            .models);
+                        updateTomSelect('#filterProduct', selectedPN.products.length ? selectedPN.products : plantData
+                            .products);
+                        updateTomSelect('#filterProcess', selectedPN.processes.length ? selectedPN.processes : plantData
+                            .processes);
+                    } else {
+                        updateTomSelect('#filterModel', plantData.models);
+                        updateTomSelect('#filterProduct', plantData.products);
+                        updateTomSelect('#filterProcess', plantData.processes);
+                    }
+                }
+
+                tsPartNumber.on('change', cascadeFromPartNumber);
+                // AJAX Live Search & Pagination
+                const tableContainer = document.getElementById("tableContainer");
+                const searchInput = document.getElementById("searchInput");
+                const clearBtn = document.getElementById("clearSearch");
+                let timer;
+                const delay = 300;
+
+                function fetchData(url) {
+                    fetch(url, {
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
                             }
+                        })
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return res.text();
+                        })
+                        .then(html => {
+                            const dom = new DOMParser().parseFromString(html, "text/html");
+                            tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                            bindPagination();
+                            rebindListeners();
+                        });
+                }
+
+                searchInput.addEventListener("keyup", function() {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => {
+                        const q = searchInput.value;
+                        const url =
+                            `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                        fetchData(url);
+                    }, delay);
+                });
+
+                searchInput.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        fetchData(
+                            `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(searchInput.value)}`
+                        );
+                    }
+                });
+
+                clearBtn?.addEventListener("click", function() {
+                    searchInput.value = "";
+                    fetchData(`{{ route('master.document-review.index2') }}`);
+                });
+
+                function bindPagination() {
+                    document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
+                        a.addEventListener("click", function(e) {
+                            e.preventDefault();
+                            fetchData(this.href);
                         });
                     });
-                });
-                document.querySelectorAll('#tableContainer button').forEach(btn => {
-                    btn.classList.add('inline-flex', 'items-center', 'justify-center');
-                    btn.style.minWidth = "2.5rem"; // supaya tombol tidak mengecil
-                });
-            }
+                }
+                // Rebind listeners after AJAX
+                function rebindListeners() {
+                    // Feather icons
+                    if (typeof feather !== 'undefined') {
+                        feather.replace();
+                    }
 
-            // Clear filters modal
-            document.getElementById('clearFilterModal').addEventListener('click', function() {
-                tsDocumentName.clear();
-                tsPartNumber.clear();
-                tsModel.clear();
-                tsProduct.clear();
-                tsProcess.clear();
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) searchInput.value = '';
-                document.getElementById('filterFormModal').submit();
+                    // File view buttons (single file)
+                    document.querySelectorAll('.view-file-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const fileViewer = document.getElementById('fileViewer');
+                            fileViewer.src = this.dataset.file;
+                            new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                        });
+                    });
+
+                    // Dropdown toggle for multiple files
+                    document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const id = this.id.replace('viewFilesBtn-', '');
+                            const dropdown = document.getElementById('viewFilesDropdown-' + id);
+                            if (dropdown) dropdown.classList.toggle('hidden');
+                        });
+                    });
+
+                    // Delete confirmation
+                    document.querySelectorAll('.delete-form').forEach(form => {
+                        form.addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            Swal.fire({
+                                title: 'Are you sure?',
+                                text: "This will permanently delete the document!",
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                cancelButtonColor: '#3085d6',
+                                confirmButtonText: 'Yes, delete it!'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    form.submit();
+                                }
+                            });
+                        });
+                    });
+                    document.querySelectorAll('#tableContainer button').forEach(btn => {
+                        btn.classList.add('inline-flex', 'items-center', 'justify-center');
+                        btn.style.minWidth = "2.5rem"; // supaya tombol tidak mengecil
+                    });
+                }
+
+                // Clear filters modal
+                document.getElementById('clearFilterModal').addEventListener('click', function() {
+                    tsDocumentName.clear();
+                    tsPartNumber.clear();
+                    tsModel.clear();
+                    tsProduct.clear();
+                    tsProcess.clear();
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) searchInput.value = '';
+                    document.getElementById('filterFormModal').submit();
+                });
+                // Inisialisasi dropdown sesuai tab aktif
+                updateFiltersForPlant(window.documentTabs.activeTab);
             });
-            // Inisialisasi dropdown sesuai tab aktif
-            updateFiltersForPlant(window.documentTabs.activeTab);
-        });
-    </script>
-@endpush
+        </script>
+    @endpush
 
-<style>
-    /* --- Dropdown fix style --- */
-    .dropdown-fixed {
-        position: fixed !important;
-        z-index: 999999 !important;
-        background-color: #ffffff !important;
-        /* warna putih solid */
-        border: 1px solid rgba(0, 0, 0, 0.1) !important;
-        border-radius: 8px !important;
-        box-shadow: 0 6px 16px rgba(233, 217, 217, 0.2);
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
+    <style>
+        /* --- Dropdown fix style --- */
+        .dropdown-fixed {
+            position: fixed !important;
+            z-index: 999999 !important;
+            background-color: #ffffff !important;
+            /* warna putih solid */
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 6px 16px rgba(233, 217, 217, 0.2);
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
 
-    /* Tambahan: untuk isi dropdown agar tidak transparan juga */
-    .dropdown-fixed .py-1 {
-        background-color: #fff;
-    }
-</style>
+        /* Tambahan: untuk isi dropdown agar tidak transparan juga */
+        .dropdown-fixed .py-1 {
+            background-color: #fff;
+        }
+    </style>

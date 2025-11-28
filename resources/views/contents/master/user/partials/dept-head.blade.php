@@ -57,7 +57,7 @@
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal" data-id="{{ $user->id }}"
                                     data-bs-title="Edit User"
-                                    class="btn-edit-user bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200">
+                                    class="btn-edit-user w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-2 duration-200">
                                     <i data-feather="edit" class="w-4 h-4"></i>
                                 </button>
                                 {{-- Delete Button --}}
@@ -67,7 +67,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            class="bg-red-600 text-white hover:bg-red-700 p-2 rounded"
+                                            class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2"
                                             data-bs-title="Delete User">
                                             <i data-feather="trash-2" class="w-4 h-4"></i>
                                         </button>

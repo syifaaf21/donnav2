@@ -86,7 +86,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" data-bs-title="Delete Department"
-                                                class=" w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
+                                                class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
                                                 <i data-feather="trash-2" class="w-4 h-4"></i>
                                             </button>
                                         </form>

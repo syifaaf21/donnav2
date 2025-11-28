@@ -24,7 +24,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     {{-- ✅ Google Fonts --}}
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    {{-- <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"> --}}
 
     {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -34,13 +34,13 @@
     @stack('styles')
 </head>
 
-<body class="bg-gray-50 text-gray-800">
+<body class="font-sans bg-matcha text-gray-800">
 
     @include('layouts.partials.sidebar')
     @include('components.flash-message')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 mr-2 my-2">
+    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 mr-2 my-2 px-2">
         @include('layouts.partials.navbar')
 
         <!-- Content -->

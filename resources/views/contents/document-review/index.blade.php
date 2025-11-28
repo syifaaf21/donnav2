@@ -4,7 +4,7 @@
 
 @section('content')
     {{-- Main Container: Modern background and clean padding --}}
-    <div class="p-8 bg-gray-50 min-h-screen space-y-8">
+    <div class="p-4">
 
         {{-- Flash Message --}}
         <x-flash-message />
@@ -27,65 +27,72 @@
         </nav>
 
         {{-- Plant Tabs Container --}}
-        <div class="overflow-x-auto">
-            {{-- ✅ Border dihilangkan dari UL agar tab aktif bisa menempel sempurna --}}
-            <ul class="flex space-x-1 border-b border-gray-200" role="tablist">
-                @php $lastTab = old('last_selected_plant') ?? null; @endphp
+        <div class="bg-white rounded-lg shadow-lg overflow-x-auto">
+            {{-- Tabs wrapper: subtle bg and rounded top to visually separate from content --}}
+            <div class="inline-flex items-center space-x-2 pt-4">
+
+                <ul class="flex space-x-1" role="tablist" aria-label="Plants">
+                    @php $lastTab = old('last_selected_plant') ?? null; @endphp
+                    @foreach ($groupedByPlant as $plant => $documentsByCode)
+                        @php
+                            $slug = \Illuminate\Support\Str::slug($plant);
+                            $isActive = $loop->first && !$lastTab || $lastTab && $lastTab === $slug;
+                        @endphp
+                        <li role="presentation" class="flex-shrink-0">
+                            <button id="tab-{{ $slug }}" type="button" role="tab"
+                                aria-controls="tab-content-{{ $slug }}"
+                                aria-selected="{{ $isActive ? 'true' : 'false' }}" title="{{ ucfirst($plant) }}"
+                                class="nav-link relative px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1
+                        {{ $isActive
+                            ? "bg-gradient-to-b from-blue-200 to-white text-blue-700 -mb-px font-bold"
+                            : 'text-gray-600 hover:text-blue-700 hover:border-t hover:border-gray-200' }}"
+                                data-bs-toggle="tab" data-bs-target="#tab-content-{{ $slug }}">
+
+                                {{-- Plant name: truncate to avoid overflow on small screens --}}
+                                <span class="inline-block max-w-[12rem] truncate align-middle">
+                                    {{ ucfirst($plant) }}
+                                </span>
+
+                                {{-- Count badge: kept as span.ml-2 for JS compatibility --}}
+                                <span
+                                    class="ml-2 inline-flex items-center justify-center text-xs font-semibold px-2 py-0.5 rounded-full
+                        {{ $isActive ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
+                                    ({{ $documentsByCode->count() }})
+                                </span>
+
+                                {{-- Focus ring helper for keyboard users (visual only) --}}
+                                <span class="sr-only">{{ $isActive ? 'Active' : 'Inactive' }} plant tab</span>
+                            </button>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            {{-- Tab Content Container --}}
+            <div
+                class="tab-content m-4 bg-white shadow border border-gray-100 rounded-lg transition-all duration-300 min-h-[10rem]">
                 @foreach ($groupedByPlant as $plant => $documentsByCode)
                     @php
                         $slug = \Illuminate\Support\Str::slug($plant);
                         $isActive = ($loop->first && !$lastTab) || ($lastTab && $lastTab === $slug);
+
+                        $plantRoots = $documents
+                            ->where('parent_id', null)
+                            ->filter(fn($doc) => $documentsByCode->has($doc->code));
                     @endphp
-                    <li role="presentation" class="flex-shrink-0">
-                        <button
-                            class="nav-link relative px-5 py-3 text-sm tracking-wide transition-all duration-300 ease-in-out border-b-0
-                            {{-- Class Logic (Matches JS for Active/Inactive) --}}
-                            {{ $isActive
-                                ? 'bg-white text-blue-700 border border-gray-200 border-b-0 -mb-px font-bold rounded-t-lg shadow-md' // ✅ shadow-md untuk tab aktif
-                                : 'text-gray-600 hover:text-blue-700 hover:bg-gray-100 bg-gray-50 border-b border-gray-200' }}"
-                            // ✅ hover dan bg-gray-50 id="tab-{{ $slug }}" data-bs-toggle="tab"
-                            data-bs-target="#tab-content-{{ $slug }}" type="button" role="tab"
-                            aria-controls="tab-content-{{ $slug }}"
-                            aria-selected="{{ $isActive ? 'true' : 'false' }}">
-
-                            {{-- ✅ Ikon Dihapus --}}
-                            {{ ucfirst($plant) }}
-
-                            <span
-                                class="ml-2 text-xs font-semibold 
-                                {{ $isActive ? 'text-blue-600' : 'text-gray-500' }}">
-                                ({{ $documentsByCode->count() }})
-                            </span>
-                        </button>
-                    </li>
+                    <div id="tab-content-{{ $slug }}" role="tabpanel" aria-labelledby="tab-{{ $slug }}"
+                        class="tab-pane fade {{ $isActive ? 'show active' : '' }} mt-4">
+                        <ul class="space-y-2">
+                            @foreach ($plantRoots as $document)
+                                @include('contents.document-review.partials.tree-node', [
+                                    'document' => $document,
+                                    'plant' => $plant,
+                                ])
+                            @endforeach
+                        </ul>
+                    </div>
                 @endforeach
-            </ul>
-        </div>
-
-        {{-- Tab Content Container --}}
-        <div
-            class="tab-content bg-white border border-gray-200 rounded-b-xl rounded-tr-xl shadow-xl p-6 transition-all duration-300">
-            @foreach ($groupedByPlant as $plant => $documentsByCode)
-                @php
-                    $slug = \Illuminate\Support\Str::slug($plant);
-                    $isActive = ($loop->first && !$lastTab) || ($lastTab && $lastTab === $slug);
-
-                    $plantRoots = $documents
-                        ->where('parent_id', null)
-                        ->filter(fn($doc) => $documentsByCode->has($doc->code));
-                @endphp
-                <div id="tab-content-{{ $slug }}" role="tabpanel" aria-labelledby="tab-{{ $slug }}"
-                    class="tab-pane fade {{ $isActive ? 'show active' : '' }}">
-                    <ul class="space-y-2">
-                        @foreach ($plantRoots as $document)
-                            @include('contents.document-review.partials.tree-node', [
-                                'document' => $document,
-                                'plant' => $plant,
-                            ])
-                        @endforeach
-                    </ul>
-                </div>
-            @endforeach
+            </div>
         </div>
     </div>
 @endsection
@@ -94,13 +101,13 @@
     <script>
         // ✅ REVISI AKTIF: Border 4 sisi (top, left, right) dan shadow-md
         const ACTIVE_TAB_CLASSES = [
-            "bg-white", "text-blue-700", "border", "border-gray-200",
-            "border-b-0", "-mb-px", "font-bold", "shadow-md"
+            "bg-gradient-to-b", "from-blue-200", "to-white", "text-blue-700",
+            "-mb-px", "font-bold", "shadow-top"
         ];
         // ✅ REVISI NON-AKTIF: Lebih sederhana, background abu-abu, hover biru
         const INACTIVE_TAB_CLASSES = [
-            "text-gray-600", "hover:text-blue-700", "hover:bg-gray-100",
-            "bg-gray-50"
+            "text-gray-600", "hover:text-blue-700", "hover:border-x",
+            "hover:border-gray-200"
         ];
         const ACTIVE_TEXT_COUNT_CLASSES = ["text-blue-600", "font-bold"];
         const INACTIVE_TEXT_COUNT_CLASSES = ["text-gray-500", "font-semibold"];
@@ -206,3 +213,39 @@
         });
     </script>
 @endpush
+<style>
+    /* Ensure active tab always shows the desired gradient and styles,
+                       including when JS toggles aria-selected="true" */
+    /* Default: reserve space for left/right borders so layout doesn't jump */
+    .nav-link {
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        transition: border-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    /* Show blue borders and subtle shadow on hover */
+    .nav-link:hover {
+        border-left-color: #1d4ed8; /* blue-700 */
+        border-right-color: #1d4ed8;
+        color: #1d4ed8;
+        box-shadow: 0 -4px 10px rgba(29, 78, 216, 0.1);
+    }
+
+    /* Active state: keep gradient, bold text and solid blue borders */
+    .nav-link[aria-selected="true"] {
+        background-image: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%);
+        background-repeat: no-repeat;
+        color: #1d4ed8; /* blue-700 */
+        font-weight: 700;
+        border-left-color: #1d4ed8;
+        border-right-color: #1d4ed8;
+    }
+
+    /* Count badge adjustments for active state */
+    .nav-link[aria-selected="true"] .ml-2 {
+        background-color: #eff6ff;
+        /* blue-50 */
+        color: #2563eb;
+        /* blue-600 */
+    }
+</style>

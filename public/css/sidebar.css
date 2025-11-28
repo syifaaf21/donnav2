@@ -8,25 +8,39 @@
     height: 100vh;
 }
 
+/* collapsed width */
 #sidebar.w-20 {
     width: 5rem;
 }
 
+/* Prevent FOUC: hide texts and make them non-focusable when collapsed (applies before JS runs) */
 #sidebar .sidebar-text {
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+/* fully hide and remove pointer events when collapsed */
 #sidebar.w-20 .sidebar-text {
     opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-6px);
 }
 
-/* main wrapper follows width */
+/* ensure collapsed logo looks right before JS runs */
+#sidebar.w-20 #sidebarLogo {
+    width: 32px !important;
+    margin: 0 auto !important;
+}
+
+/* main wrapper follows width (use general sibling to match layout) */
 #mainWrapper {
     margin-left: 16rem;
     transition: margin-left .3s ease-in-out;
 }
 
-#sidebar.w-20~#mainWrapper {
+/* ensure consistent selector (use general sibling ~) */
+#sidebar.w-20 ~ #mainWrapper,
+#sidebar.w-20 ~#mainWrapper {
     margin-left: 5rem !important;
 }
 
@@ -74,14 +88,13 @@
     border-radius: 5px;
 }
 
-/* Main content adjustments */
+/* Main content adjustments (deduplicated) */
 #mainWrapper {
     margin-left: 16rem;
-    /* Tambahkan margin sesuai dengan lebar sidebar */
     transition: margin-left 0.3s ease-in-out;
 }
 
-#sidebar.w-20+#mainWrapper {
+#sidebar.w-20 ~ #mainWrapper {
     margin-left: 5rem;
     border-radius: 10px;
 }
@@ -89,6 +102,73 @@
 [data-collapse].active i {
     transform: rotate(90deg);
     transition: transform 0.3s;
+}
+
+/* Tooltip shown when sidebar is collapsed (w-20) */
+#sidebar.w-20 .menu-item {
+    position: relative; /* ensure pseudo element positioning */
+}
+
+/* visible tooltip on hover / focus when collapsed */
+#sidebar.w-20 .menu-item:hover::after,
+#sidebar.w-20 .menu-item:focus::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 0.5rem); /* kanan */
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(31, 41, 55, 0.95); /* gray-800 */
+    color: white;
+    padding: 6px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* show with slight shift for nicer appearance */
+#sidebar.w-20 .menu-item:hover::after,
+#sidebar.w-20 .menu-item:focus::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(4px);
+}
+
+/* small arrow on the left edge of tooltip pointing to the item */
+#sidebar.w-20 .menu-item:hover::before,
+#sidebar.w-20 .menu-item:focus::before {
+    content: "";
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent rgba(31,41,55,0.95) transparent transparent;
+    z-index: 10000;
+}
+
+/* Ensure Bootstrap tooltips render above everything and placed to the right */
+.tooltip {
+    z-index: 9999 !important;
+}
+.tooltip.bs-tooltip-right .arrow::before {
+    /* keep arrow color consistent if custom styles applied */
+    background-color: rgba(31,41,55,0.95);
+}
+
+/* hide pseudo tooltips when sidebar expanded */
+#sidebar:not(.w-20) .menu-item::after,
+#sidebar:not(.w-20) .menu-item::before {
+    display: none;
+}
+
+/* ensure focusable tooltips on keyboard */
+.menu-item:focus {
+    outline: none;
 }
 
 @media (max-width: 768px) {

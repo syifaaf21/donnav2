@@ -12,9 +12,9 @@
         {{-- Icon berdasarkan level --}}
         @php
             $iconClass = match($level ?? 0) {
-                0 => 'bi-folder-fill text-yellow-500', // parent
-                1 => 'bi-folder-fill text-green-500',  // child
-                2 => 'bi-folder-fill text-blue-500',   // grandchild
+                0 => 'bi-folder-fill text-yellow-300', // parent
+                1 => 'bi-folder-fill text-green-300',  // child
+                2 => 'bi-folder-fill text-blue-300',   // grandchild
                 default => 'bi-file-text-fill text-gray-400',
             };
         @endphp

@@ -22,15 +22,23 @@
         </div>
 
         {{-- main content --}}
-        <div class="flex">
-            <button class="btn-tab px-4 py-2 bg-gray-200 rounded-md hover:bg-blue-500 hover:text-white"
-                data-section="audit">Audit Type</button>
-            <button class="btn-tab px-4 py-2 bg-gray-200 rounded-md hover:bg-blue-500 hover:text-white"
-                data-section="finding_category">Finding Category</button>
-            <button class="btn-tab px-4 py-2 bg-gray-200 rounded-md hover:bg-blue-500 hover:text-white"
-                data-section="klausul">Klausul</button>
-        </div>
         <div class="bg-white rounded-xl shadow-lg p-4">
+            <div class="flex mb-2">
+                <button
+                    class="btn-tab px-4 py-2 rounded-t-lg hover:shadow-[0_-2px_4px_rgba(0,0,0,0.1)]
+                        hover:border-x hover:border-gray-200"
+                    data-section="audit">Audit
+                    Type</button>
+                <button
+                    class="btn-tab px-4 py-2 rounded-t-lg hover:shadow-[0_-2px_4px_rgba(0,0,0,0.1)]
+                        hover:border-x hover:border-gray-200"
+                    data-section="finding_category">Finding Category</button>
+                <button
+                    class="btn-tab px-4 py-2 rounded-t-lg hover:shadow-[0_-2px_4px_rgba(0,0,0,0.1)]
+                        hover:border-x hover:border-gray-200"
+                    data-section="klausul">Klausul</button>
+            </div>
+
             <div id="ftpp-content" class="p-2 min-h-[200px] text-gray-700">
 
                 {{-- Section Audit --}}
@@ -68,8 +76,8 @@
             const firstTab = tabs[0];
             const firstTarget = firstTab.getAttribute("data-section");
 
-            firstTab.classList.remove("bg-gray-200", "text-gray-700");
-            firstTab.classList.add("bg-blue-500", "text-white");
+            firstTab.classList.remove("text-gray-700");
+            firstTab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
             sections[firstTarget].classList.remove("hidden");
 
             // event klik
@@ -78,12 +86,14 @@
                     const target = tab.getAttribute("data-section");
 
                     // hilangkan highlight tab lain
-                    tabs.forEach(t => t.classList.remove("bg-blue-500", "text-white", "shadow"));
-                    tabs.forEach(t => t.classList.add("bg-gray-200", "text-gray-700"));
+                    tabs.forEach(t => t.classList.remove("bg-gradient-to-b", "from-blue-200",
+                        "to-white", "text-gray-700", "shadow-top"));
+                    tabs.forEach(t => t.classList.add("text-gray-700"));
 
                     // aktifkan tab ini
-                    tab.classList.remove("bg-gray-200", "text-gray-700");
-                    tab.classList.add("bg-blue-500", "text-white", "shadow");
+                    tab.classList.remove("text-gray-700");
+                    tab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white",
+                        "text-gray-700", "shadow-top");
 
                     // sembunyikan semua, tampilkan target
                     Object.values(sections).forEach(section => section.classList.add("hidden"));

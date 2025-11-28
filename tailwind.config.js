@@ -10,7 +10,17 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                Poppins: ['Poppins', 'sans-serif'],
+                sans: [
+                    '-apple-system',           // iPhone, iPad, Mac → San Francisco
+                    'BlinkMacSystemFont',      // Safari Mac fallback
+                    '"Segoe UI"',              // Windows
+                    'Roboto',                  // Android
+                    'Oxygen',
+                    'Ubuntu',
+                    'Cantarell',
+                    '"Helvetica Neue"',
+                    'sans-serif',
+                ],
             },
             colors: {
                 primary: "#4569AD", // blue
@@ -23,8 +33,11 @@ module.exports = {
                 successDark: "#1E7E34", // dark green
                 accent: "#00C853",  // energetic green
                 sidebar: "#1F3F74", // dark blue
-                matcha: "#BED3CC", // light yellow
-                bgLight: "#8EA2D7", // light blue
+                sidebar2: "#f7f3ec",
+                matcha2: "#BED3CC", // light yellow
+                matcha: "#CADDE1",
+                yale: "#2f4156", // deep blue
+                bgLight: "#f8efe5", // light blue
             },
         },
     },

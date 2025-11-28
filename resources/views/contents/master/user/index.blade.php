@@ -36,33 +36,46 @@
                 </div>
             </div>
 
-            {{-- Tabs --}}
+            {{-- Tabs (improved layout, same IDs and logic preserved) --}}
             <div class="px-4 pt-4">
-                <ul class="nav nav-tabs nav-tabs-line" id="userTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane"
-                            type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">
-                            <i class="bi bi-people-fill me-1"></i> All Users
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="depthead-tab" data-bs-toggle="tab" data-bs-target="#depthead-tab-pane"
-                            type="button" role="tab" aria-controls="depthead-tab-pane" aria-selected="false">
-                            <i class="bi bi-person-badge me-1"></i> Department Heads
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="auditor-tab" data-bs-toggle="tab" data-bs-target="#auditor-tab-pane"
-                            type="button" role="tab" aria-controls="auditor-tab-pane" aria-selected="false">
-                            <i class="bi bi-shield-check me-1"></i> Auditors
-                        </button>
-                    </li>
-                </ul>
+                <div class="flex items-center justify-between gap-4">
+                    <nav class="flex-1" aria-label="User categories">
+                        <ul class="nav nav-tabs" id="userTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane"
+                                    type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">
+                                    <i class="bi bi-people-fill me-1"></i>
+                                    <span class="align-middle">All Users</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="depthead-tab" data-bs-toggle="tab" data-bs-target="#depthead-tab-pane"
+                                    type="button" role="tab" aria-controls="depthead-tab-pane" aria-selected="false">
+                                    <i class="bi bi-person-badge me-1"></i>
+                                    <span class="align-middle">Department Heads</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="auditor-tab" data-bs-toggle="tab" data-bs-target="#auditor-tab-pane"
+                                    type="button" role="tab" aria-controls="auditor-tab-pane" aria-selected="false">
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    <span class="align-middle">Auditors</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    {{-- Optional small helper area (keeps layout tidy, doesn't change tab logic) --}}
+                    <div class="hidden sm:flex items-center gap-3 text-sm text-gray-500">
+                        <span class="whitespace-nowrap">Showing by category</span>
+                        <i class="bi bi-info-circle" data-bs-title="Switch tabs to filter users" role="img" aria-hidden="true"></i>
+                    </div>
+                </div>
             </div>
 
-            {{-- Tab Contents --}}
-            <div class="p-4">
-                <div class="tab-content" id="userTabsContent">
+            {{-- Tab Contents (unchanged logic / IDs) --}}
+            <div class="px-4">
+                <div class="tab-content" id="userTabsContent" role="tablist" aria-live="polite">
                     <div class="tab-pane fade show active" id="all-tab-pane" role="tabpanel" aria-labelledby="all-tab">
                         <div id="ajaxUserTableAll" class="space-y-3">
                             @include('contents.master.user.partials.all')
@@ -413,3 +426,27 @@
     </script>
 
 @endpush
+
+<style>
+    /* Base styling for all tabs */
+    #userTabs .nav-link {
+        @apply text-gray-600 px-4 py-2 rounded-md transition-all duration-200;
+        background: transparent;
+        border-top: 2px !important;
+    }
+
+    /* Hover style */
+    #userTabs .nav-link:hover {
+        box-shadow: 2px 4px 12px rgba(148, 148, 148, 0.1);
+    }
+
+    /* ACTIVE TAB: Gradient + Shadow */
+    #userTabs .nav-link.active {
+        color: white !important;
+        background: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%); /* bg-gradient-to-b from-blue-200 to-white */
+        color: #2563eb !important; /* text-blue (blue-600) */
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0);
+        transform: translateY(-1px);
+        font-weight: 600;
+    }
+</style>
