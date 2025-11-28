@@ -314,10 +314,10 @@
 
             // TomSelect for PLANT (creatable + predefined options)
             new TomSelect("#plant-select", {
-                create: true,
+                create: false,
                 persist: false,
                 maxItems: 1,
-                placeholder: "Choose or add plant...",
+                placeholder: "Choose plant...",
                 allowEmptyOption: false, // ← penting
             });
 

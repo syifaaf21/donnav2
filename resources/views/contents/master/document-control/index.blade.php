@@ -38,7 +38,7 @@
                     <input type="text" name="search" value="{{ request('search') }}" id="searchInput"
                         placeholder="Search..."
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
-               focus:outline-none focus:ring-2 focus:ring-sky-500">
+               focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent pr-10">
 
                     <!-- Search icon -->
                     <button type="submit"
@@ -90,20 +90,28 @@
             </div>
             <div id="tableContainer">
                 {{-- Table --}}
-                <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+                <div
+                    class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
                     <table class="min-w-full text-sm text-gray-700">
-                        <thead>
+                        <thead class="sticky top-0 z-10">
                             <tr class="bg-gray-50 border-b border-gray-200">
                                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
                                     <input type="checkbox" id="selectAll" class="form-checkbox">
                                 </th>
                                 <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Department</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Reminder Date</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Period</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">Action</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document
+                                    Name</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Department
+                                </th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete
+                                </th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Reminder
+                                    Date</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document
+                                    Period</th>
+                                <th
+                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                    Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -131,49 +139,57 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 flex space-x-2 whitespace-nowrap action-column">
-                                        @if ($mapping->files->count())
-                                            <div class="relative inline-block">
+
+                                        {{-- FILE BUTTON AREA — fixed width --}}
+                                        <div class="relative inline-block w-8 h-8 flex items-center justify-center">
+                                            @if ($mapping->files->count())
                                                 <button type="button"
-                                                    class="btn btn-outline-secondary btn-sm view-files-btn relative flex items-center justify-center w-8 h-8"
+                                                    class="relative flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 bg-white
+                hover:bg-gray-100 text-gray-700 transition shadow-sm view-files-btn"
                                                     data-mapping-id="{{ $mapping->id }}"
                                                     data-files='@json(
                                                         $mapping->files->map(fn($file) => [
                                                                 'name' => $file->file_name ?? basename($file->file_path),
                                                                 'url' => asset('storage/' . $file->file_path),
                                                             ]))'>
-                                                    <i class="bi bi-paperclip text-lg"></i>
+                                                    <i class="bi bi-paperclip text-xl"></i>
 
                                                     @if ($mapping->files->count() > 1)
                                                         <span
-                                                            class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow">
+                                                            class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-md">
                                                             {{ $mapping->files->count() }}
                                                         </span>
                                                     @endif
                                                 </button>
-                                            </div>
-                                        @else
-                                            <span class="text-gray-500">No File</span>
-                                        @endif
+                                            @else
+                                                {{-- invisible placeholder agar tetap sejajar --}}
+                                                <div class="w-8 h-8"></div>
+                                            @endif
+                                        </div>
 
+                                        {{-- EDIT + DELETE --}}
                                         <div class="flex items-center gap-2">
                                             @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']))
                                                 <button type="button"
-                                                    class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded transition-colors duration-200 shrink-0"
+                                                    class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-2 duration-200 shrink-0"
                                                     data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}">
                                                     <i data-feather="edit" class="w-4 h-4"></i>
                                                 </button>
+
                                                 <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
                                                     method="POST" class="inline delete-form">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="bg-red-600 text-white hover:bg-red-700 p-2 rounded shrink-0">
+                                                        class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2 shrink-0">
                                                         <i data-feather="trash-2" class="w-4 h-4"></i>
                                                     </button>
                                                 </form>
                                             @endif
                                         </div>
+
                                     </td>
+
                                 </tr>
                                 @include('contents.master.document-control.partials.modal-edit')
                             @empty
@@ -229,7 +245,6 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body p-0">
                     <iframe id="fileViewer" src="" width="100%" height="100%" style="border:none;"></iframe>
                 </div>

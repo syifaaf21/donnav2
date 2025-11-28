@@ -40,9 +40,10 @@
         </div>
         <div id="liveTableWrapper">
             <!-- Table -->
-            <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-100">
+            <div
+                class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
                 <table class="min-w-full text-sm text-gray-700">
-                    <thead>
+                    <thead class="sticky top-0 z-10">
                         <tr class="bg-gray-50 border-b border-gray-200">
                             <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name
@@ -110,7 +111,9 @@
                                     {{-- Actions --}}
                                     <td class="px-4 py-2 text-center">
                                         <div class="flex justify-center gap-2 flex-wrap">
-                                            <div class="relative inline-block overflow-visible">
+
+                                            {{-- AREA FILE BUTTON: tetap ada ruang meski tidak ada file --}}
+                                            <div class="relative inline-block w-8 h-8 flex items-center justify-center">
                                                 @if (count($mapping->files_for_modal) > 1)
                                                     <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
                                                         class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
@@ -125,7 +128,7 @@
                                                         <div class="py-1 text-sm max-h-80 overflow-y-auto">
                                                             @foreach ($mapping->files_for_modal as $file)
                                                                 <button type="button"
-                                                                    class=" w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
+                                                                    class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
                                                                     data-file="{{ $file['url'] }}"
                                                                     data-doc-title="{{ $file['name'] }}">
                                                                     📄 {{ $file['name'] }}
@@ -140,8 +143,13 @@
                                                         data-file="{{ $file['url'] }}" title="View File">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
+                                                @else
+                                                    {{-- placeholder invisible supaya tinggi/posisi tetap --}}
+                                                    <div class="w-8 h-8"></div>
                                                 @endif
                                             </div>
+
+                                            {{-- UPLOAD --}}
                                             <button type="button"
                                                 class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors"
                                                 data-docid="{{ $mapping->id }}"
@@ -150,6 +158,8 @@
                                                 data-files='@json($mapping->files_for_modal)' onclick="openReviseModal(this)">
                                                 <i class="bi bi-upload"></i>
                                             </button>
+
+                                            {{-- APPROVE & REJECT --}}
                                             @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
                                                 <form
                                                     action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
@@ -164,6 +174,7 @@
                                                         <i class="bi bi-check2-circle"></i>
                                                     </button>
                                                 </form>
+
                                                 <button type="button"
                                                     class="action-btn btn-reject inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
                                                     data-docid="{{ $mapping->id }}"

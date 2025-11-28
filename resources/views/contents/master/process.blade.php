@@ -294,7 +294,8 @@
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonText: 'Yes, delete it!',
-                            cancelButtonText: 'Cancel'
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#d33',
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 // Setelah konfirmasi, submit form
