@@ -7,7 +7,7 @@
         {{-- Header --}}
         <div class="flex justify-between items-center mb-3">
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -15,7 +15,7 @@
                         </a>
                     </li>
                     <li>/</li>
-                    <li>Master</li>
+                    <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
                     <li class="text-gray-700 font-medium">Document Control</li>
                 </ol>
@@ -156,8 +156,7 @@
                                                 <button type="button"
                                                     class="relative flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 bg-white
                                                     hover:bg-gray-100 text-gray-700 transition shadow-sm view-files-btn"
-                                                    data-mapping-id="{{ $mapping->id }}"
-                                                    title="View File"
+                                                    data-mapping-id="{{ $mapping->id }}" title="View File"
                                                     data-files='@json(
                                                         $mapping->files->map(fn($file) => [
                                                                 'name' => $file->file_name ?? basename($file->file_path),
@@ -183,11 +182,13 @@
                                             @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']))
                                                 <button type="button"
                                                     class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-2 duration-200 shrink-0"
-                                                    data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}" title="Edit Document">
+                                                    data-bs-toggle="modal" data-bs-target="#editModal{{ $mapping->id }}"
+                                                    title="Edit Document">
                                                     <i data-feather="edit" class="w-4 h-4"></i>
                                                 </button>
 
-                                                <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
+                                                <form
+                                                    action="{{ route('master.document-control.destroy', $mapping->id) }}"
                                                     method="POST" class="inline delete-form">
                                                     @csrf
                                                     @method('DELETE')
