@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentMapping;
 use App\Models\Department;
+use App\Models\DocumentFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,31 +13,20 @@ class ArchiveController extends Controller
     public function index(Request $request)
     {
         // 1. CONTROL ARCHIVE
-        $controlQuery = DocumentMapping::with([
-            'document',
-            'department',
-            'status',
-            'files' => function ($q) {
-                $q->where('is_active', false); // ambil semua file non aktif
-            }
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'control'))
-            ->whereHas(
-                'files',
-                fn($q2) =>
-                $q2->where('is_active', false)
-                    ->where('marked_for_deletion_at', '>', now())
-            );
+        $controlQuery = DocumentFile::query()
+            ->with(['mapping.document', 'mapping.department']) // Load relasi ke atas
+            ->where('is_active', false)
+            ->where('marked_for_deletion_at', '>', now())
+            ->whereHas('mapping.document', fn($q) => $q->where('type', 'control'));
 
         // Filter department (non admin)
         if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
 
-            $controlQuery->whereHas(
-                'department',
-                fn($q) =>
-                $q->whereIn('tm_departments.id', $userDeptIds)
-            );
+            // BERUBAH: Filter via relasi mapping
+            $controlQuery->whereHas('mapping', function ($q) use ($userDeptIds) {
+                $q->whereIn('department_id', $userDeptIds); 
+            });
         }
 
         // Search filter
@@ -44,43 +34,27 @@ class ArchiveController extends Controller
             $search = $request->search_control;
 
             $controlQuery->where(function ($q) use ($search) {
-                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                    ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                    ->orWhereHas('files', function ($q2) use ($search) {
-                        $q2->where('original_name', 'like', "%$search%")
-                            ->where('is_active', false)
-                            ->where('marked_for_deletion_at', '>', now());
-                    });
+                $q->where('original_name', 'like', "%$search%") // Cari nama file
+                    ->orWhereHas('mapping.document', fn($q2) => $q2->where('name', 'like', "%$search%")) // Cari nama dokumen
+                    ->orWhereHas('mapping.department', fn($q2) => $q2->where('name', 'like', "%$search%")); // Cari department
             });
         }
 
+        // BERUBAH: Paginate sekarang menghitung total file (misal: 12 item)
         $controlDocuments = $controlQuery->paginate(10, ['*'], 'page_control');
 
-
         // 2. REVIEW ARCHIVE
-        $reviewCollection = DocumentMapping::with([
-            'files' => fn($q) => $q->where('is_active', 0),
-            'document',
-            'department'
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->get()
-            ->filter(fn($mapping) => $mapping->files->isNotEmpty());
+        $reviewQuery = DocumentFile::query()
+            ->with(['mapping.document', 'mapping.department']) // Load relasi parent
+            ->where('is_active', false) // Ambil file non-aktif
+            // Filter hanya dokumen tipe 'review' via parent
+            ->whereHas('mapping.document', fn($q) => $q->where('type', 'review'));
 
-        // Manual pagination
-        $page = $request->input('page_review', 1);
-        $perPage = 10;
+        // Note: Biasanya Review Document tidak ada filter department (sesuai kode lama Anda), 
+        // tapi jika butuh filter dept, tambahkan logic userDeptIds di sini seperti Control.
 
-        $reviewDocuments = new \Illuminate\Pagination\LengthAwarePaginator(
-            $reviewCollection->forPage($page, $perPage),
-            $reviewCollection->count(),
-            $perPage,
-            $page,
-            [
-                'path' => url()->current(),
-                'pageName' => 'page_review'
-            ]
-        );
+        $reviewDocuments = $reviewQuery->paginate(10, ['*'], 'page_review');
+
 
         // Departments for dropdown
         $departments = Department::all();
@@ -97,96 +71,56 @@ class ArchiveController extends Controller
         $query = $request->input('q', '');
 
         // CONTROL ARCHIVE SEARCH
-        $controlQuery = DocumentMapping::with([
-            'document',
-            'department',
-            'status',
-            'files' => function ($q) {
-                $q->where('is_active', false);
-            }
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'control'))
-            ->whereHas(
-                'files',
-                fn($q2) =>
-                $q2->where('is_active', false)
-                    ->where('marked_for_deletion_at', '>', now())
-            );
+        $controlQuery = DocumentFile::query()
+            ->with(['mapping.document', 'mapping.department'])
+            ->where('is_active', false)
+            ->where('marked_for_deletion_at', '>', now())
+            ->whereHas('mapping.document', fn($q) => $q->where('type', 'control'));
 
         // Filter department (non admin)
         if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
             $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
-
-            $controlQuery->whereHas(
-                'department',
-                fn($q) =>
-                $q->whereIn('tm_departments.id', $userDeptIds)
-            );
+            $controlQuery->whereHas('mapping', fn($q) => $q->whereIn('department_id', $userDeptIds));
         }
 
-        // Search filter for control
+        // Search filter
         if (!empty($query)) {
             $controlQuery->where(function ($q) use ($query) {
-                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%$query%"))
-                    ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%$query%"))
-                    ->orWhereHas('files', function ($q2) use ($query) {
-                        $q2->where('original_name', 'like', "%$query%")
-                            ->where('is_active', false)
-                            ->where('marked_for_deletion_at', '>', now());
-                    });
+                $q->where('original_name', 'like', "%$query%")
+                    ->orWhereHas('mapping.document', fn($q2) => $q2->where('name', 'like', "%$query%"))
+                    ->orWhereHas('mapping.department', fn($q2) => $q2->where('name', 'like', "%$query%"));
             });
         }
 
         $controlDocuments = $controlQuery->paginate(10);
-
         // REVIEW ARCHIVE SEARCH
-        $reviewCollection = DocumentMapping::with([
-            'files' => fn($q) => $q->where('is_active', 0),
-            'document',
-            'department'
-        ])
-            ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->get()
-            ->filter(fn($mapping) => $mapping->files->isNotEmpty());
+        // 2. REVIEW SEARCH (FIXED)
+        $reviewQuery = DocumentFile::query()
+            ->with(['mapping.document', 'mapping.department'])
+            ->where('is_active', false)
+            ->whereHas('mapping.document', fn($q) => $q->where('type', 'review'));
 
-        // Search filter for review
         if (!empty($query)) {
-            $reviewCollection = $reviewCollection->filter(function ($mapping) use ($query) {
-                $query_lower = strtolower($query);
-
-                return
-                    str_contains(strtolower($mapping->document_number ?? ''), $query_lower)
-                    || str_contains(strtolower($mapping->department?->name ?? ''), $query_lower)
-                    || $mapping->files->contains(fn($f) => str_contains(strtolower($f->original_name ?? ''), $query_lower));
+            $reviewQuery->where(function ($q) use ($query) {
+                $q->where('original_name', 'like', "%$query%") // Cari Nama File
+                    // Cari Document Number (Review biasanya pakai doc number)
+                    ->orWhereHas('mapping', fn($q2) => $q2->where('document_number', 'like', "%$query%")) 
+                    // Cari Dept Name
+                    ->orWhereHas('mapping.department', fn($q2) => $q2->where('name', 'like', "%$query%"));
             });
         }
+        
+        // Paginasi otomatis, tidak perlu LengthAwarePaginator manual lagi
+        $reviewDocuments = $reviewQuery->paginate(10); 
 
-        // Manual pagination for review
-        $page = $request->input('page_review', 1);
-        $perPage = 10;
-
-        $reviewDocuments = new \Illuminate\Pagination\LengthAwarePaginator(
-            $reviewCollection->forPage($page, $perPage),
-            $reviewCollection->count(),
-            $perPage,
-            $page,
-            [
-                'path' => url()->current(),
-                'pageName' => 'page_review'
-            ]
-        );
 
         return response()->json([
             'success' => true,
             'control' => [
-                'html' => view('contents.archive.partials.control-archive', [
-                    'controlDocuments' => $controlDocuments,
-                ])->render(),
+                'html' => view('contents.archive.partials.control-archive', ['controlDocuments' => $controlDocuments])->render(),
             ],
             'review' => [
-                'html' => view('contents.archive.partials.review-archive', [
-                    'reviewDocuments' => $reviewDocuments,
-                ])->render(),
+                'html' => view('contents.archive.partials.review-archive', ['reviewDocuments' => $reviewDocuments])->render(),
             ],
         ]);
     }

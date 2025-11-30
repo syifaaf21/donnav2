@@ -382,10 +382,28 @@ class DocumentReviewController extends Controller
             if ($oldFileId) {
                 $oldFile = $mapping->files()->find($oldFileId);
                 if ($oldFile) {
+                    $isRejected = optional($mapping->status)->name === 'Rejected';
+
+                    if ($isRejected) {
+                        // Jika REJECTED:
+                        // Set tanggal hapus SEKARANG.
+                        // Efek: Tidak masuk Archive (karena Archive > now) & siap dihapus permanen.
+                        $deletionDate = now();
+                    } else {
+                        // Jika REVISI NORMAL (Update berkala):
+                        // Masukkan ke Archive selama 1 tahun.
+                        
+                        // Opsi A: 1 Tahun dari sekarang
+                        $deletionDate = now()->addYears(1);
+
+                        // Opsi B (Jika ingin ikut deadline dokumen sebelumnya):
+                        // $deletionDate = $mapping->deadline ? \Carbon\Carbon::parse($mapping->deadline)->addYears(1) : now()->addYears(1);
+                    }
+
                     $oldFile->update([
                         'is_active' => false,
                         'replaced_by_id' => $newFile->id,
-                        'marked_for_deletion_at' => now()->addYears(1),
+                        'marked_for_deletion_at' => $deletionDate, // Gunakan variabel ini
                     ]);
                 }
             }

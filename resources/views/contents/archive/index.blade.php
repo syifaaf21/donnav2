@@ -34,7 +34,7 @@
                         {{ request('search')
                             ? '-top-3 text-xs text-sky-600'
                             : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                        peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                        peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                         Search archived documents...
                     </label>
                 </div>
@@ -238,6 +238,80 @@
                 iframe.src = ""; // Stop PDF from continuing to load
             }, 300);
         }
+
+        // ... function performSearch() di atas ...
+
+        // TAMBAHAN: Handle klik pagination agar tetap via AJAX (mencegah reload)
+        document.addEventListener('click', function(e) {
+            // Cek apakah yang diklik adalah link pagination di dalam tab-content
+            const link = e.target.closest('.tab-content .pagination a') || e.target.closest(
+                'nav[role="navigation"] a');
+
+            if (link) {
+                e.preventDefault(); // Stop reload halaman
+
+                const url = link.getAttribute('href');
+                if (!url) return;
+
+                // Ambil parameter query dari URL pagination tersebut
+                const urlObj = new URL(url);
+                const params = new URLSearchParams(urlObj.search);
+
+                // Pastikan search query yang ada di input juga terbawa (jika user sedang searching)
+                const currentSearch = document.getElementById('archiveSearchInput').value;
+                if (currentSearch) {
+                    params.set('q',
+                        currentSearch
+                        ); // Controller Anda pakai 'q' di method search, tapi 'search' di form HTML. Sesuaikan.
+                }
+
+                // Tentukan kita sedang di tab mana untuk loading state
+                const isControl = link.closest('#tab-control');
+                const contentDiv = isControl ? document.getElementById('tab-control') : document.getElementById(
+                    'tab-review');
+
+                // UI Loading
+                if (contentDiv) {
+                    contentDiv.style.opacity = '0.5';
+                    contentDiv.style.pointerEvents = 'none';
+                }
+
+                // Panggil endpoint search controller (bukan index) karena kita butuh return JSON
+                // Kita ganti base URL nya ke route('archive.search')
+                const searchUrl = `{{ route('archive.search') }}?${params.toString()}`;
+
+                fetch(searchUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        const controlContent = document.getElementById('tab-control');
+                        const reviewContent = document.getElementById('tab-review');
+
+                        // Update content sesuai response
+                        if (data.control && data.control.html) {
+                            controlContent.innerHTML = data.control.html;
+                        }
+                        if (data.review && data.review.html) {
+                            reviewContent.innerHTML = data.review.html;
+                        }
+
+                        // Restore opacity
+                        if (controlContent) {
+                            controlContent.style.opacity = '1';
+                            controlContent.style.pointerEvents = 'auto';
+                        }
+                        if (reviewContent) {
+                            reviewContent.style.opacity = '1';
+                            reviewContent.style.pointerEvents = 'auto';
+                        }
+
+                        // Scroll ke atas tab agar user sadar halaman berubah
+                        document.querySelector('.tab-link.active').scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    })
+                    .catch(err => console.error(err));
+            }
+        });
     </script>
 
 @endsection
