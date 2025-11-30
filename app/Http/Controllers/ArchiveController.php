@@ -8,6 +8,8 @@ use App\Models\DocumentFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/** @var \Illuminate\Pagination\LengthAwarePaginator $controlDocuments */
+
 class ArchiveController extends Controller
 {
     public function index(Request $request)

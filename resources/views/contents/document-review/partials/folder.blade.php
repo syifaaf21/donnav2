@@ -24,358 +24,364 @@
                 <li class="text-gray-700 font-medium">{{ $docCode }}</li>
             </ol>
         </nav>
-        <!-- Search & Filter Bar -->
-        <form id="searchForm" action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
-            method="GET" class="flex justify-end items-center w-auto">
+        <div class="bg-white rounded-xl shadow-lg p-4">
+            <!-- Search & Filter Bar -->
+            <form id="searchForm" action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
+                method="GET" class="flex justify-end items-center w-auto">
 
-            <!-- Search Input (bentuk asli) -->
-            <div class="relative w-96">
-                <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
-                    class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
+                <!-- Search Input (bentuk asli) -->
+                <div class="relative w-96">
+                    <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
+                        class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
              focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                    placeholder="Type to search...">
+                        placeholder="Type to search...">
 
-                <label for="searchInput"
-                    class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
+                    <label for="searchInput"
+                        class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
                         text-gray-400 text-sm
                         {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
-                    Type to search...
-                </label>
+                        Type to search...
+                    </label>
 
-                <button type="submit"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
                         rounded-lg text-gray-400 hover:text-blue-700 transition">
-                    <i data-feather="search" class="w-5 h-5"></i>
-                </button>
-
-                @if (request('q'))
-                    <button type="button" id="clearSearch"
-                        class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
-                        onclick="document.getElementById('searchInput').value=''; this.form.submit();">
-                        <i data-feather="x" class="w-5 h-5"></i>
+                        <i data-feather="search" class="w-5 h-5"></i>
                     </button>
-                @endif
-            </div>
 
-            <!-- Filter Button -->
-            <button type="button"
-                class="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
-                data-bs-toggle="modal" data-bs-target="#filterModal">
-                <i class="bi bi-funnel"></i>
-            </button>
-        </form>
+                    @if (request('q'))
+                        <button type="button" id="clearSearch"
+                            class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
+                            onclick="document.getElementById('searchInput').value=''; this.form.submit();">
+                            <i data-feather="x" class="w-5 h-5"></i>
+                        </button>
+                    @endif
+                </div>
+
+                <!-- Filter Button -->
+                <button type="button"
+                    class="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
+                    data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </form>
 
 
-        <!-- Modal Filter -->
-        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content rounded-2xl">
+            <!-- Modal Filter -->
+            <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content rounded-2xl">
 
-                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
-                        method="GET">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-
-                        <div class="modal-body space-y-4">
-
-                            <!-- Part Number -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Part Number</label>
-                                <select name="part_number" id="modalPart" class="form-select rounded-lg py-2">
-                                    <option value="">All Part Numbers</option>
-                                    @foreach ($partNumbers as $part)
-                                        <option value="{{ $part }}" @selected(request('part_number') == $part)>
-                                            {{ $part }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                        <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
+                            method="GET">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
 
-                            <!-- Model -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Model</label>
-                                <select name="model" id="modalModel" class="form-select rounded-lg py-2">
-                                    <option value="">All Models</option>
-                                    @foreach ($models as $model)
-                                        <option value="{{ $model }}" @selected(request('model') == $model)>
-                                            {{ $model }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <div class="modal-body space-y-4">
 
-                            <!-- Process -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Process</label>
-                                <select name="process" id="modalProcess" class="form-select rounded-lg py-2">
-                                    <option value="">All Processes</option>
-                                    @foreach ($processes as $process)
-                                        <option value="{{ $process }}" @selected(request('process') == $process)>
-                                            {{ ucwords($process) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <!-- Product -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Product</label>
-                                <select name="product" id="modalProduct" class="form-select rounded-lg py-2">
-                                    <option value="">All Products</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product }}" @selected(request('product') == $product)>
-                                            {{ $product }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer flex justify-between">
-                            <button type="button" id="clearFilterBtn"
-                                class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
-                                Clear
-                            </button>
+                                <!-- Part Number -->
+                                <div class="flex flex-col">
+                                    <label class="form-label font-semibold text-gray-700 mb-1">Part Number</label>
+                                    <select name="part_number" id="modalPart" class="form-select rounded-lg py-2">
+                                        <option value="">All Part Numbers</option>
+                                        @foreach ($partNumbers as $part)
+                                            <option value="{{ $part }}" @selected(request('part_number') == $part)>
+                                                {{ $part }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 text-white hover:bg-sky-700">
-                                Apply Filter
-                            </button>
-                        </div>
-                    </form>
+                                <!-- Model -->
+                                <div class="flex flex-col">
+                                    <label class="form-label font-semibold text-gray-700 mb-1">Model</label>
+                                    <select name="model" id="modalModel" class="form-select rounded-lg py-2">
+                                        <option value="">All Models</option>
+                                        @foreach ($models as $model)
+                                            <option value="{{ $model }}" @selected(request('model') == $model)>
+                                                {{ $model }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Process -->
+                                <div class="flex flex-col">
+                                    <label class="form-label font-semibold text-gray-700 mb-1">Process</label>
+                                    <select name="process" id="modalProcess" class="form-select rounded-lg py-2">
+                                        <option value="">All Processes</option>
+                                        @foreach ($processes as $process)
+                                            <option value="{{ $process }}" @selected(request('process') == $process)>
+                                                {{ ucwords($process) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <!-- Product -->
+                                <div class="flex flex-col">
+                                    <label class="form-label font-semibold text-gray-700 mb-1">Product</label>
+                                    <select name="product" id="modalProduct" class="form-select rounded-lg py-2">
+                                        <option value="">All Products</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{ $product }}" @selected(request('product') == $product)>
+                                                {{ $product }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer flex justify-between">
+                                <button type="button" id="clearFilterBtn"
+                                    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                    Clear
+                                </button>
+
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 text-white hover:bg-sky-700">
+                                    Apply Filter
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Table -->
-        <!-- New Modern Dribbble-Style Table -->
-        <div
-            class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
-            <table class="min-w-full text-sm text-gray-700">
-                <thead class="sticky top-0 z-10">
-                    <tr class="bg-gray-50 border-b border-gray-200">
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Number
-                        </th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part Number</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Product</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Process</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Notes</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Deadline</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last Update</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Status</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                            Actions</th>
-                    </tr>
-                </thead>
+            <!-- Table -->
+            <!-- New Modern Dribbble-Style Table -->
+            <div
+                class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px] mt-4">
+                <table class="min-w-full text-sm text-gray-700">
+                    <thead class="sticky top-0 z-10">
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document
+                                Number
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part Number
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Product</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Process</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Notes</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Deadline</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last Update
+                            </th>
+                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Status</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                Actions</th>
+                        </tr>
+                    </thead>
 
-                <tbody class="divide-y divide-gray-100">
-                    @forelse ($documents as $doc)
-                        <tr class="hover:bg-gray-50 transition-all duration-150">
-                            <td class="px-4 py-3">
-                                {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->iteration }}
-                            </td>
-                            <td class="px-4 py-3 font-medium text-gray-800">
-                                {{ $doc->document_number ?? '-' }}
-                            </td>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse ($documents as $doc)
+                            <tr class="hover:bg-gray-50 transition-all duration-150">
+                                <td class="px-4 py-3">
+                                    {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->iteration }}
+                                </td>
+                                <td class="px-4 py-3 font-medium text-gray-800">
+                                    {{ $doc->document_number ?? '-' }}
+                                </td>
 
-                            <td class="px-4 py-3">
-                                @if ($doc->partNumber->isNotEmpty())
-                                    {{ $doc->partNumber->pluck('part_number')->join(', ') }}
-                                @else
-                                    -
-                                @endif
-                            </td>
+                                <td class="px-4 py-3">
+                                    @if ($doc->partNumber->isNotEmpty())
+                                        {{ $doc->partNumber->pluck('part_number')->join(', ') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
 
-                            <td class="px-4 py-3">
-                                @if ($doc->product->isNotEmpty())
-                                    {{ $doc->product->pluck('name')->join(', ') }}
-                                @else
-                                    -
-                                @endif
-                            </td>
+                                <td class="px-4 py-3">
+                                    @if ($doc->product->isNotEmpty())
+                                        {{ $doc->product->pluck('name')->join(', ') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
 
-                            <td class="px-4 py-3">
-                                @if ($doc->productModel->isNotEmpty())
-                                    {{ $doc->productModel->pluck('name')->join(', ') }}
-                                @else
-                                    -
-                                @endif
-                            </td>
+                                <td class="px-4 py-3">
+                                    @if ($doc->productModel->isNotEmpty())
+                                        {{ $doc->productModel->pluck('name')->join(', ') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
 
-                            <td class="px-4 py-3 capitalize">
-                                @if ($doc->process->isNotEmpty())
-                                    {{ $doc->process->pluck('code')->join(', ') }}
-                                @else
-                                    -
-                                @endif
-                            </td>
+                                <td class="px-4 py-3 capitalize">
+                                    @if ($doc->process->isNotEmpty())
+                                        {{ $doc->process->pluck('code')->join(', ') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
 
-                            <td class="px-4 py-3 max-w-[250px]">
-                                <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug">
-                                    {!! $doc->notes ?? '-' !!}
-                                </div>
-                            </td>
-
-                            <td class="px-4 py-3">
-                                <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
-                            </td>
-
-                            <td class="px-4 py-3">{{ $doc->user?->name ?? '-' }}</td>
-
-                            <td class="px-4 py-3">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
-
-                            @php
-                                $statusName = strtolower($doc->status?->name ?? '');
-                                $statusClass = match ($statusName) {
-                                    'approved'
-                                        => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
-                                    'rejected'
-                                        => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
-                                    'need review'
-                                        => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
-                                    default
-                                        => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
-                                };
-                            @endphp
-                            <td class="px-4 py-3">
-                                <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
-                            </td>
-
-                            <td class="px-4 py-3 text-center">
-                                <div class="flex justify-center items-center gap-2 relative">
-                                    {{-- ================= FILE BUTTON ================= --}}
-                                    <div class="relative inline-block overflow-visible">
-                                        @php
-                                            $files = $doc->files
-                                                ->map(
-                                                    fn($f) => [
-                                                        'name' => $f->file_name ?? basename($f->file_path),
-                                                        'url' => asset('storage/' . $f->file_path),
-                                                    ],
-                                                )
-                                                ->toArray();
-                                        @endphp
-
-                                        @if (count($files) > 1)
-                                            <button id="viewFilesBtn-{{ $doc->id }}" type="button"
-                                                title="View File"
-                                                class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
-                                                <i data-feather="file-text" class="w-6 h-6"></i>
-                                                <span
-                                                    class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                                                    {{ count($files) }}
-                                                </span>
-                                            </button>
-
-                                            <div id="viewFilesDropdown-{{ $doc->id }}"
-                                                class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
-                                                <div class="py-1 text-sm max-h-80 overflow-y-auto">
-                                                    @foreach ($files as $file)
-                                                        <button type="button" title="View File"
-                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                            data-file="{{ $file['url'] }}">
-                                                            📄 {{ $file['name'] }}
-                                                        </button>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @elseif(count($files) === 1)
-                                            @php
-                                                $fileUrl = $files[0]['url'] ?? '#';
-                                            @endphp
-                                            <button type="button" title="View File"
-                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 text-white bg-cyan-500 hover:bg-cyan-600 view-file-btn"
-                                                data-file="{{ $fileUrl }}">
-                                                <i data-feather="file-text" class="w-4 h-4"></i>
-                                            </button>
-                                        @endif
-
+                                <td class="px-4 py-3 max-w-[250px]">
+                                    <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug">
+                                        {!! $doc->notes ?? '-' !!}
                                     </div>
+                                </td>
 
-                                    {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
-                                    <div class="relative inline-block text-left">
-                                        <button type="button"
-                                            onclick="document.getElementById('actionMenu-{{ $doc->id }}').classList.toggle('hidden')"
-                                            class="w-8 h-8 flex justify-center items-center rounded-full hover:bg-gray-200">
-                                            <i class="bi bi-three-dots-vertical text-lg"></i>
-                                        </button>
+                                <td class="px-4 py-3">
+                                    <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
+                                </td>
 
-                                        <div id="actionMenu-{{ $doc->id }}"
-                                            class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
+                                <td class="px-4 py-3">{{ $doc->user?->name ?? '-' }}</td>
 
-                                            {{-- Edit --}}
+                                <td class="px-4 py-3">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
+
+                                @php
+                                    $statusName = strtolower($doc->status?->name ?? '');
+                                    $statusClass = match ($statusName) {
+                                        'approved'
+                                            => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                                        'rejected'
+                                            => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                                        'need review'
+                                            => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
+                                        default
+                                            => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
+                                    };
+                                @endphp
+                                <td class="px-4 py-3">
+                                    <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
+                                </td>
+
+                                <td class="px-4 py-3 text-center">
+                                    <div class="flex justify-center items-center gap-2 relative">
+                                        {{-- ================= FILE BUTTON ================= --}}
+                                        <div class="relative inline-block overflow-visible">
                                             @php
-                                                // Roles
-                                                $roles = auth()
-                                                    ->user()
-                                                    ->roles->pluck('name')
-                                                    ->map(fn($r) => strtolower($r))
+                                                $files = $doc->files
+                                                    ->map(
+                                                        fn($f) => [
+                                                            'name' => $f->file_name ?? basename($f->file_path),
+                                                            'url' => asset('storage/' . $f->file_path),
+                                                        ],
+                                                    )
                                                     ->toArray();
-                                                $isAdminOrSuper =
-                                                    in_array('admin', $roles) || in_array('super admin', $roles);
-
-                                                // Ambil semua department user (many-to-many)
-                                                $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
-
-                                                // Ambil department dokumen
-                                                $docDeptId = $doc->department_id ?? ($doc->department->id ?? null);
-
-                                                // Cek apakah user punya department yg sama dengan dokumen
-                                                $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
                                             @endphp
 
-                                            @if ($isAdminOrSuper || $sameDepartment)
-                                                <button type="button"
-                                                    class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
+                                            @if (count($files) > 1)
+                                                <button id="viewFilesBtn-{{ $doc->id }}" type="button"
+                                                    title="View File"
+                                                    class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
+                                                    <i data-feather="file-text" class="w-6 h-6"></i>
+                                                    <span
+                                                        class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                        {{ count($files) }}
+                                                    </span>
+                                                </button>
+
+                                                <div id="viewFilesDropdown-{{ $doc->id }}"
+                                                    class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                    <div class="py-1 text-sm max-h-80 overflow-y-auto">
+                                                        @foreach ($files as $file)
+                                                            <button type="button" title="View File"
+                                                                class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
+                                                                data-file="{{ $file['url'] }}">
+                                                                📄 {{ $file['name'] }}
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @elseif(count($files) === 1)
+                                                @php
+                                                    $fileUrl = $files[0]['url'] ?? '#';
+                                                @endphp
+                                                <button type="button" title="View File"
+                                                    class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 text-white bg-cyan-500 hover:bg-cyan-600 view-file-btn"
+                                                    data-file="{{ $fileUrl }}">
+                                                    <i data-feather="file-text" class="w-4 h-4"></i>
+                                                </button>
+                                            @endif
+
+                                        </div>
+
+                                        {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
+                                        <div class="relative inline-block text-left">
+                                            <button type="button"
+                                                onclick="document.getElementById('actionMenu-{{ $doc->id }}').classList.toggle('hidden')"
+                                                class="w-8 h-8 flex justify-center items-center rounded-full hover:bg-gray-200">
+                                                <i class="bi bi-three-dots-vertical text-lg"></i>
+                                            </button>
+
+                                            <div id="actionMenu-{{ $doc->id }}"
+                                                class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
+
+                                                {{-- Edit --}}
+                                                @php
+                                                    // Roles
+                                                    $roles = auth()
+                                                        ->user()
+                                                        ->roles->pluck('name')
+                                                        ->map(fn($r) => strtolower($r))
+                                                        ->toArray();
+                                                    $isAdminOrSuper =
+                                                        in_array('admin', $roles) || in_array('super admin', $roles);
+
+                                                    // Ambil semua department user (many-to-many)
+                                                    $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
+
+                                                    // Ambil department dokumen
+                                                    $docDeptId = $doc->department_id ?? ($doc->department->id ?? null);
+
+                                                    // Cek apakah user punya department yg sama dengan dokumen
+                                                    $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
+                                                @endphp
+
+                                                @if ($isAdminOrSuper || $sameDepartment)
+                                                    <button type="button"
+                                                        class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600
                                                         disabled:text-yellow-300 disabled:hover:bg-white"
-                                                    data-doc-id="{{ $doc->id }}" title="Edit Document"
-                                                    @if ($statusName === 'need review') disabled @endif>
-                                                    <i class="bi bi-pencil mr-2"></i> Edit
-                                                </button>
-                                            @endif
+                                                        data-doc-id="{{ $doc->id }}" title="Edit Document"
+                                                        @if ($statusName === 'need review') disabled @endif>
+                                                        <i class="bi bi-pencil mr-2"></i> Edit
+                                                    </button>
+                                                @endif
 
-                                            {{-- Approve --}}
-                                            @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']))
-                                                <button type="button"
-                                                    class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-green-600
+                                                {{-- Approve --}}
+                                                @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']))
+                                                    <button type="button"
+                                                        class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-green-600
                                                         disabled:text-green-300 disabled:hover:bg-white btn-approve"
-                                                    data-id="{{ $doc->id }}"
-                                                    @if ($statusName !== 'need review') disabled @endif>
-                                                    <i class="bi bi-check2-circle mr-2"></i> Approve
-                                                </button>
+                                                        data-id="{{ $doc->id }}"
+                                                        @if ($statusName !== 'need review') disabled @endif>
+                                                        <i class="bi bi-check2-circle mr-2"></i> Approve
+                                                    </button>
 
-                                                {{-- Reject --}}
-                                                <button type="button"
-                                                    class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-red-600
+                                                    {{-- Reject --}}
+                                                    <button type="button"
+                                                        class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-red-600
                                                         disabled:text-red-300 disabled:hover:bg-white"
-                                                    data-bs-toggle="modal" data-bs-target="#rejectModal"
-                                                    data-id="{{ $doc->id }}"
-                                                    @if ($statusName !== 'need review') disabled @endif>
-                                                    <i class="bi bi-x-circle mr-2"></i> Reject
-                                                </button>
-                                            @endif
+                                                        data-bs-toggle="modal" data-bs-target="#rejectModal"
+                                                        data-id="{{ $doc->id }}"
+                                                        @if ($statusName !== 'need review') disabled @endif>
+                                                        <i class="bi bi-x-circle mr-2"></i> Reject
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
+                                </td>
 
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="12">
-                                <div
-                                    class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
-                                    <i class="bi bi-inbox text-4xl"></i>
-                                    <span>No Documents found</span>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-4">
-            {{ $documents->withQueryString()->links('vendor.pagination.tailwind') }}
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="12">
+                                    <div
+                                        class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
+                                        <i class="bi bi-inbox text-4xl"></i>
+                                        <span>No Documents found</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                {{ $documents->withQueryString()->links('vendor.pagination.tailwind') }}
+            </div>
         </div>
     </div>
 
@@ -612,24 +618,24 @@
                         <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
                         <div class="space-y-2">
                         ${data.files.map(file => `
-                                                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
-                                                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                                                                                            <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
+                                                                                                                                                                                <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                                                                                        <div class="flex gap-2">
-                                                                                                                                                                            <a href="/storage/${file.file_path}"
-                                                                                                                                                                               target="_blank"
-                                                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                                                                                                               View
-                                                                                                                                                                            </a>
+                                                                                                                                                                                <div class="flex gap-2">
+                                                                                                                                                                                    <a href="/storage/${file.file_path}"
+                                                                                                                                                                                       target="_blank"
+                                                                                                                                                                                       class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                                                                                                       View
+                                                                                                                                                                                    </a>
 
-                                                                                                                                                                            <button type="button"
-                                                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                                                                                                data-file-id="${file.id}">
-                                                                                                                                                                                Replace
-                                                                                                                                                                            </button>
-                                                                                                                                                                        </div>
-                                                                                                                                                                    </div>
-                                                                                                                                                                `).join('')}
+                                                                                                                                                                                    <button type="button"
+                                                                                                                                                                                        class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                                                                                        data-file-id="${file.id}">
+                                                                                                                                                                                        Replace
+                                                                                                                                                                                    </button>
+                                                                                                                                                                                </div>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        `).join('')}
                         </div>
                     `;
                             })
@@ -692,10 +698,10 @@
                                 class="block w-full border border-gray-300 rounded p-1 text-sm">
 
                             ${oldFileId ? `
-                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
-                                                                                                                                                                    ` : `
-                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
-                                                                                                                                                                    `}
+                                                                                                                                                                                <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
+                                                                                                                                                                            ` : `
+                                                                                                                                                                                <input type="hidden" name="revision_file_ids[]" value="">
+                                                                                                                                                                            `}
 
                                     <button type="button"
                                             class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">

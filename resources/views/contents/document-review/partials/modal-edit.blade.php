@@ -143,3 +143,13 @@
 
     });
 </script>
+<style>
+    #reviseFilesContainer div > span {
+        display: inline-block;
+        max-width: 70%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+    }
+</style>
