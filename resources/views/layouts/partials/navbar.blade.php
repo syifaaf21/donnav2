@@ -1,6 +1,6 @@
 <header class="flex items-center justify-between mx-12 py-3">
     <div class="item-start bg-white border border-gray-100 px-3 py-1 rounded-lg shadow">
-        <h1 class="text-lg font-semibold">@yield('title', 'Dashboard')</h1>
+        <h1 class="text-lg text-choco font-bold">@yield('title', 'Dashboard')</h1>
     </div>
 
     <div class="flex items-center gap-4 ml-auto ">
@@ -9,7 +9,7 @@
             <button id="notificationBtn" type="button" class="relative focus:outline-none"
                 aria-haspopup="true" aria-controls="notificationDropdown" aria-expanded="false" title="Notifications">
                 <span class="sr-only">Open notifications</span>
-                <i data-feather="bell" class="w-6 h-6"></i>
+                <i data-feather="bell" class="w-6 h-6 text-choco"></i>
 
                 @php
                     $unreadCount = auth()->user()->unreadNotifications->count();
@@ -56,11 +56,11 @@
         <!-- Profile dropdown -->
         <div class="relative shadow rounded-xl border border-gray-100">
             <button id="profileDropdownBtn" type="button"
-                class="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm focus:outline-none"
+                class="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-choco rounded-lg text-sm focus:outline-none"
                 aria-haspopup="true" aria-controls="profileDropdownMenu" aria-expanded="false" title="Profile">
                 <span class="sr-only">Open profile menu</span>
                 <div
-                    class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold uppercase">
+                    class="w-8 h-8 rounded-full bg-blue-100 text-choco flex items-center justify-center font-bold uppercase">
                     {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                 </div>
 

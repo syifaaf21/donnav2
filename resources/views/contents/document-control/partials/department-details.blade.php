@@ -5,15 +5,21 @@
 @section('content')
     <div class="mx-auto px-4 py-6">
         <!-- Breadcrumb -->
-        <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
             <ol class="list-reset flex space-x-2">
-                <li><a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center"><i
-                            class="bi bi-house-door me-1"></i> Dashboard</a></li>
-                <li>/</li>
-                <li><a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline">Document Control</a>
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
                 </li>
                 <li>/</li>
-                <li class="text-gray-700 font-medium">Documents</li>
+                <li>
+                    <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline">
+                        <i class="bi bi-gear me-1"></i>Document Control
+                    </a>
+                </li>
+                <li>/</li>
+                <li class="text-gray-400 font-medium">Documents</li>
                 <li>/</li>
                 <li class="text-gray-700 font-medium">{{ $department->name }}</li>
             </ol>
@@ -35,6 +41,16 @@
              {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
+
+                        <!-- Clear Button -->
+                        @if (request('search'))
+                            <a href="{{ route('document-control.department', $department->name) }}"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                                    rounded-lg text-gray-400
+                                    hover:text-red-600 transition">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </a>
+                        @endif
                     </div>
                 </form>
             </div>

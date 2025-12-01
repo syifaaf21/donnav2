@@ -30,27 +30,44 @@
                         {{ request('search')
                             ? '-top-3 text-xs text-sky-600'
                             : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Search archived documents...
                         </label>
+
+                        <!-- Clear Button -->
+                        @if (request('search'))
+                            <a href="{{ route('archive.index') }}"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                                    rounded-lg text-gray-400
+                                    hover:text-red-600 transition">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </a>
+                        @endif
                     </div>
                 </form>
             </div>
             <div class="bg-white p-6 rounded shadow">
 
                 {{-- TAB --}}
-                <ul class="flex border-b mb-4">
-                    <li class="mr-4">
-                        <a href="#tab-control" class="tab-link active px-4 py-2 inline-block font-semibold text-blue-600">
-                            Document Control
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#tab-review" class="tab-link px-4 py-2 inline-block font-semibold text-gray-600">
-                            Document Review
-                        </a>
-                    </li>
-                </ul>
+                <div id="typeTab" role="tablist" aria-label="Archive tabs" class="flex border-b space-x-2">
+                    <button id="tab-btn-control"
+                        role="tab"
+                        aria-controls="tab-control"
+                        aria-selected="true"
+                        data-target="#tab-control"
+                        class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-white text-blue-600 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        Document Control
+                    </button>
+
+                    <button id="tab-btn-review"
+                        role="tab"
+                        aria-controls="tab-review"
+                        aria-selected="false"
+                        data-target="#tab-review"
+                        class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-transparent text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        Document Review
+                    </button>
+                </div>
 
                 {{-- CONTENT --}}
                 <div id="tab-control" class="tab-content block">
@@ -87,87 +104,247 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        {{-- SCRIPT TABS --}}
-        <script>
-            // Tab click handling and hash persistence
-            function activateTab(hash) {
-                const target = hash || window.location.hash || '#tab-control';
-                // Normalize
-                const normalized = target.startsWith('#') ? target : `#${target}`;
+    {{-- SCRIPT TABS --}}
+    <script>
+        // Tabs: accessible behavior, keyboard nav, hash + localStorage persistence
+        function setActiveTabButton(btn, pushHistory = true) {
+            if (!btn) return;
+            // update buttons
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.setAttribute('aria-selected', 'false');
+                b.classList.remove('text-blue-600', 'bg-white');
+                b.classList.add('text-gray-600', 'bg-transparent');
+            });
 
-                // Toggle active/inactive styles explicitly to avoid Tailwind utility conflicts
-                document.querySelectorAll('.tab-link').forEach(t => {
-                    t.classList.remove('active', 'text-blue-600');
-                    // ensure inactive tab uses gray color
-                    t.classList.add('text-gray-600');
-                });
+            btn.setAttribute('aria-selected', 'true');
+            btn.classList.remove('text-gray-600', 'bg-transparent');
+            btn.classList.add('text-blue-600', 'bg-white');
 
-                const activeLink = document.querySelector(`.tab-link[href="${normalized}"]`);
-                if (activeLink) {
-                    activeLink.classList.add('active', 'text-blue-600');
-                    activeLink.classList.remove('text-gray-600');
-                }
+            // update contents
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            const target = document.querySelector(btn.dataset.target);
+            if (target) target.classList.remove('hidden');
 
-                // Show/hide contents
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-                const content = document.querySelector(normalized);
-                if (content) content.classList.remove('hidden');
+            // update URL hash (without scrolling)
+            if (pushHistory) {
+                history.replaceState(null, '', btn.dataset.target);
             }
 
-            document.querySelectorAll('.tab-link').forEach(tab => {
-                tab.addEventListener('click', function(e) {
+            // persist selection as fallback
+            try { localStorage.setItem('archive_active_tab', btn.dataset.target); } catch (e) {}
+        }
+
+        function activateTabByHash(hash) {
+            if (!hash) return null;
+            const normalized = hash.startsWith('#') ? hash : `#${hash}`;
+            const btn = document.querySelector(`.tab-btn[data-target="${normalized}"]`);
+            if (btn) setActiveTabButton(btn, false);
+            return btn;
+        }
+
+        function initTabInterface() {
+            const buttons = Array.from(document.querySelectorAll('.tab-btn'));
+
+            buttons.forEach((btn, idx) => {
+                btn.addEventListener('click', (e) => {
+                    setActiveTabButton(e.currentTarget);
+                });
+
+                btn.addEventListener('keydown', (e) => {
+                    if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
                     e.preventDefault();
-                    const href = this.getAttribute('href');
-                    // update hash without scrolling
-                    history.replaceState(null, '', href);
-                    activateTab(href);
+                    let newIdx = idx;
+                    if (e.key === 'ArrowRight') newIdx = (idx + 1) % buttons.length;
+                    if (e.key === 'ArrowLeft') newIdx = (idx - 1 + buttons.length) % buttons.length;
+                    if (e.key === 'Home') newIdx = 0;
+                    if (e.key === 'End') newIdx = buttons.length - 1;
+                    buttons[newIdx].focus();
+                    setActiveTabButton(buttons[newIdx]);
                 });
             });
 
-            // On load, activate based on hash (or default)
-            activateTab(window.location.hash || '#tab-control');
+            // initial activation: hash -> saved -> default
+            const hash = window.location.hash;
+            const saved = localStorage.getItem('archive_active_tab');
+            if (hash && document.querySelector(`.tab-btn[data-target="${hash}"]`)) {
+                activateTabByHash(hash);
+            } else if (saved && document.querySelector(`.tab-btn[data-target="${saved}"]`)) {
+                activateTabByHash(saved);
+            } else {
+                // default
+                const first = document.querySelector('.tab-btn[data-target="#tab-control"]') || buttons[0];
+                if (first) setActiveTabButton(first, false);
+            }
+        }
 
-            // === AJAX SEARCH ===
-            const searchInput = document.getElementById('archiveSearchInput');
-            const archiveFilterForm = document.getElementById('archiveFilterForm');
+        // initialize tabs when script runs
+        initTabInterface();
 
-            searchInput.addEventListener('input', debounce(function() {
-                performSearch();
-            }, 300));
+        // === AJAX SEARCH ===
+        const searchInput = document.getElementById('archiveSearchInput');
+        const archiveFilterForm = document.getElementById('archiveFilterForm');
 
-            function performSearch() {
-                const query = searchInput.value.trim();
+        searchInput.addEventListener('input', debounce(function() {
+            performSearch();
+        }, 300));
 
-                // Show loading state on both tabs
-                const controlContent = document.getElementById('tab-control');
-                const reviewContent = document.getElementById('tab-review');
+        function performSearch() {
+            const query = searchInput.value.trim();
 
-                if (controlContent) controlContent.style.opacity = '0.6';
-                if (controlContent) controlContent.style.pointerEvents = 'none';
-                if (reviewContent) reviewContent.style.opacity = '0.6';
-                if (reviewContent) reviewContent.style.pointerEvents = 'none';
+            // Show loading state on both tabs
+            const controlContent = document.getElementById('tab-control');
+            const reviewContent = document.getElementById('tab-review');
 
-                // AJAX request - get results for both tabs
-                fetch(`{{ route('archive.search') }}?q=${encodeURIComponent(query)}`)
+            if (controlContent) controlContent.style.opacity = '0.6';
+            if (controlContent) controlContent.style.pointerEvents = 'none';
+            if (reviewContent) reviewContent.style.opacity = '0.6';
+            if (reviewContent) reviewContent.style.pointerEvents = 'none';
+
+            // AJAX request - get results for both tabs
+            fetch(`{{ route('archive.search') }}?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update control tab
+                        if (controlContent && data.control.html) {
+                            controlContent.innerHTML = data.control.html;
+                        }
+
+                        // Update review tab
+                        if (reviewContent && data.review.html) {
+                            reviewContent.innerHTML = data.review.html;
+                        }
+
+                        // Ensure currently active tab remains visible after content replace
+                        // re-run tab init only if tab buttons have been re-rendered; otherwise keep current selection
+                        initTabInterface();
+                    }
+
+                    // Remove loading state
+                    if (controlContent) {
+                        controlContent.style.opacity = '1';
+                        controlContent.style.pointerEvents = 'auto';
+                    }
+                    if (reviewContent) {
+                        reviewContent.style.opacity = '1';
+                        reviewContent.style.pointerEvents = 'auto';
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+
+                    // Remove loading state on error
+                    if (controlContent) {
+                        controlContent.style.opacity = '1';
+                        controlContent.style.pointerEvents = 'auto';
+                    }
+                    if (reviewContent) {
+                        reviewContent.style.opacity = '1';
+                        reviewContent.style.pointerEvents = 'auto';
+                    }
+                });
+        }
+
+        // Debounce utility
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function openFileViewer(url) {
+            const overlay = document.getElementById("fileViewerOverlay");
+            const panel = document.getElementById("fileViewerPanel");
+            const iframe = document.getElementById("fileViewerIframe");
+
+            // Set file URL
+            iframe.src = url;
+
+            // Show overlay
+            overlay.classList.remove("hidden");
+
+            // Slide panel IN
+            panel.classList.remove("translate-x-full");
+        }
+
+        function closeFileViewer() {
+            const overlay = document.getElementById("fileViewerOverlay");
+            const panel = document.getElementById("fileViewerPanel");
+            const iframe = document.getElementById("fileViewerIframe");
+
+            // Slide panel OUT
+            panel.classList.add("translate-x-full");
+
+            // Hide overlay after animation
+            setTimeout(() => {
+                overlay.classList.add("hidden");
+                iframe.src = ""; // Stop PDF from continuing to load
+            }, 300);
+        }
+
+        // ... function performSearch() di atas ...
+
+        // TAMBAHAN: Handle klik pagination agar tetap via AJAX (mencegah reload)
+        document.addEventListener('click', function(e) {
+            // Cek apakah yang diklik adalah link pagination di dalam tab-content
+            const link = e.target.closest('.tab-content .pagination a') || e.target.closest(
+                'nav[role="navigation"] a');
+
+            if (link) {
+                e.preventDefault(); // Stop reload halaman
+
+                const url = link.getAttribute('href');
+                if (!url) return;
+
+                // Ambil parameter query dari URL pagination tersebut
+                const urlObj = new URL(url);
+                const params = new URLSearchParams(urlObj.search);
+
+                // Pastikan search query yang ada di input juga terbawa (jika user sedang searching)
+                const currentSearch = document.getElementById('archiveSearchInput').value;
+                if (currentSearch) {
+                    params.set('q',
+                        currentSearch
+                    ); // Controller Anda pakai 'q' di method search, tapi 'search' di form HTML. Sesuaikan.
+                }
+
+                // Tentukan kita sedang di tab mana untuk loading state
+                const isControl = !!link.closest('#tab-control');
+                const contentDiv = isControl ? document.getElementById('tab-control') : document.getElementById('tab-review');
+
+                // UI Loading
+                if (contentDiv) {
+                    contentDiv.style.opacity = '0.5';
+                    contentDiv.style.pointerEvents = 'none';
+                }
+
+                // Panggil endpoint search controller (bukan index) karena kita butuh return JSON
+                // Kita ganti base URL nya ke route('archive.search')
+                const searchUrl = `{{ route('archive.search') }}?${params.toString()}`;
+
+                fetch(searchUrl)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.success) {
-                            // Update control tab
-                            if (controlContent && data.control.html) {
-                                controlContent.innerHTML = data.control.html;
-                            }
+                        const controlContent = document.getElementById('tab-control');
+                        const reviewContent = document.getElementById('tab-review');
 
-                            // Update review tab
-                            if (reviewContent && data.review.html) {
-                                reviewContent.innerHTML = data.review.html;
-                            }
-
-                            // Ensure currently active tab remains visible after content replace
-                            activateTab(window.location.hash || '#tab-control');
+                        // Update content sesuai response
+                        if (data.control && data.control.html) {
+                            controlContent.innerHTML = data.control.html;
+                        }
+                        if (data.review && data.review.html) {
+                            reviewContent.innerHTML = data.review.html;
                         }
 
-                        // Remove loading state
+                        // Restore opacity
                         if (controlContent) {
                             controlContent.style.opacity = '1';
                             controlContent.style.pointerEvents = 'auto';
@@ -176,138 +353,50 @@
                             reviewContent.style.opacity = '1';
                             reviewContent.style.pointerEvents = 'auto';
                         }
+
+                        // Scroll ke atas tab agar user sadar halaman berubah
+                        const activeBtn = document.querySelector('.tab-btn[aria-selected="true"]');
+                        if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth' });
                     })
-                    .catch(error => {
-                        console.error('Search error:', error);
-
-                        // Remove loading state on error
-                        if (controlContent) {
-                            controlContent.style.opacity = '1';
-                            controlContent.style.pointerEvents = 'auto';
-                        }
-                        if (reviewContent) {
-                            reviewContent.style.opacity = '1';
-                            reviewContent.style.pointerEvents = 'auto';
-                        }
-                    });
+                    .catch(err => console.error(err));
             }
+        });
+    </script>
 
-            // Debounce utility
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
+@endsection
 
-            function openFileViewer(url) {
-                const overlay = document.getElementById("fileViewerOverlay");
-                const panel = document.getElementById("fileViewerPanel");
-                const iframe = document.getElementById("fileViewerIframe");
+<style>
+    /* Base styling for tab buttons */
+    #typeTab .tab-btn {
+        color: #4B5563;
+        padding: 0.5rem 1rem;
+        transition: all 200ms;
+        background: transparent;
+        border-top: 2px solid transparent !important;
+    }
 
-                // Set file URL
-                iframe.src = url;
+    /* Hover style */
+    #typeTab .tab-btn:hover {
+        box-shadow: 2px 4px 12px rgba(148, 148, 148, 0.1);
+    }
 
-                // Show overlay
-                overlay.classList.remove("hidden");
+    /* ACTIVE TAB: Gradient + Shadow
+       Apply when JS sets aria-selected="true" or when an 'active' class exists.
+       Use higher specificity and !important for background to override utility classes like bg-white.
+    */
+    #typeTab .tab-btn[aria-selected="true"],
+    #typeTab .tab-btn.active {
+        background-image: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%) !important;
+        background-color: transparent !important;
+        color: #2563eb !important; /* text-blue-600 */
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+        transform: translateY(-1px);
+        font-weight: 600;
+    }
 
-                // Slide panel IN
-                panel.classList.remove("translate-x-full");
-            }
-
-            function closeFileViewer() {
-                const overlay = document.getElementById("fileViewerOverlay");
-                const panel = document.getElementById("fileViewerPanel");
-                const iframe = document.getElementById("fileViewerIframe");
-
-                // Slide panel OUT
-                panel.classList.add("translate-x-full");
-
-                // Hide overlay after animation
-                setTimeout(() => {
-                    overlay.classList.add("hidden");
-                    iframe.src = ""; // Stop PDF from continuing to load
-                }, 300);
-            }
-
-            // ... function performSearch() di atas ...
-
-            // TAMBAHAN: Handle klik pagination agar tetap via AJAX (mencegah reload)
-            document.addEventListener('click', function(e) {
-                // Cek apakah yang diklik adalah link pagination di dalam tab-content
-                const link = e.target.closest('.tab-content .pagination a') || e.target.closest(
-                    'nav[role="navigation"] a');
-
-                if (link) {
-                    e.preventDefault(); // Stop reload halaman
-
-                    const url = link.getAttribute('href');
-                    if (!url) return;
-
-                    // Ambil parameter query dari URL pagination tersebut
-                    const urlObj = new URL(url);
-                    const params = new URLSearchParams(urlObj.search);
-
-                    // Pastikan search query yang ada di input juga terbawa (jika user sedang searching)
-                    const currentSearch = document.getElementById('archiveSearchInput').value;
-                    if (currentSearch) {
-                        params.set('q',
-                            currentSearch
-                        ); // Controller Anda pakai 'q' di method search, tapi 'search' di form HTML. Sesuaikan.
-                    }
-
-                    // Tentukan kita sedang di tab mana untuk loading state
-                    const isControl = link.closest('#tab-control');
-                    const contentDiv = isControl ? document.getElementById('tab-control') : document.getElementById(
-                        'tab-review');
-
-                    // UI Loading
-                    if (contentDiv) {
-                        contentDiv.style.opacity = '0.5';
-                        contentDiv.style.pointerEvents = 'none';
-                    }
-
-                    // Panggil endpoint search controller (bukan index) karena kita butuh return JSON
-                    // Kita ganti base URL nya ke route('archive.search')
-                    const searchUrl = `{{ route('archive.search') }}?${params.toString()}`;
-
-                    fetch(searchUrl)
-                        .then(response => response.json())
-                        .then(data => {
-                            const controlContent = document.getElementById('tab-control');
-                            const reviewContent = document.getElementById('tab-review');
-
-                            // Update content sesuai response
-                            if (data.control && data.control.html) {
-                                controlContent.innerHTML = data.control.html;
-                            }
-                            if (data.review && data.review.html) {
-                                reviewContent.innerHTML = data.review.html;
-                            }
-
-                            // Restore opacity
-                            if (controlContent) {
-                                controlContent.style.opacity = '1';
-                                controlContent.style.pointerEvents = 'auto';
-                            }
-                            if (reviewContent) {
-                                reviewContent.style.opacity = '1';
-                                reviewContent.style.pointerEvents = 'auto';
-                            }
-
-                            // Scroll ke atas tab agar user sadar halaman berubah
-                            document.querySelector('.tab-link.active').scrollIntoView({
-                                behavior: 'smooth'
-                            });
-                        })
-                        .catch(err => console.error(err));
-                }
-            });
-        </script>
-
-    @endsection
+    /* Ensure focus ring remains visible */
+    #typeTab .tab-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+</style>
