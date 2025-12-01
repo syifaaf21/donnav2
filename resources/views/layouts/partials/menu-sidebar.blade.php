@@ -184,3 +184,10 @@
         feather.replace();
     });
 </script>
+
+<style>
+    /* Hilangkan underline pada semua link menu-sidebar */
+    .menu-item {
+        text-decoration: none !important;
+    }
+</style>
