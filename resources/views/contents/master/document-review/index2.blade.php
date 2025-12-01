@@ -62,13 +62,20 @@
                         <div class="relative w-96">
                             <input type="text" name="search" id="searchInput"
                                 class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                                placeholder="Type to search..." value="{{ request('search') }}">
+        focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm
+        placeholder-transparent"
+                                placeholder="Type to search..." />
 
                             <label for="searchInput"
-                                class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-             text-gray-400 text-sm
-             {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                class="absolute left-4 px-1 bg-white rounded text-gray-400 transition-all duration-150
+        pointer-events-none
+        -top-3 text-xs text-sky-600
+        peer-placeholder-shown:top-2.5
+        peer-placeholder-shown:text-sm
+        peer-placeholder-shown:text-gray-400
+        peer-focus:-top-3
+        peer-focus:text-xs
+        peer-focus:text-sky-600">
                                 Type to search...
                             </label>
                         </div>
@@ -286,8 +293,10 @@
                                                 </td>
                                                 <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 text-center">
-                                                    <div class="relative inline-block overflow-visible">
+                                                <td class="px-4 py-3 flex space-x-2 whitespace-nowrap action-column">
+                                                    {{-- FILE BUTTON AREA — fixed width --}}
+                                                    {{-- <div
+                                                        class="relative inline-block w-8 h-8 flex items-center justify-center">
                                                         @php $files = $doc->files->map(fn($f) => ['name' => $f->file_name ?? basename($f->file_path), 'url' => asset('storage/' . $f->file_path)])->toArray(); @endphp
                                                         @if (count($files) > 1)
                                                             <button id="viewFilesBtn-{{ $doc->id }}" type="button"
@@ -304,7 +313,7 @@
                                                                 <div class="py-1 text-sm max-h-80 overflow-y-auto">
                                                                     @foreach ($files as $file)
                                                                         <button type="button"
-                                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
+                                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate skip-style"
                                                                             data-file="{{ $file['url'] }}"
                                                                             title="View File">
                                                                             📄 {{ $file['name'] }}
@@ -314,12 +323,12 @@
                                                             </div>
                                                         @elseif(count($files) === 1)
                                                             <button type="button"
-                                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn"
+                                                                class="inline-flex items-center gap-1 text-xs font-medium px-3 p-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 view-file-btn skip-style "
                                                                 data-file="{{ $files[0]['url'] }}" title="View File">
                                                                 <i data-feather="file-text" class="w-4 h-4"></i>
                                                             </button>
                                                         @endif
-                                                    </div>
+                                                    </div> --}}
                                                     <button data-bs-toggle="modal"
                                                         data-bs-target="#editDocumentModal-{{ $doc->id }}"
                                                         class="w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200 skip-style"
@@ -637,6 +646,108 @@
                 });
                 // Inisialisasi dropdown sesuai tab aktif
                 updateFiltersForPlant(window.documentTabs.activeTab);
+
+                // Delegated click handler: toggle dropdowns and open file viewer
+                document.addEventListener('click', function(e) {
+                    // --- Toggle file dropdown ---
+                    const btn = e.target.closest('.toggle-files-dropdown');
+                    if (btn) {
+                        const id = btn.id.replace('viewFilesBtn-', '');
+                        const target = document.getElementById('viewFilesDropdown-' + id);
+
+                        // Close other dropdowns (restore if moved)
+                        document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
+                            if (d === target) return;
+                            if (d.dataset.moved === '1' && d._origParent) {
+                                d.style.position = '';
+                                d.style.left = '';
+                                d.style.top = '';
+                                d.classList.remove('dropdown-fixed');
+                                d.dataset.moved = '0';
+                                d._origParent.insertBefore(d, d._nextSibling);
+                            } else {
+                                d.classList.add('hidden');
+                            }
+                        });
+
+                        if (!target) return;
+
+                        const isHidden = target.classList.contains('hidden');
+
+                        if (isHidden) {
+                            // Move dropdown to body to escape overflow clipping and position it
+                            const rect = btn.getBoundingClientRect();
+                            target._origParent = target.parentNode;
+                            target._nextSibling = target.nextSibling;
+                            document.body.appendChild(target);
+                            target.style.position = 'fixed';
+                            target.style.left = (rect.left + window.scrollX) + 'px';
+                            target.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+                            target.classList.remove('hidden');
+                            target.classList.add('dropdown-fixed');
+                            target.dataset.moved = '1';
+                        } else {
+                            // Close and restore
+                            if (target.dataset.moved === '1' && target._origParent) {
+                                target.style.position = '';
+                                target.style.left = '';
+                                target.style.top = '';
+                                target.classList.remove('dropdown-fixed');
+                                target.dataset.moved = '0';
+                                target._origParent.insertBefore(target, target._nextSibling);
+                            } else {
+                                target.classList.add('hidden');
+                            }
+                        }
+
+                        return;
+                    }
+
+                    // --- Click on a file button (view) ---
+                    const fileBtn = e.target.closest('.view-file-btn');
+                    if (fileBtn) {
+                        // Close and restore any open dropdowns
+                        document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
+                            if (d.dataset.moved === '1' && d._origParent) {
+                                d.style.position = '';
+                                d.style.left = '';
+                                d.style.top = '';
+                                d.classList.remove('dropdown-fixed');
+                                d.dataset.moved = '0';
+                                d._origParent.insertBefore(d, d._nextSibling);
+                            } else {
+                                d.classList.add('hidden');
+                            }
+                        });
+
+                        // Remove any leftover backdrops
+                        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+
+                        const viewer = document.getElementById('fileViewer');
+                        viewer.src = fileBtn.dataset.file;
+
+                        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('viewFileModal'));
+                        modal.show();
+                        return;
+                    }
+
+                    // --- Click outside any dropdown: close all ---
+                    if (!e.target.closest('[id^="viewFilesDropdown-"]')) {
+                        document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
+                            if (d.dataset.moved === '1' && d._origParent) {
+                                d.style.position = '';
+                                d.style.left = '';
+                                d.style.top = '';
+                                d.classList.remove('dropdown-fixed');
+                                d.dataset.moved = '0';
+                                d._origParent.insertBefore(d, d._nextSibling);
+                            } else {
+                                d.classList.add('hidden');
+                            }
+                        });
+                    }
+                });
+
             });
         </script>
     @endpush

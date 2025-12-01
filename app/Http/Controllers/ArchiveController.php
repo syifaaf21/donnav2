@@ -27,7 +27,7 @@ class ArchiveController extends Controller
 
             // BERUBAH: Filter via relasi mapping
             $controlQuery->whereHas('mapping', function ($q) use ($userDeptIds) {
-                $q->whereIn('department_id', $userDeptIds); 
+                $q->whereIn('department_id', $userDeptIds);
             });
         }
 
@@ -51,9 +51,6 @@ class ArchiveController extends Controller
             ->where('is_active', false) // Ambil file non-aktif
             // Filter hanya dokumen tipe 'review' via parent
             ->whereHas('mapping.document', fn($q) => $q->where('type', 'review'));
-
-        // Note: Biasanya Review Document tidak ada filter department (sesuai kode lama Anda), 
-        // tapi jika butuh filter dept, tambahkan logic userDeptIds di sini seperti Control.
 
         $reviewDocuments = $reviewQuery->paginate(10, ['*'], 'page_review');
 
@@ -106,14 +103,14 @@ class ArchiveController extends Controller
             $reviewQuery->where(function ($q) use ($query) {
                 $q->where('original_name', 'like', "%$query%") // Cari Nama File
                     // Cari Document Number (Review biasanya pakai doc number)
-                    ->orWhereHas('mapping', fn($q2) => $q2->where('document_number', 'like', "%$query%")) 
+                    ->orWhereHas('mapping', fn($q2) => $q2->where('document_number', 'like', "%$query%"))
                     // Cari Dept Name
                     ->orWhereHas('mapping.department', fn($q2) => $q2->where('name', 'like', "%$query%"));
             });
         }
-        
+
         // Paginasi otomatis, tidak perlu LengthAwarePaginator manual lagi
-        $reviewDocuments = $reviewQuery->paginate(10); 
+        $reviewDocuments = $reviewQuery->paginate(10);
 
 
         return response()->json([

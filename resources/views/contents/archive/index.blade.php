@@ -19,18 +19,20 @@
         <div class="bg-white rounded-xl shadow-lg p-4">
             {{-- Search --}}
             <div id="archivedSearchBar" class="flex justify-end w-full mb-4">
-                <form id="archiveFilterForm" class="flex flex-col items-end w-auto space-y-1">
+                <form id="archiveFilterForm" action="{{ route('archive.search') }}"
+                    class="flex flex-col items-end w-auto space-y-1">
                     <div class="relative w-96">
                         <input type="text" name="search" id="archiveSearchInput"
                             class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-                        placeholder="Search
-                            archived documents..." value="{{ request('search') }}">
+             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                            placeholder="Search archived documents..." value="{{ request('search') }}">
+
                         <label for="archiveSearchInput"
                             class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
-                        {{ request('search')
-                            ? '-top-3 text-xs text-sky-600'
-                            : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                top-2.5
+                                peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5
+                                peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600
+                                floating-label">
                             Search archived documents...
                         </label>
 
@@ -46,23 +48,18 @@
                     </div>
                 </form>
             </div>
+
             <div class="bg-white p-6 rounded shadow">
 
                 {{-- TAB --}}
                 <div id="typeTab" role="tablist" aria-label="Archive tabs" class="flex border-b space-x-2">
-                    <button id="tab-btn-control"
-                        role="tab"
-                        aria-controls="tab-control"
-                        aria-selected="true"
+                    <button id="tab-btn-control" role="tab" aria-controls="tab-control" aria-selected="true"
                         data-target="#tab-control"
                         class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-white text-blue-600 focus:outline-none focus:ring-2 focus:ring-sky-500">
                         Document Control
                     </button>
 
-                    <button id="tab-btn-review"
-                        role="tab"
-                        aria-controls="tab-review"
-                        aria-selected="false"
+                    <button id="tab-btn-review" role="tab" aria-controls="tab-review" aria-selected="false"
                         data-target="#tab-review"
                         class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-transparent text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
                         Document Review
@@ -133,7 +130,9 @@
             }
 
             // persist selection as fallback
-            try { localStorage.setItem('archive_active_tab', btn.dataset.target); } catch (e) {}
+            try {
+                localStorage.setItem('archive_active_tab', btn.dataset.target);
+            } catch (e) {}
         }
 
         function activateTabByHash(hash) {
@@ -318,7 +317,8 @@
 
                 // Tentukan kita sedang di tab mana untuk loading state
                 const isControl = !!link.closest('#tab-control');
-                const contentDiv = isControl ? document.getElementById('tab-control') : document.getElementById('tab-review');
+                const contentDiv = isControl ? document.getElementById('tab-control') : document.getElementById(
+                    'tab-review');
 
                 // UI Loading
                 if (contentDiv) {
@@ -356,7 +356,9 @@
 
                         // Scroll ke atas tab agar user sadar halaman berubah
                         const activeBtn = document.querySelector('.tab-btn[aria-selected="true"]');
-                        if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth' });
+                        if (activeBtn) activeBtn.scrollIntoView({
+                            behavior: 'smooth'
+                        });
                     })
                     .catch(err => console.error(err));
             }
@@ -388,7 +390,8 @@
     #typeTab .tab-btn.active {
         background-image: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%) !important;
         background-color: transparent !important;
-        color: #2563eb !important; /* text-blue-600 */
+        color: #2563eb !important;
+        /* text-blue-600 */
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
         transform: translateY(-1px);
         font-weight: 600;
@@ -397,6 +400,6 @@
     /* Ensure focus ring remains visible */
     #typeTab .tab-btn:focus {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
 </style>
