@@ -44,7 +44,7 @@
 
                     <div class="flex-1">
                         <a href="{{ route('notifications.read', $notification->id) }}"
-                            class="block text-gray-800 hover:text-blue-600">
+                            class="notif-item block text-gray-800 hover:text-blue-600">
                             {{ $notification->data['message'] ?? 'No message' }}
                         </a>
                         <div class="text-xs text-gray-400">
@@ -133,3 +133,9 @@
         });
     </script>
 @endsection
+<style>
+    /* Hilangkan underline pada semua link menu-sidebar */
+    .notif-item {
+        text-decoration: none !important;
+    }
+</style>
