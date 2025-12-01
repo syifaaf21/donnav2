@@ -5,9 +5,9 @@
     $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
 @endphp
 @section('content')
-    <div class="container mx-auto my-2 px-4">
+    <div class="mx-auto my-2 px-4">
         {{-- Breadcrumbs --}}
-        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
             <ol class="list-reset flex space-x-2">
                 <li>
                     <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -24,7 +24,7 @@
                 <li class="text-gray-700 font-medium">Assign Auditee Action</li>
             </ol>
         </nav>
-        <div class="bg-white p-6 border border-gray-200 rounded-lg shadow-sm space-y-6 mt-2">
+        <div class="bg-white p-6 border border-gray-200 rounded-xl shadow-lg space-y-6 mt-2">
             {{-- Back button --}}
             <div class="mb-3">
                 <a href="{{ route('ftpp.index') }}"
