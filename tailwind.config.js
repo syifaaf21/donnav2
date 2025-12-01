@@ -35,7 +35,8 @@ module.exports = {
                 sidebar: "#1F3F74", // dark blue
                 sidebar2: "#f7f3ec",
                 matcha2: "#BED3CC", // light yellow
-                matcha: "#CADDE1",
+                matcha: "#C9D3DD",
+                choco: "#533a33", // brown
                 yale: "#2f4156", // deep blue
                 bgLight: "#f8efe5", // light blue
             },

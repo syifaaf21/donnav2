@@ -7,19 +7,17 @@
         {{-- Header: Breadcrumbs + Add Button --}}
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
-                <ol class="flex items-center space-x-2">
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
                     <li>
-                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
-                            <i class="bi bi-house-door"></i> Dashboard
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
                         </a>
                     </li>
                     <li>/</li>
-                    <li>Master</li>
+                    <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li>Documents</li>
-                    <li>/</li>
-                    <li class="text-gray-700 font-medium">Review</li>
+                    <li class="text-gray-700 font-medium">Document Review</li>
                 </ol>
             </nav>
 
@@ -44,8 +42,9 @@
                         <button type="button" @click="setActiveTab('{{ $slug }}')" role="tab"
                             aria-controls="tableContainer" :aria-selected="activeTab === '{{ $slug }}'"
                             :class="activeTab === '{{ $slug }}'
-                                ? 'bg-gradient-to-b from-blue-200 to-white fw-semibold text-md shadow-sm transition-shadow duration-200'
-                                : 'text-gray-600 hover:shadow-lg hover:border-x hover:border-t hover:border-gray-100 transition-shadow duration-200'"
+                                ?
+                                'bg-gradient-to-b from-blue-200 to-white fw-semibold text-md shadow-sm transition-shadow duration-200' :
+                                'text-gray-600 hover:shadow-lg hover:border-x hover:border-t hover:border-gray-100 transition-shadow duration-200'"
                             class="flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1">
                             <span class="truncate max-w-[10rem]">{{ ucwords(strtolower($plant)) }}</span>
                             <span

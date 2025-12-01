@@ -5,13 +5,16 @@
     <div class="px-6">
         {{-- Header --}}
         <div class="flex justify-between items-center  w-1/4 mb-4">
-            <nav class="bg-white pr-5 pt-2 border border-gray-100 shadow rounded-lg text-sm text-gray-500">
-                <ol class="flex items-center space-x-2">
-                    <li><a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center gap-1">
-                            <i class="bi bi-house-door"></i> Dashboard</a>
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
                     </li>
                     <li>/</li>
-                    <li>Master</li>
+                    <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
                     <li class="text-gray-700 font-medium">User</li>
                 </ol>
@@ -42,22 +45,25 @@
                     <nav class="flex-1" aria-label="User categories">
                         <ul class="nav nav-tabs" id="userTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane"
-                                    type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">
+                                <button class="nav-link active" id="all-tab" data-bs-toggle="tab"
+                                    data-bs-target="#all-tab-pane" type="button" role="tab"
+                                    aria-controls="all-tab-pane" aria-selected="true">
                                     <i class="bi bi-people-fill me-1"></i>
                                     <span class="align-middle">All Users</span>
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="depthead-tab" data-bs-toggle="tab" data-bs-target="#depthead-tab-pane"
-                                    type="button" role="tab" aria-controls="depthead-tab-pane" aria-selected="false">
+                                <button class="nav-link" id="depthead-tab" data-bs-toggle="tab"
+                                    data-bs-target="#depthead-tab-pane" type="button" role="tab"
+                                    aria-controls="depthead-tab-pane" aria-selected="false">
                                     <i class="bi bi-person-badge me-1"></i>
                                     <span class="align-middle">Department Heads</span>
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="auditor-tab" data-bs-toggle="tab" data-bs-target="#auditor-tab-pane"
-                                    type="button" role="tab" aria-controls="auditor-tab-pane" aria-selected="false">
+                                <button class="nav-link" id="auditor-tab" data-bs-toggle="tab"
+                                    data-bs-target="#auditor-tab-pane" type="button" role="tab"
+                                    aria-controls="auditor-tab-pane" aria-selected="false">
                                     <i class="bi bi-shield-check me-1"></i>
                                     <span class="align-middle">Auditors</span>
                                 </button>
@@ -68,7 +74,8 @@
                     {{-- Optional small helper area (keeps layout tidy, doesn't change tab logic) --}}
                     <div class="hidden sm:flex items-center gap-3 text-sm text-gray-500">
                         <span class="whitespace-nowrap">Showing by category</span>
-                        <i class="bi bi-info-circle" data-bs-title="Switch tabs to filter users" role="img" aria-hidden="true"></i>
+                        <i class="bi bi-info-circle" data-bs-title="Switch tabs to filter users" role="img"
+                            aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
@@ -443,8 +450,10 @@
     /* ACTIVE TAB: Gradient + Shadow */
     #userTabs .nav-link.active {
         color: white !important;
-        background: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%); /* bg-gradient-to-b from-blue-200 to-white */
-        color: #2563eb !important; /* text-blue (blue-600) */
+        background: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%);
+        /* bg-gradient-to-b from-blue-200 to-white */
+        color: #2563eb !important;
+        /* text-blue (blue-600) */
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0);
         transform: translateY(-1px);
         font-weight: 600;
