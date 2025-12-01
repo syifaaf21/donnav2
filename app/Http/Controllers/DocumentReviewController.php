@@ -176,15 +176,17 @@ class DocumentReviewController extends Controller
         }
 
         // 5. Pagination manual (karena Collection)
-        $documents = $documents->map(function ($doc) {
-            // pastikan files selalu Collection dan hanya yang aktif
-            $doc->setRelation(
-                'files',
-                $doc->files ? $doc->files->where('is_active', 1) : collect()
-            );
-
-            return $doc;
-        });
+       $documents = $documents->map(function ($doc) {
+    $doc->setRelation(
+        'files',
+        $doc->files
+            ? $doc->files
+                ->where('is_active', 1)
+                ->where('pending_approval', 0)
+            : collect()
+    );
+    return $doc;
+});
 
         // Pagination manual
         $page     = $request->input('page', 1);
@@ -294,9 +296,6 @@ class DocumentReviewController extends Controller
         });
     }
 
-
-
-
     private function getDocumentsGroupedByPlantAndCode()
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
@@ -328,163 +327,174 @@ class DocumentReviewController extends Controller
     }
 
     public function revise(Request $request, $id)
-    {
-        $mapping = DocumentMapping::with('files', 'document')->findOrFail($id);
+{
+    $mapping = DocumentMapping::with('files', 'document', 'status')->findOrFail($id);
 
-        if (!Auth::check())
-            abort(403);
+    if (!Auth::check())
+        abort(403);
 
-        $userRoleNames = Auth::user()->roles->pluck('name')->map(fn($n) => strtolower($n));
-        if ($userRoleNames->intersect(collect(['user', 'admin']))->count() === 0) {
-            abort(403);
-        }
+    $request->validate([
+        'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+        'revision_file_ids.*' => 'nullable|integer',
+        'notes' => 'required|string|max:500',
+    ]);
 
-        // Validasi
-        $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
-            'revision_file_ids.*' => 'nullable|integer',
-            'notes' => 'required|string|max:500',
+    $uploadedFiles = $request->file('revision_files', []);
+    $oldFileIds = $request->input('revision_file_ids', []);
+
+    $folder = 'document-reviews';
+
+    foreach ($uploadedFiles as $index => $uploadedFile) {
+
+        $oldFileId = $oldFileIds[$index] ?? null;
+
+        // Generate filename revision
+        $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $uploadedFile->getClientOriginalExtension();
+        $timestamp = now()->format('Ymd_His');
+
+        $existingRevisions = $mapping->files()
+            ->where('original_name', 'like', "{$baseName}_rev%")
+            ->count();
+        $revisionNumber = $existingRevisions + 1;
+
+        $filename = "{$baseName}_rev{$revisionNumber}_{$timestamp}.{$extension}";
+        $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
+
+        // Buat file baru
+        $newFile = $mapping->files()->create([
+            'file_path' => $newPath,
+            'original_name' => $uploadedFile->getClientOriginalName(),
+            'file_type' => $uploadedFile->getClientMimeType(),
+            'uploaded_by' => Auth::id(),
+            'is_active' => true,
         ]);
 
-        $uploadedFiles = $request->file('revision_files', []);
-        $oldFileIds = $request->input('revision_file_ids', []);
+        // === PERILAKU SESUAI DocumentControlController ===
+        if ($oldFileId) {
+            $oldFile = $mapping->files()->find($oldFileId);
 
-        $mapping->load('document');
-        $folder = $mapping->document->type === 'control' ? 'document-controls' : 'document-reviews';
+            if ($oldFile) {
 
-        foreach ($uploadedFiles as $index => $uploadedFile) {
+                $isRejected = optional($mapping->status)->name === 'Rejected';
 
-            $oldFileId = $oldFileIds[$index] ?? null;
+                if ($isRejected) {
+    // Jika status sebelumnya REJECTED → file lama tetap aktif & tidak pending
+    $oldFile->update([
+        'replaced_by_id'     => $newFile->id,
+        'pending_approval'   => false,
+        'is_active'          => true, // tetap aktif
+        'marked_for_deletion_at' => null, // jangan dihapus otomatis
+    ]);
+} else {
+    // Revisi normal → file lama akan masuk archive SETELAH approve
+    $oldFile->update([
+        'replaced_by_id' => $newFile->id,
+        'pending_approval' => true,
+    ]);
+}
 
-            // Naming logic
-            $baseName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $uploadedFile->getClientOriginalExtension();
-            $timestamp = now()->format('Ymd_His');
-
-            $existingRevisions = $mapping->files()
-                ->where('original_name', 'like', $baseName . '_rev%')
-                ->count();
-            $revisionNumber = $existingRevisions + 1;
-
-            $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
-            $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
-
-            // File baru aktif
-            $newFile = $mapping->files()->create([
-                'file_path' => $newPath,
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'file_type' => $uploadedFile->getClientMimeType(),
-                'uploaded_by' => Auth::id(),
-                'is_active' => true,
-            ]);
-
-            // Nonaktifkan file lama
-            if ($oldFileId) {
-                $oldFile = $mapping->files()->find($oldFileId);
-                if ($oldFile) {
-                    $isRejected = optional($mapping->status)->name === 'Rejected';
-
-                    if ($isRejected) {
-                        // Jika REJECTED:
-                        // Set tanggal hapus SEKARANG.
-                        // Efek: Tidak masuk Archive (karena Archive > now) & siap dihapus permanen.
-                        $deletionDate = now();
-                    } else {
-                        // Jika REVISI NORMAL (Update berkala):
-                        // Masukkan ke Archive selama 1 tahun.
-                        
-                        // Opsi A: 1 Tahun dari sekarang
-                        $deletionDate = now()->addYears(1);
-
-                        // Opsi B (Jika ingin ikut deadline dokumen sebelumnya):
-                        // $deletionDate = $mapping->deadline ? \Carbon\Carbon::parse($mapping->deadline)->addYears(1) : now()->addYears(1);
-                    }
-
-                    $oldFile->update([
-                        'is_active' => false,
-                        'replaced_by_id' => $newFile->id,
-                        'marked_for_deletion_at' => $deletionDate, // Gunakan variabel ini
-                    ]);
-                }
             }
         }
-
-        // Update notes
-        $mapping->notes = $request->notes;
-
-        // Update status
-        $needReviewStatus = Status::where('name', 'Need Review')->first();
-        if (!$needReviewStatus)
-            throw new \Exception("Status 'Need Review' tidak ditemukan.");
-        $mapping->status_id = $needReviewStatus->id;
-        $mapping->user_id = Auth::id();
-        $mapping->save();
-
-        return redirect()->back()->with('success', 'Document revised successfully!');
     }
 
+    // Update mapping
+    $needReviewStatus = Status::where('name', 'Need Review')->firstOrFail();
+
+    $mapping->update([
+        'status_id' => $needReviewStatus->id,
+        'notes' => $request->notes,
+        'user_id' => Auth::id(),
+    ]);
+
+    return back()->with('success', 'Document revised successfully!');
+}
 
     public function getFiles($id)
-    {
-        $mapping = DocumentMapping::with(['files' => function ($q) {
-            $q->where('is_active', 1);
-        }])->findOrFail($id);
+{
+    $mapping = DocumentMapping::with(['files' => function ($q) {
+        $q->where('is_active', 1)
+          ->where('pending_approval', 0)
+          ->orderBy('created_at', 'asc'); // opsional: urutkan
+    }])->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'files' => $mapping->files->map(function ($file) {
-                return [
-                    'id' => $file->id,
-                    'original_name' => $file->original_name,
-                    'file_path' => $file->file_path,
-                ];
-            }),
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'files' => $mapping->files->map(function ($file) {
+            return [
+                'id' => $file->id,
+                'original_name' => $file->original_name,
+                'file_path' => $file->file_path,
+            ];
+        }),
+    ]);
+}
+
 
     public function approveWithDates(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'reminder_date' => 'required|date',
-            'deadline' => 'required|date|after_or_equal:reminder_date',
+{
+    $validated = $request->validate([
+        'reminder_date' => 'required|date',
+        'deadline' => 'required|date|after_or_equal:reminder_date',
+    ]);
+
+    $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
+    $approvedStatus = Status::where('name', 'Approved')->firstOrFail();
+
+    // === Update Mapping (Status + Dates) ===
+    $mapping->timestamps = false;
+    $mapping->updateQuietly([
+        'status_id' => $approvedStatus->id,
+        'reminder_date' => $validated['reminder_date'],
+        'deadline' => $validated['deadline'],
+        'user_id' => auth()->id(),
+    ]);
+    $mapping->timestamps = true;
+
+    // ====================================================
+    //   BEHAVIOR SAMA DENGAN DocumentControlController
+    // ====================================================
+
+    // Ambil semua file lama yang menunggu approval
+    $oldFiles = $mapping->files()->where('pending_approval', true)->get();
+
+    foreach ($oldFiles as $oldFile) {
+        $oldFile->update([
+            'is_active' => false,                     // nonaktifkan → masuk archive
+            'pending_approval' => false,
+            'marked_for_deletion_at' => now()->addYear(), // disimpan 1 tahun
         ]);
-
-        $mapping = DocumentMapping::with('department')->findOrFail($id);
-        $approvedStatus = Status::where('name', 'Approved')->first();
-
-        $mapping->timestamps = false;
-        $mapping->updateQuietly([
-            'status_id' => $approvedStatus->id ?? $mapping->status_id,
-            'reminder_date' => $validated['reminder_date'],
-            'deadline' => $validated['deadline'],
-            'user_id' => auth()->id(),
-        ]);
-        $mapping->timestamps = true;
-
-        // Hanya user departemen terkait (kecuali Admin/Super Admin)
-        $targetUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
-            ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
-            ->get();
-
-        $plant = $this->getPlantFromMapping($mapping);
-
-        $url = route('document-review.showFolder', [
-            'plant' => $plant,
-            'docCode' => base64_encode($mapping->document->code ?? ''),
-        ]);
-
-
-        Notification::send($targetUsers, new DocumentActionNotification(
-            action: 'approved',
-            byUser: auth()->user()->name,
-            documentNumber: $mapping->document_number, // Hanya document_number
-            url: $url,
-            departmentName: $mapping->department?->name,
-        ));
-
-        return redirect($url)
-            ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
+
+    // File dengan pending_approval = false → tetap aktif
+    // (contoh: revisi setelah status Rejected)
+
+    // ===== Kirim Notifikasi seperti sebelumnya =====
+    $targetUsers = User::whereHas('departments', fn($q) =>
+        $q->where('tm_departments.id', $mapping->department_id)
+    )->whereDoesntHave('roles', fn($q) =>
+        $q->whereIn('name', ['Admin', 'Super Admin'])
+    )->get();
+
+    $plant = $this->getPlantFromMapping($mapping);
+
+    $url = route('document-review.showFolder', [
+        'plant' => $plant,
+        'docCode' => base64_encode($mapping->document->code ?? ''),
+    ]);
+
+    Notification::send($targetUsers, new DocumentActionNotification(
+        action: 'approved',
+        byUser: auth()->user()->name,
+        documentNumber: $mapping->document_number,
+        url: $url,
+        departmentName: $mapping->department?->name,
+    ));
+
+    return redirect($url)
+        ->with('success', "Document '{$mapping->document_number}' approved successfully!");
+}
+
 
     private function getPlantFromMapping($mapping)
     {
@@ -510,6 +520,15 @@ class DocumentReviewController extends Controller
             'user_id' => auth()->id(),
         ]);
         $mapping->timestamps = true;
+
+    //     foreach ($mapping->files as $file) {
+    //     // File lama tetap aktif
+    //     $file->update([
+    //         'is_active' => true,
+    //         'pending_approval' => false,
+    //         'marked_for_deletion_at' => null,
+    //     ]);
+    // }
 
         // Hanya user departemen terkait (kecuali Admin/Super Admin)
         $targetUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
