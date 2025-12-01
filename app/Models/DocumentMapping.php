@@ -46,13 +46,22 @@ class DocumentMapping extends Model
 
     public function getFilesForModalAttribute()
     {
-        // Hanya file aktif untuk ditampilkan di UI (view tombol/dropdown)
-        $allFiles = $this->files()
-            ->where('is_active', true)
-            ->orderBy('created_at', 'asc')
-            ->get();
+        // Cek apakah ada file baru yang pending approval
+        $pendingFile = $this->files()
+            ->where('pending_approval', false)
+            ->latest()
+            ->first();
 
-        return $allFiles->map(function ($file) {
+        if ($pendingFile) {
+            $filesToShow = collect([$pendingFile]);
+        } else {
+            $filesToShow = $this->files()
+                ->where('is_active', true)
+                ->orderBy('created_at', 'asc')
+                ->get();
+        }
+
+        return $filesToShow->map(function ($file) {
             return [
                 'id' => $file->id,
                 'name' => $file->original_name,

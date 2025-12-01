@@ -19,23 +19,30 @@ class DocumentControlController extends Controller
 
     public function index(Request $request)
     {
-        // Ambil semua data dengan relasi yang dibutuhkan
+        // Ambil base query untuk document mapping
         $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
             ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
-        // Filter department kalau bukan Admin atau Super Admin
-        if (!in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
+        // Tentukan role user
+        $userRole = strtolower(Auth::user()->roles->pluck('name')->first() ?? '');
+
+        // ===== FILTER DEPARTMENT BERDASARKAN ROLE =====
+        if (!in_array($userRole, ['admin', 'super admin'])) {
+            // User biasa: hanya department mereka
             $userDeptIds = Auth::user()->departments->pluck('id')->toArray();
-            // qualify column to avoid ambiguity in generated SQL
-            $query->whereHas('department', fn($q) => $q->whereIn('tm_departments.id', $userDeptIds));
+            $query->whereIn('department_id', $userDeptIds);
+            $departments = Department::whereIn('id', $userDeptIds)->orderBy('name')->get();
+        } else {
+            // Admin / Super Admin
+            if ($request->filled('department_id')) {
+                $query->where('department_id', $request->department_id);
+                $departments = Department::where('id', $request->department_id)->get();
+            } else {
+                $departments = Department::orderBy('name')->get();
+            }
         }
 
-        // Filter department kalau Admin atau Super Admin pilih
-        if (in_array(strtolower(Auth::user()->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']) && $request->filled('department_id')) {
-            $query->where('department_id', $request->department_id);
-        }
-
-        // Search global
+        // ===== SEARCH GLOBAL =====
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -47,28 +54,18 @@ class DocumentControlController extends Controller
             });
         }
 
-        // Ambil atau buat status "Obsolete"
+        // ===== CEK DAN UPDATE DOKUMEN OBSELETE =====
         $obsoleteStatus = Status::firstOrCreate(['name' => 'Obsolete']);
-
-        // Ambil semua dokumen aktif yang tanggal obsolete-nya sudah sampai atau lewat hari ini
         $toBeObsoleted = DocumentMapping::whereDate('obsolete_date', '<=', now()->today())
             ->whereHas('status', fn($q) => $q->where('name', 'Active'))
             ->get();
+
         foreach ($toBeObsoleted as $mapping) {
-
-            // Ambil user department terkait
-            // qualify the column name to avoid ambiguity in the EXISTS subquery
             $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))->get();
-
-            // Ambil semua admin
             $adminUsers = User::whereHas('roles', fn($q) => $q->where('name', 'Admin'))->get();
-
-            // Gabungkan keduanya dan hapus duplikat
             $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
 
             foreach ($notifiableUsers as $user) {
-
-                // Cek dulu apakah notif untuk dokumen ini sudah dikirim hari ini
                 $alreadyNotified = $user->notifications()
                     ->where('type', DocumentStatusNotification::class)
                     ->whereDate('created_at', now()->today())
@@ -85,40 +82,22 @@ class DocumentControlController extends Controller
                 }
             }
 
-            // Update status menjadi Obsolete
             $mapping->update(['status_id' => $obsoleteStatus->id]);
         }
 
-        // ✅ Ambil data untuk tampilan
-        $documentsMapping = $query->with(['files'])->get();
-
-        // kalau butuh count aktif, dipakai di Blade:
-        $activeCount = $documentsMapping->map(function ($m) {
-            return $m->files->where('is_active', true)->count();
-        });
-
+        // Ambil data untuk tampilan
+        $documentsMapping = $query->get();
 
         // Hitung statistik
         $totalDocuments = $documentsMapping->count();
         $activeDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Active')->count();
         $obsoleteDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Obsolete')->count();
 
-        // Dropdown filter department
-        $departments = Department::all();
-
-        // Jika admin memilih department → tampilkan hanya department tersebut
-        if ($request->filled('department_id')) {
-            $allDepartments = Department::where('id', $request->department_id)->get();
-        } else {
-            $allDepartments = Department::orderBy('name')->get();
-        }
-
-        // Gabungkan department + dokumen
-        $groupedDocuments = $allDepartments->mapWithKeys(function ($dept) use ($documentsMapping) {
+        // Gabungkan department + dokumen untuk grouping
+        $groupedDocuments = $departments->mapWithKeys(function ($dept) use ($documentsMapping) {
             $docs = $documentsMapping->where('department_id', $dept->id);
             return [$dept->name => $docs];
         });
-
 
         return view('contents.document-control.index', compact(
             'documentsMapping',
@@ -189,7 +168,7 @@ class DocumentControlController extends Controller
             $extension = $uploadedFile->getClientOriginalExtension();
             $timestamp = now()->format('Ymd_His');
 
-            // Calculate revision number (optional)
+            // Hitung nomor revisi
             $existingRevisions = $mapping->files()
                 ->where('original_name', 'like', $baseName . '_rev%')
                 ->count();
@@ -198,7 +177,7 @@ class DocumentControlController extends Controller
             $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
             $newPath = $uploadedFile->storeAs($folder, $filename, 'public');
 
-            // Create new file record (active)
+            // Buat file baru (active)
             $newFile = $mapping->files()->create([
                 'file_path' => $newPath,
                 'original_name' => $uploadedFile->getClientOriginalName(),
@@ -207,41 +186,40 @@ class DocumentControlController extends Controller
                 'is_active' => true,
             ]);
 
-            // Mark old file as inactive and link to replacer
+            // Handle file lama
             if ($oldFileId) {
                 $oldFile = $mapping->files()->find($oldFileId);
                 if ($oldFile) {
-                    $isRejected = optional($mapping->status)->name === 'Rejected';
+                    $currentStatus = optional($mapping->status)->name;
 
-                    if ($isRejected) {
-                        // KASUS 1: DOKUMEN REJECTED
-                        // Langsung hapus (now), jangan masukkan ke Archive
-                        $deletionDate = now();
+                    if ($currentStatus === 'Rejected') {
+                        // Dokumen direject → file lama tetap aktif
+                        $oldFile->update([
+                            'replaced_by_id' => $newFile->id,
+                            'pending_approval' => false,
+                        ]);
                     } else {
-                        // KASUS 2: REVISI NORMAL (Active / Need Review)
-                        // Masukkan ke Archive selama 1 tahun
-                        $deletionDate = now()->addYears(1);
+                        // Revisi normal → file lama masuk archive setelah approve
+                        $oldFile->update([
+                            'replaced_by_id' => $newFile->id,
+                            'pending_approval' => true,
+                        ]);
                     }
-
-                    $oldFile->update([
-                        'replaced_by_id' => $newFile->id,
-                        'is_active' => false,
-                        'marked_for_deletion_at' => $deletionDate, // Gunakan variabel ini
-                    ]);
                 }
             }
         }
 
-        // Update mapping status, notify, etc (sama seperti code kamu sekarang)
+        // Update mapping status → Need Review
         $needReviewStatus = Status::firstOrCreate(['name' => 'Need Review']);
         $mapping->update([
             'status_id' => $needReviewStatus->id,
             'user_id' => Auth::id(),
         ]);
 
-        //Notif ke admin
+        // Notifikasi ke admin jika uploader bukan admin/super admin
         $uploader = Auth::user();
-        if (!in_array(strtolower($uploader->roles->pluck('name')->first() ?? ''), ['admin', 'super admin'])) {
+        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
+        if (!in_array($userRole, ['admin', 'super admin'])) {
             $admins = User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
             foreach ($admins as $admin) {
                 $admin->notify(new DocumentActionNotification(
@@ -257,6 +235,7 @@ class DocumentControlController extends Controller
 
         return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
+
 
     public function approve(Request $request, DocumentMapping $mapping)
     {
@@ -287,6 +266,20 @@ class DocumentControlController extends Controller
             'obsolete_date' => $newObsoleteDate,
             'reminder_date' => $newReminderDate,
         ]);
+
+        // NONAKTIFKAN FILE LAMA SETELAH APPROVE
+        $oldFiles = $mapping->files()
+            ->where('pending_approval', true)
+            ->get();
+
+        foreach ($oldFiles as $oldFile) {
+
+            $oldFile->update([
+                'is_active' => false,
+                'pending_approval' => false,
+                'marked_for_deletion_at' => now()->addYear(), // Archive 1 tahun
+            ]);
+        }
 
         // Ambil semua user di department terkait, kecuali user yang approve
         $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))

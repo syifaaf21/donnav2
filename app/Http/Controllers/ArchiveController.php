@@ -19,6 +19,7 @@ class ArchiveController extends Controller
             ->with(['mapping.document', 'mapping.department']) // Load relasi ke atas
             ->where('is_active', false)
             ->where('marked_for_deletion_at', '>', now())
+            ->where('pending_approval', false)
             ->whereHas('mapping.document', fn($q) => $q->where('type', 'control'));
 
         // Filter department (non admin)

@@ -151,7 +151,7 @@
                                     </td>
                                     <td class="px-4 py-3 flex space-x-2 whitespace-nowrap action-column">
                                         {{-- FILE BUTTON AREA — fixed width --}}
-                                        <div class="relative inline-block w-8 h-8 flex items-center justify-center">
+                                        {{-- <div class="relative inline-block w-8 h-8 flex items-center justify-center">
                                             @if ($mapping->files->count())
                                                 <button type="button"
                                                     class="relative flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 bg-white
@@ -171,11 +171,11 @@
                                                         </span>
                                                     @endif
                                                 </button>
-                                            @else
+                                            @else --}}
                                                 {{-- invisible placeholder agar tetap sejajar --}}
-                                                <div class="w-8 h-8"></div>
+                                                {{-- <div class="w-8 h-8"></div>
                                             @endif
-                                        </div>
+                                        </div> --}}
 
                                         {{-- EDIT + DELETE --}}
                                         <div class="flex items-center gap-2">

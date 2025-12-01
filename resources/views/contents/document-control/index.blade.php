@@ -47,30 +47,71 @@
 
 
             {{-- 🔹 Accordion --}}
-            <div id="docList" class="space-y-4">
+            @php
+                $countDept = count($groupedDocuments);
+            @endphp
+
+            <div id="docList"
+                class="
+        grid gap-4
+        @if ($countDept === 1) grid-cols-1
+        @else
+            grid-cols-1 md:grid-cols-2 lg:grid-cols-3 @endif
+    ">
                 @forelse ($groupedDocuments as $department => $mappings)
-                    <div
-                        class="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                        {{-- Header Accordion --}}
-                        <a href="{{ route('document-control.department', ['department' => $department]) }}"
-                            class="w-full flex items-center justify-between px-5 py-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-sky-50 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-sky-100 text-sky-600 p-2 rounded-md">
-                                    <i class="bi bi-folder2-open text-base"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-semibold text-gray-800">{{ $department }}</h3>
-                                    <p class="text-xs text-gray-500">{{ count($mappings) }} documents</p>
-                                </div>
+                    <a href="{{ route('document-control.department', ['department' => $department]) }}"
+                        class="block p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-sky-300
+                   bg-white transition-all duration-200 group">
+
+                        {{-- Header --}}
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="p-2 rounded-lg bg-sky-100 text-sky-600 group-hover:bg-sky-200 transition">
+                                <i class="bi bi-folder2-open text-lg"></i>
                             </div>
-                            <i class="bi bi-box-arrow-up-right text-gray-500"></i>
-                        </a>
-                        {{-- Content --}}
-                    </div>
+
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-800 group-hover:text-sky-700 transition">
+                                    {{ $department }}
+                                </h3>
+                                <p class="text-xs text-gray-500">
+                                    {{ count($mappings) }} Documents
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- List of documents (Max 3 preview) --}}
+                        <div class="space-y-1 mb-2">
+                            @foreach ($mappings->take(3) as $doc)
+                                <div class="flex items-center gap-2 text-xs text-gray-600 truncate">
+                                    <i class="bi bi-file-earmark text-sky-500"></i>
+                                    <span class="truncate">{{ $doc->document->name }}</span>
+                                </div>
+                            @endforeach
+
+                            @if (count($mappings) > 3)
+                                <p class="text-xs text-gray-400 mt-1">
+                                    +{{ count($mappings) - 3 }} more…
+                                </p>
+                            @endif
+                        </div>
+
+                        {{-- Footer --}}
+                        <div class="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
+                            <span class="text-xs text-gray-500">
+                                Click to open
+                            </span>
+
+                            <i
+                                class="bi bi-arrow-right-circle-fill text-sky-500 text-lg group-hover:translate-x-1 transition"></i>
+                        </div>
+
+                    </a>
+
                 @empty
-                    <p class="text-sm text-gray-500 text-center py-10">No documents found.</p>
+                    <p class="text-sm text-gray-500 text-center py-10 col-span-3">No documents found.</p>
                 @endforelse
             </div>
+
         </div>
     </div>
     <!-- Scroll Up Button -->
