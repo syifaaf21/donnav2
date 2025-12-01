@@ -348,19 +348,27 @@
             <td class="font-bold">
                 @switch($finding->status_id)
                     @case(7)
-                        <span style="color:red;">OPEN</span>
+                        <span style="color:red;">NEED ASSIGN</span>
                     @break
 
                     @case(8)
-                        <span style="color:orange;">SUBMITTED</span>
+                        <span style="color:orange;">NEED CHECK</span>
+                    @break
+
+                    @case(9)
+                        <span style="color:orange;">NEED APPROVAL BY AUDITOR</span>
                     @break
 
                     @case(10)
-                        <span style="color:blue;">CHECKED BY DEPT HEAD</span>
+                        <span style="color:orange;">NEED APPROVAL BY LEAD AUDITOR</span>
                     @break
 
                     @case(11)
                         <span style="color:green;">CLOSE</span>
+                    @break
+
+                    @case(12)
+                        <span style="color:orange;">NEED REVISION</span>
                     @break
 
                     @default

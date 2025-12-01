@@ -65,10 +65,10 @@ class DashboardController extends Controller
         $chartData = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
             ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
             ->whereIn('tm_statuses.name', [
-                'Open',
-                'Submitted',
-                'Checked by Dept Head',
-                'Approved by Auditor',
+                'Need Assign',
+                'Need Check',
+                'Need Approval by Auditor',
+                'Need Approval by Lead Auditor',
                 'Need Revision',
                 'Close'
             ])

@@ -180,20 +180,20 @@
             type: 'bar',
             data: {
                 labels: [
-                    'Open',
-                    'Submitted',
-                    'Checked by Dept Head',
-                    'Approved by Auditor',
+                    'Need Assign',
+                    'Need Check',
+                    'Need Approval by Auditor',
+                    'Need Approval by Lead Auditor',
                     'Need Revision',
                     'Close'
                 ],
                 datasets: [{
                     label: 'Total Findings',
                     data: [
-                        {{ $chartData['Open'] ?? 0 }},
-                        {{ $chartData['Submitted'] ?? 0 }},
-                        {{ $chartData['Checked by Dept Head'] ?? 0 }},
-                        {{ $chartData['Approved by Auditor'] ?? 0 }},
+                        {{ $chartData['Need Assign'] ?? 0 }},
+                        {{ $chartData['Need Check'] ?? 0 }},
+                        {{ $chartData['Need Approval by Auditor'] ?? 0 }},
+                        {{ $chartData['Need Approval by Lead Auditor'] ?? 0 }},
                         {{ $chartData['Need Revision'] ?? 0 }},
                         {{ $chartData['Close'] ?? 0 }},
                     ],

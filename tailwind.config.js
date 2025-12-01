@@ -9,19 +9,6 @@ module.exports = {
     ],
     theme: {
         extend: {
-            fontFamily: {
-                sans: [
-                    '-apple-system',           // iPhone, iPad, Mac → San Francisco
-                    'BlinkMacSystemFont',      // Safari Mac fallback
-                    '"Segoe UI"',              // Windows
-                    'Roboto',                  // Android
-                    'Oxygen',
-                    'Ubuntu',
-                    'Cantarell',
-                    '"Helvetica Neue"',
-                    'sans-serif',
-                ],
-            },
             colors: {
                 primary: "#4569AD", // blue
                 primaryDark: "#2C4A7B", // dark blue
@@ -37,8 +24,6 @@ module.exports = {
                 matcha2: "#BED3CC", // light yellow
                 matcha: "#C9D3DD",
                 choco: "#533a33", // brown
-                yale: "#2f4156", // deep blue
-                bgLight: "#f8efe5", // light blue
             },
         },
     },

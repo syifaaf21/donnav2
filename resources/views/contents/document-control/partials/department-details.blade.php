@@ -3,30 +3,31 @@
 @section('title', 'Documents - ' . $department->name)
 
 @section('content')
+    <!-- Breadcrumb -->
+    <nav class="text-xs text-gray-500 bg-white/50 border border-white backdrop:blur rounded-full pt-2 pr-6 shadow w-fit mb-2 mx-4"
+        aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li>
+                <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline">
+                    <i class="bi bi-gear me-1"></i>Document Control
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-400 font-medium">Documents</li>
+            <li>/</li>
+            <li class="text-gray-700 font-medium">{{ $department->name }}</li>
+        </ol>
+    </nav>
     <div class="mx-auto px-4 py-6">
-        <!-- Breadcrumb -->
-        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li>
-                    <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline">
-                        <i class="bi bi-gear me-1"></i>Document Control
-                    </a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-400 font-medium">Documents</li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">{{ $department->name }}</li>
-            </ol>
-        </nav>
         <div class="bg-white rounded-xl shadow-lg p-4">
             <!-- Search Form -->
-            <div class="flex justify-end w-full mb-4">
+            <div class="flex justify-end w-full mb-2">
                 <form id="filterForm" method="GET" action="{{ route('document-control.department', $department->name) }}"
                     class="flex flex-col items-end w-auto space-y-1">
                     <div class="relative w-96">
@@ -41,16 +42,6 @@
              {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
-
-                        <!-- Clear Button -->
-                        @if (request('search'))
-                            <a href="{{ route('document-control.department', $department->name) }}"
-                                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                                    rounded-lg text-gray-400
-                                    hover:text-red-600 transition">
-                                <i data-feather="x" class="w-5 h-5"></i>
-                            </a>
-                        @endif
                     </div>
                 </form>
             </div>
@@ -58,26 +49,25 @@
                 <!-- Table -->
                 <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
-                    <table class="min-w-full text-sm text-gray-700">
+                    <table class="min-w-full">
                         <thead class="sticky top-0 z-10">
                             <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Document
                                     Name
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Status
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Status
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Obsolete
                                     Date
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Updated By
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Updated By
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Last
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Last
                                     Update
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Notes</th>
-                                <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Notes</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     Actions</th>
                             </tr>
                         </thead>
@@ -95,15 +85,15 @@
                             @else
                                 @foreach ($mappings as $mapping)
                                     <tr class="hover:bg-gray-50 transition-all duration-150">
-                                        <td class="px-4 py-3">
+                                        <td class="px-4 py-3 text-sm">
                                             {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                         </td>
-                                        <td class="px-4 py-2 text-gray-700 truncate text-sm max-w-xs"
+                                        <td class="px-4 py-2 text-sm truncate font-bold max-w-xs"
                                             title="{{ $mapping->document->name }}">
                                             {{ $mapping->document->name }}
                                         </td>
                                         {{-- Status badge --}}
-                                        <td class="px-4 py-2">
+                                        <td class="px-4 py-2 text-sm">
                                             @php
                                                 $statusColor = match ($mapping->status->name) {
                                                     'Active' => 'bg-green-100 text-green-800',
@@ -119,16 +109,16 @@
                                                 {{ $mapping->status->name }}
                                             </span>
                                         </td>
-                                        <td class="px-4 py-3">
+                                        <td class="px-4 py-3 text-sm">
                                             {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
                                         </td>
-                                        <td class="px-4 py-3 truncate">
+                                        <td class="px-4 py-3 text-sm truncate">
                                             {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
                                         </td>
-                                        <td class="px-4 py-3">
+                                        <td class="px-4 py-3 text-sm">
                                             {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
                                         </td>
-                                        <td class="px-4 py-3 max-w-xs">
+                                        <td class="px-4 py-3 text-sm max-w-xs">
                                             <div class="overflow-y-auto max-h-16 text-sm">
                                                 {!! $mapping->notes ?? '-' !!}
                                             </div>

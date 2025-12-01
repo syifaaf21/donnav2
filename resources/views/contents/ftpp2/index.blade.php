@@ -113,10 +113,10 @@
                                         @php
                                             $name = strtolower($status->name);
                                             $icons = [
-                                                'open' => 'alert-circle',
-                                                'submitted' => 'upload-cloud',
-                                                'checked by dept head' => 'user-check',
-                                                'approved by auditor' => 'check-circle',
+                                                'Need Assign' => 'alert-circle',
+                                                'need check' => 'upload-cloud',
+                                                'need approval by auditor' => 'user-check',
+                                                'need approval by lead auditor' => 'check-circle',
                                                 'need revision' => 'alert-triangle',
                                                 'close' => 'lock',
                                             ];
@@ -151,7 +151,7 @@
 
                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-100 text-blue-700 border border-blue-700 font-medium
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
                        shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                         <i data-feather="plus" class="w-4 h-4"></i>
                         Add Finding
@@ -160,7 +160,7 @@
 
                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Dept Head']))
                     <a href="{{ route('approval.index') }}"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-100 text-blue-700 border border-blue-700 font-medium
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
                        shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                         <i data-feather="pen-tool" class="w-4 h-4"></i>
                         Approval
@@ -204,7 +204,7 @@
                                     </th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                                        {{-- Actions --}}
+                                        Actions
                                     </th>
                                 </tr>
                             </thead>
@@ -217,11 +217,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
                                             @php
                                                 $statusColors = [
-                                                    'open' => 'bg-red-100 text-red-600',
-                                                    'submitted' => 'bg-yellow-100 text-yellow-700',
-                                                    'checked by dept head' => 'bg-yellow-100 text-yellow-700',
+                                                    'need assign' => 'bg-red-100 text-red-600',
+                                                    'need check' => 'bg-yellow-100 text-yellow-700',
+                                                    'need approval by auditor' => 'bg-yellow-100 text-yellow-700',
                                                     'need revision' => 'bg-yellow-100 text-yellow-700',
-                                                    'approved by auditor' => 'bg-blue-100 text-blue-600',
+                                                    'need approval by lead auditor' => 'bg-blue-100 text-blue-600',
                                                     'close' => 'bg-green-100 text-green-600',
                                                 ];
                                                 $statusName = optional($finding->status)->name ?? '-';
@@ -292,7 +292,7 @@
                                                                     @click="open = false"
                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
                                                                     <i data-feather="edit" class="w-4 h-4"></i>
-                                                                    Edit Audit Finding
+                                                                    Edit
                                                                 </a>
                                                             @endif
                                                         @endif
@@ -301,7 +301,7 @@
                                                                 @click="open = false"
                                                                 class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                                 <i data-feather="edit" class="w-4 h-4"></i>
-                                                                Revise Auditee Action
+                                                                Revise
                                                             </a>
                                                         @elseif ($statusName === 'submitted')
                                                             @if (in_array(optional(auth()->user()->roles->first())->name, [
@@ -316,7 +316,7 @@
                                                                     @click="open = false"
                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
                                                                     <i data-feather="edit" class="w-4 h-4"></i>
-                                                                    Edit Auditee Action
+                                                                    Edit
                                                                 </a>
                                                             @endif
                                                         @else
@@ -325,7 +325,7 @@
                                                                     @click="open = false"
                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                                                     <i data-feather="edit-2" class="w-4 h-4"></i>
-                                                                    Assign Auditee Action
+                                                                    Assign
                                                                 </a>
                                                             @endif
                                                         @endif

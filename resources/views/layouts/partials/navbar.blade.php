@@ -1,13 +1,13 @@
 <header class="flex items-center justify-between mx-12 py-3">
-    <div class="item-start bg-white border border-gray-100 px-3 py-1 rounded-lg shadow">
-        <h1 class="text-lg text-choco font-bold">@yield('title', 'Dashboard')</h1>
+    <div class="item-start bg-white border border-gray-100 px-3 py-1 rounded-xl shadow">
+        <h5 class="text-choco font-semibold">@yield('title', 'Dashboard')</h5>
     </div>
 
     <div class="flex items-center gap-4 ml-auto ">
         <!-- Notification Dropdown -->
-        <div class="relative bg-white shadow rounded-3xl border border-gray-100 px-3 py-2">
-            <button id="notificationBtn" type="button" class="relative focus:outline-none"
-                aria-haspopup="true" aria-controls="notificationDropdown" aria-expanded="false" title="Notifications">
+        <div class="relative bg-white shadow rounded-full border border-gray-100 p-2">
+            <button id="notificationBtn" type="button" class="relative focus:outline-none" aria-haspopup="true"
+                aria-controls="notificationDropdown" aria-expanded="false" title="Notifications">
                 <span class="sr-only">Open notifications</span>
                 <i data-feather="bell" class="w-6 h-6 text-choco"></i>
 
@@ -31,9 +31,9 @@
                 role="menu" aria-labelledby="notificationBtn">
                 <div class="overflow-y-auto flex-grow">
                     @forelse(auth()->user()->notifications->take(5) as $notification)
-                        <div
-                            class="p-2 border-b border-gray-200
-                    {{ $notification->read_at ? 'bg-white' : 'bg-blue-50' }}" role="none">
+                        <div class="p-2 border-b border-gray-200
+                    {{ $notification->read_at ? 'bg-white' : 'bg-blue-50' }}"
+                            role="none">
                             <div class="text-sm text-gray-800" role="menuitem">
                                 {{ $notification->data['message'] ?? 'No message' }}
                             </div>
@@ -53,34 +53,57 @@
             </div>
         </div>
 
-        <!-- Profile dropdown -->
-        <div class="relative shadow rounded-xl border border-gray-100">
+        <!-- Profile Dropdown -->
+        <div class="relative">
             <button id="profileDropdownBtn" type="button"
-                class="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-choco rounded-lg text-sm focus:outline-none"
+                class="flex items-center gap-3 px-3 py-2 bg-white border border-gray-200 hover:bg-gray-50
+               rounded-xl shadow-sm text-choco transition-all duration-150"
                 aria-haspopup="true" aria-controls="profileDropdownMenu" aria-expanded="false" title="Profile">
-                <span class="sr-only">Open profile menu</span>
+
+                <!-- Profile Initial -->
                 <div
-                    class="w-8 h-8 rounded-full bg-blue-100 text-choco flex items-center justify-center font-bold uppercase">
+                    class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 text-choco
+                   flex items-center justify-center font-bold uppercase text-base shadow-inner">
                     {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                 </div>
 
-                <span class="hidden md:inline">{{ Auth::user()->name ?? 'User' }}</span>
-                <i data-feather="chevron-down" class="w-4 h-4 transform transition-transform duration-200"></i>
+                <!-- Username -->
+                <h6 class="truncate text-gray-800 max-w-[100px]">
+                    {{ Auth::user()->name ?? 'User' }}
+                </h6>
+
+                <!-- Chevron Icon -->
+                <i data-feather="chevron-down"
+                    class="w-4 h-4 text-gray-500 transform transition-transform duration-200"></i>
             </button>
 
+            <!-- Dropdown Menu -->
             <div id="profileDropdownMenu"
-                class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-lg py-1 z-50"
-                role="menu" aria-labelledby="profileDropdownBtn">
+                class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50">
+
+                <!-- Name / Department / Role -->
+                <div class="px-4 py-2 border-b border-gray-100">
+
+                    <p class="text-xs text-gray-500 truncate">
+                        {{ optional(Auth::user()->departments()->first())->name ?? 'Department' }}
+                    </p>
+                    <p class="text-xs text-gray-500 truncate">
+                        {{ optional(Auth::user()->roles()->first())->name ?? 'Role' }}
+                    </p>
+                </div>
+
+                <!-- Logout Button -->
                 <form action="{{ route('logout') }}" method="POST" role="none">
                     @csrf
                     <button type="submit"
-                        class="w-full text-left flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 text-sm"
-                        role="menuitem">
-                        <i data-feather="log-out" class="w-4 h-4"></i> Logout
+                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        <i data-feather="log-out" class="w-4 h-4"></i>
+                        <span>Logout</span>
                     </button>
                 </form>
             </div>
         </div>
+
     </div>
 </header>
 

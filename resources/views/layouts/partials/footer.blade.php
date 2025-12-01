@@ -8,7 +8,7 @@
             </div>
             <div class="col-md-6 text-end">
                 <span class="text-color">
-                    Powered by <strong>AISIN Indonesia</strong>
+                    Powered by <strong>AISIN Indonesia Automotive</strong>
                 </span>
             </div>
         </div>

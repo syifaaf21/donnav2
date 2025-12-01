@@ -47,7 +47,7 @@
 
                 <ul>
                     <template
-                        x-for="item in filteredFindings.filter(i => ['submitted','checked by dept head','approved by auditor'].includes((i.status?.name || '').toLowerCase()))"
+                        x-for="item in filteredFindings.filter(i => ['need check','need approval by auditor','need approval by lead auditor'].includes((i.status?.name || '').toLowerCase()))"
                         :key="item.id">
                         <li @click="loadForm(item.id)"
                             class="cursor-pointer px-2 py-2 mb-2 border rounded shadow hover:bg-slate-50">

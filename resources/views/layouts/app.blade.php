@@ -31,7 +31,7 @@
     @stack('styles')
 </head>
 
-<body class="font-sans bg-matcha text-gray-800">
+<body class="font-['Segoe_UI'] bg-matcha text-gray-800">
 
     @include('layouts.partials.sidebar')
     @include('components.flash-message')

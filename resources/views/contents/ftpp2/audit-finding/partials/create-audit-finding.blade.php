@@ -31,7 +31,8 @@
             <div class="space-y-1">
                 <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
 
-                <button type="button" class="px-3 py-1 bg-blue-100 border border-blue-700 text-blue-700 rounded hover:bg-blue-600 hover:text-white"
+                <button type="button"
+                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
                     onclick="openPlantSidebar()">
                     Choose Dept/Process/Product
                 </button>
@@ -50,7 +51,7 @@
                 <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
                 <button type="button" onclick="openAuditeeSidebar()"
-                    class="px-3 py-1  bg-blue-100 border border-blue-700 text-blue-700 rounded hover:bg-blue-600 hover:text-white">
+                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                     Select Auditee
                 </button>
 
@@ -63,48 +64,49 @@
                 <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
             </div>
 
-            <!-- AUDITOR -->
-            <div class="space-y-1">
-                <label class="font-semibold">Auditor / Inisiator: <span class="text-danger">*</span></label>
-                <select name="auditor_id" x-model="form.auditor_id"
-                    class="border-b border-gray-400 w-full focus:outline-none">
-                    <option value="">-- Choose Auditor --</option>
-                    @foreach ($auditors as $auditor)
-                        <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+            <!-- ROW: Auditor / Date / Reg Number (tidak full width -> gunakan grid kolom) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="font-semibold block">Auditor / Inisiator: <span class="text-danger">*</span></label>
+                    <select name="auditor_id" x-model="form.auditor_id"
+                        class="border border-gray-300 rounded w-full p-2 focus:outline-none">
+                        <option value="">-- Choose Auditor --</option>
+                        @foreach ($auditors as $auditor)
+                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="font-semibold block">Date: <span class="text-danger">*</span></label>
+                    <input type="date" name="created_at" x-model="form.created_at"
+                        class="border border-gray-300 rounded w-full p-2 focus:outline-none"
+                        value="{{ now()->toDateString() }}">
+                </div>
+
+                <div>
+                    <label class="font-semibold block">Registration Number: <span class="text-danger">*</span></label>
+                    <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
+                        class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
+                </div>
+            </div>
+            <!-- FINDING CATEGORY -->
+            <div>
+                <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
+                <div class="mt-1">
+                    @foreach ($findingCategories as $category)
+                        <label class="mr-4">
+                            <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
+                                value="{{ $category->id }}">
+                            {{ ucfirst($category->name) }}
+                        </label>
                     @endforeach
-                </select>
-            </div>
-
-            <!-- DATE -->
-            <div class="space-y-1">
-                <label class="font-semibold">Date: <span class="text-danger">*</span></label>
-                <input type="date" name="created_at" x-model="form.created_at"
-                    class="border-b border-gray-400 w-full focus:outline-none" value="{{ now()->toDateString() }}">
-            </div>
-
-            <!-- REG NUMBER -->
-            <div class="space-y-1">
-                <label class="font-semibold">Registration Number: <span class="text-danger">*</span></label>
-                <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
-                    class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" readonly>
+                </div>
             </div>
         </div>
 
         <div class="space-y-6">
             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-                <!-- FINDING CATEGORY -->
-                <div>
-                    <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
-                    <div class="mt-1">
-                        @foreach ($findingCategories as $category)
-                            <label class="mr-4">
-                                <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
-                                    value="{{ $category->id }}">
-                                {{ ucfirst($category->name) }}
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
                 <h5 class="font-semibold text-gray-700">AUDITOR / INISIATOR</h5>
 
                 <!-- FINDING -->
@@ -124,7 +126,7 @@
                     <!-- CLAUSE SELECT -->
                     <div class="text-right">
                         <button type="button" onclick="openSidebar()"
-                            class="px-3 py-1  bg-blue-100 border border-blue-700 text-blue-700 rounded hover:bg-blue-600 hover:text-white">
+                            class="px-3 py-1  bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                             Select Clause
                         </button>
 
@@ -177,7 +179,7 @@
                     <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple class="hidden">
                 </div>
                 <button type="button" onclick="saveHeaderOnly()"
-                    class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
+                    class="ml-auto mt-2 bg-gradient-to-r from-primary to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primary transition-colors">
                     Save Finding
                 </button>
             </div>
@@ -192,8 +194,9 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
         <h2 class="font-semibold text-lg text-gray-800">Select Clause</h2>
-        <button type="button" onclick="closeSidebar()" class="p-2 border border-gray-600 hover:border hover:bg-red-100 rounded-full text-gray-600 hover:text-red-500 transition">
-            <i data-feather="x" class="w-5 h-5"></i>
+        <button type="button" onclick="closeSidebar()"
+            class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+            <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
         </button>
     </div>
 
@@ -220,8 +223,8 @@
 
     <!-- Submit Button -->
     <button type="button" onclick="addSubKlausul()"
-        class="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
-               hover:bg-blue-700 transition shadow">
+        class="flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg
+               bg-gradient-to-r from-primary to-primaryDark text-white hover:from-primaryDark hover:to-primary transition-colors">
         <i data-feather="plus" class="w-4 h-4"></i> Add
     </button>
 </div>
@@ -233,8 +236,9 @@
 
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
         <h2 class="text-lg font-semibold text-gray-800">Select Plant / Department</h2>
-        <button type="button" onclick="closePlantSidebar()" class="p-2 border border-gray-600 hobg-red-100 rounded-full text-gray-600 hover:text-red-500 transition">
-            <i data-feather="x" class="w-5 h-5"></i>
+        <button type="button" onclick="closePlantSidebar()"
+            class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+            <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
         </button>
     </div>
 
@@ -277,8 +281,8 @@
     </select>
 
     <button type="button" onclick="submitSidebarPlant()"
-        class="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
-               hover:bg-blue-700 shadow transition">
+        class="flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg bg-gradient-to-l from-primary to-primaryDark text-white
+               hover:from-primaryDark hover:to-primary transition-colors shadow">
         <i data-feather="plus" class="w-4 h-4"></i> Add
     </button>
 </div>
@@ -290,8 +294,9 @@
 
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
         <h2 class="text-lg font-semibold text-gray-800">Select Auditee</h2>
-        <button type="button" onclick="closeAuditeeSidebar()" class="p-2 border border-gray-600 hover:border hover:bg-red-100 rounded-full text-gray-600 hover:text-red-500 transition">
-            <i data-feather="x" class="w-5 h-5"></i>
+        <button type="button" onclick="closeAuditeeSidebar()"
+            class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+            <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
         </button>
     </div>
 
