@@ -211,10 +211,22 @@ class DocumentControlController extends Controller
             if ($oldFileId) {
                 $oldFile = $mapping->files()->find($oldFileId);
                 if ($oldFile) {
+                    $isRejected = optional($mapping->status)->name === 'Rejected';
+
+                    if ($isRejected) {
+                        // KASUS 1: DOKUMEN REJECTED
+                        // Langsung hapus (now), jangan masukkan ke Archive
+                        $deletionDate = now();
+                    } else {
+                        // KASUS 2: REVISI NORMAL (Active / Need Review)
+                        // Masukkan ke Archive selama 1 tahun
+                        $deletionDate = now()->addYears(1);
+                    }
+
                     $oldFile->update([
                         'replaced_by_id' => $newFile->id,
                         'is_active' => false,
-                        'marked_for_deletion_at' => now()->addYears(1),
+                        'marked_for_deletion_at' => $deletionDate, // Gunakan variabel ini
                     ]);
                 }
             }
