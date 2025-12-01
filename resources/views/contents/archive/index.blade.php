@@ -23,19 +23,20 @@
                     <div class="relative w-96">
                         <input type="text" name="search" id="archiveSearchInput"
                             class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-                        placeholder="Search
-                            archived documents..." value="{{ request('search') }}">
+                       focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                            placeholder="Search archived documents..." value="{{ request('search') }}">
+
                         <label for="archiveSearchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
-                        {{ request('search')
-                            ? '-top-3 text-xs text-sky-600'
-                            : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            class="absolute left-4 bg-white px-1 rounded text-gray-400 text-sm transition-all duration-150 pointer-events-none
+                       {{ request('search')
+                           ? '-top-3 text-xs text-sky-600'
+                           : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Search archived documents...
                         </label>
                     </div>
                 </form>
             </div>
+
             <div class="bg-white p-6 rounded shadow">
 
                 {{-- TAB --}}
