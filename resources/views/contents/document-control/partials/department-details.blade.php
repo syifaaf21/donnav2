@@ -125,64 +125,94 @@
                                         </td>
                                         {{-- Actions --}}
                                         <td class="px-4 py-2 text-center">
-                                            <div class="flex justify-center gap-2 flex-wrap">
+                                            <div class="flex justify-start items-center gap-2 flex-wrap">
 
-                                                {{-- AREA FILE BUTTON: tetap ada ruang meski tidak ada file --}}
-                                                <div class="relative inline-block w-8 h-8 flex items-center justify-center">
-                                                    @if (count($mapping->files_for_modal) > 1)
+                                                {{-- VIEW FILES --}}
+                                                @php
+                                                    $filesToShow = collect($mapping->files_for_modal_all)->filter(
+                                                        fn($file) => ($file['is_active'] ?? 0) == 1,
+                                                    );
+                                                @endphp
+
+                                                @if ($filesToShow->count() > 1)
+                                                    <div class="relative">
+                                                        <!-- Dropdown toggle button -->
                                                         <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
-                                                            class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown">
+                                                            class="text-gray-700 hover:text-blue-600 toggle-files-dropdown">
                                                             <i class="bi bi-file-earmark-text text-2xl"></i>
                                                             <span
                                                                 class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                                                                {{ count($mapping->files_for_modal) }}
+                                                                {{ $filesToShow->count() }}
                                                             </span>
                                                         </button>
+
+                                                        <!-- Dropdown menu -->
                                                         <div id="viewFilesDropdown-{{ $mapping->id }}"
-                                                            class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                            class="hidden absolute right-0 bottom-full mb-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
                                                             <div class="py-1 text-sm max-h-80 overflow-y-auto">
-                                                                @foreach ($mapping->files_for_modal as $file)
+                                                                @foreach ($filesToShow as $file)
                                                                     <button type="button"
-                                                                        class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate rounded-md text-sm"
+                                                                        class="w-full flex justify-between items-center px-3 py-2 rounded-md text-sm truncate view-file-btn
+                        {{ !empty($file['replaced_by_id']) ? 'bg-red-100 border border-red-400' : '' }}"
                                                                         data-file="{{ $file['url'] }}"
                                                                         data-doc-title="{{ $file['name'] }}">
-                                                                        📄 {{ $file['name'] }}
+
+                                                                        <!-- Nama file -->
+                                                                        <span class="truncate pr-2"
+                                                                            style="flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                                            📄 {{ $file['name'] }}
+                                                                        </span>
+
+                                                                        <!-- Badge Replaced -->
+                                                                        @if (!empty($file['replaced_by_id']))
+                                                                            <span
+                                                                                class="ml-2 inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                Replaced
+                                                                            </span>
+                                                                        @endif
                                                                     </button>
                                                                 @endforeach
                                                             </div>
                                                         </div>
-                                                    @elseif(count($mapping->files_for_modal) === 1)
-                                                        @php $file = $mapping->files_for_modal[0]; @endphp
-                                                        <button type="button"
-                                                            class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-cyan-500 text-white hover:bg-cyan-500 transition-colors view-file-btn"
-                                                            data-file="{{ $file['url'] }}" title="View File">
-                                                            <i class="bi bi-eye"></i>
-                                                        </button>
-                                                    @else
-                                                        {{-- placeholder invisible supaya tinggi/posisi tetap --}}
-                                                        <div class="w-8 h-8"></div>
-                                                    @endif
-                                                </div>
+                                                    </div>
+                                                @elseif($filesToShow->count() === 1)
+                                                    @php $file = $filesToShow->first(); @endphp
+                                                    <button type="button"
+                                                        class="action-btn inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn
+            {{ !empty($file['replaced_by_id']) ? 'bg-red-100 text-red-900' : 'bg-cyan-500' }}"
+                                                        data-file="{{ $file['url'] }}"
+                                                        data-doc-title="{{ $file['name'] }}" title="View File">
+                                                        <i class="bi bi-eye"></i>
+                                                        @if (!empty($file['replaced_by_id']))
+                                                            <span
+                                                                class="ml-1 inline-block bg-red-300 text-red-900 text-xs font-semibold px-1 py-0.5 rounded-full">
+                                                                Replaced
+                                                            </span>
+                                                        @endif
+                                                    </button>
+                                                @endif
 
-                                                {{-- UPLOAD --}}
+
+
+                                                {{-- UPLOAD ALWAYS APPEARS LEFT WITH OTHER ACTIONS --}}
                                                 <button type="button"
-                                                    class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors"
+                                                    class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
                                                     data-docid="{{ $mapping->id }}"
                                                     data-doc-title="{{ $mapping->document->name }}"
-                                                    data-status="{{ $mapping->status->name }}" title="Upload"
-                                                    data-files='@json($mapping->files_for_modal)'
-                                                    onclick="openReviseModal(this)">
+                                                    data-status="{{ $mapping->status->name }}"
+                                                    data-files='@json($mapping->files_for_modal_all)'
+                                                    onclick="openReviseModal(this)" title="Upload">
                                                     <i class="bi bi-upload"></i>
                                                 </button>
 
-                                                {{-- APPROVE & REJECT --}}
+                                                {{-- ADMIN ACTIONS --}}
                                                 @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
                                                     <form
                                                         action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
-                                                        method="POST" class="d-inline">
+                                                        method="POST" class="inline-flex items-center m-0 p-0">
                                                         @csrf
                                                         <button type="button"
-                                                            class="action-btn btn-approve inline-flex items-center w-8 h-8 rounded-full bg-green-500 text-white hover:bg-green-500 transition-colors"
+                                                            class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors btn-approve"
                                                             data-status="{{ $mapping->status->name }}"
                                                             data-obsolete="{{ $mapping->obsolete_date }}"
                                                             data-period="{{ $mapping->period_years }}"
@@ -192,12 +222,13 @@
                                                     </form>
 
                                                     <button type="button"
-                                                        class="action-btn btn-reject inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                        class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors btn-reject"
                                                         data-docid="{{ $mapping->id }}"
                                                         data-doc-title="{{ $mapping->document->name }}"
                                                         data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
-                                                        data-status="{{ $mapping->status->name }}" title="Reject"
-                                                        data-reject-url="{{ route('document-control.reject', $mapping) }}">
+                                                        data-status="{{ $mapping->status->name }}"
+                                                        data-reject-url="{{ route('document-control.reject', $mapping) }}"
+                                                        title="Reject">
                                                         <i class="bi bi-x-circle"></i>
                                                     </button>
                                                 @endif
@@ -468,12 +499,15 @@
                         enabled = true;
                     }
 
-                    // Terapkan style dan disable
-                    btn.disabled = !enabled;
-                    btn.classList.toggle('opacity-50', !enabled);
-                    btn.classList.toggle('cursor-not-allowed', !enabled);
+                    // HILANGKAN tombol kalau tidak memenuhi syarat
+                    if (!enabled) {
+                        btn.style.display = 'none'; // Hide tombol
+                    } else {
+                        btn.style.display = ''; // Tampilkan
+                    }
                 });
             }
+
 
             // Terapkan ke semua section mapping
             updateActionButtonsByStatus(document);
@@ -526,38 +560,42 @@
             window.openReviseModal = function(btn) {
                 const mappingId = btn.dataset.docid;
                 const files = JSON.parse(btn.dataset.files || '[]');
+
+                // Kosongkan container
                 reviseFilesContainer.innerHTML = '';
                 newFilesContainer.innerHTML = '';
 
-                if (files.length === 0) {
-                    reviseFilesContainer.innerHTML = `
-                <div class="p-3 border rounded bg-gray-50">
-                    <label class="block text-sm font-medium mb-2">Upload initial files</label>
-                    <input type="file" name="revision_files[]" class="form-control" required>
-                </div>
-            `;
-                } else {
+                // --- Render file baru dulu (kalau mau user tambah file awal) ---
+                newFilesContainer.innerHTML = `
+        <div class="mb-2">
+            <label class="block text-sm font-medium mb-1">Add new file(s)</label>
+        </div>
+    `;
+
+                // --- Render file lama aktif di bawah ---
+                if (files.length > 0) {
                     const activeFiles = files.filter(f => f.is_active == 1);
                     reviseFilesContainer.innerHTML = activeFiles.map((f, i) => `
-                <div class="p-3 border rounded bg-gray-50 mb-2">
-                    <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
-                    <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
-                    <div class="mt-2 flex items-center gap-2">
-                        <label class="text-xs text-gray-600">Replace:</label>
-                        <input type="file" name="revision_files[]" class="form-control border-gray-300 rounded p-1 text-sm">
-                        <input type="hidden" name="revision_file_ids[]" value="${f.id}">
-                    </div>
+            <div class="p-3 border rounded bg-gray-50 mb-2">
+                <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
+                <div class="mt-2 flex items-center gap-2">
+                    <label class="text-xs text-gray-600">Replace:</label>
+                    <input type="file" name="revision_files[]" class="form-control border-gray-300 rounded p-1 text-sm">
+                    <input type="hidden" name="revision_file_ids[]" value="${f.id}">
                 </div>
-            `).join('');
+            </div>
+        `).join('');
                 }
 
-                // set form action
+                // Set form action
                 const form = document.getElementById('reviseFormDynamic');
                 form.action = `${window.location.origin}/document-control/${mappingId}/revise`;
 
-                // tampilkan modal
+                // Tampilkan modal
                 reviseModal.classList.remove('hidden');
             };
+
 
             window.closeReviseModal = function() {
                 reviseModal.classList.add('hidden');

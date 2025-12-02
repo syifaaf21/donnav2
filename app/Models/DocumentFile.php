@@ -19,6 +19,7 @@ class DocumentFile extends Model
         'archived_at',
         'replaced_by_id',
         'marked_for_deletion_at',
+        'pending_approval',
     ];
 
     protected $table = 'tt_document_files';

@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Document;
 use App\Models\User;
 use App\Models\DocumentMapping;
+use App\Models\Status;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -57,10 +58,15 @@ class DashboardController extends Controller
             ->toArray();
 
 
-        $obsoleteDocuments = DocumentMapping::whereHas('status', function ($q) {
-            $q->where('name', 'Obsolete');
-        })->get();
+        $statusObsoleteId = Status::where('name', 'Obsolete')->value('id');
 
+        $obsoleteDocuments = DocumentMapping::with([
+            'document:id,name',
+            'department:id,name'
+        ])
+            ->where('status_id', $statusObsoleteId)
+            ->orderBy('obsolete_date', 'desc')
+            ->get();
 
         $chartData = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
             ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')

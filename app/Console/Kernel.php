@@ -7,7 +7,7 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
-    protected function schedule(Schedule $schedule)
+   protected function schedule(Schedule $schedule)
     {
         // Jalankan SendDocumentControlReminder setiap hari jam 08:00
         $schedule->command('document:send-reminder')

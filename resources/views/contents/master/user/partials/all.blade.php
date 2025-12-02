@@ -116,30 +116,37 @@
 
                         <td class="px-4 py-3 align-top whitespace-nowrap">
                             <div class="flex items-center gap-2">
-                                {{-- Edit Button: delegated handler to load single shared modal via AJAX --}}
+                                {{-- Edit Button --}}
                                 <button type="button"
-                                    class="btn-edit-user w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-2 duration-200"
+                                    class=" btn-edit-user flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors duration-200 flex-shrink-0"
                                     data-id="{{ $user->id }}" data-bs-title="Edit User" title="Edit user"
                                     aria-label="Edit user {{ $user->name }}">
                                     <i data-feather="edit" class="w-4 h-4" aria-hidden="true"></i>
                                 </button>
 
                                 {{-- Delete Button --}}
-                                @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+                                {{-- Delete Button --}}
+                                @php
+                                    $userRoles = $user->roles->pluck('name')->toArray();
+                                @endphp
+
+                                @if (!in_array('Admin', $userRoles) && !in_array('Super Admin', $userRoles))
                                     <form action="{{ route('master.users.destroy', $user->id) }}" method="POST"
-                                        class="d-inline delete-form">
+                                        class="flex items-center m-0 p-0 delete-form">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            class="w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2"
+                                            class="flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors duration-200 flex-shrink-0 align-middle"
                                             data-bs-title="Delete User" title="Delete user"
                                             aria-label="Delete user {{ $user->name }}">
                                             <i data-feather="trash-2" class="w-4 h-4" aria-hidden="true"></i>
                                         </button>
                                     </form>
                                 @endif
+
                             </div>
                         </td>
+
                     </tr>
                 @empty
                     <tr>

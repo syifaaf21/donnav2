@@ -164,3 +164,9 @@
         text-decoration: none !important;
     }
 </style>
+<style>
+    /* Hilangkan underline pada semua link menu-sidebar */
+    .notif-item {
+        text-decoration: none !important;
+    }
+</style>
