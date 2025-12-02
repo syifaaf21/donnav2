@@ -142,7 +142,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 Route::middleware('auth')->group(function () {
 
     // Dashboard & Profile
-    Route::get('/index', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
 

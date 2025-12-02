@@ -49,7 +49,7 @@
                     <input type="email" name="email"
                         class="form-control border-0 shadow-sm rounded-3 @error('email') is-invalid @enderror"
                         pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                        title="Please enter a valid email address (e.g. user@example.com)" value="{{ $user->email }}">
+                        title="Please enter a valid email address (e.g. user@example.com)" value="{{ $user->email ?: '-' }}">
                     @error('email')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
