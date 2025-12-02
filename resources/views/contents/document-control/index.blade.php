@@ -21,7 +21,7 @@
         </div>
 
         {{-- 🔹 Main Card --}}
-        <div class="bg-white shadow-2xl rounded-2xl border border-gray-100 p-6">
+        <div class="bg-gray-50 shadow-2xl rounded-2xl border border-gray-100 p-6">
             {{-- Filter --}}
             <form method="GET" id="filterForm" class="mb-6">
                 @if (auth()->user()->roles->pluck('name')->contains('Admin') ||
@@ -45,7 +45,6 @@
                 @endif
             </form>
 
-
             {{-- 🔹 Accordion --}}
             @php
                 $countDept = count($groupedDocuments);
@@ -53,11 +52,11 @@
 
             <div id="docList"
                 class="
-        grid gap-4
-        @if ($countDept === 1) grid-cols-1
-        @else
-            grid-cols-1 md:grid-cols-2 lg:grid-cols-3 @endif
-    ">
+                grid gap-4
+                @if ($countDept === 1) grid-cols-1
+                @else
+                    grid-cols-1 md:grid-cols-2 lg:grid-cols-3 @endif
+            ">
                 @forelse ($groupedDocuments as $department => $mappings)
                     <a href="{{ route('document-control.department', ['department' => $department]) }}"
                         class="block p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-sky-300

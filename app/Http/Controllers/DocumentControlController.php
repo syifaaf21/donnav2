@@ -188,28 +188,27 @@ class DocumentControlController extends Controller
 
             // Handle file lama
             if ($oldFileId) {
-    $oldFile = $mapping->files()->find($oldFileId);
-    if ($oldFile) {
-        $currentStatus = optional($mapping->status)->name;
+                $oldFile = $mapping->files()->find($oldFileId);
+                if ($oldFile) {
+                    $currentStatus = optional($mapping->status)->name;
 
-        if ($currentStatus === 'Rejected') {
-            // Dokumen direject → tandai file lama sebagai soft deleted
-            $oldFile->update([
-                'replaced_by_id' => $newFile->id,
-                'pending_approval' => false,
-                'is_active' => false, // supaya tidak muncul di modal
-                'marked_for_deletion_at' => now(),
-            ]);
-        } else {
-            // Revisi normal → file lama masuk archive setelah approve
-            $oldFile->update([
-                'replaced_by_id' => $newFile->id,
-                'pending_approval' => true,
-            ]);
-        }
-    }
-}
-
+                    if ($currentStatus === 'Rejected') {
+                        // Dokumen direject → tandai file lama sebagai soft deleted
+                        $oldFile->update([
+                            'replaced_by_id' => $newFile->id,
+                            'pending_approval' => false,
+                            'is_active' => false, // supaya tidak muncul di modal
+                            'marked_for_deletion_at' => now(),
+                        ]);
+                    } else {
+                        // Revisi normal → file lama masuk archive setelah approve
+                        $oldFile->update([
+                            'replaced_by_id' => $newFile->id,
+                            'pending_approval' => true,
+                        ]);
+                    }
+                }
+            }
         }
 
         // Update mapping status → Need Review

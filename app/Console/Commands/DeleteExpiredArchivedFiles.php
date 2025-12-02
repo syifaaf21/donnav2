@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 // Ganti App\Models\File dengan Model yang Anda gunakan
-use App\Models\DocumentFile; 
+use App\Models\DocumentFile;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,7 +26,7 @@ class DeleteExpiredArchivedFiles extends Command
             }
 
             // Hapus dari Database (PENTING: ini Hard Delete)
-            $file->delete(); 
+            $file->delete();
             $count++;
         }
 

@@ -289,9 +289,9 @@
                                                     $fileUrl = $files[0]['url'] ?? '#';
                                                 @endphp
                                                 <button type="button" title="View File"
-                                                    class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md border border-gray-200 text-white bg-cyan-500 hover:bg-cyan-600 view-file-btn"
+                                                   class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn"
                                                     data-file="{{ $fileUrl }}">
-                                                    <i data-feather="file-text" class="w-4 h-4"></i>
+                                                    <i class="bi bi-eye"></i>
                                                 </button>
                                             @endif
 

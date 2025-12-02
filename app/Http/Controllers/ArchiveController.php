@@ -48,10 +48,11 @@ class ArchiveController extends Controller
 
         // 2. REVIEW ARCHIVE
         $reviewQuery = DocumentFile::query()
-            ->with(['mapping.document', 'mapping.department']) // Load relasi parent
-            ->where('is_active', false) // Ambil file non-aktif
-            // Filter hanya dokumen tipe 'review' via parent
+            ->with(['mapping.document', 'mapping.department'])
+            ->where('is_active', false)
+            ->where('marked_for_deletion_at', '>', now()) // tambahkan ini
             ->whereHas('mapping.document', fn($q) => $q->where('type', 'review'));
+
 
         $reviewDocuments = $reviewQuery->paginate(10, ['*'], 'page_review');
 
@@ -92,7 +93,8 @@ class ArchiveController extends Controller
             });
         }
 
-        $controlDocuments = $controlQuery->paginate(10);
+        $controlDocuments = $controlQuery->paginate(10, ['*'], 'page_control');
+
         // REVIEW ARCHIVE SEARCH
         // 2. REVIEW SEARCH (FIXED)
         $reviewQuery = DocumentFile::query()
@@ -111,7 +113,7 @@ class ArchiveController extends Controller
         }
 
         // Paginasi otomatis, tidak perlu LengthAwarePaginator manual lagi
-        $reviewDocuments = $reviewQuery->paginate(10);
+        $reviewDocuments = $reviewQuery->paginate(10, ['*'], 'page_review');
 
 
         return response()->json([
