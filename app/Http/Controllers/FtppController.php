@@ -32,26 +32,41 @@ class FtppController extends Controller
         // Build base query with eager loads
         $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee']);
 
-        // --- Apply department restriction for non-privileged users ---
         $user = auth()->user();
-        if ($user) {
-            $userRoles = $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray();
-            $exemptRoles = ['super admin', 'admin', 'auditor'];
-            $canSeeAll = (bool) count(array_intersect($userRoles, $exemptRoles));
 
-            if (! $canSeeAll) {
-                // support pivot departments or single department_id
-                $userDeptIds = $user->departments->pluck('id')->toArray();
-                if (empty($userDeptIds) && !empty($user->department_id)) {
-                    $userDeptIds = [(int) $user->department_id];
-                }
+        // Determine roles lowercased for checks
+        $userRoles = $user ? $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray() : [];
 
-                if (!empty($userDeptIds)) {
-                    $query->whereIn('department_id', $userDeptIds);
-                } else {
-                    // ensure empty result when user has no department
-                    $query->whereRaw('0 = 1');
-                }
+        // Super Admin & Admin can see all records (no additional filter)
+        if (!empty($user) && (in_array('super admin', $userRoles) || in_array('admin', $userRoles))) {
+            // no department/audience filter
+        }
+        // Dept Head: can see all FTTP in their department(s)
+        elseif (!empty($user) && in_array('dept head', $userRoles)) {
+            $userDeptIds = $user->departments->pluck('id')->toArray();
+            if (empty($userDeptIds) && !empty($user->department_id)) {
+                $userDeptIds = [(int) $user->department_id];
+            }
+
+            if (!empty($userDeptIds)) {
+                $query->whereIn('department_id', $userDeptIds);
+            } else {
+                // if dept head has no department assigned, show nothing
+                $query->whereRaw('0 = 1');
+            }
+        }
+        // Default: only show FTTP where user is auditor OR listed as auditee
+        else {
+            if (empty($user)) {
+                // not authenticated -> no records
+                $query->whereRaw('0 = 1');
+            } else {
+                $query->where(function ($q) use ($user) {
+                    $q->where('auditor_id', $user->id)
+                        ->orWhereHas('auditee', function ($qa) use ($user) {
+                            $qa->where('users.id', $user->id);
+                        });
+                });
             }
         }
 
@@ -62,7 +77,7 @@ class FtppController extends Controller
             }
         }
 
-        // Optional free-text search across several columns/relations (kept safe: department filter already applied)
+        // Optional free-text search across several columns/relations (kept safe)
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -82,13 +97,6 @@ class FtppController extends Controller
             });
         }
 
-        if ($request->filled('status_id')) {
-            $statusIds = (array) $request->input('status_id');
-            if (!empty($statusIds)) {
-                $query->whereIn('status_id', $statusIds);
-            }
-        }
-
         // order and paginate
         $findings = $query->orderBy('updated_at', 'desc')->paginate(10);
         // preserve filters in pagination links
@@ -98,12 +106,38 @@ class FtppController extends Controller
         $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
         $totalCount = AuditFinding::count();
         $departments = Department::orderBy('name')->get();
-        // auditors: users with role 'auditor'
+
+        // auditors: users with role 'auditor' (case-insensitive)
         $auditors = User::whereHas('roles', function ($q) {
-            $q->where('name', 'auditor');
+            $q->whereRaw('LOWER(name) = ?', ['auditor']);
         })->orderBy('name')->get();
 
-        return view('contents.ftpp2.index', compact('findings', 'statuses', 'departments', 'auditors', 'totalCount'));
+        $nearDueFindings = AuditFinding::whereNotNull('due_date')
+            ->whereDate('due_date', '>=', now()->today())
+            ->whereDate('due_date', '<=', now()->addDays(3))
+            ->with(['auditor', 'auditee', 'department'])
+            ->get();
+
+        $overdueFindings = AuditFinding::whereNotNull('due_date')
+            ->whereDate('due_date', '<', now()->today())
+            ->with(['auditor', 'auditee', 'department'])
+            ->get();
+
+        // admin users (case-insensitive)
+        $adminUsers = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['admin']))->get();
+
+        // Removed invalid access to $findings->auditor / ->auditee (paginator doesn't expose relations directly)
+        // If you need to compute a notifiable user list for a specific finding, build it per-finding where needed.
+
+        return view('contents.ftpp2.index', compact(
+            'findings',
+            'statuses',
+            'departments',
+            'auditors',
+            'totalCount',
+            'nearDueFindings',
+            'overdueFindings'
+        ));
     }
 
     public function getData($auditTypeId)

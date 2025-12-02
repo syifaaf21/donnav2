@@ -25,15 +25,6 @@
             </ol>
         </nav>
         <div class="bg-white p-6 border border-gray-200 rounded-xl shadow-lg space-y-6 mt-2">
-            {{-- Back button --}}
-            <div class="mb-3">
-                <a href="{{ route('ftpp.index') }}"
-                    class="inline-flex items-center px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-sm text-gray-700">
-                    <i data-feather="arrow-left" class="w-4 h-4"></i>
-                    <span class="ml-2">Back</span>
-                </a>
-            </div>
-
             <h4>Assign Auditee Action</h4>
 
             <div x-data="editFtppApp()" x-init="init()">
@@ -50,7 +41,7 @@
                         @php
                             $statusNeedsReview =
                                 ($finding->status->need_review ?? null) === true ||
-                                in_array(strtolower($finding->status->name ?? ''), ['need revision', 'open']);
+                                in_array(strtolower($finding->status->name ?? ''), ['need revision', 'need assign']);
                         @endphp
 
                         @include('contents.ftpp2.auditee-action.partials.create-auditee-action', [

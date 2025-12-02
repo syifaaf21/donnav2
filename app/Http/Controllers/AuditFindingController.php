@@ -13,8 +13,11 @@ use App\Models\Process;
 use App\Models\Product;
 use App\Models\SubAudit;
 use App\Models\User;
+use App\Notifications\FindingCreatedNotification;
+use App\Notifications\FtppActionNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 
 class AuditFindingController extends Controller
@@ -113,12 +116,23 @@ class AuditFindingController extends Controller
         // Store auditee relationship
         $auditFinding->auditee()->attach($validated['auditee_ids']);
 
-        // Store sub klausul relationships
-        foreach ($validated['sub_klausul_id'] as $subId) {
-            AuditFindingSubKlausul::create([
-                'audit_finding_id' => $auditFinding->id,
-                'sub_klausul_id' => $subId,
-            ]);
+        // send notification to auditees
+        try {
+            $recipients = $auditFinding->auditee()->get();
+            $recipients = $recipients->unique('id')->filter()->values();
+
+            if ($recipients->isNotEmpty()) {
+                Notification::send(
+                    $recipients,
+                    new FtppActionNotification(
+                        $auditFinding,
+                        'created'   // 🔥 ACTION: created (assign immediately)
+                    )
+                );
+            }
+
+        } catch (\Throwable $e) {
+            \Log::warning('Notify auditee (finding created) failed: ' . $e->getMessage());
         }
 
         // Handle file uploads for photos, files, and attachments

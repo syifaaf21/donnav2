@@ -16,6 +16,9 @@ use App\Models\Product;
 use App\Models\SubAudit;
 use App\Models\User;
 use App\Models\WhyCauses;
+use App\Notifications\AuditeeAssignedNotification;
+use App\Notifications\FtppActionNotification;
+use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -203,6 +206,59 @@ class AuditeeActionController extends Controller
             }
 
             DB::commit();
+
+            // notify auditee(s) and auditor that auditee action / assignment exists
+            try {
+                if (!empty($auditFinding) && $auditFinding instanceof AuditFinding) {
+
+                    // 1️⃣ Notify auditees + auditor that auditee action / assignment exists
+                    $recipients = collect();
+                    $recipients = $recipients->merge($auditFinding->auditee()->get());
+
+                    if ($auditFinding->auditor) {
+                        $recipients->push($auditFinding->auditor);
+                    }
+
+                    $recipients = $recipients->unique('id')->filter()->values();
+
+                    if ($recipients->isNotEmpty()) {
+                        Notification::send(
+                            $recipients,
+                            new FtppActionNotification(
+                                $auditFinding,
+                                'assigned',   // action: assigned
+                                auth()->user()?->name
+                            )
+                        );
+                    }
+
+                    // 2️⃣ Notify Dept Head(s) of the finding's department that review is required
+                    if (!empty($auditFinding->department_id)) {
+                        $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['dept head']))
+                            ->where(function ($q) use ($auditFinding) {
+                                $q->whereHas('departments', fn($qq) => $qq->where('tm_departments.id', $auditFinding->department_id))
+                                    ->orWhere('department_id', $auditFinding->department_id);
+                            })
+                            ->get();
+
+                        if ($deptHeads->isNotEmpty()) {
+                            $customMessage = "Finding (No: {$auditFinding->registration_number}) needs your review.";
+
+                            Notification::send(
+                                $deptHeads,
+                                new FtppActionNotification(
+                                    $auditFinding,
+                                    'dept_head_checked', // action type
+                                    null,                // byUser optional
+                                    $customMessage       // custom message
+                                )
+                            );
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('FindingActionNotification failed: ' . $e->getMessage());
+            }
 
             if ($request->ajax()) {
                 return response()->json([

@@ -2,7 +2,7 @@
 @section('title', 'Edit Audit Finding')
 @section('content')
     {{-- Breadcrumbs --}}
-    <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -16,19 +16,11 @@
                 </a>
             </li>
             <li>/</li>
-            <li class="text-gray-700 font-medium">Edit Audit Finding</li>
+            <li class="text-gray-700 font-medium">Edit Finding</li>
         </ol>
     </nav>
 
     <div>
-        {{-- Back button --}}
-        <div class="mt-2">
-            <a href="{{ route('ftpp.index') }}"
-                class="inline-flex items-center px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-sm text-gray-700">
-                <i data-feather="arrow-left" class="w-4 h-4"></i>
-                <span class="ml-2">Back</span>
-            </a>
-        </div>
         <div x-data="editFindingApp()" x-init="init()">
             <form action="{{ route('ftpp.audit-finding.update', $finding->id) }}" method="POST"
                 enctype="multipart/form-data">
@@ -63,12 +55,13 @@
 
                         <!-- DEPARTMENT / PROCESS / PRODUCT -->
                         <div class="space-y-1">
-                            <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
+                            <label class="font-semibold">Department / Process / Product: <span
+                                    class="text-danger">*</span></label>
 
                             <button type="button"
-                                class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white"
+                                class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
                                 onclick="openPlantSidebar()">
-                                Select Department / Process / Product by Plant
+                                Choose Dept/Process/Product
                             </button>
 
                             <input type="hidden" id="selectedPlant" name="plant">
@@ -85,7 +78,7 @@
                             <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
                             <button type="button" onclick="openAuditeeSidebar()"
-                                class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
+                                class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                                 Select Auditee
                             </button>
 
@@ -93,55 +86,57 @@
                             </div>
 
                             <!-- Hidden holder for selected auditees (NOT submitted directly).
-                                                                                                                                                 We avoid naming this input so only the dynamic `auditee_ids[]` inputs
-                                                                                                                                                 created by `saveHeaderOnly()` are included in the POST request. -->
+                                 We avoid naming this input so only the dynamic `auditee_ids[]` inputs
+                                 created by `saveHeaderOnly()` are included in the POST request. -->
                             <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
                         </div>
 
-                        <!-- AUDITOR -->
-                        <div class="space-y-1">
-                            <label class="font-semibold">Auditor / Inisiator: <span class="text-danger">*</span></label>
-                            <select name="auditor_id" x-model="form.auditor_id"
-                                class="border-b border-gray-400 w-full focus:outline-none">
-                                <option value="">-- Choose Auditor --</option>
-                                @foreach ($auditors as $auditor)
-                                    <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                        <!-- ROW: Auditor / Date / Reg Number (tidak full width -> gunakan grid kolom) -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="font-semibold block">Auditor / Inisiator: <span
+                                        class="text-danger">*</span></label>
+                                <select name="auditor_id" x-model="form.auditor_id"
+                                    class="border border-gray-300 rounded w-full p-2 focus:outline-none">
+                                    <option value="">-- Choose Auditor --</option>
+                                    @foreach ($auditors as $auditor)
+                                        <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="font-semibold block">Date: <span class="text-danger">*</span></label>
+                                <input type="date" name="created_at" x-model="form.created_at"
+                                    class="border border-gray-300 rounded w-full p-2 focus:outline-none"
+                                    value="{{ now()->toDateString() }}">
+                            </div>
+
+                            <div>
+                                <label class="font-semibold block">Registration Number: <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" name="registration_number" id="reg_number"
+                                    x-model="form.registration_number"
+                                    class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
+                            </div>
+                        </div>
+                        <!-- FINDING CATEGORY -->
+                        <div>
+                            <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
+                            <div class="mt-1">
+                                @foreach ($findingCategories as $category)
+                                    <label class="mr-4">
+                                        <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
+                                            value="{{ $category->id }}">
+                                        {{ ucfirst($category->name) }}
+                                    </label>
                                 @endforeach
-                            </select>
-                        </div>
-
-                        <!-- DATE -->
-                        <div class="space-y-1">
-                            <label class="font-semibold">Date: <span class="text-danger">*</span></label>
-                            <input type="date" name="created_at" x-model="form.created_at"
-                                class="border-b border-gray-400 w-full focus:outline-none"
-                                value="{{ now()->toDateString() }}">
-                        </div>
-
-                        <!-- REG NUMBER -->
-                        <div class="space-y-1">
-                            <label class="font-semibold">Registration Number: <span class="text-danger">*</span></label>
-                            <input type="text" name="registration_number" id="reg_number"
-                                x-model="form.registration_number"
-                                class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" readonly>
+                            </div>
                         </div>
                     </div>
 
                     <div class="space-y-6">
                         <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-                            <!-- FINDING CATEGORY -->
-                            <div>
-                                <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
-                                <div class="mt-1">
-                                    @foreach ($findingCategories as $category)
-                                        <label class="mr-4">
-                                            <input type="radio" name="finding_category_id"
-                                                x-model="form.finding_category_id" value="{{ $category->id }}">
-                                            {{ ucfirst($category->name) }}
-                                        </label>
-                                    @endforeach
-                                </div>
-                            </div>
                             <h5 class="font-semibold text-gray-700">AUDITOR / INISIATOR</h5>
 
                             <!-- FINDING -->
@@ -156,13 +151,13 @@
                                 <div>
                                     <label class="font-semibold">Duedate: <span class="text-danger">*</span></label>
                                     <input type="date" name="due_date" x-model="form.due_date"
-                                        class="border-b border-gray-400 ml-2" required>
+                                        class="border-b border-gray-400 ml-2" required min="{{ now()->toDateString() }}">
                                 </div>
 
                                 <!-- CLAUSE SELECT -->
                                 <div class="text-right">
                                     <button type="button" onclick="openSidebar()"
-                                        class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
+                                        class="px-3 py-1  bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                                         Select Clause
                                     </button>
 
@@ -217,7 +212,7 @@
                                     class="hidden">
                             </div>
                             <button type="button" onclick="saveChangesFinding()"
-                                class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">
+                                class="ml-auto mt-2 bg-gradient-to-r from-primary to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primary transition-colors">
                                 Save Changes
                             </button>
                         </div>
@@ -227,14 +222,14 @@
         </div>
         <!-- Sidebar Klausul -->
         <div id="sidebarKlausul"
-            class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
-           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
+            class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
             <!-- Header -->
             <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
                 <h2 class="font-semibold text-lg text-gray-800">Select Clause</h2>
-                <button type="button" onclick="closeSidebar()" class="text-gray-600 hover:text-red-500 transition">
-                    <i data-feather="x" class="w-5 h-5"></i>
+                <button type="button" onclick="closeSidebar()" class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+                    <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
                 </button>
             </div>
 
@@ -261,21 +256,22 @@
 
             <!-- Submit Button -->
             <button type="button" onclick="addSubKlausul()"
-                class="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
-               hover:bg-blue-700 transition shadow">
+                class="flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg
+               bg-gradient-to-r from-primary to-primaryDark text-white hover:from-primaryDark hover:to-primary transition-colors">
                 <i data-feather="plus" class="w-4 h-4"></i> Add
             </button>
         </div>
 
         {{-- Sidebar Select Dept/Proc/Prod by Plant --}}
         <div id="sidebarPlant"
-            class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
-           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
+            class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
             <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
                 <h2 class="text-lg font-semibold text-gray-800">Select Plant / Department</h2>
-                <button type="button" onclick="closePlantSidebar()" class="text-gray-600 hover:text-red-500 transition">
-                    <i data-feather="x" class="w-5 h-5"></i>
+                <button type="button" onclick="closePlantSidebar()"
+                    class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+                    <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
                 </button>
             </div>
 
@@ -318,22 +314,22 @@
             </select>
 
             <button type="button" onclick="submitSidebarPlant()"
-                class="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
-               hover:bg-blue-700 shadow transition">
+                class="flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg bg-gradient-to-l from-primary to-primaryDark text-white
+               hover:from-primaryDark hover:to-primary transition-colors shadow">
                 <i data-feather="plus" class="w-4 h-4"></i> Add
             </button>
         </div>
 
         {{-- Sidebar select auditee --}}
         <div id="auditeeSidebar"
-            class="fixed top-0 right-0 w-full md:w-1/3 lg:w-1/4 h-full bg-white/95 backdrop-blur-xl shadow-2xl
-           border-l border-gray-200 p-5 hidden overflow-y-auto rounded-l-xl">
+            class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+           border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
             <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
                 <h2 class="text-lg font-semibold text-gray-800">Select Auditee</h2>
                 <button type="button" onclick="closeAuditeeSidebar()"
-                    class="text-gray-600 hover:text-red-500 transition">
-                    <i data-feather="x" class="w-5 h-5"></i>
+                    class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+                    <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
                 </button>
             </div>
 

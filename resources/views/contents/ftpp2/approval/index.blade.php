@@ -22,14 +22,6 @@
         </ol>
     </nav>
     <div x-data="ftppApp()" class=" bg-white rounded-xl border border-gray-200 shadow-lg p-4">
-        {{-- Back button --}}
-        <div class="mb-3">
-            <a href="{{ route('ftpp.index') }}"
-                class="inline-flex items-center px-3 py-1.5 bg-blue-100 rounded shadow border border-blue-600 hover:bg-blue-200 text-sm text-blue-600">
-                <i data-feather="arrow-left" class="w-4 h-4"></i>
-                <span class="ml-2">Back</span>
-            </a>
-        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 

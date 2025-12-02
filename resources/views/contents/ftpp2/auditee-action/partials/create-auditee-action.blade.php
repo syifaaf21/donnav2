@@ -5,21 +5,20 @@
 <div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
     <div class="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-4 my-2">
         <!-- LEFT: 5 WHY -->
-        <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
-            <div class="font-semibold text-lg text-gray-900">AUDITEE</div>
-
+        <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-4">
+            <h5 class="font-semibold text-gray-700">AUDITEE</h5>
             <div>
-                <label class="font-semibold text-gray-900">Issue Causes (5 Why)</label>
+                <label class="font-semibold text-medium text-gray-700">Issue Causes (5 Why)</label>
 
                 <template x-for="i in 5">
                     <div class="mt-2 space-y-2">
                         <div class="flex flex-col space-y-1">
-                            <label class="text-gray-600">Why-<span x-text="i"></span> (Mengapa):</label>
+                            <label class="text-gray-700">Why-<span x-text="i"></span> (Mengapa):</label>
                             <input type="text" name="why[]"
                                 class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
                                 x-model="form['why_'+i+'_mengapa']">
 
-                            <label class="text-gray-600">Cause (Karena):</label>
+                            <label class="text-gray-700">Cause (Karena):</label>
                             <input type="text" name="cause[]"
                                 class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
                                 x-model="form['cause_'+i+'_karena']">
@@ -184,7 +183,7 @@
                     <img src="/images/usr-approve.png" class="mx-auto h-24">
                 @else
                     {{-- Jika belum approve, tombol tetap muncul --}}
-                    <button type="button" class="px-3 py-1 bg-blue-600 text-white text-xs rounded"
+                    <button type="button" class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
                         @click="confirmApprove()">
                         Approve
                     </button>

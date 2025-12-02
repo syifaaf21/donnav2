@@ -921,12 +921,11 @@
 {{-- Store header data handler --}}
 <script>
     async function saveHeaderOnly() {
-        // Instead of AJAX, submit the main form so the controller can redirect and set a flash message.
         const form = document.querySelector('form[action="{{ route('ftpp.audit-finding.store') }}"]');
         if (!form) return alert('Form not found');
 
-        // remove any previously added dynamic inputs to avoid duplicates
-        document.querySelectorAll('[data-dyn-input]').forEach(n => n.remove());
+        // hapus pesan error lama
+        document.querySelectorAll('.validation-error').forEach(n => n.remove());
 
         // Prevent the static single `selectedSub` hidden input from submitting an empty value
         const staticSelectedSub = document.getElementById('selectedSub');
@@ -934,41 +933,89 @@
             staticSelectedSub.removeAttribute('name');
         }
 
+        // Prepare FormData
+        const formData = new FormData(form);
+
         // Add action indicator
-        const actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = 'save_header';
-        actionInput.setAttribute('data-dyn-input', '1');
-        form.appendChild(actionInput);
+        formData.set('action', 'save_header');
 
         // Add selected auditees (deduplicated by id)
         if (typeof selectedAuditees !== 'undefined' && selectedAuditees.length) {
             const uniqueIds = Array.from(new Set(selectedAuditees.map(a => a.id)));
-            uniqueIds.forEach(id => {
-                const inp = document.createElement('input');
-                inp.type = 'hidden';
-                inp.name = 'auditee_ids[]';
-                inp.value = id;
-                inp.setAttribute('data-dyn-input', '1');
-                form.appendChild(inp);
-            });
+            uniqueIds.forEach(id => formData.append('auditee_ids[]', id));
         }
 
         // Add selected sub klausul ids
         if (typeof selectedSubIds !== 'undefined' && selectedSubIds.length) {
-            selectedSubIds.forEach(id => {
-                const inp = document.createElement('input');
-                inp.type = 'hidden';
-                inp.name = 'sub_klausul_id[]';
-                inp.value = Number(id);
-                inp.setAttribute('data-dyn-input', '1');
-                form.appendChild(inp);
-            });
+            selectedSubIds.forEach(id => formData.append('sub_klausul_id[]', Number(id)));
         }
 
-        // Submit the form normally (will redirect and show flash message from controller)
-        form.submit();
+        // Send AJAX request
+        try {
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+
+            if (res.status === 422) {
+                const data = await res.json();
+                const errors = data.errors || {};
+                // tampilkan pesan error di tempat yang relevan
+                let firstErrorEl = null;
+                Object.keys(errors).forEach(key => {
+                    const messages = errors[key];
+                    // normalisasi key untuk array like "auditee_ids.0" -> "auditee_ids"
+                    const baseKey = key.split('.')[0];
+
+                    let targetEl = null;
+                    if (baseKey === 'auditee_ids') {
+                        targetEl = document.getElementById('selectedAuditees') || form;
+                    } else if (baseKey === 'sub_klausul_id') {
+                        targetEl = document.getElementById('selectedSubContainer') || form;
+                    } else {
+                        // coba cari elemen dengan name exact atau name[]'
+                        targetEl = form.querySelector(`[name="${baseKey}"]`) || form.querySelector(`[name="${baseKey}[]"]`) || form;
+                    }
+
+                    // append all messages
+                    messages.forEach(msg => {
+                        const el = document.createElement('div');
+                        el.className = 'validation-error text-sm text-red-600 mt-1';
+                        el.textContent = msg;
+                        // jika target adalah container, letakkan setelah container; jika input, setelah input
+                        if (targetEl === form) {
+                            form.appendChild(el);
+                        } else {
+                            targetEl.insertAdjacentElement('afterend', el);
+                        }
+                        if (!firstErrorEl) firstErrorEl = targetEl;
+                    });
+                });
+
+                if (firstErrorEl && typeof firstErrorEl.focus === 'function') {
+                    try { firstErrorEl.focus(); } catch(e){/* ignore */ }
+                }
+                return;
+            }
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error('Unexpected response', res.status, text);
+                return alert('Server error. Check console.');
+            }
+
+            // success
+            const json = await res.json();
+            // kalau mau redirect setelah sukses:
+            window.location.href = '/ftpp';
+        } catch (err) {
+            console.error('Save error', err);
+            alert('Error saat menyimpan. Lihat console untuk detail.');
+        }
     }
 </script>
 

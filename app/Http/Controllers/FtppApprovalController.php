@@ -19,8 +19,13 @@ use App\Models\SubAudit;
 use App\Models\SubKlausul;
 use App\Models\User;
 use App\Models\WhyCauses;
+use App\Notifications\FtppActionNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\AuditeeAssignedNotification;
+use App\Notifications\DeptHeadCheckedNotification;
+use App\Notifications\LeadAuditorApprovedNotification;
+use Illuminate\Support\Facades\Notification;
 
 class FtppApprovalController extends Controller
 {
@@ -59,7 +64,7 @@ class FtppApprovalController extends Controller
             'auditeeAction.leadAuditor',
         ])->orderByDesc('created_at');
 
-        if (! $isPrivileged) {
+        if (!$isPrivileged) {
             $query->whereIn('department_id', $userDeptIds);
         }
 
@@ -266,6 +271,20 @@ class FtppApprovalController extends Controller
 
                 // 🔹 Simpan auditee ke pivot
                 $auditFinding->auditee()->attach($validated['auditee_ids']);
+
+                // send notification to auditees and auditor
+                try {
+                    $recipients = $auditFinding->auditee()->get();
+                    if ($auditFinding->auditor) {
+                        $recipients->push($auditFinding->auditor);
+                    }
+                    $recipients = $recipients->unique('id')->filter()->values();
+                    if ($recipients->isNotEmpty()) {
+                        Notification::send($recipients, new AuditeeAssignedNotification($auditFinding));
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('Notify auditee assigned (approval controller) failed: ' . $e->getMessage());
+                }
 
                 foreach ($validated['sub_klausul_id'] as $subId) {
                     AuditFindingSubKlausul::create([
@@ -488,22 +507,6 @@ class FtppApprovalController extends Controller
         }
     }
 
-    public function ldrSpvSign(Request $request)
-    {
-        $request->validate([
-            'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
-        ]);
-
-        $action = AuditeeAction::findOrFail($request->auditee_action_id);
-        $action->ldr_spv_signature = true;
-        $action->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Leader/SPV approved'
-        ]);
-    }
-
     public function deptheadSign(Request $request)
     {
         $request->validate([
@@ -527,6 +530,28 @@ class FtppApprovalController extends Controller
         $finding = AuditFinding::find($action->audit_finding_id);
         if ($finding)
             $finding->update(['status_id' => 9]);
+
+        // notify auditor and auditees that dept head checked
+        try {
+            $recipients = collect();
+            if ($finding->auditor)
+                $recipients->push($finding->auditor);
+            $recipients = $recipients->merge($finding->auditee()->get());
+            $recipients = $recipients->unique('id')->filter()->values();
+
+            if ($recipients->isNotEmpty()) {
+                Notification::send(
+                    $recipients,
+                    new FtppActionNotification(
+                        $finding,
+                        'dept_head_checked',   // action: assigned
+                        auth()->user()?->name
+                    )
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('FtppActionNotification (dept_head_checked) failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
@@ -631,6 +656,45 @@ class FtppApprovalController extends Controller
         $finding->status_id = 10; // Approved by auditor
         $finding->save();
 
+        try {
+            $recipients = collect();
+
+            // auditees
+            $recipients = $recipients->merge($finding->auditee()->get());
+
+            // dept head if present on auditee action
+            if (!empty($action->dept_head_id)) {
+                $dh = User::find($action->dept_head_id);
+                if ($dh) $recipients->push($dh);
+            }
+
+            // include lead auditors (role-based)
+            $leadAuditors = User::whereHas('roles', fn($q) => $q->where('name', 'admin'))->get();
+            if ($leadAuditors->isNotEmpty()) {
+                $recipients = $recipients->merge($leadAuditors);
+            }
+
+            // include auditor (the verifier) for trace
+            if ($finding->auditor) {
+                $recipients->push($finding->auditor);
+            }
+
+            $recipients = $recipients->unique('id')->filter()->values();
+
+            if ($recipients->isNotEmpty()) {
+                Notification::send(
+                    $recipients,
+                    new FtppActionNotification(
+                        $finding,
+                        'auditor_approved',
+                        auth()->user()?->name
+                    )
+                );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('FtppActionNotification (auditor_approved) failed: ' . $e->getMessage());
+        }
+
         return response()->json(['success' => true]);
     }
 
@@ -675,6 +739,32 @@ class FtppApprovalController extends Controller
 
         $finding->status_id = 11; // closed
         $finding->save();
+
+        // notify auditee, auditor and dept head
+        try {
+            $recipients = collect();
+            $recipients = $recipients->merge($finding->auditee()->get());
+            if ($finding->auditor) {
+            $recipients->push($finding->auditor);
+            }
+            if ($action->dept_head_id) {
+            $dh = User::find($action->dept_head_id);
+            if ($dh) $recipients->push($dh);
+            }
+            $recipients = $recipients->unique('id')->filter()->values();
+            if ($recipients->isNotEmpty()) {
+            Notification::send(
+                $recipients,
+                new FtppActionNotification(
+                $finding,
+                'lead_approved',
+                auth()->user()?->name
+                )
+            );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('FtppActionNotification (lead_approved) failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true]);
     }

@@ -113,7 +113,7 @@
                                         @php
                                             $name = strtolower($status->name);
                                             $icons = [
-                                                'Need Assign' => 'alert-circle',
+                                                'need assign' => 'alert-circle',
                                                 'need check' => 'upload-cloud',
                                                 'need approval by auditor' => 'user-check',
                                                 'need approval by lead auditor' => 'check-circle',
@@ -159,12 +159,36 @@
                 @endif
 
                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Dept Head']))
-                    <a href="{{ route('approval.index') }}"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
-                       shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
-                        <i data-feather="pen-tool" class="w-4 h-4"></i>
-                        Approval
-                    </a>
+                    @php
+                        $role = optional(auth()->user()->roles->first())->name;
+                        $badgeCount = 0;
+                        // helper to find count by case-insensitive name
+                        $findCount = fn($needle) => collect($statuses)->first(fn($s) => strtolower($s->name) === strtolower($needle))->audit_finding_count ?? 0;
+
+                        if ($role === 'Dept Head') {
+                            $badgeCount = $findCount('need check');
+                        } elseif ($role === 'Auditor') {
+                            $badgeCount = $findCount('need approval by auditor');
+                        } elseif (in_array($role, ['Super Admin', 'Admin'])) {
+                            $badgeCount = $findCount('need approval by lead auditor');
+                        }
+                    @endphp
+
+                    <div class="relative">
+                        @if ($badgeCount > 0)
+                            <span
+                                class="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-semibold leading-none text-white bg-red-600 rounded-full z-10">
+                                {{ $badgeCount }}
+                            </span>
+                        @endif
+
+                        <a href="{{ route('approval.index') }}"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
+                           shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
+                            <i data-feather="pen-tool" class="w-4 h-4"></i>
+                            Approval
+                        </a>
+                    </div>
                 @endif
             </div>
 
@@ -264,7 +288,7 @@
                                                         class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
                                                         :style="`top:${y}px; left:${x}px; width:170px;`">
 
-                                                        @if (strtolower(optional($finding->status)->name ?? '') !== 'open')
+                                                        @if (strtolower(optional($finding->status)->name ?? '') !== 'need assign')
                                                             <!-- ITEM: Show -->
                                                             <button type="button"
                                                                 @click="
@@ -286,7 +310,7 @@
 
                                                         <!-- ITEM: Assign Auditee Action -->
                                                         @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
-                                                        @if ($statusName === 'open')
+                                                        @if ($statusName === 'need assign')
                                                             @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                                                                 <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
                                                                     @click="open = false"
@@ -303,7 +327,7 @@
                                                                 <i data-feather="edit" class="w-4 h-4"></i>
                                                                 Revise
                                                             </a>
-                                                        @elseif ($statusName === 'submitted')
+                                                        @elseif ($statusName === 'need check')
                                                             @if (in_array(optional(auth()->user()->roles->first())->name, [
                                                                     'Super Admin',
                                                                     'Admin',

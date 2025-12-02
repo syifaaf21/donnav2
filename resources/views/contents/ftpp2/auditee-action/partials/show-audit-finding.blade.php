@@ -1,10 +1,11 @@
 <!-- CARD WRAPPER -->
 <div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
+    <!-- CARD WRAPPER -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+        <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg space-y-6">
             <!-- AUDIT TYPE -->
             <div>
-                <label class="font-semibold block">Audit Type:</label>
+                <label class="font-semibold block">Audit Type: <span class="text-danger">*</span></label>
                 <div class="mt-2 space-y-1">
                     @foreach ($auditTypes as $type)
                         <label class="flex items-center gap-2">
@@ -28,11 +29,12 @@
 
             <!-- DEPARTMENT / PROCESS / PRODUCT -->
             <div class="space-y-1">
-                <label class="font-semibold">Department / Process / Product:</label>
+                <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
 
-                <button type="button" class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white"
+                <button type="button"
+                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
                     onclick="openPlantSidebar()">
-                    Select Department / Process / Product by Plant
+                    Choose Dept/Process/Product
                 </button>
 
                 <input type="hidden" id="selectedPlant" name="plant">
@@ -46,81 +48,85 @@
 
             <!-- AUDITEE -->
             <div class="space-y-1">
-                <label class="font-semibold">Auditee:</label>
+                <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
                 <button type="button" onclick="openAuditeeSidebar()"
-                    class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
+                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                     Select Auditee
                 </button>
 
                 <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
                 </div>
 
-                <input type="hidden" id="auditee_ids" name="auditee_ids[]" x-model="form.auditee_ids">
+                <!-- Hidden holder for selected auditees (NOT submitted directly).
+                     We avoid naming this input so only the dynamic `auditee_ids[]` inputs
+                     created by `saveHeaderOnly()` are included in the POST request. -->
+                <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
             </div>
 
-            <!-- AUDITOR -->
-            <div class="space-y-1">
-                <label class="font-semibold">Auditor / Inisiator:</label>
-                <select name="auditor_id" x-model="form.auditor_id"
-                    class="border-b border-gray-400 w-full focus:outline-none">
-                    <option value="">-- Choose Auditor --</option>
-                    @foreach ($auditors as $auditor)
-                        <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+            <!-- ROW: Auditor / Date / Reg Number (tidak full width -> gunakan grid kolom) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="font-semibold block">Auditor / Inisiator: <span class="text-danger">*</span></label>
+                    <select name="auditor_id" x-model="form.auditor_id"
+                        class="border border-gray-300 rounded w-full p-2 focus:outline-none">
+                        <option value="">-- Choose Auditor --</option>
+                        @foreach ($auditors as $auditor)
+                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="font-semibold block">Date: <span class="text-danger">*</span></label>
+                    <input type="date" name="created_at" x-model="form.created_at"
+                        class="border border-gray-300 rounded w-full p-2 focus:outline-none"
+                        value="{{ now()->toDateString() }}">
+                </div>
+
+                <div>
+                    <label class="font-semibold block">Registration Number: <span class="text-danger">*</span></label>
+                    <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
+                        class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
+                </div>
+            </div>
+            <!-- FINDING CATEGORY -->
+            <div>
+                <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
+                <div class="mt-1">
+                    @foreach ($findingCategories as $category)
+                        <label class="mr-4">
+                            <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
+                                value="{{ $category->id }}">
+                            {{ ucfirst($category->name) }}
+                        </label>
                     @endforeach
-                </select>
-            </div>
-
-            <!-- DATE -->
-            <div class="space-y-1">
-                <label class="font-semibold">Date:</label>
-                <input type="date" name="created_at" x-model="form.created_at"
-                    class="border-b border-gray-400 w-full focus:outline-none" value="{{ now()->toDateString() }}">
-            </div>
-
-            <!-- REG NUMBER -->
-            <div class="space-y-1">
-                <label class="font-semibold">Registration Number:</label>
-                <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
-                    class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" readonly>
+                </div>
             </div>
         </div>
 
         <div class="space-y-6">
-            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-                <!-- FINDING CATEGORY -->
-                <div>
-                    <label class="font-semibold">Finding Category:</label>
-                    <div class="mt-1">
-                        @foreach ($findingCategories as $category)
-                            <label class="mr-4">
-                                <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
-                                    value="{{ $category->id }}">
-                                {{ ucfirst($category->name) }}
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
+            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg space-y-6">
                 <h5 class="font-semibold text-gray-700">AUDITOR / INISIATOR</h5>
 
                 <!-- FINDING -->
                 <div>
-                    <label class="font-semibold">Finding / Issue:</label>
+                    <label class="font-semibold">Finding / Issue: <span class="text-danger">*</span></label>
                     <textarea name="finding_description" x-model="form.finding_description" class="w-full border rounded p-2 h-24" required></textarea>
                 </div>
 
                 <div class="flex justify-between items-start">
                     <!-- DUE DATE -->
                     <div>
-                        <label class="font-semibold">Duedate:</label>
+                        <label class="font-semibold">Duedate: <span class="text-danger">*</span></label>
                         <input type="date" name="due_date" x-model="form.due_date"
-                            class="border-b border-gray-400 ml-2" required>
+                            class="border-b border-gray-400 ml-2" required min="{{ now()->toDateString() }}">
                     </div>
 
                     <!-- CLAUSE SELECT -->
                     <div class="text-right">
                         <button type="button" onclick="openSidebar()"
-                            class="px-3 py-1 border text-gray-600 rounded hover:bg-blue-600 hover:text-white">
+                            class="px-3 py-1  bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                             Select Clause
                         </button>
 
@@ -132,9 +138,10 @@
             </div>
 
             {{-- ATTACHMENT --}}
-            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg space-y-6">
 
                 <div class="font-semibold text-lg text-gray-700">Attachments</div>
+                <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
                 <div>
                     <!-- Preview containers (sesuaikan posisi di form) -->
                     <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
@@ -153,7 +160,7 @@
 
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
-                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow z-20">
+                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
                             <button id="attachImages" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="image" class="w-4 h-4"></i>
@@ -164,29 +171,17 @@
                                 <i data-feather="file-text" class="w-4 h-4"></i>
                                 <span class="text-sm">Upload Documents</span>
                             </button>
-                            <div class="border-t mt-1"></div>
-                            <button id="attachBoth" type="button"
-                                class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                <i data-feather="upload" class="w-4 h-4"></i>
-                                <span class="text-sm">Open Combined Picker</span>
-                            </button>
                         </div>
                     </div>
 
                     <!-- Hidden file inputs -->
                     <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
-                    <input type="file" id="fileInput" name="files[]" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple
-                        class="hidden">
-                    <!-- Optional combined input -->
-                    <input type="file" id="combinedInput" name="attachments[]"
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
+                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple class="hidden">
                 </div>
-                {{-- @if (in_array(optional(auth()->user()->role)->name, ['Super Admin', 'Admin', 'Auditor']))
-                    <button type="button" onclick="updateAuditFinding()"
-                        class="ml-auto mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 mb-4">
-                        Save changes
-                    </button>
-                {{-- @endif --}}
+                <button type="button" onclick="saveHeaderOnly()"
+                    class="ml-auto mt-2 bg-gradient-to-r from-primary to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primary transition-colors">
+                    Save Finding
+                </button>
             </div>
         </div>
     </div>
