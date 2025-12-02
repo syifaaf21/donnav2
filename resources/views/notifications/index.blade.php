@@ -3,15 +3,23 @@
 @section('title', 'Notifications')
 
 @section('content')
-    <div class="max-w-3xl mx-auto mt-10">
+    <div class="max-w-3xl mx-auto mt-10 px-4">
         <div class="flex items-center justify-between mb-4">
-            <h1 class="text-xl font-semibold">All Notifications</h1>
+            <h1 class="text-2xl font-semibold text-gray-900">All Notifications</h1>
 
-            @if (auth()->user()->unreadNotifications->count() > 0)
-                <button id="markAllReadBtn" class="text-sm text-blue-600 hover:underline">
-                    Mark all as read
-                </button>
-            @endif
+            <div class="flex items-center space-x-3">
+                @if (auth()->user()->unreadNotifications->count() > 0)
+                    <span id="notifCountBadge"
+                          class="inline-flex items-center justify-center bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                        {{ auth()->user()->unreadNotifications->count() }}
+                    </span>
+
+                    <button id="markAllReadBtn"
+                            class="text-sm text-blue-600 hover:underline px-3 py-1 rounded hover:bg-blue-50 transition">
+                        Mark all as read
+                    </button>
+                @endif
+            </div>
         </div>
 
         @php
@@ -35,31 +43,48 @@
         @endphp
 
         @forelse($groupedNotifications as $period => $notifications)
-            <h2 class="text-lg font-semibold mb-2 mt-6">{{ $period }}</h2>
+            <h2 class="text-lg font-semibold mb-3 mt-6 text-gray-800">{{ $period }}</h2>
 
             @foreach ($notifications as $notification)
                 <div id="notif-{{ $notification->id }}"
-                    class="flex items-start justify-between p-4 mb-2 border rounded transition-colors
-            @if (is_null($notification->read_at)) bg-blue-50 @else bg-white @endif">
+                     class="flex items-start justify-between p-4 mb-3 border rounded-lg transition-transform transform
+                        hover:shadow-sm
+                        @if (is_null($notification->read_at)) bg-blue-50 border-blue-100 @else bg-white border-gray-100 @endif">
 
-                    <div class="flex-1">
-                        <a href="{{ route('notifications.read', $notification->id) }}"
-                            class="notif-item block text-gray-800 hover:text-blue-600">
-                            {{ $notification->data['message'] ?? 'No message' }}
-                        </a>
-                        <div class="text-xs text-gray-400">
-                            {{ $notification->created_at->diffForHumans() }}
+                    <div class="flex items-start gap-3 flex-1">
+                        {{-- visual indicator --}}
+                        @if (is_null($notification->read_at))
+                            <span class="w-3 h-3 rounded-full bg-blue-500 mt-2 flex-shrink-0" aria-hidden="true"></span>
+                        @else
+                            <span class="w-3 h-3 rounded-full bg-gray-200 mt-2 flex-shrink-0" aria-hidden="true"></span>
+                        @endif
+
+                        <div class="min-w-0">
+                            <a href="{{ route('notifications.read', $notification->id) }}"
+                               class="notif-item block text-sm font-medium text-gray-900 hover:text-blue-600 break-words">
+                                {{ $notification->data['message'] ?? 'No message' }}
+                            </a>
+                            <div class="text-xs text-gray-400 mt-1">
+                                {{ $notification->created_at->diffForHumans() }}
+                            </div>
                         </div>
                     </div>
-                    @if (is_null($notification->read_at))
-                        <button type="button"
-                            class="mark-read-btn text-xs text-blue-600 hover:underline whitespace-nowrap ml-3"
-                            data-id="{{ $notification->id }}"> Mark as read </button>
-                    @endif
+
+                    <div class="flex items-center ml-4">
+                        @if (is_null($notification->read_at))
+                            <button type="button"
+                                    class="mark-read-btn text-xs text-blue-600 hover:underline whitespace-nowrap ml-3 px-2 py-1 border border-blue-100 rounded hover:bg-blue-50 transition"
+                                    data-id="{{ $notification->id }}">
+                                Mark as read
+                            </button>
+                        @endif
+                    </div>
                 </div>
             @endforeach
         @empty
-            <p class="text-gray-500">You have no notifications.</p>
+            <div class="py-10 text-center">
+                <p class="text-gray-500">You have no notifications.</p>
+            </div>
         @endforelse
     </div>
 

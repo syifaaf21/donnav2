@@ -1,39 +1,37 @@
 document.addEventListener("DOMContentLoaded", () => {
-    feather.replace(); // Render feather sekali saja
+    // safe guard feather call if not initialized elsewhere
+    if (typeof feather !== 'undefined' && typeof feather.replace === 'function') {
+        feather.replace();
+    }
 
     const sidebar = document.getElementById("sidebar");
-    const toggleBtn = document.getElementById("toggleSidebar");
+    const toggleBtn = document.getElementById("toggleSidebar"); // collapse button inside sidebar
+    const openBtn = document.getElementById("openSidebarBtn"); // open button in navbar
     const sidebarTexts = document.querySelectorAll(".sidebar-text");
     const logo = document.getElementById("sidebarLogo");
     const profileIcon = document.getElementById("profileIcon");
 
-    const collapsedWidth = "w-20";
-    const expandedWidth = "w-64";
+    const COLLAPSED = "w-20";
+    const EXPANDED = "w-64";
 
-    const toggleIconEl = null; // replaced usage with direct injection into the button
-
-    function setToggleIcon(name) {
-        if (!toggleBtn) return;
-        // keep accessible label/span, replace icon markup then render feather SVGs
-        const sr = toggleBtn.querySelector('.sr-only') ? '<span class="sr-only">Toggle sidebar</span>' : '';
-        toggleBtn.innerHTML = `${sr}<i data-feather="${name}" class="w-5 h-5"></i>`;
-        feather.replace();
+    function setToggleIcon(btn, name) {
+        if (!btn) return;
+        // keep sr-only if present
+        const sr = btn.querySelector('.sr-only') ? '<span class="sr-only">Toggle sidebar</span>' : '';
+        btn.innerHTML = `${sr}<i data-feather="${name}" class="w-5 h-5"></i>`;
+        if (typeof feather !== 'undefined' && typeof feather.replace === 'function') feather.replace();
     }
 
-    /* ----------------------------
-       SIDEBAR COLLAPSE / EXPAND
-    ----------------------------- */
-
-    function collapseSidebar() {
-        sidebar.classList.remove(expandedWidth);
-        sidebar.classList.add(collapsedWidth);
+    function applyCollapsedVisuals() {
+        sidebar.classList.remove(EXPANDED);
+        sidebar.classList.add(COLLAPSED);
 
         sidebarTexts.forEach(t => {
             t.classList.add("hidden");
             t.setAttribute("aria-hidden", "true");
         });
 
-        if (logo) {
+        if (logo && logo.dataset.icon) {
             logo.src = logo.dataset.icon;
             logo.style.width = "32px";
             logo.style.margin = "0 auto";
@@ -41,49 +39,96 @@ document.addEventListener("DOMContentLoaded", () => {
 
         profileIcon?.classList.add("scale-90");
 
-        if (toggleBtn) toggleBtn.setAttribute("aria-expanded", "false");
-        setToggleIcon("chevron-right");
+        if (openBtn) openBtn.classList.remove("hidden");
+        if (toggleBtn) {
+            toggleBtn.classList.add("hidden");
+            toggleBtn.setAttribute("aria-expanded", "false");
+            setToggleIcon(toggleBtn, "chevron-right"); // icon if it becomes visible later
+        }
     }
 
-    function expandSidebar() {
-        sidebar.classList.remove(collapsedWidth);
-        sidebar.classList.add(expandedWidth);
+    function applyExpandedVisuals() {
+        sidebar.classList.remove(COLLAPSED);
+        sidebar.classList.add(EXPANDED);
 
         sidebarTexts.forEach(t => {
             t.classList.remove("hidden");
             t.setAttribute("aria-hidden", "false");
         });
 
-        if (logo) {
+        if (logo && logo.dataset.full) {
             logo.src = logo.dataset.full;
             logo.style.width = "150px";
             logo.style.margin = "0";
         }
 
-        if (toggleBtn) toggleBtn.setAttribute("aria-expanded", "true");
-        setToggleIcon("chevron-left");
-    }
+        profileIcon?.classList.remove("scale-90");
 
-    if (toggleBtn) {
-        // ensure toggle has ARIA defaults
-        if (!toggleBtn.hasAttribute('aria-expanded')) toggleBtn.setAttribute('aria-expanded', 'false');
-        toggleBtn.addEventListener("click", () => {
-            if (sidebar.classList.contains(expandedWidth)) collapseSidebar();
-            else expandSidebar();
-        });
-    }
-
-    /* Apply initial visual state based on the sidebar's class */
-    if (sidebar) {
-        if (sidebar.classList.contains(collapsedWidth)) {
-            collapseSidebar();
-        } else {
-            expandSidebar();
+        if (openBtn) openBtn.classList.add("hidden");
+        if (toggleBtn) {
+            toggleBtn.classList.remove("hidden");
+            toggleBtn.setAttribute("aria-expanded", "true");
+            setToggleIcon(toggleBtn, "chevron-left");
         }
     }
 
+    function expandSidebar() {
+        applyExpandedVisuals();
+        // persist state if desired (localStorage)
+        try { localStorage.setItem('sidebarState', 'expanded'); } catch(e){}
+    }
+
+    function collapseSidebar() {
+        applyCollapsedVisuals();
+        try { localStorage.setItem('sidebarState', 'collapsed'); } catch(e){}
+    }
+
+    // toggle helper used by both buttons
+    function toggleSidebar() {
+        if (!sidebar) return;
+        if (sidebar.classList.contains(EXPANDED)) collapseSidebar();
+        else expandSidebar();
+    }
+
+    // wire events
+    if (openBtn) {
+        openBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            expandSidebar();
+        });
+    }
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            collapseSidebar();
+        });
+    }
+
+    // initialize state:
+    (function init() {
+        // priority: explicit class on sidebar -> keep it
+        if (sidebar) {
+            // if stored preference exists, apply it
+            let pref = null;
+            try { pref = localStorage.getItem('sidebarState'); } catch(e){}
+
+            if (pref === 'expanded') {
+                applyExpandedVisuals();
+                return;
+            } else if (pref === 'collapsed') {
+                applyCollapsedVisuals();
+                return;
+            }
+
+            // fallback to existing classes on element (server-side)
+            if (sidebar.classList.contains(EXPANDED)) applyExpandedVisuals();
+            else applyCollapsedVisuals();
+        }
+    })();
+
     /* ----------------------------
-       DROPDOWN COLLAPSE (MASTER)
+       Collapse/expand behavior for nested menus
     ----------------------------- */
 
     document.querySelectorAll(".collapse-toggle").forEach(btn => {
@@ -91,63 +136,56 @@ document.addEventListener("DOMContentLoaded", () => {
         const target = document.getElementById(targetId);
         const icon = btn.querySelector("i[data-feather]");
 
-        // mark button for accessibility
         btn.setAttribute('role', 'button');
-        btn.setAttribute('aria-controls', targetId);
+        if (target) btn.setAttribute('aria-controls', targetId);
 
-        // Jika submenu memiliki item dengan class "active" → jangan biarkan collapse (expand terus)
         const locked = target && target.querySelector(".active");
-
-        // initialize aria-expanded based on visibility
         const isVisible = target && !target.classList.contains('hidden');
         btn.setAttribute('aria-expanded', isVisible ? 'true' : 'false');
 
         if (locked) {
-            // Pastikan submenu terlihat dan icon ter-rotate
-            target.classList.remove("hidden");
+            if (target) target.classList.remove("hidden");
             if (icon) icon.classList.add("rotate-90");
-
-            // Pastikan sidebar dalam keadaan expand
             expandSidebar();
             btn.setAttribute('aria-expanded', 'true');
         }
 
         btn.addEventListener("click", () => {
-            // Jika submenu "locked" karena ada active, jangan toggle collapse-nya
             if (locked) {
-                if (sidebar.classList.contains(collapsedWidth)) expandSidebar();
+                if (sidebar.classList.contains(COLLAPSED)) expandSidebar();
                 return;
             }
 
-            // Jika sidebar collapsed → expand dulu
-            if (sidebar.classList.contains(collapsedWidth)) {
+            if (sidebar.classList.contains(COLLAPSED)) {
                 expandSidebar();
             }
 
-            // Toggle submenu
             if (target) {
                 target.classList.toggle("hidden");
                 const nowVisible = !target.classList.contains("hidden");
                 btn.setAttribute('aria-expanded', nowVisible ? 'true' : 'false');
             }
 
-            // Rotate icon
             if (icon) icon.classList.toggle("rotate-90");
         });
     });
 
     /* ----------------------------
-       TOOLTIP (AUTO FROM .sidebar-text)
+       Bootstrap tooltip init if present
     ----------------------------- */
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
-    tooltipTriggerList.map(function (el) {
-        return new bootstrap.Tooltip(el, {
-            title: el.getAttribute('data-bs-title'),
-            placement: 'right',          // paksa tampil di kanan
-            container: 'body',          // render di body supaya tidak terpotong
-            trigger: 'hover focus',     // hover + keyboard focus
-            boundary: 'viewport',
-            delay: { "show": 50, "hide": 0 }
+    try {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
+        tooltipTriggerList.map(function (el) {
+            return new bootstrap.Tooltip(el, {
+                title: el.getAttribute('data-bs-title'),
+                placement: 'right',
+                container: 'body',
+                trigger: 'hover focus',
+                boundary: 'viewport',
+                delay: { "show": 50, "hide": 0 }
+            });
         });
-    });
+    } catch (e) {
+        // ignore if bootstrap not available
+    }
 });
