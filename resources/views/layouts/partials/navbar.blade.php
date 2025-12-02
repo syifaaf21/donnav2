@@ -1,5 +1,5 @@
 <header id="minimalNavbar"
-    class="fixed left-1/2 transform -translate-x-1/2 top-4 z-50 bg-white/70 backdrop-blur-md border border-white rounded-3xl flex items-center gap-4 px-3 py-2 shadow-md">
+    class="fixed left-1/2 transform -translate-x-1/2 top-4 mb-4 z-50 bg-white/70 backdrop-blur-md border border-white rounded-3xl flex items-center gap-4 px-3 py-2 shadow-md">
     <!-- Open sidebar button (visible when sidebar is collapsed) -->
     <button id="openSidebarBtn" type="button"
         class="flex items-center justify-center w-9 h-9 rounded-md hover:bg-gray-100 transition-colors text-choco focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -10,7 +10,9 @@
 
     <!-- Notification -->
     <div class="relative p-1">
-        <button id="notificationBtn" type="button" class="relative focus:outline-none focus:ring-2 focus:ring-blue-400 rounded" aria-haspopup="true" aria-controls="notificationDropdown" aria-expanded="false" title="Notifications">
+        <button id="notificationBtn" type="button"
+            class="relative focus:outline-none focus:ring-2 focus:ring-blue-400 rounded" aria-haspopup="true"
+            aria-controls="notificationDropdown" aria-expanded="false" title="Notifications">
             <span class="sr-only">Open notifications</span>
             <i data-feather="bell" class="w-5 h-5 text-choco"></i>
 
@@ -19,20 +21,24 @@
             @endphp
 
             @if ($unreadCount > 0)
-                <span class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full animate-pulse" aria-hidden="false" aria-live="polite" aria-atomic="true">
+                <span
+                    class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-600 rounded-full animate-pulse"
+                    aria-hidden="false" aria-live="polite" aria-atomic="true">
                     <span class="sr-only">{{ $unreadCount }} unread notifications</span>
                     {{ $unreadCount > 9 ? '9+' : $unreadCount }}
                 </span>
             @endif
         </button>
 
-        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white border border-gray-100 rounded-xl shadow-lg ring-1 ring-black/5 z-50 flex flex-col overflow-hidden" role="menu" aria-labelledby="notificationBtn">
+        <div id="notificationDropdown"
+            class="hidden absolute right-0 mt-2 w-96 bg-white border border-gray-100 rounded-xl shadow-lg ring-1 ring-black/5 z-50 flex flex-col overflow-hidden"
+            role="menu" aria-labelledby="notificationBtn">
             <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                 <div class="flex items-center gap-2">
                     <i data-feather="bell" class="w-4 h-4 text-choco"></i>
                     <span class="text-sm font-medium text-gray-700">Notifications</span>
                 </div>
-                @if(auth()->user()->unreadNotifications->count() > 0)
+                @if (auth()->user()->unreadNotifications->count() > 0)
                     <form action="{{ route('notifications.markAllRead') }}" method="POST" class="m-0">
                         @csrf
                         <button type="submit" class="text-xs text-gray-500 hover:text-gray-700">
@@ -44,10 +50,12 @@
 
             <div class="overflow-y-auto max-h-64 divide-y divide-gray-100">
                 @forelse(auth()->user()->notifications->take(8) as $notification)
-                    <a href="{{ $notification->data['url'] ?? '#' }}" class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" role="menuitem">
+                    <a href="{{ $notification->data['url'] ?? '#' }}"
+                        class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" role="menuitem">
                         <span class="flex-none mt-1">
-                            @if(!$notification->read_at)
-                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white"></span>
+                            @if (!$notification->read_at)
+                                <span
+                                    class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white"></span>
                             @else
                                 <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200"></span>
                             @endif
@@ -60,7 +68,7 @@
                                 {{ $notification->created_at->diffForHumans() }}
                             </div>
                         </div>
-                        @if(!$notification->read_at)
+                        @if (!$notification->read_at)
                             <span class="ml-2 flex-shrink-0 text-xs text-blue-600 font-medium">New</span>
                         @endif
                     </a>
@@ -73,23 +81,29 @@
             </div>
 
             <div class="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center">
-                <a href="{{ route('notifications.index') }}" class="inline-block text-sm text-blue-600 hover:underline">View all notifications</a>
+                <a href="{{ route('notifications.index') }}"
+                    class="inline-block text-sm text-blue-600 hover:underline">View all notifications</a>
             </div>
         </div>
     </div>
 
     <!-- Profile -->
     <div class="relative">
-        <button id="profileDropdownBtn" type="button" class="flex items-center gap-3 px-2 py-1 text-choco transition-all duration-150" aria-haspopup="true" aria-controls="profileDropdownMenu" aria-expanded="false" title="Profile">
+        <button id="profileDropdownBtn" type="button"
+            class="flex items-center gap-3 px-2 py-1 text-choco transition-all duration-150" aria-haspopup="true"
+            aria-controls="profileDropdownMenu" aria-expanded="false" title="Profile">
             <div class="flex items-center gap-2">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-500 text-choco flex items-center justify-center font-bold uppercase text-base shadow-inner">
+                <div
+                    class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-500 text-choco flex items-center justify-center font-bold uppercase text-base shadow-inner">
                     {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                 </div>
-                <i data-feather="chevron-down" class="w-4 h-4 text-gray-500 transform transition-transform duration-200 flex-shrink-0"></i>
+                <i data-feather="chevron-down"
+                    class="w-4 h-4 text-gray-500 transform transition-transform duration-200 flex-shrink-0"></i>
             </div>
         </button>
 
-        <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50">
+        <div id="profileDropdownMenu"
+            class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50">
             <div class="px-4 border-b border-gray-100">
                 <p class="text-sm text-gray-400 truncate">{{ Auth::user()->name ?? 'User' }}</p>
                 <p class="text-sm text-gray-400 truncate">
@@ -102,7 +116,8 @@
 
             <form action="{{ route('logout') }}" method="POST" role="none">
                 @csrf
-                <button type="submit" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                <button type="submit"
+                    class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <i data-feather="log-out" class="w-4 h-4"></i>
                     <span>Logout</span>
                 </button>
@@ -200,7 +215,8 @@
             if (dropdownMenu && !dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
                 closeDropdown(dropdownBtn, dropdownMenu);
             }
-            if (notificationDropdown && !notificationDropdown.contains(e.target) && !notificationBtn.contains(e.target)) {
+            if (notificationDropdown && !notificationDropdown.contains(e.target) && !notificationBtn
+                .contains(e.target)) {
                 closeDropdown(notificationBtn, notificationDropdown);
             }
         });

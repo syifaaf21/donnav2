@@ -1,12 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
-
 @section('content')
-    <div class="px-4 py-4">
-
+    <div class="px-4 py-4 mt-8">
+        <div class="mb-4 text-white">
+            <h1 class="fw-bold ">Dashboard Overview</h1>
+            <p style="font-size: 0.9rem;">
+                A quick summary of the document statuses and activities.
+            </p>
+        </div>
         {{-- ===== SUMMARY CARDS ===== --}}
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-5 mt-4">
             @php
                 $cards = [
                     [
@@ -73,7 +76,7 @@
         <div class="row g-3">
             {{-- Pie Chart --}}
             <div class="col-lg-4">
-                <div class="card shadow-sm border-0 h-100" style="border-radius: 10px;">
+                <div class="card shadow-sm border-0 h-100 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2"
                             style="font-size: 0.85rem; color: #1f2937;">
@@ -92,7 +95,7 @@
 
             {{-- Control Documents Chart --}}
             <div class="col-lg-8">
-                <div class="card shadow-sm border-0 h-100" style="border-radius: 10px;">
+                <div class="card shadow-sm border-0 h-100 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
@@ -117,7 +120,7 @@
 
 
         {{-- Obsolete Table --}}
-        <div id="obsoleteTableContainer" class="card shadow-sm border-0 mt-3 d-none"
+        <div id="obsoleteTableContainer" class="card shadow-sm border-0 p-2 mt-3 d-none"
             style="border-radius: 12px; overflow: hidden;">
             <div class="card-body p-2"> <!-- p-3 → p-2 -->
                 <div class="fw-semibold mb-2 d-flex align-items-center gap-2" style="color: #1f2937; font-size: 0.85rem;">
@@ -152,7 +155,7 @@
         {{-- Review Documents Chart --}}
         <div class="row g-3 mt-2">
             <div class="col-lg-6">
-                <div class="card shadow-sm border-0" style="border-radius: 10px;">
+                <div class="card shadow-sm border-0 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             Review Documents
@@ -164,7 +167,7 @@
 
             {{-- FTPP Status Chart --}}
             <div class="col-lg-6">
-                <div class="card shadow-sm border-0" style="border-radius: 10px;">
+                <div class="card shadow-sm border-0 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             FTPP Status Summary
@@ -180,10 +183,10 @@
         {{-- Findings per Department Chart --}}
         <div class="row g-3 mt-2 mb-3">
             <div class="col-12">
-                <div class="card shadow-sm border-0 max-height-100" style="border-radius: 10px; ">
+                <div class="card shadow-sm border-0 p-2 max-height-100" style="border-radius: 10px; ">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
-                            Findings per Department
+                            <i class="bi bi-search me-2"></i>Findings per Department
                         </h6>
 
                         <!-- height sebelumnya 180 → sekarang 140 -->
@@ -629,15 +632,15 @@
     @push('styles')
         <style>
             /*
-                                                   GLOBAL BACKGROUND
-                                                 */
+                                                                                                                                           GLOBAL BACKGROUND
+                                                                                                                                         */
             body {
                 /* background: #f6f8fc !important; */
             }
 
             /*
-                                                   CARD STYLE (Neumorphism Light)
-                                                 */
+                                                                                                                                           CARD STYLE (Neumorphism Light)
+                                                                                                                                         */
             .card {
                 border-radius: 22px !important;
                 background: #ffffff !important;
@@ -672,8 +675,8 @@
 
 
             /*
-                                                   SUMMARY ICON BOX
-                                                 */
+                                                                                                                                           SUMMARY ICON BOX
+                                                                                                                                         */
             .summary-icon-box {
                 width: 46px;
                 height: 46px;
@@ -686,8 +689,8 @@
             }
 
             /*
-                                                   TITLES
-                                                 */
+                                                                                                                                           TITLES
+                                                                                                                                         */
             h6,
             .fw-semibold {
                 color: #1e1e2d !important;
@@ -696,8 +699,8 @@
             }
 
             /*
-                                                   BLUE PANEL LIKE IMAGE
-                                                 */
+                                                                                                                                           BLUE PANEL LIKE IMAGE
+                                                                                                                                         */
             .blue-panel {
                 background: linear-gradient(135deg, #1e3cff, #2d4fff);
                 border-radius: 24px;
@@ -707,8 +710,8 @@
             }
 
             /*
-                                                   TOGGLE SWITCH (Modern Blue)
-                                                 */
+                                                                                                                                           TOGGLE SWITCH (Modern Blue)
+                                                                                                                                         */
             /* HIDE the actual checkbox */
             .toggle-switch input {
                 display: none;
@@ -762,8 +765,8 @@
             }
 
             /*
-                                                   PIE & BAR LABEL COLORS
-                                                 */
+                                                                                                                                           PIE & BAR LABEL COLORS
+                                                                                                                                         */
             .chart-title {
                 color: #1e1e2d;
                 font-weight: 600;
@@ -771,8 +774,8 @@
             }
 
             /*
-                                                   OBSOLETE TABLE STYLE (Modern Clean)
-                                                 */
+                                                                                                                                           OBSOLETE TABLE STYLE (Modern Clean)
+                                                                                                                                         */
             #obsoleteTableContainer table {
                 border-radius: 18px !important;
                 overflow: hidden;
@@ -804,8 +807,8 @@
             }
 
             /*
-                                                   PAGINATION BUTTONS
-                                                 */
+                                                                                                                                           PAGINATION BUTTONS
+                                                                                                                                         */
             #nextPage,
             #prevPage {
                 background: white !important;
@@ -825,8 +828,8 @@
             }
 
             /*
-                                                   SCROLL TO TOP BUTTON
-                                                 */
+                                                                                                                                           SCROLL TO TOP BUTTON
+                                                                                                                                         */
             #scrollUpBtn {
                 background: linear-gradient(135deg, #1e3cff, #3f69ff) !important;
                 box-shadow: 0px 10px 22px rgba(30, 60, 255, 0.35) !important;

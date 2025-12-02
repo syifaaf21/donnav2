@@ -1,39 +1,30 @@
 @extends('layouts.app')
-@section('title', 'FTPP')
-@section('breadcrumbs')
-    <nav class="text-md text-gray-500 w-fit mb-2" aria-label="Breadcrumb">
-        <ol class="list-reset flex space-x-2">
-            <li>
-                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-house-door me-1"></i> Dashboard
-                </a>
-            </li>
-            <li>/</li>
-            <li class="text-gray-700 font-medium">FTPP</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
-    {{-- Breadcrumbs --}}
-    {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
-        <ol class="list-reset flex space-x-2">
-            <li>
-                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-house-door me-1"></i> Dashboard
-                </a>
-            </li>
-            <li>/</li>
-            <li class="text-gray-700 font-medium">FTPP</li>
-        </ol>
-    </nav> --}}
-    <div class="p-4 bg-white/50 border rounded-xl border border-gray-200 shadow-lg" x-data="showModal()"
-        @open-show-modal.window="openShowModal($event.detail)">
-        <div class="mb-6">
-            <div class="fw-semibold text-gray-800">Audit Findings Monitoring & Auditee Actions</div>
+    <div class=" mx-auto p-6" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
+        <div class="py-6">
+            <div class="text-white">
+                <h1 class="fw-bold">
+                    FTPP
+                </h1>
+                <p class="text-base mt-1">Manage and organize your FTPP documents efficiently</p>
+            </div>
         </div>
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 py-3 pb-1 shadow-sm w-fit mb-2 mt-2"
+            aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">FTPP</li>
+            </ol>
+        </nav>
 
-        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="mb-8 mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <!-- LEFT: Search + Filter -->
             <div class="flex items-center gap-2 w-full md:w-1/3">
 
@@ -55,7 +46,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -81,7 +72,7 @@
                 <!-- FILTER BUTTON -->
                 <div x-data="statusFilter()" x-init="init()" class="relative">
                     <button @click="toggle($event)"
-                        class="bg-white border border-gray-200 rounded-xl shadow p-2 hover:bg-gray-100 transition">
+                        class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition">
                         <i data-feather="filter" class="w-5 h-5"></i>
                     </button>
 
@@ -160,11 +151,11 @@
                 </div>
             </div>
             <!-- ACTION BUTTONS -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
 
                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
                        shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                         <i data-feather="plus" class="w-4 h-4"></i>
                         Add Finding
@@ -198,7 +189,7 @@
                         @endif
 
                         <a href="{{ route('approval.index') }}"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
+                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primaryDark text-white border border-blue-700 font-medium
                            shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                             <i data-feather="pen-tool" class="w-4 h-4"></i>
                             Approval
@@ -218,31 +209,31 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Registration No
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Status
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Department
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Auditor
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Auditee
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Due Date
                                     </th>
                                     <th
-                                        class="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
@@ -251,9 +242,9 @@
 
                                 @forelse($findings as $finding)
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                             {{ $finding->registration_number ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <td class="px-4 py-3 whitespace-nowrap text-center text-sm">
                                             @php
                                                 $statusColors = [
                                                     'need assign' => 'bg-red-100 text-red-600',
@@ -268,21 +259,21 @@
                                             @endphp
                                             <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                             {{ optional($finding->department)->name ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                             {{ optional($finding->auditor)->name ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 {{ $finding->auditee->pluck('name')->join(', ') }}
                                             @else
                                                 -
                                             @endif
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                             {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
                                         </td>
-                                        <td class="flex px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="flex px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                             <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
                                                 <!-- BUTTON -->
                                                 <button type="button"
