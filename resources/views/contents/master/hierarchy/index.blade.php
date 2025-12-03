@@ -78,12 +78,12 @@
                 <table class="min-w-full text-sm text-gray-700">
                     <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                         <tr>
-                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                            <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                 style="color: #1e2b50; letter-spacing: 0.5px;">Document Name
                             </th>
-                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                            <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                 style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
-                            <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                            <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
                                 style="color: #1e2b50; letter-spacing: 0.5px;">
                                 Actions</th>
                         </tr>

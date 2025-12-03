@@ -121,25 +121,25 @@
                     <table class="min-w-full text-sm text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">
                                     <input type="checkbox" id="selectAll" class="form-checkbox">
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Name</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Obsolete
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Reminder
                                     Date</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Period</th>
-                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">
                                     Action</th>
                             </tr>
@@ -147,23 +147,23 @@
                         <tbody class="divide-y divide-gray-200">
                             @forelse($documentMappings as $mapping)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 border-r border-gray-200">
                                         <input type="checkbox" class="row-checkbox form-checkbox"
                                             value="{{ $mapping->id }}">
                                     </td>
-                                    <td class="px-4 py-3">{{ $documentMappings->firstItem() + $loop->index }}</td>
-                                    <td class="px-4 py-3 text-sm font-semibold text-gray-800">
+                                    <td class="px-4 py-3 border-r border-gray-200">{{ $documentMappings->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold text-gray-800">
                                         {{ $mapping->document->name ?? '-' }} <span
                                             class="text-xs text-gray-400 mt-1 block">
                                             {{ $mapping->department->name ?? '-' }}
                                         </span></td>
-                                    <td class="px-4 py-3 text-sm font-semibold">
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold">
                                         {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 border-r border-gray-200">
                                         {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 border-r border-gray-200">
                                         @if ($mapping->period_years)
                                             {{ $mapping->period_years }}
                                             {{ $mapping->period_years == 1 ? 'Year' : 'Years' }}
@@ -171,7 +171,7 @@
                                             -
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 flex space-x-2 whitespace-nowrap action-column">
+                                    <td class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
                                         {{-- FILE BUTTON AREA — fixed width --}}
                                         {{-- <div class="relative inline-block w-8 h-8 flex items-center justify-center">
                                             @if ($mapping->files->count())

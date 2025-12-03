@@ -66,28 +66,28 @@
                     <table class="min-w-full divide-y divide-gray-200 text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
-                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody class="divide-y divide-x divide-gray-200">
                             @forelse ($departments as $department)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 border-r border-gray-200">
                                         {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-semibold">{{ ucwords($department->name) }}</td>
-                                    <td class="px-4 py-3 text-sm">{{ $department->code }}</td>
-                                    <td class="px-4 py-3 text-sm">{{ $department->plant }}</td>
-                                    <td class="px-4 py-3 text-sm text-center">
+                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">{{ ucwords($department->name) }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $department->code }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $department->plant }}</td>
+                                    <td class="px-4 py-3 text-sm text-center border-r border-gray-200">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editDepartmentModal-{{ $department->id }}"
                                             title="Edit Department"
