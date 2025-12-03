@@ -1,12 +1,12 @@
 <div class="overflow-hidden rounded-xl border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
-    <table class="min-w-full text-sm text-gray-700">
-        <thead class="sticky top-0 z-10 bg-gray-50">
-            <tr class="border-b border-gray-200">
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide text-left">No</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide text-left">Document</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide text-left">Inactive File</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide text-left">Hard Delete</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">Action</th>
+    <table class="min-w-full text-gray-700">
+        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+            <tr>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Document Name</th>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Inactive File</th>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Hard Delete On</th>
+                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
             </tr>
         </thead>
 

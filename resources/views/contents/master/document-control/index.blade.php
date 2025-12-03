@@ -23,7 +23,7 @@
 
             {{-- Add Button --}}
             <button type="button" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal"
-               class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                 <i class="bi bi-plus-circle"></i> Add Document
             </button>
             @include('contents.master.document-control.partials.modal-add')
@@ -104,28 +104,32 @@
                 <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
                     <table class="min-w-full text-sm text-gray-700">
-                        <thead class="sticky top-0 z-10">
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                            <tr>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">
                                     <input type="checkbox" id="selectAll" class="form-checkbox">
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Name</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Department
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Obsolete
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Obsolete
-                                </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Reminder
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Reminder
                                     Date</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Period</th>
-                                <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">
                                     Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
+                        <tbody class="divide-y divide-gray-200">
                             @forelse($documentMappings as $mapping)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
                                     <td class="px-4 py-3">
@@ -133,9 +137,12 @@
                                             value="{{ $mapping->id }}">
                                     </td>
                                     <td class="px-4 py-3">{{ $documentMappings->firstItem() + $loop->index }}</td>
-                                    <td class="px-4 py-3">{{ $mapping->document->name ?? '-' }}</td>
-                                    <td class="px-4 py-3">{{ $mapping->department->name ?? '-' }}</td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 text-sm font-semibold text-gray-800">
+                                        {{ $mapping->document->name ?? '-' }} <span
+                                            class="text-xs text-gray-400 mt-1 block">
+                                            {{ $mapping->department->name ?? '-' }}
+                                        </span></td>
+                                    <td class="px-4 py-3 text-sm font-semibold">
                                         {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}
                                     </td>
                                     <td class="px-4 py-3">
@@ -172,8 +179,8 @@
                                                     @endif
                                                 </button>
                                             @else --}}
-                                                {{-- invisible placeholder agar tetap sejajar --}}
-                                                {{-- <div class="w-8 h-8"></div>
+                                        {{-- invisible placeholder agar tetap sejajar --}}
+                                        {{-- <div class="w-8 h-8"></div>
                                             @endif
                                         </div> --}}
 
@@ -187,8 +194,7 @@
                                                     <i data-feather="edit" class="w-4 h-4"></i>
                                                 </button>
 
-                                                <form
-                                                    action="{{ route('master.document-control.destroy', $mapping->id) }}"
+                                                <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
                                                     method="POST" class="inline delete-form">
                                                     @csrf
                                                     @method('DELETE')

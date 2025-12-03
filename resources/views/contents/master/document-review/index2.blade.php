@@ -233,33 +233,33 @@
                         <div
                             class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[60vh]">
                             <table class="min-w-full text-sm text-gray-700">
-                                <thead class="bg-gray-50 sticky top-0 z-10">
+                                <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                     <tr>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             No
                                         </th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Document Number</th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Part
                                             Number</th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Product</th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Model
                                         </th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Process</th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Reminder Date</th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Deadline</th>
                                         <th
-                                            class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                            class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class=" divide-y divide-gray-100">
+                                <tbody class=" divide-y divide-gray-200">
                                     @if ($documents->isEmpty())
                                         <tr class="hover:bg-gray-50 transition-all duration-150">
                                             <td colspan="9" class="text-center text-gray-400 py-6">

@@ -53,28 +53,26 @@
                 {{-- Table --}}
                 <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
-                    <table class="min-w-full text-sm text-gray-700">
-                        <thead class="sticky top-0 z-10">
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
-                                <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                    Actions</th>
+                    <table class="min-w-full divide-y divide-gray-200 text-gray-700">
+                        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                            <tr>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-200">
                             @forelse ($departments as $department)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
                                     <td class="px-4 py-3">
                                         {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3">{{ ucwords($department->name) }}</td>
-                                    <td class="px-4 py-3">{{ $department->code }}</td>
-                                    <td class="px-4 py-3">{{ $department->plant }}</td>
-                                    <td class="px-4 py-3 text-center">
+                                    <td class="px-4 py-3 text-sm font-semibold">{{ ucwords($department->name) }}</td>
+                                    <td class="px-4 py-3 text-sm">{{ $department->code }}</td>
+                                    <td class="px-4 py-3 text-sm">{{ $department->plant }}</td>
+                                    <td class="px-4 py-3 text-sm text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editDepartmentModal-{{ $department->id }}"
                                             title="Edit Department"

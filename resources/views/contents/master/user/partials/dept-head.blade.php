@@ -25,34 +25,41 @@
                     <i data-feather="search" class="w-5 h-5"></i>
                 </button>
                 @if (request('search'))
-                <button type="button"
-                    class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
-                    <i data-feather="x" class="w-5 h-5"></i>
-                </button>
+                    <button type="button"
+                        class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
+                        <i data-feather="x" class="w-5 h-5"></i>
+                    </button>
                 @endif
             </div>
         </form>
     </div>
     <div class="overflow-x-auto overflow-y-auto max-h-96">
         <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-            <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
+            <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;" class="sticky top-0 z-10">
                 <tr>
-                    <th class="px-4 py-2">No</th>
-                    <th class="px-4 py-2">Name</th>
-                    <th class="px-4 py-2">NPK</th>
-                    <th class="px-4 py-2">Department</th>
-                    <th class="px-4 py-2">Action</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-100">
                 @forelse ($users as $user)
                     @if ($user->roles->pluck('name')->first() === 'Dept Head')
                         <tr class="border-b hover:bg-gray-50">
                             <td class="px-4 py-2">
-                                {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
-                            <td class="px-4 py-2">{{ ucwords(strtolower($user->name)) }}</td>
-                            <td class="px-4 py-2">{{ $user->npk }}</td>
-                            <td class="px-4 py-2">{{ $user->departments->pluck('name')->join(', ') ?: '-' }}</td>
+                                {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
+                            </td>
+                            <td class="px-4 py-2 text-sm font-semibold">{{ ucwords(strtolower($user->name)) }}
+                                <span class="text-xs text-gray-400 block">
+                                    {{ $user->departments->pluck('name')->join(', ') ?: '-' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-sm font-semibold">{{ $user->npk }}</td>
                             <td class="px-4 py-2 flex gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal" data-id="{{ $user->id }}"

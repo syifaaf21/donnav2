@@ -67,18 +67,18 @@
 
             {{-- Table --}}
             <div
-                class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[540px]">
                 <table class="min-w-full text-sm text-gray-700">
-                    <thead class="sticky top-0 z-10">
-                        <tr class="bg-gray-50 border-b border-gray-200">
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name
+                    <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                        <tr>
+                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Document Name
                             </th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
+                            <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                 Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="documentTableBody">
+                    <tbody id="documentTableBody" class="divide-y divide-gray-200"
                         @php $number = 1; @endphp
                         @if ($documents->count() === 0)
                             <tr>

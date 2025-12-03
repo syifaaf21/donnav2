@@ -6,7 +6,7 @@
 <tr id="{{ $rowId }}" class="{{ $parentClass }} {{ $parent_id ? 'hidden' : '' }}"
     class="hover:bg-gray-50 transition-all duration-150">
     {{-- Document Name & toggle --}}
-    <td class="px-4 py-3">
+    <td class="px-4 py-3 text-sm font-semibold">
         <div class="flex items-center" style="margin-left: {{ $level * 30 }}px">
             @if ($document->children->isNotEmpty())
                 <button type="button" class="toggle-children mr-1" data-target="child-of-{{ $document->id }}">

@@ -11,16 +11,16 @@
 <div
     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
     <table class="min-w-full text-sm text-gray-700">
-        <thead class="sticky top-0 z-10">
-            <tr class="bg-gray-50 border-b border-gray-200">
-                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">No</th>
-                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Audit Type</th>
-                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Sub Audit Type</th>
-                <th class="px-4 py-3 text-center text-sm text-gray-700 uppercase tracking-wider">Action
+        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+            <tr>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Sub Audit Type</th>
+                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action
                 </th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-gray-200">
             @forelse ($audits as $index => $audit)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
                     <td class="px-4 py-3 text-sm">
