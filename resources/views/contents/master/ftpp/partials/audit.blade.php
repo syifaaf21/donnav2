@@ -2,7 +2,7 @@
 <div class="flex justify-between items-center mb-4">
     <h2 class="text-lg font-semibold text-gray-700">Audit Type</h2>
     <button id="btn-add"
-        class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-md transition"
+        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
         data-bs-toggle="modal" data-bs-target="#modalAddAudit">
         <i class="bi bi-plus"></i> Add Audit
     </button>
@@ -132,8 +132,8 @@
                     style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
-                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+
                     Submit
                 </button>
             </div>
@@ -203,9 +203,8 @@
                     data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
-                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
-                    Update
+                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                    Save Changes
                 </button>
             </div>
         </form>

@@ -32,7 +32,7 @@
                 <div class="text-sm text-gray-500 hidden sm:block">
                     {{-- Add User Button --}}
                     <button type="button" data-bs-toggle="modal" data-bs-target="#addUserModal"
-                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add User</span>
                     </button>

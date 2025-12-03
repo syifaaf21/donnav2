@@ -2,7 +2,7 @@
 <div class="flex justify-between items-center mb-2">
     <h2 class="text-lg font-semibold text-gray-700">Klausul</h2>
     <button id="btn-add-klausul" data-bs-toggle="modal" data-bs-target="#modalAddKlausul"
-        class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 flex items-center gap-1">
+        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
         <i class="bi bi-plus"></i> Add Klausul
     </button>
 </div>
@@ -107,7 +107,6 @@
                                 @endif
                             @endforeach
                         </tbody>
-
                     </table>
                 </div>
             @else

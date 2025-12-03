@@ -124,8 +124,7 @@
                         Cancel
                     </button>
                     <button type="submit"
-                        class="btn px-5 py-2 rounded-3 fw-semibold"
-                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                        class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Save Changes
                     </button>
                 </div>

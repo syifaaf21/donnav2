@@ -22,7 +22,7 @@
 
             {{-- Add Button --}}
             <button type="button" data-bs-toggle="modal" data-bs-target="#createDocumentModal"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+               class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                 <i class="bi bi-plus-circle"></i>
                 <span>Add Document</span>
             </button>
@@ -179,13 +179,13 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                <div class="modal-footer bg-light rounded-b-xl justify-content-between p-4">
                     <button type="button"
                         class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit" class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Submit
                     </button>
                 </div>

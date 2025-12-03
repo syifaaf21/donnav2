@@ -23,7 +23,7 @@
 
             {{-- Add Document Button --}}
             <button
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
+                class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
                 data-bs-toggle="modal" data-bs-target="#addDocumentModal">
                 <i class="bi bi-plus-circle"></i> Add Document
             </button>
@@ -726,7 +726,8 @@
                         const viewer = document.getElementById('fileViewer');
                         viewer.src = fileBtn.dataset.file;
 
-                        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('viewFileModal'));
+                        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById(
+                            'viewFileModal'));
                         modal.show();
                         return;
                     }

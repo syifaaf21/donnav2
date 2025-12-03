@@ -18,7 +18,8 @@
                         {{-- Header --}}
                         <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
                             style="background-color: #f5f5f7;">
-                            <h5 class="modal-title fw-semibold text-dark" id="editDocumentModalLabel-{{ $mapping->id }}"
+                            <h5 class="modal-title fw-semibold text-dark"
+                                id="editDocumentModalLabel-{{ $mapping->id }}"
                                 style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                                 <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Document Review
                             </h5>
@@ -31,7 +32,8 @@
                         </div>
 
                         {{-- Body --}}
-                        <div class="modal-body p-5 bg-gray-50" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                        <div class="modal-body p-5 bg-gray-50"
+                            style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                             <form id="editForm-{{ $mapping->id }}"
                                 action="{{ route('master.document-review.update2', $mapping->id) }}" method="POST"
                                 class="needs-validation" novalidate>
@@ -67,13 +69,14 @@
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold">Plant <span
                                                 class="text-danger">*</span></label>
-                                        <select name="plant" class="form-select border-0 shadow-sm rounded-3 tom-select"
-                                            required>
+                                        <select name="plant"
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select" required>
                                             <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>
                                                 Body</option>
                                             <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>
                                                 Unit</option>
-                                            <option value="electric" {{ $mapping->plant == 'electric' ? 'selected' : '' }}>
+                                            <option value="electric"
+                                                {{ $mapping->plant == 'electric' ? 'selected' : '' }}>
                                                 Electric</option>
                                         </select>
                                     </div>
@@ -167,16 +170,14 @@
 
                         {{-- Footer --}}
                         <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
-                            <button type="button"
-                                class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
                                 data-bs-dismiss="modal"
                                 style="text-decoration: none; transition: background-color 0.3s ease;">
                                 Cancel
                             </button>
                             <button type="submit"
-                                class="btn px-5 py-2 rounded-3 fw-semibold"
-                                form="editForm-{{ $mapping->id }}"
-                                style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                                class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
+                                form="editForm-{{ $mapping->id }}">
                                 Save Changes
                             </button>
                         </div>
@@ -186,8 +187,6 @@
         @endforeach
     @endforeach
 @endif
-
-
 
 @push('scripts')
     <script>
@@ -210,7 +209,8 @@
                 return new TomSelect(el, Object.assign({
                     allowEmptyOption: true,
                     maxOptions: 100,
-                    placeholder: "-- Select --"
+                    placeholder: "-- Select --",
+                    plugins: ['remove_button'],
                 }, opts));
             }
 

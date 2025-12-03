@@ -6,8 +6,10 @@
             @method('PUT')
 
             {{-- Header --}}
-            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4" style="background-color: #f5f5f7;">
-                <h5 class="modal-title fw-semibold text-dark" id="modalEditKlausulLabel" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="modalEditKlausulLabel"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
                     <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Klausul
                 </h5>
                 <button type="button"
@@ -23,8 +25,10 @@
                 <div class="row g-4">
                     {{-- Head Klausul --}}
                     <div class="col-md-12">
-                        <label for="edit-head-name" class="form-label fw-semibold">Head Klausul <span class="text-danger">*</span></label>
-                        <input type="text" name="head_name" id="edit-head-name" class="form-control @error('head_name') is-invalid @enderror" required>
+                        <label for="edit-head-name" class="form-label fw-semibold">Head Klausul <span
+                                class="text-danger">*</span></label>
+                        <input type="text" name="head_name" id="edit-head-name"
+                            class="form-control @error('head_name') is-invalid @enderror" required>
                         @error('head_name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -36,7 +40,8 @@
                         <div id="edit-sub-list" class="d-flex flex-column gap-2">
                             {{-- dynamic items will be injected via JS --}}
                         </div>
-                        <button type="button" id="btn-add-sub-edit" class="btn btn-link p-0 mt-2">+ Add another</button>
+                        <button type="button" id="btn-add-sub-edit" class="btn btn-link p-0 mt-2">+ Add
+                            another</button>
                         <div class="form-text">You can add many sub klausul rows (each has code + name).</div>
                     </div>
                 </div>
@@ -44,10 +49,12 @@
 
             {{-- Footer --}}
             <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
-                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal"
+                    style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold" style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                <button type="submit"
+                    class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                     Save Changes
                 </button>
             </div>
