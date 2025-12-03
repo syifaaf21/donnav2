@@ -66,7 +66,7 @@
                 {{-- Add Button --}}
                 <div class="w-full sm:w-auto flex justify-end">
                     <button type="button" data-bs-toggle="modal" data-bs-target="#createPartNumberModal"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add Part Number</span>
                     </button>

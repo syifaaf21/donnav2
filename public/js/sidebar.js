@@ -45,6 +45,13 @@ document.addEventListener("DOMContentLoaded", () => {
             toggleBtn.setAttribute("aria-expanded", "false");
             setToggleIcon(toggleBtn, "chevron-right"); // icon if it becomes visible later
         }
+
+        // Update mainWrapper margin to match collapsed sidebar
+        const mainWrapper = document.getElementById("mainWrapper");
+        if (mainWrapper) {
+            mainWrapper.classList.remove("ml-64");
+            mainWrapper.classList.add("ml-20");
+        }
     }
 
     function applyExpandedVisuals() {
@@ -69,6 +76,13 @@ document.addEventListener("DOMContentLoaded", () => {
             toggleBtn.classList.remove("hidden");
             toggleBtn.setAttribute("aria-expanded", "true");
             setToggleIcon(toggleBtn, "chevron-left");
+        }
+
+        // Update mainWrapper margin to match expanded sidebar
+        const mainWrapper = document.getElementById("mainWrapper");
+        if (mainWrapper) {
+            mainWrapper.classList.remove("ml-20");
+            mainWrapper.classList.add("ml-64");
         }
     }
 

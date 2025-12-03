@@ -1,7 +1,8 @@
 {{-- Header --}}
 <div class="flex justify-between items-center mb-3">
     <h2 class="text-lg font-semibold text-gray-700">Finding Category</h2>
-    <button id="btnAddCategory" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">
+    <button id="btnAddCategory"
+        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
         <i class="bi bi-plus"></i> Add Category
     </button>
 </div>
@@ -10,15 +11,15 @@
 <div
     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
     <table class="min-w-full text-sm text-gray-700">
-        <thead class="sticky top-0 z-10">
-            <tr class="bg-gray-50 border-b border-gray-200">
-                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">No</th>
-                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Name</th>
-                <th class="px-4 py-3 text-center text-sm text-gray-700 uppercase tracking-wider">Action
+        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+            <tr>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action
                 </th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-gray-200">
             @forelse ($findingCategories as $index => $category)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
                     <td class="px-4 py-3 text-sm">{{ $index + 1 }}</td>
@@ -89,8 +90,9 @@
                     style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
-                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                <button type="submit"
+                    class="btn px-3 py-2 bg-gradient-to-r from-primary
+                    to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                     Submit
                 </button>
             </div>
@@ -128,8 +130,8 @@
                     <div class="col-md-12">
                         <label for="edit_category_name" class="form-label fw-semibold">Category Name <span
                                 class="text-danger">*</span></label>
-                        <input type="text" name="name" id="edit_category_name"
-                            placeholder="Input Category Name" required
+                        <input type="text" name="name" id="edit_category_name" placeholder="Input Category Name"
+                            required
                             class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -144,8 +146,8 @@
                     data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
-                    style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+
                     Save Changes
                 </button>
             </div>

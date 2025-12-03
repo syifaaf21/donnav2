@@ -1,12 +1,12 @@
-<div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
-    <table class="min-w-full text-sm text-gray-700">
-        <thead>
-            <tr class="bg-gray-50 border-b border-gray-200">
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Number</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Archived File</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Hard Delete On</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">Action</th>
+<div class="overflow-hidden rounded-xl border border-gray-100 shadow-sm">
+    <table class="min-w-full text-gray-700">
+        <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+            <tr>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Document Number</th>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Archived File</th>
+                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Hard Delete On</th>
+                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">

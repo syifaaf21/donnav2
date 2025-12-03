@@ -64,8 +64,9 @@
                 </form>
 
                 {{-- Add Button on the right --}}
+                {{-- Add Button --}}
                 <button type="button" data-bs-toggle="modal" data-bs-target="#createDocumentModal"
-                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                     <i class="bi bi-plus-circle"></i>
                     <span>Add Document</span>
                 </button>
@@ -73,21 +74,22 @@
 
             {{-- Table --}}
             <div
-                class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+                class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[540px]">
                 <table class="min-w-full text-sm text-gray-700">
-                    <thead class="sticky top-0 z-10">
-                        <tr class="bg-gray-50 border-b border-gray-200">
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Name
+                    <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                        <tr>
+                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">Document Name
                             </th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
+                            <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">
                                 Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="documentTableBody">
-                        @php $number = 1; @endphp
-                        @if ($documents->count() === 0)
-                            <tr>
+                    <tbody id="documentTableBody" class="divide-y divide-gray-200" @php $number = 1; @endphp
+                        @if ($documents->count() === 0) <tr>
                                 <td colspan="3" class="text-center py-6 text-gray-500">
                                     <i class="bi bi-inbox text-2xl block mb-1"></i>
                                     No data found
@@ -101,9 +103,8 @@
                                     'number' => $number++,
                                     'parent_id' => null,
                                 ])
-                            @endforeach
-                        @endif
-                    </tbody>
+                            @endforeach @endif
+                        </tbody>
                 </table>
             </div>
             {{-- Pagination --}}
@@ -185,20 +186,20 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                <div class="modal-footer bg-light rounded-b-xl justify-content-between p-4">
                     <button type="button"
                         class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit"
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Submit
                     </button>
                 </div>
             </form>
         </div>
     </div>
-
 @endsection
 @push('scripts')
     <x-sweetalert-confirm />

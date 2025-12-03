@@ -37,7 +37,7 @@
     @include('components.flash-message')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 mr-2 my-2 px-2">
+    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 my-2 px-2">
         @include('layouts.partials.navbar')
 
         <!-- Content -->
@@ -45,6 +45,7 @@
             @yield('content')
         </main>
 
+        <!-- Footer Inside Main Wrapper -->
         @include('layouts.partials.footer')
     </div>
 

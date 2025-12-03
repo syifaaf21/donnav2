@@ -22,7 +22,7 @@
 
             {{-- Add Button --}}
             <button type="button" data-bs-toggle="modal" data-bs-target="#createPartNumberModal"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                 <i class="bi bi-plus-circle"></i>
                 <span>Add Part Number</span>
             </button>
@@ -65,29 +65,29 @@
                 <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
                     <table class="min-w-full text-sm text-gray-700">
-                        <thead class="sticky top-0 z-10">
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part
+                        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                            <tr>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Part
                                     Number</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Product
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Product
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Process
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Model</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Process
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
                                 <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                     Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-200">
                             @forelse ($partNumbers as $part)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
                                     <td class="px-4 py-3">
                                         {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3">{{ $part->part_number }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold">{{ $part->part_number }}</td>
                                     <td class="px-4 py-3">{{ $part->product->name ?? '-' }}</td>
                                     <td class="px-4 py-3">{{ $part->productModel->name ?? '-' }}</td>
                                     <td class="px-4 py-3">{{ ucwords($part->process->name) ?? '-' }}</td>
@@ -237,7 +237,8 @@
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        <button type="submit"
+                            class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                             Save Changes
                         </button>
                     </div>
@@ -363,13 +364,14 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                <div class="modal-footer bg-light rounded-b-xl justify-content-between p-4">
                     <button type="button"
                         class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit"
+                        class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Submit
                     </button>
                 </div>

@@ -6,7 +6,7 @@
 <tr id="{{ $rowId }}" class="{{ $parentClass }} {{ $parent_id ? 'hidden' : '' }}"
     class="hover:bg-gray-50 transition-all duration-150">
     {{-- Document Name & toggle --}}
-    <td class="px-4 py-3">
+    <td class="px-4 py-3 text-sm font-semibold">
         <div class="flex items-center" style="margin-left: {{ $level * 30 }}px">
             @if ($document->children->isNotEmpty())
                 <button type="button" class="toggle-children mr-1" data-target="child-of-{{ $document->id }}">
@@ -128,8 +128,7 @@
                         data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
-                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Save Changes
                     </button>
                 </div>

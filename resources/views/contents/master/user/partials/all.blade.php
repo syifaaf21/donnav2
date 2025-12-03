@@ -36,18 +36,23 @@
     </div>
     <div class="overflow-x-auto overflow-y-auto max-h-96">
         <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
-            <thead class="bg-gray-50 text-gray-700 uppercase text-xs sticky top-0 z-10 shadow-sm">
+            <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;" class="sticky top-0 z-10">
                 <tr>
-                    <th class="px-4 py-2">No</th>
-                    <th class="px-4 py-2">Name</th>
-                    <th class="px-4 py-2">NPK</th>
-                    <th class="px-4 py-2">Email</th>
-                    <th class="px-4 py-2">Role</th>
-                    <th class="px-4 py-2">Department</th>
-                    <th class="px-4 py-2">Action</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Email</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Role</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-100">
+            <tbody class="bg-white divide-y divide-gray-200">
                 @forelse ($users as $user)
                     <tr class="border-b hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 align-top whitespace-nowrap text-gray-700">
@@ -55,12 +60,17 @@
                         </td>
 
                         <td class="px-4 py-3 align-top">
-                            <div class="truncate max-w-[14rem]" title="{{ $user->name }}">
+                            <div class="truncate max-w-[14rem] text-sm font-semibold" title="{{ $user->name }}">
                                 {{ ucwords(strtolower($user->name)) }}
+                                @if ($user->departments->isNotEmpty())
+                                    <span class="text-xs text-gray-400 block">
+                                        {{ $user->departments->pluck('name')->join(', ') }}
+                                    </span>
+                                @endif
                             </div>
                         </td>
 
-                        <td class="px-4 py-3 align-top whitespace-nowrap">
+                        <td class="px-4 py-3 align-top whitespace-nowrap text-sm font-semibold">
                             <div class="text-sm text-gray-600" title="{{ $user->npk }}">{{ $user->npk }}</div>
                         </td>
 
@@ -100,7 +110,7 @@
                             @endif
                         </td>
 
-                        <td class="px-4 py-3 align-top">
+                        {{-- <td class="px-4 py-3 align-top">
                             @if ($user->departments->isNotEmpty())
                                 <div class="flex flex-wrap gap-1">
                                     <span
@@ -112,7 +122,7 @@
                             @else
                                 <span class="text-gray-400">-</span>
                             @endif
-                        </td>
+                        </td> --}}
 
                         <td class="px-4 py-3 align-top whitespace-nowrap">
                             <div class="flex items-center gap-2">

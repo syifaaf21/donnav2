@@ -52,8 +52,9 @@
 
                 {{-- Add Button --}}
                 <div class="w-full sm:w-auto flex justify-end">
+                    {{-- Add Model Button --}}
                     <button type="button" data-bs-toggle="modal" data-bs-target="#addModelModal"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add Model</span>
                     </button>
@@ -65,23 +66,25 @@
                 <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
                     <table class="min-w-full text-sm text-gray-700">
-                        <thead class="sticky top-0 z-10">
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
-                                <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                    Actions</th>
+                        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                            <tr>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-200">
                             @forelse ($models as $model)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
                                     <td class="px-4 py-3">
                                         {{ ($models->currentPage() - 1) * $models->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3">{{ $model->name }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold">{{ $model->name }}</td>
                                     <td class="px-4 py-3">{{ $model->plant }}</td>
                                     <td class="px-4 py-3 flex justify-center gap-2">
                                         {{-- Edit Button --}}
@@ -185,12 +188,11 @@
                             style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
-                            style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                        <button type="submit"
+                            class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                             Save Changes
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>
@@ -257,8 +259,8 @@
                         data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn px-5 py-2 rounded-3 fw-semibold"
-                        style="background-color: #3b82f6; border: 1px solid #3b82f6; color: white; transition: background-color 0.3s ease;">
+                    <button type="submit"
+                        class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Submit
                     </button>
                 </div>

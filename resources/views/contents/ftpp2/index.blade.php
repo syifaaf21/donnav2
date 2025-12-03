@@ -206,34 +206,34 @@
                 <div class="bg-white shadow rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
                                     <th
-                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-center text-sm text-gray-700 uppercase tracking-wider">
+                                        class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Status
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Department
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditor
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditee
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Due Date
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Actions
                                     </th>
                                 </tr>
