@@ -2,104 +2,110 @@
 @section('title', 'FTPP')
 
 @section('content')
-<div class="p-4">
-    {{-- Breadcrumbs --}}
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
-        <ol class="list-reset flex space-x-2">
-            <li>
-                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-house-door me-1"></i> Dashboard
-                </a>
-            </li>
-            <li>/</li>
-            <li>
-                <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-folder me-1"></i>FTPP
-                </a>
-            </li>
-            <li>/</li>
-            <li class="text-gray-700 font-medium">Approval</li>
-        </ol>
-    </nav>
-    <div x-data="ftppApp()" class=" bg-white rounded-xl border border-gray-200 shadow-lg p-4">
+    <div class="p-6 space-y-10 mt-4">
+        <div class="text-white">
+            <h1 class="fw-bold">
+                FTPP Approval
+            </h1>
+            <p class="text-base mt-1">Please review and approve the pending FTPP findings below.</p>
+        </div>
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li>
+                    <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-folder me-1"></i>FTPP
+                    </a>
+                </li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">Approval</li>
+            </ol>
+        </nav>
+        <div x-data="ftppApp()">
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-            {{-- LEFT SIDE --}}
-            <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow p-4 overflow-auto h-[90vh]">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-lg font-semibold text-gray-700">FTPP Approval List</h2>
-                </div>
-
-                <!-- 🔍 Single Search Bar -->
-                <div class="m-3">
-                    <input type="text" x-model="search" placeholder="Search..."
-                        class="border border-gray-300 rounded-md px-2 py-1 w-full text-sm focus:ring focus:ring-blue-200">
-                </div>
-
-                <ul>
-                    <template
-                        x-for="item in filteredFindings.filter(i => ['need check','need approval by auditor','need approval by lead auditor'].includes((i.status?.name || '').toLowerCase()))"
-                        :key="item.id">
-                        <li @click="loadForm(item.id)"
-                            class="cursor-pointer px-2 py-2 mb-2 border rounded shadow hover:bg-slate-50">
-                            <div class="font-semibold text-sm" x-text="item.registration_number"></div>
-                            <div class="text-xs" x-text="item.department?.name ?? '-'"></div>
-                            <div class="text-xs mt-1" x-text="item.status?.name ?? 'Unknown Status'"
-                                :class="{
-                                    'text-red-500 hover:text-red-600': item.status_id === 7,
-                                    'text-yellow-500 hover:text-yellow-600': item.status_id !== 7 && item
-                                        .status_id !== 11,
-                                    'text-green-600 hover:text-green-700': item.status_id === 11
-                                }">
-                            </div>
-                        </li>
-                    </template>
-
-                    <template x-if="filteredFindings.length === 0">
-                        <li class="text-gray-400 text-sm text-center py-4">No results found.</li>
-                    </template>
-                </ul>
-            </div>
-
-            {{-- RIGHT SIDE --}}
-            <div class="lg:col-span-9 bg-white border border-gray-100 rounded-2xl shadow p-3 overflow-auto h-[90vh]">
-                <template x-if="!formLoaded">
-                    <div class="text-center text-gray-400 mt-20">
-                        Choose FTPP from the list or click add
+                {{-- LEFT SIDE --}}
+                <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow p-4 overflow-auto h-[90vh]">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-lg font-semibold text-gray-700">FTPP Approval List</h2>
                     </div>
-                </template>
 
-                <template x-if="formLoaded">
-                    <form>
-                        {{-- @csrf
+                    <!-- 🔍 Single Search Bar -->
+                    <div class="m-3">
+                        <input type="text" x-model="search" placeholder="Search..."
+                            class="border border-gray-300 rounded-md px-2 py-1 w-full text-sm focus:ring focus:ring-blue-200">
+                    </div>
+
+                    <ul>
+                        <template
+                            x-for="item in filteredFindings.filter(i => ['need check','need approval by auditor','need approval by lead auditor'].includes((i.status?.name || '').toLowerCase()))"
+                            :key="item.id">
+                            <li @click="loadForm(item.id)"
+                                class="cursor-pointer px-2 py-2 mb-2 border rounded shadow hover:bg-slate-50">
+                                <div class="font-semibold text-sm" x-text="item.registration_number"></div>
+                                <div class="text-xs" x-text="item.department?.name ?? '-'"></div>
+                                <div class="text-xs mt-1" x-text="item.status?.name ?? 'Unknown Status'"
+                                    :class="{
+                                        'text-red-500 hover:text-red-600': item.status_id === 7,
+                                        'text-yellow-500 hover:text-yellow-600': item.status_id !== 7 && item
+                                            .status_id !== 11,
+                                        'text-green-600 hover:text-green-700': item.status_id === 11
+                                    }">
+                                </div>
+                            </li>
+                        </template>
+
+                        <template x-if="filteredFindings.length === 0">
+                            <li class="text-gray-400 text-sm text-center py-4">No results found.</li>
+                        </template>
+                    </ul>
+                </div>
+
+                {{-- RIGHT SIDE --}}
+                <div class="lg:col-span-9 bg-white border border-gray-100 rounded-2xl shadow p-3 overflow-auto h-[90vh]">
+                    <template x-if="!formLoaded">
+                        <div class="text-center text-gray-400 mt-20">
+                            Choose FTPP from the list or click add
+                        </div>
+                    </template>
+
+                    <template x-if="formLoaded">
+                        <form>
+                            {{-- @csrf
                         @if (isset($finding))
                             @method('PUT')
                         @endif --}}
 
-                        {{-- HEADER --}}
-                        <table class="header-table border border-black rounded mb-2 w-full">
-                            <tr>
-                                <td class="header-logo border border-black">
-                                    <img src="{{ asset('images/logo-aiia.png') }}" alt="AISIN Logo" class="w-40 h-auto">
-                                </td>
-                                <td class="header-title text-center">
-                                    <h6>
-                                        FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
-                                    </h6>
-                                </td>
-                            </tr>
-                        </table>
+                            {{-- HEADER --}}
+                            <table class="header-table border border-black rounded mb-2 w-full">
+                                <tr>
+                                    <td class="header-logo border border-black">
+                                        <img src="{{ asset('images/logo-aiia.png') }}" alt="AISIN Logo" class="w-40 h-auto">
+                                    </td>
+                                    <td class="header-title text-center">
+                                        <h6>
+                                            FORM TINDAKAN PERBAIKAN DAN PENCEGAHAN TEMUAN AUDIT
+                                        </h6>
+                                    </td>
+                                </tr>
+                            </table>
 
-                        @include('contents.ftpp2.approval.partials.auditor-input')
-                        @include('contents.ftpp2.approval.partials.auditee-input')
-                        @include('contents.ftpp2.approval.partials.auditor-verification')
-                    </form>
-                </template>
+                            @include('contents.ftpp2.approval.partials.auditor-input')
+                            @include('contents.ftpp2.approval.partials.auditee-input')
+                            @include('contents.ftpp2.approval.partials.auditor-verification')
+                        </form>
+                    </template>
+                </div>
             </div>
         </div>
     </div>
-</div>
 @endsection
 <x-sweetalert-confirm />
 @push('scripts')

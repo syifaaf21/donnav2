@@ -1,224 +1,240 @@
 @extends('layouts.app')
 @section('title', 'Edit Audit Finding')
 @section('content')
-    {{-- Breadcrumbs --}}
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
-        <ol class="list-reset flex space-x-2">
-            <li>
-                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-house-door me-1"></i> Dashboard
-                </a>
-            </li>
-            <li>/</li>
-            <li>
-                <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-folder me-1"></i>FTPP
-                </a>
-            </li>
-            <li>/</li>
-            <li class="text-gray-700 font-medium">Edit Finding</li>
-        </ol>
-    </nav>
+    <div class="p-6 space-y-6 mt-6">
+        <div class="py-6">
+            <div class="text-white">
+                <h1 class="fw-bold">
+                    Edit Finding
+                </h1>
+                <p class="text-base mt-1">Edit finding for FTPP #{{ $finding->registration_number }}. Please update the details below to edit the FTPP finding.</p>
+            </div>
+        </div>
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li>
+                    <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-folder me-1"></i>FTPP
+                    </a>
+                </li>
+                <li>/</li>
+                <li class="text-gray-700 font-bold">Edit Finding</li>
+            </ol>
+        </nav>
 
-    <div>
-        <div x-data="editFindingApp()" x-init="init()">
-            <form action="{{ route('ftpp.audit-finding.update', $finding->id) }}" method="POST"
-                enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <!-- CARD WRAPPER -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-                        <!-- AUDIT TYPE -->
-                        <div>
-                            <label class="font-semibold block">Audit Type: <span class="text-danger">*</span></label>
-                            <div class="mt-2 space-y-1">
-                                @foreach ($auditTypes as $type)
-                                    <label class="flex items-center gap-2">
-                                        <input type="radio" name="audit_type_id" value="{{ $type->id }}"
-                                            x-model="form.audit_type_id">
-                                        {{ $type->name }}
-                                    </label>
-                                @endforeach
-                            </div>
+        <div>
+            <div x-data="editFindingApp()" x-init="init()">
+                <form action="{{ route('ftpp.audit-finding.update', $finding->id) }}" method="POST"
+                    enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <!-- CARD WRAPPER -->
+                    <div class="gap-4">
+                        <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+                            <h5 class="font-bold text-gray-700">AUDITOR / INISIATOR</h5>
 
-                            <!-- SUB AUDIT TYPE -->
-                            <div id="subAuditType" class="mt-2 ml-4 space-y-1">
-                                @foreach ($subAudit as $sub)
-                                    <label class="flex items-center gap-2">
-                                        <input type="radio" name="sub_audit_type_id" value="{{ $sub->id }}" disabled>
-                                        {{ $sub->name }}
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <!-- DEPARTMENT / PROCESS / PRODUCT -->
-                        <div class="space-y-1">
-                            <label class="font-semibold">Department / Process / Product: <span
-                                    class="text-danger">*</span></label>
-
-                            <button type="button"
-                                class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
-                                onclick="openPlantSidebar()">
-                                Choose Dept/Process/Product
-                            </button>
-
-                            <input type="hidden" id="selectedPlant" name="plant">
-                            <input type="hidden" id="selectedDepartment" name="department_id" x-model="form.department_id">
-                            <input type="hidden" id="selectedProcess" name="process_id" x-model="form.process_id">
-                            <input type="hidden" id="selectedProduct" name="product_id" x-model="form.product_id">
-
-                            <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'" class="mt-1 text-gray-700">
-                            </div>
-                        </div>
-
-                        <!-- AUDITEE -->
-                        <div class="space-y-1">
-                            <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
-
-                            <button type="button" onclick="openAuditeeSidebar()"
-                                class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
-                                Select Auditee
-                            </button>
-
-                            <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
-                            </div>
-
-                            <!-- Hidden holder for selected auditees (NOT submitted directly).
-                                 We avoid naming this input so only the dynamic `auditee_ids[]` inputs
-                                 created by `saveHeaderOnly()` are included in the POST request. -->
-                            <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
-                        </div>
-
-                        <!-- ROW: Auditor / Date / Reg Number (tidak full width -> gunakan grid kolom) -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- AUDIT TYPE -->
                             <div>
-                                <label class="font-semibold block">Auditor / Inisiator: <span
-                                        class="text-danger">*</span></label>
-                                <select name="auditor_id" x-model="form.auditor_id"
-                                    class="border border-gray-300 rounded w-full p-2 focus:outline-none">
-                                    <option value="">-- Choose Auditor --</option>
-                                    @foreach ($auditors as $auditor)
-                                        <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                                <label class="font-semibold block">Audit Type: <span class="text-danger">*</span></label>
+                                <div class="mt-2 space-y-1">
+                                    @foreach ($auditTypes as $type)
+                                        <label class="flex items-center gap-2">
+                                            <input type="radio" name="audit_type_id" value="{{ $type->id }}"
+                                                x-model="form.audit_type_id">
+                                            {{ $type->name }}
+                                        </label>
                                     @endforeach
-                                </select>
+                                </div>
+
+                                <!-- SUB AUDIT TYPE -->
+                                <div id="subAuditType" class="mt-2 ml-4 space-y-1">
+                                    @foreach ($subAudit as $sub)
+                                        <label class="flex items-center gap-2">
+                                            <input type="radio" name="sub_audit_type_id" value="{{ $sub->id }}"
+                                                disabled>
+                                            {{ $sub->name }}
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="font-semibold block">Date: <span class="text-danger">*</span></label>
-                                <input type="date" name="created_at" x-model="form.created_at"
-                                    class="border border-gray-300 rounded w-full p-2 focus:outline-none"
-                                    value="{{ now()->toDateString() }}">
-                            </div>
-
-                            <div>
-                                <label class="font-semibold block">Registration Number: <span
+                            <!-- DEPARTMENT / PROCESS / PRODUCT -->
+                            <div class="space-y-1">
+                                <label class="font-semibold">Department / Process / Product: <span
                                         class="text-danger">*</span></label>
-                                <input type="text" name="registration_number" id="reg_number"
-                                    x-model="form.registration_number"
-                                    class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
-                            </div>
-                        </div>
-                        <!-- FINDING CATEGORY -->
-                        <div>
-                            <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
-                            <div class="mt-1">
-                                @foreach ($findingCategories as $category)
-                                    <label class="mr-4">
-                                        <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
-                                            value="{{ $category->id }}">
-                                        {{ ucfirst($category->name) }}
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="space-y-6">
-                        <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-                            <h5 class="font-semibold text-gray-700">AUDITOR / INISIATOR</h5>
+                                <button type="button"
+                                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
+                                    onclick="openPlantSidebar()">
+                                    Choose Dept/Process/Product
+                                </button>
 
-                            <!-- FINDING -->
-                            <div>
-                                <label class="font-semibold">Finding / Issue: <span class="text-danger">*</span></label>
-                                <textarea name="finding_description" x-model="form.finding_description" class="w-full border rounded p-2 h-24"
-                                    required></textarea>
+                                <input type="hidden" id="selectedPlant" name="plant">
+                                <input type="hidden" id="selectedDepartment" name="department_id"
+                                    x-model="form.department_id">
+                                <input type="hidden" id="selectedProcess" name="process_id" x-model="form.process_id">
+                                <input type="hidden" id="selectedProduct" name="product_id" x-model="form.product_id">
+
+                                <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'" class="mt-1 text-gray-700">
+                                </div>
                             </div>
 
-                            <div class="flex justify-between items-start">
-                                <!-- DUE DATE -->
+                            <!-- AUDITEE -->
+                            <div class="space-y-1">
+                                <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
+
+                                <button type="button" onclick="openAuditeeSidebar()"
+                                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                                    Select Auditee
+                                </button>
+
+                                <div id="selectedAuditees" x-html="form._auditee_html ?? ''"
+                                    class="flex flex-wrap gap-2 mt-2">
+                                </div>
+
+                                <!-- Hidden holder for selected auditees (NOT submitted directly).
+                                             We avoid naming this input so only the dynamic `auditee_ids[]` inputs
+                                             created by `saveHeaderOnly()` are included in the POST request. -->
+                                <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
+                            </div>
+
+                            <!-- ROW: Auditor / Date / Reg Number (tidak full width -> gunakan grid kolom) -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label class="font-semibold">Duedate: <span class="text-danger">*</span></label>
-                                    <input type="date" name="due_date" x-model="form.due_date"
-                                        class="border-b border-gray-400 ml-2" required min="{{ now()->toDateString() }}">
+                                    <label class="font-semibold block">Auditor / Inisiator: <span
+                                            class="text-danger">*</span></label>
+                                    <select name="auditor_id" x-model="form.auditor_id"
+                                        class="border border-gray-300 rounded w-full p-2 focus:outline-none">
+                                        <option value="">-- Choose Auditor --</option>
+                                        @foreach ($auditors as $auditor)
+                                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
 
-                                <!-- CLAUSE SELECT -->
-                                <div class="text-right">
-                                    <button type="button" onclick="openSidebar()"
-                                        class="px-3 py-1  bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
-                                        Select Clause
-                                    </button>
+                                <div>
+                                    <label class="font-semibold block">Date: <span class="text-danger">*</span></label>
+                                    <input type="date" name="created_at" x-model="form.created_at"
+                                        class="border border-gray-300 rounded w-full p-2 focus:outline-none"
+                                        value="{{ now()->toDateString() }}">
+                                </div>
 
-                                    <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
-
-                                    <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-3 justify-end"></div>
+                                <div>
+                                    <label class="font-semibold block">Registration Number: <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="registration_number" id="reg_number"
+                                        x-model="form.registration_number"
+                                        class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
+                                </div>
+                            </div>
+                            <!-- FINDING CATEGORY -->
+                            <div>
+                                <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
+                                <div class="mt-1">
+                                    @foreach ($findingCategories as $category)
+                                        <label class="mr-4">
+                                            <input type="radio" name="finding_category_id"
+                                                x-model="form.finding_category_id" value="{{ $category->id }}">
+                                            {{ ucfirst($category->name) }}
+                                        </label>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
 
-                        {{-- ATTACHMENT --}}
-                        <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+                        <div class="space-y-6">
+                            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+                                <!-- FINDING -->
+                                <div>
+                                    <label class="font-semibold">Finding / Issue: <span
+                                            class="text-danger">*</span></label>
+                                    <textarea name="finding_description" x-model="form.finding_description" class="w-full border rounded p-2 h-24"
+                                        required></textarea>
+                                </div>
 
-                            <div class="font-semibold text-lg text-gray-700">Attachments</div>
-                            <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
-                            <div>
-                                <!-- Preview containers (sesuaikan posisi di form) -->
-                                <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
-                                <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
+                                <div class="flex justify-between items-start">
+                                    <!-- DUE DATE -->
+                                    <div>
+                                        <label class="font-semibold">Duedate: <span class="text-danger">*</span></label>
+                                        <input type="date" name="due_date" x-model="form.due_date"
+                                            class="border-b border-gray-400 ml-2" required
+                                            min="{{ now()->toDateString() }}">
+                                    </div>
 
-                                <!-- Attachment button (paperclip) -->
-                                <div class="relative inline-block">
-                                    @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin', 'Auditor']))
-                                        <button id="attachBtn" type="button"
-                                            class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
-                                            aria-haspopup="true" aria-expanded="false" title="Attach files">
-                                            <i data-feather="paperclip" class="w-4 h-4"></i>
-                                            <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                                    <!-- CLAUSE SELECT -->
+                                    <div class="text-right">
+                                        <button type="button" onclick="openSidebar()"
+                                            class="px-3 py-1  bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                                            Select Clause
                                         </button>
-                                    @endif
 
-                                    <!-- Small menu seperti email (hidden, muncul saat klik) -->
-                                    <div id="attachMenu"
-                                        class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
-                                        <button id="attachImages" type="button"
-                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                            <i data-feather="image" class="w-4 h-4"></i>
-                                            <span class="text-sm">Upload Images</span>
-                                        </button>
-                                        <button id="attachDocs" type="button"
-                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                            <i data-feather="file-text" class="w-4 h-4"></i>
-                                            <span class="text-sm">Upload Documents</span>
-                                        </button>
+                                        <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
+
+                                        <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-3 justify-end">
+                                        </div>
                                     </div>
                                 </div>
-
-                                <!-- Hidden file inputs -->
-                                <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple
-                                    class="hidden">
-                                <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple
-                                    class="hidden">
                             </div>
-                            <button type="button" onclick="saveChangesFinding()"
-                                class="ml-auto mt-2 bg-gradient-to-r from-primary to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primary transition-colors">
-                                Save Changes
-                            </button>
+
+                            {{-- ATTACHMENT --}}
+                            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+
+                                <div class="font-semibold text-lg text-gray-700">Attachments</div>
+                                <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
+                                <div>
+                                    <!-- Preview containers (sesuaikan posisi di form) -->
+                                    <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
+                                    <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
+
+                                    <!-- Attachment button (paperclip) -->
+                                    <div class="relative inline-block">
+                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin', 'Auditor']))
+                                            <button id="attachBtn" type="button"
+                                                class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
+                                                aria-haspopup="true" aria-expanded="false" title="Attach files">
+                                                <i data-feather="paperclip" class="w-4 h-4"></i>
+                                                <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                                            </button>
+                                        @endif
+
+                                        <!-- Small menu seperti email (hidden, muncul saat klik) -->
+                                        <div id="attachMenu"
+                                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
+                                            <button id="attachImages" type="button"
+                                                class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                                <i data-feather="image" class="w-4 h-4"></i>
+                                                <span class="text-sm">Upload Images</span>
+                                            </button>
+                                            <button id="attachDocs" type="button"
+                                                class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
+                                                <i data-feather="file-text" class="w-4 h-4"></i>
+                                                <span class="text-sm">Upload Documents</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hidden file inputs -->
+                                    <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple
+                                        class="hidden">
+                                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple
+                                        class="hidden">
+                                </div>
+                                <button type="button" onclick="saveChangesFinding()"
+                                    class="ml-auto mt-2 bg-gradient-to-r from-primary to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primary transition-colors">
+                                    Save Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
         <!-- Sidebar Klausul -->
         <div id="sidebarKlausul"

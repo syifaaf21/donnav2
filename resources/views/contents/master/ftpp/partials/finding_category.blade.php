@@ -13,18 +13,18 @@
     <table class="min-w-full text-sm text-gray-700">
         <thead class="sticky top-0 z-10">
             <tr class="bg-gray-50 border-b border-gray-200">
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Action
+                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">No</th>
+                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Name</th>
+                <th class="px-4 py-3 text-center text-sm text-gray-700 uppercase tracking-wider">Action
                 </th>
             </tr>
         </thead>
         <tbody>
             @forelse ($findingCategories as $index => $category)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
-                    <td class="px-4 py-3">{{ $index + 1 }}</td>
-                    <td class="px-4 py-3">{{ $category->name }}</td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-4 py-3 text-sm">{{ $index + 1 }}</td>
+                    <td class="px-4 py-3 text-sm font-semibold">{{ $category->name }}</td>
+                    <td class="px-4 py-3 text-sm text-center">
                         <div class="flex justify-center gap-2">
                             <button data-id="{{ $category->id }}"
                                 class="btn-edit w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
@@ -172,7 +172,7 @@
             });
 
             // === Show Edit Modal ===
-            document.querySelectorAll('.btn-edit').forEach(button => {
+            document.querySelectorAll('#section-finding-category .btn-edit').forEach(button => {
                 button.addEventListener('click', async () => {
                     const id = button.dataset.id;
                     const response = await fetch(`/master/ftpp/finding-category/${id}`);
@@ -193,7 +193,7 @@
             });
 
             // === Delete Action ===
-            document.querySelectorAll('.btn-delete').forEach(button => {
+            document.querySelectorAll('#section-finding-category .btn-delete').forEach(button => {
                 button.addEventListener('click', () => {
                     const id = button.dataset.id;
                     if (confirm('Are you sure you want to delete this data?')) {

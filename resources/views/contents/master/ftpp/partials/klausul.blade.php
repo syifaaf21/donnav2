@@ -32,14 +32,14 @@
                     <table class="min-w-full text-sm text-gray-700">
                         <thead class="sticky top-0 z-10">
                             <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No
+                                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">No
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Code
+                                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Code
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Name
+                                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Name
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    class="px-4 py-3 text-center text-sm text-gray-700 uppercase tracking-wider">
                                     Action</th>
                             </tr>
                         </thead>
@@ -47,15 +47,15 @@
                             @foreach ($klausul->headKlausul as $i => $head)
                                 <tr class="hover:bg-gray-50 transition-all duration-150 cursor-pointer head-row"
                                     data-collapse-target="subKlausul-{{ $head->id }}">
-                                    <td class="px-4 py-3 text-gray-700">
+                                    <td class="px-4 py-3 text-sm text-gray-700">
                                         <div class="flex items-center gap-1">
                                             <i data-feather="chevron-right"
                                                 class="w-4 h-4 rotate-icon transition-transform"></i>{{ $i + 1 }}
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $head->code }}</td>
-                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $head->name }}</td>
-                                    <td class="px-4 py-3 text-center">
+                                    <td class="px-4 py-3 text-sm text-gray-900">{{ $head->code }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold text-gray-900">{{ $head->name }}</td>
+                                    <td class="px-4 py-3 text-sm text-center">
                                         <div class="flex justify-center gap-2">
                                             <button data-head-id="{{ $head->id }}"
                                                 data-head-name="{{ $head->name }}"

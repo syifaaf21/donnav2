@@ -13,21 +13,21 @@
     <table class="min-w-full text-sm text-gray-700">
         <thead class="sticky top-0 z-10">
             <tr class="bg-gray-50 border-b border-gray-200">
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Audit Type</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Sub Audit Type</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Action
+                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">No</th>
+                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Audit Type</th>
+                <th class="px-4 py-3 text-sm text-gray-700 uppercase tracking-wide">Sub Audit Type</th>
+                <th class="px-4 py-3 text-center text-sm text-gray-700 uppercase tracking-wider">Action
                 </th>
             </tr>
         </thead>
         <tbody>
             @forelse ($audits as $index => $audit)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 text-sm">
                         {{ $index + 1 }}</td>
-                    <td class="py-2 px-3 ">
+                    <td class="py-2 px-3 text-sm font-semibold">
                         {{ $audit->name }}</td>
-                    <td class="py-2 px-3">
+                    <td class="py-2 px-3 text-sm">
                         @if ($audit->subAudit->isNotEmpty())
                             <ul class="list-disc list-inside space-y-0.5">
                                 @foreach ($audit->subAudit as $sub)
@@ -215,7 +215,7 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const editButtons = document.querySelectorAll('.btn-edit');
+            const editButtons = document.querySelectorAll('#section-audit .btn-edit');
             const editForm = document.getElementById('formEditAudit');
             const nameInput = document.getElementById('edit_audit_name');
 
@@ -293,7 +293,7 @@
             const editModalEl = document.getElementById('modalEditAudit');
             const editModal = new bootstrap.Modal(editModalEl); // buat sekali
 
-            document.querySelectorAll('.btn-edit').forEach(btn => {
+            document.querySelectorAll('#section-audit .btn-edit').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const id = btn.getAttribute('data-id');
                     const response = await fetch(`/master/ftpp/audit/${id}`);

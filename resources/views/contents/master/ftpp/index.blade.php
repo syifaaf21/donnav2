@@ -2,7 +2,15 @@
 @section('title', 'FTPP')
 
 @section('content')
-    <div class="mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2 space-y-6">
+        <div class="py-6 mt-4">
+            <div class="text-white">
+                <h1 class="fw-bold">
+                    Master FTPP
+                </h1>
+                <p class="text-base mt-1">Use this page to manage FTPP master data, including Audit Types, Finding Categories, and Klausul.</p>
+            </div>
+        </div>
         {{-- Header --}}
         <div class="flex items-center justify-between mb-6">
             {{-- Breadcrumbs --}}
@@ -16,30 +24,27 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">FTPP</li>
+                    <li class="text-gray-700 font-bold">FTPP</li>
                 </ol>
             </nav>
         </div>
 
         {{-- main content --}}
-        <div class="bg-white rounded-xl shadow-lg p-4">
-            <div class="flex mb-2">
+        <div class="">
+            <div class="flex ml-4">
                 <button
-                    class="btn-tab px-4 py-2 rounded-t-lg hover:shadow-[0_-2px_4px_rgba(0,0,0,0.1)]
-                        hover:border-x hover:border-gray-200"
+                    class="btn-tab px-4 py-2 rounded-t-lg transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
                     data-section="audit">Audit
                     Type</button>
                 <button
-                    class="btn-tab px-4 py-2 rounded-t-lg hover:shadow-[0_-2px_4px_rgba(0,0,0,0.1)]
-                        hover:border-x hover:border-gray-200"
+                    class="btn-tab px-4 py-2 rounded-t-lg transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
                     data-section="finding_category">Finding Category</button>
                 <button
-                    class="btn-tab px-4 py-2 rounded-t-lg hover:shadow-[0_-2px_4px_rgba(0,0,0,0.1)]
-                        hover:border-x hover:border-gray-200"
+                    class="btn-tab px-4 py-2 rounded-t-lg transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
                     data-section="klausul">Klausul</button>
             </div>
 
-            <div id="ftpp-content" class="p-2 min-h-[200px] text-gray-700">
+            <div id="ftpp-content" class="p-4 min-h-[200px] text-gray-700 bg-white rounded-xl shadow-lg">
 
                 {{-- Section Audit --}}
                 <div id="section-audit" class="hidden">
