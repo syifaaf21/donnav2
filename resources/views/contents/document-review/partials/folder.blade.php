@@ -4,67 +4,84 @@
 
 @section('content')
     <div class="p-6 min-h-screen space-y-6">
+        <div class="py-6 mt-4 text-white">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">
+                    Document Review - {{ ucfirst($plant) }}
+                </h1>
+                <p style="font-size: 0.9rem;">
+                    Review and manage documents across different plants. Select a plant tab to view its document hierarchy.
+                </p>
+            </div>
+        </div>
+
         <x-flash-message />
 
-        <!-- Breadcrumb -->
-        <nav class="text-sm text-gray-500" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li>
-                    <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">Document Review</a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">{{ ucfirst($plant) }}</li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">{{ $docCode }}</li>
-            </ol>
-        </nav>
-        <div class="bg-white rounded-xl shadow-lg p-4">
-            <!-- Search & Filter Bar -->
-            <form id="searchForm" action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
-                method="GET" class="flex justify-end items-center w-auto">
+        <div class="">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2 w-full">
+                <!-- Breadcrumb (left) -->
+                <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit"
+                    aria-label="Breadcrumb">
+                    <ol class="list-reset flex space-x-2">
+                        <li>
+                            <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                                <i class="bi bi-house-door me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li>/</li>
+                        <li>
+                            <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">Document
+                                Review</a>
+                        </li>
+                        <li>/</li>
+                        <li class="text-gray-700 font-medium">{{ ucfirst($plant) }}</li>
+                        <li>/</li>
+                        <li class="text-gray-700 font-medium">{{ $docCode }}</li>
+                    </ol>
+                </nav>
 
-                <!-- Search Input (bentuk asli) -->
-                <div class="relative w-96">
-                    <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
-                        class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                        placeholder="Type to search...">
+                <!-- Search & Filter Bar (right) -->
+                <form id="searchForm"
+                    action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
+                    method="GET" class="flex items-center gap-3 w-full md:w-auto justify-end">
 
-                    <label for="searchInput"
-                        class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-                        text-gray-400 text-sm
-                        {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
-                        Type to search...
-                    </label>
+                    <!-- Search Input -->
+                    <div class="relative w-full md:w-96">
+                        <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
+                            class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
+                 focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                            placeholder="Type to search...">
 
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                        rounded-lg text-gray-400 hover:text-blue-700 transition">
-                        <i data-feather="search" class="w-5 h-5"></i>
-                    </button>
+                        <label for="searchInput"
+                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
+                            text-gray-400 text-sm
+                            {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            Type to search...
+                        </label>
 
-                    @if (request('q'))
-                        <button type="button" id="clearSearch"
-                            class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
-                            onclick="document.getElementById('searchInput').value=''; this.form.submit();">
-                            <i data-feather="x" class="w-5 h-5"></i>
+                        <button type="submit"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                            rounded-lg text-gray-400 hover:text-blue-700 transition">
+                            <i data-feather="search" class="w-5 h-5"></i>
                         </button>
-                    @endif
-                </div>
 
-                <!-- Filter Button -->
-                <button type="button"
-                    class="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
-                    data-bs-toggle="modal" data-bs-target="#filterModal">
-                    <i class="bi bi-funnel"></i>
-                </button>
-            </form>
+                        @if (request('q'))
+                            <button type="button" id="clearSearch"
+                                class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
+                                onclick="document.getElementById('searchInput').value=''; this.form.submit();">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </button>
+                        @endif
+                    </div>
+
+                    <!-- Filter Button -->
+                    <button type="button"
+                        class="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
+                        data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                </form>
+            </div>
 
 
             <!-- Modal Filter -->

@@ -43,7 +43,7 @@ class PartNumberController extends Controller
         $models = ProductModel::all();
         $processes = Process::all();
 
-        return view('contents.master.part-number', compact('partNumbers', 'products', 'models', 'processes'));
+        return view('contents.master.part-number2', compact('partNumbers', 'products', 'models', 'processes'));
     }
 
 

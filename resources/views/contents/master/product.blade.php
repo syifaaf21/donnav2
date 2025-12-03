@@ -4,8 +4,7 @@
 @section('content')
     <div class="mx-auto px-4 py-2">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-3">
-            {{-- Breadcrumbs --}}
+        <div class="flex justify-end items-center my-4 pt-4">
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -16,36 +15,47 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">Product</li>
+                    <li class="text-gray-700 font-bold">Product</li>
                 </ol>
             </nav>
-
-            {{-- Add Button --}}
-            <button type="button" data-bs-toggle="modal" data-bs-target="#addProductModal"
-               class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add Product</span>
-            </button>
+        </div>
+        <div class="py-6  text-white">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Product Master</h1>
+                <p style="font-size: 0.9rem;">
+                    Manage product records. Use the "Add Product" button to create new entries and the actions column
+                    to edit or delete existing products.
+                </p>
+            </div>
         </div>
 
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
-            {{-- Search Bar --}}
-            <div class="p-4 border-b border-gray-100 flex justify-end">
-                <form id="searchForm" method="GET" class="flex items-end w-auto">
-                    <div class="relative w-96">
-                        <input type="text" name="search" id="searchInput"
-                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                            placeholder="Type to search..." value="{{ request('search') }}">
+        <div class="overflow-hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 my-4">
+                {{-- Search --}}
+                <form id="searchForm" method="GET" class="w-full sm:max-w-md">
+                    <div class="relative w-full">
+                        <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
+                            class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
+                            focus:border-sky-400 focus:ring-2 focus:ring-sky-200 transition-all duration-200 shadow-sm"
+                            placeholder="Type to search...">
 
                         <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-             text-gray-400 text-sm
-             {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
+                            {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
                     </div>
                 </form>
+
+                {{-- Add Button --}}
+                <div class="w-full sm:w-auto flex justify-end">
+                    {{-- Add Button --}}
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#addProductModal"
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Add Product</span>
+                    </button>
+                </div>
             </div>
             <div id="tableContainer">
                 {{-- Table --}}
@@ -54,16 +64,20 @@
                     <table class="min-w-full text-sm text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
-                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200"
-                            @forelse ($products as $product)
-                                <tr class="hover:bg-gray-50 transition-all duration-150">
+                            @forelse ($products as $product) <tr class="hover:bg-gray-50 transition-all duration-150">
                                     <td class="px-4 py-3">
                                         {{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}
                                     </td>
@@ -91,9 +105,8 @@
                             @empty
                                 <tr>
                                     <td colspan="5" class="text-center text-gray-500 py-4">No products found.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
+                                </tr> @endforelse
+                            </tbody>
                     </table>
                 </div>
                 {{-- Pagination --}}
@@ -178,7 +191,8 @@
                             style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        <button type="submit"
+                            class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                             Save Changes
                         </button>
                     </div>
@@ -261,7 +275,8 @@
                         data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                    <button type="submit"
+                        class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Submit
                     </button>
                 </div>

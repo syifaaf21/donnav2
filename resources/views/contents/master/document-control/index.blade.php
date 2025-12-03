@@ -5,7 +5,7 @@
     <div class="mx-auto px-4 py-2">
 
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-3">
+        <div class="flex justify-end items-center my-4 pt-4">
             {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
@@ -17,86 +17,101 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">Document Control</li>
+                    <li class="text-gray-700 font-bold">Document Control</li>
                 </ol>
             </nav>
-
-            {{-- Add Button --}}
-            <button type="button" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal"
-                class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
-                <i class="bi bi-plus-circle"></i> Add Document
-            </button>
-            @include('contents.master.document-control.partials.modal-add')
+        </div>
+        <div class="py-6">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Document Control Master</h1>
+                <p style="font-size: 0.9rem;">
+                    Manage document controls. Use the "Add Document Control" button to create new entries and the actions column
+                    to edit or delete existing records.
+                </p>
+            </div>
         </div>
 
         {{-- Table Card --}}
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
-            {{-- Search Bar --}}
-            <div class="p-4 border-b border-gray-100 flex justify-end items-center space-x-2">
-                <form method="GET" id="searchForm" class="flex items-center w-full sm:w-96 relative">
+        <div class="overflow-hidden">
+            {{-- Controls: Search + Filter (left) | Add Button (right) --}}
+            <div class="py-4 flex items-center justify-between gap-4 flex-wrap">
+                {{-- Left: Search + Filter --}}
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    {{-- Search Bar --}}
+                    <form method="GET" id="searchForm" class="flex items-center w-full sm:w-96 relative min-w-0">
+                        <input id="searchInput" type="text" name="search"
+                            class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
+                            text-sm text-gray-700 shadow-sm transition-all duration-200
+                            focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            placeholder="Type to search..." value="{{ request('search') }}">
 
-                    <input type="text" name="search"
-                        class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
-                        text-sm text-gray-700 shadow-sm transition-all duration-200
-                        focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-                        placeholder="Type to search..." value="{{ request('search') }}">
+                        <!-- Floating Label -->
+                        <label for="searchInput"
+                            class="absolute left-4 px-1 bg-white text-gray-400 rounded transition-all duration-150
+                            pointer-events-none
+                            {{ request('search')
+                                ? '-top-3 text-xs text-sky-600'
+                                : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            Type to search...
+                        </label>
 
-                    <!-- Floating Label -->
-                    <label for="searchInput"
-                        class="absolute left-4 px-1 bg-white text-gray-400 rounded transition-all duration-150
-                        pointer-events-none
-                        {{ request('search')
-                            ? '-top-3 text-xs text-sky-600'
-                            : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
-                        Type to search...
-                    </label>
+                        <button type="submit"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-blue-700 transition">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
 
-                    <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-blue-700 transition">
-                        <i data-feather="search" class="w-5 h-5"></i>
-                    </button>
+                        <!-- Clear button -->
+                        @if (request('search'))
+                            <a href="{{ route('master.document-control.index') }}"
+                                class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </a>
+                        @endif
+                    </form>
 
-                    <!-- Clear button -->
-                    @if (request('search'))
-                        <a href="{{ route('master.document-control.index') }}"
-                            class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
-                            <i data-feather="x" class="w-5 h-5"></i>
-                        </a>
-                    @endif
-                </form>
+                    {{-- Filter Button --}}
+                    <div class="relative ml-1">
+                        <button id="filterBtn" type="button"
+                            class="flex items-center gap-1 px-3 py-2 bg-gray-100 border rounded-lg text-gray-600
+                           hover:bg-gray-200 hover:text-gray-800 transition">
+                            <i class="bi bi-funnel-fill"></i>
+                        </button>
 
-                {{-- Filter Button --}}
-                <div class="relative ml-3">
-                    <button id="filterBtn" type="button"
-                        class="flex items-center gap-1 px-3 py-2 bg-gray-100 border rounded-lg text-gray-600
-                       hover:bg-gray-200 hover:text-gray-800 transition">
-                        <i class="bi bi-funnel-fill"></i>
-                    </button>
+                        {{-- Dropdown Filter --}}
+                        <div id="filterDropdown" class="hidden bg-white w-64 border rounded-lg shadow-xl p-4 z-50"
+                            style="position: fixed; top: 65px; right: 40px;">
 
-                    {{-- Dropdown Filter --}}
-                    <div id="filterDropdown" class="hidden bg-white w-64 border rounded-lg shadow-xl p-4 z-50"
-                        style="position: fixed; top: 65px; right: 40px;">
+                            <form id="filterForm">
+                                <input type="hidden" name="search" value="{{ request('search') }}">
 
-                        <form id="filterForm">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                                    Filter by Department
+                                </h3>
 
-                            <h3 class="text-sm font-semibold text-gray-700 mb-3">
-                                Filter by Department
-                            </h3>
+                                <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                    @foreach ($departments as $department)
+                                        <label class="flex items-center gap-2 cursor-pointer text-gray-700 text-sm">
+                                            <input type="checkbox" name="department[]" value="{{ $department->id }}"
+                                                class="rounded text-blue-600 border-gray-300 focus:ring-blue-500 departmentCheck"
+                                                {{ is_array(request('department')) && in_array($department->id, request('department')) ? 'checked' : '' }}>
+                                            <span>{{ $department->name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
 
-                            <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
-                                @foreach ($departments as $department)
-                                    <label class="flex items-center gap-2 cursor-pointer text-gray-700 text-sm">
-                                        <input type="checkbox" name="department[]" value="{{ $department->id }}"
-                                            class="rounded text-blue-600 border-gray-300 focus:ring-blue-500 departmentCheck"
-                                            {{ is_array(request('department')) && in_array($department->id, request('department')) ? 'checked' : '' }}>
-                                        <span>{{ $department->name }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
-
-                        </form>
+                            </form>
+                        </div>
                     </div>
+                </div>
+
+                {{-- Right: Add Button --}}
+                <div class="flex-shrink-0">
+                    {{-- Add Button --}}
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#addDocumentControlModal"
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        <i class="bi bi-plus-circle"></i> Add Document
+                    </button>
+                    @include('contents.master.document-control.partials.modal-add')
                 </div>
             </div>
             <div id="tableContainer">
@@ -194,7 +209,8 @@
                                                     <i data-feather="edit" class="w-4 h-4"></i>
                                                 </button>
 
-                                                <form action="{{ route('master.document-control.destroy', $mapping->id) }}"
+                                                <form
+                                                    action="{{ route('master.document-control.destroy', $mapping->id) }}"
                                                     method="POST" class="inline delete-form">
                                                     @csrf
                                                     @method('DELETE')

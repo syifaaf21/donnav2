@@ -4,6 +4,15 @@
 
 @section('content')
     <div class="mx-auto px-4 py-6">
+        <div class="py-6 mt-4 text-white">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Archive</h1>
+                <p style="font-size: 0.9rem;">
+                    Manage and review archived documents efficiently.
+                </p>
+            </div>
+        </div>
+
         {{-- Breadcrumbs --}}
         <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
             <ol class="list-reset flex space-x-2">
@@ -16,89 +25,89 @@
                 <li class="text-gray-700 font-medium">Archive</li>
             </ol>
         </nav>
-        <div class="bg-white rounded-xl shadow-lg p-4">
-            {{-- Search --}}
-            <div id="archivedSearchBar" class="flex justify-end w-full mb-4">
-                <form id="archiveFilterForm" action="{{ route('archive.search') }}"
-                    class="flex flex-col items-end w-auto space-y-1">
-                    <div class="relative w-96">
-                        <input type="text" name="search" id="archiveSearchInput"
-                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                            placeholder="Search archived documents..." value="{{ request('search') }}">
 
-                        <label for="archiveSearchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
-                                top-2.5
-                                peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5
-                                peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600
-                                floating-label">
-                            Search archived documents...
-                        </label>
-
-                        <!-- Clear Button -->
-                        @if (request('search'))
-                            <a href="{{ route('archive.index') }}"
-                                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                                    rounded-lg text-gray-400
-                                    hover:text-red-600 transition">
-                                <i data-feather="x" class="w-5 h-5"></i>
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
-
-            <div class="bg-white p-6 rounded shadow">
-
-                {{-- TAB --}}
-                <div id="typeTab" role="tablist" aria-label="Archive tabs" class="flex border-b space-x-2">
+        <div>
+            <div class="flex items-center w-full">
+                {{-- TAB (keep button markup & classes unchanged) --}}
+                <div id="typeTab" role="tablist" aria-label="Archive tabs" class="flex ml-4 mt-10 -mb-px space-x-2">
                     <button id="tab-btn-control" role="tab" aria-controls="tab-control" aria-selected="true"
                         data-target="#tab-control"
-                        class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-white text-blue-600 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-white text-white focus:outline-none focus:ring-2 focus:ring-sky-500">
                         Document Control
                     </button>
 
                     <button id="tab-btn-review" role="tab" aria-controls="tab-review" aria-selected="false"
                         data-target="#tab-review"
-                        class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-transparent text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        class="tab-btn px-4 py-2 font-semibold rounded-t-lg bg-transparent text-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
                         Document Review
                     </button>
                 </div>
 
-                {{-- CONTENT --}}
-                <div id="tab-control" class="tab-content block">
-                    @include('contents.archive.partials.control-archive', [
-                        'controlDocuments' => $controlDocuments,
-                    ])
-                </div>
+                {{-- Search (ke kanan dengan ml-auto sehingga sejajar dengan tab) --}}
+                <div id="archivedSearchBar" class="flex items-center ml-auto">
+                    <form id="archiveFilterForm" action="{{ route('archive.search') }}"
+                        class="flex flex-col items-end w-auto space-y-1">
+                        <div class="relative w-96">
+                            <input type="text" name="search" id="archiveSearchInput"
+                                class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
+                         focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                                placeholder="Search archived documents..." value="{{ request('search') }}">
 
-                <div id="tab-review" class="tab-content hidden">
-                    @include('contents.archive.partials.review-archive', [
-                        'reviewDocuments' => $reviewDocuments,
-                    ])
+                            <label for="archiveSearchInput"
+                                class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
+                                    top-2.5
+                                    peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5
+                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600
+                                    floating-label">
+                                Search archived documents...
+                            </label>
+
+                            <!-- Clear Button -->
+                            @if (request('search'))
+                                <a href="{{ route('archive.index') }}"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                                        rounded-lg text-gray-400
+                                        hover:text-red-600 transition">
+                                    <i data-feather="x" class="w-5 h-5"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <!-- SLIDER FILE VIEWER (like Notion) -->
-            <div id="fileViewerOverlay" class="fixed inset-0 bg-black/30 z-[9998] hidden" onclick="closeFileViewer()"></div>
+            {{-- CONTENT --}}
+            <div id="tab-control" class="tab-content block">
+                @include('contents.archive.partials.control-archive', [
+                    'controlDocuments' => $controlDocuments,
+                ])
+            </div>
 
-            <div id="fileViewerPanel"
-                class="fixed right-0 top-0 h-full w-[70%] max-w-4xl bg-white shadow-2xl z-[9999]
+            <div id="tab-review" class="tab-content hidden">
+                @include('contents.archive.partials.review-archive', [
+                    'reviewDocuments' => $reviewDocuments,
+                ])
+            </div>
+        </div>
+
+        <!-- SLIDER FILE VIEWER (like Notion) -->
+        <div id="fileViewerOverlay" class="fixed inset-0 bg-black/30 z-[9998] hidden" onclick="closeFileViewer()"></div>
+
+        <div id="fileViewerPanel"
+            class="fixed right-0 top-0 h-full w-[70%] max-w-4xl bg-white shadow-2xl z-[9999]
             translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
 
-                <!-- Header -->
-                <div class="flex items-center justify-between p-4 border-b">
-                    <h2 class="text-lg font-semibold text-gray-700">File Viewer</h2>
-                    <button onclick="closeFileViewer()" class="text-gray-500 hover:text-gray-700 text-xl">
-                        &times;
-                    </button>
-                </div>
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h2 class="text-lg font-semibold text-gray-700">File Viewer</h2>
+                <button onclick="closeFileViewer()" class="text-gray-500 hover:text-gray-700 text-xl">
+                    &times;
+                </button>
+            </div>
 
-                <!-- File content -->
-                <div class="flex-1 overflow-auto">
-                    <iframe id="fileViewerIframe" src="" class="w-full h-full border-0"></iframe>
-                </div>
+            <!-- File content -->
+            <div class="flex-1 overflow-auto">
+                <iframe id="fileViewerIframe" src="" class="w-full h-full border-0"></iframe>
             </div>
         </div>
     </div>

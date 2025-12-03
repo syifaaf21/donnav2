@@ -4,7 +4,7 @@
 @section('content')
     <div class="px-6">
         {{-- Header --}}
-        <div class="flex justify-between items-center  w-1/4 mb-4">
+        <div class="flex justify-end items-center my-4 pt-4">
             {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
@@ -20,32 +20,25 @@
                 </ol>
             </nav>
         </div>
+        {{-- Card Header: title + subtle description --}}
+        <div class="py-4">
+            <div class="text-white">
+                <h1 class="fw-bold">
+                    Master User
+                </h1>
+                <p class="text-base mt-1">Use this page to manage user master data, including Department Heads and Auditors.
+                </p>
+            </div>
+        </div>
 
         {{-- Enhanced Tabs Container --}}
-        <div class="bg-white shadow-lg rounded-lg border border-gray-100">
-            {{-- Card Header: title + subtle description --}}
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">User Management</h3>
-                    <p class="text-sm text-gray-500 mt-0.5">Browse and manage users by category.</p>
-                </div>
-                <div class="text-sm text-gray-500 hidden sm:block">
-                    {{-- Add User Button --}}
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#addUserModal"
-                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
-                        <i class="bi bi-plus-circle"></i>
-                        <span>Add User</span>
-                    </button>
-                </div>
-            </div>
-
-            {{-- Tabs (improved layout, same IDs and logic preserved) --}}
-            <div class="px-4 pt-4">
+        <div>
+            <div class="px-4 pt-4 ml-4">
                 <div class="flex items-center justify-between gap-4">
-                    <nav class="flex-1" aria-label="User categories">
+                    <nav class="flex-1-mb-px mt-6" aria-label="User categories">
                         <ul class="nav nav-tabs" id="userTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="all-tab" data-bs-toggle="tab"
+                                <button class="nav-link active rounded-t-lg" id="all-tab" data-bs-toggle="tab"
                                     data-bs-target="#all-tab-pane" type="button" role="tab"
                                     aria-controls="all-tab-pane" aria-selected="true">
                                     <i class="bi bi-people-fill me-1"></i>
@@ -53,7 +46,7 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="depthead-tab" data-bs-toggle="tab"
+                                <button class="nav-link rounded-t-lg" id="depthead-tab" data-bs-toggle="tab"
                                     data-bs-target="#depthead-tab-pane" type="button" role="tab"
                                     aria-controls="depthead-tab-pane" aria-selected="false">
                                     <i class="bi bi-person-badge me-1"></i>
@@ -61,7 +54,7 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="auditor-tab" data-bs-toggle="tab"
+                                <button class="nav-link rounded-t-lg" id="auditor-tab" data-bs-toggle="tab"
                                     data-bs-target="#auditor-tab-pane" type="button" role="tab"
                                     aria-controls="auditor-tab-pane" aria-selected="false">
                                     <i class="bi bi-shield-check me-1"></i>
@@ -71,11 +64,13 @@
                         </ul>
                     </nav>
 
-                    {{-- Optional small helper area (keeps layout tidy, doesn't change tab logic) --}}
-                    <div class="hidden sm:flex items-center gap-3 text-sm text-gray-500">
-                        <span class="whitespace-nowrap">Showing by category</span>
-                        <i class="bi bi-info-circle" data-bs-title="Switch tabs to filter users" role="img"
-                            aria-hidden="true"></i>
+                    <div class="text-sm text-gray-500 ml-4">
+                        {{-- Add User Button aligned to the right --}}
+                        <button type="button" data-bs-toggle="modal" data-bs-target="#addUserModal"
+                            class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Add User</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -435,27 +430,33 @@
 @endpush
 
 <style>
-    /* Base styling for all tabs */
+    /* Remove default tab container border */
+    #userTabs {
+        border-bottom: none !important;
+    }
+
+    /* Base styling for all tabs: default text-white, no bottom border */
     #userTabs .nav-link {
-        @apply text-gray-600 px-4 py-2 rounded-md transition-all duration-200;
+        color: #ffffff !important; /* default text-white */
         background: transparent;
-        border-top: 2px !important;
+        border: none !important; /* remove any borders including bottom */
+        padding: .5rem 1rem;
+        transition: all .15s ease-in-out;
     }
 
-    /* Hover style */
+    /* Hover style (subtle) */
     #userTabs .nav-link:hover {
-        box-shadow: 2px 4px 12px rgba(148, 148, 148, 0.1);
+        color: #e6eefc !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+        transform: translateY(-1px);
     }
 
-    /* ACTIVE TAB: Gradient + Shadow */
+    /* Active tab: text-gray-700 and keep subtle background */
     #userTabs .nav-link.active {
-        color: white !important;
+        color: #374151 !important; /* text-gray-700 */
         background: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%);
-        /* bg-gradient-to-b from-blue-200 to-white */
-        color: #2563eb !important;
-        /* text-blue (blue-600) */
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0);
-        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+        transform: translateY(-2px);
         font-weight: 600;
     }
 </style>

@@ -1,10 +1,9 @@
 @extends('layouts.app')
-@section('title', 'Document Hierarchy')
 
 @section('content')
     <div class="mx-auto px-4 py-2">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-3">
+        <div class="flex justify-end items-center my-4 pt-4">
             {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
@@ -19,22 +18,21 @@
                     <li class="text-gray-700 font-medium">Hierarchy</li>
                 </ol>
             </nav>
-
-            {{-- Add Button --}}
-            <button type="button" data-bs-toggle="modal" data-bs-target="#createDocumentModal"
-               class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add Document</span>
-            </button>
         </div>
-
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
-            {{-- Search Bar --}}
-            <div class="p-4 border-b border-gray-100 flex justify-end">
-
-                <form method="GET" id="searchForm" class="flex items-center w-full sm:w-96 relative">
-
-                    <input type="text" name="search"
+        <div class="py-6  text-white">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Hierarchy Master</h1>
+                <p style="font-size: 0.9rem;">
+                    Manage hierarchies. Use the "Add Hierarchy" button to create new entries and the actions column
+                    to edit or delete existing records.
+                </p>
+            </div>
+        </div>
+        <div class="overflow-hidden">
+            {{-- Search Bar and Add Button aligned --}}
+            <div class="py-4 flex items-center justify-between gap-4">
+                <form method="GET" id="searchForm" class="relative w-full sm:w-96">
+                    <input id="searchInput" type="text" name="search"
                         class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
                         text-sm text-gray-700 shadow-sm transition-all duration-200
                         focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
@@ -57,12 +55,21 @@
 
                     <!-- Clear button -->
                     @if (request('search'))
-                        <a href="{{ route('master.hierarchy.index') }}"
-                            class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
+                        <button id="clearSearch" type="button"
+                            class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
+                            onclick="document.getElementById('searchInput').value=''; document.getElementById('searchForm').submit();">
                             <i data-feather="x" class="w-5 h-5"></i>
-                        </a>
+                        </button>
                     @endif
                 </form>
+
+                {{-- Add Button on the right --}}
+                {{-- Add Button --}}
+                <button type="button" data-bs-toggle="modal" data-bs-target="#createDocumentModal"
+                    class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Add Document</span>
+                </button>
             </div>
 
             {{-- Table --}}
@@ -71,17 +78,18 @@
                 <table class="min-w-full text-sm text-gray-700">
                     <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                         <tr>
-                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Document Name
+                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">Document Name
                             </th>
-                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
-                            <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
+                            <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
+                            <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">
                                 Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="documentTableBody" class="divide-y divide-gray-200"
-                        @php $number = 1; @endphp
-                        @if ($documents->count() === 0)
-                            <tr>
+                    <tbody id="documentTableBody" class="divide-y divide-gray-200" @php $number = 1; @endphp
+                        @if ($documents->count() === 0) <tr>
                                 <td colspan="3" class="text-center py-6 text-gray-500">
                                     <i class="bi bi-inbox text-2xl block mb-1"></i>
                                     No data found
@@ -95,9 +103,8 @@
                                     'number' => $number++,
                                     'parent_id' => null,
                                 ])
-                            @endforeach
-                        @endif
-                    </tbody>
+                            @endforeach @endif
+                        </tbody>
                 </table>
             </div>
             {{-- Pagination --}}
@@ -185,14 +192,14 @@
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                    <button type="submit"
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         Submit
                     </button>
                 </div>
             </form>
         </div>
     </div>
-
 @endsection
 @push('scripts')
     <x-sweetalert-confirm />

@@ -127,7 +127,7 @@
                         data-collapse="documentsDropdown">
                         <div class="flex items-center gap-3">
                             <i data-feather="file-text" class="menu-icon w-4 h-4"></i>
-                            <span class="sidebar-text text-gray-700">Document</span>
+                            <span class="sidebar-text ">Document</span>
                         </div>
                         <i data-feather="chevron-right" class="menu-icon w-4 h-4"></i>
                     </a>

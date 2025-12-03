@@ -1,38 +1,46 @@
 @extends('layouts.app')
 
-@section('title', 'Documents - ' . $department->name)
-
 @section('content')
-    <!-- Breadcrumb -->
-    <nav class="text-xs text-gray-500 bg-white/50 border border-white backdrop:blur rounded-full pt-2 pr-6 shadow w-fit mb-2 mx-4"
-        aria-label="Breadcrumb">
-        <ol class="list-reset flex space-x-2">
-            <li>
-                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-house-door me-1"></i> Dashboard
-                </a>
-            </li>
-            <li>/</li>
-            <li>
-                <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline">
-                    <i class="bi bi-gear me-1"></i>Document Control
-                </a>
-            </li>
-            <li>/</li>
-            <li class="text-gray-400 font-medium">Documents</li>
-            <li>/</li>
-            <li class="text-gray-700 font-medium">{{ $department->name }}</li>
-        </ol>
-    </nav>
-    <div class="mx-auto px-4 py-6">
-        <div class="bg-white rounded-xl shadow-lg p-4">
+    <div class="mx-auto px-4 py-6 space-y-4">
+        {{-- Page Title --}}
+        <div class="pt-8 mb-4">
+            <div class="py-6 text-white">
+                <h1 class="fw-bold">
+                    Document Control - {{ $department->name }}
+                </h1>
+                <p class="text-base mt-1">Manage and organize your documents efficiently</p>
+            </div>
+        </div>
+
+        <!-- Breadcrumb -->
+        <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 pt-3 pb-1 shadow-sm w-fit" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li>
+                    <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline">
+                        <i class="bi bi-gear me-1"></i>Document Control
+                    </a>
+                </li>
+                <li>/</li>
+                <li class="text-gray-400 font-medium">Documents</li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">{{ $department->name }}</li>
+            </ol>
+        </nav>
+
+        {{-- <div class="p-4"> --}}
             <!-- Search Form -->
             <div class="flex justify-end w-full mb-2">
                 <form id="filterForm" method="GET" action="{{ route('document-control.department', $department->name) }}"
                     class="flex flex-col items-end w-auto space-y-1">
                     <div class="relative w-96">
                         <input type="text" name="search" id="searchInput"
-                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
+                            class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
              focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
                             placeholder="Type to search..." value="{{ request('search') }}">
 

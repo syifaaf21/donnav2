@@ -2,17 +2,9 @@
 @section('title', 'FTPP')
 
 @section('content')
-    <div class="mx-auto px-4 py-2 space-y-6">
-        <div class="py-6 mt-4">
-            <div class="text-white">
-                <h1 class="fw-bold">
-                    Master FTPP
-                </h1>
-                <p class="text-base mt-1">Use this page to manage FTPP master data, including Audit Types, Finding Categories, and Klausul.</p>
-            </div>
-        </div>
+    <div class="mx-auto px-4 py-2 space-y-4">
         {{-- Header --}}
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex justify-end items-center my-4 pt-4">
             {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
@@ -28,19 +20,27 @@
                 </ol>
             </nav>
         </div>
+        <div class="py-4">
+            <div class="text-white">
+                <h1 class="fw-bold">
+                    Master FTPP
+                </h1>
+                <p class="text-base mt-1">Use this page to manage FTPP master data, including Audit Types, Finding Categories, and Klausul.</p>
+            </div>
+        </div>
 
         {{-- main content --}}
         <div class="">
             <div class="flex ml-4">
                 <button
-                    class="btn-tab px-4 py-2 rounded-t-lg transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    class="btn-tab px-4 py-2 rounded-t-lg font-semibold text-white transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
                     data-section="audit">Audit
                     Type</button>
                 <button
-                    class="btn-tab px-4 py-2 rounded-t-lg transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    class="btn-tab px-4 py-2 rounded-t-lg font-semibold text-white transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
                     data-section="finding_category">Finding Category</button>
                 <button
-                    class="btn-tab px-4 py-2 rounded-t-lg transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    class="btn-tab px-4 py-2 rounded-t-lg font-semibold text-white transition transform duration-150 ease-in-out hover:-translate-y-0.5 hover:scale-105 hover:bg-gradient-to-b hover:from-blue-50 hover:to-white hover:text-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200"
                     data-section="klausul">Klausul</button>
             </div>
 
@@ -77,11 +77,17 @@
             // sembunyikan semua section dulu
             Object.values(sections).forEach(section => section.classList.add("hidden"));
 
+            // set all tabs to default (text-white, no active styles)
+            tabs.forEach(t => {
+                t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
+                t.classList.add("text-white");
+            });
+
             // aktifkan tab pertama secara default
             const firstTab = tabs[0];
             const firstTarget = firstTab.getAttribute("data-section");
 
-            firstTab.classList.remove("text-gray-700");
+            firstTab.classList.remove("text-white");
             firstTab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
             sections[firstTarget].classList.remove("hidden");
 
@@ -90,15 +96,15 @@
                 tab.addEventListener("click", () => {
                     const target = tab.getAttribute("data-section");
 
-                    // hilangkan highlight tab lain
-                    tabs.forEach(t => t.classList.remove("bg-gradient-to-b", "from-blue-200",
-                        "to-white", "text-gray-700", "shadow-top"));
-                    tabs.forEach(t => t.classList.add("text-gray-700"));
+                    // hilangkan highlight tab lain -> set kembali ke default text-white
+                    tabs.forEach(t => {
+                        t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
+                        t.classList.add("text-white");
+                    });
 
-                    // aktifkan tab ini
-                    tab.classList.remove("text-gray-700");
-                    tab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white",
-                        "text-gray-700", "shadow-top");
+                    // aktifkan tab ini (text-gray-700 + gradient)
+                    tab.classList.remove("text-white");
+                    tab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
 
                     // sembunyikan semua, tampilkan target
                     Object.values(sections).forEach(section => section.classList.add("hidden"));
