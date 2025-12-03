@@ -1,6 +1,5 @@
 <footer
-  class="mt-12 -mx-5 transition-all duration-300 bg-[#f0f7ff] hover:bg-gradient-to-b hover:from-[#f0f7ff] hover:to-[#eaf4ff]"
->
+  class="mt-12 mx-5 transition-all duration-300 hover:bg-gradient-to-b hover:from-[#f0f7ff] hover:to-[#eaf4ff]">
   <div class="px-4 ">
     <!-- Main Footer Content -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">

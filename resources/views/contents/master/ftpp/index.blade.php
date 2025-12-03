@@ -4,9 +4,18 @@
 @section('content')
     <div class="mx-auto px-4 py-2 space-y-4">
         {{-- Header --}}
-        <div class="flex justify-end items-center my-4 pt-4">
+        <div class="flex justify-between items-center my-2 pt-4">
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2 text-white">
+                    <h3 class="fw-bold">Master FTPP</h3>
+                    <p class="text-sm" style="font-size: 0.85rem;">
+                        Use this page to manage FTPP master data, including Audit Types, Finding Categories, and Klausul.
+                    </p>
+                </div>
+            </div>
+
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -19,14 +28,6 @@
                     <li class="text-gray-700 font-bold">FTPP</li>
                 </ol>
             </nav>
-        </div>
-        <div class="py-4">
-            <div class="text-white">
-                <h1 class="fw-bold">
-                    Master FTPP
-                </h1>
-                <p class="text-base mt-1">Use this page to manage FTPP master data, including Audit Types, Finding Categories, and Klausul.</p>
-            </div>
         </div>
 
         {{-- main content --}}
@@ -79,7 +80,8 @@
 
             // set all tabs to default (text-white, no active styles)
             tabs.forEach(t => {
-                t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
+                t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700",
+                    "shadow-top");
                 t.classList.add("text-white");
             });
 
@@ -98,13 +100,15 @@
 
                     // hilangkan highlight tab lain -> set kembali ke default text-white
                     tabs.forEach(t => {
-                        t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
+                        t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white",
+                            "text-gray-700", "shadow-top");
                         t.classList.add("text-white");
                     });
 
                     // aktifkan tab ini (text-gray-700 + gradient)
                     tab.classList.remove("text-white");
-                    tab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
+                    tab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white",
+                        "text-gray-700", "shadow-top");
 
                     // sembunyikan semua, tampilkan target
                     Object.values(sections).forEach(section => section.classList.add("hidden"));

@@ -2,10 +2,10 @@
     class="fixed left-1/2 transform -translate-x-1/2 top-4 mb-4 z-50 bg-white/70 backdrop-blur-md border border-white rounded-3xl flex items-center gap-4 px-3 py-2 shadow-md">
     <!-- Open sidebar button (visible when sidebar is collapsed) -->
     <button id="openSidebarBtn" type="button"
-        class="flex items-center justify-center w-9 h-9 rounded-md hover:bg-gray-100 transition-colors text-choco focus:outline-none focus:ring-2 focus:ring-blue-400"
+        class="flex items-center justify-center w-9 h-9 rounded-md hover:bg-gray-100 transition-colors text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
         aria-controls="sidebar" aria-expanded="false" title="Open sidebar">
         <span class="sr-only">Open sidebar</span>
-        <i data-feather="menu" class="w-5 h-5"></i>
+        <i data-feather="sidebar" class="w-5 h-5"></i>
     </button>
 
     <!-- Notification -->
@@ -14,7 +14,7 @@
             class="relative focus:outline-none focus:ring-2 focus:ring-blue-400 rounded" aria-haspopup="true"
             aria-controls="notificationDropdown" aria-expanded="false" title="Notifications">
             <span class="sr-only">Open notifications</span>
-            <i data-feather="bell" class="w-5 h-5 text-choco"></i>
+            <i data-feather="bell" class="w-5 h-5 text-gray-700"></i>
 
             @php
                 $unreadCount = auth()->user()->unreadNotifications->count();
@@ -35,7 +35,7 @@
             role="menu" aria-labelledby="notificationBtn">
             <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                 <div class="flex items-center gap-2">
-                    <i data-feather="bell" class="w-4 h-4 text-choco"></i>
+                    <i data-feather="bell" class="w-4 h-4 text-gray-700"></i>
                     <span class="text-sm font-medium text-gray-700">Notifications</span>
                 </div>
                 @if (auth()->user()->unreadNotifications->count() > 0)
@@ -90,11 +90,11 @@
     <!-- Profile -->
     <div class="relative">
         <button id="profileDropdownBtn" type="button"
-            class="flex items-center gap-3 px-2 py-1 text-choco transition-all duration-150" aria-haspopup="true"
+            class="flex items-center gap-3 px-2 py-1 text-gray-700 transition-all duration-150" aria-haspopup="true"
             aria-controls="profileDropdownMenu" aria-expanded="false" title="Profile">
             <div class="flex items-center gap-2">
                 <div
-                    class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-500 text-choco flex items-center justify-center font-bold uppercase text-base shadow-inner">
+                    class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-500 text-gray-700 flex items-center justify-center font-bold uppercase text-base shadow-inner">
                     {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                 </div>
                 <i data-feather="chevron-down"

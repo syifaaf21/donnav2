@@ -10,7 +10,7 @@
             </tr>
         </thead>
 
-        <tbody class="divide-y divide-gray-100">
+        <tbody class="bg-white divide-y divide-gray-100">
             @php
                 $globalIteration = ($controlDocuments->currentPage() - 1) * $controlDocuments->perPage() + 1;
             @endphp

@@ -3,34 +3,47 @@
 
 @section('content')
     <div x-data="editFtppApp()" x-init="init()" class="p-6 space-y-6 mt-6">
-        <div class="py-4">
-            <div class="text-white">
-                <h1 class="fw-bold">
-                    Edit Auditee Action
-                </h1>
-                <p class="text-base mt-1">Edit auditee action for finding #{{ $finding->registration_number }}. Please update
-                    the details below for the auditee action.</p>
-            </div>
-        </div>
+        {{-- Header --}}
+        <div class="flex justify-between items-center my-2 pt-4">
 
-        {{-- Breadcrumbs --}}
-        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-4" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li>
-                    <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-folder me-1"></i> FTPP
-                    </a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-700 font-bold">Edit Auditee Action</li>
-            </ol>
-        </nav>
+            {{-- Title + Description --}}
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2">
+                    <h3 class="fw-bold">Edit Auditee Action</h3>
+                    <p class="text-sm" style="font-size: 0.9rem;">
+                        Edit auditee action for finding #{{ $finding->registration_number }}.
+                        Please update the details below for the auditee action.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1"
+                aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <li>/</li>
+
+                    <li>
+                        <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-folder me-1"></i> FTPP
+                        </a>
+                    </li>
+
+                    <li>/</li>
+
+                    <li class="text-gray-700 font-bold">Edit Auditee Action</li>
+
+                </ol>
+            </nav>
+
+        </div>
 
         <form action="{{ route('ftpp.auditee-action.update', $finding->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -260,7 +273,8 @@
                                 class="w-full border border-gray-300 rounded text-center py-1" readonly>
                         </div>
                         <div class="mt-4">
-                            <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primary to-primaryDark hover:from-primaryDark hover:to-primary transition-colors text-white rounded">
+                            <button type="submit"
+                                class="px-4 py-2 bg-gradient-to-r from-primary to-primaryDark hover:from-primaryDark hover:to-primary transition-colors text-white rounded">
                                 Save Changes
                             </button>
                         </div>

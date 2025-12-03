@@ -6,32 +6,46 @@
 @endphp
 @section('content')
     <div class="mx-auto my-4 px-4">
-        <div class="py-8">
-            <div class="text-white">
-                <h1 class="fw-bold">
-                    Assign Auditee Action
-                </h1>
-                <p class="text-base mt-1">Please fill in the details below to assign auditee actions for the FTPP finding.</p>
+        {{-- Header --}}
+        <div class="flex justify-between items-center my-2 pt-4">
+
+            {{-- Title + Description --}}
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2">
+                    <h3 class="fw-bold">Assign Auditee Action</h3>
+                    <p class="text-sm" style="font-size: 0.9rem;">
+                        Please fill in the details below to assign auditee actions for the FTPP finding.
+                    </p>
+                </div>
             </div>
+
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <li>/</li>
+
+                    <li>
+                        <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-folder me-1"></i> FTPP
+                        </a>
+                    </li>
+
+                    <li>/</li>
+
+                    <li class="text-gray-700 font-bold">Assign Auditee Action</li>
+
+                </ol>
+            </nav>
+
         </div>
-        {{-- Breadcrumbs --}}
-        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li>
-                    <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-folder me-1"></i>FTPP
-                    </a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-700 font-bold">Assign Auditee Action</li>
-            </ol>
-        </nav>
+
         <div class="space-y-6 mt-2">
             <div x-data="editFtppApp()" x-init="init()">
                 <form action="{{ route('ftpp.auditee-action.store', $finding->id) }}" method="POST">

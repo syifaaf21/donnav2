@@ -5,30 +5,40 @@
 @section('content')
     {{-- Main Container: Modern background and clean padding --}}
     <div class="p-6 space-y-6">
-        <div class="py-6 mt-4 text-white">
-            <div class="mb-4 text-white">
-                <h1 class="fw-bold ">Document Review</h1>
-                <p style="font-size: 0.9rem;">
-                    Review and manage documents across different plants. Select a plant tab to view its document hierarchy.
-                </p>
-            </div>
-        </div>
-
         {{-- Flash Message --}}
         <x-flash-message />
+        {{-- Header --}}
+        <div class="flex justify-between items-center my-2 pt-4">
 
-        {{-- Breadcrumbs --}}
-        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">Document Review</li>
-            </ol>
-        </nav>
+            {{-- Title + Description --}}
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2">
+                    <h3 class="fw-bold">Document Review</h3>
+                    <p class="text-sm" style="font-size: 0.9rem;">
+                        Review and manage documents across different plants. Select a plant tab to view its document
+                        hierarchy.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <li>/</li>
+
+                    <li class="text-gray-700 font-bold">Document Review</li>
+
+                </ol>
+            </nav>
+
+        </div>
 
         {{-- Plant Tabs Container --}}
         <div class="">
@@ -49,7 +59,6 @@
                 {{ $isActive
                     ? 'bg-gradient-to-b from-blue-200 to-white text-gray-700 -mb-px font-bold'
                     : 'text-white hover:text-gray-700 hover:border-t hover:border-gray-200' }}"
-
                                 data-bs-toggle="tab" data-bs-target="#tab-content-{{ $slug }}">
 
                                 {{-- Plant name: truncate to avoid overflow on small screens --}}
@@ -73,8 +82,7 @@
             </div>
 
             {{-- Tab Content Container --}}
-            <div
-                class="tab-content bg-white shadow rounded-lg transition-all duration-300 min-h-[10rem] p-4">
+            <div class="tab-content bg-white shadow rounded-lg transition-all duration-300 min-h-[10rem] p-4">
                 @foreach ($groupedByPlant as $plant => $documentsByCode)
                     @php
                         $slug = \Illuminate\Support\Str::slug($plant);
@@ -240,7 +248,8 @@
     .nav-link[aria-selected="true"] {
         background-image: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%);
         background-repeat: no-repeat;
-        color: #374151; /* gray-700 */
+        color: #1d4ed8;
+        /* blue-700 */
         font-weight: 700;
         border-left-color: #1d4ed8;
         border-right-color: #1d4ed8;

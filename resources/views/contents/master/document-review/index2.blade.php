@@ -4,10 +4,21 @@
 @section('content')
     <div class="mx-auto px-4 py-4" x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
 
-        {{-- Header: Breadcrumbs + Add Button --}}
-        <div class="flex justify-end items-center my-4 pt-4">
+        {{-- Header --}}
+        <div class="flex justify-between items-center my-2 pt-4">
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2 text-white">
+                    <h3 class="fw-bold">Document Review Master</h3>
+                    <p class="text-sm" style="font-size: 0.85rem;">
+                        Manage document reviews. Use the "Add Document Review" button to create new entries and the actions
+                        column
+                        to edit or delete existing records.
+                    </p>
+                </div>
+            </div>
+
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -17,18 +28,9 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">Document Review</li>
+                    <li class="text-gray-700 font-bold">Document Review</li>
                 </ol>
             </nav>
-        </div>
-        <div class="pt-2 pb-6">
-            <div class="mb-4 text-white">
-                <h1 class="fw-bold ">Document Review Master</h1>
-                <p style="font-size: 0.9rem;">
-                    Manage document reviews. Use the "Add Document Review" button to create new entries and the actions
-                    column to edit or delete existing records.
-                </p>
-            </div>
         </div>
 
         <div class="overflow-hidden">

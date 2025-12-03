@@ -4,9 +4,18 @@
 @section('content')
     <div class="px-6">
         {{-- Header --}}
-        <div class="flex justify-end items-center my-4 pt-4">
+        <div class="flex justify-between items-center my-2 pt-4">
+            {{-- Title + Description --}}
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2 text-white">
+                    <h3 class="fw-bold">Master User</h3>
+                    <p class="text-sm" style="font-size: 0.85rem;">
+                        Use this page to manage user master data, including Department Heads and Auditors.
+                    </p>
+                </div>
+            </div>
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -16,24 +25,14 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">User</li>
+                    <li class="text-gray-700 font-bold">User</li>
                 </ol>
             </nav>
-        </div>
-        {{-- Card Header: title + subtle description --}}
-        <div class="py-4">
-            <div class="text-white">
-                <h1 class="fw-bold">
-                    Master User
-                </h1>
-                <p class="text-base mt-1">Use this page to manage user master data, including Department Heads and Auditors.
-                </p>
-            </div>
         </div>
 
         {{-- Enhanced Tabs Container --}}
         <div>
-            <div class="px-4 pt-4 ml-4">
+            <div class="pt-2 mx-8">
                 <div class="flex items-center justify-between gap-4">
                     <nav class="flex-1-mb-px mt-6" aria-label="User categories">
                         <ul class="nav nav-tabs" id="userTabs" role="tablist">
@@ -76,7 +75,7 @@
             </div>
 
             {{-- Tab Contents (unchanged logic / IDs) --}}
-            <div class="px-4">
+            <div>
                 <div class="tab-content" id="userTabsContent" role="tablist" aria-live="polite">
                     <div class="tab-pane fade show active" id="all-tab-pane" role="tabpanel" aria-labelledby="all-tab">
                         <div id="ajaxUserTableAll" class="space-y-3">
@@ -437,9 +436,11 @@
 
     /* Base styling for all tabs: default text-white, no bottom border */
     #userTabs .nav-link {
-        color: #ffffff !important; /* default text-white */
+        color: #ffffff !important;
+        /* default text-white */
         background: transparent;
-        border: none !important; /* remove any borders including bottom */
+        border: none !important;
+        /* remove any borders including bottom */
         padding: .5rem 1rem;
         transition: all .15s ease-in-out;
     }
@@ -453,7 +454,8 @@
 
     /* Active tab: text-gray-700 and keep subtle background */
     #userTabs .nav-link.active {
-        color: #374151 !important; /* text-gray-700 */
+        color: #374151 !important;
+        /* text-gray-700 */
         background: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%);
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
         transform: translateY(-2px);
