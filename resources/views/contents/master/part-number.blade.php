@@ -3,9 +3,8 @@
 
 @section('content')
     <div class="mx-auto px-4 py-2">
-        {{-- Header --}}
-        <div class="flex justify-between items-center mb-3">
-            {{-- Breadcrumbs --}}
+        {{-- Header (match product layout) --}}
+        <div class="flex justify-end items-center my-4 pt-4">
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -16,47 +15,61 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">Part Number</li>
+                    <li class="text-gray-700 font-bold">Part Number</li>
                 </ol>
             </nav>
-
-            {{-- Add Button --}}
-            <button type="button" data-bs-toggle="modal" data-bs-target="#createPartNumberModal"
-                class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add Part Number</span>
-            </button>
         </div>
 
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
-            {{-- Search Bar --}}
-            <div class="p-4 border-b border-gray-100 flex justify-end">
-                <form id="searchForm" method="GET" class="flex items-end w-auto">
-                    <div class="relative w-96">
-                        <input type="text" name="search" id="searchInput"
-                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                            placeholder="Type to search..." value="{{ request('search') }}">
+        <div class="py-6  text-white">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Part Number Master</h1>
+                <p style="font-size: 0.9rem;">
+                    Manage part numbers. Use the "Add Part Number" button to create new entries and the actions column
+                    to edit or delete existing records.
+                </p>
+            </div>
+        </div>
 
-                        <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-             text-gray-400 text-sm
-             {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
-                            Type to search...
-                        </label>
+        <div class="overflow-hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 my-4">
+                <div class="w-full sm:w-auto flex items-center gap-2">
+                    {{-- Search --}}
+                    <form id="searchForm" method="GET" class="flex items-center w-full sm:w-auto">
+                        <div class="relative w-full sm:w-96 md:w-[520px]">
+                            <input type="text" name="search" id="searchInput"
+                                class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
+                            focus:border-sky-400 focus:ring-2 focus:ring-sky-200 transition-all duration-200 shadow-sm"
+                                placeholder="Type to search..." value="{{ request('search') }}">
+
+                            <label for="searchInput"
+                                class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
+                            {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                Type to search....
+                            </label>
+                        </div>
+                    </form>
+
+                    {{-- Filter plant (berdekatan dengan search) --}}
+                    <div class="flex items-center gap-2">
+                        <select id="filterPlant"
+                            class="form-select border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px] bg-white">
+                            <option value="">All Plants</option>
+                            @foreach (['Body', 'Unit', 'Electric'] as $plant)
+                                <option value="{{ $plant }}" {{ request('plant') == $plant ? 'selected' : '' }}>
+                                    {{ ucfirst($plant) }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-                </form>
+                </div>
 
-                <div class="ml-2 relative">
-                    <select id="filterPlant"
-                        class="form-select border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px] bg-gray-100">
-                        <option value="">All Plants</option>
-                        @foreach (['Body', 'Unit', 'Electric'] as $plant)
-                            <option value="{{ $plant }}" {{ request('plant') == $plant ? 'selected' : '' }}>
-                                {{ ucfirst($plant) }}
-                            </option>
-                        @endforeach
-                    </select>
+                {{-- Add Button --}}
+                <div class="w-full sm:w-auto flex justify-end">
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#createPartNumberModal"
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Add Part Number</span>
+                    </button>
                 </div>
             </div>
 
@@ -65,29 +78,29 @@
                 <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
                     <table class="min-w-full text-sm text-gray-700">
-                        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
-                            <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Part
+                        <thead class="sticky top-0 z-10">
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part
                                     Number</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Product
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Product
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Model</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Process
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Process
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
                                 <th
-                                    class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                     Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody>
                             @forelse ($partNumbers as $part)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
                                     <td class="px-4 py-3">
                                         {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-semibold">{{ $part->part_number }}</td>
+                                    <td class="px-4 py-3">{{ $part->part_number }}</td>
                                     <td class="px-4 py-3">{{ $part->product->name ?? '-' }}</td>
                                     <td class="px-4 py-3">{{ $part->productModel->name ?? '-' }}</td>
                                     <td class="px-4 py-3">{{ ucwords($part->process->name) ?? '-' }}</td>
@@ -127,7 +140,8 @@
         </div>
     </div>
 
-    {{-- Modals Edit --}}
+    {{-- Modals Edit / Create (existing code preserved) --}}
+    {{-- ...existing code... --}}
     @foreach ($partNumbers as $part)
         <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
             aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
@@ -237,8 +251,7 @@
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit"
-                            class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
                             Save Changes
                         </button>
                     </div>
@@ -364,14 +377,13 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl justify-content-between p-4">
+                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
                     <button type="button"
                         class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit"
-                        class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
                         Submit
                     </button>
                 </div>
@@ -380,6 +392,7 @@
     </div>
 
 @endsection
+
 @push('scripts')
     <x-sweetalert-confirm />
     <script>

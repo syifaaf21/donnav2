@@ -631,31 +631,23 @@
     @endpush
     @push('styles')
         <style>
-            /*
-                                                                                                                                           GLOBAL BACKGROUND
-                                                                                                                                         */
+            /* GLOBAL BACKGROUND */
             body {
                 /* background: #f6f8fc !important; */
             }
 
-            /*
-                                                                                                                                           CARD STYLE (Neumorphism Light)
-                                                                                                                                         */
+            /*CARD STYLE (Neumorphism Light) */
             .card {
-                border-radius: 22px !important;
+                border-radius: 12px !important;
                 background: #ffffff !important;
-                border: none !important;
-                box-shadow:
-                    8px 8px 20px rgba(63, 63, 63, 0.35),
-                    -8px -8px 20px rgba(255, 255, 255, 0.037) !important;
+                border: 1px solid #e5e7eb !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
                 transition: all 0.25s ease;
             }
 
             .card:hover {
-                transform: translateY(-3px);
-                box-shadow:
-                    10px 10px 26px rgba(163, 177, 198, 0.45),
-                    -10px -10px 26px rgba(255, 255, 255, 0.95) !important;
+                transform: translateY(-4px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12) !important;
             }
 
             .finding-card {
@@ -674,9 +666,7 @@
             }
 
 
-            /*
-                                                                                                                                           SUMMARY ICON BOX
-                                                                                                                                         */
+            /*SUMMARY ICON BOX*/
             .summary-icon-box {
                 width: 46px;
                 height: 46px;
@@ -688,9 +678,7 @@
                 box-shadow: 0px 6px 16px rgba(30, 60, 255, 0.3);
             }
 
-            /*
-                                                                                                                                           TITLES
-                                                                                                                                         */
+            /*TITLES*/
             h6,
             .fw-semibold {
                 color: #1e1e2d !important;
@@ -698,9 +686,7 @@
                 letter-spacing: 0.3px;
             }
 
-            /*
-                                                                                                                                           BLUE PANEL LIKE IMAGE
-                                                                                                                                         */
+            /*BLUE PANEL LIKE IMAGE*/
             .blue-panel {
                 background: linear-gradient(135deg, #1e3cff, #2d4fff);
                 border-radius: 24px;
@@ -709,9 +695,7 @@
                 padding: 24px 28px;
             }
 
-            /*
-                                                                                                                                           TOGGLE SWITCH (Modern Blue)
-                                                                                                                                         */
+            /*TOGGLE SWITCH (Modern Blue)*/
             /* HIDE the actual checkbox */
             .toggle-switch input {
                 display: none;
@@ -764,33 +748,27 @@
                 transform: translate(16px, -50%);
             }
 
-            /*
-                                                                                                                                           PIE & BAR LABEL COLORS
-                                                                                                                                         */
+            /*PIE & BAR LABEL COLORS*/
             .chart-title {
                 color: #1e1e2d;
                 font-weight: 600;
                 font-size: 1rem;
             }
 
-            /*
-                                                                                                                                           OBSOLETE TABLE STYLE (Modern Clean)
-                                                                                                                                         */
+            /*OBSOLETE TABLE STYLE (Modern Clean)*/
             #obsoleteTableContainer table {
-                border-radius: 18px !important;
+                border-radius: 12px !important;
                 overflow: hidden;
-                border: none !important;
+                border: 1px solid #e5e7eb !important;
                 background: #ffffff !important;
-                box-shadow:
-                    6px 6px 16px rgba(163, 177, 198, 0.25),
-                    -6px -6px 16px rgba(255, 255, 255, 0.9);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             }
 
             #obsoleteTableContainer table thead th {
                 background: #f3f6ff !important;
                 color: #1e2b50 !important;
                 font-weight: 700;
-                border-bottom: 2px solid #e0e7ff !important;
+                border-bottom: 1px solid #e0e7ff !important;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 padding: 1rem !important;
@@ -803,33 +781,28 @@
             }
 
             .table-row-hover:hover {
-                background: #f6f9ff !important;
+                background: #f9fafb !important;
             }
 
-            /*
-                                                                                                                                           PAGINATION BUTTONS
-                                                                                                                                         */
+            /*PAGINATION BUTTONS*/
             #nextPage,
             #prevPage {
                 background: white !important;
-                border-radius: 14px !important;
-                border: 1px solid #d6d9e8 !important;
+                border-radius: 8px !important;
+                border: 1px solid #e5e7eb !important;
                 padding: 6px 14px;
-                box-shadow:
-                    4px 4px 12px rgba(163, 177, 198, 0.25),
-                    -4px -4px 12px rgba(255, 255, 255, 0.9);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
                 transition: all 0.2s;
             }
 
             #nextPage:hover,
             #prevPage:hover {
-                background: #eef2ff !important;
-                border-color: #c7d2fe !important;
+                background: #f9fafb !important;
+                border-color: #d1d5db !important;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
             }
 
-            /*
-                                                                                                                                           SCROLL TO TOP BUTTON
-                                                                                                                                         */
+            /*SCROLL TO TOP BUTTON*/
             #scrollUpBtn {
                 background: linear-gradient(135deg, #1e3cff, #3f69ff) !important;
                 box-shadow: 0px 10px 22px rgba(30, 60, 255, 0.35) !important;
