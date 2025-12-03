@@ -31,60 +31,80 @@
         </button>
 
         <div id="notificationDropdown"
-            class="hidden absolute right-0 mt-2 w-96 bg-white border border-gray-100 rounded-xl shadow-lg ring-1 ring-black/5 z-50 flex flex-col overflow-hidden"
+            class="hidden absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-xl shadow-xl ring-1 ring-black/5 z-50 flex flex-col overflow-hidden"
             role="menu" aria-labelledby="notificationBtn">
-            <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50/80">
                 <div class="flex items-center gap-2">
-                    <i data-feather="bell" class="w-4 h-4 text-choco"></i>
-                    <span class="text-sm font-medium text-gray-700">Notifications</span>
+                    <i data-feather="bell" class="w-4 h-4 text-gray-600"></i>
+                    <span class="text-sm font-semibold text-gray-700">Notifications</span>
                 </div>
                 @if (auth()->user()->unreadNotifications->count() > 0)
                     <form action="{{ route('notifications.markAllRead') }}" method="POST" class="m-0">
                         @csrf
-                        <button type="submit" class="text-xs text-gray-500 hover:text-gray-700">
+                        <button type="submit" class="text-xs text-gray-500 hover:text-gray-700 transition">
                             Mark all read
                         </button>
                     </form>
                 @endif
             </div>
 
+            <!-- Notification list -->
             <div class="overflow-y-auto max-h-64 divide-y divide-gray-100">
                 @forelse(auth()->user()->notifications->take(8) as $notification)
                     <a href="{{ $notification->data['url'] ?? '#' }}"
                         class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" role="menuitem">
+
+                        <!-- Status dot -->
                         <span class="flex-none mt-1">
                             @if (!$notification->read_at)
                                 <span
                                     class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white"></span>
                             @else
-                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300"></span>
                             @endif
                         </span>
-                        <div class="min-w-0">
-                            <div class="text-sm text-gray-800 truncate">
+
+                        <!-- Content -->
+                        <div class="min-w-0 flex-auto">
+                            <div class="text-sm text-gray-800 leading-snug">
                                 {{ Str::limit($notification->data['message'] ?? 'No message', 120) }}
                             </div>
                             <div class="text-xs text-gray-400 mt-1">
                                 {{ $notification->created_at->diffForHumans() }}
                             </div>
                         </div>
+
+                        <!-- NEW Badge -->
                         @if (!$notification->read_at)
-                            <span class="ml-2 flex-shrink-0 text-xs text-blue-600 font-medium">New</span>
+                            <span
+                                class="flex-shrink-0 ml-2 px-2 py-0.5 text-[10px] font-semibold
+                                text-blue-600 bg-blue-50 border border-blue-200 rounded-full">
+                                NEW
+                            </span>
                         @endif
                     </a>
                 @empty
                     <div class="p-6 text-center text-sm text-gray-500">
-                        <i data-feather="inbox" class="w-5 h-5 mx-auto mb-2 text-gray-300"></i>
+                        <i data-feather="inbox" class="w-6 h-6 mx-auto mb-2 text-gray-300"></i>
                         No notifications
                     </div>
                 @endforelse
             </div>
 
-            <div class="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center">
+            <!-- Footer button -->
+            <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
                 <a href="{{ route('notifications.index') }}"
-                    class="inline-block text-sm text-blue-600 hover:underline">View all notifications</a>
+                    class="block w-full text-center text-sm font-medium text-gray-700 bg-white
+                   border border-gray-200 rounded-lg py-2
+                   shadow-sm hover:bg-gray-100 hover:border-gray-300
+                   transition-all duration-150 decoration-none">
+                    View all notifications
+                </a>
             </div>
         </div>
+
     </div>
 
     <!-- Profile -->
@@ -104,14 +124,19 @@
 
         <div id="profileDropdownMenu"
             class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50">
-            <div class="px-4 border-b border-gray-100">
-                <p class="text-sm text-gray-400 truncate">{{ Auth::user()->name ?? 'User' }}</p>
-                <p class="text-sm text-gray-400 truncate">
+
+            <div class="px-4 border-b border-gray-100 py-2">
+                <p class="text-lg font-semibold text-gray-800 truncate">
+                    {{ Auth::user()->name ?? 'User' }}
+                </p>
+
+                <span class="block text-sm text-gray-500 truncate">
                     {{ optional(Auth::user()->departments()->first())->name ?? 'Department' }}
-                </p>
-                <p class="text-sm text-gray-400 truncate">
+                </span>
+
+                <span class="block text-sm text-gray-500 truncate">
                     {{ optional(Auth::user()->roles()->first())->name ?? 'Role' }}
-                </p>
+                </span>
             </div>
 
             <form action="{{ route('logout') }}" method="POST" role="none">
@@ -123,6 +148,7 @@
                 </button>
             </form>
         </div>
+
     </div>
 </header>
 
