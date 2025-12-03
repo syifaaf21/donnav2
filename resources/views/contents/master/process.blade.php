@@ -4,8 +4,7 @@
 @section('content')
     <div class="mx-auto px-4 py-2">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-3">
-            {{-- Breadcrumbs --}}
+        <div class="flex justify-end items-center my-4 pt-4">
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -16,37 +15,47 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">Process</li>
+                    <li class="text-gray-700 font-bold">Process</li>
                 </ol>
             </nav>
-
-            {{-- Add Button --}}
-            <button type="button" data-bs-toggle="modal" data-bs-target="#addProcessModal"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                <i class="bi bi-plus-circle"></i>
-                <span>Add Process</span>
-            </button>
         </div>
 
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden p-3">
-            {{-- Search Bar --}}
-            <div class="p-4 border-b border-gray-100 flex justify-end">
+        <div class="py-6  text-white">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Process Master</h1>
+                <p style="font-size: 0.9rem;">
+                    Manage process records. Use the "Add Process" button to create new entries and the actions column
+                    to edit or delete existing processes.
+                </p>
+            </div>
+        </div>
 
-                <form id="searchForm" method="GET" class="flex items-end w-auto">
-                    <div class="relative w-96">
+        <div class="overflow-hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 my-4">
+                {{-- Search --}}
+                <form id="searchForm" method="GET" class="w-full sm:max-w-md">
+                    <div class="relative w-full">
                         <input type="text" name="search" id="searchInput"
-                            class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                            class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
+             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 transition-all duration-200 shadow-sm"
                             placeholder="Type to search..." value="{{ request('search') }}">
 
                         <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-             text-gray-400 text-sm
+                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
              {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
                     </div>
                 </form>
+
+                {{-- Add Button --}}
+                <div class="w-full sm:w-auto flex justify-end">
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#addProcessModal"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Add Process</span>
+                    </button>
+                </div>
             </div>
 
             <div id="tableContainer">
@@ -273,8 +282,6 @@
         </div>
     </div>
 @endsection
-
-
 
 @push('scripts')
     <x-sweetalert-confirm />

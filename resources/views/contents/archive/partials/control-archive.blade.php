@@ -1,4 +1,4 @@
-<div class="overflow-hidden rounded-xl border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
+<div class="overflow-hidden rounded-xl bg-white border border-gray-100 overflow-x-auto overflow-y-auto max-h-[520px]">
     <table class="min-w-full text-sm text-gray-700">
         <thead class="sticky top-0 z-10 bg-gray-50">
             <tr class="border-b border-gray-200">

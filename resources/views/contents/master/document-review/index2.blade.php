@@ -5,7 +5,7 @@
     <div class="mx-auto px-4 py-4" x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
 
         {{-- Header: Breadcrumbs + Add Button --}}
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+        <div class="flex justify-end items-center my-4 pt-4">
             {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
@@ -20,21 +20,30 @@
                     <li class="text-gray-700 font-medium">Document Review</li>
                 </ol>
             </nav>
-
-            {{-- Add Document Button --}}
-            <button
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
-                data-bs-toggle="modal" data-bs-target="#addDocumentModal">
-                <i class="bi bi-plus-circle"></i> Add Document
-            </button>
-            @include('contents.master.document-review.partials.modal-add2')
         </div>
+        <div class="pt-2 pb-6">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Document Review Master</h1>
+                <p style="font-size: 0.9rem;">
+                    Manage document reviews. Use the "Add Document Review" button to create new entries and the actions
+                    column to edit or delete existing records.
+                </p>
+            </div>
+        </div>
+        {{-- Add Document Button --}}
+        <div class="flex justify-end mb-4">
+            <button class="items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
+                data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                <i class="bi bi-plus-circle me-2"></i> Add Document
+            </button>
+        </div>
+        @include('contents.master.document-review.partials.modal-add2')
 
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+        <div class="overflow-hidden">
             {{-- Tabs + Search + Filter --}}
-            <div class="flex items-center px-3 py-2">
+            <div class="flex items-center px-4">
                 {{-- Tabs (left) --}}
-                <nav role="tablist" aria-label="Plant tabs" class="flex items-center flex-1 overflow-auto">
+                <nav role="tablist" aria-label="Plant tabs" class="flex items-center flex-1 -mb-4 overflow-auto mt-6">
                     @foreach ($groupedByPlant as $plant => $documents)
                         @php
                             $slug = \Illuminate\Support\Str::slug($plant);
@@ -43,9 +52,9 @@
                             aria-controls="tableContainer" :aria-selected="activeTab === '{{ $slug }}'"
                             :class="activeTab === '{{ $slug }}'
                                 ?
-                                'bg-gradient-to-b from-blue-200 to-white fw-semibold text-md shadow-sm transition-shadow duration-200' :
-                                'text-gray-600 hover:shadow-lg hover:border-x hover:border-t hover:border-gray-100 transition-shadow duration-200'"
-                            class="flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1">
+                                'bg-gradient-to-b from-blue-200 to-white fw-semibold text-md text-gray-700 shadow-sm transition-shadow duration-200' :
+                                'text-white hover:text-gray-700 transition-shadow duration-200'"
+                            class="flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1">
                             <span class="truncate max-w-[10rem]">{{ ucwords(strtolower($plant)) }}</span>
                             <span
                                 class="inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-100 text-blue-700">
@@ -56,26 +65,26 @@
                 </nav>
 
                 {{-- Search + Filter (right) --}}
-                <div class="flex items-center gap-2 ml-auto mt-2">
+                <div class="flex items-center gap-2 ml-auto mt-2 pt-2">
                     {{-- Search Bar --}}
                     <form id="searchForm" method="GET" class="flex items-end w-auto">
                         <div class="relative w-96">
                             <input type="text" name="search" id="searchInput"
-                                class="peer w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 text-sm text-gray-700
-        focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm
-        placeholder-transparent"
+                                class="peer w-full rounded-xl border border-gray-200 bg-white0 px-4 py-2.5 text-sm text-gray-700
+                                    focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm
+                                    placeholder-transparent"
                                 placeholder="Type to search..." />
 
                             <label for="searchInput"
-                                class="absolute left-4 px-1 bg-white rounded text-gray-400 transition-all duration-150
-        pointer-events-none
-        -top-3 text-xs text-sky-600
-        peer-placeholder-shown:top-2.5
-        peer-placeholder-shown:text-sm
-        peer-placeholder-shown:text-gray-400
-        peer-focus:-top-3
-        peer-focus:text-xs
-        peer-focus:text-sky-600">
+                                class="absolute left-4 px-1 bg-white rounded transition-all duration-150
+                                    pointer-events-none
+                                    -top-3 text-xs text-sky-600
+                                    peer-placeholder-shown:top-2.5
+                                    peer-placeholder-shown:text-sm
+                                    peer-placeholder-shown:text-gray-400
+                                    peer-focus:-top-3
+                                    peer-focus:text-xs
+                                    peer-focus:text-sky-600">
                                 Type to search...
                             </label>
                         </div>
@@ -91,34 +100,6 @@
                     </button>
                 </div>
             </div>
-
-            <script>
-                // show/hide clear button for search input (UI-only, doesn't change logic)
-                document.addEventListener('DOMContentLoaded', function() {
-                    const searchInput = document.getElementById('searchInput');
-                    const clearBtn = document.getElementById('clearSearch');
-                    if (!searchInput || !clearBtn) return;
-
-                    function toggleClear() {
-                        if (searchInput.value && searchInput.value.trim().length) {
-                            clearBtn.classList.remove('hidden');
-                            clearBtn.setAttribute('aria-hidden', 'false');
-                        } else {
-                            clearBtn.classList.add('hidden');
-                            clearBtn.setAttribute('aria-hidden', 'true');
-                        }
-                    }
-
-                    searchInput.addEventListener('input', toggleClear);
-                    toggleClear();
-
-                    clearBtn.addEventListener('click', function() {
-                        searchInput.value = '';
-                        searchInput.dispatchEvent(new Event('keyup')); // reuse existing logic
-                        toggleClear();
-                    });
-                });
-            </script>
 
             {{-- Filter Modal --}}
             <div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
@@ -225,11 +206,16 @@
                 </div>
             </div>
 
-            <div id="tableContainer">
+            <div id="tableContainer" class="bg-white p-4 rounded-xl shadow-lg">
                 {{-- Table per Plant --}}
                 @foreach ($groupedByPlant as $plant => $documents)
                     @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
                     <div x-show="activeTab === '{{ $slug }}'" x-transition class="flex flex-col">
+                        <div class="mb-4 flex items-center justify-between">
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-800">{{ ucwords(strtolower($plant)) }}</h2>
+                            </div>
+                        </div>
                         <div
                             class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[60vh]">
                             <table class="min-w-full text-sm text-gray-700">
@@ -353,7 +339,7 @@
                         </div>
                         {{-- PAGINATION --}}
                         @if ($documents instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                            <div class="px-4 py-2 bg-gray-50 flex justify-end">
+                            <div class="px-4 py-2 flex justify-end">
                                 {{ $documents->withQueryString()->links('vendor.pagination.tailwind') }}
                             </div>
                         @endif
@@ -390,384 +376,413 @@
                 </div>
             </div>
         </div>
-    @endsection
+    </div>
+@endsection
 
-    @push('scripts')
-        <x-sweetalert-confirm />
-        <script>
-            // Simpan data filter dari controller
-            window.filterDataByPlant = @json($filterDataByPlant);
+@push('scripts')
+    <x-sweetalert-confirm />
+    <script>
+        // show/hide clear button for search input (UI-only, doesn't change logic)
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearch');
+            if (!searchInput || !clearBtn) return;
 
-            // Tab manager
-            function documentReviewTabs() {
-                return {
-                    activeTab: localStorage.getItem('activeTab') || 'body',
-                    setActiveTab(tab) {
-                        this.activeTab = tab;
-                        localStorage.setItem('activeTab', tab);
-                        updateFiltersForPlant(tab);
+            function toggleClear() {
+                if (searchInput.value && searchInput.value.trim().length) {
+                    clearBtn.classList.remove('hidden');
+                    clearBtn.setAttribute('aria-hidden', 'false');
+                } else {
+                    clearBtn.classList.add('hidden');
+                    clearBtn.setAttribute('aria-hidden', 'true');
+                }
+            }
+
+            searchInput.addEventListener('input', toggleClear);
+            toggleClear();
+
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('keyup')); // reuse existing logic
+                toggleClear();
+            });
+        });
+    </script>
+    <script>
+        // Simpan data filter dari controller
+        window.filterDataByPlant = @json($filterDataByPlant);
+
+        // Tab manager
+        function documentReviewTabs() {
+            return {
+                activeTab: localStorage.getItem('activeTab') || 'body',
+                setActiveTab(tab) {
+                    this.activeTab = tab;
+                    localStorage.setItem('activeTab', tab);
+                    updateFiltersForPlant(tab);
+                }
+            };
+        }
+        window.documentTabs = documentReviewTabs();
+
+        // Data master fallback
+        window.allPartNumbers = @json($partNumbers->map(fn($p) => ['id' => $p->id, 'label' => $p->part_number]));
+        window.allModels = @json($models->map(fn($m) => ['id' => $m->id, 'label' => $m->name]));
+        window.allProducts = @json($products->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+        window.allProcesses = @json($processes->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
+
+        function slugToPlant(slug) {
+            return {
+                "body": "Body",
+                "unit": "Unit",
+                "electric": "Electric",
+                "other-manual-entry": "Other / Manual Entry"
+            } [slug] || null;
+        }
+
+        // Update dropdown berdasarkan plant
+        function updateFiltersForPlant(slug) {
+            const plantName = slugToPlant(slug);
+            if (!plantName) return;
+
+            const data = window.filterDataByPlant[plantName] || {};
+
+            if (plantName === "Other / Manual Entry") {
+                updateTomSelect('#filterPartNumber', window.allPartNumbers);
+                updateTomSelect('#filterModel', window.allModels);
+                updateTomSelect('#filterProduct', window.allProducts);
+                updateTomSelect('#filterProcess', window.allProcesses);
+                return;
+            }
+
+            updateTomSelect('#filterPartNumber', data.part_numbers || window.allPartNumbers);
+            updateTomSelect('#filterModel', data.models || window.allModels);
+            updateTomSelect('#filterProduct', data.products || window.allProducts);
+            updateTomSelect('#filterProcess', data.processes || window.allProcesses);
+        }
+
+        // Helper TomSelect
+        function updateTomSelect(selector, items) {
+            const el = document.querySelector(selector);
+            if (!el) return;
+            if (el.tomselect) el.tomselect.destroy();
+
+            el.innerHTML = '<option value="">All</option>';
+
+            items.forEach(i => {
+                const option = document.createElement('option');
+                option.value = i.id;
+
+                // Jika field process, ubah label menjadi Title Case
+                if (selector === '#filterProcess') {
+                    option.textContent = i.label.split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                } else {
+                    option.textContent = i.label;
+                }
+
+                el.appendChild(option);
+            });
+
+            new TomSelect(selector, {
+                maxItems: 1,
+                placeholder: "Select"
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi TomSelect
+            const tsDocumentName = new TomSelect("#filterDocumentName", {
+                maxItems: 1,
+                placeholder: "Select Document Name"
+            });
+            const tsPartNumber = new TomSelect("#filterPartNumber", {
+                maxItems: 1,
+                placeholder: "Select Part Number"
+            });
+            const tsModel = new TomSelect("#filterModel", {
+                maxItems: 1,
+                placeholder: "Select Model"
+            });
+            const tsProduct = new TomSelect("#filterProduct", {
+                maxItems: 1,
+                placeholder: "Select Product"
+            });
+            const tsProcess = new TomSelect("#filterProcess", {
+                maxItems: 1,
+                placeholder: "Select Process"
+            });
+            // Cascade filter: PN → Model/Product/Process
+            function cascadeFromPartNumber(value) {
+                const activeTab = window.documentTabs.activeTab;
+                const plantName = slugToPlant(activeTab);
+                const plantData = window.filterDataByPlant[plantName];
+                if (!plantData) return;
+
+                const selectedPN = plantData.part_numbers.find(pn => pn.id == value);
+
+                if (selectedPN) {
+                    updateTomSelect('#filterModel', selectedPN.models.length ? selectedPN.models : plantData
+                        .models);
+                    updateTomSelect('#filterProduct', selectedPN.products.length ? selectedPN.products : plantData
+                        .products);
+                    updateTomSelect('#filterProcess', selectedPN.processes.length ? selectedPN.processes : plantData
+                        .processes);
+                } else {
+                    updateTomSelect('#filterModel', plantData.models);
+                    updateTomSelect('#filterProduct', plantData.products);
+                    updateTomSelect('#filterProcess', plantData.processes);
+                }
+            }
+
+            tsPartNumber.on('change', cascadeFromPartNumber);
+            // AJAX Live Search & Pagination
+            const tableContainer = document.getElementById("tableContainer");
+            const searchInput = document.getElementById("searchInput");
+            const clearBtn = document.getElementById("clearSearch");
+            let timer;
+            const delay = 300;
+
+            function fetchData(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return res.text();
+                    })
+                    .then(html => {
+                        const dom = new DOMParser().parseFromString(html, "text/html");
+                        tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
+
+                        bindPagination();
+                        rebindListeners();
+                    });
+            }
+
+            searchInput.addEventListener("keyup", function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    const q = searchInput.value;
+                    const url =
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
+                    fetchData(url);
+                }, delay);
+            });
+
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    fetchData(
+                        `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(searchInput.value)}`
+                    );
+                }
+            });
+
+            clearBtn?.addEventListener("click", function() {
+                searchInput.value = "";
+                fetchData(`{{ route('master.document-review.index2') }}`);
+            });
+
+            function bindPagination() {
+                document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
+                    a.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        fetchData(this.href);
+                    });
+                });
+            }
+            // Rebind listeners after AJAX
+            function rebindListeners() {
+                // Feather icons
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+
+                // File view buttons (single file)
+                document.querySelectorAll('.view-file-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const fileViewer = document.getElementById('fileViewer');
+                        fileViewer.src = this.dataset.file;
+                        new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                    });
+                });
+
+                // Dropdown toggle for multiple files
+                document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const id = this.id.replace('viewFilesBtn-', '');
+                        const dropdown = document.getElementById('viewFilesDropdown-' + id);
+                        if (dropdown) dropdown.classList.toggle('hidden');
+                    });
+                });
+
+                // Delete confirmation
+                document.querySelectorAll('.delete-form').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "This will permanently delete the document!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Yes, delete it!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+                document.querySelectorAll('#tableContainer button:not(.skip-style)').forEach(btn => {
+                    btn.classList.add('inline-flex', 'items-center', 'justify-center');
+                    btn.style.minWidth = "2.5rem"; // hanya untuk tombol tertentu
+                });
+            }
+
+            // Clear filters modal
+            document.getElementById('clearFilterModal').addEventListener('click', function() {
+                tsDocumentName.clear();
+                tsPartNumber.clear();
+                tsModel.clear();
+                tsProduct.clear();
+                tsProcess.clear();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = '';
+                document.getElementById('filterFormModal').submit();
+            });
+            // Inisialisasi dropdown sesuai tab aktif
+            updateFiltersForPlant(window.documentTabs.activeTab);
+
+            // Delegated click handler: toggle dropdowns and open file viewer
+            document.addEventListener('click', function(e) {
+                // --- Toggle file dropdown ---
+                const btn = e.target.closest('.toggle-files-dropdown');
+                if (btn) {
+                    const id = btn.id.replace('viewFilesBtn-', '');
+                    const target = document.getElementById('viewFilesDropdown-' + id);
+
+                    // Close other dropdowns (restore if moved)
+                    document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
+                        if (d === target) return;
+                        if (d.dataset.moved === '1' && d._origParent) {
+                            d.style.position = '';
+                            d.style.left = '';
+                            d.style.top = '';
+                            d.classList.remove('dropdown-fixed');
+                            d.dataset.moved = '0';
+                            d._origParent.insertBefore(d, d._nextSibling);
+                        } else {
+                            d.classList.add('hidden');
+                        }
+                    });
+
+                    if (!target) return;
+
+                    const isHidden = target.classList.contains('hidden');
+
+                    if (isHidden) {
+                        // Move dropdown to body to escape overflow clipping and position it
+                        const rect = btn.getBoundingClientRect();
+                        target._origParent = target.parentNode;
+                        target._nextSibling = target.nextSibling;
+                        document.body.appendChild(target);
+                        target.style.position = 'fixed';
+                        target.style.left = (rect.left + window.scrollX) + 'px';
+                        target.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+                        target.classList.remove('hidden');
+                        target.classList.add('dropdown-fixed');
+                        target.dataset.moved = '1';
+                    } else {
+                        // Close and restore
+                        if (target.dataset.moved === '1' && target._origParent) {
+                            target.style.position = '';
+                            target.style.left = '';
+                            target.style.top = '';
+                            target.classList.remove('dropdown-fixed');
+                            target.dataset.moved = '0';
+                            target._origParent.insertBefore(target, target._nextSibling);
+                        } else {
+                            target.classList.add('hidden');
+                        }
                     }
-                };
-            }
-            window.documentTabs = documentReviewTabs();
 
-            // Data master fallback
-            window.allPartNumbers = @json($partNumbers->map(fn($p) => ['id' => $p->id, 'label' => $p->part_number]));
-            window.allModels = @json($models->map(fn($m) => ['id' => $m->id, 'label' => $m->name]));
-            window.allProducts = @json($products->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
-            window.allProcesses = @json($processes->map(fn($p) => ['id' => $p->id, 'label' => $p->name]));
-
-            function slugToPlant(slug) {
-                return {
-                    "body": "Body",
-                    "unit": "Unit",
-                    "electric": "Electric",
-                    "other-manual-entry": "Other / Manual Entry"
-                } [slug] || null;
-            }
-
-            // Update dropdown berdasarkan plant
-            function updateFiltersForPlant(slug) {
-                const plantName = slugToPlant(slug);
-                if (!plantName) return;
-
-                const data = window.filterDataByPlant[plantName] || {};
-
-                if (plantName === "Other / Manual Entry") {
-                    updateTomSelect('#filterPartNumber', window.allPartNumbers);
-                    updateTomSelect('#filterModel', window.allModels);
-                    updateTomSelect('#filterProduct', window.allProducts);
-                    updateTomSelect('#filterProcess', window.allProcesses);
                     return;
                 }
 
-                updateTomSelect('#filterPartNumber', data.part_numbers || window.allPartNumbers);
-                updateTomSelect('#filterModel', data.models || window.allModels);
-                updateTomSelect('#filterProduct', data.products || window.allProducts);
-                updateTomSelect('#filterProcess', data.processes || window.allProcesses);
-            }
-
-            // Helper TomSelect
-            function updateTomSelect(selector, items) {
-                const el = document.querySelector(selector);
-                if (!el) return;
-                if (el.tomselect) el.tomselect.destroy();
-
-                el.innerHTML = '<option value="">All</option>';
-
-                items.forEach(i => {
-                    const option = document.createElement('option');
-                    option.value = i.id;
-
-                    // Jika field process, ubah label menjadi Title Case
-                    if (selector === '#filterProcess') {
-                        option.textContent = i.label.split(' ')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                            .join(' ');
-                    } else {
-                        option.textContent = i.label;
-                    }
-
-                    el.appendChild(option);
-                });
-
-                new TomSelect(selector, {
-                    maxItems: 1,
-                    placeholder: "Select"
-                });
-            }
-            document.addEventListener('DOMContentLoaded', function() {
-                // Inisialisasi TomSelect
-                const tsDocumentName = new TomSelect("#filterDocumentName", {
-                    maxItems: 1,
-                    placeholder: "Select Document Name"
-                });
-                const tsPartNumber = new TomSelect("#filterPartNumber", {
-                    maxItems: 1,
-                    placeholder: "Select Part Number"
-                });
-                const tsModel = new TomSelect("#filterModel", {
-                    maxItems: 1,
-                    placeholder: "Select Model"
-                });
-                const tsProduct = new TomSelect("#filterProduct", {
-                    maxItems: 1,
-                    placeholder: "Select Product"
-                });
-                const tsProcess = new TomSelect("#filterProcess", {
-                    maxItems: 1,
-                    placeholder: "Select Process"
-                });
-                // Cascade filter: PN → Model/Product/Process
-                function cascadeFromPartNumber(value) {
-                    const activeTab = window.documentTabs.activeTab;
-                    const plantName = slugToPlant(activeTab);
-                    const plantData = window.filterDataByPlant[plantName];
-                    if (!plantData) return;
-
-                    const selectedPN = plantData.part_numbers.find(pn => pn.id == value);
-
-                    if (selectedPN) {
-                        updateTomSelect('#filterModel', selectedPN.models.length ? selectedPN.models : plantData
-                            .models);
-                        updateTomSelect('#filterProduct', selectedPN.products.length ? selectedPN.products : plantData
-                            .products);
-                        updateTomSelect('#filterProcess', selectedPN.processes.length ? selectedPN.processes : plantData
-                            .processes);
-                    } else {
-                        updateTomSelect('#filterModel', plantData.models);
-                        updateTomSelect('#filterProduct', plantData.products);
-                        updateTomSelect('#filterProcess', plantData.processes);
-                    }
-                }
-
-                tsPartNumber.on('change', cascadeFromPartNumber);
-                // AJAX Live Search & Pagination
-                const tableContainer = document.getElementById("tableContainer");
-                const searchInput = document.getElementById("searchInput");
-                const clearBtn = document.getElementById("clearSearch");
-                let timer;
-                const delay = 300;
-
-                function fetchData(url) {
-                    fetch(url, {
-                            headers: {
-                                "X-Requested-With": "XMLHttpRequest"
-                            }
-                        })
-                        .then(res => {
-                            if (!res.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return res.text();
-                        })
-                        .then(html => {
-                            const dom = new DOMParser().parseFromString(html, "text/html");
-                            tableContainer.innerHTML = dom.querySelector("#tableContainer").innerHTML;
-
-                            bindPagination();
-                            rebindListeners();
-                        });
-                }
-
-                searchInput.addEventListener("keyup", function() {
-                    clearTimeout(timer);
-                    timer = setTimeout(() => {
-                        const q = searchInput.value;
-                        const url =
-                            `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(q)}`;
-                        fetchData(url);
-                    }, delay);
-                });
-
-                searchInput.addEventListener("keydown", function(e) {
-                    if (e.key === "Enter") {
-                        e.preventDefault();
-                        fetchData(
-                            `{{ route('master.document-review.index2') }}?search=${encodeURIComponent(searchInput.value)}`
-                        );
-                    }
-                });
-
-                clearBtn?.addEventListener("click", function() {
-                    searchInput.value = "";
-                    fetchData(`{{ route('master.document-review.index2') }}`);
-                });
-
-                function bindPagination() {
-                    document.querySelectorAll("#tableContainer .pagination a").forEach(a => {
-                        a.addEventListener("click", function(e) {
-                            e.preventDefault();
-                            fetchData(this.href);
-                        });
-                    });
-                }
-                // Rebind listeners after AJAX
-                function rebindListeners() {
-                    // Feather icons
-                    if (typeof feather !== 'undefined') {
-                        feather.replace();
-                    }
-
-                    // File view buttons (single file)
-                    document.querySelectorAll('.view-file-btn').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const fileViewer = document.getElementById('fileViewer');
-                            fileViewer.src = this.dataset.file;
-                            new bootstrap.Modal(document.getElementById('viewFileModal')).show();
-                        });
-                    });
-
-                    // Dropdown toggle for multiple files
-                    document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
-                        btn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            const id = this.id.replace('viewFilesBtn-', '');
-                            const dropdown = document.getElementById('viewFilesDropdown-' + id);
-                            if (dropdown) dropdown.classList.toggle('hidden');
-                        });
-                    });
-
-                    // Delete confirmation
-                    document.querySelectorAll('.delete-form').forEach(form => {
-                        form.addEventListener('submit', function(e) {
-                            e.preventDefault();
-                            Swal.fire({
-                                title: 'Are you sure?',
-                                text: "This will permanently delete the document!",
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonColor: '#d33',
-                                cancelButtonColor: '#3085d6',
-                                confirmButtonText: 'Yes, delete it!'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    form.submit();
-                                }
-                            });
-                        });
-                    });
-                    document.querySelectorAll('#tableContainer button:not(.skip-style)').forEach(btn => {
-                        btn.classList.add('inline-flex', 'items-center', 'justify-center');
-                        btn.style.minWidth = "2.5rem"; // hanya untuk tombol tertentu
-                    });
-                }
-
-                // Clear filters modal
-                document.getElementById('clearFilterModal').addEventListener('click', function() {
-                    tsDocumentName.clear();
-                    tsPartNumber.clear();
-                    tsModel.clear();
-                    tsProduct.clear();
-                    tsProcess.clear();
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) searchInput.value = '';
-                    document.getElementById('filterFormModal').submit();
-                });
-                // Inisialisasi dropdown sesuai tab aktif
-                updateFiltersForPlant(window.documentTabs.activeTab);
-
-                // Delegated click handler: toggle dropdowns and open file viewer
-                document.addEventListener('click', function(e) {
-                    // --- Toggle file dropdown ---
-                    const btn = e.target.closest('.toggle-files-dropdown');
-                    if (btn) {
-                        const id = btn.id.replace('viewFilesBtn-', '');
-                        const target = document.getElementById('viewFilesDropdown-' + id);
-
-                        // Close other dropdowns (restore if moved)
-                        document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
-                            if (d === target) return;
-                            if (d.dataset.moved === '1' && d._origParent) {
-                                d.style.position = '';
-                                d.style.left = '';
-                                d.style.top = '';
-                                d.classList.remove('dropdown-fixed');
-                                d.dataset.moved = '0';
-                                d._origParent.insertBefore(d, d._nextSibling);
-                            } else {
-                                d.classList.add('hidden');
-                            }
-                        });
-
-                        if (!target) return;
-
-                        const isHidden = target.classList.contains('hidden');
-
-                        if (isHidden) {
-                            // Move dropdown to body to escape overflow clipping and position it
-                            const rect = btn.getBoundingClientRect();
-                            target._origParent = target.parentNode;
-                            target._nextSibling = target.nextSibling;
-                            document.body.appendChild(target);
-                            target.style.position = 'fixed';
-                            target.style.left = (rect.left + window.scrollX) + 'px';
-                            target.style.top = (rect.bottom + window.scrollY + 8) + 'px';
-                            target.classList.remove('hidden');
-                            target.classList.add('dropdown-fixed');
-                            target.dataset.moved = '1';
+                // --- Click on a file button (view) ---
+                const fileBtn = e.target.closest('.view-file-btn');
+                if (fileBtn) {
+                    // Close and restore any open dropdowns
+                    document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
+                        if (d.dataset.moved === '1' && d._origParent) {
+                            d.style.position = '';
+                            d.style.left = '';
+                            d.style.top = '';
+                            d.classList.remove('dropdown-fixed');
+                            d.dataset.moved = '0';
+                            d._origParent.insertBefore(d, d._nextSibling);
                         } else {
-                            // Close and restore
-                            if (target.dataset.moved === '1' && target._origParent) {
-                                target.style.position = '';
-                                target.style.left = '';
-                                target.style.top = '';
-                                target.classList.remove('dropdown-fixed');
-                                target.dataset.moved = '0';
-                                target._origParent.insertBefore(target, target._nextSibling);
-                            } else {
-                                target.classList.add('hidden');
-                            }
+                            d.classList.add('hidden');
                         }
+                    });
 
-                        return;
-                    }
+                    // Remove any leftover backdrops
+                    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
 
-                    // --- Click on a file button (view) ---
-                    const fileBtn = e.target.closest('.view-file-btn');
-                    if (fileBtn) {
-                        // Close and restore any open dropdowns
-                        document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
-                            if (d.dataset.moved === '1' && d._origParent) {
-                                d.style.position = '';
-                                d.style.left = '';
-                                d.style.top = '';
-                                d.classList.remove('dropdown-fixed');
-                                d.dataset.moved = '0';
-                                d._origParent.insertBefore(d, d._nextSibling);
-                            } else {
-                                d.classList.add('hidden');
-                            }
-                        });
+                    const viewer = document.getElementById('fileViewer');
+                    viewer.src = fileBtn.dataset.file;
 
-                        // Remove any leftover backdrops
-                        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById(
+                        'viewFileModal'));
+                    modal.show();
+                    return;
+                }
 
-                        const viewer = document.getElementById('fileViewer');
-                        viewer.src = fileBtn.dataset.file;
-
-                        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('viewFileModal'));
-                        modal.show();
-                        return;
-                    }
-
-                    // --- Click outside any dropdown: close all ---
-                    if (!e.target.closest('[id^="viewFilesDropdown-"]')) {
-                        document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
-                            if (d.dataset.moved === '1' && d._origParent) {
-                                d.style.position = '';
-                                d.style.left = '';
-                                d.style.top = '';
-                                d.classList.remove('dropdown-fixed');
-                                d.dataset.moved = '0';
-                                d._origParent.insertBefore(d, d._nextSibling);
-                            } else {
-                                d.classList.add('hidden');
-                            }
-                        });
-                    }
-                });
-
+                // --- Click outside any dropdown: close all ---
+                if (!e.target.closest('[id^="viewFilesDropdown-"]')) {
+                    document.querySelectorAll('[id^="viewFilesDropdown-"]').forEach(d => {
+                        if (d.dataset.moved === '1' && d._origParent) {
+                            d.style.position = '';
+                            d.style.left = '';
+                            d.style.top = '';
+                            d.classList.remove('dropdown-fixed');
+                            d.dataset.moved = '0';
+                            d._origParent.insertBefore(d, d._nextSibling);
+                        } else {
+                            d.classList.add('hidden');
+                        }
+                    });
+                }
             });
-        </script>
-    @endpush
 
-    <style>
-        /* --- Dropdown fix style --- */
-        .dropdown-fixed {
-            position: fixed !important;
-            z-index: 999999 !important;
-            background-color: #ffffff !important;
-            /* warna putih solid */
-            border: 1px solid rgba(0, 0, 0, 0.1) !important;
-            border-radius: 8px !important;
-            box-shadow: 0 6px 16px rgba(233, 217, 217, 0.2);
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
+        });
+    </script>
+@endpush
 
-        /* Tambahan: untuk isi dropdown agar tidak transparan juga */
-        .dropdown-fixed .py-1 {
-            background-color: #fff;
-        }
-    </style>
+<style>
+    /* --- Dropdown fix style --- */
+    .dropdown-fixed {
+        position: fixed !important;
+        z-index: 999999 !important;
+        background-color: #ffffff !important;
+        /* warna putih solid */
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 6px 16px rgba(233, 217, 217, 0.2);
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* Tambahan: untuk isi dropdown agar tidak transparan juga */
+    .dropdown-fixed .py-1 {
+        background-color: #fff;
+    }
+</style>

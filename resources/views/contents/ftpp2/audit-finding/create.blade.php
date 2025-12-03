@@ -33,8 +33,6 @@
             </ol>
         </nav>
 
-
-
         {{-- Show create-audit-finding for: super admin, admin, auditor --}}
         @if (in_array($role, ['super admin', 'admin', 'auditor']))
             @include('contents.ftpp2.audit-finding.partials.create-audit-finding')

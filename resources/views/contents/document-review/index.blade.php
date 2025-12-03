@@ -4,7 +4,15 @@
 
 @section('content')
     {{-- Main Container: Modern background and clean padding --}}
-    <div class="p-4">
+    <div class="p-6 space-y-6">
+        <div class="py-6 mt-4 text-white">
+            <div class="mb-4 text-white">
+                <h1 class="fw-bold ">Document Review</h1>
+                <p style="font-size: 0.9rem;">
+                    Review and manage documents across different plants. Select a plant tab to view its document hierarchy.
+                </p>
+            </div>
+        </div>
 
         {{-- Flash Message --}}
         <x-flash-message />
@@ -23,11 +31,10 @@
         </nav>
 
         {{-- Plant Tabs Container --}}
-        <div class="bg-white rounded-lg shadow-lg overflow-x-auto">
+        <div class="">
             {{-- Tabs wrapper: subtle bg and rounded top to visually separate from content --}}
-            <div class="inline-flex items-center space-x-2 pt-4">
-
-                <ul class="flex space-x-1" role="tablist" aria-label="Plants">
+            <div class="inline-flex items-center space-x-2 pt-4 ">
+                <ul class="flex -mb-px" role="tablist" aria-label="Plants">
                     @php $lastTab = old('last_selected_plant') ?? null; @endphp
                     @foreach ($groupedByPlant as $plant => $documentsByCode)
                         @php
@@ -39,9 +46,10 @@
                                 aria-controls="tab-content-{{ $slug }}"
                                 aria-selected="{{ $isActive ? 'true' : 'false' }}" title="{{ ucfirst($plant) }}"
                                 class="nav-link relative px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1
-                        {{ $isActive
-                            ? 'bg-gradient-to-b from-blue-200 to-white text-blue-700 -mb-px font-bold'
-                            : 'text-gray-600 hover:text-blue-700 hover:border-t hover:border-gray-200' }}"
+                {{ $isActive
+                    ? 'bg-gradient-to-b from-blue-200 to-white text-gray-700 -mb-px font-bold'
+                    : 'text-white hover:text-gray-700 hover:border-t hover:border-gray-200' }}"
+
                                 data-bs-toggle="tab" data-bs-target="#tab-content-{{ $slug }}">
 
                                 {{-- Plant name: truncate to avoid overflow on small screens --}}
@@ -52,7 +60,7 @@
                                 {{-- Count badge: kept as span.ml-2 for JS compatibility --}}
                                 <span
                                     class="ml-2 inline-flex items-center justify-center text-xs font-semibold px-2 py-0.5 rounded-full
-                        {{ $isActive ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
+                {{ $isActive ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
                                     ({{ $documentsByCode->count() }})
                                 </span>
 
@@ -66,7 +74,7 @@
 
             {{-- Tab Content Container --}}
             <div
-                class="tab-content m-4 bg-white shadow border border-gray-100 rounded-lg transition-all duration-300 min-h-[10rem]">
+                class="tab-content bg-white shadow rounded-lg transition-all duration-300 min-h-[10rem] p-4">
                 @foreach ($groupedByPlant as $plant => $documentsByCode)
                     @php
                         $slug = \Illuminate\Support\Str::slug($plant);
@@ -77,7 +85,7 @@
                             ->filter(fn($doc) => $documentsByCode->has($doc->code));
                     @endphp
                     <div id="tab-content-{{ $slug }}" role="tabpanel" aria-labelledby="tab-{{ $slug }}"
-                        class="tab-pane fade {{ $isActive ? 'show active' : '' }} mt-4">
+                        class="tab-pane fade {{ $isActive ? 'show active' : '' }}">
                         <ul class="space-y-2">
                             @foreach ($plantRoots as $document)
                                 @include('contents.document-review.partials.tree-node', [
@@ -97,15 +105,15 @@
     <script>
         // ✅ REVISI AKTIF: Border 4 sisi (top, left, right) dan shadow-md
         const ACTIVE_TAB_CLASSES = [
-            "bg-gradient-to-b", "from-blue-200", "to-white", "text-blue-700",
+            "bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700",
             "-mb-px", "font-bold", "shadow-top"
         ];
         // ✅ REVISI NON-AKTIF: Lebih sederhana, background abu-abu, hover biru
         const INACTIVE_TAB_CLASSES = [
-            "text-gray-600", "hover:text-blue-700", "hover:border-x",
+            "text-white", "hover:text-blue-700", "hover:border-x",
             "hover:border-gray-200"
         ];
-        const ACTIVE_TEXT_COUNT_CLASSES = ["text-blue-600", "font-bold"];
+        const ACTIVE_TEXT_COUNT_CLASSES = ["text-gray-700", "font-bold"];
         const INACTIVE_TEXT_COUNT_CLASSES = ["text-gray-500", "font-semibold"];
 
 
@@ -232,8 +240,7 @@
     .nav-link[aria-selected="true"] {
         background-image: linear-gradient(to bottom, #bfdbfe 0%, #ffffff 100%);
         background-repeat: no-repeat;
-        color: #1d4ed8;
-        /* blue-700 */
+        color: #374151; /* gray-700 */
         font-weight: 700;
         border-left-color: #1d4ed8;
         border-right-color: #1d4ed8;
