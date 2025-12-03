@@ -99,7 +99,7 @@
                     <div class="card-body p-2">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
-                                Control Documents
+                                Document Control
                             </h6>
 
                             {{-- 🔥 Toggle Mini Premium --}}
@@ -158,7 +158,7 @@
                 <div class="card shadow-sm border-0 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
-                            Review Documents
+                            Document Review
                         </h6>
                         <canvas id="reviewDocsChart" height="180"></canvas>
                     </div>
