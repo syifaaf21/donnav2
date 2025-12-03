@@ -5,7 +5,15 @@
     $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
 @endphp
 @section('content')
-    <div class="mx-auto my-2 px-4">
+    <div class="mx-auto my-4 px-4">
+        <div class="py-8">
+            <div class="text-white">
+                <h1 class="fw-bold">
+                    Assign Auditee Action
+                </h1>
+                <p class="text-base mt-1">Please fill in the details below to assign auditee actions for the FTPP finding.</p>
+            </div>
+        </div>
         {{-- Breadcrumbs --}}
         <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
             <ol class="list-reset flex space-x-2">
@@ -21,12 +29,10 @@
                     </a>
                 </li>
                 <li>/</li>
-                <li class="text-gray-700 font-medium">Assign Auditee Action</li>
+                <li class="text-gray-700 font-bold">Assign Auditee Action</li>
             </ol>
         </nav>
-        <div class="bg-white p-6 border border-gray-200 rounded-xl shadow-lg space-y-6 mt-2">
-            <h4>Assign Auditee Action</h4>
-
+        <div class="space-y-6 mt-2">
             <div x-data="editFtppApp()" x-init="init()">
                 <form action="{{ route('ftpp.auditee-action.store', $finding->id) }}" method="POST">
                     @csrf

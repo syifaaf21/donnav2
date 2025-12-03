@@ -1,5 +1,5 @@
 <!-- CARD WRAPPER -->
-<div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
+<div @if ($readonly) class="opacity-90 pointer-events-none select-none" @endif>
     <!-- CARD WRAPPER -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg space-y-6">

@@ -1,8 +1,10 @@
 <form action="{{ route('ftpp.audit-finding.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
     <!-- CARD WRAPPER -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class=" gap-4">
         <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+            <h5 class="font-bold text-gray-700">AUDITOR / INISIATOR</h5>
+
             <!-- AUDIT TYPE -->
             <div>
                 <label class="font-semibold block">Audit Type: <span class="text-danger">*</span></label>
@@ -107,8 +109,6 @@
 
         <div class="space-y-6">
             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-                <h5 class="font-semibold text-gray-700">AUDITOR / INISIATOR</h5>
-
                 <!-- FINDING -->
                 <div>
                     <label class="font-semibold">Finding / Issue: <span class="text-danger">*</span></label>
@@ -192,10 +192,9 @@
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0">
         <h2 class="font-semibold text-lg text-gray-800">Select Clause</h2>
-        <button type="button" onclick="closeSidebar()"
-            class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+        <button type="button" onclick="closeSidebar()" class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
             <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
         </button>
     </div>
@@ -234,10 +233,9 @@
     class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
-    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0">
         <h2 class="text-lg font-semibold text-gray-800">Select Plant / Department</h2>
-        <button type="button" onclick="closePlantSidebar()"
-            class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+        <button type="button" onclick="closePlantSidebar()" class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
             <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
         </button>
     </div>
@@ -292,10 +290,9 @@
     class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
-    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0">
         <h2 class="text-lg font-semibold text-gray-800">Select Auditee</h2>
-        <button type="button" onclick="closeAuditeeSidebar()"
-            class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
+        <button type="button" onclick="closeAuditeeSidebar()" class="p-1 bg-red-600 hover:bg-red-100  rounded-full">
             <i data-feather="x" class="w-4 h-4 text-white hover:text-red-600"></i>
         </button>
     </div>
@@ -304,8 +301,8 @@
         placeholder="Search or select auditee..."></select>
 
     <button type="button" onclick="saveAuditeeSelection()"
-        class="flex items-center justify-center gap-2 mt-4 bg-blue-600 text-white px-4 py-2 w-full rounded-lg
-               hover:bg-blue-700 transition shadow">
+        class="flex items-center justify-center gap-2 mt-4 px-4 py-2 w-full rounded-lg bg-gradient-to-l from-primary to-primaryDark text-white
+               hover:from-primaryDark hover:to-primary transition-colors shadow">
         <i data-feather="plus" class="w-4 h-4"></i> Add
     </button>
 </div>
@@ -978,7 +975,8 @@
                         targetEl = document.getElementById('selectedSubContainer') || form;
                     } else {
                         // coba cari elemen dengan name exact atau name[]'
-                        targetEl = form.querySelector(`[name="${baseKey}"]`) || form.querySelector(`[name="${baseKey}[]"]`) || form;
+                        targetEl = form.querySelector(`[name="${baseKey}"]`) || form.querySelector(
+                            `[name="${baseKey}[]"]`) || form;
                     }
 
                     // append all messages
@@ -997,7 +995,10 @@
                 });
 
                 if (firstErrorEl && typeof firstErrorEl.focus === 'function') {
-                    try { firstErrorEl.focus(); } catch(e){/* ignore */ }
+                    try {
+                        firstErrorEl.focus();
+                    } catch (e) {
+                        /* ignore */ }
                 }
                 return;
             }

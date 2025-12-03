@@ -20,7 +20,7 @@
                     </a>
                 </li>
                 <li>/</li>
-                <li class="text-gray-700 font-medium">FTPP</li>
+                <li class="text-gray-700 font-bold">FTPP</li>
             </ol>
         </nav>
 
@@ -209,31 +209,31 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th
-                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
                                         Registration No
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-center text-sm text-gray-700 uppercase tracking-wider">
                                         Status
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
                                         Department
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
                                         Auditor
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
                                         Auditee
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
                                         Due Date
                                     </th>
                                     <th
-                                        class="px-4 py-2.5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                        class="px-4 py-2.5 text-left text-sm text-gray-700 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
@@ -242,7 +242,7 @@
 
                                 @forelse($findings as $finding)
                                     <tr>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
                                             {{ $finding->registration_number ?? '-' }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-center text-sm">
                                             @php
