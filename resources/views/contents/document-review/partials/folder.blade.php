@@ -17,7 +17,6 @@
 
         <x-flash-message />
 
-
         <!-- Breadcrumb (left) -->
         <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
             <ol class="list-reset flex space-x-2">
