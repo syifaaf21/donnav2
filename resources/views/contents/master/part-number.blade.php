@@ -262,13 +262,13 @@
                     </div>
 
                     {{-- Footer --}}
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                    <div class="modal-footer bg-light rounded-b-xl flex items-center justify-content-between p-4">
                         <button type="button"
                             class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primaryLight text-white rounded-lg hover:bg-pr transition">
+                        <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Save Changes
                         </button>
                     </div>
@@ -394,13 +394,13 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                <div class="modal-footer bg-light rounded-b-xl flex items-center justify-content-between p-4">
                     <button type="button"
                         class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primaryLight text-white rounded-lg hover:bg-primary transition">
+                    <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         Submit
                     </button>
                 </div>

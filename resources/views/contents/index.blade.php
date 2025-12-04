@@ -89,7 +89,7 @@
                             <span>Active vs Obsolete</span>
                         </div>
                         <div class="d-flex justify-content-center">
-                            <canvas id="activeObsoletePie" style="max-width: 100%; max-height: 230px;"></canvas>
+                            <canvas id="activeObsoletePie" style="max-width: 100%; max-height: 300px;"></canvas>
                         </div>
                     </div>
                 </div>
@@ -114,7 +114,7 @@
                             </label>
                         </div>
 
-                        <canvas id="controlDocsChart" style="max-height: 250px;"></canvas>
+                        <canvas id="controlDocsChart" style="max-height: 300px;"></canvas>
                     </div>
                 </div>
             </div>
@@ -133,7 +133,6 @@
                 border-radius: 6px; display: flex; align-items: center; justify-content: center;">
                         <i data-feather="file-minus" class="text-white" style="width: 13px; height: 13px;"></i>
                     </div>
-
                     <span>Obsolete Documents</span>
                 </div>
 
@@ -154,48 +153,44 @@
         </div>
 
 
-        {{-- Review Documents Chart --}}
+        {{-- Review Documents Chart (FULL WIDTH) --}}
         <div class="row g-3 mt-2">
-            <div class="col-lg-6">
+            <div class="col-12">
                 <div class="card shadow-sm border-0 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             Document Review
                         </h6>
-                        <canvas id="reviewDocsChart" height="180"></canvas>
+                        <canvas id="reviewDocsChart" height="90"></canvas>
                     </div>
                 </div>
             </div>
+        </div>
 
-            {{-- FTPP Status Chart --}}
+        {{-- FTPP Status + Findings per Department (SEBELAH-SEBELAH) --}}
+        <div class="row g-3 mt-2 mb-3">
             <div class="col-lg-6">
                 <div class="card shadow-sm border-0 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             FTPP Status Summary
                         </h6>
-                        <canvas id="ftppStatusChart" height="180"></canvas>
+                        <canvas id="ftppStatusChart" height="150"></canvas>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Findings per Department Chart --}}
-        <div class="row g-3 mt-2 mb-3">
-            <div class="col-12">
-                <div class="card shadow-sm border-0 p-2 max-height-100" style="border-radius: 10px; ">
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0 p-2 max-height-100" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             <i class="bi bi-search me-2"></i>Findings per Department
                         </h6>
-
-                        <!-- height sebelumnya 180 → sekarang 140 -->
-                        <canvas id="findingLineChart" height="100"></canvas>
+                        <canvas id="findingLineChart" height="150"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-
 
         <button id="scrollUpBtn"
             class="fixed bottom-5 right-5 w-12 h-12 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
@@ -335,10 +330,20 @@
             // Render Control Documents Chart
             // Pastel color set
             const pastelColors = [
-                '#AEC6CF', '#FFB7B2', '#B5EAD7', '#FFDAC1', '#E2F0CB', '#C7CEEA',
-                '#F7C8E0', '#C6E2D3', '#FFE5B4', '#EAD7F5', '#F5E1A4', '#C8F3FA',
-                '#FFDFD3', '#D7E9F7', '#F2C6DE', '#D9F8C4', '#FAE3B4', '#EBD4FF',
-                '#FFF5BA', '#B8F2E6', '#FAD4C0', '#D5E8F6', '#F6D6D6', '#D3F4BE'
+                '#7BA7FF', // soft blue
+                '#6EC6E2', // muted sky blue
+                '#8BD3C7', // soft teal
+                '#A3A0FB', // soft indigo
+                '#F7C97F', // pastel warm yellow (low saturation)
+                '#FFB38A', // soft peach
+                '#B7B5F1', // muted lavender
+                '#9ED2B6', // desaturated mint green
+                '#E5C7FF', // soft purple
+                '#C0E4FF', // ice blue
+                '#B4C4FF', // steel light blue
+                '#FFD8A8', // soft orange
+                '#9FC9E9', // slightly greyish blue
+                '#C5E8D1' // pale green-blue
             ];
 
             // Render Control Documents Chart (Pastel)
@@ -419,10 +424,20 @@
 
             // Pastel Palette 2 (24 colors)
             const pastelColorsReview = [
-                '#FFD1DC', '#C1E1C1', '#F7E7CE', '#D5CFE1', '#E0BBE4', '#FFDFD3',
-                '#BEE3DB', '#F2BAC9', '#FFEDC2', '#CDE7F0', '#E3F4E0', '#FFCCE1',
-                '#D7F2BA', '#F6E2B3', '#D9D7F1', '#FAD4C0', '#D3F4FF', '#FFF3CD',
-                '#E8D4EF', '#C8E9F0', '#FFE6CC', '#D9F4E5', '#F3D2D2', '#E6F7D8'
+                '#7BA7FF', // soft blue
+                '#6EC6E2', // muted sky blue
+                '#8BD3C7', // soft teal
+                '#A3A0FB', // soft indigo
+                '#F7C97F', // pastel warm yellow (low saturation)
+                '#FFB38A', // soft peach
+                '#B7B5F1', // muted lavender
+                '#9ED2B6', // desaturated mint green
+                '#E5C7FF', // soft purple
+                '#C0E4FF', // ice blue
+                '#B4C4FF', // steel light blue
+                '#FFD8A8', // soft orange
+                '#9FC9E9', // slightly greyish blue
+                '#C5E8D1' // pale green-blue
             ];
 
             // Render Review Documents Chart

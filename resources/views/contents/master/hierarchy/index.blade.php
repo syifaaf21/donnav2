@@ -83,7 +83,6 @@
                     @endif
                 </form> --}}
 
-                {{-- Add Button on the right --}}
                 {{-- Add Button --}}
                 <button type="button" data-bs-toggle="modal" data-bs-target="#createDocumentModal"
                     class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
