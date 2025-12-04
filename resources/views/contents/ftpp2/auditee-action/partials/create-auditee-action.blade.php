@@ -183,7 +183,7 @@
                     <img src="/images/usr-approve.png" class="mx-auto h-24">
                 @else
                     {{-- Jika belum approve, tombol tetap muncul --}}
-                    <button type="button" class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
+                    <button type="button" class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
                         @click="confirmApprove()">
                         Approve
                     </button>
