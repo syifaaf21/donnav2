@@ -2,7 +2,7 @@
 <div class="flex justify-between items-center mb-4">
     <h2 class="text-lg font-semibold text-gray-700">Audit Type</h2>
     <button id="btn-add"
-        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
+        class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
         data-bs-toggle="modal" data-bs-target="#modalAddAudit">
         <i class="bi bi-plus"></i> Add Audit
     </button>

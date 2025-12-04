@@ -1,11 +1,28 @@
 @extends('layouts.app')
-@section('title', 'Master Document Review')
+@section('title', 'Document Review Master')
+@section('subtitle',
+    'Manage document reviews')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-500 font-medium">Master</li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Document Review</li>
+        </ol>
+    </nav>
+@endsection
 
 @section('content')
     <div class="mx-auto px-4 py-4" x-data="documentReviewTabs('{{ \Illuminate\Support\Str::slug(array_key_first($groupedByPlant)) }}')">
 
         {{-- Header --}}
-        <div class="flex justify-between items-center my-2 pt-4">
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
                 <div class="mb-2 text-white">
                     <h3 class="fw-bold">Document Review Master</h3>
@@ -16,8 +33,6 @@
                     </p>
                 </div>
             </div>
-
-            {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -31,7 +46,7 @@
                     <li class="text-gray-700 font-bold">Document Review</li>
                 </ol>
             </nav>
-        </div>
+        </div> --}}
 
         <div class="overflow-hidden">
             {{-- Tabs + Search + Filter --}}
@@ -210,7 +225,7 @@
                             {{-- Add Document Button --}}
                             <div class="flex items-center gap-2">
                                 <button
-                                    class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
+                                    class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
                                     data-bs-toggle="modal" data-bs-target="#addDocumentModal">
                                     <i class="bi bi-plus-circle me-2"></i> Add Document
                                 </button>
@@ -270,7 +285,8 @@
                                                 <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->index + 1 }}
                                                 </td>
-                                                <td class="px-4 py-3 border-r border-gray-200 font-medium">{{ $doc->document_number }}</td>
+                                                <td class="px-4 py-3 border-r border-gray-200 font-medium">
+                                                    {{ $doc->document_number }}</td>
                                                 <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
                                                 </td>
@@ -288,9 +304,11 @@
                                                 <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->reminder_date?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 border-r border-gray-200">{{ $doc->deadline?->format('d M Y') ?? '-' }}
+                                                <td class="px-4 py-3 border-r border-gray-200">
+                                                    {{ $doc->deadline?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
+                                                <td
+                                                    class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
                                                     {{-- FILE BUTTON AREA — fixed width --}}
                                                     {{-- <div
                                                         class="relative inline-block w-8 h-8 flex items-center justify-center">

@@ -1,16 +1,28 @@
 @extends('layouts.app')
-
 @section('title', 'Document Review')
+@section('subtitle', 'Review and manage documents across different plants. Select a plant tab to view its document
+    hierarchy.')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Document Review</li>
+        </ol>
+    </nav>
+@endsection
 
 @section('content')
     {{-- Main Container: Modern background and clean padding --}}
-    <div class="p-6 space-y-6">
+    <div class="p-6 space-y-6 bg-white rounded-lg shadow-md">
         {{-- Flash Message --}}
         <x-flash-message />
         {{-- Header --}}
-        <div class="flex justify-between items-center my-2 pt-4">
-
-            {{-- Title + Description --}}
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
                 <div class="mb-2">
                     <h3 class="fw-bold">Document Review</h3>
@@ -21,29 +33,23 @@
                 </div>
             </div>
 
-            {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
-
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
                             <i class="bi bi-house-door me-1"></i> Dashboard
                         </a>
                     </li>
-
                     <li>/</li>
-
                     <li class="text-gray-700 font-bold">Document Review</li>
-
                 </ol>
             </nav>
-
-        </div>
+        </div> --}}
 
         {{-- Plant Tabs Container --}}
-        <div class="">
+        <div>
             {{-- Tabs wrapper: subtle bg and rounded top to visually separate from content --}}
-            <div class="inline-flex items-center space-x-2 pt-4 ">
+            <div class="inline-flex items-center space-x-2">
                 <ul class="flex -mb-px" role="tablist" aria-label="Plants">
                     @php $lastTab = old('last_selected_plant') ?? null; @endphp
                     @foreach ($groupedByPlant as $plant => $documentsByCode)
@@ -58,7 +64,7 @@
                                 class="nav-link relative px-4 py-2 rounded-t-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-1
                 {{ $isActive
                     ? 'bg-gradient-to-b from-blue-200 to-white text-gray-700 -mb-px font-bold'
-                    : 'text-white hover:text-gray-700 hover:border-t hover:border-gray-200' }}"
+                    : 'text-gray-700 hover:text-gray-700 hover:border-t hover:border-gray-200' }}"
                                 data-bs-toggle="tab" data-bs-target="#tab-content-{{ $slug }}">
 
                                 {{-- Plant name: truncate to avoid overflow on small screens --}}
@@ -118,7 +124,7 @@
         ];
         // ✅ REVISI NON-AKTIF: Lebih sederhana, background abu-abu, hover biru
         const INACTIVE_TAB_CLASSES = [
-            "text-white", "hover:text-blue-700", "hover:border-x",
+            "text-gray-700", "hover:text-blue-700", "hover:border-x",
             "hover:border-gray-200"
         ];
         const ACTIVE_TEXT_COUNT_CLASSES = ["text-gray-700", "font-bold"];

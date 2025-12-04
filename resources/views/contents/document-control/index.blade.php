@@ -1,8 +1,22 @@
 @extends('layouts.app')
+@section('title', 'Document Control')
+@section('subtitle', 'Manage and organize your documents efficiently')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 pt-3 pb-1 shadow-sm w-fit" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Document Control</li>
+        </ol>
+    </nav>
+@endsection
 
 @section('content')
-        <div class="flex justify-between items-center my-2 pt-4">
-        {{-- Page Title --}}
+    {{-- <div class="flex justify-between items-center my-2 pt-4">
         <div class="mb-2 pt-8">
             <div class="p-6 text-white">
                 <h3 class="fw-bold">
@@ -11,7 +25,6 @@
                 <p class="text-base mt-1">Manage and organize your documents efficiently</p>
             </div>
         </div>
-        {{-- Breadcrumbs --}}
         <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 pt-3 pb-1 shadow-sm w-fit" aria-label="Breadcrumb">
             <ol class="list-reset flex space-x-2">
                 <li>
@@ -23,8 +36,8 @@
                 <li class="text-gray-700 font-medium">Document Control</li>
             </ol>
         </nav>
-    </div>
-    <div class="mx-auto px-6">
+    </div> --}}
+    <div class="mx-auto px-6 py-2">
 
         {{-- 🔹 Header + Breadcrumb --}}
         <div class="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
@@ -34,7 +47,7 @@
                     auth()->user()->roles->pluck('name')->contains('Super Admin'))
                 <form method="GET" id="filterForm" class="w-full lg:w-auto">
                     <div class="flex items-center space-x-4">
-                        <div class="w-full lg:w-96 rounded-lg bg-white p-3 shadow-sm">
+                        <div class="w-full lg:w-96 rounded-lg bg-white border border-gray-200 p-3 shadow-xl">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 <i class="bi bi-filter"></i> Department
                             </label>
@@ -55,7 +68,6 @@
             @endif
         </div>
 
-
         {{-- 🔹 Accordion --}}
         @php
             $countDept = count($groupedDocuments);
@@ -68,7 +80,7 @@
             ">
             @forelse ($groupedDocuments as $department => $mappings)
                 <a href="{{ route('document-control.department', ['department' => $department]) }}"
-                    class="block p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-sky-300
+                    class="block p-6 rounded-xl border border-gray-200 shadow-xl hover:shadow-2xl hover:border-sky-300
                    bg-white transition-all duration-200 group">
 
                     {{-- Header --}}

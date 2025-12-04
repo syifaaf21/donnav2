@@ -1,13 +1,24 @@
 @extends('layouts.app')
-
 @section('title', 'Archive')
+@section('subtitle', 'Manage and review archived documents efficiently')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Archive</li>
+        </ol>
+    </nav>
+@endsection
 
 @section('content')
     <div class="mx-auto px-4 py-6">
         {{-- Header --}}
-        <div class="flex justify-between items-center my-2 pt-4">
-
-            {{-- Title + Description --}}
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
                 <div class="mb-2 text-white">
                     <h3 class="fw-bold">Archive</h3>
@@ -16,8 +27,6 @@
                     </p>
                 </div>
             </div>
-
-            {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -29,8 +38,7 @@
                     <li class="text-gray-700 font-bold">Archive</li>
                 </ol>
             </nav>
-
-        </div>
+        </div> --}}
 
         <div>
             <div class="flex items-center w-full">

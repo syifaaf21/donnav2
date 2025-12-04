@@ -1,15 +1,17 @@
 @extends('layouts.app')
+@section('title', 'Dashboard Overview')
+@section('subtitle', 'A quick summary of the document statuses and activities.')
 
 @section('content')
-    <div class="px-4 py-4 mt-8">
-        <div class="mb-4 text-white">
-            <h1 class="fw-bold ">Dashboard Overview</h1>
+    <div class="px-4 mt-4">
+        {{-- <div class="mb-4 text-white">
+            <h3 class="fw-bold ">Dashboard Overview</h3>
             <p style="font-size: 0.9rem;">
                 A quick summary of the document statuses and activities.
             </p>
-        </div>
+        </div> --}}
         {{-- ===== SUMMARY CARDS ===== --}}
-        <div class="row g-4 mb-5 mt-4">
+        <div class="row g-4 mb-5">
             @php
                 $cards = [
                     [
