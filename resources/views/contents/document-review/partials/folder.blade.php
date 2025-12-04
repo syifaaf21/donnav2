@@ -1,10 +1,33 @@
 @extends('layouts.app')
 
 @section('title', "Folder $docCode - " . ucwords($plant))
+@section('subtitle',
+    'Review and manage documents across different plants. Select a plant tab to view its document
+    hierarchy.')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li>
+                <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">Document
+                    Review</a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-medium">{{ ucfirst($plant) }}</li>
+            <li>/</li>
+            <li class="text-gray-700 font-medium">{{ $docCode }}</li>
+        </ol>
+    </nav>
+@endsection
 
 @section('content')
     <div class="p-6 min-h-screen space-y-6">
-        <div class="flex justify-between items-center my-2 pt-4">
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-6 mt-4 text-white">
                 <div class="mb-4 text-white">
                     <h3 class="fw-bold ">
@@ -15,9 +38,9 @@
                         hierarchy.
                     </p>
                 </div>
-            </div>
+            </div> --}}
             <!-- Breadcrumb (left) -->
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
+            {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -35,7 +58,7 @@
                     <li class="text-gray-700 font-medium">{{ $docCode }}</li>
                 </ol>
             </nav>
-        </div>
+        </div> --}}
 
         <x-flash-message />
 
@@ -74,8 +97,8 @@
 
             <!-- Filter Button -->
             <button type="button"
-                        class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition"
-                        data-bs-toggle="modal" data-bs-target="#filterModal">
+                class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition"
+                data-bs-toggle="modal" data-bs-target="#filterModal">
                 <i data-feather="filter" class="w-5 h-5"></i>
             </button>
         </form>
@@ -668,24 +691,24 @@
                         <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
                         <div class="space-y-2">
                         ${data.files.map(file => `
-                                                                                                                                                                                                                                                                                                                                                                            <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
-                                                                                                                                                                                                                                                                                                                                                                                <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                                                                                                                                                                                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
+                                                                                                                                                                                                                                                                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                                                                                                                                                                                                                                                                                                <div class="flex gap-2">
-                                                                                                                                                                                                                                                                                                                                                                                    <a href="/storage/${file.file_path}"
-                                                                                                                                                                                                                                                                                                                                                                                       target="_blank"
-                                                                                                                                                                                                                                                                                                                                                                                       class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                                                                                                                                                                                                                                                                                                                       View
-                                                                                                                                                                                                                                                                                                                                                                                    </a>
+                                                                                                                                                                                                                                                                                                                                                                                        <div class="flex gap-2">
+                                                                                                                                                                                                                                                                                                                                                                                            <a href="/storage/${file.file_path}"
+                                                                                                                                                                                                                                                                                                                                                                                               target="_blank"
+                                                                                                                                                                                                                                                                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                                                                                                                                                                                                                                                                                                               View
+                                                                                                                                                                                                                                                                                                                                                                                            </a>
 
-                                                                                                                                                                                                                                                                                                                                                                                    <button type="button"
-                                                                                                                                                                                                                                                                                                                                                                                        class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                                                                                                                                                                                                                                                                                                        data-file-id="${file.id}">
-                                                                                                                                                                                                                                                                                                                                                                                        Replace
-                                                                                                                                                                                                                                                                                                                                                                                    </button>
-                                                                                                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                                                        `).join('')}
+                                                                                                                                                                                                                                                                                                                                                                                            <button type="button"
+                                                                                                                                                                                                                                                                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                                                                                                                                                                                                                                                                                                data-file-id="${file.id}">
+                                                                                                                                                                                                                                                                                                                                                                                                Replace
+                                                                                                                                                                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                                                                `).join('')}
                         </div>
                     `;
                             })
@@ -748,10 +771,10 @@
                                 class="block w-full border border-gray-300 rounded p-1 text-sm">
 
                             ${oldFileId ? `
-                                                                                                                                                                                                                                                                                                                                                                                <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
-                                                                                                                                                                                                                                                                                                                                                                            ` : `
-                                                                                                                                                                                                                                                                                                                                                                                <input type="hidden" name="revision_file_ids[]" value="">
-                                                                                                                                                                                                                                                                                                                                                                            `}
+                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
+                                                                                                                                                                                                                                                                                                                                                                                    ` : `
+                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
+                                                                                                                                                                                                                                                                                                                                                                                    `}
 
                                     <button type="button"
                                             class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">
