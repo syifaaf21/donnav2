@@ -69,25 +69,25 @@
                     <table class="min-w-full text-sm text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
-                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody class="divide-y divide-gray-200 ">
                             @forelse ($models as $model)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 border-r border-gray-200">
                                         {{ ($models->currentPage() - 1) * $models->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-semibold">{{ $model->name }}</td>
-                                    <td class="px-4 py-3">{{ $model->plant }}</td>
-                                    <td class="px-4 py-3 flex justify-center gap-2">
+                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">{{ $model->name }}</td>
+                                    <td class="px-4 py-3 border-r border-gray-200">{{ $model->plant }}</td>
+                                    <td class="px-4 py-3 flex justify-center gap-2 border-r border-gray-200">
                                         {{-- Edit Button --}}
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editModelModal-{{ $model->id }}" data-bs-title="Edit Model"

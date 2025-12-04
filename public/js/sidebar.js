@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (logo && logo.dataset.full) {
             logo.src = logo.dataset.full;
-            logo.style.width = "150px";
+            logo.style.width = "250px";
             logo.style.margin = "0";
         }
 

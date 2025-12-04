@@ -398,6 +398,34 @@ class DocumentReviewController extends Controller
         // Update mapping
         $needReviewStatus = Status::where('name', 'Need Review')->firstOrFail();
 
+        // --- SEND NOTIFICATION TO ADMINS ---
+        $uploader = Auth::user();
+        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
+
+        if (!in_array($userRole, ['admin', 'super admin'])) {
+
+            $admins = User::whereHas(
+                'roles',
+                fn($q) =>
+                $q->whereIn('name', ['Admin', 'Super Admin'])
+            )->get();
+
+            foreach ($admins as $admin) {
+
+                $admin->notify(new DocumentActionNotification(
+                    action: 'revised',
+                    byUser: $uploader->name,
+                    documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
+                    documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
+                    url: route('document-review.showFolder', [
+                        'plant' => $this->getPlantFromMapping($mapping),
+                        'docCode' => base64_encode($mapping->document->code ?? ''),
+                    ]),
+                    departmentName: $mapping->department?->name
+                ));
+            }
+        }
+
         $mapping->update([
             'status_id' => $needReviewStatus->id,
             'notes' => $request->notes,

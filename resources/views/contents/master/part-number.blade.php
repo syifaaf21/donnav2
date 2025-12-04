@@ -36,7 +36,7 @@
                 <div class="w-full sm:w-auto flex items-center gap-2">
                     {{-- Search --}}
                     <form id="searchForm" method="GET" class="flex items-center w-full sm:w-auto">
-                        <div class="relative w-full sm:w-96 md:w-[520px]">
+                        <div class="relative w-full sm:w-96 md:w-[400px]">
                             <input type="text" name="search" id="searchInput"
                                 class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
                             focus:border-sky-400 focus:ring-2 focus:ring-sky-200 transition-all duration-200 shadow-sm"

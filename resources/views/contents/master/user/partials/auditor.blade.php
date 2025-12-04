@@ -37,27 +37,27 @@
         <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;" class="sticky top-0 z-10">
                 <tr>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse ($users as $user)
                     @if ($user->roles->pluck('name')->contains('Auditor'))
                         <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-2">
+                            <td class="px-4 py-2 border-r border-gray-200">
                                 {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
-                            <td class="px-4 py-2 text-sm font-semibold">{{ ucwords(strtolower($user->name)) }}
+                            <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">{{ ucwords(strtolower($user->name)) }}
                                 <span class="text-xs text-gray-400 block">
                                     {{ $user->departments->pluck('name')->join(', ') ?: '-' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-2 text-sm font-semibold">{{ $user->npk }}</td>
-                            <td class="px-4 py-2">{{ $user->auditType->name ?? '-' }}</td>
-                            <td class="px-4 py-2 flex gap-2">
+                            <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">{{ $user->npk }}</td>
+                            <td class="px-4 py-2 border-r border-gray-200">{{ $user->auditType->name ?? '-' }}</td>
+                            <td class="px-4 py-2 border-r border-gray-200 flex gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal" data-id="{{ $user->id }}"
                                     data-bs-title="Edit User"

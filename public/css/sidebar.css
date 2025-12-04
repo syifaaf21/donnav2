@@ -28,7 +28,8 @@
 
 /* ensure collapsed logo looks right before JS runs */
 #sidebar.w-20 #sidebarLogo {
-    width: 32px !important;
+    width: 56px !important;
+    min-width: 56px !important;
     margin: 0 auto !important;
 }
 
@@ -47,9 +48,8 @@
 /* Logo transition */
 #sidebarLogo {
     transition: all .3s ease;
-    min-width: 40px;
+    min-width: 100px;
     padding-top: 16px;
-    padding-bottom: 16px;
 }
 
 /* Dropdown toggle */

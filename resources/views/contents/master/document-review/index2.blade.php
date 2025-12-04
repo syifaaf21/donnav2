@@ -86,11 +86,10 @@
 
                     {{-- Filter Icon --}}
                     <button type="button"
-                        class="flex items-center gap-2 px-3 py-2 mb-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition shadow-md"
+                        class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition mb-3"
                         data-bs-toggle="modal" data-bs-target="#filterModal" aria-haspopup="dialog"
                         aria-controls="filterModal" title="Open filters">
-                        <i class="bi bi-funnel"></i>
-                        <span class="hidden md:inline text-sm">Filter</span>
+                        <i data-feather="filter" class="w-5 h-5"></i>
                     </button>
                 </div>
             </div>
@@ -225,34 +224,34 @@
                                 <thead class="sticky top-0 z-10"
                                     style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                     <tr>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             No
                                         </th>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Document Number</th>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Part
                                             Number</th>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Product</th>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Model
                                         </th>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Process</th>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Reminder Date</th>
-                                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Deadline</th>
-                                        <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Actions</th>
                                     </tr>
@@ -268,30 +267,30 @@
                                     @else
                                         @foreach ($documents as $index => $doc)
                                             <tr class="hover:bg-gray-50 transition-all duration-150">
-                                                <td class="px-4 py-3">
+                                                <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->index + 1 }}
                                                 </td>
-                                                <td class="px-4 py-3 font-medium">{{ $doc->document_number }}</td>
-                                                <td class="px-4 py-3">
+                                                <td class="px-4 py-3 border-r border-gray-200 font-medium">{{ $doc->document_number }}</td>
+                                                <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
                                                 </td>
 
-                                                <td class="px-4 py-3">
+                                                <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->product->pluck('name')->join(', ') ?: '-' }}
                                                 </td>
 
-                                                <td class="px-4 py-3">
+                                                <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
 
-                                                <td class="px-4 py-3 capitalize">
+                                                <td class="px-4 py-3 border-r border-gray-200 capitalize">
                                                     {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
                                                 </td>
-                                                <td class="px-4 py-3">
+                                                <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->reminder_date?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3">{{ $doc->deadline?->format('d M Y') ?? '-' }}
+                                                <td class="px-4 py-3 border-r border-gray-200">{{ $doc->deadline?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 flex space-x-2 whitespace-nowrap action-column">
+                                                <td class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
                                                     {{-- FILE BUTTON AREA — fixed width --}}
                                                     {{-- <div
                                                         class="relative inline-block w-8 h-8 flex items-center justify-center">
@@ -351,7 +350,7 @@
                         </div>
                         {{-- PAGINATION --}}
                         @if ($documents instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                            <div class="px-4 py-2 flex justify-end">
+                            <div class="px-4 py-2">
                                 {{ $documents->withQueryString()->links('vendor.pagination.tailwind') }}
                             </div>
                         @endif

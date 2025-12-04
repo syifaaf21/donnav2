@@ -32,14 +32,14 @@
                     <table class="min-w-full text-sm text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Code
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Code
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Head Klausul
+                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Head Klausul
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                     Action</th>
                             </tr>
                         </thead>
@@ -47,15 +47,15 @@
                             @foreach ($klausul->headKlausul as $i => $head)
                                 <tr class="hover:bg-gray-50 transition-all duration-150 cursor-pointer head-row"
                                     data-collapse-target="subKlausul-{{ $head->id }}">
-                                    <td class="px-4 py-3 text-sm text-gray-700">
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm text-gray-700">
                                         <div class="flex items-center gap-1">
                                             <i data-feather="chevron-right"
                                                 class="w-4 h-4 rotate-icon transition-transform"></i>{{ $i + 1 }}
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-gray-900">{{ $head->code }}</td>
-                                    <td class="px-4 py-3 text-sm font-semibold text-gray-900">{{ $head->name }}</td>
-                                    <td class="px-4 py-3 text-sm text-center">
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm text-gray-900">{{ $head->code }}</td>
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold text-gray-900">{{ $head->name }}</td>
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm text-center">
                                         <div class="flex justify-center gap-2">
                                             <button data-head-id="{{ $head->id }}"
                                                 data-head-name="{{ $head->name }}"

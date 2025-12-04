@@ -63,108 +63,100 @@
                         class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
              text-gray-400 text-sm
              {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
-                        Type to search...
-                    </label>
-                </div>
-            </form>
-        </div>
-        <div id="liveTableWrapper">
-            <!-- Table -->
-            <div class="flex-1">
-                <div class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="overflow-x-auto overflow-y-auto max-h-[520px]">
-                        <table class="min-w-full divide-y divide-gray-200 ">
-                            <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">No
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Document
-                                        Name
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Status
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Obsolete
-                                        Date
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Updated By
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Last
-                                        Update
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Notes</th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                @if ($mappings->isEmpty())
-                                    <tr colspan="12">
-                                        <td colspan="12">
-                                            <div
-                                                class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
-                                                <i class="bi bi-inbox text-4xl"></i>
-                                                <span>No Documents found</span>
-                                            </div>
-                                        </td>
+                            Type to search...
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div id="liveTableWrapper">
+                <!-- Table -->
+                <div class="flex-1">
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="overflow-x-auto overflow-y-auto max-h-[520px]">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Document
+                                            Name
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Status
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Obsolete
+                                            Date
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Updated By
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Last
+                                            Update
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Notes</th>
+                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Actions</th>
                                     </tr>
-                                @else
-                                    @foreach ($mappings as $mapping)
-                                        <tr class="hover:bg-gray-50 transition-all duration-150">
-                                            <td class="px-4 py-3 text-sm">
-                                                {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
-                                            </td>
-                                            <td class="px-4 py-2 text-sm truncate ext-sm font-semibold max-w-xs"
-                                                title="{{ $mapping->document->name }}">
-                                                {{ $mapping->document->name }}
-                                            </td>
-                                            {{-- Status badge --}}
-                                            <td class="px-4 py-2 text-sm">
-                                                @php
-                                                    $statusColor = match ($mapping->status->name) {
-                                                        'Active' => 'bg-green-100 text-green-800',
-                                                        'Need Review' => 'bg-yellow-100 text-yellow-800',
-                                                        'Rejected' => 'bg-red-100 text-red-800',
-                                                        'Obsolete' => 'bg-gray-200 text-gray-800',
-                                                        'Uncomplete' => 'bg-orange-100 text-orange-800',
-                                                        default => 'bg-blue-100 text-blue-800',
-                                                    };
-                                                @endphp
-                                                <span
-                                                    class="inline-block px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
-                                                    {{ $mapping->status->name }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 ext-sm font-semibold">
-                                                {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
-                                            </td>
-                                            <td class="px-4 py-3 text-sm truncate">
-                                                {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
-                                            </td>
-                                            <td class="px-4 py-3 text-sm">
-                                                {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
-                                            </td>
-                                            <td class="px-4 py-3 text-sm max-w-xs">
-                                                <div class="overflow-y-auto max-h-16 text-sm">
-                                                    {!! $mapping->notes ?? '-' !!}
+                                </thead>
+                                <tbody class="divide-y divide-x divide-gray-200">
+                                    @if ($mappings->isEmpty())
+                                        <tr colspan="12">
+                                            <td colspan="12">
+                                                <div
+                                                    class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
+                                                    <i class="bi bi-inbox text-4xl"></i>
+                                                    <span>No Documents found</span>
                                                 </div>
                                             </td>
-                                            {{-- Actions --}}
-                                            <td class="px-4 py-2 text-center">
-                                                <div class="flex justify-start items-center gap-2 flex-wrap">
+                                        </tr>
+                                    @else
+                                        @foreach ($mappings as $mapping)
+                                            <tr class="hover:bg-gray-50 transition-all duration-150">
+                                                <td class="px-4 py-3 text-sm border-r border-gray-200">
+                                                    {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
+                                                </td>
+                                                <td class="px-4 py-2 text-sm truncate ext-sm font-semibold max-w-xs border-r border-gray-200"
+                                                    title="{{ $mapping->document->name }}">
+                                                    {{ $mapping->document->name }}
+                                                </td>
+                                                {{-- Status badge --}}
+                                                <td class="px-4 py-2 text-sm border-r border-gray-200">
+                                                    @php
+                                                        $statusColor = match ($mapping->status->name) {
+                                                            'Active' => 'bg-green-100 text-green-800',
+                                                            'Need Review' => 'bg-yellow-100 text-yellow-800',
+                                                            'Rejected' => 'bg-red-100 text-red-800',
+                                                            'Obsolete' => 'bg-gray-200 text-gray-800',
+                                                            'Uncomplete' => 'bg-orange-100 text-orange-800',
+                                                            default => 'bg-blue-100 text-blue-800',
+                                                        };
+                                                    @endphp
+                                                    <span
+                                                        class="inline-block px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
+                                                        {{ $mapping->status->name }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 ext-sm font-semibold border-r border-gray-200">
+                                                    {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
+                                                </td>
+                                                <td class="px-4 py-3 text-sm truncate border-r border-gray-200">
+                                                    {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
+                                                </td>
+                                                <td class="px-4 py-3 text-sm border-r border-gray-200">
+                                                    {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
+                                                </td>
+                                                <td class="px-4 py-3 text-sm max-w-xs border-r border-gray-200">
+                                                    <div class="overflow-y-auto max-h-16 text-sm">
+                                                        {!! $mapping->notes ?? '-' !!}
+                                                    </div>
+                                                </td>
+                                                {{-- Actions --}}
+                                                <td class="px-4 py-2 text-center">
+                                                    <div class="flex justify-start items-center gap-2 flex-wrap">
 
                                                     {{-- VIEW FILES --}}
                                                     @php

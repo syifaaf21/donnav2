@@ -218,39 +218,39 @@
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
                                     </th>
-                                    <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    <th
+                                        class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Status
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    <th
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Department
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    <th
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditor
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    <th
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditee
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    <th
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Due Date
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    <th
+                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-x divide-gray-200">
 
                                 @forelse($findings as $finding)
                                     <tr>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 border-r border-gray-200">
                                             {{ $finding->registration_number ?? '-' }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center text-sm">
+                                        <td class="px-4 py-3 whitespace-nowrap text-center text-sm border-r border-gray-200">
                                             @php
                                                 $statusColors = [
                                                     'need assign' => 'bg-red-100 text-red-600',
@@ -265,21 +265,21 @@
                                             @endphp
                                             <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ optional($finding->department)->name ?? '-' }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ optional($finding->auditor)->name ?? '-' }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 {{ $finding->auditee->pluck('name')->join(', ') }}
                                             @else
                                                 -
                                             @endif
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
                                         </td>
-                                        <td class="flex px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="flex px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
                                                 <!-- BUTTON -->
                                                 <button type="button"

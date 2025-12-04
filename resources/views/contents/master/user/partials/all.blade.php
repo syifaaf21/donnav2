@@ -38,28 +38,28 @@
         <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;" class="sticky top-0 z-10">
                 <tr>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                         style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                         style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                         style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                         style="color: #1e2b50; letter-spacing: 0.5px;">Email</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                         style="color: #1e2b50; letter-spacing: 0.5px;">Role</th>
-                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider"
+                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                         style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse ($users as $user)
                     <tr class="border-b hover:bg-gray-50 transition-colors">
-                        <td class="px-4 py-3 align-top whitespace-nowrap text-gray-700">
+                        <td class="px-4 py-3 border-r border-gray-200 align-top whitespace-nowrap text-gray-700">
                             {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
                         </td>
 
-                        <td class="px-4 py-3 align-top">
+                        <td class="px-4 py-3 border-r border-gray-200 align-top">
                             <div class="truncate max-w-[14rem] text-sm font-semibold" title="{{ $user->name }}">
                                 {{ ucwords(strtolower($user->name)) }}
                                 @if ($user->departments->isNotEmpty())
@@ -70,17 +70,17 @@
                             </div>
                         </td>
 
-                        <td class="px-4 py-3 align-top whitespace-nowrap text-sm font-semibold">
+                        <td class="px-4 py-3 border-r border-gray-200 align-top whitespace-nowrap text-sm font-semibold">
                             <div class="text-sm text-gray-600" title="{{ $user->npk }}">{{ $user->npk }}</div>
                         </td>
 
-                        <td class="px-4 py-3 align-top">
+                        <td class="px-4 py-3 border-r border-gray-200 align-top">
                             <div class="truncate max-w-[18rem] text-sm text-gray-600" title="{{ $user->email }}">
                                 {{ $user->email }}
                             </div>
                         </td>
 
-                        <td class="px-4 py-3 align-top">
+                        <td class="px-4 py-3 border-r border-gray-200 align-top">
                             @if ($user->roles->isNotEmpty())
                                 <div class="flex flex-wrap gap-1">
                                     @foreach ($user->roles as $role)
@@ -110,7 +110,7 @@
                             @endif
                         </td>
 
-                        {{-- <td class="px-4 py-3 align-top">
+                        {{-- <td class="px-4 py-3 border-r border-gray-200 align-top">
                             @if ($user->departments->isNotEmpty())
                                 <div class="flex flex-wrap gap-1">
                                     <span
@@ -124,7 +124,7 @@
                             @endif
                         </td> --}}
 
-                        <td class="px-4 py-3 align-top whitespace-nowrap">
+                        <td class="px-4 py-3 border-r border-gray-200 align-top whitespace-nowrap">
                             <div class="flex items-center gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button"

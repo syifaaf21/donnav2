@@ -6,7 +6,7 @@
 <tr id="{{ $rowId }}" class="{{ $parentClass }} {{ $parent_id ? 'hidden' : '' }}"
     class="hover:bg-gray-50 transition-all duration-150">
     {{-- Document Name & toggle --}}
-    <td class="px-4 py-3 text-sm font-semibold">
+    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold">
         <div class="flex items-center" style="margin-left: {{ $level * 30 }}px">
             @if ($document->children->isNotEmpty())
                 <button type="button" class="toggle-children mr-1" data-target="child-of-{{ $document->id }}">
@@ -26,10 +26,10 @@
         </div>
     </td>
 
-    <td class="px-4 py-3 text-gray-500">{{ ucwords($document->code) ?: '-' }}</td>
+    <td class="px-4 py-3 border-r border-gray-200 text-gray-500">{{ ucwords($document->code) ?: '-' }}</td>
 
     {{-- Actions --}}
-    <td class="px-4 py-3 text-center">
+    <td class="px-4 py-3 border-r border-gray-200 text-center">
         <div class="flex gap-2 justify-center">
             {{-- Edit Button --}}
             <button type="button" data-bs-toggle="modal" data-bs-target="#editDocumentModal-{{ $document->id }}"
