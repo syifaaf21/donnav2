@@ -180,8 +180,6 @@
             </div>
         </div>
 
-
-        {{-- Findings per Department Chart --}}
         {{-- Findings per Department Chart --}}
         <div class="row g-3 mt-2 mb-3">
             <div class="col-12">
@@ -343,7 +341,6 @@
                 '#FFF5BA', '#B8F2E6', '#FAD4C0', '#D5E8F6', '#F6D6D6', '#D3F4BE'
             ];
 
-
             // Render Control Documents Chart (Pastel)
             new Chart(document.getElementById('controlDocsChart').getContext('2d'), {
                 type: 'bar',
@@ -366,6 +363,13 @@
                         tooltip: {
                             enabled: true,
                             callbacks: {
+                                title: function(context) {
+                                    const index = context[0].dataIndex;
+                                    const deptId = Object.keys(departments)[index];
+
+                                    // TAMPILKAN NAMA PANJANG DEPARTMENT
+                                    return departments[deptId];
+                                },
                                 label: function(context) {
                                     const deptId = Object.keys(departments)[context.dataIndex];
                                     const mainValue = context.raw;
@@ -377,13 +381,13 @@
                                         `Need Review: ${extra.needReview}`);
                                     if (extra.uncomplete !== undefined) lines.push(
                                         `Uncomplete: ${extra.uncomplete}`);
-                                    if (extra.reject !== undefined) lines.push(
-                                        `Rejected: ${extra.reject}`);
+                                    if (extra.reject !== undefined) lines.push(`Rejected: ${extra.reject}`);
 
                                     return lines;
                                 }
                             }
                         }
+
                     },
                     scales: {
                         y: {

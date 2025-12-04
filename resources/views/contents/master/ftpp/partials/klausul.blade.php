@@ -32,14 +32,14 @@
                     <table class="min-w-full text-sm text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No
                                 </th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Code
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Code
                                 </th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Head Klausul
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Head Klausul
                                 </th>
                                 <th
-                                    class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                    class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                     Action</th>
                             </tr>
                         </thead>

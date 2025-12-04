@@ -13,10 +13,10 @@
     <table class="min-w-full text-sm text-gray-700">
         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
             <tr>
-                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
-                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Sub Audit Type</th>
-                <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Sub Audit Type</th>
+                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Action
                 </th>
             </tr>
         </thead>
@@ -24,9 +24,12 @@
             @forelse ($audits as $index => $audit)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
                     <td class="px-4 py-3 border-r border-gray-200 text-sm">
+                    <td class="px-4 py-3 border-r border-gray-200 text-sm">
                         {{ $index + 1 }}</td>
                     <td class="py-2 px-3 border-r border-gray-200 text-sm font-semibold">
+                    <td class="py-2 px-3 border-r border-gray-200 text-sm font-semibold">
                         {{ $audit->name }}</td>
+                    <td class="py-2 px-3 border-r border-gray-200 text-sm">
                     <td class="py-2 px-3 border-r border-gray-200 text-sm">
                         @if ($audit->subAudit->isNotEmpty())
                             <ul class="list-disc list-inside space-y-0.5">

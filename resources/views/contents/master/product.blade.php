@@ -1,10 +1,26 @@
 @extends('layouts.app')
 @section('title', 'Product')
-
+@section('subtitle',
+    'Manage Product records.')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-500 font-medium">Master</li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Product</li>
+        </ol>
+    </nav>
+@endsection
 @section('content')
     <div class="mx-auto px-4 py-2">
         {{-- Header --}}
-        <div class="flex justify-between items-center my-2 pt-4">
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
                 <div class="mb-2 text-white">
                     <h3 class="fw-bold">Product Master</h3>
@@ -13,10 +29,10 @@
                         column to edit or delete existing products.
                     </p>
                 </div>
-            </div>
+            </div> --}}
 
-            {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        {{-- Breadcrumbs --}}
+        {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -29,7 +45,7 @@
                     <li class="text-gray-700 font-bold">Product</li>
                 </ol>
             </nav>
-        </div>
+        </div> --}}
 
         <div class="overflow-hidden">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 my-4">
@@ -53,7 +69,7 @@
                 <div class="w-full sm:w-auto flex justify-end">
                     {{-- Add Button --}}
                     <button type="button" data-bs-toggle="modal" data-bs-target="#addProductModal"
-                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add Product</span>
                     </button>

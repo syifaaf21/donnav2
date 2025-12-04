@@ -76,29 +76,29 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                     <tr>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No
                                         </th>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Document
                                             Name
                                         </th>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Status
                                         </th>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Obsolete
                                             Date
                                         </th>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Updated By
                                         </th>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Last
                                             Update
                                         </th>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Notes</th>
-                                        <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                        <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Actions</th>
                                     </tr>
                                 </thead>
@@ -116,15 +116,15 @@
                                     @else
                                         @foreach ($mappings as $mapping)
                                             <tr class="hover:bg-gray-50 transition-all duration-150">
-                                                <td class="px-4 py-3 text-sm border-r border-gray-200">
+                                                <td class="px-4 py-3 text-xs border-r border-gray-200">
                                                     {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                                 </td>
-                                                <td class="px-4 py-2 text-sm truncate ext-sm font-semibold max-w-xs border-r border-gray-200"
+                                                <td class="px-4 py-2 text-xs font-semibold max-w-xs border-r border-gray-200"
                                                     title="{{ $mapping->document->name }}">
                                                     {{ $mapping->document->name }}
                                                 </td>
                                                 {{-- Status badge --}}
-                                                <td class="px-4 py-2 text-sm border-r border-gray-200">
+                                                <td class="px-4 py-2 text-xs border-r border-gray-200">
                                                     @php
                                                         $statusColor = match ($mapping->status->name) {
                                                             'Active' => 'bg-green-100 text-green-800',
@@ -140,17 +140,17 @@
                                                         {{ $mapping->status->name }}
                                                     </span>
                                                 </td>
-                                                <td class="px-4 py-3 ext-sm font-semibold border-r border-gray-200">
+                                                <td class="px-4 py-3 text-xs font-semibold border-r border-gray-200">
                                                     {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 text-sm truncate border-r border-gray-200">
+                                                <td class="px-4 py-3 text-xs truncate border-r border-gray-200">
                                                     {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
                                                 </td>
-                                                <td class="px-4 py-3 text-sm border-r border-gray-200">
+                                                <td class="px-4 py-3 text-xs border-r border-gray-200">
                                                     {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 text-sm max-w-xs border-r border-gray-200">
-                                                    <div class="overflow-y-auto max-h-16 text-sm">
+                                                <td class="px-4 py-3 text-xs max-w-xs border-r border-gray-200">
+                                                    <div class="overflow-y-auto max-h-16 text-xs">
                                                         {!! $mapping->notes ?? '-' !!}
                                                     </div>
                                                 </td>

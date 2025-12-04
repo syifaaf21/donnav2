@@ -37,11 +37,11 @@
         <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;" class="sticky top-0 z-10">
                 <tr>
-                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
-                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
-                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
-                    <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
