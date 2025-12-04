@@ -13,18 +13,18 @@
     <table class="min-w-full text-sm text-gray-700">
         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
             <tr>
-                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
-                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider" style="color: #1e2b50; letter-spacing: 0.5px;">Action
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Action
                 </th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
             @forelse ($findingCategories as $index => $category)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
-                    <td class="px-4 py-3 text-sm">{{ $index + 1 }}</td>
-                    <td class="px-4 py-3 text-sm font-semibold">{{ $category->name }}</td>
-                    <td class="px-4 py-3 text-sm text-center">
+                    <td class="px-4 py-3 border-r border-gray-200 text-sm">{{ $index + 1 }}</td>
+                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold">{{ $category->name }}</td>
+                    <td class="px-4 py-3 border-r border-gray-200 text-sm text-center">
                         <div class="flex justify-center gap-2">
                             <button data-id="{{ $category->id }}"
                                 class="btn-edit w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
