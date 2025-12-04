@@ -1,4 +1,4 @@
-<header id="minimalNavbar" class="fixed top-4 right-14 z-50 flex items-center px-3 py-2 bg-white/70 backdrop-blur-md border border-white rounded-3xl shadow-md">
+<header id="minimalNavbar" class="fixed top-8 right-14 z-50 flex justify-between items-center px-3 py-2 bg-white/50 backdrop-blur-sm border border-white rounded-3xl shadow-md">
     <!-- RIGHT: Notification + Profile (pojok kanan) -->
     <div class="flex items-center px-2 py-1">
         <!-- Notification -->

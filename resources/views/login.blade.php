@@ -14,13 +14,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-primary via-primaryDark to-gray-50 flex items-center justify-center">
+<body class="min-h-screen bg-gradient-to-br from-primaryLight via-primaryDark to-gray-50 flex items-center justify-center">
 
     <!-- Login Card -->
     <div class="w-full max-w-sm p-4 bg-white/70 backdrop-blur border border-white rounded-xl shadow-lg overflow-hidden transition-colors duration-200 focus-within:bg-white">
         <!-- Logo -->
         <div class="flex flex-col items-center mb-6">
-            <div class="p-3 bg-gradient-to-br from-primary/10 to-primaryDark/10 rounded-full shadow-md">
+            <div class="p-3 bg-gradient-to-br from-primaryLight/10 to-primaryDark/10 rounded-full shadow-md">
                 <div class="relative w-16 h-16 group">
                     <img src="{{ asset('images/madonna-logo.png') }}" alt="Madonna logo"
                         class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-100 group-hover:opacity-0">

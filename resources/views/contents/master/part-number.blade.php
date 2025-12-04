@@ -252,7 +252,7 @@
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                        <button type="submit" class="px-4 py-2 bg-primaryLight text-white rounded-lg hover:bg-pr transition">
                             Save Changes
                         </button>
                     </div>
@@ -384,7 +384,7 @@
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-pr transition">
+                    <button type="submit" class="px-4 py-2 bg-primaryLight text-white rounded-lg hover:bg-primary transition">
                         Submit
                     </button>
                 </div>

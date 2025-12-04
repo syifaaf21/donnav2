@@ -1,10 +1,26 @@
 @extends('layouts.app')
-@section('title', 'FTPP')
+@section('title', 'FTPP Master')
+@section('subtitle', 'Manage FTPP')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-500 font-medium">Master</li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">FTPP</li>
+        </ol>
+    </nav>
+@endsection
 
 @section('content')
     <div class="mx-auto px-4 py-2 space-y-4">
         {{-- Header --}}
-        <div class="flex justify-between items-center my-2 pt-4">
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
                 <div class="mb-2 text-white">
                     <h3 class="fw-bold">Master FTPP</h3>
@@ -13,8 +29,6 @@
                     </p>
                 </div>
             </div>
-
-            {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -28,7 +42,7 @@
                     <li class="text-gray-700 font-bold">FTPP</li>
                 </ol>
             </nav>
-        </div>
+        </div> --}}
 
         {{-- main content --}}
         <div class="">
