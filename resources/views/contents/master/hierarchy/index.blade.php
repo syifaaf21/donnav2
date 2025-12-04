@@ -18,7 +18,7 @@
     </nav>
 @endsection
 @section('content')
-    <div class="mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -50,8 +50,8 @@
 
         <div class="overflow-hidden">
             {{-- Search Bar and Add Button aligned --}}
-            <div class="py-4 flex items-center justify-between gap-4">
-                <form method="GET" id="searchForm" class="relative w-full sm:w-96">
+            <div class="py-4 flex items-center justify-end gap-4">
+                {{-- <form method="GET" id="searchForm" class="relative w-full sm:w-96">
                     <input id="searchInput" type="text" name="search"
                         class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
                         text-sm text-gray-700 shadow-sm transition-all duration-200
@@ -81,7 +81,7 @@
                             <i data-feather="x" class="w-5 h-5"></i>
                         </button>
                     @endif
-                </form>
+                </form> --}}
 
                 {{-- Add Button on the right --}}
                 {{-- Add Button --}}
@@ -213,7 +213,7 @@
                         Cancel
                     </button>
                     <button type="submit"
-                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         Submit
                     </button>
                 </div>

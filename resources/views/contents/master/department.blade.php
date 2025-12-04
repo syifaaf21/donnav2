@@ -17,7 +17,7 @@
     </nav>
 @endsection
 @section('content')
-    <div class="mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -46,7 +46,7 @@
         </div> --}}
 
         <div class="overflow-hidden">
-            <div class="flex items-center justify-between my-4">
+            <div class="flex items-center justify-between my-2">
                 {{-- Search Bar (left) --}}
                 <form id="searchForm" method="GET" class="flex items-end w-full md:w-96">
                     <div class="relative w-full">
@@ -56,7 +56,7 @@
                             placeholder="Type to search..." value="{{ request('search') }}">
 
                         <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
+                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded  text-sky-600
                             text-gray-400 text-sm
                             {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...

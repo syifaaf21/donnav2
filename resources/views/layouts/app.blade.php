@@ -39,14 +39,14 @@
     <!-- ✅ Main Content -->
     <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 my-2 px-2">
         {{-- @include('layouts.partials.navbar') --}}
-        <div class="my-3 ml-8 pt-2">
+        <div class="my-3 mr-8 ml-8 pt-2 bg-gradient-to-r from-white/30 to-white/60 rounded-3xl">
             @include('layouts.partials.navbar')
-            <div class="flex ml-8 mr-56 justify-between items-center">
-                <div class="text-white">
-                    <h3 class="font-bold">@yield('title', 'Dashboard')</h3>
-                    <p class="max-w-[550px]" style="font-size: 0.9rem;">@yield('subtitle', '')</p>
+            <div class="flex items-center justify-between w-full px-8">
+                <div class="text-white flex flex-col justify-center">
+                    <h3 class="font-bold leading-tight">@yield('title', 'Dashboard')</h3>
+                    <p class="max-w-[550px] text-white/80 text-sm">@yield('subtitle', '')</p>
                 </div>
-                <div class="flex ">
+                <div class="flex items-center space-x-2 mr-48 mb-2">
                     @yield('breadcrumbs')
                 </div>
             </div>

@@ -2,8 +2,7 @@
 
 @section('title', "Folder $docCode - " . ucwords($plant))
 @section('subtitle',
-    'Review and manage documents across different plants. Select a plant tab to view its document
-    hierarchy.')
+    'Review and manage documents across different plants.')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">

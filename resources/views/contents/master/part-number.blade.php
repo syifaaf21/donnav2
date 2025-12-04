@@ -17,7 +17,7 @@
     </nav>
 @endsection
 @section('content')
-    <div class="mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">

@@ -32,7 +32,7 @@
                 <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
 
                 <button type="button"
-                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
+                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
                     onclick="openPlantSidebar()">
                     Choose Dept/Process/Product
                 </button>
@@ -51,7 +51,7 @@
                 <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
                 <button type="button" onclick="openAuditeeSidebar()"
-                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                     Select Auditee
                 </button>
 
@@ -126,7 +126,7 @@
                     <!-- CLAUSE SELECT -->
                     <div class="text-right">
                         <button type="button" onclick="openSidebar()"
-                            class="px-3 py-1  bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                            class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Select Clause
                         </button>
 
@@ -179,7 +179,7 @@
                     <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple class="hidden">
                 </div>
                 <button type="button" onclick="saveHeaderOnly()"
-                    class="ml-auto mt-2 bg-gradient-to-r from-primary to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primary transition-colors">
+                    class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                     Save Finding
                 </button>
             </div>

@@ -19,7 +19,7 @@
 @endsection
 
 @section('content')
-    <div class="mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
 
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
@@ -59,7 +59,7 @@
                     <form method="GET" id="searchForm" class="flex items-center w-full sm:w-96 relative min-w-0">
                         <input id="searchInput" type="text" name="search"
                             class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
-                            text-sm text-gray-700 shadow-sm transition-all duration-200
+                            text-sm text-gray-700 shadow transition-all duration-200
                             focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                             placeholder="Type to search..." value="{{ request('search') }}">
 

@@ -41,7 +41,7 @@
             </nav>
         </div> --}}
 
-        <div class="mb-8 mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <!-- LEFT: Search + Filter -->
             <div class="flex items-center gap-2 w-full md:w-1/3">
 

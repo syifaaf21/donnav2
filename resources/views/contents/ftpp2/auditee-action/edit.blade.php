@@ -284,7 +284,7 @@
                         </div>
                         <div class="mt-4">
                             <button type="submit"
-                                class="px-4 py-2 bg-gradient-to-r from-primary to-primaryDark hover:from-primaryDark hover:to-primary transition-colors text-white rounded">
+                                class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark hover:from-primaryDark hover:to-primaryLight transition-colors text-white rounded">
                                 Save Changes
                             </button>
                         </div>

@@ -17,7 +17,7 @@
     </nav>
 @endsection
 @section('content')
-    <div class="px-6">
+    <div class="px-6 bg-white rounded-lg shadow">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -79,7 +79,7 @@
                     <div class="text-sm text-gray-500 ml-4">
                         {{-- Add User Button aligned to the right --}}
                         <button type="button" data-bs-toggle="modal" data-bs-target="#addUserModal"
-                            class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                            class="px-3 py-2.5 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             <i class="bi bi-plus-circle"></i>
                             <span>Add User</span>
                         </button>
@@ -449,7 +449,7 @@
 
     /* Base styling for all tabs: default text-white, no bottom border */
     #userTabs .nav-link {
-        color: #ffffff !important;
+        color: #373737 !important;
         /* default text-white */
         background: transparent;
         border: none !important;

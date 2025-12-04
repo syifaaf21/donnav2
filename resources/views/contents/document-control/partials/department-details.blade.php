@@ -31,7 +31,7 @@
 @endsection
 
 @section('content')
-    <div class="mx-auto px-4 py-6 space-y-4">
+    <div class="mx-auto px-4 space-y-4">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -43,10 +43,10 @@
                         Manage and organize documents efficiently
                     </p>
                 </div> --}}
-            {{-- </div> --}}
+        {{-- </div> --}}
 
-            {{-- Breadcrumbs --}}
-            {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1"
+        {{-- Breadcrumbs --}}
+        {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1"
                 aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
 
@@ -76,8 +76,6 @@
             </nav>
         </div> --}}
 
-
-        {{-- <div class="p-4"> --}}
         <!-- Search Form -->
         <div class="flex justify-end w-full mb-2">
             <form id="filterForm" method="GET" action="{{ route('document-control.department', $department->name) }}"
@@ -314,7 +312,6 @@
                 </div>
             </div>
         </div>
-    </div>
     </div>
     <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
