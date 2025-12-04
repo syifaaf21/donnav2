@@ -158,7 +158,6 @@
     </div>
 
     {{-- Modals Edit / Create (existing code preserved) --}}
-    {{-- ...existing code... --}}
     @foreach ($partNumbers as $part)
         <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
             aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
@@ -276,7 +275,6 @@
             </div>
         </div>
     @endforeach
-
 
     {{-- Modal Create --}}
     <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
@@ -407,7 +405,6 @@
             </form>
         </div>
     </div>
-
 @endsection
 
 @push('scripts')

@@ -1,12 +1,36 @@
 @extends('layouts.app')
-@section('title', 'Department')
-
+@section('title', 'Department Master')
+@section('subtitle', 'Manage Departments')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-500 font-medium">Master</li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Department</li>
+        </ol>
+    </nav>
+@endsection
 @section('content')
     <div class="mx-auto px-4 py-2">
         {{-- Header --}}
-        <div class="flex justify-end items-center my-4 pt-4">
-            {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2 text-white">
+                    <h3 class="fw-bold">Department Master</h3>
+                    <p class="text-sm" style="font-size: 0.85rem;">
+                        Manage department records. Use the "Add Department" button to create new entries and the actions
+                        column
+                        to edit or delete existing departments.
+                    </p>
+                </div>
+            </div>
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -19,15 +43,7 @@
                     <li class="text-gray-700 font-bold">Department</li>
                 </ol>
             </nav>
-        </div>
-        <div class="py-6 mt-4 text-white">
-            <div class="mb-4 text-white">
-                <h1 class="fw-bold ">Department Master</h1>
-                <p style="font-size: 0.9rem;">
-                    Manage department records. Use the "Add Department" button to create new entries and the actions column to edit or delete existing departments.
-                </p>
-            </div>
-        </div>
+        </div> --}}
 
         <div class="overflow-hidden">
             <div class="flex items-center justify-between my-4">
@@ -52,7 +68,7 @@
                 <div class="ms-4 flex-shrink-0">
                     {{-- Add Button --}}
                     <button type="button" data-bs-toggle="modal" data-bs-target="#addDepartmentModal"
-                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded border border-white hover:from-primaryDark hover:to-primaryLight transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add Department</span>
                     </button>
@@ -84,7 +100,8 @@
                                     <td class="px-4 py-3 border-r border-gray-200">
                                         {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">{{ ucwords($department->name) }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">
+                                        {{ ucwords($department->name) }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $department->code }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $department->plant }}</td>
                                     <td class="px-4 py-3 text-sm text-center border-r border-gray-200">
