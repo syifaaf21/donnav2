@@ -1,11 +1,39 @@
 @extends('layouts.app')
+@section('title', 'Hierarchy Document')
+@section('subtitle', 'Manage Hierarchy Document records.')
+@section('breadcrumbs')
 
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-500 font-medium">Master</li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Hierarchy</li>
+        </ol>
+    </nav>
+@endsection
 @section('content')
     <div class="mx-auto px-4 py-2">
         {{-- Header --}}
-        <div class="flex justify-end items-center my-4 pt-4">
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2 text-white">
+                    <h3 class="fw-bold">Hierarchy Master</h3>
+                    <p class="text-sm" style="font-size: 0.85rem;">
+                        Manage hierarchies. Use the "Add Hierarchy" button to create new entries and the actions column
+                        to edit or delete existing records.
+                    </p>
+                </div>
+            </div> --}}
+
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1"
+                aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -15,19 +43,11 @@
                     <li>/</li>
                     <li class="text-gray-500 font-medium">Master</li>
                     <li>/</li>
-                    <li class="text-gray-700 font-medium">Hierarchy</li>
+                    <li class="text-gray-700 font-bold">Hierarchy</li>
                 </ol>
             </nav>
-        </div>
-        <div class="py-6  text-white">
-            <div class="mb-4 text-white">
-                <h1 class="fw-bold ">Hierarchy Master</h1>
-                <p style="font-size: 0.9rem;">
-                    Manage hierarchies. Use the "Add Hierarchy" button to create new entries and the actions column
-                    to edit or delete existing records.
-                </p>
-            </div>
-        </div>
+        </div> --}}
+
         <div class="overflow-hidden">
             {{-- Search Bar and Add Button aligned --}}
             <div class="py-4 flex items-center justify-between gap-4">
@@ -66,7 +86,7 @@
                 {{-- Add Button on the right --}}
                 {{-- Add Button --}}
                 <button type="button" data-bs-toggle="modal" data-bs-target="#createDocumentModal"
-                    class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                    class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                     <i class="bi bi-plus-circle"></i>
                     <span>Add Document</span>
                 </button>

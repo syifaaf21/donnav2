@@ -4,38 +4,40 @@
 
 @section('content')
     <div class="p-6 min-h-screen space-y-6">
-        <div class="py-6 mt-4 text-white">
-            <div class="mb-4 text-white">
-                <h1 class="fw-bold ">
-                    Document Review - {{ ucfirst($plant) }}
-                </h1>
-                <p style="font-size: 0.9rem;">
-                    Review and manage documents across different plants. Select a plant tab to view its document hierarchy.
-                </p>
+        <div class="flex justify-between items-center my-2 pt-4">
+            <div class="py-6 mt-4 text-white">
+                <div class="mb-4 text-white">
+                    <h3 class="fw-bold ">
+                        Document Review - {{ ucfirst($plant) }}
+                    </h3>
+                    <p style="font-size: 0.9rem;">
+                        Review and manage documents across different plants. Select a plant tab to view its document
+                        hierarchy.
+                    </p>
+                </div>
             </div>
+            <!-- Breadcrumb (left) -->
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>/</li>
+                    <li>
+                        <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">Document
+                            Review</a>
+                    </li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">{{ ucfirst($plant) }}</li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-medium">{{ $docCode }}</li>
+                </ol>
+            </nav>
         </div>
 
         <x-flash-message />
-
-        <!-- Breadcrumb (left) -->
-        <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li>
-                    <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">Document
-                        Review</a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">{{ ucfirst($plant) }}</li>
-                <li>/</li>
-                <li class="text-gray-700 font-medium">{{ $docCode }}</li>
-            </ol>
-        </nav>
 
         <!-- Search & Filter Bar (right) -->
         <form id="searchForm" action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
@@ -72,9 +74,9 @@
 
             <!-- Filter Button -->
             <button type="button"
-                class="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm"
-                data-bs-toggle="modal" data-bs-target="#filterModal">
-                <i class="bi bi-funnel"></i>
+                        class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition"
+                        data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i data-feather="filter" class="w-5 h-5"></i>
             </button>
         </form>
 
@@ -165,34 +167,34 @@
                     <table class="min-w-full divide-y divide-gray-200 folder-table" style="solid #e5e7eb;">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Number
                                 </th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Part Number
                                 </th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Product</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Model</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Process</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Notes</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Deadline</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Updated By
                                 </th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Last Update
                                 </th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Status</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
@@ -203,11 +205,11 @@
                                     <td class="px-4 py-3">
                                         {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-medium text-gray-800">
+                                    <td class="px-4 py-3 text-xs font-medium text-gray-800">
                                         {{ $doc->document_number ?? '-' }}
                                     </td>
 
-                                    <td class="px-4 py-3 text-sm font-medium">
+                                    <td class="px-4 py-3 text-xs font-medium">
                                         @if ($doc->partNumber->isNotEmpty())
                                             {{ $doc->partNumber->pluck('part_number')->join(', ') }}
                                         @else
@@ -215,7 +217,7 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 text-xs">
                                         @if ($doc->product->isNotEmpty())
                                             {{ $doc->product->pluck('name')->join(', ') }}
                                         @else
@@ -223,7 +225,7 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 text-xs">
                                         @if ($doc->productModel->isNotEmpty())
                                             {{ $doc->productModel->pluck('name')->join(', ') }}
                                         @else
@@ -231,7 +233,7 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 capitalize">
+                                    <td class="px-4 py-3 text-xs capitalize">
                                         @if ($doc->process->isNotEmpty())
                                             {{ $doc->process->pluck('code')->join(', ') }}
                                         @else
@@ -239,19 +241,19 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 max-w-[250px]">
+                                    <td class="px-4 py-3 text-xs max-w-[250px]">
                                         <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug">
                                             {!! $doc->notes ?? '-' !!}
                                         </div>
                                     </td>
 
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 text-xs">
                                         <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
                                     </td>
 
-                                    <td class="px-4 py-3">{{ $doc->user?->name ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-xs">{{ $doc->user?->name ?? '-' }}</td>
 
-                                    <td class="px-4 py-3">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-xs">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
 
                                     @php
                                         $statusName = strtolower($doc->status?->name ?? '');
@@ -266,11 +268,11 @@
                                                 => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
                                         };
                                     @endphp
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 text-xs">
                                         <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
                                     </td>
 
-                                    <td class="px-4 py-3 text-center">
+                                    <td class="px-4 py-3 text-xs text-center">
                                         <div class="flex justify-center items-center gap-2 relative">
                                             {{-- ================= FILE BUTTON ================= --}}
                                             <div class="relative inline-block overflow-visible">
@@ -298,7 +300,7 @@
 
                                                     <div id="viewFilesDropdown-{{ $doc->id }}"
                                                         class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
-                                                        <div class="py-1 text-sm max-h-80 overflow-y-auto">
+                                                        <div class="py-1 text-xs max-h-80 overflow-y-auto">
                                                             @foreach ($files as $file)
                                                                 <button type="button" title="View File"
                                                                     class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"

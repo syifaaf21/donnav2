@@ -5,9 +5,21 @@
     <div class="mx-auto px-4 py-2">
 
         {{-- Header --}}
-        <div class="flex justify-end items-center my-4 pt-4">
+        <div class="flex justify-between items-center my-2 pt-4">
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2 text-white">
+                    <h3 class="fw-bold">Document Control Master</h3>
+                    <p class="text-sm" style="font-size: 0.85rem;">
+                        Manage document controls. Use the "Add Document Control" button to create new entries and the
+                        actions
+                        column
+                        to edit or delete existing records.
+                    </p>
+                </div>
+            </div>
+
             {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-2" aria-label="Breadcrumb">
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -20,15 +32,6 @@
                     <li class="text-gray-700 font-bold">Document Control</li>
                 </ol>
             </nav>
-        </div>
-        <div class="py-6">
-            <div class="mb-4 text-white">
-                <h1 class="fw-bold ">Document Control Master</h1>
-                <p style="font-size: 0.9rem;">
-                    Manage document controls. Use the "Add Document Control" button to create new entries and the actions column
-                    to edit or delete existing records.
-                </p>
-            </div>
         </div>
 
         {{-- Table Card --}}
@@ -72,9 +75,8 @@
                     {{-- Filter Button --}}
                     <div class="relative ml-1">
                         <button id="filterBtn" type="button"
-                            class="flex items-center gap-1 px-3 py-2 bg-gray-100 border rounded-lg text-gray-600
-                           hover:bg-gray-200 hover:text-gray-800 transition">
-                            <i class="bi bi-funnel-fill"></i>
+                            class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition">
+                            <i data-feather="filter" class="w-5 h-5"></i>
                         </button>
 
                         {{-- Dropdown Filter --}}
@@ -151,7 +153,8 @@
                                         <input type="checkbox" class="row-checkbox form-checkbox"
                                             value="{{ $mapping->id }}">
                                     </td>
-                                    <td class="px-4 py-3 border-r border-gray-200">{{ $documentMappings->firstItem() + $loop->index }}</td>
+                                    <td class="px-4 py-3 border-r border-gray-200">
+                                        {{ $documentMappings->firstItem() + $loop->index }}</td>
                                     <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold text-gray-800">
                                         {{ $mapping->document->name ?? '-' }} <span
                                             class="text-xs text-gray-400 mt-1 block">
@@ -171,7 +174,8 @@
                                             -
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
+                                    <td
+                                        class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
                                         {{-- FILE BUTTON AREA — fixed width --}}
                                         {{-- <div class="relative inline-block w-8 h-8 flex items-center justify-center">
                                             @if ($mapping->files->count())

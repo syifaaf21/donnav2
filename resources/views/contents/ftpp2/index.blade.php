@@ -2,27 +2,34 @@
 
 @section('content')
     <div class=" mx-auto p-6" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
-        <div class="py-6">
-            <div class="text-white">
-                <h1 class="fw-bold">
-                    FTPP
-                </h1>
-                <p class="text-base mt-1">Manage and organize your FTPP documents efficiently</p>
+        {{-- Header --}}
+        <div class="flex justify-between items-center my-2 pt-4">
+
+            {{-- Title + Description --}}
+            <div class="py-3 mt-2 text-white">
+                <div class="mb-2 text-white">
+                    <h3 class="fw-bold">FTPP</h3>
+                    <p class="text-sm" style="font-size: 0.9rem;">
+                        Manage and organize your FTPP documents efficiently
+                    </p>
+                </div>
             </div>
+
+            {{-- Breadcrumbs --}}
+            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1"
+                aria-label="Breadcrumb">
+                <ol class="list-reset flex space-x-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                            <i class="bi bi-house-door me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>/</li>
+                    <li class="text-gray-700 font-bold">FTPP</li>
+                </ol>
+            </nav>
+
         </div>
-        {{-- Breadcrumbs --}}
-        <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 py-3 pb-1 shadow-sm w-fit mb-2 mt-2"
-            aria-label="Breadcrumb">
-            <ol class="list-reset flex space-x-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                        <i class="bi bi-house-door me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li>/</li>
-                <li class="text-gray-700 font-bold">FTPP</li>
-            </ol>
-        </nav>
 
         <div class="mb-8 mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <!-- LEFT: Search + Filter -->
@@ -46,7 +53,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -197,19 +204,18 @@
                     </div>
                 @endif
             </div>
-
         </div>
 
-        <div class="flex gap-6">
-            {{-- Main column --}}
+        <div id="liveTableWrapper">
+            <!-- Table -->
             <div class="flex-1">
-                <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden bg-white shadow">
                             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px; ">
+                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                        style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
                                     </th>
                                     <th
@@ -393,13 +399,12 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="mt-4">
+                        {{ $findings->links() }}
+                    </div>
                 </div>
-
-                <div class="mt-4">
-                    {{ $findings->links() }}
-                </div>
-            </div> {{-- end .flex-1 --}}
-        </div> {{-- end .flex --}}
+            </div>
+        </div>
 
         @include('contents.ftpp2.show')
     </div> {{-- end .p-6 --}}

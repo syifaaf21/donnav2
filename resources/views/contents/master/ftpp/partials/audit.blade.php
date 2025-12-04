@@ -24,9 +24,12 @@
             @forelse ($audits as $index => $audit)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
                     <td class="px-4 py-3 border-r border-gray-200 text-sm">
+                    <td class="px-4 py-3 border-r border-gray-200 text-sm">
                         {{ $index + 1 }}</td>
                     <td class="py-2 px-3 border-r border-gray-200 text-sm font-semibold">
+                    <td class="py-2 px-3 border-r border-gray-200 text-sm font-semibold">
                         {{ $audit->name }}</td>
+                    <td class="py-2 px-3 border-r border-gray-200 text-sm">
                     <td class="py-2 px-3 border-r border-gray-200 text-sm">
                         @if ($audit->subAudit->isNotEmpty())
                             <ul class="list-disc list-inside space-y-0.5">

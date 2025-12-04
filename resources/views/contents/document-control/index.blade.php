@@ -1,31 +1,33 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- Page Title --}}
-    <div class="mb-2 pt-8">
-        <div class="p-6 text-white">
-            <h1 class="fw-bold">
-                Document Control
-            </h1>
-            <p class="text-base mt-1">Manage and organize your documents efficiently</p>
+        <div class="flex justify-between items-center my-2 pt-4">
+        {{-- Page Title --}}
+        <div class="mb-2 pt-8">
+            <div class="p-6 text-white">
+                <h3 class="fw-bold">
+                    Document Control
+                </h3>
+                <p class="text-base mt-1">Manage and organize your documents efficiently</p>
+            </div>
         </div>
+        {{-- Breadcrumbs --}}
+        <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 pt-3 pb-1 shadow-sm w-fit" aria-label="Breadcrumb">
+            <ol class="list-reset flex space-x-2">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                        <i class="bi bi-house-door me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li>/</li>
+                <li class="text-gray-700 font-medium">Document Control</li>
+            </ol>
+        </nav>
     </div>
     <div class="mx-auto px-6">
 
         {{-- 🔹 Header + Breadcrumb --}}
         <div class="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
-            {{-- Breadcrumbs --}}
-            <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 pt-3 pb-1 shadow-sm w-fit" aria-label="Breadcrumb">
-                <ol class="list-reset flex space-x-2">
-                    <li>
-                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                            <i class="bi bi-house-door me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>/</li>
-                    <li class="text-gray-700 font-medium">Document Control</li>
-                </ol>
-            </nav>
 
             {{-- Filter --}}
             @if (auth()->user()->roles->pluck('name')->contains('Admin') ||

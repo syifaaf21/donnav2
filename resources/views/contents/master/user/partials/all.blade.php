@@ -69,17 +69,14 @@
                                 @endif
                             </div>
                         </td>
-
                         <td class="px-4 py-3 border-r border-gray-200 align-top whitespace-nowrap text-sm font-semibold">
                             <div class="text-sm text-gray-600" title="{{ $user->npk }}">{{ $user->npk }}</div>
                         </td>
-
                         <td class="px-4 py-3 border-r border-gray-200 align-top">
                             <div class="truncate max-w-[18rem] text-sm text-gray-600" title="{{ $user->email }}">
                                 {{ $user->email }}
                             </div>
                         </td>
-
                         <td class="px-4 py-3 border-r border-gray-200 align-top">
                             @if ($user->roles->isNotEmpty())
                                 <div class="flex flex-wrap gap-1">
