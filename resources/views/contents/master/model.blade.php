@@ -71,7 +71,7 @@
                 <div class="w-full sm:w-auto flex justify-end">
                     {{-- Add Model Button --}}
                     <button type="button" data-bs-toggle="modal" data-bs-target="#addModelModal"
-                        class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        class="px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add Model</span>
                     </button>

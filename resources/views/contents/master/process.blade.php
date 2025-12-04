@@ -68,7 +68,7 @@
                 <div class="w-full sm:w-auto flex justify-end">
                     {{-- Add Button --}}
                     <button type="button" data-bs-toggle="modal" data-bs-target="#addProcessModal"
-                        class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        class="px-3 py-2 bg-sky-600 shadow-md shadow-blue-100/40 text-white rounded hover:bg-gradient-to-r hover:from-sky-400 hover:to-sky-600 transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add Process</span>
                     </button>
@@ -213,7 +213,7 @@
                             Cancel
                         </button>
                         <button type="submit"
-                            class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Save Changes
                         </button>
                     </div>
@@ -294,7 +294,7 @@
                         Cancel
                     </button>
                     <button type="submit"
-                        class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         Submit
                     </button>
                 </div>
