@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Document Control')
-@section('subtitle', 'Manage and organize your documents efficiently')
+@section('subtitle', 'Manage and organize documents efficiently')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pr-8 pt-3 pb-1 shadow-sm w-fit" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">

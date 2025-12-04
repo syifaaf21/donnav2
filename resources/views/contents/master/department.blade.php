@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Department Master')
-@section('subtitle', 'Manage Departments')
+@section('subtitle', 'Manage Departments records')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">

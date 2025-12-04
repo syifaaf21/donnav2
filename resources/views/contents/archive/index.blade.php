@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Archive')
-@section('subtitle', 'Manage and review archived documents efficiently')
+@section('subtitle', 'Access and manage documents retained in the one-year archived')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
