@@ -23,7 +23,7 @@
     <!-- ✅ Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -39,14 +39,14 @@
     <!-- ✅ Main Content -->
     <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 my-2 px-2">
         {{-- @include('layouts.partials.navbar') --}}
-        <div class="my-3 ml-8 pt-2">
+        <div class="my-3 mr-8 ml-8 pt-2 bg-gradient-to-r from-white/30 to-white/60 rounded-3xl">
             @include('layouts.partials.navbar')
-            <div class="flex ml-8 mr-56 justify-between items-center">
-                <div class="text-white">
-                    <h3 class="font-bold">@yield('title', 'Dashboard')</h3>
-                    <p class="max-w-[550px]" style="font-size: 0.9rem;">@yield('subtitle', '')</p>
+            <div class="flex items-center justify-between w-full px-8">
+                <div class="text-white flex flex-col justify-center">
+                    <h3 class="font-bold leading-tight">@yield('title', 'Dashboard')</h3>
+                    <p class="max-w-[550px] text-white/80 text-sm">@yield('subtitle', '')</p>
                 </div>
-                <div class="flex ">
+                <div class="flex items-center space-x-2 mr-48 mb-2">
                     @yield('breadcrumbs')
                 </div>
             </div>

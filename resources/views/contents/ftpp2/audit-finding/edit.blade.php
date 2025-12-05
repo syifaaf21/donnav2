@@ -1,11 +1,31 @@
 @extends('layouts.app')
 @section('title', 'Edit Audit Finding')
+@section('subtitle',
+    ' Edit finding for FTPP #'. $finding->registration_number .'. Please update the details below to edit
+    the FTPP finding.')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li>
+                <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-folder me-1"></i> FTPP
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Edit Finding</li>
+        </ol>
+    </nav>
+@endsection
 @section('content')
-    <div class="p-6 space-y-6 mt-6">
+    <div class="px-6 space-y-6">
         {{-- Header --}}
-        <div class="flex justify-between items-center my-2 pt-4">
-
-            {{-- Title + Description --}}
+        {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
                 <div class="mb-2">
                     <h3 class="fw-bold">Edit Finding</h3>
@@ -15,34 +35,24 @@
                     </p>
                 </div>
             </div>
-
-            {{-- Breadcrumbs --}}
             <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
-
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
                             <i class="bi bi-house-door me-1"></i> Dashboard
                         </a>
                     </li>
-
                     <li>/</li>
-
                     <li>
                         <a href="{{ route('ftpp.index') }}" class="text-blue-600 hover:underline flex items-center">
                             <i class="bi bi-folder me-1"></i> FTPP
                         </a>
                     </li>
-
                     <li>/</li>
-
                     <li class="text-gray-700 font-bold">Edit Finding</li>
-
                 </ol>
             </nav>
-
-        </div>
-
+        </div> --}}
 
         <div>
             <div x-data="editFindingApp()" x-init="init()">
@@ -86,7 +96,7 @@
                                         class="text-danger">*</span></label>
 
                                 <button type="button"
-                                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors"
+                                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
                                     onclick="openPlantSidebar()">
                                     Choose Dept/Process/Product
                                 </button>
@@ -106,7 +116,7 @@
                                 <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
                                 <button type="button" onclick="openAuditeeSidebar()"
-                                    class="px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                                     Select Auditee
                                 </button>
 
@@ -115,8 +125,8 @@
                                 </div>
 
                                 <!-- Hidden holder for selected auditees (NOT submitted directly).
-                                                 We avoid naming this input so only the dynamic `auditee_ids[]` inputs
-                                                 created by `saveHeaderOnly()` are included in the POST request. -->
+                                                     We avoid naming this input so only the dynamic `auditee_ids[]` inputs
+                                                     created by `saveHeaderOnly()` are included in the POST request. -->
                                 <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
                             </div>
 
@@ -186,7 +196,7 @@
                                     <!-- CLAUSE SELECT -->
                                     <div class="text-right">
                                         <button type="button" onclick="openSidebar()"
-                                            class="px-3 py-1  bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                                            class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                                             Select Clause
                                         </button>
 
@@ -242,7 +252,7 @@
                                         class="hidden">
                                 </div>
                                 <button type="button" onclick="saveChangesFinding()"
-                                    class="ml-auto mt-2 bg-gradient-to-r from-primary to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primary transition-colors">
+                                    class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                                     Save Changes
                                 </button>
                             </div>
@@ -288,7 +298,7 @@
             <!-- Submit Button -->
             <button type="button" onclick="addSubKlausul()"
                 class="flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg
-               bg-gradient-to-r from-primary to-primaryDark text-white hover:from-primaryDark hover:to-primary transition-colors">
+               bg-gradient-to-r from-primaryLight to-primaryDark text-white hover:from-primaryDark hover:to-primaryLight transition-colors">
                 <i data-feather="plus" class="w-4 h-4"></i> Add
             </button>
         </div>
@@ -345,8 +355,8 @@
             </select>
 
             <button type="button" onclick="submitSidebarPlant()"
-                class="flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg bg-gradient-to-l from-primary to-primaryDark text-white
-               hover:from-primaryDark hover:to-primary transition-colors shadow">
+                class="flex items-center justify-center gap-2 px-4 py-2 w-full rounded-lg bg-gradient-to-l from-primaryLight to-primaryDark text-white
+               hover:from-primaryDark hover:to-primaryLight transition-colors shadow">
                 <i data-feather="plus" class="w-4 h-4"></i> Add
             </button>
         </div>

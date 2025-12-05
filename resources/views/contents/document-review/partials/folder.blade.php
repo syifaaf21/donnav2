@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('title', "Folder $docCode - " . ucwords($plant))
-@section('subtitle',
-    'Review and manage documents across different plants. Select a plant tab to view its document
-    hierarchy.')
+@section('subtitle', 'Review and manage documents across different plants.')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
@@ -39,8 +37,8 @@
                     </p>
                 </div>
             </div> --}}
-            <!-- Breadcrumb (left) -->
-            {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
+        <!-- Breadcrumb (left) -->
+        {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
                         <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -303,8 +301,10 @@
                                                     $files = $doc->files
                                                         ->map(
                                                             fn($f) => [
-                                                                'name' => $f->file_name ?? basename($f->file_path),
-                                                                'url' => asset('storage/' . $f->file_path),
+                                                            'id' => $f->id,
+                                                            'file_path' => $f->file_path,
+                                                             'name' => $f->file_name ?? basename($f->file_path),
+                                                             'url' => asset('storage/' . $f->file_path),
                                                             ],
                                                         )
                                                         ->toArray();
@@ -327,7 +327,10 @@
                                                             @foreach ($files as $file)
                                                                 <button type="button" title="View File"
                                                                     class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                    data-file="{{ $file['url'] }}">
+                                                                   data-file="{{ $file['url'] }}"
+                                                                   data-doc-id="{{ $doc->id }}"
+                                                                   data-file-id="{{ $file['id'] }}"
+                                                                   data-file-path="{{ $file['file_path'] }}">
                                                                     📄 {{ $file['name'] }}
                                                                 </button>
                                                             @endforeach
@@ -339,7 +342,10 @@
                                                     @endphp
                                                     <button type="button" title="View File"
                                                         class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn"
-                                                        data-file="{{ $fileUrl }}">
+                                                       data-file="{{ $fileUrl }}"
+                                                       data-doc-id="{{ $doc->id }}"
+                                                       data-file-id="{{ $files[0]['id'] ?? '' }}"
+                                                       data-file-path="{{ $files[0]['file_path'] ?? '' }}">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                 @endif
@@ -601,16 +607,72 @@
 
 
                 // === File preview modal ===
+                const withCacheBuster = (url) => {
+                    if (!url) return url;
+                    const sep = url.includes('?') ? '&' : '?';
+                    return `${url}${sep}_=${Date.now()}`;
+                };
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const url = btn.dataset.file;
-                        previewFrame.src = url;
+                    btn.addEventListener('click', async () => {
+                        const docId = btn.dataset.docId;
+                        const clickedFileId = btn.dataset.fileId;
+                        const clickedFilePath = btn.dataset.filePath;
+                        let url = btn.dataset.file || '';
+
+                        if (docId) {
+                            try {
+                                const res = await fetch(`/document-review/${docId}/files`);
+                                const json = await res.json();
+                                const first = json?.files?.[0]?.file_path || '';
+                                if (first) {
+                                    url = withCacheBuster(`/storage/${first}`);
+                                }
+                                const list = json?.files || [];
+                                let target =
+                                    list.find(f => String(f.id) === String(clickedFileId)) ||
+                                    list.find(f => f.file_path === clickedFilePath);
+
+                                // Fallback: coba cocokkan dari URL asal
+                                if (!target && url) {
+                                    const raw = url.replace(/^.*\/storage\//, '');
+                                    target = list.find(f => f.file_path === raw);
+                                }
+
+                                if (!target && list.length) {
+                                    target = list[0];
+                                }
+
+                                if (target?.file_path) {
+                                    url = withCacheBuster(`/storage/${target.file_path}`);
+                                }
+                            } catch (err) {
+                                console.error('Failed to load files', err);
+                            }
+                        } else {
+                            url = withCacheBuster(url);
+                        }
+                        // Simpan URL dulu, jangan langsung set ke iframe
+                        previewFrame.dataset.url = url;
                         viewFullBtn.href = url;
+
+                        // Buka modal dulu
                         previewModal.show();
-                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                            .add('hidden'));
                     });
                 });
+
+                document.getElementById('filePreviewModal')
+                    .addEventListener('shown.bs.modal', function() {
+                        if (previewFrame.dataset.url) {
+                            previewFrame.src = previewFrame.dataset.url;
+                        }
+                    });
+                document.getElementById('filePreviewModal')
+                    .addEventListener('hidden.bs.modal', () => {
+                        previewFrame.src = '';
+                        previewFrame.dataset.url = '';
+                        viewFullBtn.href = '#';
+                    });
+
 
                 const printFileBtn = document.getElementById('printFileBtn');
 
@@ -637,21 +699,6 @@
                 });
 
 
-                // Reset modal
-                document.getElementById('filePreviewModal').addEventListener('hidden.bs.modal', () => {
-                    previewFrame.src = '';
-                    viewFullBtn.href = '#';
-                });
-
-                // Klik di luar → tutup dropdown
-                document.addEventListener('click', function(e) {
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
-                        const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
-                        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                            dropdown.classList.add('hidden');
-                        }
-                    });
-                });
                 // === MODAL REVISE (Document Review) ===
 
                 const reviseModal = document.getElementById('modal-revise');
@@ -691,24 +738,24 @@
                         <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
                         <div class="space-y-2">
                         ${data.files.map(file => `
-                                                                                                                                                                                                                                                                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
-                                                                                                                                                                                                                                                                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
+                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                                                                                                                                                                                                                                                                                                        <div class="flex gap-2">
-                                                                                                                                                                                                                                                                                                                                                                                            <a href="/storage/${file.file_path}"
-                                                                                                                                                                                                                                                                                                                                                                                               target="_blank"
-                                                                                                                                                                                                                                                                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                                                                                                                                                                                                                                                                                                                               View
-                                                                                                                                                                                                                                                                                                                                                                                            </a>
+                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="flex gap-2">
+                                                                                                                                                                                                                                                                                                                                                                                                                                            <a href="/storage/${file.file_path}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                               target="_blank"
+                                                                                                                                                                                                                                                                                                                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                                                                                                                                                                                                                                                                                                                                                               View
+                                                                                                                                                                                                                                                                                                                                                                                                                                            </a>
 
-                                                                                                                                                                                                                                                                                                                                                                                            <button type="button"
-                                                                                                                                                                                                                                                                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                                                                                                                                                                                                                                                                                                                data-file-id="${file.id}">
-                                                                                                                                                                                                                                                                                                                                                                                                Replace
-                                                                                                                                                                                                                                                                                                                                                                                            </button>
-                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                `).join('')}
+                                                                                                                                                                                                                                                                                                                                                                                                                                            <button type="button"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                data-file-id="${file.id}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                Replace
+                                                                                                                                                                                                                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                `).join('')}
                         </div>
                     `;
                             })
@@ -771,10 +818,10 @@
                                 class="block w-full border border-gray-300 rounded p-1 text-sm">
 
                             ${oldFileId ? `
-                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
-                                                                                                                                                                                                                                                                                                                                                                                    ` : `
-                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
-                                                                                                                                                                                                                                                                                                                                                                                    `}
+                                                                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                    ` : `
+                                                                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
+                                                                                                                                                                                                                                                                                                                                                                                                                                    `}
 
                                     <button type="button"
                                             class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">
@@ -845,8 +892,6 @@
                 if (modalPart) {
                     modalPart.addEventListener('change', updateModalFilters);
                 }
-
-                const currentPlant = "{{ $plant }}";
 
                 function updateModalFilters(partNumber) {
 

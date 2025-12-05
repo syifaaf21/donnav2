@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Document Review')
-@section('subtitle', 'Review and manage documents across different plants. Select a plant tab to view its document
-    hierarchy.')
+@section('subtitle', 'Review and manage documents across different plants.')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">

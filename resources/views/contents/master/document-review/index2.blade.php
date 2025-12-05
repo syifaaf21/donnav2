@@ -225,14 +225,15 @@
                             {{-- Add Document Button --}}
                             <div class="flex items-center gap-2">
                                 <button
-                                    class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                                    class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
                                     data-bs-toggle="modal" data-bs-target="#addDocumentModal">
                                     <i class="bi bi-plus-circle me-2"></i> Add Document
                                 </button>
                             </div>
                         </div>
 
-                        @include('contents.master.document-review.partials.modal-add2')
+                        {{-- add modal is included once globally (moved out of per-plant loop) --}}
+                        {{-- @include moved to below, outside loop to avoid duplicate IDs / double-init --}}
                         <div
                             class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[60vh]">
                             <table class="min-w-full text-sm text-gray-700">
@@ -377,6 +378,11 @@
             </div>
         </div>
 
+        {{-- Include Add Modal only once (prevent duplicate scripts / TomSelect init) --}}
+        @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+            @include('contents.master.document-review.partials.modal-add2')
+        @endif
++
         {{-- 📄 All Edit Modals --}}
         @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
             @foreach ($groupedByPlant as $plant => $documents)
@@ -494,21 +500,26 @@
         function updateTomSelect(selector, items) {
             const el = document.querySelector(selector);
             if (!el) return;
-            if (el.tomselect) el.tomselect.destroy();
+
+            // If an instance exists, destroy it and clear reference to avoid double-init
+            if (el.tomselect) {
+                try { el.tomselect.destroy(); } catch (e) { /* ignore */ }
+                el.tomselect = null;
+            }
 
             el.innerHTML = '<option value="">All</option>';
 
-            items.forEach(i => {
+            (items || []).forEach(i => {
                 const option = document.createElement('option');
-                option.value = i.id;
+                option.value = i.id ?? '';
 
                 // Jika field process, ubah label menjadi Title Case
-                if (selector === '#filterProcess') {
+                if (selector === '#filterProcess' && i.label) {
                     option.textContent = i.label.split(' ')
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                         .join(' ');
                 } else {
-                    option.textContent = i.label;
+                    option.textContent = i.label ?? '';
                 }
 
                 el.appendChild(option);

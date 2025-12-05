@@ -17,7 +17,7 @@
     </nav>
 @endsection
 @section('content')
-    <div class="mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -68,7 +68,7 @@
                 <div class="w-full sm:w-auto flex justify-end">
                     {{-- Add Button --}}
                     <button type="button" data-bs-toggle="modal" data-bs-target="#addProcessModal"
-                        class="px-3 py-2 bg-sky-600 shadow-md shadow-blue-100/40 text-white rounded hover:bg-gradient-to-r hover:from-sky-400 hover:to-sky-600 transition-colors">
+                        class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         <i class="bi bi-plus-circle"></i>
                         <span>Add Process</span>
                     </button>

@@ -17,7 +17,7 @@
     </nav>
 @endsection
 @section('content')
-    <div class="mx-auto px-4 py-2">
+    <div class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -30,8 +30,8 @@
                 </div>
             </div> --}}
 
-            {{-- Breadcrumbs --}}
-            {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1"
+        {{-- Breadcrumbs --}}
+        {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1"
                 aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -143,9 +143,26 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-gray-500 py-4">No part numbers found.</td>
+                                    <td colspan="7" class="py-6 text-center">
+                                        <div class="flex flex-col items-center justify-center text-gray-500">
+
+                                            <!-- Icon Folder / Search / Empty State -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor"
+                                                class="w-12 h-12 mb-2 text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2
+                                 2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
+                                 0 01-2 2z" />
+                                            </svg>
+
+                                            <span class="text-gray-500 text-sm">
+                                                No part numbers found.
+                                            </span>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforelse
+
                         </tbody>
                     </table>
                 </div>
@@ -261,13 +278,14 @@
                     </div>
 
                     {{-- Footer --}}
-                    <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                    <div class="modal-footer bg-light rounded-b-xl flex items-center justify-content-between p-4">
                         <button type="button"
                             class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        <button type="submit"
+                            class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Save Changes
                         </button>
                     </div>
@@ -392,13 +410,14 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="modal-footer bg-light rounded-b-xl flex justify-between p-4">
+                <div class="modal-footer bg-light rounded-b-xl flex items-center justify-content-between p-4">
                     <button type="button"
                         class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-200"
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                    <button type="submit"
+                        class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         Submit
                     </button>
                 </div>

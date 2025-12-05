@@ -3,14 +3,15 @@
     $parentClass = $parent_id ? 'child-of-' . $parent_id : '';
 @endphp
 
-<tr id="{{ $rowId }}" class="{{ $parentClass }} {{ $parent_id ? 'hidden' : '' }}"
+<tr id="{{ $rowId }}" class="{{ $parentClass }}"
     class="hover:bg-gray-50 transition-all duration-150">
     {{-- Document Name & toggle --}}
     <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold">
         <div class="flex items-center" style="margin-left: {{ $level * 30 }}px">
             @if ($document->children->isNotEmpty())
                 <button type="button" class="toggle-children mr-1" data-target="child-of-{{ $document->id }}">
-                    <i data-feather="chevron-right" class="w-4 h-4 transition-transform"></i>
+                    {{-- default expanded: rotate chevron so it points down --}}
+                    <i data-feather="chevron-right" class="w-4 h-4 transition-transform rotate-90"></i>
                 </button>
             @else
                 <span class="w-4 h-4 inline-block mr-1"></span>

@@ -70,7 +70,7 @@
             <!-- Submit Button -->
             <div>
                 <button type="submit"
-                    class="w-full py-2 text-sm bg-gradient-to-r from-primary to-primaryDark text-white font-medium rounded-lg shadow-sm hover:from-primaryDark hover:to-primary transition-all duration-200">
+                    class="w-full py-2 text-sm bg-gradient-to-r from-primaryLight to-primaryDark text-white font-medium rounded-lg shadow-sm hover:from-primaryDark hover:to-primaryLight transition-all duration-200">
                     Login
                 </button>
             </div>

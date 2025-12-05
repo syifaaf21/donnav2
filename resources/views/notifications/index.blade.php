@@ -5,19 +5,30 @@
 @section('content')
     <div class="max-w-3xl mx-auto mt-10 px-4">
         <div class="flex items-center justify-between mb-4">
-            <h1 class="text-2xl font-semibold text-gray-900">All Notifications</h1>
+            <h1 class="text-2xl font-semibold text-white">All Notifications</h1>
 
             <div class="flex items-center space-x-3">
-                @if (auth()->user()->unreadNotifications->count() > 0)
-                    <span id="notifCountBadge"
-                          class="inline-flex items-center justify-center bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                        {{ auth()->user()->unreadNotifications->count() }}
-                    </span>
+                @php
+                    $unread = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
+                @endphp
 
-                    <button id="markAllReadBtn"
-                            class="text-sm text-blue-600 hover:underline px-3 py-1 rounded hover:bg-blue-50 transition">
-                        Mark all as read
-                    </button>
+                @if ($unread > 0)
+                    <div class="flex items-center">
+                        <div class="relative inline-flex">
+                            <button id="markAllReadBtn"
+                                    class="text-sm bg-white text-blue-600 hover:underline px-3 py-1 rounded hover:bg-blue-4 00 transition">
+                                Mark all as read
+                            </button>
+
+                            <!-- Badge melayang di atas kanan button -->
+                            <span id="notifCountBadge"
+                                  class="absolute -top-2 right-0 transform translate-x-1/2 inline-flex items-center justify-center bg-red-600 text-white text-xs font-semibold w-6 h-6 rounded-full shadow"
+                                  aria-live="polite"
+                                  aria-label="{{ $unread }} unread notifications">
+                                {{ $unread > 99 ? '99+' : $unread }}
+                            </span>
+                        </div>
+                    </div>
                 @endif
             </div>
         </div>
@@ -43,7 +54,7 @@
         @endphp
 
         @forelse($groupedNotifications as $period => $notifications)
-            <h2 class="text-lg font-semibold mb-3 mt-6 text-gray-800">{{ $period }}</h2>
+            <h2 class="text-lg font-semibold mb-3 mt-6 text-white">{{ $period }}</h2>
 
             @foreach ($notifications as $notification)
                 <div id="notif-{{ $notification->id }}"

@@ -16,7 +16,7 @@
 @endsection
 
 @section('content')
-    <div class=" mx-auto p-6" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
+    <div class="mx-auto px-6" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -41,7 +41,7 @@
             </nav>
         </div> --}}
 
-        <div class="mb-8 mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <!-- LEFT: Search + Filter -->
             <div class="flex items-center gap-2 w-full md:w-1/3">
 

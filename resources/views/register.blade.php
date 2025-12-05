@@ -13,7 +13,7 @@
 
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-primary via-primaryDark to-gray-50 flex items-center justify-center">
+<body class="min-h-screen bg-gradient-to-br from-primaryLight via-primaryDark to-gray-50 flex items-center justify-center">
 
     <div class="container d-flex justify-content-center align-items-center py-5">
         <div class="col-12 col-sm-10 col-md-8 col-lg-5">
@@ -131,7 +131,7 @@
 
                         <!-- Submit -->
                         <div class="col-12 d-grid mt-2">
-                            <button type="submit" class="w-full py-2 text-sm bg-gradient-to-r from-primary to-primaryDark text-white font-medium rounded-lg shadow-sm hover:from-primaryDark hover:to-primary transition-all duration-200">Register</button>
+                            <button type="submit" class="w-full py-2 text-sm bg-gradient-to-r from-primaryLight to-primaryDark text-white font-medium rounded-lg shadow-sm hover:from-primaryDark hover:to-primaryLight transition-all duration-200">Register</button>
                         </div>
 
                         <div class="col-12 text-center">

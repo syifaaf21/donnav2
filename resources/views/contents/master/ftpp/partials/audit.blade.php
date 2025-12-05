@@ -24,12 +24,9 @@
             @forelse ($audits as $index => $audit)
                 <tr class="hover:bg-gray-50 transition-all duration-150">
                     <td class="px-4 py-3 border-r border-gray-200 text-sm">
-                    <td class="px-4 py-3 border-r border-gray-200 text-sm">
                         {{ $index + 1 }}</td>
                     <td class="py-2 px-3 border-r border-gray-200 text-sm font-semibold">
-                    <td class="py-2 px-3 border-r border-gray-200 text-sm font-semibold">
                         {{ $audit->name }}</td>
-                    <td class="py-2 px-3 border-r border-gray-200 text-sm">
                     <td class="py-2 px-3 border-r border-gray-200 text-sm">
                         @if ($audit->subAudit->isNotEmpty())
                             <ul class="list-disc list-inside space-y-0.5">
@@ -135,7 +132,7 @@
                     style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
 
                     Submit
                 </button>
@@ -206,7 +203,7 @@
                     data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                     Save Changes
                 </button>
             </div>

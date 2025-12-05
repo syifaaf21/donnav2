@@ -22,7 +22,8 @@
             </div>
 
             <div class="modal-body p-5 bg-gray-50" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
-                <form action="{{ route('master.document-control.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('master.document-control.store') }}" method="POST"
+                    enctype="multipart/form-data">
                     @csrf
                     <div class="row g-4">
                         <div class="col-md-4">
@@ -128,15 +129,14 @@
 
 
                     {{-- Modal Footer --}}
-                    <div class="modal-footer border-0 p-4 justify-content-between bg-white mt-4 rounded-bottom-4">
-                        <button type="button"
-                            class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                    <div class="modal-footer border-0 justify-content-between mt-4 rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
                             data-bs-dismiss="modal"
                             style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
                         <button type="submit"
-                            class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Submit
                         </button>
                     </div>
