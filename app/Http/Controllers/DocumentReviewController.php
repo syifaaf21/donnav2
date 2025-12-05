@@ -472,7 +472,6 @@ class DocumentReviewController extends Controller
             'status_id' => $approvedStatus->id,
             'reminder_date' => $validated['reminder_date'],
             'deadline' => $validated['deadline'],
-            'user_id' => auth()->id(),
         ]);
         $mapping->timestamps = true;
 
@@ -546,7 +545,6 @@ class DocumentReviewController extends Controller
         $mapping->updateQuietly([
             'status_id' => $rejectedStatus->id ?? $mapping->status_id,
             'notes' => $request->notes,
-            'user_id' => auth()->id(),
         ]);
         $mapping->timestamps = true;
 
