@@ -1,4 +1,5 @@
-<header id="minimalNavbar" class="fixed top-8 right-14 z-50 flex justify-between items-center px-3 py-2 bg-white/50 backdrop-blur-sm border border-white rounded-3xl shadow-md">
+<header id="minimalNavbar"
+    class="fixed top-8 right-14 z-50 flex justify-between items-center px-3 py-2 bg-white/50 backdrop-blur-sm border border-white rounded-3xl shadow-md">
     <!-- RIGHT: Notification + Profile (pojok kanan) -->
     <div class="flex items-center px-2 py-1">
         <!-- Notification -->
@@ -123,13 +124,30 @@
                         {{ Auth::user()->name ?? 'User' }}
                     </p>
 
-                    <span class="block text-sm text-gray-500 truncate">
-                        {{ optional(Auth::user()->departments()->first())->name ?? 'Department' }}
-                    </span>
+                    <div class="space-y-1">
+                        @if (Auth::user()->departments->count() > 0)
+                            <div>
+                                @foreach (Auth::user()->departments as $department)
+                                    <span class="block text-sm text-gray-600">{{ $department->name }}</span>
+                                @endforeach
+                                <p class="text-xs text-gray-400 font-semibold">Departments</p>
+                            </div>
+                        @else
+                            <span class="block text-sm text-gray-500">No departments</span>
+                        @endif
 
-                    <span class="block text-sm text-gray-500 truncate">
-                        {{ optional(Auth::user()->roles()->first())->name ?? 'Role' }}
-                    </span>
+                        @if (Auth::user()->roles->count() > 0)
+                            <div>
+                                @foreach (Auth::user()->roles as $role)
+                                    <span class="block text-sm text-gray-600">{{ $role->name }}</span>
+                                @endforeach
+                                <p class="text-xs text-gray-400 font-semibold">Roles</p>
+
+                            </div>
+                        @else
+                            <span class="block text-sm text-gray-500">No roles</span>
+                        @endif
+                    </div>
                 </div>
 
                 <form action="{{ route('logout') }}" method="POST" role="none">

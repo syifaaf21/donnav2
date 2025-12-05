@@ -212,43 +212,40 @@ class AuditeeActionController extends Controller
                 if (!empty($auditFinding) && $auditFinding instanceof AuditFinding) {
 
                     // 1️⃣ Notify auditees + auditor that auditee action / assignment exists
-                    $recipients = collect();
-                    $recipients = $recipients->merge($auditFinding->auditee()->get());
-
                     if ($auditFinding->auditor) {
-                        $recipients->push($auditFinding->auditor);
-                    }
-
-                    $recipients = $recipients->unique('id')->filter()->values();
-
-                    if ($recipients->isNotEmpty()) {
                         Notification::send(
-                            $recipients,
+                            $auditFinding->auditor,
                             new FtppActionNotification(
                                 $auditFinding,
-                                'assigned',   // action: assigned
+                                'assigned',
                                 auth()->user()?->name
                             )
                         );
                     }
 
                     // 2️⃣ Notify Dept Head(s) of the finding's department that review is required
-                    if (!empty($auditFinding->department_id)) {
+                    $deptId = $auditFinding?->department_id;
+                    if (!empty($deptId)) {
                         $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['dept head']))
-                            ->where(function ($q) use ($auditFinding) {
-                                $q->whereHas('departments', fn($qq) => $qq->where('tm_departments.id', $auditFinding->department_id))
-                                    ->orWhere('department_id', $auditFinding->department_id);
+                            ->where(function ($q) use ($deptId) {
+                                $q->whereExists(function ($sub) use ($deptId) {
+                                    $sub->select(\DB::raw(1))
+                                        ->from('tt_user_department')
+                                        ->whereColumn('tt_user_department.user_id', 'users.id')
+                                        ->where('tt_user_department.department_id', $deptId);
+                                });
                             })
                             ->get();
 
                         if ($deptHeads->isNotEmpty()) {
-                            $customMessage = "Finding (No: {$auditFinding->registration_number}) needs your review.";
+                            $regNum = $auditFinding?->registration_number ?? 'N/A';
+                            $customMessage = "Finding (No: {$regNum}) needs your review.";
 
                             Notification::send(
-                                $deptHeads,
+                                $deptHeads->unique('id')->values(),
                                 new FtppActionNotification(
                                     $auditFinding,
-                                    'dept_head_checked', // action type
+                                    'assigned', // action type
                                     null,                // byUser optional
                                     $customMessage       // custom message
                                 )
@@ -500,7 +497,43 @@ class AuditeeActionController extends Controller
                 ]);
             }
 
+
             DB::commit();
+
+            // Kirim notifikasi kepada Dept Head bahwa perlu review setelah update auditee action
+            try {
+                if (!empty($auditFinding) && $auditFinding instanceof AuditFinding) {
+                    $deptId = (int) $auditFinding->department_id;
+                    $regNum = (string) $auditFinding->registration_number;
+
+                    $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['dept head']))
+                        ->where(function ($q) use ($deptId) {
+                            // avoid ambiguous `id` by checking existence in pivot table explicitly
+                            $q->whereExists(function ($sub) use ($deptId) {
+                                $sub->select(\DB::raw(1))
+                                    ->from('tt_user_department')
+                                    ->whereColumn('tt_user_department.user_id', 'users.id')
+                                    ->where('tt_user_department.department_id', $deptId);
+                            });
+                        })
+                        ->get();
+
+                    if ($deptHeads->isNotEmpty()) {
+                        $customMessage = "Finding (No: {$regNum}) needs your review.";
+                        Notification::send(
+                            $deptHeads->unique('id')->values(),
+                            new FtppActionNotification(
+                                $auditFinding,
+                                'auditee_revised', // custom action type
+                                null,
+                                $customMessage
+                            )
+                        );
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('FtppActionNotification (update -> auditee_revised) failed: ' . $e->getMessage());
+            }
 
             return redirect()->route('ftpp.index')->with('success', 'Auditee Action updated successfully.');
 

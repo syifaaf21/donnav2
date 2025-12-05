@@ -37,8 +37,8 @@
 
                         <!-- VERIFY BUTTON -->
                         <button type="button" onclick="verifyLeadAuditor()"
-                            :disabled="form.status_id != 10 || (userRole !== 'admin')"
-                            :class="form.status_id != 10 || (userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
+                            :disabled="form.status_id != 10 || (!userRoles.includes('admin'))"
+                            :class="form.status_id != 10 || (!userRoles.includes('admin')) ? 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-blue-600 hover:bg-blue-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">
@@ -49,8 +49,8 @@
 
                         <!-- RETURN BUTTON -->
                         <button type="button" onclick="returnForRevision()"
-                            :disabled="form.status_id != 10 || (userRole !== 'admin')"
-                            :class="form.status_id != 10 || (userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
+                            :disabled="form.status_id != 10 || (!userRoles.includes('admin'))"
+                            :class="form.status_id != 10 || (!userRoles.includes('admin')) ? 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-red-600 hover:bg-red-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">
@@ -81,8 +81,8 @@
 
                         <!-- VERIFY BUTTON -->
                         <button type="button" onclick="verifyAuditor()"
-                            :disabled="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin')"
-                            :class="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin') ?
+                            :disabled="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin'))"
+                            :class="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin')) ?
                                 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-blue-600 hover:bg-blue-700 text-white rounded-lg
@@ -94,8 +94,8 @@
 
                         <!-- RETURN BUTTON -->
                         <button type="button" onclick="returnForRevision()"
-                            :disabled="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin')"
-                            :class="form.status_id != 9 || (userRole !== 'auditor' && userRole !== 'admin') ?
+                            :disabled="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin'))"
+                            :class="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin')) ?
                                 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-red-600 hover:bg-red-700 text-white rounded-lg

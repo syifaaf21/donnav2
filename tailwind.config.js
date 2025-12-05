@@ -9,8 +9,13 @@ module.exports = {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['Poppins', 'ui-sans-serif', 'system-ui'],
+                heading: ['Inter', 'ui-sans-serif', 'system-ui'],
+            },
             colors: {
                 primaryLight: "#4569AD", // blue
+                primaryLight2: "#6199c6", // light blue
                 primaryDark: "#2C4A7B", // dark blue
                 danger: "#FF6F61", // red
                 dangerDark: "#CC5649", // dark red

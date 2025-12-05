@@ -31,17 +31,17 @@
     @stack('styles')
 </head>
 
-<body class="font-['Segoe_UI'] bg-primaryDark text-gray-800">
+<body class=" bg-primaryLight/80 text-gray-800">
 
     @include('layouts.partials.sidebar')
     @include('components.flash-message')
 
     <!-- ✅ Main Content -->
-    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 my-2 px-2">
+    <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 mt-2 pl-2">
         {{-- @include('layouts.partials.navbar') --}}
         <div class="my-3 mr-8 ml-8 pt-2 bg-gradient-to-r from-white/30 to-white/60 rounded-3xl">
             @include('layouts.partials.navbar')
-            <div class="flex items-center justify-between w-full px-8">
+            <div class="font-heading flex items-center justify-between w-full px-8">
                 <div class="text-white flex flex-col justify-center">
                     <h3 class="font-bold leading-tight">@yield('title', 'Dashboard')</h3>
                     <p class="max-w-[550px] text-white/80 text-sm">@yield('subtitle', '')</p>
@@ -53,12 +53,14 @@
         </div>
 
         <!-- Content -->
-        <main class="flex-1 p-2 mx-8 my-2">
+        <main class="font-heading flex-1 p-2 mx-8 my-2">
             @yield('content')
         </main>
 
-        <!-- Footer Inside Main Wrapper -->
-        @include('layouts.partials.footer')
+        <div class="mx-2">
+            <!-- Footer Inside Main Wrapper -->
+            @include('layouts.partials.footer')
+        </div>
     </div>
 
 

@@ -20,7 +20,7 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
         $schedule->command('notify:findings-due')
-            ->dailyAt('08:00')
+            ->daily()
             ->withoutOverlapping()
             ->runInBackground();
     }
