@@ -19,52 +19,55 @@
                         'value' => $totalDocuments + $totalFtpp,
                         'color' => 'primary',
                         'icon' => 'bi-collection',
-                        'bg' => 'bg-light',
                     ],
                     [
                         'label' => 'FTPP',
                         'value' => $ftpp,
-                        'color' => 'warning text-dark',
+                        'color' => 'warning',
                         'icon' => 'bi-file-earmark-post',
-                        'bg' => 'bg-light',
                     ],
                     [
                         'label' => 'Document Control',
                         'value' => $documentControls,
                         'color' => 'success',
                         'icon' => 'bi-calendar-range',
-                        'bg' => 'bg-light',
                     ],
                     [
                         'label' => 'Document Review',
                         'value' => $documentReviews,
                         'color' => 'danger',
                         'icon' => 'bi-clipboard-check',
-                        'bg' => 'bg-light',
                     ],
                 ];
             @endphp
 
             @foreach ($cards as $c)
                 <div class="col-6 col-md-3">
-                    <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 overflow-hidden"
+                    <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                        transition-all duration-200 border-0 h-100 overflow-hidden"
                         style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
-                        <div class="card-body p-3 d-flex flex-column">
+                        <div class="card-body p-3 d-flex flex-column justify-content-between">
 
                             {{-- Label --}}
-                            <small class="text-muted fw-medium" style="font-size: 0.78rem; letter-spacing: 0.3px;">
+                            <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
                                 {{ $c['label'] }}
                             </small>
 
-                            {{-- Value (⚡ highlight utama) --}}
-                            <div class="fw-bold mt-1 mb-2 text-{{ $c['color'] }}"
-                                style="font-size: 1.8rem; line-height: 1;">
+                            {{-- Value --}}
+                            <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
                                 {{ $c['value'] }}
                             </div>
 
-                            {{-- Icon (subtle + aligned right) --}}
-                            <div class="ms-auto mt-auto opacity-50" style="font-size: 1.4rem;">
+                            {{-- Icon --}}
+                            <div class="ms-auto mt-2"
+                                style="
+                            font-size: 1.7rem;
+                            padding: 8px 12px;
+                            border-radius: 12px;
+                            background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
+                            color: var(--bs-{{ $c['color'] }});
+                        ">
                                 <i class="bi {{ $c['icon'] }}"></i>
                             </div>
 
@@ -73,19 +76,20 @@
                 </div>
             @endforeach
         </div>
-
         {{-- ===== CHARTS SECTION ===== --}}
         <div class="row g-3">
             {{-- Pie Chart --}}
             <div class="col-lg-4">
-                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
                     style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2"
-                            style="font-size: 0.85rem; color: #1f2937;">
+                            style="font-size: 0.95rem; color: #1f2937;">
                             <div
-                                style="width: 24px; height: 24px; background: linear-gradient(135deg, #3b82f6, #60a5fa); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                <i data-feather="pie-chart" class="text-white" style="width: 14px; height: 14px;"></i>
+                                style="width: 28px; height: 28px; background-color: rgba(34,197,94,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <i data-feather="pie-chart"
+                                    style="width: 16px; height: 16px; color: rgba(34,197,94,0.7);"></i>
                             </div>
                             <span>Active vs Obsolete</span>
                         </div>
@@ -98,22 +102,35 @@
 
             {{-- Control Documents Chart --}}
             <div class="col-lg-8">
-                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
                     style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
+                            <h6 class="mb-0 fw-semibold d-flex align-items-center gap-2"
+                                style="font-size: 1rem; color: #1f2937;">
+                                {{-- Icon kalender hijau lembut --}}
+                                <span
+                                    style="display: inline-flex; align-items: center; justify-content: center;
+                                   width: 20px; height: 20px;
+                                   background-color: rgba(34,197,94,0.15); border-radius: 4px;">
+                                    <i data-feather="calendar"
+                                        style="width: 16px; height: 16px; color: rgba(34,197,94,0.7);"></i>
+                                </span>
                                 Document Control
                             </h6>
 
-                            {{-- 🔥 Toggle Mini Premium --}}
-                            <label class="toggle-switch" style="transform: scale(0.75);">
-                                <input type="checkbox" id="toggleObsoleteSwitch">
-                                <span class="slider small"></span>
-                                <span class="label-text ms-2" style="font-size: 0.9rem; color: #6b7280;">
+                            {{-- Toggle --}}
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggleObsoleteSwitch">
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="label-text" style="font-size: 0.75rem; color: #6b7280;">
                                     View Details
                                 </span>
-                            </label>
+                            </div>
+
                         </div>
 
                         <canvas id="controlDocsChart" style="max-height: 300px;"></canvas>
@@ -122,25 +139,29 @@
             </div>
         </div>
 
-
         {{-- Obsolete Table --}}
-        <div id="obsoleteTableContainer" class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2 mt-3 d-none"
+        <div id="obsoleteTableContainer"
+            class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+       hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2 mt-3 d-none"
             style="border-radius: 12px; overflow: hidden;">
-            <div class="card-body p-2"> <!-- p-3 → p-2 -->
-                <div class="fw-semibold mb-2 d-flex align-items-center gap-2" style="color: #1f2937; font-size: 0.85rem;">
-                    <!-- font-size: 0.95 → 0.85 -->
+            <div class="card-body p-2">
 
+                {{-- Label --}}
+                <div class="fw-semibold mb-2 d-flex align-items-center gap-2" style="color: #1f2937; font-size: 1rem;">
                     <div
-                        style="width: 22px; height: 22px; background: linear-gradient(135deg, #ef4444, #f87171);
-                border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                        <i data-feather="file-minus" class="text-white" style="width: 13px; height: 13px;"></i>
+                        style="width: 24px; height: 24px;
+                        background: rgba(34,197,94,0.15); border-radius: 6px;
+                        display: flex; align-items: center; justify-content: center;">
+                        <i data-feather="file-minus" style="width: 16px; height: 16px; color: rgba(34,197,94,0.7);"></i>
                     </div>
                     <span>Obsolete Documents</span>
                 </div>
 
-                <div id="obsoleteTableContent" style="font-size: 0.8rem;"></div> <!-- table text lebih kecil -->
+                {{-- Table content --}}
+                <div id="obsoleteTableContent" style="font-size: 0.8rem;"></div>
 
-                <div class="d-flex justify-content-center gap-2 mt-2"> <!-- mt-3 → mt-2 -->
+                {{-- Pagination --}}
+                <div class="d-flex justify-content-center gap-2 mt-2">
                     <button class="btn btn-outline-secondary btn-sm" id="prevPage"
                         style="border-radius: 6px; font-size: 0.75rem; padding: 3px 10px;">
                         <i class="bi bi-chevron-left me-1" style="font-size: 0.8rem;"></i> Previous
@@ -158,42 +179,83 @@
         {{-- Review Documents Chart (FULL WIDTH) --}}
         <div class="row g-3 mt-2">
             <div class="col-12">
-                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+                    hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2"
+                    style="border-radius: 10px;">
                     <div class="card-body p-2">
-                        <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
-                            Document Review
-                        </h6>
+
+                        {{-- Label dengan icon lembut --}}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span
+                                style="display: inline-flex; align-items: center; justify-content: center;
+                                 width: 24px; height: 24px;
+                                 background-color: rgba(239, 68, 68, 0.15); border-radius: 4px;">
+                                <i data-feather="clipboard" class="text-red-500"
+                                    style="width: 16px; height: 16px; color: #ef4444;"></i>
+                            </span>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 1rem; color: #1f2937;">
+                                Document Review
+                            </h6>
+                        </div>
+
+                        {{-- Chart --}}
                         <canvas id="reviewDocsChart" height="90"></canvas>
+
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- FTPP Status + Findings per Department (SEBELAH-SEBELAH) --}}
+        {{-- FTPP Status + Findings per Department --}}
         <div class="row g-3 mt-2 mb-3">
             <div class="col-lg-6">
-                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2"
+                    style="border-radius: 10px;">
                     <div class="card-body p-2">
-                        <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
-                            FTPP Status Summary
-                        </h6>
+                        {{-- Label dengan icon --}}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span
+                                style="display: inline-flex; align-items: center; justify-content: center;
+                                 width: 24px; height: 24px;
+                                 background-color: rgba(251,191,36,0.15); border-radius: 4px;">
+                                <i data-feather="file-text"
+                                    style="width: 16px; height: 16px; color: rgba(251,191,36,0.7);"></i>
+                            </span>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 1rem; color: #1f2937;">
+                                FTPP Status Summary
+                            </h6>
+                        </div>
+
                         <canvas id="ftppStatusChart" height="150"></canvas>
                     </div>
                 </div>
             </div>
 
             <div class="col-lg-6">
-                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2 max-height-100" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2 max-height-100"
+                    style="border-radius: 10px;">
                     <div class="card-body p-2">
-                        <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
-                            <i class="bi bi-search me-2"></i>Findings per Department
-                        </h6>
+                        {{-- Label dengan icon --}}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span
+                                style="display: inline-flex; align-items: center; justify-content: center;
+                                 width: 24px; height: 24px;
+                                 background-color: rgba(251,191,36,0.15); border-radius: 4px;">
+                                <i class="bi bi-search"
+                                    style="width: 14px; height: 14px; color: rgba(251,191,36,0.7);"></i>
+                            </span>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 1rem; color: #1f2937;">
+                                Findings per Department
+                            </h6>
+                        </div>
+
                         <canvas id="findingLineChart" height="150"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-
         <button id="scrollUpBtn"
             class="fixed bottom-5 right-5 w-12 h-12 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
             title="Scroll to top" style="background: linear-gradient(135deg, #3b82f6, #0ea5e9); z-index: 50;">
@@ -601,7 +663,7 @@
                 <div class="table-responsive">
                     <table class="table mb-0 align-middle"
                         style="border-radius: 12px; overflow: hidden; border:1px solid #e5e7eb;">
-                        <thead>
+                         <thead class="table-header-blue">
                             <tr>
                                 <th class="small fw-semibold py-3">Document</th>
                                 <th class="small fw-semibold py-3">Department</th>
@@ -651,4 +713,66 @@
             });
             feather.replace();
         </script>
+    @endpush
+    @push('styles')
+        <style>
+            /* Small Toggle Switch */
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 32px;
+                /* lebih kecil */
+                height: 16px;
+                /* lebih kecil */
+                vertical-align: middle;
+            }
+
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .toggle-switch .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                /* warna off */
+                transition: 0.4s;
+                border-radius: 16px;
+            }
+
+            .toggle-switch .slider::before {
+                position: absolute;
+                content: "";
+                height: 12px;
+                /* lebih kecil */
+                width: 12px;
+                /* lebih kecil */
+                left: 2px;
+                bottom: 2px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+            .toggle-switch input:checked+.slider {
+                background-color: rgba(34, 197, 94, 0.7);
+                /* hijau lembut */
+            }
+
+            .toggle-switch input:checked+.slider::before {
+                transform: translateX(16px);
+                /* geser sesuai lebar toggle */
+            }
+
+            .table-header-blue th {
+                background-color: #dbeafe;
+                color: #1f2937;
+            }
+        </style>
     @endpush
