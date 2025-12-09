@@ -72,7 +72,7 @@
                      class="notification-card flex items-start justify-between p-4 mb-3 border rounded-lg transition-transform transform
                         hover:shadow-sm cursor-pointer
                         @if (is_null($notification->read_at)) bg-blue-50 border-blue-100 @else bg-white border-gray-100 @endif
-                        {{ $isRedNotif ? 'bg-red-100' : '' }}">
+                        {{ $isRedNotif ? 'bg-red-100 hover:bg-red-200' : '' }}">
                     <div class="flex items-start gap-3 flex-1">
                         @if (is_null($notification->read_at))
                             <span class="w-3 h-3 rounded-full bg-blue-500 mt-2 flex-shrink-0" aria-hidden="true"></span>
