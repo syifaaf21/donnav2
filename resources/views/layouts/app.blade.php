@@ -8,6 +8,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard')</title>
 
+    <link rel="icon" href="{{ url('images/favicon.ico') }}">
+
     {{-- ✅ Include Tailwind via Vite --}}
     @vite('resources/css/app.css')
 

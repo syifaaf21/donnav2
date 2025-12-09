@@ -130,21 +130,21 @@
                     .map(a => `<span class='bg-blue-100 px-2 py-1 rounded'>${a.name}</span>`)
                     .join("");
 
-                // Sub Audit
+                // ✅ PINDAHKAN semua operasi DOM ke $nextTick
                 this.$nextTick(() => {
+                    // Sub Audit
                     this.loadSubAudit();
-                });
 
-                // Sub Klausul
-                this.loadSubKlausul();
+                    // Sub Klausul
+                    this.loadSubKlausul();
 
-                this.$nextTick(() => {
-                    // ===== RENDER ATTACHMENTS =====
-                    const files = this.form.file ?? this.form.attachments ?? [];
-                    const previewImageContainer = document.getElementById('previewImageContainer');
-                    const previewFileContainer = document.getElementById('previewFileContainer');
+                    // ===== RENDER ATTACHMENTS (FINDING) =====
+                    let previewImageContainer = document.getElementById('previewImageContainer');
+                    let previewFileContainer = document.getElementById('previewFileContainer');
 
                     if (previewImageContainer && previewFileContainer) {
+                        const files = this.form.file ?? [];
+
                         previewImageContainer.innerHTML = '';
                         previewFileContainer.innerHTML = '';
 
@@ -157,24 +157,38 @@
                                 const filename = f.original_name ?? path.split('/').pop() ?? '';
 
                                 if ((path + filename).match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
+                                    // IMAGE THUMBNAIL
                                     const img = document.createElement('img');
                                     img.src = fullUrl;
-                                    img.className = 'w-24 h-24 object-cover border rounded cursor-pointer hover:opacity-80';
-                                    img.onclick = () => window.open(fullUrl, '_blank');
+                                    img.className = 'w-24 h-24 object-cover border rounded cursor-pointer hover:opacity-80 transition';
+                                    img.onclick = () => showImagePreviewModal(fullUrl, filename);
                                     previewImageContainer.appendChild(img);
+                                } else if (filename.match(/\.pdf$/i)) {
+                                    // PDF CARD
+                                    const pdfCard = document.createElement('div');
+                                    pdfCard.className = 'border rounded p-3 cursor-pointer hover:bg-gray-50 transition w-28 text-center';
+                                    pdfCard.innerHTML = `
+                                        <i data-feather="file-text" class="text-red-500 mx-auto" style="width: 40px; height: 40px;"></i>
+                                        <span class="text-xs mt-2 block truncate" title="${filename}">${filename}</span>
+                                    `;
+                                    pdfCard.onclick = () => showFilePreviewModal(fullUrl, filename);
+                                    previewFileContainer.appendChild(pdfCard);
                                 } else {
-                                    const link = document.createElement('a');
-                                    link.href = fullUrl;
-                                    link.target = '_blank';
-                                    link.className = 'text-blue-600 hover:underline text-sm flex items-center gap-1';
-                                    link.innerHTML = `<i data-feather="file"></i> ${filename}`;
-                                    previewFileContainer.appendChild(link);
+                                    // OTHER FILES
+                                    const fileCard = document.createElement('div');
+                                    fileCard.className = 'border rounded p-3 cursor-pointer hover:bg-gray-50 transition w-28 text-center';
+                                    fileCard.innerHTML = `
+                                        <i data-feather="file" class="text-gray-500 mx-auto" style="width: 40px; height: 40px;"></i>
+                                        <span class="text-xs mt-2 block truncate" title="${filename}">${filename}</span>
+                                    `;
+                                    fileCard.onclick = () => showFilePreviewModal(fullUrl, filename);
+                                    previewFileContainer.appendChild(fileCard);
                                 }
                             });
 
                             if (typeof feather !== 'undefined') feather.replace();
                         } else {
-                            previewImageContainer.innerHTML = '<span class="text-gray-400 text-sm">-</span>';
+                            previewImageContainer.innerHTML = '<span class="text-gray-400 text-sm">No attachments</span>';
                         }
                     }
                 });
@@ -199,7 +213,6 @@
                             this.form[`why_${i}_mengapa`] = row.why_description || '';
                             this.form[`cause_${i}_karena`] = row.cause_description || '';
                         });
-
                     }
 
                     // ========================
@@ -250,15 +263,14 @@
                                 const filename = f.original_name ?? (f.file_path ?? f.path ?? '').split(
                                     '/').pop() ?? '';
 
-                                if ((f.file_path ?? filename).match(
-                                        /\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
+                                if ((f.file_path ?? filename).match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
                                     previewImageContainer2.innerHTML += `
                                         <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded cursor-pointer hover:opacity-80" onclick="window.open('${fullUrl}', '_blank')" />
                                     `;
                                 } else {
                                     previewFileContainer2.innerHTML += `
-                                        <a href="${fullUrl}" target="_blank" class="text-blue-600 hover:underline text-sm flex items-center gap-1">
-                                            <i data-feather="file"></i> ${filename}
+                                        <a href="${fullUrl}" target="_blank" class="flex gap-2 text-sm border p-2 rounded items-center text-blue-600 hover:underline">
+                                            <i data-feather="file-text"></i> ${filename}
                                         </a>
                                     `;
                                 }
@@ -276,8 +288,7 @@
                 let list = @json($subAudit);
                 const subContainer = document.getElementById('subAuditType');
 
-                // Guard: jika container tidak ada, skip
-                if (!subContainer) return;
+                if (!subContainer) return; // ✅ Guard jika element tidak ada
 
                 subContainer.innerHTML = "";
 
@@ -300,30 +311,31 @@
 
             loadSubKlausul() {
                 const list = this.form.sub_klausuls ?? [];
+                const container = document.getElementById('selectedSubContainer');
 
-                this.$nextTick(() => {
-                    const container = document.getElementById('selectedSubContainer');
+                if (!container) {
+                    console.warn('⚠️ Container selectedSubContainer tidak ditemukan');
+                    return;
+                }
 
-                    // Guard: jika container tidak ada, skip
-                    if (!container) return;
+                console.log('🔍 Sub Klausuls data:', list); // ✅ Debug
 
-                    container.innerHTML = "";
+                container.innerHTML = "";
 
-                    if (!list.length) {
-                        container.innerHTML = `<span class="text-gray-400 text-sm">-</span>`;
-                        return;
-                    }
+                if (!list.length) {
+                    container.innerHTML = `<span class="text-gray-400 text-sm">No clauses</span>`;
+                    return;
+                }
 
-                    list.forEach(s => {
-                        const code = s.code ?? s.klausul_code ?? '';
-                        const name = s.name ?? s.title ?? '';
+                list.forEach(s => {
+                    const code = s.code ?? '';
+                    const name = s.name ?? '';
 
-                        container.insertAdjacentHTML('beforeend', `
-                            <span class="bg-green-100 px-2 py-1 rounded text-xs">
-                                ${code}${code && name ? ' - ' : ''}${name}
-                            </span>
-                        `);
-                    });
+                    container.insertAdjacentHTML('beforeend', `
+                        <span class="bg-green-100 px-2 py-1 rounded text-xs mr-1 mb-1 inline-block">
+                            ${code}${code && name ? ' - ' : ''}${name}
+                        </span>
+                    `);
                 });
             },
         }

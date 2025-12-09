@@ -427,7 +427,6 @@
 @endsection
 
 @push('scripts')
-    <x-sweetalert-confirm />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
@@ -533,6 +532,15 @@
                     });
             });
 
+            // ✅ FIX: Jika ada old plant value, trigger change event
+            @if (old('plant'))
+                setTimeout(() => {
+                    const plant = @json(old('plant'));
+                    plantSelect.value = plant;
+                    plantSelect.dispatchEvent(new Event('change'));
+                }, 100);
+            @endif
+
             // Cancel button create modal
             const cancelCreateBtn = document.querySelector(
                 '#createPartNumberModal button[data-bs-dismiss="modal"]');
@@ -542,6 +550,9 @@
                 productTomSelect.clear();
                 modelTomSelect.clear();
                 processTomSelect.clear();
+                productTomSelect.disable();
+                modelTomSelect.disable();
+                processTomSelect.disable();
             });
 
 
