@@ -9,15 +9,18 @@ use Illuminate\Notifications\Notification;
 
 class FindingDueNotification extends Notification
 {
-     use Queueable;
+    use Queueable;
 
     protected $finding;
     protected $message;
+    protected $url;
 
-    public function __construct($finding, $message)
+    public function __construct($finding, $message, $url = null)
     {
         $this->finding = $finding;
         $this->message = $message;
+        $this->url = $url ?? route('ftpp.index');
+
     }
 
     public function via($notifiable)
@@ -30,7 +33,7 @@ class FindingDueNotification extends Notification
         return [
             'message' => $this->message,
             'finding_id' => $this->finding->id,
-            'url' => route('ftpp.index'),
+            'url' => $this->url ,
         ];
     }
 

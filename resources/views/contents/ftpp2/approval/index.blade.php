@@ -142,7 +142,7 @@
                 formLoaded: false,
                 mode: 'create',
                 selectedId: null,
-                userRole: "{{ strtolower(auth()->user()->roles->pluck('name')->first() ?? '') }}",
+                userRoles: @json(auth()->user()->roles->pluck('name')->map('strtolower')->toArray() ?? []),
                 form: {
                     status_id: 7,
                     audit_type_id: "",

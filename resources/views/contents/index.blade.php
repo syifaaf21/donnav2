@@ -18,21 +18,21 @@
                         'label' => 'Total Documents',
                         'value' => $totalDocuments + $totalFtpp,
                         'color' => 'primary',
-                        'icon' => 'bi-files',
+                        'icon' => 'bi-collection',
                         'bg' => 'bg-light',
                     ],
                     [
                         'label' => 'FTPP',
                         'value' => $ftpp,
                         'color' => 'warning text-dark',
-                        'icon' => 'bi-exclamation-circle',
+                        'icon' => 'bi-file-earmark-post',
                         'bg' => 'bg-light',
                     ],
                     [
                         'label' => 'Document Control',
                         'value' => $documentControls,
                         'color' => 'success',
-                        'icon' => 'bi-gear',
+                        'icon' => 'bi-calendar-range',
                         'bg' => 'bg-light',
                     ],
                     [
@@ -47,7 +47,7 @@
 
             @foreach ($cards as $c)
                 <div class="col-6 col-md-3">
-                    <div class="card shadow-sm border-0 h-100 overflow-hidden"
+                    <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 overflow-hidden"
                         style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
                         <div class="card-body p-3 d-flex flex-column">
@@ -78,7 +78,8 @@
         <div class="row g-3">
             {{-- Pie Chart --}}
             <div class="col-lg-4">
-                <div class="card shadow-sm border-0 h-100 p-2" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
+                    style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2"
                             style="font-size: 0.85rem; color: #1f2937;">
@@ -97,7 +98,8 @@
 
             {{-- Control Documents Chart --}}
             <div class="col-lg-8">
-                <div class="card shadow-sm border-0 h-100 p-2" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
+                    style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
@@ -122,7 +124,7 @@
 
 
         {{-- Obsolete Table --}}
-        <div id="obsoleteTableContainer" class="card shadow-sm border-0 p-2 mt-3 d-none"
+        <div id="obsoleteTableContainer" class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2 mt-3 d-none"
             style="border-radius: 12px; overflow: hidden;">
             <div class="card-body p-2"> <!-- p-3 → p-2 -->
                 <div class="fw-semibold mb-2 d-flex align-items-center gap-2" style="color: #1f2937; font-size: 0.85rem;">
@@ -156,7 +158,7 @@
         {{-- Review Documents Chart (FULL WIDTH) --}}
         <div class="row g-3 mt-2">
             <div class="col-12">
-                <div class="card shadow-sm border-0 p-2" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             Document Review
@@ -170,7 +172,7 @@
         {{-- FTPP Status + Findings per Department (SEBELAH-SEBELAH) --}}
         <div class="row g-3 mt-2 mb-3">
             <div class="col-lg-6">
-                <div class="card shadow-sm border-0 p-2" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             FTPP Status Summary
@@ -181,7 +183,7 @@
             </div>
 
             <div class="col-lg-6">
-                <div class="card shadow-sm border-0 p-2 max-height-100" style="border-radius: 10px;">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60 hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2 max-height-100" style="border-radius: 10px;">
                     <div class="card-body p-2">
                         <h6 class="mb-2 fw-semibold" style="font-size: 0.85rem; color: #1f2937;">
                             <i class="bi bi-search me-2"></i>Findings per Department
@@ -649,184 +651,4 @@
             });
             feather.replace();
         </script>
-    @endpush
-    @push('styles')
-        <style>
-            /* GLOBAL BACKGROUND */
-            body {
-                /* background: #f6f8fc !important; */
-            }
-
-            /*CARD STYLE (Neumorphism Light) */
-            .card {
-                border-radius: 12px !important;
-                background: #ffffff !important;
-                border: 1px solid #e5e7eb !important;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-                transition: all 0.25s ease;
-            }
-
-            .card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12) !important;
-            }
-
-            .finding-card {
-                padding: 4px !important;
-                border-radius: 12px !important;
-                /* kecil */
-                box-shadow:
-                    4px 4px 12px rgba(163, 177, 198, 0.25),
-                    -4px -4px 12px rgba(255, 255, 255, 0.8) !important;
-                /* shadow lebih tipis */
-            }
-
-            .finding-card canvas {
-                height: 120px !important;
-                /* height baru */
-            }
-
-
-            /*SUMMARY ICON BOX*/
-            .summary-icon-box {
-                width: 46px;
-                height: 46px;
-                border-radius: 14px;
-                background: linear-gradient(135deg, #1e3cff, #2d4fff);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0px 6px 16px rgba(30, 60, 255, 0.3);
-            }
-
-            /*TITLES*/
-            h6,
-            .fw-semibold {
-                color: #1e1e2d !important;
-                font-weight: 600 !important;
-                letter-spacing: 0.3px;
-            }
-
-            /*BLUE PANEL LIKE IMAGE*/
-            .blue-panel {
-                background: linear-gradient(135deg, #1e3cff, #2d4fff);
-                border-radius: 24px;
-                color: white;
-                box-shadow: 0px 12px 22px rgba(30, 60, 255, 0.3);
-                padding: 24px 28px;
-            }
-
-            /*TOGGLE SWITCH (Modern Blue)*/
-            /* HIDE the actual checkbox */
-            .toggle-switch input {
-                display: none;
-            }
-
-            /* Slider wrapper */
-            .toggle-switch {
-                position: relative;
-                display: inline-flex;
-                align-items: center;
-                cursor: pointer;
-            }
-
-            /* Background slider */
-            .toggle-switch .slider {
-                width: 40px;
-                height: 20px;
-                background: #d1d5db;
-                border-radius: 20px;
-                position: relative;
-                transition: all .3s ease;
-            }
-
-            /* Small slider version */
-            .toggle-switch .slider.small {
-                width: 34px;
-                height: 16px;
-            }
-
-            /* Toggle button */
-            .toggle-switch .slider::before {
-                content: "";
-                position: absolute;
-                width: 14px;
-                height: 14px;
-                background: white;
-                border-radius: 50%;
-                top: 50%;
-                left: 3px;
-                transform: translateY(-50%);
-                transition: all .3s ease;
-            }
-
-            /* When checked */
-            .toggle-switch input:checked+.slider {
-                background: #4f46e5;
-            }
-
-            .toggle-switch input:checked+.slider::before {
-                transform: translate(16px, -50%);
-            }
-
-            /*PIE & BAR LABEL COLORS*/
-            .chart-title {
-                color: #1e1e2d;
-                font-weight: 600;
-                font-size: 1rem;
-            }
-
-            /*OBSOLETE TABLE STYLE (Modern Clean)*/
-            #obsoleteTableContainer table {
-                border-radius: 12px !important;
-                overflow: hidden;
-                border: 1px solid #e5e7eb !important;
-                background: #ffffff !important;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            }
-
-            #obsoleteTableContainer table thead th {
-                background: #f3f6ff !important;
-                color: #1e2b50 !important;
-                font-weight: 700;
-                border-bottom: 1px solid #e0e7ff !important;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                padding: 1rem !important;
-            }
-
-            #obsoleteTableContainer table tbody td {
-                color: #3a3f52 !important;
-                padding: 0.9rem 1rem !important;
-                border-bottom: 1px solid #f0f2fa;
-            }
-
-            .table-row-hover:hover {
-                background: #f9fafb !important;
-            }
-
-            /*PAGINATION BUTTONS*/
-            #nextPage,
-            #prevPage {
-                background: white !important;
-                border-radius: 8px !important;
-                border: 1px solid #e5e7eb !important;
-                padding: 6px 14px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                transition: all 0.2s;
-            }
-
-            #nextPage:hover,
-            #prevPage:hover {
-                background: #f9fafb !important;
-                border-color: #d1d5db !important;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            }
-
-            /*SCROLL TO TOP BUTTON*/
-            #scrollUpBtn {
-                background: linear-gradient(135deg, #1e3cff, #3f69ff) !important;
-                box-shadow: 0px 10px 22px rgba(30, 60, 255, 0.35) !important;
-            }
-        </style>
     @endpush

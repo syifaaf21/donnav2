@@ -61,6 +61,14 @@ class FtppActionNotification extends Notification
                     $message = "Lead Auditor has closed the finding (Registration No: {$reg}).";
                     break;
 
+                case 'auditor_return':
+                    $message = "Auditor has returned the auditee action for finding (Registration No: {$reg}) for further revision.";
+                    break;
+
+                case 'auditee_revised':
+                    $message = "Auditee has revised the action for finding (Registration No: {$reg}).";
+                    break;
+
                 default:
                     // generic fallback
                     $message = "Finding {$reg} has been updated by {$by}.";

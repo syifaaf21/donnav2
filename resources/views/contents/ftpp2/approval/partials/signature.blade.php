@@ -14,8 +14,8 @@
 
     <!-- Jika belum approve -->
     <template x-if="!form.dept_head_signature">
-        <button type="button" :disabled="form.status_id != 8 || (userRole !== 'dept head' && userRole !== 'admin')"
-            :class="form.status_id != 8 || (userRole !== 'dept head' && userRole !== 'admin') ? 'opacity-40 cursor-not-allowed' : ''"
+        <button type="button" :disabled="form.status_id != 8 || (userRoles.includes('dept head') === false && userRoles.includes('admin') === false)"
+            :class="form.status_id != 8 || (userRoles.includes('dept head') === false && userRoles.includes('admin') === false) ? 'opacity-40 cursor-not-allowed' : ''"
             class="px-3 py-1 bg-blue-600 text-white text-xs rounded" @click="approveDeptHead(form.auditee_action_id)">
             Approve
         </button>

@@ -664,32 +664,27 @@ class FtppApprovalController extends Controller
 
             // dept head if present on auditee action
             if (!empty($action->dept_head_id)) {
-                $dh = User::find($action->dept_head_id);
-                if ($dh) $recipients->push($dh);
+            $dh = User::find($action->dept_head_id);
+            if ($dh) $recipients->push($dh);
             }
 
             // include lead auditors (role-based)
             $leadAuditors = User::whereHas('roles', fn($q) => $q->where('name', 'admin'))->get();
             if ($leadAuditors->isNotEmpty()) {
-                $recipients = $recipients->merge($leadAuditors);
-            }
-
-            // include auditor (the verifier) for trace
-            if ($finding->auditor) {
-                $recipients->push($finding->auditor);
+            $recipients = $recipients->merge($leadAuditors);
             }
 
             $recipients = $recipients->unique('id')->filter()->values();
 
             if ($recipients->isNotEmpty()) {
-                Notification::send(
-                    $recipients,
-                    new FtppActionNotification(
-                        $finding,
-                        'auditor_approved',
-                        auth()->user()?->name
-                    )
-                );
+            Notification::send(
+                $recipients,
+                new FtppActionNotification(
+                $finding,
+                'auditor_approved',
+                auth()->user()?->name
+                )
+            );
             }
         } catch (\Throwable $e) {
             \Log::warning('FtppActionNotification (auditor_approved) failed: ' . $e->getMessage());
@@ -720,7 +715,33 @@ class FtppApprovalController extends Controller
         $auditeeAction->verified_by_auditor = false;
         $auditeeAction->effectiveness_verification = $request->effectiveness_verification;
         $auditeeAction->dept_head_signature = 0; // reset tanda tangan dept head
+        $auditeeAction->dept_head_id = null;
         $auditeeAction->save();
+
+        // --- Kirim notifikasi bahwa auditor mengembalikan (return) untuk revisi ---
+        try {
+            // Hanya kirim notifikasi ke auditee yang tertera di FTPP
+            $recipients = $finding->auditee()->get()->unique('id')->filter()->values();
+
+            if ($recipients->isNotEmpty()) {
+            $by = auth()->user()?->name ?? 'Auditor';
+            $reg = $finding->registration_number ?? '-';
+            $reason = $auditeeAction->effectiveness_verification ?? $request->effectiveness_verification;
+            $customMessage = "{$by} has returned the finding (Registration No: {$reg}) for revision. Note: {$reason}";
+
+            Notification::send(
+                $recipients,
+                new FtppActionNotification(
+                $finding,
+                'auditor_return',
+                auth()->user()?->name,
+                $customMessage
+                )
+            );
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('FtppActionNotification (auditor_return) failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,

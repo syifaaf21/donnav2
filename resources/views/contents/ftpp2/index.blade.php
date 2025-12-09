@@ -170,7 +170,11 @@
             <!-- ACTION BUTTONS -->
             <div class="flex items-center gap-4">
 
-                @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                @php
+                    $userRoles = auth()->user()->roles->pluck('name')->toArray();
+                @endphp
+
+                @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
                         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 font-medium
                        shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
@@ -179,21 +183,38 @@
                     </a>
                 @endif
 
-                @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Dept Head']))
+                @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles) || in_array('Dept Head', $userRoles))
                     @php
-                        $role = optional(auth()->user()->roles->first())->name;
                         $badgeCount = 0;
-                        // helper to find count by case-insensitive name
                         $findCount = fn($needle) => collect($statuses)->first(
                             fn($s) => strtolower($s->name) === strtolower($needle),
                         )->audit_finding_count ?? 0;
 
-                        if ($role === 'Dept Head') {
-                            $badgeCount = $findCount('need check');
-                        } elseif ($role === 'Auditor') {
-                            $badgeCount = $findCount('need approval by auditor');
-                        } elseif (in_array($role, ['Super Admin', 'Admin'])) {
-                            $badgeCount = $findCount('need approval by lead auditor');
+                        if (in_array('Dept Head', $userRoles)) {
+                            $user = auth()->user();
+                            $userDepts = $user->departments ?? $user->department ?? null;
+                            
+                            $deptIds = [];
+                            if ($userDepts instanceof \Illuminate\Database\Eloquent\Collection || $userDepts instanceof \Illuminate\Support\Collection) {
+                                $deptIds = $userDepts->pluck('id')->toArray();
+                            } elseif ($userDepts) {
+                                $deptIds = [$userDepts->id];
+                            }
+                            
+                            if (!empty($deptIds)) {
+                                $badgeCount += \App\Models\AuditFinding::whereIn('department_id', $deptIds)
+                                    ->whereHas('status', function ($q) {
+                                        $q->whereRaw('LOWER(name) = ?', ['need check']);
+                                    })->count();
+                            }
+                        }
+                        
+                        if (in_array('Auditor', $userRoles)) {
+                            $badgeCount += $findCount('need approval by auditor');
+                        }
+                        
+                        if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles)) {
+                            $badgeCount += $findCount('need approval by lead auditor');
                         }
                     @endphp
 
