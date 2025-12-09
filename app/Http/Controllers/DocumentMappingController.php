@@ -1151,11 +1151,10 @@ class DocumentMappingController extends Controller
                     Auth::user()->name,
                     null,
                     $newDocument->name,
-                    route('document-control.index')
+                    route('document-control.department', $mapping->department->name), // <-- pakai nama, bukan ID
                 ));
             }
         }
-
         return redirect()->route('master.document-control.index')
             ->with('success', 'Document created successfully!');
     }
