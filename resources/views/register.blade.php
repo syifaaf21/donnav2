@@ -20,7 +20,7 @@
             <div class="card shadow-lg rounded-3">
                 <div class="text-grey-700 rounded-top mx-auto p-3">
                     <div class="d-flex align-items-center">
-                        <img src="{{ asset('images/madonna.png') }}" alt="Logo" class="me-3" style="height:40px;">
+                        {{-- <img src="{{ asset('images/madonna.png') }}" alt="Logo" class="me-3" style="height:40px;"> --}}
                         <div>
                             <h5 class="mb-0">Create Your Account</h5>
                             <small class="opacity-75">Join and access your dashboard</small>
@@ -62,7 +62,7 @@
                         </div>
 
                         <!-- Email -->
-                        <div class="col-12">
+                        {{-- <div class="col-12">
                             <label for="email" class="form-label fw-semibold small">
                                 <i class="bi bi-envelope-fill me-1"></i>Email
                             </label>
@@ -72,7 +72,7 @@
                             @error('email')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
-                        </div>
+                        </div> --}}
 
                         <!-- Password Field -->
                         <div class="col-12">
@@ -187,3 +187,17 @@
 </body>
 
 </html>
+<style>
+    .ts-dropdown {
+        top: auto !important;
+        bottom: 100% !important;
+        margin-bottom: 4px !important;
+        animation: dropUp 0.15s ease-out;
+    }
+
+    @keyframes dropUp {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
