@@ -188,7 +188,7 @@
 </form>
 <!-- Sidebar Klausul -->
 <div id="sidebarKlausul"
-    class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+    class="fixed top-24 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
     <!-- Header -->
@@ -230,7 +230,7 @@
 
 {{-- Sidebar Select Dept/Proc/Prod by Plant --}}
 <div id="sidebarPlant"
-    class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+    class="fixed top-24 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0">
@@ -287,7 +287,7 @@
 
 {{-- Sidebar select auditee --}}
 <div id="auditeeSidebar"
-    class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+    class="fixed top-24 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0">
@@ -998,7 +998,8 @@
                     try {
                         firstErrorEl.focus();
                     } catch (e) {
-                        /* ignore */ }
+                        /* ignore */
+                    }
                 }
                 return;
             }

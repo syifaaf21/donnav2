@@ -192,15 +192,42 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
+            // Add caching and request deduplication
+            let activeRequests = new Map();
+            let requestCache = new Map();
+
             async function fetchJson(url) {
-                try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-                    return await res.json();
-                } catch (e) {
-                    console.error("fetchJson error:", url, e);
-                    return null;
+                // Check cache first
+                if (requestCache.has(url)) {
+                    return requestCache.get(url);
                 }
+
+                // If request is already in progress, wait for it
+                if (activeRequests.has(url)) {
+                    return await activeRequests.get(url);
+                }
+
+                const requestPromise = (async () => {
+                    try {
+                        const res = await fetch(url);
+                        if (!res.ok) throw new Error("HTTP " + res.status);
+                        const data = await res.json();
+
+                        // Cache for 5 minutes
+                        requestCache.set(url, data);
+                        setTimeout(() => requestCache.delete(url), 300000);
+
+                        return data;
+                    } catch (e) {
+                        console.error("fetchJson error:", url, e);
+                        return null;
+                    } finally {
+                        activeRequests.delete(url);
+                    }
+                })();
+
+                activeRequests.set(url, requestPromise);
+                return await requestPromise;
             }
 
             function createTS(el, opts = {}) {
@@ -268,20 +295,15 @@
                 const docEl = form.querySelector('[name="document_id"]');
 
                 const tsPlant = createTS(plantEl);
-                const tsModel = createTS(modelEl, {
-                    maxItems: null
-                });
-                const tsProduct = createTS(prodEl, {
-                    maxItems: null
-                });
-                const tsProcess = createTS(procEl, {
-                    maxItems: null
-                });
-                const tsPart = createTS(partEl, {
-                    maxItems: null
-                });
+                const tsModel = createTS(modelEl, { maxItems: null });
+                const tsProduct = createTS(prodEl, { maxItems: null });
+                const tsProcess = createTS(procEl, { maxItems: null });
+                const tsPart = createTS(partEl, { maxItems: null });
                 const tsDept = createTS(deptEl);
                 const tsDoc = createTS(docEl);
+
+                // Flag to prevent triggering cascade during initialization
+                let isInitializing = false;
 
                 async function loadByPlant(plant) {
                     if (!plant) {
@@ -314,6 +336,8 @@
                 }
 
                 tsPlant.on("change", async val => {
+                    if (isInitializing) return; // Skip during init
+
                     disableAndClear(tsModel);
                     disableAndClear(tsProduct);
                     disableAndClear(tsProcess);
@@ -325,68 +349,101 @@
                 });
 
                 tsPart.on("change", async val => {
+                    if (isInitializing) return; // Skip during init
+
                     if (!val || val.length === 0) {
-                        disableAndClear(tsModel);
-                        disableAndClear(tsProduct);
-                        disableAndClear(tsProcess);
-                        tsDept.enable();
+                        const currentPlant = tsPlant.getValue();
+                        if (currentPlant) {
+                            await loadByPlant(currentPlant);
+                        }
                         return;
                     }
+
                     if (!Array.isArray(val)) val = [val];
-                    let allProducts = [],
-                        allModels = [],
-                        allProcesses = [];
-                    for (const partId of val) {
-                        const detail = await fetchJson(
-                            `/api/part-number-details/${encodeURIComponent(partId)}`);
+
+                    let allProducts = [], allModels = [], allProcesses = [];
+
+                    // Batch fetch all part details
+                    const detailPromises = val.map(partId =>
+                        fetchJson(`/api/part-number-details/${encodeURIComponent(partId)}`)
+                    );
+
+                    const details = await Promise.all(detailPromises);
+
+                    details.forEach(detail => {
                         if (detail && !detail.error) {
                             if (detail.product) allProducts.push(detail.product);
                             if (detail.model) allModels.push(detail.model);
                             if (detail.process) allProcesses.push(detail.process);
                         }
-                    }
+                    });
+
                     const uniqueById = arr => [...new Map(arr.map(i => [i.id, i])).values()];
                     const formatTS = arr => arr.map(i => ({
                         value: i.id,
-                        text: i.name ?? i.part_number ?? String(i.id)
+                        text: i.text ?? i.name ?? i.part_number ?? String(i.id),
+                        name: i.text ?? i.name ?? i.part_number ?? String(i.id),
                     }));
 
+                    // Update dropdowns
+                    tsProduct.clear(true);
                     tsProduct.clearOptions();
                     tsProduct.addOptions(formatTS(uniqueById(allProducts)));
                     tsProduct.setValue(uniqueById(allProducts).map(p => p.id));
                     tsProduct.enable();
 
+                    tsModel.clear(true);
                     tsModel.clearOptions();
                     tsModel.addOptions(formatTS(uniqueById(allModels)));
                     tsModel.setValue(uniqueById(allModels).map(m => m.id));
                     tsModel.enable();
 
+                    tsProcess.clear(true);
                     tsProcess.clearOptions();
                     tsProcess.addOptions(formatTS(uniqueById(allProcesses)));
                     tsProcess.setValue(uniqueById(allProcesses).map(p => p.id));
                     tsProcess.enable();
                 });
 
+
                 const modalEl = document.getElementById(`editDocumentModal-${id}`);
                 modalEl.addEventListener("shown.bs.modal", async () => {
-                    // Inisialisasi Quill hanya 1x
-                    if (modalEl.dataset.quillInitialized === "1") return;
-                    initQuill(`quill_editor_edit${id}`, `notes_input_edit${id}`);
+                    isInitializing = true; // Set flag to prevent cascade
 
-                    // Set multi-select default value
+                    const currentPlant = tsPlant.getValue();
+
+                    // 1️⃣ FILTER ULANG semua options berdasarkan plant saat ini
+                    if (currentPlant) {
+                        await loadByPlant(currentPlant);
+                    }
+
+                    // 2️⃣ Inisialisasi Quill hanya sekali
+                    if (modalEl.dataset.quillInitialized !== "1") {
+                        initQuill(`quill_editor_edit${id}`, `notes_input_edit${id}`);
+                        modalEl.dataset.quillInitialized = "1";
+                    }
+
+                    // 3️⃣ Set ulang value untuk model/product/process/part
                     const modelIds = JSON.parse(modalEl.dataset.modelIds || "[]");
                     const productIds = JSON.parse(modalEl.dataset.productIds || "[]");
                     const processIds = JSON.parse(modalEl.dataset.processIds || "[]");
                     const partIds = JSON.parse(modalEl.dataset.partIds || "[]");
 
-                    // Set value hanya untuk modal ini
-                    tsModel.setValue(modelIds);
-                    tsProduct.setValue(productIds);
-                    tsProcess.setValue(processIds);
-                    tsPart.setValue(partIds);
+                    // Set values without triggering change events
+                    tsModel.setValue(modelIds, true);
+                    tsProduct.setValue(productIds, true);
+                    tsProcess.setValue(processIds, true);
 
-                    modalEl.dataset.quillInitialized = "1";
+                    const deptId = form.querySelector('[name="department_id"]').value;
+                    if (deptId) tsDept.setValue(deptId, true);
+
+                    // Set part number last and allow it to trigger after init
+                    setTimeout(() => {
+                        isInitializing = false; // Release flag
+                        tsPart.setValue(partIds, true);
+                    }, 100);
                 });
+
 
             });
         });

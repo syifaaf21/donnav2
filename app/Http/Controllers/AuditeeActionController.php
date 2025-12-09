@@ -49,7 +49,7 @@ class AuditeeActionController extends Controller
             'department',
             'process',
             'product',
-            'subKlausuls',
+            'subKlausuls',  // pastikan relasi ini ada
             'file',
             'status',
             'auditeeAction',
@@ -58,6 +58,7 @@ class AuditeeActionController extends Controller
             'auditeeAction.preventiveActions',
             'auditeeAction.file',
         ])->findOrFail($id);
+
         $departments = Department::select('id', 'name')->get();
         $processes = Process::select('id', 'name')->get();
         $products = Product::select('id', 'name')->get();
@@ -66,12 +67,12 @@ class AuditeeActionController extends Controller
             ->select('id', 'name')->get();
 
         $auditTypes = Audit::with('subAudit')->get();
-
         $subAudit = SubAudit::all();
-
         $findingCategories = FindingCategory::all();
-
         $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
+
+        // Debug: cek apakah sub_klausuls terload
+        // dd($finding->subKlausuls); // uncomment untuk debug
 
         return view('contents.ftpp2.auditee-action.create', compact('finding', 'departments', 'processes', 'products', 'auditors', 'auditTypes', 'subAudit', 'findingCategories', 'klausuls'));
     }

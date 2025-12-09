@@ -116,6 +116,11 @@ class AuditFindingController extends Controller
         // Store auditee relationship
         $auditFinding->auditee()->attach($validated['auditee_ids']);
 
+        // ✅ ATTACH SUB KLAUSUL (yang sebelumnya hilang)
+        if (!empty($validated['sub_klausul_id'])) {
+            $auditFinding->subKlausuls()->attach($validated['sub_klausul_id']);
+        }
+
         // send notification to auditees
         try {
             $recipients = $auditFinding->auditee()->get();
@@ -126,7 +131,7 @@ class AuditFindingController extends Controller
                     $recipients,
                     new FtppActionNotification(
                         $auditFinding,
-                        'created'   // 🔥 ACTION: created (assign immediately)
+                        'created'
                     )
                 );
             }

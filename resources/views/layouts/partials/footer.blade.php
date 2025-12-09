@@ -25,13 +25,12 @@
             </div>
 
             <!-- Right -->
-            <div class="text-center mt-3 md:text-right">
-                <p class="text-xs text-slate-300/60">Powered by</p>
+            <div class="flex justify-between items-center text-center mt-3 md:text-right">
+                <p class="text-xs text-slate-300/60 mr-2">Copy Right</p>
                 <p class="font-semibold text-white text-xs whitespace-nowrap">
                     AISIN Indonesia Automotive
                 </p>
             </div>
-
         </div>
     </div>
 </footer>

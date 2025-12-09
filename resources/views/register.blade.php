@@ -65,7 +65,7 @@
                         </div>
 
                         <!-- Email -->
-                        <div class="col-12">
+                        {{-- <div class="col-12">
                             <label for="email" class="form-label fw-semibold small">
                                 <i class="bi bi-envelope-fill me-1"></i>Email
                             </label>
@@ -75,7 +75,7 @@
                             @error('email')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
-                        </div>
+                        </div> --}}
 
                         <!-- Password Field -->
                         <div class="col-12">
@@ -262,3 +262,23 @@
 </body>
 
 </html>
+<style>
+    .ts-dropdown {
+        top: auto !important;
+        bottom: 100% !important;
+        margin-bottom: 4px !important;
+        animation: dropUp 0.15s ease-out;
+    }
+
+    @keyframes dropUp {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

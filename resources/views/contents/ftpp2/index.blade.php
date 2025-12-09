@@ -63,7 +63,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -253,7 +253,7 @@
                             class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden bg-white shadow-md shadow-gray-300">
                             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
                                     </th>

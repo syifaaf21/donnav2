@@ -47,22 +47,39 @@
                 <!-- Notification list -->
                 <div class="overflow-y-auto max-h-64 divide-y divide-gray-100">
                     @forelse(auth()->user()->notifications->take(8) as $notification)
+                        @php
+                            $isRedNotif =
+                                in_array($notification->type, [
+                                    \App\Notifications\DocumentCreatedNotification::class,
+                                    \App\Notifications\FindingDueNotification::class,
+                                ]) ||
+                                ($notification->type === \App\Notifications\DocumentActionNotification::class &&
+                                    (($notification->data['action'] ?? null) === 'rejected' ||
+                                        str_contains(strtolower($notification->data['message'] ?? ''), 'rejected')));
+                        @endphp
                         <a href="{{ $notification->data['url'] ?? '#' }}"
-                            class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors" role="menuitem">
+                            class="notification-item no-underline hover:no-underline flex items-start gap-3 px-4 py-3 {{ $isRedNotif ? 'bg-red-100 hover:bg-red-200' : '' }} hover:bg-gray-50 transition-colors"
+                            role="menuitem" data-id="{{ $notification->id }}"
+                            data-unread="{{ !$notification->read_at ? 'true' : 'false' }}">
 
                             <!-- Status dot -->
                             <span class="flex-none mt-1">
-                                @if (!$notification->read_at)
-                                    <span
-                                        class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white"></span>
+                                @if (is_null($notification->read_at))
+                                    <span class="w-3 h-3 rounded-full bg-blue-500 mt-2 flex-shrink-0"
+                                        aria-hidden="true"></span>
+                                @elseif ($isRedNotif)
+                                    <span class="w-3 h-3 rounded-full bg-red-500 mt-2 flex-shrink-0"
+                                        aria-hidden="true"></span>
                                 @else
-                                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                                    <span class="w-3 h-3 rounded-full bg-gray-200 mt-2 flex-shrink-0"
+                                        aria-hidden="true"></span>
                                 @endif
                             </span>
 
                             <!-- Content -->
                             <div class="min-w-0 flex-auto">
-                                <div class="text-sm text-gray-800 leading-snug">
+                                <div
+                                    class="text-sm leading-snug {{ $isRedNotif ? 'text-red-500' : 'text-gray-800' }}">
                                     {{ Str::limit($notification->data['message'] ?? 'No message', 120) }}
                                 </div>
                                 <div class="text-xs text-gray-400 mt-1">
@@ -265,6 +282,49 @@
                 // collapse sidebar with escape for convenience
                 setSidebarState(false);
             }
+        });
+
+        // ✅ Mark as read on notification click
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async function(e) {
+                const notifId = this.dataset.id;
+                const isUnread = this.dataset.unread === 'true';
+
+                if (!isUnread) return; // Skip jika sudah read
+
+                e.preventDefault();
+                const url = this.href;
+                const token = document.querySelector('meta[name="csrf-token"]')
+                    .getAttribute('content');
+
+                try {
+                    await fetch(`/notifications/${notifId}/mark-read`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    // Update badge counter
+                    const badge = document.querySelector('span[aria-atomic="true"]');
+                    if (badge) {
+                        let count = parseInt(badge.textContent);
+                        if (count > 1) {
+                            badge.textContent = (count - 1) + '+';
+                        } else {
+                            badge.remove();
+                        }
+                    }
+
+                    // Redirect ke URL
+                    window.location.href = url;
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                    // Redirect tetap dilakukan meski error
+                    window.location.href = url;
+                }
+            });
         });
     });
 </script>

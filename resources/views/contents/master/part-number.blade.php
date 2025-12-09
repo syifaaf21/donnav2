@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Part Number')
+@section('title', 'Master Part Number')
 @section('subtitle', 'Manage Part Number records.')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
@@ -30,8 +30,8 @@
                 </div>
             </div> --}}
 
-            {{-- Breadcrumbs --}}
-            {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1"
+        {{-- Breadcrumbs --}}
+        {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1"
                 aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -143,9 +143,26 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-gray-500 py-4">No part numbers found.</td>
+                                    <td colspan="7" class="py-6 text-center">
+                                        <div class="flex flex-col items-center justify-center text-gray-500">
+
+                                            <!-- Icon Folder / Search / Empty State -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor"
+                                                class="w-12 h-12 mb-2 text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2
+                                 2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
+                                 0 01-2 2z" />
+                                            </svg>
+
+                                            <span class="text-gray-500 text-sm">
+                                                No part numbers found.
+                                            </span>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforelse
+
                         </tbody>
                     </table>
                 </div>
@@ -158,7 +175,6 @@
     </div>
 
     {{-- Modals Edit / Create (existing code preserved) --}}
-    {{-- ...existing code... --}}
     @foreach ($partNumbers as $part)
         <div class="modal fade" id="editPartNumberModal-{{ $part->id }}" tabindex="-1"
             aria-labelledby="editPartNumberModalLabel-{{ $part->id }}" aria-hidden="true">
@@ -268,7 +284,8 @@
                             data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        <button type="submit"
+                            class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Save Changes
                         </button>
                     </div>
@@ -276,7 +293,6 @@
             </div>
         </div>
     @endforeach
-
 
     {{-- Modal Create --}}
     <div class="modal fade" id="createPartNumberModal" tabindex="-1" aria-labelledby="createPartNumberModalLabel"
@@ -400,18 +416,17 @@
                         data-bs-dismiss="modal">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                    <button type="submit"
+                        class="px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         Submit
                     </button>
                 </div>
             </form>
         </div>
     </div>
-
 @endsection
 
 @push('scripts')
-    <x-sweetalert-confirm />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-title]'));
@@ -517,6 +532,15 @@
                     });
             });
 
+            // ✅ FIX: Jika ada old plant value, trigger change event
+            @if (old('plant'))
+                setTimeout(() => {
+                    const plant = @json(old('plant'));
+                    plantSelect.value = plant;
+                    plantSelect.dispatchEvent(new Event('change'));
+                }, 100);
+            @endif
+
             // Cancel button create modal
             const cancelCreateBtn = document.querySelector(
                 '#createPartNumberModal button[data-bs-dismiss="modal"]');
@@ -526,6 +550,9 @@
                 productTomSelect.clear();
                 modelTomSelect.clear();
                 processTomSelect.clear();
+                productTomSelect.disable();
+                modelTomSelect.disable();
+                processTomSelect.disable();
             });
 
 

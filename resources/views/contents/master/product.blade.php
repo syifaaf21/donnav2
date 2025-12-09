@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Product')
+@section('title', 'Master Product')
 @section('subtitle',
     'Manage Product records.')
 @section('breadcrumbs')
@@ -356,6 +356,8 @@
                             text: "This action cannot be undone.",
                             icon: 'warning',
                             showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
                             confirmButtonText: 'Yes, delete it!',
                             cancelButtonText: 'Cancel'
                         }).then((result) => {

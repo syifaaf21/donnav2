@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Document Review Master')
+@section('title', 'Master Document Review')
 @section('subtitle',
     'Manage document reviews')
 @section('breadcrumbs')
@@ -804,6 +804,52 @@
             });
 
         });
+    </script>
+    <script>
+        let activeRequests = new Map(); // Track active requests
+        let requestCache = new Map(); // Cache responses
+
+        async function fetchJson(url) {
+            // Check cache first
+            if (requestCache.has(url)) {
+                return requestCache.get(url);
+            }
+
+            // If request is already in progress, wait for it
+            if (activeRequests.has(url)) {
+                return await activeRequests.get(url);
+            }
+
+            // Create new request promise
+            const requestPromise = fetch(url, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Accept": "application/json"
+                }
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                // Cache successful response for 5 minutes
+                requestCache.set(url, data);
+                setTimeout(() => requestCache.delete(url), 300000);
+                return data;
+            })
+            .catch(err => {
+                console.error('fetchJson error:', url, err);
+                throw err;
+            })
+            .finally(() => {
+                activeRequests.delete(url);
+            });
+
+            activeRequests.set(url, requestPromise);
+            return await requestPromise;
+        }
     </script>
 @endpush
 

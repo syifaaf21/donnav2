@@ -7,11 +7,11 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
-   protected function schedule(Schedule $schedule)
+    protected function schedule(Schedule $schedule)
     {
         // Jalankan SendDocumentControlReminder setiap hari jam 08:00
         $schedule->command('document:send-reminder')
-            ->weeklyOn(1, '08:00') // 1 = Senin
+            ->weeklyOn(5, '08:00') // 1 = Senin
             ->withoutOverlapping()
             ->runInBackground();
         // Opsional: jalankan di background
@@ -20,6 +20,10 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
         $schedule->command('notify:findings-due')
+            ->dailyAt('12:00')
+            ->withoutOverlapping()
+            ->runInBackground();
+        $schedule->command('notifications:purge-old')
             ->daily()
             ->withoutOverlapping()
             ->runInBackground();

@@ -44,7 +44,7 @@
                 </div>
 
                 <!-- Email -->
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label class="form-label fw-semibold">Email</label>
                     <input type="email" name="email"
                         class="form-control border-0 shadow-sm rounded-3 @error('email') is-invalid @enderror"
@@ -53,7 +53,7 @@
                     @error('email')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
-                </div>
+                </div> --}}
 
                 <!-- Password -->
                 <div class="col-md-6">
