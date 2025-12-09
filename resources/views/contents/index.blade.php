@@ -243,8 +243,8 @@
                                 style="display: inline-flex; align-items: center; justify-content: center;
                                  width: 24px; height: 24px;
                                  background-color: rgba(251,191,36,0.15); border-radius: 4px;">
-                                <i class="bi bi-search"
-                                    style="width: 14px; height: 14px; color: rgba(251,191,36,0.7);"></i>
+                                <i data-feather="bar-chart-2"
+                                    style="width: 16px; height: 16px; color: rgba(251,191,36,0.7);"></i>
                             </span>
                             <h6 class="mb-0 fw-semibold" style="font-size: 1rem; color: #1f2937;">
                                 Findings per Department
