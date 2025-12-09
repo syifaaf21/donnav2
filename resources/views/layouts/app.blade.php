@@ -39,7 +39,7 @@
     <!-- ✅ Main Content -->
     <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 mt-2 pl-2">
         {{-- @include('layouts.partials.navbar') --}}
-        <div class="my-3 mr-8 ml-8 pt-2 bg-gradient-to-r from-white/30 to-white/60 rounded-3xl">
+        <div class="my-3 mr-8 ml-8 pt-2 bg-gradient-to-r from-gray-400/30 to-gray-200/60 rounded-3xl">
             @include('layouts.partials.navbar')
             <div class="font-heading flex items-center justify-between w-full px-8">
                 <div class="text-white flex flex-col justify-center">

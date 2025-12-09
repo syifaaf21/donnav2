@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Document Control Master')
+@section('title', 'Master Document Control')
 @section('subtitle', 'Manage document controls')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">

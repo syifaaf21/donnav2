@@ -170,3 +170,7 @@ Route::get('/head-klausuls', function (Request $request) {
     if ($q) $query->where('name', 'like', "%{$q}%");
     return $query->select('id', 'name', 'code')->orderBy('name')->get();
 });
+
+Route::middleware(['throttle:120,1'])->group(function () {
+    Route::get('/part-number-details/{id}', [PartNumberController::class, 'getDetails']);
+});

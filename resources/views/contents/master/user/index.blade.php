@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'User Master')
+@section('title', 'Master User')
 @section('subtitle', 'Manage users')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">

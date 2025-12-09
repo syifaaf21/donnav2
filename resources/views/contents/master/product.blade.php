@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Product')
+@section('title', 'Master Product')
 @section('subtitle',
     'Manage Product records.')
 @section('breadcrumbs')

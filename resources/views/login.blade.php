@@ -21,16 +21,13 @@
         class="w-full max-w-sm p-4 bg-white/70 backdrop-blur border border-white rounded-xl shadow-lg overflow-hidden transition-colors duration-200 focus-within:bg-white">
         <!-- Logo -->
         <div class="flex flex-col items-center mb-4">
-            <div class="flex justify-between items-center">
-                <div class="p-3 bg-gradient-to-br from-primaryLight/10 to-primaryDark/10 rounded-full shadow-md">
-                    <div class="relative w-16 h-16 group">
-                        <img src="{{ asset('images/madonna-logo.png') }}" alt="Madonna logo"
-                            class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-100 group-hover:opacity-0">
-                        <img src="{{ asset('images/madonna.png') }}" alt="Madonna hover"
-                            class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-0 group-hover:opacity-100">
-                    </div>
+            <div class="p-3 bg-gradient-to-br from-primaryLight/10 to-primaryDark/10 rounded-full shadow-md">
+                <div class="relative w-48 h-16 group">
+                    <img src="{{ asset('images/madonna.png') }}" alt="Madonna logo"
+                        class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-100 group-hover:opacity-0">
+                    <img src="{{ asset('images/madonna-logo.png') }}" alt="Madonna hover"
+                        class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-0 group-hover:opacity-100">
                 </div>
-                <h3 class="font-serif text-2xl ml-2">MADONNA</h3>
             </div>
             <h2 class="mt-3 text-2xl font-semibold text-gray-800">Sign in</h2>
             {{-- <p class="mt-1 text-sm text-gray-500 text-center">Enter your 6-digit NPK and password to access your account</p> --}}

@@ -193,14 +193,14 @@
                         if (in_array('Dept Head', $userRoles)) {
                             $user = auth()->user();
                             $userDepts = $user->departments ?? $user->department ?? null;
-                            
+
                             $deptIds = [];
                             if ($userDepts instanceof \Illuminate\Database\Eloquent\Collection || $userDepts instanceof \Illuminate\Support\Collection) {
                                 $deptIds = $userDepts->pluck('id')->toArray();
                             } elseif ($userDepts) {
                                 $deptIds = [$userDepts->id];
                             }
-                            
+
                             if (!empty($deptIds)) {
                                 $badgeCount += \App\Models\AuditFinding::whereIn('department_id', $deptIds)
                                     ->whereHas('status', function ($q) {
@@ -208,11 +208,11 @@
                                     })->count();
                             }
                         }
-                        
+
                         if (in_array('Auditor', $userRoles)) {
                             $badgeCount += $findCount('need approval by auditor');
                         }
-                        
+
                         if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles)) {
                             $badgeCount += $findCount('need approval by lead auditor');
                         }
@@ -245,7 +245,7 @@
                         <table class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden bg-white shadow">
                             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider"
+                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
                                     </th>
