@@ -98,7 +98,8 @@
                                     <td class="px-4 py-3 border-r border-gray-200">
                                         {{ ($departments->currentPage() - 1) * $departments->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">{{ ucwords($department->name) }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">
+                                        {{ ucwords($department->name) }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $department->code }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $department->plant }}</td>
                                     <td class="px-4 py-3 text-sm text-center border-r border-gray-200">
@@ -224,7 +225,7 @@
                             Cancel
                         </button>
                         <button type="submit"
-                            class="btn px-3 py-2 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Save Changes
                         </button>
                     </div>
@@ -327,7 +328,7 @@
                         Cancel
                     </button>
                     <button type="submit"
-                        class="btn px-3 py-1 bg-gradient-to-r from-primary to-primaryDark text-white rounded hover:from-primaryDark hover:to-primary transition-colors">
+                        class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                         Submit
                     </button>
                 </div>

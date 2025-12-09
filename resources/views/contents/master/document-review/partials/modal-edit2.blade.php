@@ -326,16 +326,21 @@
 
                 tsPart.on("change", async val => {
                     if (!val || val.length === 0) {
-                        disableAndClear(tsModel);
-                        disableAndClear(tsProduct);
-                        disableAndClear(tsProcess);
-                        tsDept.enable();
+                        // APABILA PART NUMBER DIHAPUS → KEMBALIKAN KE MODE MANUAL BERDASARKAN PLANT SAAT INI
+                        const currentPlant = tsPlant.getValue();
+                        if (currentPlant) {
+                            await loadByPlant(currentPlant); // ⬅⬅⬅ kembalikan data plant
+                        }
                         return;
                     }
+
+
                     if (!Array.isArray(val)) val = [val];
+
                     let allProducts = [],
                         allModels = [],
                         allProcesses = [];
+
                     for (const partId of val) {
                         const detail = await fetchJson(
                             `/api/part-number-details/${encodeURIComponent(partId)}`);
@@ -345,48 +350,75 @@
                             if (detail.process) allProcesses.push(detail.process);
                         }
                     }
-                    const uniqueById = arr => [...new Map(arr.map(i => [i.id, i])).values()];
-                    const formatTS = arr => arr.map(i => ({
-                        value: i.id,
-                        text: i.name ?? i.part_number ?? String(i.id)
-                    }));
 
+                    const uniqueById = arr => [...new Map(arr.map(i => [i.id, i])).values()];
+
+                    const formatTS = arr =>
+                        arr.map(i => ({
+                            value: i.id,
+                            text: i.text ?? i.name ?? i.part_number ?? String(i.id),
+                            name: i.text ?? i.name ?? i.part_number ?? String(i.id),
+                        }));
+                    // ==============================
+                    // PRODUCT
+                    // ==============================
+                    tsProduct.clear(true);
                     tsProduct.clearOptions();
                     tsProduct.addOptions(formatTS(uniqueById(allProducts)));
                     tsProduct.setValue(uniqueById(allProducts).map(p => p.id));
                     tsProduct.enable();
 
+                    // ==============================
+                    // MODEL
+                    // ==============================
+                    tsModel.clear(true);
                     tsModel.clearOptions();
                     tsModel.addOptions(formatTS(uniqueById(allModels)));
                     tsModel.setValue(uniqueById(allModels).map(m => m.id));
                     tsModel.enable();
 
+                    // ==============================
+                    // PROCESS
+                    // ==============================
+                    tsProcess.clear(true);
                     tsProcess.clearOptions();
                     tsProcess.addOptions(formatTS(uniqueById(allProcesses)));
                     tsProcess.setValue(uniqueById(allProcesses).map(p => p.id));
                     tsProcess.enable();
                 });
 
+
                 const modalEl = document.getElementById(`editDocumentModal-${id}`);
                 modalEl.addEventListener("shown.bs.modal", async () => {
-                    // Inisialisasi Quill hanya 1x
-                    if (modalEl.dataset.quillInitialized === "1") return;
-                    initQuill(`quill_editor_edit${id}`, `notes_input_edit${id}`);
+                    const currentPlant = tsPlant.getValue();
 
-                    // Set multi-select default value
+                    // 1️⃣ FILTER ULANG semua options berdasarkan plant saat ini
+                    if (currentPlant) {
+                        await loadByPlant(currentPlant);
+                    }
+
+                    // 2️⃣ Inisialisasi Quill hanya sekali
+                    if (modalEl.dataset.quillInitialized !== "1") {
+                        initQuill(`quill_editor_edit${id}`, `notes_input_edit${id}`);
+                        modalEl.dataset.quillInitialized = "1";
+                    }
+
+                    // 3️⃣ Set ulang value untuk model/product/process/part
                     const modelIds = JSON.parse(modalEl.dataset.modelIds || "[]");
                     const productIds = JSON.parse(modalEl.dataset.productIds || "[]");
                     const processIds = JSON.parse(modalEl.dataset.processIds || "[]");
                     const partIds = JSON.parse(modalEl.dataset.partIds || "[]");
 
-                    // Set value hanya untuk modal ini
                     tsModel.setValue(modelIds);
                     tsProduct.setValue(productIds);
                     tsProcess.setValue(processIds);
                     tsPart.setValue(partIds);
 
-                    modalEl.dataset.quillInitialized = "1";
+                    // 4️⃣ SET DEPARTMENT YANG SUDAH ADA (harus dilakukan SETELAH loadByPlant!)
+                    const deptId = form.querySelector('[name="department_id"]').value;
+                    if (deptId) tsDept.setValue(deptId);
                 });
+
 
             });
         });

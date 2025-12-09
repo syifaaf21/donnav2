@@ -306,7 +306,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-4">
+                    <div class="mt-2 px-4 py-2">
                         {{ $mappings->withQueryString()->links('vendor.pagination.tailwind') }}
                     </div>
                 </div>
