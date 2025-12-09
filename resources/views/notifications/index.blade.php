@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Notifications')
+@section('subtitle', 'Manage your recent alerts')
 
 @section('content')
     <div class="max-w-3xl mx-auto mt-10 px-4">
