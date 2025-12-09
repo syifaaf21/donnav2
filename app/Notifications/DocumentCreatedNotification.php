@@ -32,7 +32,7 @@ class DocumentCreatedNotification extends Notification
         $title = $this->documentNumber ?? $this->documentName ?? 'A new document';
 
         return [
-            'message' => "{$title} has been created by {$this->createdBy}.",
+            'message' => "{$title} has been created by {$this->createdBy}. Please upload the file",
             'url' => $this->url,
         ];
     }
