@@ -12,10 +12,11 @@
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url('images/favicon.ico') }}">
 </head>
 
 <body
-    class="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf2ff] via-[#eef4ff] to-[#d8e6ff] font-inter">
+    class="min-h-screen flex items-center justify-center bg-primaryLight font-inter">
 
     <!-- Login Card -->
     <div class="w-full max-w-sm p-8 bg-white border border-gray-200 rounded-2xl shadow-xl">
