@@ -22,6 +22,17 @@
             style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
             @csrf
 
+            {{-- Tips Alert --}}
+            <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
+                <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
+                    <p class="text-xs text-yellow-700 leading-relaxed">
+                        Gunakan tombol <strong>Replace</strong> untuk mengganti file. Menghapus file akan menghapusnya secara <strong>permanen</strong> dan tidak dapat dipulihkan.
+                    </p>
+                </div>
+            </div>
+
             {{-- Existing Files (dynamic by JS) --}}
             <div id="reviseFilesContainer" class="mb-4"></div>
 

@@ -301,10 +301,10 @@
                                                     $files = $doc->files
                                                         ->map(
                                                             fn($f) => [
-                                                            'id' => $f->id,
-                                                            'file_path' => $f->file_path,
-                                                             'name' => $f->file_name ?? basename($f->file_path),
-                                                             'url' => asset('storage/' . $f->file_path),
+                                                                'id' => $f->id,
+                                                                'file_path' => $f->file_path,
+                                                                'name' => $f->file_name ?? basename($f->file_path),
+                                                                'url' => asset('storage/' . $f->file_path),
                                                             ],
                                                         )
                                                         ->toArray();
@@ -327,10 +327,10 @@
                                                             @foreach ($files as $file)
                                                                 <button type="button" title="View File"
                                                                     class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                   data-file="{{ $file['url'] }}"
-                                                                   data-doc-id="{{ $doc->id }}"
-                                                                   data-file-id="{{ $file['id'] }}"
-                                                                   data-file-path="{{ $file['file_path'] }}">
+                                                                    data-file="{{ $file['url'] }}"
+                                                                    data-doc-id="{{ $doc->id }}"
+                                                                    data-file-id="{{ $file['id'] }}"
+                                                                    data-file-path="{{ $file['file_path'] }}">
                                                                     📄 {{ $file['name'] }}
                                                                 </button>
                                                             @endforeach
@@ -342,10 +342,10 @@
                                                     @endphp
                                                     <button type="button" title="View File"
                                                         class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn"
-                                                       data-file="{{ $fileUrl }}"
-                                                       data-doc-id="{{ $doc->id }}"
-                                                       data-file-id="{{ $files[0]['id'] ?? '' }}"
-                                                       data-file-path="{{ $files[0]['file_path'] ?? '' }}">
+                                                        data-file="{{ $fileUrl }}"
+                                                        data-doc-id="{{ $doc->id }}"
+                                                        data-file-id="{{ $files[0]['id'] ?? '' }}"
+                                                        data-file-path="{{ $files[0]['file_path'] ?? '' }}">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                 @endif
@@ -735,29 +735,33 @@
 
                                 // Render file list
                                 filesContainer.innerHTML = `
-                        <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
-                        <div class="space-y-2">
-                        ${data.files.map(file => `
-                                                                                                                                                                                                                                                                                                                                                                                                                                    <div class="flex items-center justify-between border rounded p-2 bg-gray-50">
-                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="text-sm">📄 ${file.original_name}</span>
+<h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
+<div class="space-y-3">
+${data.files.map(file => `
+                                    <div class="border rounded p-2 bg-gray-50">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="flex gap-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                            <a href="/storage/${file.file_path}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                               target="_blank"
-                                                                                                                                                                                                                                                                                                                                                                                                                                               class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                                                                                                                                                                                                                                                                                                                                                                               View
-                                                                                                                                                                                                                                                                                                                                                                                                                                            </a>
+                                            <div class="flex gap-2">
+                                                <a href="/storage/${file.file_path}"
+                                                   target="_blank"
+                                                   class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                   View
+                                                </a>
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                            <button type="button"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                data-file-id="${file.id}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                Replace
-                                                                                                                                                                                                                                                                                                                                                                                                                                            </button>
-                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                `).join('')}
-                        </div>
-                    `;
+                                                <button type="button"
+                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                    data-file-id="${file.id}">
+                                                    Replace
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                    </div>
+                                `).join('')}
+</div>`;
+
                             })
                             .catch(() => {
                                 filesContainer.innerHTML =
@@ -794,42 +798,57 @@
                     if (!e.target.classList.contains('replace-btn')) return;
 
                     const fileId = e.target.getAttribute('data-file-id');
+                    const box = document.getElementById(`replace-box-${fileId}`);
 
-                    newFilesContainer.insertAdjacentHTML(
-                        'beforeend',
-                        renderNewFileInput(fileId)
-                    );
+                    box.classList.remove("hidden"); // <— tambahan penting agar tidak berantakan
+                    // jika sebelumnya sudah ada input lalu di-replace, jangan hapus DOM-nya seluruhnya
+                    box.classList.remove("hidden");
+
+                    // hapus hanya input sebelumnya di box tersebut
+                    const existingInput = box.querySelector('.replace-input-wrapper');
+                    if (existingInput) existingInput.remove();
+
+                    // tambahkan input baru
+                    box.insertAdjacentHTML('beforeend', `
+                        <div class="replace-input-wrapper">
+                            ${renderNewFileInput(fileId, true)}
+                        </div>
+                    `);
+
                 });
-
+                filesContainer.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('remove-file-btn')) {
+                        e.target.closest('.border').remove();
+                    }
+                });
 
                 /**
                  * TEMPLATE: Input File Baru
                  */
-                function renderNewFileInput(oldFileId = null) {
+                function renderNewFileInput(oldFileId = null, inline = false) {
                     return `
-                        <div class="border rounded p-3 bg-white shadow-sm relative mt-2">
-                            <label class="block text-xs font-medium text-gray-600 mb-1">
-                                New File ${oldFileId ? "(Replacing existing file)" : ""}
-                            </label>
+        <div class="border rounded p-3 bg-white shadow-sm relative mt-2">
+            <label class="block text-xs font-medium text-gray-600 mb-1">
+                New File ${oldFileId ? "(Replacing existing file)" : ""}
+            </label>
 
-                            <input type="file"
-                                name="revision_files[]"
-                                required
-                                class="block w-full border border-gray-300 rounded p-1 text-sm">
+            <input type="file"
+                name="revision_files[]"
+                required
+                class="block w-full border border-gray-300 rounded p-1 text-sm">
 
-                            ${oldFileId ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="${oldFileId}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                    ` : `
-                                                                                                                                                                                                                                                                                                                                                                                                                                        <input type="hidden" name="revision_file_ids[]" value="">
-                                                                                                                                                                                                                                                                                                                                                                                                                                    `}
+            <input type="hidden"
+                name="revision_file_ids[]"
+                value="${oldFileId ?? ""}">
 
-                                    <button type="button"
-                                            class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">
-                                        ✕
-                                    </button>
-                                </div>
-                            `;
+            <button type="button"
+                class="absolute top-1 right-1 text-red-500 text-xs remove-file-btn">
+                ✕
+            </button>
+        </div>
+    `;
                 }
+
 
                 /**
                  * REMOVE DYNAMIC FILE INPUT

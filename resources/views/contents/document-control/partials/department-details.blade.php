@@ -196,7 +196,7 @@
                                                     {{-- VIEW FILES --}}
                                                     @php
                                                         $filesToShow = collect($mapping->files_for_modal_all)->filter(
-                                                            fn($file) => ($file['is_active'] ?? 0) == 1,
+                                                            fn($file) => ($file['is_active'] ?? 0) == 1 || ($file['pending_approval'] ?? 0) == 2
                                                         );
                                                     @endphp
 
@@ -219,20 +219,19 @@
                                                                     @foreach ($filesToShow as $file)
                                                                         <button type="button"
                                                                             class="w-full flex justify-between items-center px-3 py-2 rounded-md text-sm truncate view-file-btn
-                                                                                {{ !empty($file['replaced_by_id']) ? 'bg-red-100 border border-red-400' : '' }}"
+                                                                                {{ ($file['pending_approval'] ?? 0) == 2 ? 'bg-red-50 border border-red-300' : (!empty($file['replaced_by_id']) ? 'bg-red-100 border border-red-400' : '') }}"
                                                                             data-file="{{ $file['url'] }}"
                                                                             data-doc-title="{{ $file['name'] }}">
 
-                                                                            <!-- Nama file -->
-                                                                            <span class="truncate pr-2"
-                                                                                style="flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                                            <span class="truncate pr-2" style="flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                                                                 📄 {{ $file['name'] }}
                                                                             </span>
-
-                                                                            <!-- Badge Replaced -->
-                                                                            @if (!empty($file['replaced_by_id']))
-                                                                                <span
-                                                                                    class="ml-2 inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                            @if (($file['pending_approval'] ?? 0) == 2)
+                                                                                <span class="ml-2 inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                    Rejected
+                                                                                </span>
+                                                                            @elseif (!empty($file['replaced_by_id']))
+                                                                                <span class="ml-2 inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
                                                                                     Replaced
                                                                                 </span>
                                                                             @endif
@@ -600,6 +599,9 @@
                     // ambil file baru
                     const newFileInputs = newFilesContainer.querySelectorAll('input[type="file"]');
 
+                    // ambil file yang dihapus
+                    const deletedFileInputs = reviseFormDynamic.querySelectorAll('input[name="deleted_file_ids[]"]');
+
                     let hasChange = false;
 
                     // cek apakah ada file lama yang diganti
@@ -615,6 +617,11 @@
                             hasChange = true;
                         }
                     });
+
+                    // cek file yang dihapus
+                    if (deletedFileInputs.length > 0) {
+                        hasChange = true;
+                    }
 
                     if (!hasChange) {
                         e.preventDefault();
@@ -644,7 +651,12 @@
                     const activeFiles = files.filter(f => f.is_active == 1);
                     reviseFilesContainer.innerHTML = activeFiles.map((f, i) => `
             <div class="p-3 border rounded bg-gray-50 mb-2">
-                <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                    <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
                 <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
                 <div class="mt-2 flex items-center gap-2">
                     <label class="text-xs text-gray-600">Replace:</label>
@@ -653,6 +665,65 @@
                 </div>
             </div>
         `).join('');
+
+                    // Bind delete button events
+                    reviseFilesContainer.querySelectorAll('.btn-delete-file').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const fileId = this.dataset.fileId;
+                            const fileContainer = this.closest('.p-3');
+
+                            Swal.fire({
+                                title: 'Delete File?',
+                                text: 'Are you sure you want to delete this file?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Yes, delete it',
+                                cancelButtonText: 'Cancel',
+                                buttonsStyling: false,
+                                customClass: {
+                                    confirmButton: 'btn btn-danger fw-semibold px-3 py-2 mx-2',
+                                    cancelButton: 'btn btn-outline-secondary fw-semibold px-3 py-2 mx-2',
+                                    popup: 'swal-on-top'
+                                },
+                                didOpen: function(popup) {
+                                    popup.style.zIndex = '999999';
+                                    const backdrop = document.querySelector('.swal2-container');
+                                    if (backdrop) backdrop.style.zIndex = '999998';
+                                }
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Remove dari DOM langsung
+                                    fileContainer.remove();
+
+                                    // Add hidden input untuk menandai file sebagai deleted
+                                    const deleteInput = document.createElement('input');
+                                    deleteInput.type = 'hidden';
+                                    deleteInput.name = 'deleted_file_ids[]';
+                                    deleteInput.value = fileId;
+                                    reviseFormDynamic.appendChild(deleteInput);
+
+                                    // Show success message
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'File removed',
+                                        text: 'This file has been removed from revision.',
+                                        timer: 2000,
+                                        timerProgressBar: true,
+                                        buttonsStyling: false,
+                                        customClass: {
+                                            popup: 'swal-on-top'
+                                        },
+                                        didOpen: function(popup) {
+                                            popup.style.zIndex = '999999';
+                                            const backdrop = document.querySelector('.swal2-container');
+                                            if (backdrop) backdrop.style.zIndex = '999998';
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                    });
                 }
 
                 // Set form action

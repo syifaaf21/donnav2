@@ -38,4 +38,9 @@ class DocumentFile extends Model
     {
         return $this->belongsTo(AuditeeAction::class, 'auditee_action_id');
     }
+
+    public function replacedByFile()
+    {
+        return $this->belongsTo(self::class, 'replaced_by_id');
+    }
 }
