@@ -15,32 +15,25 @@
     <link rel="icon" href="{{ url('images/favicon.ico') }}">
 </head>
 
-<body
-    class="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf2ff] via-[#eef4ff] to-[#d8e6ff] font-inter">
+<body class="min-h-screen flex items-center justify-center bg-primaryLight font-inter">
 
     <!-- Login Card -->
-    <div class="w-full max-w-sm p-8 bg-white border border-gray-200 rounded-2xl shadow-xl">
-
+    <div
+        class="w-full max-w-sm p-4 bg-white/50 backdrop-blur-sm border border-white rounded-xl shadow-lg overflow-hidden transition-colors duration-200 focus-within:bg-white">
         <!-- Logo -->
-        <div class="flex flex-col items-center mb-8">
-            <div class="p-3 bg-gray-50 rounded-full shadow-sm border border-gray-200">
-                <div class="relative w-16 h-16 group">
-                    <img src="{{ asset('images/madonna-logo.png') }}" alt="Madonna logo"
+        <div class="flex flex-col items-center mb-4">
+            <div class="p-3 bg-gradient-to-br from-primaryLight/10 to-primaryDark/10 rounded-full shadow-md">
+                <div class="relative w-48 h-16 group">
+                    <img src="{{ asset('images/madonna.png') }}" alt="Madonna logo"
                         class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-100 group-hover:opacity-0">
-                    <img src="{{ asset('images/madonna.png') }}" alt="Madonna hover"
+                    <img src="{{ asset('images/madonna-logo.png') }}" alt="Madonna hover"
                         class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-0 group-hover:opacity-100">
                 </div>
             </div>
+            <h2 class="mt-3 text-2xl font-semibold text-gray-800">Sign in</h2>
+            {{-- <p class="mt-1 text-sm text-gray-500 text-center">Enter your 6-digit NPK and password to access your account</p> --}}
 
-            <h2 class="mt-4 text-2xl font-semibold text-gray-900 tracking-tight">
-                Welcome Back
-            </h2>
-
-            <p class="mt-1 text-sm text-gray-500">
-                Please sign in to continue
-            </p>
-
-            <div class="w-14 h-[2px] bg-gray-300 rounded mt-4"></div>
+            <div class="w-16 h-px bg-gray-400 rounded mt-4"></div>
         </div>
 
         <form method="POST" action="{{ route('login') }}" class="space-y-5">

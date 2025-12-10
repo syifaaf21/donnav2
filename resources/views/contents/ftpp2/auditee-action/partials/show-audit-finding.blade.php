@@ -1,188 +1,124 @@
 <!-- CARD WRAPPER -->
-<div @if ($readonly) class="opacity-90 pointer-events-none select-none" @endif>
-    <!-- CARD WRAPPER -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg space-y-6">
-            <!-- AUDIT TYPE -->
-            <div>
-                <label class="font-semibold block">Audit Type: <span class="text-danger">*</span></label>
-                <div class="mt-2 space-y-1">
-                    @foreach ($auditTypes as $type)
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="audit_type_id" value="{{ $type->id }}"
-                                x-model="form.audit_type_id">
-                            {{ $type->name }}
-                        </label>
-                    @endforeach
-                </div>
-
-                <!-- SUB AUDIT TYPE -->
-                <div id="subAuditType" class="mt-2 ml-4 space-y-1">
-                    @foreach ($subAudit as $sub)
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="sub_audit_type_id" value="{{ $sub->id }}" disabled>
-                            {{ $sub->name }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- DEPARTMENT / PROCESS / PRODUCT -->
-            <div class="space-y-1">
-                <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
-
-                <button type="button"
-                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                    onclick="openPlantSidebar()">
-                    Choose Dept/Process/Product
-                </button>
-
-                <input type="hidden" id="selectedPlant" name="plant">
-                <input type="hidden" id="selectedDepartment" name="department_id" x-model="form.department_id">
-                <input type="hidden" id="selectedProcess" name="process_id" x-model="form.process_id">
-                <input type="hidden" id="selectedProduct" name="product_id" x-model="form.product_id">
-
-                <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'" class="mt-1 text-gray-700">
-                </div>
-            </div>
-
-            <!-- AUDITEE -->
-            <div class="space-y-1">
-                <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
-
-                <button type="button" onclick="openAuditeeSidebar()"
-                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                    Select Auditee
-                </button>
-
-                <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
-                </div>
-
-                <!-- Hidden holder for selected auditees (NOT submitted directly).
-                     We avoid naming this input so only the dynamic `auditee_ids[]` inputs
-                     created by `saveHeaderOnly()` are included in the POST request. -->
-                <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
-            </div>
-
-            <!-- ROW: Auditor / Date / Reg Number (tidak full width -> gunakan grid kolom) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="font-semibold block">Auditor / Inisiator: <span class="text-danger">*</span></label>
-                    <select name="auditor_id" x-model="form.auditor_id"
-                        class="border border-gray-300 rounded w-full p-2 focus:outline-none">
-                        <option value="">-- Choose Auditor --</option>
-                        @foreach ($auditors as $auditor)
-                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label class="font-semibold block">Date: <span class="text-danger">*</span></label>
-                    <input type="date" name="created_at" x-model="form.created_at"
-                        class="border border-gray-300 rounded w-full p-2 focus:outline-none"
-                        value="{{ now()->toDateString() }}">
-                </div>
-
-                <div>
-                    <label class="font-semibold block">Registration Number: <span class="text-danger">*</span></label>
-                    <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
-                        class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
-                </div>
-            </div>
-            <!-- FINDING CATEGORY -->
-            <div>
-                <label class="font-semibold">Finding Category: <span class="text-danger">*</span></label>
-                <div class="mt-1">
-                    @foreach ($findingCategories as $category)
-                        <label class="mr-4">
-                            <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
-                                value="{{ $category->id }}">
-                            {{ ucfirst($category->name) }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
+<div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg">
+    <div @if ($readonly) class="opacity-90 pointer-events-none select-none" @endif>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm text-left border border-gray-200">
+                <tbody class="divide-y divide-gray-200">
+                    <tr>
+                        <th class="w-56 px-4 py-2 font-semibold bg-gray-50">Audit Type</th>
+                        <td class="px-4 py-2">
+                            @foreach ($auditTypes as $type)
+                                <template x-if="form.audit_type_id == {{ $type->id }}">
+                                    <span>{{ $type->name }}</span>
+                                </template>
+                            @endforeach
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50">Sub Audit Type</th>
+                        <td class="px-4 py-2">
+                            @foreach ($subAudit as $sub)
+                                <template x-if="form.sub_audit_type_id == {{ $sub->id }}">
+                                    <span>{{ $sub->name }}</span>
+                                </template>
+                            @endforeach
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50">Department / Process / Product</th>
+                        <td class="px-4 py-2" x-text="form._plant_display ?? '-'"></td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50 align-top">Auditee</th>
+                        <td class="px-4 py-2">
+                            <div id="selectedAuditees" x-html="form._auditee_html ?? '-'" class="flex flex-wrap gap-2">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50">Auditor / Inisiator</th>
+                        <td class="px-4 py-2">
+                            @foreach ($auditors as $auditor)
+                                <template x-if="form.auditor_id == {{ $auditor->id }}">
+                                    <span>{{ $auditor->name }}</span>
+                                </template>
+                            @endforeach
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50">Date</th>
+                        <td class="px-4 py-2" x-text="form.created_at ?? '-'"></td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50">Registration Number</th>
+                        <td class="px-4 py-2" x-text="form.registration_number ?? '-'"></td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50">Finding Category</th>
+                        <td class="px-4 py-2">
+                            @foreach ($findingCategories as $category)
+                                <template x-if="form.finding_category_id == {{ $category->id }}">
+                                    <span>{{ ucfirst($category->name) }}</span>
+                                </template>
+                            @endforeach
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50 align-top">Finding / Issue</th>
+                        <td class="px-4 py-2 whitespace-pre-line" x-text="form.finding_description ?? '-'"></td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50">Duedate</th>
+                        <td class="px-4 py-2" x-text="form.due_date ?? '-'"></td>
+                    </tr>
+                    <tr>
+                        <th class="px-4 py-2 font-semibold bg-gray-50 align-top">Clauses</th>
+                        <td class="px-4 py-2">
+                            <div id="selectedSubContainer" class="flex flex-wrap gap-2"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+    </div>
+    <div>
+        <div class="px-4 py-2 font-semibold bg-gray-50 align-top">Attachments</div>
+        <div class="px-4 py-2">
+            <div id="previewImageContainer" class="flex flex-wrap gap-2"></div>
+            <div id="previewFileContainer" class="mt-2 flex flex-wrap gap-2"></div>
+        </div>
+    </div>
+</div>
 
-        <div class="space-y-6">
-            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg space-y-6">
-                <h5 class="font-semibold text-gray-700">AUDITOR / INISIATOR</h5>
+<!-- Modal Preview File -->
+<div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+    style="z-index: 9999;">
+    <div id="previewModalContent"
+         class="bg-white rounded-lg flex flex-col overflow-hidden shadow-2xl transition-all duration-300"
+         style="z-index: 10000;">
+        <div class="flex justify-between items-center px-6 py-4 border-b bg-white">
+            <h3 class="font-semibold text-lg truncate max-w-md" id="previewTitle">Preview</h3>
+            <button onclick="closePreviewModal()"
+                    class="text-gray-500 hover:text-gray-700 transition ml-4 flex-shrink-0">
+                <i data-feather="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <div id="previewContentArea" class="flex-1 overflow-hidden bg-gray-100 flex items-center justify-center">
+            <!-- PDF / FILE FRAME -->
+            <iframe id="previewFrame" class="w-full h-full border-0 hidden"></iframe>
 
-                <!-- FINDING -->
-                <div>
-                    <label class="font-semibold">Finding / Issue: <span class="text-danger">*</span></label>
-                    <textarea name="finding_description" x-model="form.finding_description" class="w-full border rounded p-2 h-24" required></textarea>
-                </div>
-
-                <div class="flex justify-between items-start">
-                    <!-- DUE DATE -->
-                    <div>
-                        <label class="font-semibold">Duedate: <span class="text-danger">*</span></label>
-                        <input type="date" name="due_date" x-model="form.due_date"
-                            class="border-b border-gray-400 ml-2" required min="{{ now()->toDateString() }}">
-                    </div>
-
-                    <!-- CLAUSE SELECT -->
-                    <div class="text-right">
-                        <button type="button" onclick="openSidebar()"
-                            class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                            Select Clause
-                        </button>
-
-                        <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
-
-                        <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-3 justify-end"></div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- ATTACHMENT --}}
-            <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg space-y-6">
-
-                <div class="font-semibold text-lg text-gray-700">Attachments</div>
-                <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
-                <div>
-                    <!-- Preview containers (sesuaikan posisi di form) -->
-                    <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
-                    <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
-
-                    <!-- Attachment button (paperclip) -->
-                    <div class="relative inline-block">
-                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin', 'Auditor']))
-                            <button id="attachBtn" type="button"
-                                class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
-                                aria-haspopup="true" aria-expanded="false" title="Attach files">
-                                <i data-feather="paperclip" class="w-4 h-4"></i>
-                                <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
-                            </button>
-                        @endif
-
-                        <!-- Small menu seperti email (hidden, muncul saat klik) -->
-                        <div id="attachMenu"
-                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
-                            <button id="attachImages" type="button"
-                                class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                <i data-feather="image" class="w-4 h-4"></i>
-                                <span class="text-sm">Upload Images</span>
-                            </button>
-                            <button id="attachDocs" type="button"
-                                class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
-                                <i data-feather="file-text" class="w-4 h-4"></i>
-                                <span class="text-sm">Upload Documents</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Hidden file inputs -->
-                    <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
-                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple class="hidden">
-                </div>
-                <button type="button" onclick="saveHeaderOnly()"
-                    class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
-                    Save Finding
-                </button>
-            </div>
+            <!-- IMAGE PREVIEW -->
+            <img id="previewImage" src="" class="hidden max-w-full max-h-full object-contain" alt="Preview">
+        </div>
+        <div class="px-6 py-4 border-t bg-white flex gap-3">
+            <a id="previewDownloadBtn" href="#" download
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition shadow-sm">
+                <i data-feather="download" class="w-4 h-4"></i> Download
+            </a>
+            <a id="previewOpenBtn" href="#" target="_blank"
+                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 transition shadow-sm">
+                <i data-feather="external-link" class="w-4 h-4"></i> Open in New Tab
+            </a>
         </div>
     </div>
 </div>
@@ -191,4 +127,98 @@
 <script>
     // Inisialisasi Feather Icons
     feather.replace();
+
+    // ===== UNIFIED PREVIEW MODAL =====
+    function showFilePreviewModal(url, filename) {
+        const modal = document.getElementById('previewModal');
+        const modalContent = document.getElementById('previewModalContent');
+        const contentArea = document.getElementById('previewContentArea');
+        const frame = document.getElementById('previewFrame');
+        const image = document.getElementById('previewImage');
+        const title = document.getElementById('previewTitle');
+        const downloadBtn = document.getElementById('previewDownloadBtn');
+        const openBtn = document.getElementById('previewOpenBtn');
+
+        // Reset visibility
+        frame.classList.add('hidden');
+        image.classList.add('hidden');
+
+        // Check if image or file
+        if (filename.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
+            // Show image
+            image.src = url;
+            image.classList.remove('hidden');
+            title.textContent = filename;
+
+            // Modal size for images - lebih compact
+            modalContent.style.width = 'auto';
+            modalContent.style.minWidth = '400px';
+            modalContent.style.maxWidth = '90vw';
+            modalContent.style.height = 'auto';
+            modalContent.style.maxHeight = '90vh';
+            contentArea.style.padding = '2rem';
+            contentArea.style.maxHeight = 'calc(90vh - 140px)'; // minus header & footer
+        } else {
+            // Show iframe for PDF and other files
+            frame.src = url;
+            frame.classList.remove('hidden');
+            title.textContent = filename;
+
+            // Modal size for documents - lebih lebar
+            modalContent.style.width = '95vw';
+            modalContent.style.minWidth = 'auto';
+            modalContent.style.maxWidth = '1400px';
+            modalContent.style.height = '95vh';
+            modalContent.style.maxHeight = '95vh';
+            contentArea.style.padding = '0';
+            contentArea.style.maxHeight = 'none';
+        }
+
+        downloadBtn.href = url;
+        downloadBtn.download = filename;
+        openBtn.href = url;
+
+        modal.classList.remove('hidden');
+
+        // Re-render feather icons
+        setTimeout(() => {
+            if (typeof feather !== 'undefined') feather.replace();
+        }, 100);
+    }
+
+    function showImagePreviewModal(url, filename) {
+        showFilePreviewModal(url, filename);
+    }
+
+    function closePreviewModal() {
+        const modal = document.getElementById('previewModal');
+        const frame = document.getElementById('previewFrame');
+        const image = document.getElementById('previewImage');
+
+        modal.classList.add('hidden');
+        frame.src = '';
+        image.src = '';
+        frame.classList.add('hidden');
+        image.classList.add('hidden');
+    }
+
+    function closeFilePreviewModal() {
+        closePreviewModal();
+    }
+
+    function closeImagePreviewModal() {
+        closePreviewModal();
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('previewModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closePreviewModal();
+    });
+
+    // Close with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePreviewModal();
+        }
+    });
 </script>

@@ -131,10 +131,102 @@
             </div>
         </div>
     </div>
+
+    <!-- Attachment preview modal -->
+    <div id="attachmentPreviewModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[9999]">
+        <div class="bg-white rounded-lg shadow-xl w-11/12 lg:w-4/5 h-[80vh] relative overflow-hidden">
+            <button type="button" id="closePreviewModal"
+                class="absolute top-2 right-2 p-2 rounded-full bg-gray-100 hover:bg-gray-200 border text-gray-600"
+                aria-label="Close preview">
+                &times;
+            </button>
+            <iframe id="attachmentPreviewFrame" src="" title="Attachment preview"
+                class="w-full h-full border-none"></iframe>
+        </div>
+    </div>
 @endsection
 <x-sweetalert-confirm />
 @push('scripts')
     <script>
+        const baseStorageUrl = `${window.location.origin}/storage/`;
+
+        function openAttachmentPreview(url) {
+            const modal = document.getElementById('attachmentPreviewModal');
+            const frame = document.getElementById('attachmentPreviewFrame');
+            if (!modal || !frame) return;
+
+            frame.src = url;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAttachmentPreview() {
+            const modal = document.getElementById('attachmentPreviewModal');
+            const frame = document.getElementById('attachmentPreviewFrame');
+            if (!modal || !frame) return;
+
+            frame.src = '';
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderAttachmentPreview(imageContainer, fileContainer, files) {
+            if (!imageContainer || !fileContainer) return;
+
+            imageContainer.innerHTML = '';
+            fileContainer.innerHTML = '';
+
+            (files || []).forEach(file => {
+                const path = file?.file_path;
+                if (!path || typeof path !== 'string') return;
+
+                const url = `${baseStorageUrl}${path}`;
+                const filename = path.split('/').pop();
+                const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(path);
+
+                if (isImage) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'relative group border rounded overflow-hidden';
+
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = filename;
+                    img.className = 'w-24 h-24 object-cover';
+
+                    btn.appendChild(img);
+                    btn.addEventListener('click', () => openAttachmentPreview(url));
+                    imageContainer.appendChild(btn);
+                } else {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className =
+                        'flex items-center gap-2 text-sm border p-2 rounded w-full text-left hover:bg-slate-50';
+                    btn.innerHTML = `<i data-feather="file-text"></i><span class="truncate">${filename}</span>`;
+                    btn.addEventListener('click', () => openAttachmentPreview(url));
+                    fileContainer.appendChild(btn);
+                }
+            });
+
+            feather.replace();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('attachmentPreviewModal');
+            const closeBtn = document.getElementById('closePreviewModal');
+
+            closeBtn?.addEventListener('click', closeAttachmentPreview);
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeAttachmentPreview();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeAttachmentPreview();
+            });
+        });
+
         function ftppApp() {
             return {
                 search: '',
@@ -294,44 +386,8 @@
                             const previewImageContainer = document.getElementById('previewImageContainer');
                             const previewFileContainer = document.getElementById('previewFileContainer');
 
-                            if (!previewImageContainer || !previewFileContainer) {
-                                return;
-                            }
-
-                            if (finding.file?.length) {
-                                previewImageContainer.innerHTML = '';
-                                previewFileContainer.innerHTML = '';
-
-                                // Assuming this is your base URL. Replace it as needed.
-                                const baseUrl = 'http://127.0.0.1:8000/storage/'; // For local development
-                                // const fullUrl = `/storage/app/public`;
-
-                                finding.file.forEach(a => {
-                                    if (a.file_path && typeof a.file_path === 'string') {
-                                        // Construct full URL for the image
-                                        const fullUrl = baseUrl + a.file_path;
-
-                                        // Check if it's an image based on file extension
-                                        if (a.file_path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
-                                            // Image preview
-                                            previewImageContainer.innerHTML += `
-                                                <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded" />
-                                            `;
-                                        } else {
-                                            // Document preview
-                                            previewFileContainer.innerHTML += `
-                                            <div class="flex gap-2 text-sm border p-2 rounded">
-                                                <i data-feather="file-text"></i> ${a.file_path.split('/').pop()}
-                                            </div>`;
-                                        }
-                                    } else {
-                                        console.warn('Invalid file path for attachment:',
-                                            a); // Log problematic item
-                                    }
-                                });
-
-                                feather.replace();
-                            }
+                            if (!previewImageContainer || !previewFileContainer) return;
+                            renderAttachmentPreview(previewImageContainer, previewFileContainer, finding.file);
                         });
 
                         // Auditee action
@@ -407,7 +463,7 @@
 
                             this.$nextTick(() => {
                                 const previewImageContainer2 = document.getElementById(
-                                    'previewImageContainer2');
+                                'previewImageContainer2');
                                 const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
                                 if (!previewImageContainer2 || !previewFileContainer2) {
@@ -415,40 +471,8 @@
                                     return;
                                 }
 
-                                if (act.file?.length) {
-                                    previewImageContainer2.innerHTML = '';
-                                    previewFileContainer2.innerHTML = '';
-
-                                    // Assuming this is your base URL. Replace it as needed.
-                                    const baseUrl = 'http://127.0.0.1:8000/storage/'; // For local development
-                                    // const baseUrl = 'https://yourapp.com/'; // For production
-
-                                    act.file.forEach(a => {
-                                        if (a.file_path && typeof a.file_path === 'string') {
-                                            // Construct full URL for the image
-                                            const fullUrl = baseUrl + a.file_path;
-
-                                            // Check if it's an image based on file extension
-                                            if (a.file_path.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
-                                                // Image preview
-                                                previewImageContainer2.innerHTML += `
-                                                <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded" />
-                                            `;
-                                            } else {
-                                                // Document preview
-                                                previewFileContainer2.innerHTML += `
-                                                <div class="flex gap-2 text-sm border p-2 rounded">
-                                                    <i data-feather="file-text"></i> ${a.file_path.split('/').pop()}
-                                                </div>`;
-                                            }
-                                        } else {
-                                            console.warn('Invalid file path for attachment:',
-                                                a); // Log problematic item
-                                        }
-                                    });
-
-                                    feather.replace();
-                                }
+                                renderAttachmentPreview(previewImageContainer2, previewFileContainer2, act
+                                .file);
                             });
 
                             this.form.auditee_action_id = act.id;

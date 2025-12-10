@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Department Master')
+@section('title', 'Master Department')
 @section('subtitle', 'Manage Departments')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
@@ -54,7 +54,7 @@
                             placeholder="Type to search..." value="{{ request('search') }}">
 
                         <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded  text-sky-600
+                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
                             text-gray-400 text-sm
                             {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...

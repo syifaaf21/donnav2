@@ -32,13 +32,11 @@
         </td>
         <td class="border border-black p-2">
             <div class="my-4">
-                <template x-if="!form.lead_auditor_ack">
+                <template x-if="!form.lead_auditor_ack && userRoles.includes('admin') && form.status_id == 10">
                     <div class="flex flex-col gap-3">
 
                         <!-- VERIFY BUTTON -->
                         <button type="button" onclick="verifyLeadAuditor()"
-                            :disabled="form.status_id != 10 || (!userRoles.includes('admin'))"
-                            :class="form.status_id != 10 || (!userRoles.includes('admin')) ? 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-blue-600 hover:bg-blue-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">
@@ -49,8 +47,6 @@
 
                         <!-- RETURN BUTTON -->
                         <button type="button" onclick="returnForRevision()"
-                            :disabled="form.status_id != 10 || (!userRoles.includes('admin'))"
-                            :class="form.status_id != 10 || (!userRoles.includes('admin')) ? 'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-red-600 hover:bg-red-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">
@@ -76,14 +72,12 @@
 
         <td class="border border-black p-2">
             <div class="my-4">
-                <template x-if="!form.auditor_verified">
+                <template
+                    x-if="!form.auditor_verified && (userRoles.includes('auditor') || userRoles.includes('admin')) && form.status_id == 9">
                     <div class="flex flex-col gap-3">
 
                         <!-- VERIFY BUTTON -->
                         <button type="button" onclick="verifyAuditor()"
-                            :disabled="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin'))"
-                            :class="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin')) ?
-                                'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-blue-600 hover:bg-blue-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">
@@ -94,9 +88,6 @@
 
                         <!-- RETURN BUTTON -->
                         <button type="button" onclick="returnForRevision()"
-                            :disabled="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin'))"
-                            :class="form.status_id != 9 || (!userRoles.includes('auditor') && !userRoles.includes('admin')) ?
-                                'opacity-40 cursor-not-allowed' : ''"
                             class="flex items-center justify-center gap-2 px-4 py-2
                            bg-red-600 hover:bg-red-700 text-white rounded-lg
                            transition-all shadow-sm hover:shadow">

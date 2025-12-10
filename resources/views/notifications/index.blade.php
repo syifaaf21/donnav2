@@ -58,22 +58,35 @@
             <h2 class="text-lg font-semibold mb-3 mt-6 text-white">{{ $period }}</h2>
 
             @foreach ($notifications as $notification)
+                @php
+                    $isRedNotif =
+                        in_array($notification->type, [
+                            \App\Notifications\DocumentCreatedNotification::class,
+                            \App\Notifications\FindingDueNotification::class,
+                        ]) ||
+                        ($notification->type === \App\Notifications\DocumentActionNotification::class &&
+                            ((($notification->data['action'] ?? null) === 'rejected') ||
+                                str_contains(strtolower($notification->data['message'] ?? ''), 'rejected')));
+                @endphp
                 <div id="notif-{{ $notification->id }}"
-                     class="flex items-start justify-between p-4 mb-3 border rounded-lg transition-transform transform
-                        hover:shadow-sm
-                        @if (is_null($notification->read_at)) bg-blue-50 border-blue-100 @else bg-white border-gray-100 @endif">
-
+                     data-url="{{ route('notifications.read', $notification->id) }}"
+                     class="notification-card flex items-start justify-between p-4 mb-3 border rounded-lg transition-transform transform
+                        hover:shadow-sm cursor-pointer
+                        @if (is_null($notification->read_at)) bg-blue-50 border-blue-100 @else bg-white border-gray-100 @endif
+                        {{ $isRedNotif ? 'bg-red-100 hover:bg-red-200' : '' }}">
                     <div class="flex items-start gap-3 flex-1">
-                        {{-- visual indicator --}}
                         @if (is_null($notification->read_at))
                             <span class="w-3 h-3 rounded-full bg-blue-500 mt-2 flex-shrink-0" aria-hidden="true"></span>
+                        @elseif ($isRedNotif)
+                            <span class="w-3 h-3 rounded-full bg-red-500 mt-2 flex-shrink-0" aria-hidden="true"></span>
                         @else
                             <span class="w-3 h-3 rounded-full bg-gray-200 mt-2 flex-shrink-0" aria-hidden="true"></span>
                         @endif
 
                         <div class="min-w-0">
                             <a href="{{ route('notifications.read', $notification->id) }}"
-                               class="notif-item block text-sm font-medium text-gray-900 hover:text-blue-600 break-words">
+                               class="notif-item block text-sm font-medium break-words
+                               {{ $isRedNotif ? ' text-red-500 hover:text-red-700' : 'text-gray-900 hover:text-blue-600' }}">
                                 {{ $notification->data['message'] ?? 'No message' }}
                             </a>
                             <div class="text-xs text-gray-400 mt-1">
@@ -81,7 +94,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="flex items-center ml-4">
                         @if (is_null($notification->read_at))
                             <button type="button"
@@ -105,9 +117,27 @@
         document.addEventListener("DOMContentLoaded", function() {
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+            // ✅ Card click -> navigate
+            document.querySelectorAll('.notification-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const url = card.dataset.url;
+                    if (url) window.location.href = url;
+                });
+                card.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const url = card.dataset.url;
+                        if (url) window.location.href = url;
+                    }
+                });
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('role', 'link');
+            });
+
             // ✅ Mark single notification
             document.querySelectorAll('.mark-read-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
+                btn.addEventListener('click', async function(e) {
+                    e.stopPropagation(); // prevent card click
                     const id = this.dataset.id;
                     try {
                         const res = await fetch(`/notifications/${id}/mark-read`, {
@@ -119,13 +149,11 @@
                         });
 
                         if (res.ok) {
-                            // ubah tampilan tanpa reload
                             const notifCard = document.getElementById(`notif-${id}`);
                             notifCard.classList.remove('bg-blue-50');
                             notifCard.classList.add('bg-white');
                             this.remove();
 
-                            // update counter (jika kamu punya badge notifikasi)
                             const badge = document.getElementById('notifCountBadge');
                             if (badge) {
                                 let count = parseInt(badge.textContent);
@@ -142,7 +170,8 @@
             // ✅ Mark all read
             const markAllBtn = document.getElementById('markAllReadBtn');
             if (markAllBtn) {
-                markAllBtn.addEventListener('click', async function() {
+                markAllBtn.addEventListener('click', async function(e) {
+                    e.stopPropagation(); // prevent card click
                     try {
                         const res = await fetch(`/notifications/mark-all-read`, {
                             method: 'POST',

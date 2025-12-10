@@ -83,6 +83,7 @@ class DocumentActionNotification extends Notification
         return [
             'message' => $message,
             'url' => $this->url,
+            'action' => $this->action, // keep action so view can style rejected red
         ];
     }
 }

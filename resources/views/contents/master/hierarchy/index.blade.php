@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Hierarchy Document')
+@section('title', 'Master Hierarchy Document')
 @section('subtitle', 'Manage Hierarchy Document records.')
 @section('breadcrumbs')
 

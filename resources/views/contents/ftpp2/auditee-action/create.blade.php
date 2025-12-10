@@ -130,65 +130,65 @@
                     .map(a => `<span class='bg-blue-100 px-2 py-1 rounded'>${a.name}</span>`)
                     .join("");
 
-                // Sub Audit
-                this.loadSubAudit();
-
-                // Sub Klausul
-                this.loadSubKlausul();
-
+                // ✅ PINDAHKAN semua operasi DOM ke $nextTick
                 this.$nextTick(() => {
-                    // pastikan container preview ada; jika tidak, buat dan sisipkan ke form
+                    // Sub Audit
+                    this.loadSubAudit();
+
+                    // Sub Klausul
+                    this.loadSubKlausul();
+
+                    // ===== RENDER ATTACHMENTS (FINDING) =====
                     let previewImageContainer = document.getElementById('previewImageContainer');
                     let previewFileContainer = document.getElementById('previewFileContainer');
 
-                    if (!previewImageContainer || !previewFileContainer) {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'mt-4 border p-2 rounded';
+                    if (previewImageContainer && previewFileContainer) {
+                        const files = this.form.file ?? [];
 
-                        previewImageContainer = document.createElement('div');
-                        previewImageContainer.id = 'previewImageContainer';
-                        previewImageContainer.className = 'flex gap-2 flex-wrap';
-
-                        previewFileContainer = document.createElement('div');
-                        previewFileContainer.id = 'previewFileContainer';
-                        previewFileContainer.className = 'mt-2 flex flex-col gap-2';
-
-                        wrapper.appendChild(previewImageContainer);
-                        wrapper.appendChild(previewFileContainer);
-
-                        const target = document.querySelector('form') || document.body;
-                        target.appendChild(wrapper);
-                    }
-
-                    // render existing files jika tersedia di form (attachments/file)
-                    const files = this.form.attachments ?? this.form.file ?? [];
-
-                    if (files && files.length) {
                         previewImageContainer.innerHTML = '';
                         previewFileContainer.innerHTML = '';
 
-                        const baseUrl = '/storage/';
+                        if (files && files.length) {
+                            const baseUrl = '/storage/';
 
-                        files.forEach(f => {
-                            const path = f.file_path ?? f.path ?? '';
-                            const fullUrl = baseUrl + path;
-                            const filename = f.original_name ?? path.split('/').pop() ?? '';
+                            files.forEach(f => {
+                                const path = f.file_path ?? f.path ?? '';
+                                const fullUrl = baseUrl + path;
+                                const filename = f.original_name ?? path.split('/').pop() ?? '';
 
-                            if ((path + filename).match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
-                                const img = document.createElement('img');
-                                img.src = fullUrl;
-                                img.className = 'w-24 h-24 object-cover border rounded';
-                                previewImageContainer.appendChild(img);
-                            } else {
-                                const div = document.createElement('div');
-                                div.className = 'flex gap-2 text-sm border p-2 rounded items-center';
-                                div.innerHTML = `<i data-feather="file-text"></i> ${filename}`;
-                                previewFileContainer.appendChild(div);
-                            }
-                        });
+                                if ((path + filename).match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
+                                    // IMAGE THUMBNAIL
+                                    const img = document.createElement('img');
+                                    img.src = fullUrl;
+                                    img.className = 'w-24 h-24 object-cover border rounded cursor-pointer hover:opacity-80 transition';
+                                    img.onclick = () => showImagePreviewModal(fullUrl, filename);
+                                    previewImageContainer.appendChild(img);
+                                } else if (filename.match(/\.pdf$/i)) {
+                                    // PDF CARD
+                                    const pdfCard = document.createElement('div');
+                                    pdfCard.className = 'border rounded p-3 cursor-pointer hover:bg-gray-50 transition w-28 text-center';
+                                    pdfCard.innerHTML = `
+                                        <i data-feather="file-text" class="text-red-500 mx-auto" style="width: 40px; height: 40px;"></i>
+                                        <span class="text-xs mt-2 block truncate" title="${filename}">${filename}</span>
+                                    `;
+                                    pdfCard.onclick = () => showFilePreviewModal(fullUrl, filename);
+                                    previewFileContainer.appendChild(pdfCard);
+                                } else {
+                                    // OTHER FILES
+                                    const fileCard = document.createElement('div');
+                                    fileCard.className = 'border rounded p-3 cursor-pointer hover:bg-gray-50 transition w-28 text-center';
+                                    fileCard.innerHTML = `
+                                        <i data-feather="file" class="text-gray-500 mx-auto" style="width: 40px; height: 40px;"></i>
+                                        <span class="text-xs mt-2 block truncate" title="${filename}">${filename}</span>
+                                    `;
+                                    fileCard.onclick = () => showFilePreviewModal(fullUrl, filename);
+                                    previewFileContainer.appendChild(fileCard);
+                                }
+                            });
 
-                        if (typeof feather !== 'undefined' && feather.replace) {
-                            feather.replace();
+                            if (typeof feather !== 'undefined') feather.replace();
+                        } else {
+                            previewImageContainer.innerHTML = '<span class="text-gray-400 text-sm">No attachments</span>';
                         }
                     }
                 });
@@ -213,7 +213,6 @@
                             this.form[`why_${i}_mengapa`] = row.why_description || '';
                             this.form[`cause_${i}_karena`] = row.cause_description || '';
                         });
-
                     }
 
                     // ========================
@@ -241,24 +240,16 @@
                             this.form[`preventive_${i}_actual`] = row.actual_date?.substring(0, 10) ?? '';
                         });
                     }
-                    // =========================
-                    // ATTACHMENTS (existing files)
-                    // =========================
-                    // if (action && action.attachments && Array.isArray(action.attachments)) {
-                    //     this.loadExistingAttachments(action.attachments);
-                    // }
+
                     this.$nextTick(() => {
                         const previewImageContainer2 = document.getElementById('previewImageContainer2');
                         const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
                         if (!previewImageContainer2 || !previewFileContainer2) {
-                            console.warn('⚠️ Preview container belum ada di DOM');
                             return;
                         }
 
-                        // use the local 'action' captured above, fallback to form properties if needed
                         const aa = action ?? this.form.auditeeAction ?? this.form.auditee_action ?? null;
-
                         const files = aa?.file ?? aa?.attachments ?? [];
 
                         if (files && files.length) {
@@ -272,18 +263,15 @@
                                 const filename = f.original_name ?? (f.file_path ?? f.path ?? '').split(
                                     '/').pop() ?? '';
 
-                                if ((f.file_path ?? filename).match(
-                                        /\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
-                                    // Image preview
+                                if ((f.file_path ?? filename).match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
                                     previewImageContainer2.innerHTML += `
-                                        <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded" />
+                                        <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded cursor-pointer hover:opacity-80" onclick="window.open('${fullUrl}', '_blank')" />
                                     `;
                                 } else {
-                                    // Document preview
                                     previewFileContainer2.innerHTML += `
-                                        <div class="flex gap-2 text-sm border p-2 rounded">
+                                        <a href="${fullUrl}" target="_blank" class="flex gap-2 text-sm border p-2 rounded items-center text-blue-600 hover:underline">
                                             <i data-feather="file-text"></i> ${filename}
-                                        </div>
+                                        </a>
                                     `;
                                 }
                             });
@@ -293,16 +281,15 @@
                             }
                         }
                     });
-
                 }
-
-                // console.log("FORM DATA:", this.form);
-
             },
 
             loadSubAudit() {
                 let list = @json($subAudit);
                 const subContainer = document.getElementById('subAuditType');
+
+                if (!subContainer) return; // ✅ Guard jika element tidak ada
+
                 subContainer.innerHTML = "";
 
                 if (!list.length) {
@@ -324,31 +311,31 @@
 
             loadSubKlausul() {
                 const list = this.form.sub_klausuls ?? [];
+                const container = document.getElementById('selectedSubContainer');
 
-                // Wait for DOM to be updated / elements to exist
-                this.$nextTick(() => {
-                    const container = document.getElementById('selectedSubContainer');
+                if (!container) {
+                    console.warn('⚠️ Container selectedSubContainer tidak ditemukan');
+                    return;
+                }
 
-                    if (!container) return;
+                console.log('🔍 Sub Klausuls data:', list); // ✅ Debug
 
-                    container.innerHTML = "";
+                container.innerHTML = "";
 
-                    if (!list.length) {
-                        container.innerHTML = `<small class="text-gray-500">No Sub Klausul</small>`;
-                        return;
-                    }
+                if (!list.length) {
+                    container.innerHTML = `<span class="text-gray-400 text-sm">No clauses</span>`;
+                    return;
+                }
 
-                    list.forEach(s => {
-                        // support different shapes: { code, name } or nested objects or alternative keys
-                        const code = s.code ?? s.klausul_code ?? (s.sub_klausul?.code ?? '') ?? '';
-                        const name = s.name ?? s.title ?? (s.sub_klausul?.name ?? '') ?? '';
+                list.forEach(s => {
+                    const code = s.code ?? '';
+                    const name = s.name ?? '';
 
-                        container.insertAdjacentHTML('beforeend', `
-                    <span class="bg-blue-100 px-2 py-1 rounded mr-1 inline-block">
-                        ${code} - ${name}
-                    </span>
-                `);
-                    });
+                    container.insertAdjacentHTML('beforeend', `
+                        <span class="bg-green-100 px-2 py-1 rounded text-xs mr-1 mb-1 inline-block">
+                            ${code}${code && name ? ' - ' : ''}${name}
+                        </span>
+                    `);
                 });
             },
         }

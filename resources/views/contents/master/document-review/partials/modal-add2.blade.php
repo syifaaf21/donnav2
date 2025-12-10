@@ -460,9 +460,87 @@
             //     }
             // });
 
+            /* -------------------------------------------------------------------
+             * SHOW MODAL IF VALIDATION ERRORS
+             * ------------------------------------------------------------------- */
             @if ($errors->any())
-                var addDocModal = new bootstrap.Modal(document.getElementById('addDocumentModal'));
-                addDocModal.show();
+                new bootstrap.Modal(document.getElementById('addDocumentModal')).show();
+
+                // Jika plant punya old value → aktifkan dan reload datanya
+                const oldPlant = @json(old('plant'));
+                if (oldPlant) {
+                    // Set plant value first
+                    tsPlant.setValue(oldPlant, false); // false = don't trigger change yet
+
+                    // Trigger change event untuk load data dari API
+                    setTimeout(async () => {
+                        // Manually trigger the plant change to load filtered data
+                        const [parts, products, models, processes, departments] = await Promise.all([
+                            safeFetchJson(`/api/part-numbers?plant=${encodeURIComponent(oldPlant)}`),
+                            safeFetchJson(`/api/products?plant=${encodeURIComponent(oldPlant)}`),
+                            safeFetchJson(`/api/models?plant=${encodeURIComponent(oldPlant)}`),
+                            safeFetchJson(`/api/processes?plant=${encodeURIComponent(oldPlant)}`),
+                            safeFetchJson(`/api/departments?plant=${encodeURIComponent(oldPlant)}`)
+                        ]);
+
+                        // Enable fields
+                        tsPart.enable();
+                        tsProduct.enable();
+                        tsModel.enable();
+                        tsProcess.enable();
+                        tsDept.enable();
+
+                        // Populate options
+                        tsPart.clearOptions();
+                        tsPart.addOptions(parts || []);
+                        tsPart.refreshOptions(false);
+
+                        tsProduct.clearOptions();
+                        tsProduct.addOptions(products || []);
+                        tsProduct.refreshOptions(false);
+
+                        tsModel.clearOptions();
+                        tsModel.addOptions(models || []);
+                        tsModel.refreshOptions(false);
+
+                        tsProcess.clearOptions();
+                        tsProcess.addOptions(processes || []);
+                        tsProcess.refreshOptions(false);
+
+                        tsDept.clearOptions();
+                        tsDept.addOptions(departments || []);
+                        tsDept.refreshOptions(false);
+
+                        // After options loaded, restore old values
+                        setTimeout(() => {
+                            const oldPartNumbers = @json(old('part_number_id', []));
+                            const oldProducts = @json(old('product_id', []));
+                            const oldModels = @json(old('model_id', []));
+                            const oldProcesses = @json(old('process_id', []));
+                            const oldDepartment = @json(old('department_id'));
+
+                            if (oldPartNumbers && oldPartNumbers.length > 0) {
+                                tsPart.setValue(oldPartNumbers, false);
+                            }
+
+                            if (oldProducts && oldProducts.length > 0) {
+                                tsProduct.setValue(oldProducts, false);
+                            }
+
+                            if (oldModels && oldModels.length > 0) {
+                                tsModel.setValue(oldModels, false);
+                            }
+
+                            if (oldProcesses && oldProcesses.length > 0) {
+                                tsProcess.setValue(oldProcesses, false);
+                            }
+
+                            if (oldDepartment) {
+                                tsDept.setValue(oldDepartment, false);
+                            }
+                        }, 200);
+                    }, 100);
+                }
             @endif
         });
     </script>
