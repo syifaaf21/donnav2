@@ -21,7 +21,16 @@
             class="px-5 py-4 space-y-4 max-h-[70vh] overflow-y-auto"
             style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
             @csrf
-
+            {{-- Tips Alert --}}
+            <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
+                <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
+                    <p class="text-xs text-yellow-700 leading-relaxed">
+                        Gunakan tombol <strong>Replace</strong> untuk mengganti file.
+                    </p>
+                </div>
+            </div>
             <!-- Existing Files -->
             <div id="reviseFilesContainer" class="mb-4"></div>
 
@@ -109,8 +118,9 @@
 
             let isValid = true;
 
-            // 1) VALIDASI: FILE WAJIB ADA MINIMAL SATU
-            const allFileInputs = newFilesContainer.querySelectorAll('input[type="file"]');
+            // 1) VALIDASI: FILE WAJIB ADA MINIMAL SATU (termasuk replace di existing item)
+            const allFileInputs = reviseForm.querySelectorAll(
+                'input[type="file"][name="revision_files[]"]');
             let hasFile = false;
 
             allFileInputs.forEach(input => {
@@ -124,7 +134,6 @@
                 showReviseError("Please upload at least one new file.");
                 isValid = false;
             }
-
 
             // 2) VALIDASI: NOTES QUILL WAJIB ISI
             let plain = quillRevise.getText().trim();
@@ -144,7 +153,7 @@
     });
 </script>
 <style>
-    #reviseFilesContainer div > span {
+    #reviseFilesContainer div>span {
         display: inline-block;
         max-width: 70%;
         white-space: nowrap;
