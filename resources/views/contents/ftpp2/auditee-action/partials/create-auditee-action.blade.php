@@ -131,26 +131,37 @@
                     $actionId = $action?->id ?? 'null';
                 @endphp
 
-                <!-- Attachments -->
+                {{-- ATTACHMENT SECTION --}}
                 <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
+                    <div class="font-semibold text-lg text-gray-700">Attachments</div>
 
-                    <div class="font-semibold text-lg text-gray-900">Attachments</div>
-                    <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
+                    {{-- Tips Alert --}}
+                    <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
+                        <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
+                            <p class="text-xs text-yellow-700 leading-relaxed">
+                                Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
+                                Maximum total file size is <strong>10 MB</strong>.
+                            </p>
+                        </div>
+                    </div>
+
                     <div>
-                        <div id="previewImageContainer2" class="flex flex-wrap gap-2"></div>
-                        <div id="previewFileContainer2" class="flex flex-col gap-1"></div>
+                        <!-- Preview containers -->
+                        <div id="previewImageContainer2" class="mt-2 flex flex-wrap gap-2"></div>
+                        <div id="previewFileContainer2" class="mt-2 flex flex-col gap-1"></div>
 
-                        <!-- Attachment button (paperclip) -->
+                        <!-- Attachment button -->
                         <div class="relative inline-block">
-                            <!-- Attachment button -->
                             <button id="attachBtn2" type="button"
-                                class="items-center gap-2 px-4 py-2 border rounded-lg text-gray-900 hover:bg-gray-100 focus:outline-none"
-                                title="Attach files">
+                                class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
+                                aria-haspopup="true" aria-expanded="false" title="Attach files">
                                 <i data-feather="paperclip" class="w-4 h-4"></i>
                                 <span id="attachCount2" class="text-xs text-gray-600 hidden">0</span>
                             </button>
 
-                            <!-- Attachment Menu -->
+                            <!-- Menu -->
                             <div id="attachMenu2"
                                 class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
                                 <button id="attachImages2" type="button"
@@ -164,12 +175,18 @@
                                     <span class="text-sm">Upload Documents</span>
                                 </button>
                             </div>
+                        </div>
 
-                            <!-- Hidden file inputs -->
-                            <input type="file" id="photoInput2" name="photos2[]" accept="image/*" multiple
-                                class="hidden">
-                            <input type="file" id="fileInput2" name="files2[]" accept=".pdf" multiple
-                                class="hidden">
+                        <!-- Hidden file inputs -->
+                        <input type="file" id="photoInput2" name="attachments[]" accept="image/*" multiple class="hidden">
+                        <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple class="hidden">
+
+                        <!-- ✅ Error message container for attachments -->
+                        <div id="attachmentErrorContainer" class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                            <div class="flex items-start">
+                                <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                <div id="attachmentErrorMessage" class="text-sm text-red-700"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -183,7 +200,8 @@
                     <img src="/images/usr-approve.png" class="mx-auto h-24">
                 @else
                     {{-- Jika belum approve, tombol tetap muncul --}}
-                    <button type="button" class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                    <button type="button"
+                        class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
                         @click="confirmApprove()">
                         Approve
                     </button>
@@ -330,12 +348,35 @@
         });
 
         if (result.isConfirmed) {
-            // wait for save; updateAuditeeAction will redirect on success
             await updateAuditeeAction(true);
         }
     }
 
     async function updateAuditeeAction(isApprove = false) {
+
+        // ✅ 1. Hapus error messages lama
+        const errorContainer = document.getElementById('attachmentErrorContainer');
+        const errorMessage = document.getElementById('attachmentErrorMessage');
+        if (errorContainer) {
+            errorContainer.classList.add('hidden');
+        }
+        if (errorMessage) {
+            errorMessage.innerHTML = '';
+        }
+
+        // ✅ 2. Function untuk tampilkan error di field attachment
+        function showAttachmentError(message) {
+            if (errorContainer && errorMessage) {
+                errorMessage.innerHTML = message;
+                errorContainer.classList.remove('hidden');
+
+                // Re-render feather icons
+                feather.replace();
+
+                // Scroll to error
+                errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
 
         // -----------------------------
         // VALIDATION (BLOCK SAVE)
@@ -356,37 +397,123 @@
             err.push("Yokoten Area must be filled when Yokoten = Yes.");
         }
 
+        // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
+        const photoInput2 = document.getElementById('photoInput2');
+        const fileInput2 = document.getElementById('fileInput2');
+
+        let totalSize = 0;
+        let fileDetails = [];
+
+        // Hitung total size dari photos (images)
+        if (photoInput2 && photoInput2.files) {
+            Array.from(photoInput2.files).forEach(file => {
+                totalSize += file.size;
+                fileDetails.push({
+                    name: file.name,
+                    size: file.size,
+                    type: 'image'
+                });
+            });
+        }
+
+        // Hitung total size dari files (PDF)
+        if (fileInput2 && fileInput2.files) {
+            Array.from(fileInput2.files).forEach(file => {
+                totalSize += file.size;
+                fileDetails.push({
+                    name: file.name,
+                    size: file.size,
+                    type: 'pdf'
+                });
+            });
+        }
+
+        // Convert ke MB untuk display
+        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+        console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
+        console.log('Files:', fileDetails);
+
+        // ✅ 4. CHECK jika melebihi 10MB - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
+        if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+            const errorHtml = `
+                <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+                <p class="mt-1">
+                    Please compress your PDF files using this tool:
+                    <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline hover:text-blue-800 font-semibold">
+                        click here
+                    </a>
+                    , download and reupload it.
+                </p>
+            `;
+            showAttachmentError(errorHtml);
+            return; // ⛔ STOP submit
+        }
+
+        // ✅ 5. CHECK individual file size - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
+        let individualErrors = [];
+
+        // Check individual image files (max 3MB)
+        if (photoInput2 && photoInput2.files) {
+            Array.from(photoInput2.files).forEach(file => {
+                if (file.size > 3 * 1024 * 1024) { // 3MB
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    individualErrors.push(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
+                }
+            });
+        }
+
+        // Check individual PDF files (max 10MB)
+        if (fileInput2 && fileInput2.files) {
+            Array.from(fileInput2.files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    individualErrors.push(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
+                }
+            });
+        }
+
+        if (individualErrors.length > 0) {
+            const errorHtml = `
+                <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
+                <ul class="list-disc list-inside space-y-1">
+                    ${individualErrors.map(e => `<li>${e}</li>`).join('')}
+                </ul>
+            `;
+            showAttachmentError(errorHtml);
+            return; // ⛔ STOP submit
+        }
+
+        // ✅ 6. Check other validation errors (tetap di SweetAlert - bukan file attachment)
         if (err.length > 0) {
             await Swal.fire({
                 icon: 'error',
-                title: 'Required Fields Missing',
+                title: 'Validation Error',
                 html: err.join("<br>"),
             });
             return; // ⛔ STOP submit
         }
 
+        // -----------------------------
+        // PREPARE FORM DATA
+        // -----------------------------
         const token = document.querySelector('meta[name="csrf-token"]').content;
         const formData = new FormData();
 
         formData.append('_token', token);
-        formData.append('_method', 'POST'); // WAJIB!
+        formData.append('_method', 'POST');
         formData.append('action', 'update_auditee_action');
 
-        // Jika ini approve, kasih flag ke backend
         if (isApprove) {
             formData.append('approve_ldr_spv', 1);
         }
 
-        // Get ID Finding
         const findingId = document.querySelector('input[name="audit_finding_id"]')?.value;
         formData.append('audit_finding_id', findingId);
-
-        // Get PIC
         formData.append('pic', document.querySelector('input[name="pic"]')?.value);
 
-        // -----------------------------
         // 5 WHY
-        // -----------------------------
         const whyInputs = document.querySelectorAll('input[name="why[]"]');
         const causeInputs = document.querySelectorAll('input[name="cause[]"]');
 
@@ -395,12 +522,9 @@
             formData.append(`cause_${i+1}_karena`, causeInputs[i]?.value || '');
         }
 
-        // Root cause
         formData.append('root_cause', document.querySelector('textarea[x-model="form.root_cause"]')?.value || '');
 
-        // -----------------------------
-        // Corrective Action (1–4)
-        // -----------------------------
+        // Corrective Action
         document.querySelectorAll('tr.corrective-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
             const pic = row.querySelector('input[name="pic[]"]')?.value || '';
@@ -413,9 +537,7 @@
             formData.append(`corrective_${i+1}_actual`, actual);
         });
 
-        // -----------------------------
-        // Preventive Action (1–4)
-        // -----------------------------
+        // Preventive Action
         document.querySelectorAll('tr.preventive-row').forEach((row, i) => {
             const activity = row.querySelector('input[name="activity[]"]')?.value || '';
             const pic = row.querySelector('input[name="pic[]"]')?.value || '';
@@ -428,25 +550,17 @@
             formData.append(`preventive_${i+1}_actual`, actual);
         });
 
-        // -----------------------------
         // Yokoten
-        // -----------------------------
         const yokoten = document.querySelector('input[name="yokoten"]:checked');
         formData.append('yokoten', yokoten ? yokoten.value : 0);
-
         formData.append('yokoten_area', document.querySelector('textarea[name="yokoten_area"]')?.value || '');
 
-        // -----------------------------
         // Attachments
-        // -----------------------------
-        const photoInput2 = document.getElementById('photoInput2');
-        const fileInput2 = document.getElementById('fileInput2');
-
         Array.from(photoInput2?.files || []).forEach(file => formData.append('attachments[]', file));
         Array.from(fileInput2?.files || []).forEach(file => formData.append('attachments[]', file));
 
         // -----------------------------
-        // Submit
+        // SUBMIT
         // -----------------------------
         try {
             const res = await fetch("{{ route('ftpp.auditee-action.store', ['id' => $finding->id]) }}", {
@@ -463,14 +577,26 @@
 
             if (res.ok && result.success) {
                 console.log(result);
-                // Redirect to index after successful save
                 window.location.href = "{{ route('ftpp.index') }}";
             } else {
-                alert("❌ Failed: " + (result.message || "Unknown error"));
+                // ✅ Jika ada error dari server tentang file size, tampilkan di field
+                if (result.message && result.message.includes('file size')) {
+                    showAttachmentError(result.message);
+                } else {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.message || "Unknown error"
+                    });
+                }
             }
         } catch (err) {
             console.error(err);
-            alert("❌ Error: " + err.message);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.message
+            });
         }
     }
 </script>

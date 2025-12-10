@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6e4be3a4ed6bd4b712eb74b47e448067",
+    "content-hash": "8779b1da7bebdb359614ee0e1076865d",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -1333,129 +1333,6 @@
                 }
             ],
             "time": "2025-08-22T14:27:06+00:00"
-        },
-        {
-            "name": "iio/libmergepdf",
-            "version": "2.4.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/hanneskod/libmergepdf.git",
-                "reference": "0701d006f6f611dcb552589a8d7d678059501d54"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/hanneskod/libmergepdf/zipball/0701d006f6f611dcb552589a8d7d678059501d54",
-                "reference": "0701d006f6f611dcb552589a8d7d678059501d54",
-                "shasum": ""
-            },
-            "require": {
-                "itbz/fpdi": "~1.4",
-                "php": ">=5.3.0"
-            },
-            "require-dev": {
-                "symfony/finder": "2.*"
-            },
-            "suggest": {
-                "symfony/finder": "Bulk add files using finder."
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "iio\\libmergepdf\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "WTFPL"
-            ],
-            "authors": [
-                {
-                    "name": "Hannes Forsgård",
-                    "email": "hannes.forsgard@gmail.com"
-                }
-            ],
-            "description": "Library for merging multiple PDFs",
-            "homepage": "https://github.com/iio/libmergepdf",
-            "keywords": [
-                "concatenate",
-                "merge",
-                "pdf"
-            ],
-            "time": "2014-11-17T18:03:49+00:00"
-        },
-        {
-            "name": "itbz/fpdf",
-            "version": "1.7.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/mreg-archive/fpdf.git",
-                "reference": "63340096907ef7525a9002d1ae3d0fd1ff376a6d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/mreg-archive/fpdf/zipball/63340096907ef7525a9002d1ae3d0fd1ff376a6d",
-                "reference": "63340096907ef7525a9002d1ae3d0fd1ff376a6d",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "fpdf": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "no usage restriction"
-            ],
-            "description": "Unofficial PSR-0 compliant version of the FPDF library",
-            "homepage": "http://www.fpdf.org/",
-            "abandoned": "setasign/fpdf",
-            "time": "2016-05-27T09:02:54+00:00"
-        },
-        {
-            "name": "itbz/fpdi",
-            "version": "1.6.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/mreg-archive/fpdi.git",
-                "reference": "3189f4662a5bbd3838309368d9fc7f5a31c08a6f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/mreg-archive/fpdi/zipball/3189f4662a5bbd3838309368d9fc7f5a31c08a6f",
-                "reference": "3189f4662a5bbd3838309368d9fc7f5a31c08a6f",
-                "shasum": ""
-            },
-            "require": {
-                "itbz/fpdf": "~1.7",
-                "php": ">=5.3.0"
-            },
-            "require-dev": {
-                "hanneskod/classtools": "~1.0",
-                "nikic/php-parser": "~1.0",
-                "phpunit/phpunit": "4.*",
-                "symfony/finder": "~2.3",
-                "tecnickcom/tcpdf": "^6.2.12"
-            },
-            "suggest": {
-                "tecnickcom/tcpdf": "FPDI supports TCPDF as a replacement for FPDF"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "fpdi\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "Unofficial PSR-4 compliant version of the FPDI library",
-            "abandoned": "setasign/fpdi",
-            "time": "2016-03-02T19:45:05+00:00"
         },
         {
             "name": "laravel/framework",
@@ -3840,6 +3717,53 @@
             },
             "abandoned": true,
             "time": "2020-02-19T12:21:53+00:00"
+        },
+        {
+            "name": "smalot/pdfparser",
+            "version": "v2.11.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/smalot/pdfparser.git",
+                "reference": "ac8e6678b0940e4b2ccd5caadd3fb18e68093be6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/smalot/pdfparser/zipball/ac8e6678b0940e4b2ccd5caadd3fb18e68093be6",
+                "reference": "ac8e6678b0940e4b2ccd5caadd3fb18e68093be6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-iconv": "*",
+                "ext-zlib": "*",
+                "php": ">=7.1",
+                "symfony/polyfill-mbstring": "^1.18"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Smalot\\PdfParser\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastien MALOT",
+                    "email": "sebastien@malot.fr"
+                }
+            ],
+            "description": "Pdf parser library. Can read and extract information from pdf file.",
+            "homepage": "https://www.pdfparser.org",
+            "keywords": [
+                "extract",
+                "parse",
+                "parser",
+                "pdf",
+                "text"
+            ],
+            "time": "2024-08-16T06:48:03+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",

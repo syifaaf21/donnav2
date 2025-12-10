@@ -141,7 +141,19 @@
             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
 
                 <div class="font-semibold text-lg text-gray-700">Attachments</div>
-                <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
+
+                {{-- Tips Alert --}}
+                <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
+                    <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
+                        <p class="text-xs text-yellow-700 leading-relaxed">
+                            Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
+                            Maximum total file size is <strong>10 MB</strong>.
+                        </p>
+                    </div>
+                </div>
+
                 <div>
                     <!-- Preview containers (sesuaikan posisi di form) -->
                     <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
@@ -174,10 +186,25 @@
                         </div>
                     </div>
 
-                    <!-- Hidden file inputs -->
-                    <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple class="hidden">
-                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple class="hidden">
+                    <!-- ✅ Hidden file inputs - Ubah ke 'attachments[]' -->
+                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple
+                        class="hidden">
+                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple
+                        class="hidden">
+
+                    <!-- ✅ Error message container for attachments -->
+                    @error('attachments')
+                        <div class="mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                            <div class="flex items-start">
+                                <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                <p class="text-sm text-red-700">
+                                    {!! $message !!}
+                                </p>
+                            </div>
+                        </div>
+                    @enderror
                 </div>
+
                 <button type="button" onclick="saveHeaderOnly()"
                     class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                     Save Finding
@@ -921,8 +948,121 @@
         const form = document.querySelector('form[action="{{ route('ftpp.audit-finding.store') }}"]');
         if (!form) return alert('Form not found');
 
-        // hapus pesan error lama
+        // ✅ 1. Hapus pesan error lama
         document.querySelectorAll('.validation-error').forEach(n => n.remove());
+        document.querySelectorAll('.attachment-error').forEach(n => n.remove());
+
+        // ✅ 2. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
+        const photoInput = document.getElementById('photoInput');
+        const fileInput = document.getElementById('fileInput');
+
+        let totalSize = 0;
+        let fileDetails = [];
+
+        // Hitung total size dari photos (images)
+        if (photoInput && photoInput.files) {
+            Array.from(photoInput.files).forEach(file => {
+                totalSize += file.size;
+                fileDetails.push({
+                    name: file.name,
+                    size: file.size,
+                    type: 'image'
+                });
+            });
+        }
+
+        // Hitung total size dari files (PDF)
+        if (fileInput && fileInput.files) {
+            Array.from(fileInput.files).forEach(file => {
+                totalSize += file.size;
+                fileDetails.push({
+                    name: file.name,
+                    size: file.size,
+                    type: 'pdf'
+                });
+            });
+        }
+
+        // Convert ke MB untuk display
+        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+        console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
+        console.log('Files:', fileDetails);
+
+        // ✅ 3. CHECK jika melebihi 10MB - STOP DI SINI
+        if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+            // Tampilkan error di bawah attachment section
+            const attachmentSection = document.querySelector('.bg-white.p-6.mt-6:has(#previewImageContainer)');
+
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'attachment-error mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r';
+            errorDiv.innerHTML = `
+                <div class="flex items-start">
+                    <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                    <div class="text-sm text-red-700">
+                        <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                        <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+                        <p class="mt-1">
+                            Please compress your PDF files using this tool:
+                            <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline hover:text-blue-800 font-semibold">
+                                click here
+                            </a>
+                            , download and reupload it.
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Insert sebelum tombol submit
+            const submitBtn = attachmentSection.querySelector('button[onclick="saveHeaderOnly()"]');
+            if (submitBtn) {
+                submitBtn.insertAdjacentElement('beforebegin', errorDiv);
+            } else {
+                attachmentSection.appendChild(errorDiv);
+            }
+
+            // Re-render feather icons
+            feather.replace();
+
+            // Scroll ke error
+            errorDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            return; // ❌ STOP - JANGAN LANJUT KE SERVER
+        }
+
+        // ✅ 4. VALIDASI FILE INDIVIDUAL (opsional)
+        let hasIndividualError = false;
+
+        // Check individual image files (max 3MB)
+        if (photoInput && photoInput.files) {
+            Array.from(photoInput.files).forEach(file => {
+                if (file.size > 3 * 1024 * 1024) { // 3MB
+                    hasIndividualError = true;
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    showFileError(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
+                }
+            });
+        }
+
+        // Check individual PDF files (max 10MB)
+        if (fileInput && fileInput.files) {
+            Array.from(fileInput.files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    hasIndividualError = true;
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    showFileError(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
+                }
+            });
+        }
+
+        if (hasIndividualError) {
+            return; // ❌ STOP - JANGAN LANJUT KE SERVER
+        }
+
+        // ✅ 5. LANJUT KE SERVER (jika semua validasi OK)
 
         // Prevent the static single `selectedSub` hidden input from submitting an empty value
         const staticSelectedSub = document.getElementById('selectedSub');
@@ -961,44 +1101,48 @@
             if (res.status === 422) {
                 const data = await res.json();
                 const errors = data.errors || {};
-                // tampilkan pesan error di tempat yang relevan
                 let firstErrorEl = null;
+
                 Object.keys(errors).forEach(key => {
                     const messages = errors[key];
-                    // normalisasi key untuk array like "auditee_ids.0" -> "auditee_ids"
                     const baseKey = key.split('.')[0];
 
                     let targetEl = null;
+
                     if (baseKey === 'auditee_ids') {
                         targetEl = document.getElementById('selectedAuditees') || form;
                     } else if (baseKey === 'sub_klausul_id') {
                         targetEl = document.getElementById('selectedSubContainer') || form;
                     } else {
-                        // coba cari elemen dengan name exact atau name[]'
-                        targetEl = form.querySelector(`[name="${baseKey}"]`) || form.querySelector(
-                            `[name="${baseKey}[]"]`) || form;
+                        targetEl = form.querySelector(`[name="${baseKey}"]`) ||
+                            form.querySelector(`[name="${baseKey}[]"]`) || form;
                     }
 
-                    // append all messages
                     messages.forEach(msg => {
                         const el = document.createElement('div');
                         el.className = 'validation-error text-sm text-red-600 mt-1';
                         el.textContent = msg;
-                        // jika target adalah container, letakkan setelah container; jika input, setelah input
+
                         if (targetEl === form) {
                             form.appendChild(el);
                         } else {
                             targetEl.insertAdjacentElement('afterend', el);
                         }
+
                         if (!firstErrorEl) firstErrorEl = targetEl;
                     });
                 });
 
-                if (firstErrorEl && typeof firstErrorEl.focus === 'function') {
-                    try {
-                        firstErrorEl.focus();
-                    } catch (e) {
-                        /* ignore */
+                if (firstErrorEl) {
+                    firstErrorEl.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    if (typeof firstErrorEl.focus === 'function') {
+                        try {
+                            firstErrorEl.focus();
+                        } catch (e) {
+                            /* ignore */ }
                     }
                 }
                 return;
@@ -1012,12 +1156,34 @@
 
             // success
             const json = await res.json();
-            // kalau mau redirect setelah sukses:
             window.location.href = '/ftpp';
         } catch (err) {
             console.error('Save error', err);
             alert('Error saat menyimpan. Lihat console untuk detail.');
         }
+    }
+
+    // ✅ Helper function untuk show individual file error
+    function showFileError(message) {
+        const attachmentSection = document.querySelector('.bg-white.p-6.mt-6:has(#previewImageContainer)');
+
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'attachment-error mt-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded';
+        errorDiv.innerHTML = `
+            <div class="flex items-start gap-2">
+                <i data-feather="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                <span class="text-sm">${message}</span>
+            </div>
+        `;
+
+        const submitBtn = attachmentSection.querySelector('button[onclick="saveHeaderOnly()"]');
+        if (submitBtn) {
+            submitBtn.insertAdjacentElement('beforebegin', errorDiv);
+        } else {
+            attachmentSection.appendChild(errorDiv);
+        }
+
+        feather.replace();
     }
 </script>
 
