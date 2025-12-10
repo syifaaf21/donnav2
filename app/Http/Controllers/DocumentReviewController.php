@@ -459,9 +459,10 @@ class DocumentReviewController extends Controller
     public function approveWithDates(Request $request, $id)
     {
         $validated = $request->validate([
-            'reminder_date' => 'required|date',
+            'reminder_date' => 'required|date|after_or_equal:today',
             'deadline' => 'required|date|after_or_equal:reminder_date',
         ]);
+
 
         $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
         $approvedStatus = Status::where('name', 'Approved')->firstOrFail();

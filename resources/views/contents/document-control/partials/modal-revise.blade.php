@@ -27,9 +27,14 @@
                 <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
                 <div>
                     <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
-                    <p class="text-xs text-yellow-700 leading-relaxed">
-                        Gunakan tombol <strong>Replace</strong> untuk mengganti file. Menghapus file akan menghapusnya secara <strong>permanen</strong> dan tidak dapat dipulihkan.
-                    </p>
+                    <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
+                        <li>Allowed formats: <strong>PDF, DOCX, XLSX, JPG, PNG, JPEG</strong>. Max size: <strong>10
+                                MB</strong>.</li>
+                        <li>Gunakan tombol <strong>Replace</strong> untuk mengganti file, dan <strong>Add File</strong>
+                            untuk menambah file baru.</li>
+                        <li>File yang dihapus akan hilang secara <strong>permanen</strong> dan tidak dapat dipulihkan.
+                        </li>
+                    </ul>
                 </div>
             </div>
 
@@ -43,7 +48,7 @@
                     class="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition">
                     + Add File
                 </button>
-                <p class="text-xs text-gray-500 mt-1">Allowed formats: PDF, DOCX, XLSX, JPG, PNG, JPEG</p>
+                <p class="text-xs text-gray-500 mt-1">Allowed formats: PDF, DOCX, XLSX, JPG, PNG, JPEG|max:10mb</p>
             </div>
 
             {{-- Footer --}}
