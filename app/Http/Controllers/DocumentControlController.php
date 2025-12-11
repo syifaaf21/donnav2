@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 
 class DocumentControlController extends Controller
@@ -155,8 +157,24 @@ class DocumentControlController extends Controller
             return redirect()->back()->with('info', 'No changes made to document.');
         }
 
+        // ================= TOTAL SIZE LIMIT =================
+        $maxTotalSize = 10 * 1024 * 1024; // 20 MB
+        $totalSize = 0;
+
+        foreach ($uploadedFiles as $file) {
+            if ($file) {
+                $totalSize += $file->getSize();
+            }
+        }
+
+        if ($totalSize > $maxTotalSize) {
+            return back()->withErrors([
+                'revision_files' => 'Total ukuran semua file tidak boleh lebih dari 10 MB.'
+            ])->withInput();
+        }
+
         $request->validate([
-            'revision_files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:20480',
+            'revision_files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
         ]);
 
         $mapping->load('document');
@@ -205,11 +223,11 @@ class DocumentControlController extends Controller
             $timestamp  = now()->format('Ymd_His');
 
             $existingRevisions = $mapping->files()
-                ->where('original_name', 'like', $baseName.'%')
+                ->where('original_name', 'like', $baseName . '%')
                 ->count();
             $revisionNumber = $existingRevisions + 1;
 
-            $filename = $baseName.'_rev'.$revisionNumber.'_'.$timestamp.'.'.$extension;
+            $filename = $baseName . '_rev' . $revisionNumber . '_' . $timestamp . '.' . $extension;
             $newPath  = $uploadedFile->storeAs($folder, $filename, 'public');
 
             $newFile = $mapping->files()->create([
@@ -219,6 +237,14 @@ class DocumentControlController extends Controller
                 'uploaded_by'   => Auth::id(),
                 'is_active'     => 1,
             ]);
+
+            // ==================== AUTO-COMPRESS ====================
+            $extension = strtolower($uploadedFile->getClientOriginalExtension());
+            if ($extension === 'pdf') {
+                $this->compressPdf($newPath);
+            } elseif (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                $this->compressImage($newPath);
+            }
 
             if ($oldFileId) {
                 $oldFile = $mapping->files()->find($oldFileId);
@@ -292,6 +318,7 @@ class DocumentControlController extends Controller
 
         return redirect()->back()->with('success', 'Document revised successfully!');
     }
+
 
     public function approve(Request $request, DocumentMapping $mapping)
     {
@@ -454,5 +481,53 @@ class DocumentControlController extends Controller
         ));
 
         return redirect()->back()->with('success', 'Document rejected successfully');
+    }
+
+    // ===============================
+    // COMPRESS PDF
+    // ===============================
+    private function compressPdf($filePath)
+    {
+        $fullPath = storage_path("app/public/" . $filePath);
+        $tempPath = $fullPath . "_compressed.pdf";
+
+        // Pastikan Ghostscript tersedia di server
+        $gs = trim(shell_exec("which gs"));
+        if (!$gs) return false;
+
+        $cmd = "$gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook "
+            . "-dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"$tempPath\" \"$fullPath\"";
+
+        shell_exec($cmd);
+
+        // Jika compress sukses → ganti file asli
+        if (file_exists($tempPath)) {
+            rename($tempPath, $fullPath);
+        }
+
+        return true;
+    }
+
+
+    // ===============================
+    // COMPRESS IMAGE
+    // ===============================
+    private function compressImage($filePath)
+    {
+        $fullPath = storage_path("app/public/" . $filePath);
+
+        // Buat manager baru
+        $manager = new ImageManager(new Driver());
+
+        // Proses image
+        $image = $manager->read($fullPath);
+
+        // Resize
+        $image->scaleDown(1920);
+
+        // Simpan kualitas 70%
+        $image->save($fullPath, quality: 70);
+
+        return true;
     }
 }

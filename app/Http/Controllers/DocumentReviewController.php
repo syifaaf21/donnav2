@@ -334,10 +334,26 @@ class DocumentReviewController extends Controller
             abort(403);
 
         $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
             'revision_file_ids.*' => 'nullable|integer',
             'notes' => 'required|string|max:500',
         ]);
+
+        // Hitung total size semua file baru
+        $totalSize = 0;
+
+        if ($request->hasFile('revision_files')) {
+            foreach ($request->file('revision_files') as $file) {
+                $totalSize += $file->getSize(); // dalam bytes
+            }
+        }
+
+        // Maksimal total 10 MB = 10 * 1024 * 1024
+        if ($totalSize > 10 * 1024 * 1024) {
+            return back()
+                ->withErrors(['revision_files' => 'Total file upload tidak boleh lebih dari 10 MB'])
+                ->withInput();
+        }
 
         $uploadedFiles = $request->file('revision_files', []);
         $oldFileIds = $request->input('revision_file_ids', []);
@@ -459,9 +475,10 @@ class DocumentReviewController extends Controller
     public function approveWithDates(Request $request, $id)
     {
         $validated = $request->validate([
-            'reminder_date' => 'required|date',
+            'reminder_date' => 'required|date|after_or_equal:today',
             'deadline' => 'required|date|after_or_equal:reminder_date',
         ]);
+
 
         $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
         $approvedStatus = Status::where('name', 'Approved')->firstOrFail();

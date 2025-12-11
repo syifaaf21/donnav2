@@ -9,7 +9,7 @@
                     style="font-family: 'Inter', sans-serif; font-size: 1.25rem;" id="approveModalLabel">
                     <i class="bi bi-check-circle-fill me-2 text-primary"></i> Approve Document
                 </h5>
-                 <button type="button"
+                <button type="button"
                     class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
                     data-bs-dismiss="modal" aria-label="Close"
                     style="width: 36px; height: 36px; border: 1px solid #ddd;">
@@ -25,7 +25,8 @@
                         <label for="reminder_date" class="form-label fw-semibold">
                             Reminder Date <span class="text-danger">*</span>
                         </label>
-                        <input type="date" name="reminder_date" id="reminder_date" class="form-control" required>
+                        <input type="date" name="reminder_date" id="reminder_date" class="form-control"
+                            min="{{ now()->toDateString() }}" required>
                         <div id="reminderError" class="text-danger small mt-1" style="display:none;">
                             Reminder Date must be earlier than or equal to Deadline.
                         </div>
@@ -36,14 +37,15 @@
                         <label for="deadline" class="form-label fw-semibold">
                             Deadline <span class="text-danger">*</span>
                         </label>
-                        <input type="date" name="deadline" id="deadline" class="form-control" required>
+                        <input type="date" name="deadline" id="deadline" class="form-control"
+                            min="{{ now()->toDateString() }}" required>
                         <div id="deadlineError" class="text-danger small mt-1" style="display:none;">
                             Deadline must be later than or equal to Reminder Date.
                         </div>
                     </div>
                 </div>
 
-               <div class="modal-footer justify-content-between p-3 bg-light border-top rounded-bottom-4">
+                <div class="modal-footer justify-content-between p-3 bg-light border-top rounded-bottom-4">
                     <button type="button" class="btn btn-outline-secondary fw-semibold" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Cancel
                     </button>
@@ -56,61 +58,60 @@
     </div>
 </div>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
 
-    const approveForm = document.getElementById("approveForm");
-    const reminderInput = document.getElementById("reminder_date");
-    const deadlineInput = document.getElementById("deadline");
-
-
-    // ===== FUNC: Tampilkan error mirip modal revise =====
-    function showApproveError(message) {
-
-        // Hapus alert lama
-        let oldAlert = document.getElementById("approve-alert");
-        if (oldAlert) oldAlert.remove();
-
-        const alertDiv = document.createElement("div");
-        alertDiv.id = "approve-alert";
-        alertDiv.className = "alert alert-danger mt-2";
-        alertDiv.innerText = message;
-
-        approveForm.prepend(alertDiv);
-    }
+        const approveForm = document.getElementById("approveForm");
+        const reminderInput = document.getElementById("reminder_date");
+        const deadlineInput = document.getElementById("deadline");
 
 
-    // ===== VALIDASI SUBMIT =====
-    approveForm.addEventListener("submit", function (e) {
+        // ===== FUNC: Tampilkan error mirip modal revise =====
+        function showApproveError(message) {
 
-        let reminder = reminderInput.value;
-        let deadline = deadlineInput.value;
+            // Hapus alert lama
+            let oldAlert = document.getElementById("approve-alert");
+            if (oldAlert) oldAlert.remove();
 
-        // Wajib isi
-        if (!reminder || !deadline) {
-            e.preventDefault();
-            showApproveError("Reminder Date and Deadline are required.");
-            return;
+            const alertDiv = document.createElement("div");
+            alertDiv.id = "approve-alert";
+            alertDiv.className = "alert alert-danger mt-2";
+            alertDiv.innerText = message;
+
+            approveForm.prepend(alertDiv);
         }
 
-        // Convert ke date
-        const reminderDate = new Date(reminder);
-        const deadlineDate = new Date(deadline);
 
-        // Reminder tidak boleh > deadline
-        if (reminderDate > deadlineDate) {
-            e.preventDefault();
-            showApproveError("Reminder Date must be earlier than or equal to Deadline.");
-            return;
-        }
+        // ===== VALIDASI SUBMIT =====
+        approveForm.addEventListener("submit", function(e) {
 
-        // Deadline tidak boleh < Reminder
-        if (deadlineDate < reminderDate) {
-            e.preventDefault();
-            showApproveError("Deadline must be later than or equal to Reminder Date.");
-            return;
-        }
+            let reminder = reminderInput.value;
+            let deadline = deadlineInput.value;
+
+            // Wajib isi
+            if (!reminder || !deadline) {
+                e.preventDefault();
+                showApproveError("Reminder Date and Deadline are required.");
+                return;
+            }
+
+            // Convert ke date
+            const reminderDate = new Date(reminder);
+            const deadlineDate = new Date(deadline);
+
+            // Reminder tidak boleh > deadline
+            if (reminderDate > deadlineDate) {
+                e.preventDefault();
+                showApproveError("Reminder Date must be earlier than or equal to Deadline.");
+                return;
+            }
+
+            // Deadline tidak boleh < Reminder
+            if (deadlineDate < reminderDate) {
+                e.preventDefault();
+                showApproveError("Deadline must be later than or equal to Reminder Date.");
+                return;
+            }
+        });
+
     });
-
-});
 </script>
-

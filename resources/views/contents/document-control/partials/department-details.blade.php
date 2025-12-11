@@ -15,7 +15,7 @@
 
             <li>
                 <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-gear me-1"></i> Document Control
+                    <i class="bi bi-calendar-range" ></i> Document Control
                 </a>
             </li>
 
@@ -196,7 +196,8 @@
                                                     {{-- VIEW FILES --}}
                                                     @php
                                                         $filesToShow = collect($mapping->files_for_modal_all)->filter(
-                                                            fn($file) => ($file['is_active'] ?? 0) == 1 || ($file['pending_approval'] ?? 0) == 2
+                                                            fn($file) => ($file['is_active'] ?? 0) == 1 ||
+                                                                ($file['pending_approval'] ?? 0) == 2,
                                                         );
                                                     @endphp
 
@@ -223,15 +224,18 @@
                                                                             data-file="{{ $file['url'] }}"
                                                                             data-doc-title="{{ $file['name'] }}">
 
-                                                                            <span class="truncate pr-2" style="flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                                                            <span class="truncate pr-2"
+                                                                                style="flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                                                                 📄 {{ $file['name'] }}
                                                                             </span>
                                                                             @if (($file['pending_approval'] ?? 0) == 2)
-                                                                                <span class="ml-2 inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                <span
+                                                                                    class="ml-2 inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
                                                                                     Rejected
                                                                                 </span>
                                                                             @elseif (!empty($file['replaced_by_id']))
-                                                                                <span class="ml-2 inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                <span
+                                                                                    class="ml-2 inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
                                                                                     Replaced
                                                                                 </span>
                                                                             @endif
@@ -600,7 +604,8 @@
                     const newFileInputs = newFilesContainer.querySelectorAll('input[type="file"]');
 
                     // ambil file yang dihapus
-                    const deletedFileInputs = reviseFormDynamic.querySelectorAll('input[name="deleted_file_ids[]"]');
+                    const deletedFileInputs = reviseFormDynamic.querySelectorAll(
+                        'input[name="deleted_file_ids[]"]');
 
                     let hasChange = false;
 
@@ -626,7 +631,56 @@
                     if (!hasChange) {
                         e.preventDefault();
                         showReviseError("Please modify at least one file before submitting.");
+                        return;
                     }
+
+                    // ===============================
+                    // VALIDASI: Total file size <= 10MB
+                    // ===============================
+                    let totalSize = 0;
+
+                    // Hitung ukuran file lama yang diganti
+                    existingFileInputs.forEach(input => {
+                        if (input.files.length > 0) {
+                            totalSize += input.files[0].size;
+                        }
+                    });
+
+                    // Hitung ukuran file baru
+                    newFileInputs.forEach(input => {
+                        if (input.files.length > 0) {
+                            totalSize += input.files[0].size;
+                        }
+                    });
+
+                    // Convert bytes ke MB (2 decimal)
+                    let totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+                    const maxSize = 10; // dalam MB
+
+                    if (totalSizeMB > maxSize) {
+                        e.preventDefault();
+                        showReviseError(`
+    <div class="flex items-start">
+        <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+        <div class="text-xs text-red-700">
+            <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+            <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+            <p class="mt-2">
+                Please compress your PDF files using this tool:
+                <a href="https://smallpdf.com/compress-pdf" target="_blank"
+                   class="text-blue-600 underline hover:text-blue-800 font-semibold">
+                    click here
+                </a>
+            </p>
+        </div>
+    </div>
+`);
+
+
+                        return;
+                    }
+
                 });
             }
 
@@ -659,7 +713,7 @@
                 </div>
                 <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
                 <div class="mt-2 flex items-center gap-2">
-                    <label class="text-xs text-gray-600">Replace:</label>
+                    <label class="text-xs text-gray-600"><strong>Replace:</strong></label>
                     <input type="file" name="revision_files[]" class="form-control border-gray-300 rounded p-1 text-sm">
                     <input type="hidden" name="revision_file_ids[]" value="${f.id}">
                 </div>
@@ -688,7 +742,8 @@
                                 },
                                 didOpen: function(popup) {
                                     popup.style.zIndex = '999999';
-                                    const backdrop = document.querySelector('.swal2-container');
+                                    const backdrop = document.querySelector(
+                                        '.swal2-container');
                                     if (backdrop) backdrop.style.zIndex = '999998';
                                 }
                             }).then((result) => {
@@ -716,8 +771,11 @@
                                         },
                                         didOpen: function(popup) {
                                             popup.style.zIndex = '999999';
-                                            const backdrop = document.querySelector('.swal2-container');
-                                            if (backdrop) backdrop.style.zIndex = '999998';
+                                            const backdrop = document
+                                                .querySelector(
+                                                    '.swal2-container');
+                                            if (backdrop) backdrop.style
+                                                .zIndex = '999998';
                                         }
                                     });
                                 }
@@ -1006,10 +1064,13 @@
             const alertDiv = document.createElement('div');
             alertDiv.id = 'revise-alert';
             alertDiv.className = "alert alert-danger mt-3";
-            alertDiv.innerText = message;
+            alertDiv.innerHTML = message; // ← wajib pakai innerHTML
 
             const form = document.getElementById('reviseFormDynamic');
             form.prepend(alertDiv);
+            if (window.feather) {
+                feather.replace();
+            }
         }
     </script>
 @endpush
