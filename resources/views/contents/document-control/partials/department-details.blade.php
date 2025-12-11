@@ -15,7 +15,7 @@
 
             <li>
                 <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-calendar-range" ></i> Document Control
+                    <i class="bi bi-calendar-range me-1" ></i> Document Control
                 </a>
             </li>
 
