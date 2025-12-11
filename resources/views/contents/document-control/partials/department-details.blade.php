@@ -15,7 +15,7 @@
 
             <li>
                 <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-calendar-range"></i> Document Control
+                    <i class="bi bi-calendar-range" ></i> Document Control
                 </a>
             </li>
 
@@ -495,53 +495,10 @@
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
                     btn.onclick = function() {
                         document.getElementById('previewTitle').textContent = this.dataset.docTitle;
-                        const fileUrl = this.dataset.file;
-                        const encoded = encodeURIComponent(fileUrl);
-
-                        document.getElementById('previewIframe').src =
-                            `https://view.officeapps.live.com/op/embed.aspx?src=${encoded}`;
-
+                        document.getElementById('previewIframe').src = this.dataset.file;
 
                         new bootstrap.Modal(document.getElementById('viewFileModal')).show();
                     };
-                });
-
-                document.addEventListener('click', function(e) {
-                    const btn = e.target.closest('.view-file-btn');
-                    if (!btn) return;
-
-                    document.querySelectorAll('[id^="viewFilesDropdown"]')
-                        .forEach(d => d.classList.add('hidden'));
-
-                    const fileUrl = btn.dataset.file;
-                    const ext = fileUrl.split('.').pop().toLowerCase();
-
-                    let previewUrl = fileUrl;
-
-                    // === Jika Excel atau Word → gunakan Office Viewer ===
-                    if (['xlsx', 'xls', 'doc', 'docx', 'ppt', 'pptx'].includes(ext)) {
-                        previewUrl =
-                            `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
-                    }
-
-                    // === Jika PDF → langsung pakai iframe biasa ===
-                    if (ext === 'pdf') {
-                        previewUrl = fileUrl;
-                    }
-
-                    // Set preview ke iframe
-                    document.getElementById('previewIframe').src = previewUrl;
-
-                    // Set title
-                    document.getElementById('previewTitle').textContent =
-                        btn.dataset.docTitle || 'File Preview';
-
-                    new bootstrap.Modal(document.getElementById('viewFileModal')).show();
-
-                    const viewFullBtn = document.getElementById('viewFullBtn');
-                    if (viewFullBtn) {
-                        viewFullBtn.href = previewUrl;
-                    }
                 });
 
                 // =========================
