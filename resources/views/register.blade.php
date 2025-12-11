@@ -21,8 +21,8 @@
             <div class="card shadow-lg rounded-3">
                 <div class="text-grey-700 rounded-top mx-auto p-3">
                     <div class="d-flex align-items-center">
-                        <img src="{{ asset('images/madonna-logo.png') }}" alt="Logo" class="me-3"
-                            style="height:40px;">
+                        {{-- <img src="{{ asset('images/madonna-logo.png') }}" alt="Logo" class="me-3"
+                            style="height:40px;"> --}}
                         <div>
                             <h5 class="mb-0">Create Your Account</h5>
                             <small class="opacity-75">Join and access your dashboard</small>
