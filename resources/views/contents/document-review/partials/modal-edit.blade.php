@@ -100,25 +100,27 @@
 
 
         // ====== TAMPILKAN ERROR DALAM MODAL ======
-        function showReviseError(message) {
+        function showReviseError(htmlMessage) {
             let oldAlert = document.getElementById("revise-alert");
             if (oldAlert) oldAlert.remove();
 
             const alertDiv = document.createElement("div");
             alertDiv.id = "revise-alert";
-            alertDiv.className = "alert alert-danger mt-2";
-            alertDiv.innerText = message;
+            alertDiv.className = "border border-red-300 bg-red-100 p-3 rounded-md mt-2";
+            alertDiv.innerHTML = htmlMessage;
 
             reviseForm.prepend(alertDiv);
-        }
 
+            // Refresh feather icons
+            if (window.feather) feather.replace();
+        }
 
         // ====== VALIDASI SAAT SUBMIT ======
         reviseForm.addEventListener("submit", function(e) {
 
             let isValid = true;
 
-            // 1) VALIDASI: FILE WAJIB ADA MINIMAL SATU (termasuk replace di existing item)
+            // 1) VALIDASI: FILE WAJIB ADA MINIMAL SATU
             const allFileInputs = reviseForm.querySelectorAll(
                 'input[type="file"][name="revision_files[]"]');
             let hasFile = false;
@@ -135,7 +137,44 @@
                 isValid = false;
             }
 
-            // 2) VALIDASI: NOTES QUILL WAJIB ISI
+            // 1.3) VALIDASI TOTAL SIZE MAKS 10MB
+            let totalSize = 0;
+            allFileInputs.forEach(input => {
+                if (input.files.length > 0) {
+                    totalSize += input.files[0].size;
+                }
+            });
+
+            const MAX_SIZE = 10 * 1024 * 1024;
+
+            if (totalSize > MAX_SIZE) {
+                e.preventDefault();
+
+                const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+                const htmlMessage = `
+        <div class="flex items-start">
+            <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+            <div class="text-xs text-red-700">
+                <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+                <p class="mt-2">
+                    Please compress your PDF files using this tool:
+                    <a href="https://smallpdf.com/compress-pdf" target="_blank"
+                       class="text-blue-600 underline hover:text-blue-800 font-semibold">
+                        click here
+                    </a>
+                </p>
+            </div>
+        </div>
+    `;
+
+                showReviseError(htmlMessage);
+                isValid = false;
+            }
+
+
+            // 2) VALIDASI: NOTES WAJIB ISI
             let plain = quillRevise.getText().trim();
             let html = quillRevise.root.innerHTML.trim();
 
@@ -149,6 +188,7 @@
 
             if (!isValid) return;
         });
+
 
     });
 </script>
