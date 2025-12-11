@@ -61,17 +61,6 @@
 
                         @php $today = now()->format('Y-m-d'); @endphp
 
-                        {{-- Reminder Date --}}
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Reminder Date <span
-                                    class="text-danger">*</span></label>
-                            <input type="date" name="reminder_date" class="form-control border-0 shadow-sm rounded-3"
-                                value="{{ session('editOldInputs.' . $mapping->id . '.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}"
-                                min="{{ $today }}" required>
-                            @error('reminder_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
 
                         {{-- Obsolete --}}
                         <div class="col-md-4">
@@ -81,6 +70,18 @@
                                 value="{{ session('editOldInputs.' . $mapping->id . '.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}"
                                 min="{{ $today }}" required>
                             @error('obsolete_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Reminder Date --}}
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Reminder Date <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" name="reminder_date" class="form-control border-0 shadow-sm rounded-3"
+                                value="{{ session('editOldInputs.' . $mapping->id . '.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}"
+                                min="{{ $today }}" required>
+                            @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
