@@ -30,17 +30,17 @@ class WhatsAppService
         $groupId = $groupId ?: $this->defaultGroupId;
 
         // Simulasi jika environment local
-        if (config('app.env') === 'local') {
-            Log::info("[LOCAL MODE] WhatsApp simulated send to group {$groupId}");
-            Log::info("Message:\n{$message}");
-            return true;
-        }
+        // if (config('app.env') === 'local') {
+        //     Log::info("[LOCAL MODE] WhatsApp simulated send to group {$groupId}");
+        //     Log::info("Message:\n{$message}");
+        //     return true;
+        // }
 
         // Sesuaikan endpoint dan parameter sesuai dokumentasi FastWA.
         // Misalnya endpoint: /send_group atau /send_text_group
         $response = Http::asForm()->withOptions([
-             'verify' => 'C:/xampp/apache/bin/curl-ca-bundle.crt',
-            // 'verify' => false,
+            //  'verify' => 'C:/xampp/apache/bin/curl-ca-bundle.crt',
+            'verify' => false,
         ])->post($this->url, [
             'api_key'  => $this->token,
             'phone' => $groupId,     // note: gunakan key 'group_id' jika itu parameter yang diminta
