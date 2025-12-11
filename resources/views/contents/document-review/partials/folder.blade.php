@@ -612,6 +612,33 @@
                     const sep = url.includes('?') ? '&' : '?';
                     return `${url}${sep}_=${Date.now()}`;
                 };
+
+                function convertToViewerUrl(url) {
+                    if (!url) return url;
+
+                    const fileExt = url.split('.').pop().toLowerCase();
+
+                    // === OFFICE FILES (Word, Excel, PowerPoint)
+                    const officeExt = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+                    if (officeExt.includes(fileExt)) {
+                        return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+                    }
+
+                    // === PDF (direct)
+                    if (fileExt === 'pdf') {
+                        return url;
+                    }
+
+                    // === Images (direct)
+                    const imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                    if (imageExt.includes(fileExt)) {
+                        return url;
+                    }
+
+                    // === Fallback
+                    return url;
+                }
+
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const docId = btn.dataset.docId;
@@ -651,9 +678,13 @@
                         } else {
                             url = withCacheBuster(url);
                         }
+                        // Convert URL ke viewer (Office Viewer / direct)
+                        const viewerUrl = convertToViewerUrl(url);
+
                         // Simpan URL dulu, jangan langsung set ke iframe
-                        previewFrame.dataset.url = url;
-                        viewFullBtn.href = url;
+                        previewFrame.dataset.url = viewerUrl;
+                        viewFullBtn.href = viewerUrl;
+
 
                         // Buka modal dulu
                         previewModal.show();
@@ -738,28 +769,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                    <div class="border rounded p-2 bg-gray-50">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-sm">📄 ${file.original_name}</span>
+                                                    <div class="border rounded p-2 bg-gray-50">
+                                                        <div class="flex items-center justify-between">
+                                                            <span class="text-sm">📄 ${file.original_name}</span>
 
-                                            <div class="flex gap-2">
-                                                <a href="/storage/${file.file_path}"
-                                                   target="_blank"
-                                                   class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                   View
-                                                </a>
+                                                            <div class="flex gap-2">
+                                                                <a href="/storage/${file.file_path}"
+                                                                   target="_blank"
+                                                                   class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                   View
+                                                                </a>
 
-                                                <button type="button"
-                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                    data-file-id="${file.id}">
-                                                    Replace
-                                                </button>
-                                            </div>
-                                        </div>
+                                                                <button type="button"
+                                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                    data-file-id="${file.id}">
+                                                                    Replace
+                                                                </button>
+                                                            </div>
+                                                        </div>
 
-                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                    </div>
-                                `).join('')}
+                                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                    </div>
+                                                `).join('')}
 </div>`;
 
                             })
