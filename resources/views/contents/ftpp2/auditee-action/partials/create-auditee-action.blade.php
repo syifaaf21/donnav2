@@ -439,12 +439,8 @@
             const errorHtml = `
                 <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
                 <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
-                <p class="mt-1">
-                    Please compress your PDF files using this tool:
-                    <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline hover:text-blue-800 font-semibold">
-                        click here
-                    </a>
-                    , download and reupload it.
+                <p>
+                    Please compress your PDF files and reupload it.
                 </p>
             `;
             showAttachmentError(errorHtml);

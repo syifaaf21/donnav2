@@ -199,6 +199,18 @@
 
                         <div class="font-semibold text-lg text-gray-800">Attachments</div>
 
+                        {{-- Tips Alert --}}
+                        <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
+                            <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
+                                <p class="text-xs text-yellow-700 leading-relaxed">
+                                    Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
+                                    Maximum total file size is <strong>10 MB</strong>.
+                                </p>
+                            </div>
+                        </div>
+
                         <div class="flex items-center justify-between">
                             <div class="items-center gap-4 mt-4">
 
@@ -228,6 +240,25 @@
                                     class="hidden">
                                 <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple
                                     class="hidden">
+
+                                <!-- ✅ Error message container for attachments -->
+                                <div id="attachmentErrorContainer" class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                                    <div class="flex items-start">
+                                        <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                        <div id="attachmentErrorMessage" class="text-sm text-red-700"></div>
+                                    </div>
+                                </div>
+
+                                {{-- Laravel server-side errors --}}
+                                @error('attachments')
+                                    <div class="mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                                        <div class="flex items-start">
+                                            <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                            <p class="text-sm text-red-700">{!! $message !!}</p>
+                                        </div>
+                                    </div>
+                                @enderror
+
                                 {{-- Render existing attachments server-side so users can remove them --}}
                                 @php
                                     $existingFiles =
@@ -709,5 +740,143 @@
                 });
             };
         })();
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        // ✅ VALIDASI CLIENT-SIDE sebelum submit form
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form[action="{{ route('ftpp.auditee-action.update', $finding->id) }}"]');
+
+            if (!form) return;
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Stop default submit dulu
+
+                // ✅ 1. Hapus error lama
+                const errorContainer = document.getElementById('attachmentErrorContainer');
+                if (errorContainer) {
+                    errorContainer.classList.add('hidden');
+                }
+
+                // ✅ 2. VALIDASI TOTAL FILE SIZE
+                const photoInput2 = document.getElementById('photoInput2');
+                const fileInput2 = document.getElementById('fileInput2');
+
+                let totalSize = 0;
+                let fileDetails = [];
+
+                // Hitung total size dari photos (images)
+                if (photoInput2 && photoInput2.files) {
+                    Array.from(photoInput2.files).forEach(file => {
+                        totalSize += file.size;
+                        fileDetails.push({
+                            name: file.name,
+                            size: file.size,
+                            type: 'image'
+                        });
+                    });
+                }
+
+                // Hitung total size dari files (PDF)
+                if (fileInput2 && fileInput2.files) {
+                    Array.from(fileInput2.files).forEach(file => {
+                        totalSize += file.size;
+                        fileDetails.push({
+                            name: file.name,
+                            size: file.size,
+                            type: 'pdf'
+                        });
+                    });
+                }
+
+                // Convert ke MB untuk display
+                const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+                console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
+                console.log('Files:', fileDetails);
+
+                // ✅ 3. CHECK jika melebihi 10MB
+                if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+                    showAttachmentError(`
+
+                        <p class="font-semibold mb-1">❌ Total file size exceeds 10MB</p>
+                        <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+                        <p>
+                            Please compress your PDF files and reupload it.
+                        </p>
+                    `);
+                    return; // ⛔ STOP submit
+                }
+
+                // ✅ 4. CHECK individual file size
+                let individualErrors = [];
+
+                // Check individual image files (max 3MB)
+                if (photoInput2 && photoInput2.files) {
+                    Array.from(photoInput2.files).forEach(file => {
+                        if (file.size > 3 * 1024 * 1024) { // 3MB
+                            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                            individualErrors.push(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
+                        }
+                    });
+                }
+
+                // Check individual PDF files (max 10MB)
+                if (fileInput2 && fileInput2.files) {
+                    Array.from(fileInput2.files).forEach(file => {
+                        if (file.size > 10 * 1024 * 1024) { // 10MB
+                            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                            individualErrors.push(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
+                        }
+                    });
+                }
+
+                if (individualErrors.length > 0) {
+                    const errorHtml = `
+                        <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            ${individualErrors.map(e => `<li>${e}</li>`).join('')}
+                        </ul>
+                    `;
+                    showAttachmentError(errorHtml);
+                    return; // ⛔ STOP submit
+                }
+
+                // ✅ 5. Jika lolos semua validasi, lanjut submit
+                form.submit();
+            });
+
+            // ✅ Helper function untuk show error menggunakan container yang sudah ada
+            function showAttachmentError(message) {
+                const errorContainer = document.getElementById('attachmentErrorContainer');
+                const errorMessage = document.getElementById('attachmentErrorMessage');
+
+                if (!errorContainer || !errorMessage) {
+                    console.error('❌ Error container not found in DOM');
+                    // Fallback: show alert
+                    alert(message.replace(/<[^>]*>/g, ''));
+                    return;
+                }
+
+                // Tampilkan error
+                errorMessage.innerHTML = message;
+                errorContainer.classList.remove('hidden');
+
+                // Re-render feather icons
+                if (typeof feather !== 'undefined' && feather.replace) {
+                    feather.replace();
+                }
+
+                // Scroll ke error
+                errorContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                console.log('✅ Error displayed in container');
+            }
+        });
     </script>
 @endpush

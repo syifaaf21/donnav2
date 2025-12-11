@@ -210,11 +210,22 @@
 
                             {{-- ATTACHMENT --}}
                             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-
                                 <div class="font-semibold text-lg text-gray-700">Attachments</div>
-                                <p class="text-sm text-gray-400">Only PDF, png, jpg, and jpeg files are allowed.</p>
+
+                                {{-- Tips Alert --}}
+                                <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
+                                    <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
+                                        <p class="text-xs text-yellow-700 leading-relaxed">
+                                            Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
+                                            Maximum total file size is <strong>10 MB</strong>.
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <!-- Preview containers (sesuaikan posisi di form) -->
+                                    <!-- Preview containers -->
                                     <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
                                     <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
 
@@ -245,12 +256,19 @@
                                         </div>
                                     </div>
 
-                                    <!-- Hidden file inputs -->
-                                    <input type="file" id="photoInput" name="photos[]" accept="image/*" multiple
-                                        class="hidden">
-                                    <input type="file" id="fileInput" name="files[]" accept=".pdf" multiple
-                                        class="hidden">
+                                    <!-- Hidden file inputs - UBAH ke 'attachments[]' untuk konsistensi -->
+                                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple class="hidden">
+                                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple class="hidden">
+
+                                    <!-- ✅ Error message container for attachments -->
+                                    <div id="attachmentErrorContainer" class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                                        <div class="flex items-start">
+                                            <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                            <div id="attachmentErrorMessage" class="text-sm text-red-700"></div>
+                                        </div>
+                                    </div>
                                 </div>
+
                                 <button type="button" onclick="saveChangesFinding()"
                                     class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                                     Save Changes
@@ -1377,11 +1395,131 @@
     {{-- Store header data handler --}}
     <script>
         async function saveChangesFinding() {
-            // Instead of AJAX, submit the main form so the controller can redirect and set a flash message.
             const form = document.querySelector(
                 'form[action="{{ route('ftpp.audit-finding.update', $finding->id) }}"]');
             if (!form) return alert('Form not found');
 
+            // ✅ 1. Hapus error lama
+            const errorContainer = document.getElementById('attachmentErrorContainer');
+            const errorMessage = document.getElementById('attachmentErrorMessage');
+            if (errorContainer) {
+                errorContainer.classList.add('hidden');
+            }
+            if (errorMessage) {
+                errorMessage.innerHTML = '';
+            }
+
+            // ✅ 2. Function untuk tampilkan error di field attachment
+            function showAttachmentError(message) {
+                if (!errorContainer || !errorMessage) {
+                    console.error('❌ Error container not found in DOM');
+                    alert(message.replace(/<[^>]*>/g, ''));
+                    return;
+                }
+
+                // Tampilkan error
+                errorMessage.innerHTML = message;
+                errorContainer.classList.remove('hidden');
+
+                // Re-render feather icons
+                if (typeof feather !== 'undefined' && feather.replace) {
+                    feather.replace();
+                }
+
+                // Scroll ke error
+                errorContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                console.log('✅ Error displayed in container');
+            }
+
+            // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
+            const photoInput = document.getElementById('photoInput');
+            const fileInput = document.getElementById('fileInput');
+
+            let totalSize = 0;
+            let fileDetails = [];
+
+            // Hitung total size dari photos (images)
+            if (photoInput && photoInput.files) {
+                Array.from(photoInput.files).forEach(file => {
+                    totalSize += file.size;
+                    fileDetails.push({
+                        name: file.name,
+                        size: file.size,
+                        type: 'image'
+                    });
+                });
+            }
+
+            // Hitung total size dari files (PDF)
+            if (fileInput && fileInput.files) {
+                Array.from(fileInput.files).forEach(file => {
+                    totalSize += file.size;
+                    fileDetails.push({
+                        name: file.name,
+                        size: file.size,
+                        type: 'pdf'
+                    });
+                });
+            }
+
+            // Convert ke MB untuk display
+            const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+            console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
+            console.log('Files:', fileDetails);
+
+            // ✅ 4. CHECK jika melebihi 10MB - TAMPILKAN DI FIELD (BUKAN ALERT)
+            if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+                const errorHtml = `
+                    <p class="font-semibold mb-1">❌ Total file size exceeds 10MB</p>
+                    <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+                    <p>
+                        Please compress your PDF files and reupload it.
+                    </p>
+                `;
+                showAttachmentError(errorHtml);
+                return; // ⛔ STOP submit
+            }
+
+            // ✅ 5. CHECK individual file size - TAMPILKAN DI FIELD (BUKAN ALERT)
+            let individualErrors = [];
+
+            // Check individual image files (max 3MB)
+            if (photoInput && photoInput.files) {
+                Array.from(photoInput.files).forEach(file => {
+                    if (file.size > 3 * 1024 * 1024) { // 3MB
+                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                        individualErrors.push(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
+                    }
+                });
+            }
+
+            // Check individual PDF files (max 10MB)
+            if (fileInput && fileInput.files) {
+                Array.from(fileInput.files).forEach(file => {
+                    if (file.size > 10 * 1024 * 1024) { // 10MB
+                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                        individualErrors.push(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
+                    }
+                });
+            }
+
+            if (individualErrors.length > 0) {
+                const errorHtml = `
+                    <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        ${individualErrors.map(e => `<li>${e}</li>`).join('')}
+                    </ul>
+                `;
+                showAttachmentError(errorHtml);
+                return; // ⛔ STOP submit
+            }
+
+            // ✅ 6. Jika lolos validasi, lanjutkan submit form
             // remove any previously added dynamic inputs to avoid duplicates
             document.querySelectorAll('[data-dyn-input]').forEach(n => n.remove());
 
@@ -1399,20 +1537,17 @@
             actionInput.setAttribute('data-dyn-input', '1');
             form.appendChild(actionInput);
 
-            // Collect auditee ids from multiple sources (selectedAuditees variable, DOM chips, hidden fallback, or initial server data)
+            // Collect auditee ids
             let auditeeIds = [];
             if (typeof selectedAuditees !== 'undefined' && selectedAuditees.length) {
                 auditeeIds = selectedAuditees.map(a => String(a.id));
             } else {
-                // read from displayed chips
                 auditeeIds = Array.from(document.querySelectorAll('#selectedAuditees [data-id]')).map(el => String(el
                     .getAttribute('data-id')));
-                // fallback to comma list hidden input
                 if ((!auditeeIds || auditeeIds.length === 0) && document.getElementById('auditee_ids')) {
                     const raw = document.getElementById('auditee_ids').value || '';
                     auditeeIds = raw ? raw.split(',').map(s => s.trim()).filter(Boolean) : [];
                 }
-                // final fallback: initial server-side auditees
                 if ((!auditeeIds || auditeeIds.length === 0) && typeof __initialAuditees !== 'undefined') {
                     auditeeIds = (__initialAuditees || []).map(a => String(a.id));
                 }
@@ -1428,19 +1563,17 @@
                 form.appendChild(inp);
             });
 
-            // Collect sub_klausul ids from selectedSubIds, DOM, static selectedSub, or initial server data
+            // Collect sub_klausul ids
             let subIds = [];
             if (typeof selectedSubIds !== 'undefined' && selectedSubIds.length) {
                 subIds = selectedSubIds.map(String);
             } else {
                 subIds = Array.from(document.querySelectorAll('#selectedSubContainer [data-id]')).map(el => String(el
                     .getAttribute('data-id')));
-                // fallback to single hidden selectedSub
                 if ((!subIds || subIds.length === 0) && document.getElementById('selectedSub')) {
                     const v = document.getElementById('selectedSub').value;
                     if (v) subIds = [String(v)];
                 }
-                // final fallback: initial server-side sub klausuls
                 if ((!subIds || subIds.length === 0) && typeof __initialSubKlausulIds !== 'undefined') {
                     subIds = (__initialSubKlausulIds || []).map(String);
                 }
@@ -1456,8 +1589,7 @@
                 form.appendChild(inp);
             });
 
-
-            // Submit the form normally (will redirect and show flash message from controller)
+            // Submit the form
             form.submit();
         }
     </script>
