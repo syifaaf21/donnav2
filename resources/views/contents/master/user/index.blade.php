@@ -474,4 +474,48 @@
         transform: translateY(-2px);
         font-weight: 600;
     }
+
+    /* Default border */
+    #addUserModal input.form-control,
+    #addUserModal select.form-select {
+        border: 1px solid #d1d5db !important;
+        /* abu-abu halus */
+        box-shadow: none !important;
+    }
+
+    /* Hover (opsional) */
+    #addUserModal input.form-control:hover,
+    #addUserModal select.form-select:hover {
+        border-color: #bfc3ca !important;
+    }
+
+    /* Fokus / diklik */
+    #addUserModal input.form-control:focus,
+    #addUserModal select.form-select:focus {
+        border-color: #3b82f6 !important;
+        /* biru */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        /* efek biru lembut */
+    }
+
+    [id^="editUserModal"] input.form-control,
+    [id^="editUserModal"] select.form-select {
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+    }
+
+    /* Hover */
+    [id^="editUserModal"] input.form-control:hover,
+    [id^="editUserModal"] select.form-select:hover {
+        border-color: #bfc3ca !important;
+    }
+
+    /* Fokus */
+    [id^="editUserModal"] input.form-control:focus,
+    [id^="editUserModal"] select.form-select:focus {
+        border-color: #3b82f6 !important;
+        /* biru */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+    }
+
 </style>

@@ -59,10 +59,13 @@
                                 placeholder="Type to search..." value="{{ request('search') }}">
 
                             <label for="searchInput"
-                                class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
-                            {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
-                                Type to search....
+                                class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
+           transition-all duration-150
+           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
+                                Type to search...
                             </label>
+
                         </div>
                     </form>
 
@@ -151,8 +154,8 @@
                                                 stroke-width="1.5" stroke="currentColor"
                                                 class="w-12 h-12 mb-2 text-gray-400">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2
-                                 2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
-                                 0 01-2 2z" />
+                                     2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
+                                     0 01-2 2z" />
                                             </svg>
 
                                             <span class="text-gray-500 text-sm">
@@ -798,4 +801,51 @@
 
         });
     </script>
+@endpush
+
+@push('styles')
+    <style>
+        /* Default border */
+        #createPartNumberModal input.form-control,
+        #createPartNumberModal select.form-select {
+            border: 1px solid #d1d5db !important;
+            /* abu-abu halus */
+            box-shadow: none !important;
+        }
+
+        /* Hover (opsional) */
+        #createPartNumberModal input.form-control:hover,
+        #createPartNumberModal select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus / diklik */
+        #createPartNumberModal input.form-control:focus,
+        #createPartNumberModal select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+            /* efek biru lembut */
+        }
+
+        [id^="editPartNumberModal-"] input.form-control,
+        [id^="editPartNumberModal-"] select.form-select {
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+        }
+
+        /* Hover */
+        [id^="editPartNumberModal-"] input.form-control:hover,
+        [id^="editPartNumberModal-"] select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus */
+        [id^="editPartNumberModal-"] input.form-control:focus,
+        [id^="editPartNumberModal-"] select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        }
+    </style>
 @endpush

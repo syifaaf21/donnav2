@@ -254,8 +254,8 @@
                                                 stroke-width="1.5" stroke="currentColor"
                                                 class="w-12 h-12 mb-2 text-gray-400">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2
-                                 2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
-                                 0 01-2 2z" />
+                                     2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
+                                     0 01-2 2z" />
                                             </svg>
 
                                             <span class="text-gray-500 text-sm">
@@ -798,6 +798,49 @@
         min-width: 120px;
         /* atau sesuai kebutuhan */
         white-space: nowrap;
+    }
+
+    /* Default border */
+    #addDocumentControlModal input.form-control,
+    #addDocumentControlModal select.form-select {
+        border: 1px solid #d1d5db !important;
+        /* abu-abu halus */
+        box-shadow: none !important;
+    }
+
+    /* Hover (opsional) */
+    #addDocumentControlModal input.form-control:hover,
+    #addDocumentControlModal select.form-select:hover {
+        border-color: #bfc3ca !important;
+    }
+
+    /* Fokus / diklik */
+    #addDocumentControlModal input.form-control:focus,
+    #addDocumentControlModal select.form-select:focus {
+        border-color: #3b82f6 !important;
+        /* biru */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        /* efek biru lembut */
+    }
+
+    [id^="editModal"] input.form-control,
+    [id^="editModal"] select.form-select {
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+    }
+
+    /* Hover */
+    [id^="editModal"] input.form-control:hover,
+    [id^="editModal"] select.form-select:hover {
+        border-color: #bfc3ca !important;
+    }
+
+    /* Fokus */
+    [id^="editModal"] input.form-control:focus,
+    [id^="editModal"] select.form-select:focus {
+        border-color: #3b82f6 !important;
+        /* biru */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
     }
 </style>
 @endpush

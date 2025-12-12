@@ -345,3 +345,49 @@
         });
     </script>
 @endpush
+@push('styles')
+    <style>
+        /* Default border */
+        #modalAddAudit input.form-control,
+        #modalAddAudit select.form-select {
+            border: 1px solid #d1d5db !important;
+            /* abu-abu halus */
+            box-shadow: none !important;
+        }
+
+        /* Hover (opsional) */
+        #modalAddAudit input.form-control:hover,
+        #modalAddAudit select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus / diklik */
+        #modalAddAudit input.form-control:focus,
+        #modalAddAudit select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+            /* efek biru lembut */
+        }
+
+        [id^="modalEditAudit"] input.form-control,
+        [id^="modalEditAudit"] select.form-select {
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+        }
+
+        /* Hover */
+        [id^="modalEditAudit"] input.form-control:hover,
+        [id^="modalEditAudit"] select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus */
+        [id^="modalEditAudit"] input.form-control:focus,
+        [id^="modalEditAudit"] select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        }
+    </style>
+@endpush

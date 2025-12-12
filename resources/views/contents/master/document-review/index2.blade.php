@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Master Document Review')
-@section('subtitle',
-    'Manage document reviews')
+@section('subtitle', 'Manage document reviews')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
@@ -382,7 +381,7 @@
         @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
             @include('contents.master.document-review.partials.modal-add2')
         @endif
-+
+        +
         {{-- 📄 All Edit Modals --}}
         @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
             @foreach ($groupedByPlant as $plant => $documents)
@@ -503,7 +502,10 @@
 
             // If an instance exists, destroy it and clear reference to avoid double-init
             if (el.tomselect) {
-                try { el.tomselect.destroy(); } catch (e) { /* ignore */ }
+                try {
+                    el.tomselect.destroy();
+                } catch (e) {
+                    /* ignore */ }
                 el.tomselect = null;
             }
 
@@ -822,30 +824,30 @@
 
             // Create new request promise
             const requestPromise = fetch(url, {
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Accept": "application/json"
-                }
-            })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
-                }
-                return res.json();
-            })
-            .then(data => {
-                // Cache successful response for 5 minutes
-                requestCache.set(url, data);
-                setTimeout(() => requestCache.delete(url), 300000);
-                return data;
-            })
-            .catch(err => {
-                console.error('fetchJson error:', url, err);
-                throw err;
-            })
-            .finally(() => {
-                activeRequests.delete(url);
-            });
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Accept": "application/json"
+                    }
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    // Cache successful response for 5 minutes
+                    requestCache.set(url, data);
+                    setTimeout(() => requestCache.delete(url), 300000);
+                    return data;
+                })
+                .catch(err => {
+                    console.error('fetchJson error:', url, err);
+                    throw err;
+                })
+                .finally(() => {
+                    activeRequests.delete(url);
+                });
 
             activeRequests.set(url, requestPromise);
             return await requestPromise;
@@ -870,5 +872,48 @@
     /* Tambahan: untuk isi dropdown agar tidak transparan juga */
     .dropdown-fixed .py-1 {
         background-color: #fff;
+    }
+
+    /* Default border */
+    #addDocumentModal input.form-control,
+    #addDocumentModal select.form-select {
+        border: 1px solid #d1d5db !important;
+        /* abu-abu halus */
+        box-shadow: none !important;
+    }
+
+    /* Hover (opsional) */
+    #addDocumentModal input.form-control:hover,
+    #addDocumentModal select.form-select:hover {
+        border-color: #bfc3ca !important;
+    }
+
+    /* Fokus / diklik */
+    #addDocumentModal input.form-control:focus,
+    #addDocumentModal select.form-select:focus {
+        border-color: #3b82f6 !important;
+        /* biru */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        /* efek biru lembut */
+    }
+
+    [id^="editDocumentModal-"] input.form-control,
+    [id^="editDocumentModal-"] select.form-select {
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+    }
+
+    /* Hover */
+    [id^="editDocumentModal-"] input.form-control:hover,
+    [id^="editDocumentModal-"] select.form-select:hover {
+        border-color: #bfc3ca !important;
+    }
+
+    /* Fokus */
+    [id^="editDocumentModal-"] input.form-control:focus,
+    [id^="editDocumentModal-"] select.form-select:focus {
+        border-color: #3b82f6 !important;
+        /* biru */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
     }
 </style>
