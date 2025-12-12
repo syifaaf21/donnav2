@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Master Product')
-@section('subtitle',
-    'Manage Product records.')
+@section('subtitle', 'Manage Product records.')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
@@ -58,10 +57,13 @@
                             placeholder="Type to search...">
 
                         <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
-                            {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
+           transition-all duration-150
+           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
                             Type to search...
                         </label>
+
                     </div>
                 </form>
 
@@ -493,4 +495,51 @@
             });
         });
     </script>
+@endpush
+
+@push('styles')
+    <style>
+        /* Default border */
+        #addProductModal input.form-control,
+        #addProductModal select.form-select {
+            border: 1px solid #d1d5db !important;
+            /* abu-abu halus */
+            box-shadow: none !important;
+        }
+
+        /* Hover (opsional) */
+        #addProductModal input.form-control:hover,
+        #addProductModal select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus / diklik */
+        #addProductModal input.form-control:focus,
+        #addProductModal select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+            /* efek biru lembut */
+        }
+
+        [id^="editProductModal-"] input.form-control,
+        [id^="editProductModal-"] select.form-select {
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+        }
+
+        /* Hover */
+        [id^="editProductModal-"] input.form-control:hover,
+        [id^="editProductModal-"] select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus */
+        [id^="editProductModal-"] input.form-control:focus,
+        [id^="editProductModal-"] select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        }
+    </style>
 @endpush

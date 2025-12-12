@@ -322,3 +322,50 @@
         }
     </style>
 @endpush
+
+@push('styles')
+    <style>
+        /* Default border */
+        #createDocumentModal input.form-control,
+        #createDocumentModal select.form-select {
+            border: 1px solid #d1d5db !important;
+            /* abu-abu halus */
+            box-shadow: none !important;
+        }
+
+        /* Hover (opsional) */
+        #createDocumentModal input.form-control:hover,
+        #createDocumentModal select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus / diklik */
+        #createDocumentModal input.form-control:focus,
+        #createDocumentModal select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+            /* efek biru lembut */
+        }
+
+        [id^="editDocumentModal-"] input.form-control,
+        [id^="editDocumentModal-"] select.form-select {
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+        }
+
+        /* Hover */
+        [id^="editDocumentModal-"] input.form-control:hover,
+        [id^="editDocumentModal-"] select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus */
+        [id^="editDocumentModal-"] input.form-control:focus,
+        [id^="editDocumentModal-"] select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        }
+    </style>
+@endpush

@@ -30,8 +30,8 @@
                 </div>
             </div> --}}
 
-            {{-- Breadcrumbs --}}
-            {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1"
+        {{-- Breadcrumbs --}}
+        {{-- <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1"
                 aria-label="Breadcrumb">
                 <ol class="list-reset flex space-x-2">
                     <li>
@@ -60,10 +60,13 @@
                             placeholder="Type to search..." value="{{ request('search') }}">
 
                         <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
-                            {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
+           transition-all duration-150
+           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
                             Type to search...
                         </label>
+
                     </div>
                 </form>
 
@@ -170,8 +173,7 @@
                         <div class="row g-4">
                             {{-- Model Name --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Model Name <span
-                                        class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Model Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" placeholder="Enter model name"
                                     class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
                                     value="{{ $model->name }}" required>
@@ -455,4 +457,51 @@
             });
         </script>
     @endif
+@endpush
+
+@push('styles')
+    <style>
+        /* Default border */
+        #addModelModal input.form-control,
+        #addModelModal select.form-select {
+            border: 1px solid #d1d5db !important;
+            /* abu-abu halus */
+            box-shadow: none !important;
+        }
+
+        /* Hover (opsional) */
+        #addModelModal input.form-control:hover,
+        #addModelModal select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus / diklik */
+        #addModelModal input.form-control:focus,
+        #addModelModal select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+            /* efek biru lembut */
+        }
+
+        [id^="editModelModal-"] input.form-control,
+        [id^="editModelModal-"] select.form-select {
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+        }
+
+        /* Hover */
+        [id^="editModelModal-"] input.form-control:hover,
+        [id^="editModelModal-"] select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus */
+        [id^="editModelModal-"] input.form-control:focus,
+        [id^="editModelModal-"] select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        }
+    </style>
 @endpush

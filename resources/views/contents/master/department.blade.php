@@ -54,11 +54,14 @@
                             placeholder="Type to search..." value="{{ request('search') }}">
 
                         <label for="searchInput"
-                            class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-                            text-gray-400 text-sm
-                            {{ request('search') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
+           transition-all duration-150
+           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
                             Type to search...
                         </label>
+
+
                     </div>
                 </form>
 
@@ -538,4 +541,51 @@
             });
         </script>
     @endif
+@endpush
+
+@push('styles')
+    <style>
+        /* Default border */
+        #addDepartmentModal input.form-control,
+        #addDepartmentModal select.form-select {
+            border: 1px solid #d1d5db !important;
+            /* abu-abu halus */
+            box-shadow: none !important;
+        }
+
+        /* Hover (opsional) */
+        #addDepartmentModal input.form-control:hover,
+        #addDepartmentModal select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus / diklik */
+        #addDepartmentModal input.form-control:focus,
+        #addDepartmentModal select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+            /* efek biru lembut */
+        }
+
+        [id^="editDepartmentModal-"] input.form-control,
+        [id^="editDepartmentModal-"] select.form-select {
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+        }
+
+        /* Hover */
+        [id^="editDepartmentModal-"] input.form-control:hover,
+        [id^="editDepartmentModal-"] select.form-select:hover {
+            border-color: #bfc3ca !important;
+        }
+
+        /* Fokus */
+        [id^="editDepartmentModal-"] input.form-control:focus,
+        [id^="editDepartmentModal-"] select.form-select:focus {
+            border-color: #3b82f6 !important;
+            /* biru */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        }
+    </style>
 @endpush

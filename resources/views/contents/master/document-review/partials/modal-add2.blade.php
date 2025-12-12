@@ -421,7 +421,7 @@
                 placeholder: 'Write your notes here...',
                 modules: {
                     toolbar: [
-                        ['bold', 'italic', 'underline', 'strike'],[{list: 'ordered'},
+                        ['bold', 'italic', 'underline',],[
                         ['clean']]
                     ]
                 }

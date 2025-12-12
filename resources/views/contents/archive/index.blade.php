@@ -68,12 +68,11 @@
                                 placeholder="Search archived documents..." value="{{ request('search') }}">
 
                             <label for="archiveSearchInput"
-                                class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm
-                                    top-2.5
-                                    peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5
-                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600
-                                    floating-label">
-                                Search archived documents...
+                                class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
+           transition-all duration-150
+           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
+                                Type to search...
                             </label>
 
                             <!-- Clear Button -->
