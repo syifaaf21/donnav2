@@ -1170,8 +1170,8 @@ class DocumentMappingController extends Controller
         $validator = Validator::make($request->all(), [
             'document_name' => 'required|string|max:255',
             'department_id' => 'required|exists:tm_departments,id',
-            'obsolete_date' => 'required|date|after_or_equal:today',
-            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'obsolete_date' => 'required|date',
+            'reminder_date' => 'required|date|before_or_equal:obsolete_date',
             'notes' => 'required|string|max:500',
             'period_years' => 'nullable|integer|min:1',
         ], [
@@ -1189,6 +1189,8 @@ class DocumentMappingController extends Controller
         }
 
         $validated = $validator->validated();
+
+        $oldDepartmentId = $mapping->department_id;
 
         // Update document name
         if ($mapping->document) {
@@ -1219,6 +1221,24 @@ class DocumentMappingController extends Controller
         }
 
         $mapping->update($updateData);
+
+        // Kirim notifikasi jika department diubah
+        if ($oldDepartmentId != $validated['department_id']) {
+            $newDeptId = $validated['department_id'];
+
+            $users = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $newDeptId))
+                ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
+                ->get();
+
+            foreach ($users as $user) {
+                $user->notify(new DocumentCreatedNotification(
+                    Auth::user()->name,
+                    null,
+                    $mapping->document->name,
+                    route('document-control.department', $mapping->department->name),
+                ));
+            }
+        }
 
         return redirect()->route('master.document-control.index')
             ->with('success', 'Document updated successfully!');
