@@ -48,7 +48,6 @@
                     class="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition">
                     + Add File
                 </button>
-                <p class="text-xs text-gray-500 mt-1">Allowed formats: PDF, DOCX, XLSX, JPG, PNG, JPEG|max:10mb</p>
             </div>
 
             {{-- Footer --}}

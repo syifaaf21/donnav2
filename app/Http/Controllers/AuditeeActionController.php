@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use setasign\Fpdi\Fpdi;
 use App\Models\Audit;
 use App\Models\AuditeeAction;
 use App\Models\AuditFinding;
@@ -82,6 +83,7 @@ class AuditeeActionController extends Controller
      */
     public function store(Request $request)
     {
+        // ✅ VALIDASI FILE SIZE
         $validated = $request->validate([
             'audit_finding_id' => 'required|exists:tt_audit_findings,id',
             'root_cause' => 'required|string',
@@ -90,11 +92,27 @@ class AuditeeActionController extends Controller
             'yokoten_area' => 'nullable|string',
             'ldr_spv_signature' => 'nullable|boolean',
 
-            // terima file upload (hapus rule max, akan dikompres otomatis jika image)
-            'attachments.*' => 'nullable|file',
-            'photos2.*' => 'nullable|file',
-            'files2.*' => 'nullable|file',
+            // Attachments: gabung semua file
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
         ]);
+
+        // ✅ VALIDASI TOTAL FILE SIZE (SERVER-SIDE BACKUP)
+        $totalSize = $this->calculateTotalFileSize($request);
+        if ($totalSize > 10 * 1024 * 1024) { // 10MB
+            \Log::warning('Total file size validation bypassed on client-side!');
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Total file size exceeds 10MB. Please compress your PDF files using <a href="https://smallpdf.com/compress-pdf" target="_blank">this tool</a>.'
+                ], 422);
+            }
+
+            return back()->withErrors([
+                'attachments' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+            ])->withInput();
+        }
 
         DB::beginTransaction();
 
@@ -272,10 +290,16 @@ class AuditeeActionController extends Controller
             // log error agar lebih mudah debug
             \Log::error('update_auditee_action error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+
+            return back()
+                ->withErrors(['error' => $e->getMessage()])
+                ->withInput();
         }
     }
 
@@ -315,17 +339,32 @@ class AuditeeActionController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // ✅ VALIDASI FILE SIZE
         $validated = $request->validate([
             'root_cause' => 'required|string',
-            // 'pic' => 'nullable|string|max:100',
             'yokoten' => 'required|boolean',
             'yokoten_area' => 'nullable|string',
             'ldr_spv_signature' => 'nullable|boolean',
-            'attachments.*' => 'nullable|file',
-            'photos2.*' => 'nullable|file',
-            'files2.*' => 'nullable|file',
+
+            // Image: max 3MB per file
+            'photos2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3072',
+
+            // Files: max 3MB per file (images)
+            'files2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3072',
+
+            // Attachments: max 10MB per PDF file
+            'attachments.*' => 'nullable|file|mimes:pdf|max:10240',
+
             'remove_attachments.*' => 'nullable|numeric',
         ]);
+
+        // ✅ VALIDASI TOTAL FILE SIZE
+        $totalSize = $this->calculateTotalFileSize($request);
+        if ($totalSize > 10485760) { // 10MB
+            return back()->withErrors([
+                'total_file_size' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+            ])->withInput();
+        }
 
         DB::beginTransaction();
 
@@ -629,82 +668,188 @@ class AuditeeActionController extends Controller
 
         $mime = $file->getMimeType() ?? '';
 
-        // Image handling (compress/resize)
+        // Image handling (compress/resize with Imagick)
         if (str_starts_with($mime, 'image/')) {
             try {
-                $img = Image::make($file)->orientate();
-                $img->resize(1920, null, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                });
+                // Store file temporarily first to get a real path
+                $tempPath = $file->storeAs('temp', $newFileName, 'public');
+                $fullPath = storage_path('app/public/' . $tempPath);
 
-                if (in_array($extension, ['jpg', 'jpeg'])) {
-                    $encoded = (string) $img->encode('jpg', 75);
-                    $newFileName = preg_replace('/\.(jpg|jpeg)$/i', '.jpg', $newFileName);
-                } elseif ($extension === 'png') {
-                    $encoded = (string) $img->encode('png', 8);
-                } elseif ($extension === 'gif') {
-                    $encoded = (string) $img->encode('gif');
-                } else {
-                    $encoded = (string) $img->encode('jpg', 75);
-                    $newFileName = preg_replace('/\.[^.]+$/', '.jpg', $newFileName);
-                }
+                // Use Imagick for compression
+                $this->compressImageWithImagick($fullPath, $extension);
 
+                // Move to final destination
                 $path = $directory . '/' . $newFileName;
-                Storage::disk('public')->put($path, $encoded);
+                Storage::disk('public')->move($tempPath, $path);
 
                 return ['path' => $path, 'original' => $originalName];
+
             } catch (\Throwable $e) {
                 \Log::warning('Image compress/store failed: ' . $e->getMessage());
-                // fallback: simpan file langsung
+                // fallback: simpan file langsung tanpa compress
                 $path = $file->storeAs($directory, $newFileName, 'public');
                 return ['path' => $path, 'original' => $originalName];
             }
         }
 
-        // PDF handling (try Ghostscript compression)
+        // PDF handling (try FPDI compression)
         if ($extension === 'pdf' || str_contains($mime, 'pdf')) {
-            $inputPath = $file->getRealPath();
-            if ($inputPath && file_exists($inputPath)) {
-                $tmpName = 'gs_compressed_' . uniqid() . '.pdf';
-                $tmpPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $tmpName;
+            try {
+                // Store file temporarily first
+                $tempPath = $file->storeAs('temp', $newFileName, 'public');
+                $fullPath = storage_path('app/public/' . $tempPath);
 
-                // Choose a PDFSETTINGS level. /ebook is a decent balance (smaller than /printer, better quality than /screen)
-                $pdfSettings = '/ebook';
+                \Log::info("📄 PDF upload detected: {$originalName}");
+                \Log::info("   Temp path: {$tempPath}");
+                \Log::info("   Full path: {$fullPath}");
+                \Log::info("   Original size: " . number_format(filesize($fullPath)) . " bytes");
 
-                $cmd = sprintf(
-                    'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=%s -dNOPAUSE -dQUIET -dBATCH -sOutputFile=%s %s 2>&1',
-                    escapeshellarg($pdfSettings),
-                    escapeshellarg($tmpPath),
-                    escapeshellarg($inputPath)
-                );
+                // ✅ COMPRESS FIRST (modifies file in place)
+                $this->compressPdf($fullPath);
 
-                try {
-                    @exec($cmd, $output, $returnVar);
+                // ✅ THEN MOVE to final destination
+                $path = $directory . '/' . $newFileName;
+                Storage::disk('public')->move($tempPath, $path);
 
-                    if ($returnVar === 0 && file_exists($tmpPath) && filesize($tmpPath) > 0) {
-                        $path = $directory . '/' . $newFileName;
-                        $contents = file_get_contents($tmpPath);
-                        Storage::disk('public')->put($path, $contents);
-                        @unlink($tmpPath);
-                        return ['path' => $path, 'original' => $originalName];
-                    } else {
-                        \Log::warning('Ghostscript PDF compression failed or produced empty file. Cmd: ' . $cmd . ' Output: ' . implode("\n", (array) $output));
-                    }
-                } catch (\Throwable $e) {
-                    \Log::warning('PDF compression via Ghostscript failed: ' . $e->getMessage());
-                }
-            } else {
-                \Log::warning('PDF compress: uploaded file real path missing for ' . $originalName);
+                \Log::info("   Final size: " . number_format(filesize(storage_path('app/public/' . $path))) . " bytes");
+                \Log::info("✅ PDF stored at: {$path}");
+
+                return ['path' => $path, 'original' => $originalName];
+
+            } catch (\Throwable $e) {
+                \Log::warning('PDF compress/store failed: ' . $e->getMessage());
+                // fallback: simpan file langsung tanpa compress
+                $path = $file->storeAs($directory, $newFileName, 'public');
+                return ['path' => $path, 'original' => $originalName];
             }
-
-            // fallback: store original pdf
-            $path = $file->storeAs($directory, $newFileName, 'public');
-            return ['path' => $path, 'original' => $originalName];
         }
 
         // non-image, non-pdf files: simpan apa adanya
         $path = $file->storeAs($directory, $newFileName, 'public');
         return ['path' => $path, 'original' => $originalName];
+    }
+
+    /**
+     * Calculate total file size from request
+     */
+    private function calculateTotalFileSize(Request $request): int
+    {
+        $totalSize = 0;
+
+        // Hitung semua file di 'attachments'
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $totalSize += $file->getSize();
+            }
+        }
+
+        \Log::info("📊 Total attachment size: " . number_format($totalSize) . " bytes (" . round($totalSize / 1024 / 1024, 2) . "MB)");
+
+        return $totalSize;
+    }
+
+    /**
+     * Compress PDF using FPDI (pure PHP, no Ghostscript needed)
+     * ✅ Modifies file in-place at $filePath
+     */
+    private function compressPdf($filePath)
+    {
+        try {
+            if (!file_exists($filePath)) {
+                \Log::warning("❌ PDF file not found: {$filePath}");
+                return;
+            }
+
+            $originalSize = filesize($filePath);
+            \Log::info("🔍 Checking PDF: " . basename($filePath) . " ({$originalSize} bytes / " . round($originalSize / 1024 / 1024, 2) . "MB)");
+
+            if ($originalSize < 100000) { // < 100KB
+                \Log::info("⏭️  PDF too small to compress ({$originalSize} bytes), skipping");
+                return;
+            }
+
+            $outputPath = $filePath . '.compressed';
+
+            try {
+                \Log::info("🔄 Starting FPDI compression...");
+
+                // Create FPDI instance
+                $pdf = new Fpdi();
+
+                // Get page count
+                $pageCount = $pdf->setSourceFile($filePath);
+                \Log::info("   Pages detected: {$pageCount}");
+
+                // Loop through pages and import them
+                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                    $templateId = $pdf->importPage($pageNo);
+                    $size = $pdf->getTemplateSize($templateId);
+
+                    // Add page dengan compressed settings
+                    $pdf->addPage(
+                        $size['orientation'] == 'L' ? 'L' : 'P',
+                        [$size['width'], $size['height']]
+                    );
+                    $pdf->useTemplate($templateId);
+                }
+
+                // Enable compression
+                $pdf->setCompression(true);
+
+                // Save compressed PDF
+                $pdf->Output($outputPath, 'F');
+                \Log::info("   Compressed file created: {$outputPath}");
+
+                // Verify result
+                if (file_exists($outputPath)) {
+                    $compressedSize = filesize($outputPath);
+
+                    if ($compressedSize === 0 || $compressedSize === false) {
+                        \Log::warning('❌ Compressed PDF is empty, keeping original');
+                        @unlink($outputPath);
+                        return;
+                    }
+
+                    // Verify PDF header
+                    $handle = fopen($outputPath, 'r');
+                    $header = fread($handle, 5);
+                    fclose($handle);
+
+                    if ($header !== '%PDF-') {
+                        \Log::warning('❌ Compressed PDF has invalid header (corrupted)');
+                        @unlink($outputPath);
+                        return;
+                    }
+
+                    $reduction = round((1 - $compressedSize / $originalSize) * 100, 1);
+
+                    \Log::info("✅ PDF Compression Success:");
+                    \Log::info("   Original: " . number_format($originalSize) . " bytes (" . round($originalSize / 1024 / 1024, 2) . "MB)");
+                    \Log::info("   Compressed: " . number_format($compressedSize) . " bytes (" . round($compressedSize / 1024 / 1024, 2) . "MB)");
+                    \Log::info("   Reduction: {$reduction}%");
+
+                    // ✅ REPLACE jika gain > 5%
+                    if ($compressedSize < $originalSize && $reduction > 5) {
+                        @unlink($filePath);  // Delete original
+                        rename($outputPath, $filePath);  // Rename compressed to original path
+                        \Log::info("✅ Original file replaced with compressed version (saved {$reduction}%)");
+                    } else {
+                        @unlink($outputPath);  // Delete compressed jika gain kecil
+                        \Log::info("⚠️  Compression gain < 5%, keeping original");
+                    }
+                } else {
+                    \Log::warning("❌ Failed to create compressed PDF");
+                }
+
+            } catch (\Exception $e) {
+                \Log::error("❌ FPDI PDF compression error: " . $e->getMessage());
+                if (isset($outputPath) && file_exists($outputPath)) {
+                    @unlink($outputPath);
+                }
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("❌ PDF compression exception: " . $e->getMessage());
+        }
     }
 }

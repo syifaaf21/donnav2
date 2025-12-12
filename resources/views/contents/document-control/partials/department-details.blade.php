@@ -15,7 +15,7 @@
 
             <li>
                 <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-calendar-range" ></i> Document Control
+                    <i class="bi bi-calendar-range me-1" ></i> Document Control
                 </a>
             </li>
 
@@ -666,12 +666,8 @@
         <div class="text-xs text-red-700">
             <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
             <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
-            <p class="mt-2">
-                Please compress your PDF files using this tool:
-                <a href="https://smallpdf.com/compress-pdf" target="_blank"
-                   class="text-blue-600 underline hover:text-blue-800 font-semibold">
-                    click here
-                </a>
+            <p>
+                Please compress your PDF files and reupload it.
             </p>
         </div>
     </div>

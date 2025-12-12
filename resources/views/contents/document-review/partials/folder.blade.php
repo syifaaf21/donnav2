@@ -12,8 +12,9 @@
             </li>
             <li>/</li>
             <li>
-                <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">Document
-                    Review</a>
+                <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">
+                <i class="bi bi-check-square me-1"></i> Document Review
+                </a>
             </li>
             <li>/</li>
             <li class="text-gray-700 font-medium">{{ ucfirst($plant) }}</li>

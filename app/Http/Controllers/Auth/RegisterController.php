@@ -21,7 +21,7 @@ class RegisterController extends Controller
         $validated = $request->validate([
             'npk' => 'required|numeric|digits:6|unique:users,npk',
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:users,email',
+            // 'email' => 'nullable|email|unique:users,email',
             'password' => [
                 'required',
                 'string',
@@ -47,7 +47,7 @@ class RegisterController extends Controller
         $user = User::create([
             'npk' => $validated['npk'],
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            // 'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role_id' => 3,
             'department_id' => $validated['department'],
