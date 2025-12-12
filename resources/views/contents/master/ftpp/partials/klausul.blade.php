@@ -12,11 +12,20 @@
     <div class="border-b border-gray-200 mb-3">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="klausulTabs">
             @foreach ($klausuls as $index => $klausul)
-                <li class="me-2">
+                <li class="me-2 flex items-center gap-2">
                     <button
                         class="inline-block p-2 border-b-2 {{ $index === 0 ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600' }}"
                         data-tab="tab-{{ $klausul->id }}">
                         {{ $klausul->name }}
+                    </button>
+                    <button
+                        class="p-1 text-yellow-500 hover:text-yellow-600 transition-colors"
+                        data-klausul-id="{{ $klausul->id }}"
+                        data-klausul-name="{{ $klausul->name }}"
+                        data-audit-type-id="{{ $klausul->audit_type_id }}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalEditMainKlausul">
+                        <i data-feather="edit-2" class="w-4 h-4"></i>
                     </button>
                 </li>
             @endforeach
@@ -59,6 +68,7 @@
                                         <div class="flex justify-center gap-2">
                                             <button data-head-id="{{ $head->id }}"
                                                 data-head-name="{{ $head->name }}"
+                                                data-audit-type-id="{{ $klausul->audit_type_id }}"
                                                 data-sub='@json($head->subKlausul)'
                                                 class="btn-edit-klausul w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                                 <i data-feather="edit" class="w-4 h-4"></i>
@@ -119,11 +129,31 @@
 @endif
 
 @include('contents.master.ftpp.partials.modal_add_klausul')
+@include('contents.master.ftpp.partials.modal_edit_main_klausul')
 @include('contents.master.ftpp.partials.modal_edit_klausul')
 
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Edit Main Klausul Modal Handler ---
+            const modalEditMain = document.getElementById('modalEditMainKlausul');
+            const formEditMain = document.getElementById('form-edit-main-klausul');
+            
+            if (modalEditMain && formEditMain) {
+                modalEditMain.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const klausulId = button.getAttribute('data-klausul-id');
+                    const klausulName = button.getAttribute('data-klausul-name');
+                    const auditTypeId = button.getAttribute('data-audit-type-id');
+                    
+                    // Set form action
+                    formEditMain.action = `/master/ftpp/klausul/update-main/${klausulId}`;
+                    
+                    // Populate fields
+                    document.getElementById('edit-name').value = klausulName;
+                    document.getElementById('edit-audit-type').value = auditTypeId;
+                });
+            }
             // --- Tab Switching ---
             document.querySelectorAll('#klausulTabs button').forEach(btn => {
                 btn.addEventListener('click', () => {

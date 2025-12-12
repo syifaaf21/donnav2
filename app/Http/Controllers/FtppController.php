@@ -171,11 +171,7 @@ class FtppController extends Controller
     public function filterKlausul($auditType)
     {
         // Contoh mapping manual
-        $klausulIds = $auditType == 2
-            ? [1]        // Management Mutu
-            : [2, 3];    // Management LK3
-
-        $klausuls = Klausul::whereIn('id', $klausulIds)->get();
+        $klausuls = Klausul::where('audit_type_id', $auditType)->get();
         return response()->json($klausuls);
     }
 

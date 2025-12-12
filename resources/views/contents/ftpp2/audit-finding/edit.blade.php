@@ -1,7 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Edit Audit Finding')
 @section('subtitle',
-    ' Edit finding for FTPP #'. $finding->registration_number .'. Please update the details below to edit
+    ' Edit finding for FTPP #' .
+    $finding->registration_number .
+    '. Please update the details below to edit
     the FTPP finding.')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
@@ -91,15 +93,9 @@
                             </div>
 
                             <!-- DEPARTMENT / PROCESS / PRODUCT -->
-                            <div class="space-y-1">
+                            <div class="flex items-center space-y-1">
                                 <label class="font-semibold">Department / Process / Product: <span
                                         class="text-danger">*</span></label>
-
-                                <button type="button"
-                                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                                    onclick="openPlantSidebar()">
-                                    Choose Dept/Process/Product
-                                </button>
 
                                 <input type="hidden" id="selectedPlant" name="plant">
                                 <input type="hidden" id="selectedDepartment" name="department_id"
@@ -107,26 +103,38 @@
                                 <input type="hidden" id="selectedProcess" name="process_id" x-model="form.process_id">
                                 <input type="hidden" id="selectedProduct" name="product_id" x-model="form.product_id">
 
-                                <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'" class="mt-1 text-gray-700">
+                                <div class="flex items-center ml-2">
+                                    <button type="button"
+                                        class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                                        onclick="openPlantSidebar()">
+                                        Choose
+                                    </button>
+                                    <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'"
+                                        class="ml-4 text-gray-700 border border-gray-600 w-[500px] rounded px-2 py-1">
+                                        -
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- AUDITEE -->
-                            <div class="space-y-1">
+                            <div class="flex items-center space-y-1">
                                 <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
-                                <button type="button" onclick="openAuditeeSidebar()"
-                                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                    Select Auditee
-                                </button>
+                                <div class="flex items-center ml-2">
+                                    <button type="button" onclick="openAuditeeSidebar()"
+                                        class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                                        Choose
+                                    </button>
 
-                                <div id="selectedAuditees" x-html="form._auditee_html ?? ''"
-                                    class="flex flex-wrap gap-2 mt-2">
+                                    <div id="selectedAuditees" x-html="form._auditee_html ?? '-'"
+                                        class="flex flex-wrap gap-2 ml-4 items-center border border-gray-600 w-[500px] h-8.5 rounded px-2 py-1">
+                                        -
+                                    </div>
                                 </div>
 
                                 <!-- Hidden holder for selected auditees (NOT submitted directly).
-                                                     We avoid naming this input so only the dynamic `auditee_ids[]` inputs
-                                                     created by `saveHeaderOnly()` are included in the POST request. -->
+                                    We avoid naming this input so only the dynamic `auditee_ids[]` inputs
+                                    created by `saveHeaderOnly()` are included in the POST request. -->
                                 <input type="hidden" id="auditee_ids" x-model="form.auditee_ids">
                             </div>
 
@@ -195,14 +203,17 @@
 
                                     <!-- CLAUSE SELECT -->
                                     <div class="text-right">
-                                        <button type="button" onclick="openSidebar()"
-                                            class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                            Select Clause
-                                        </button>
-
                                         <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
 
-                                        <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-3 justify-end">
+                                        <div class="flex flex-col items-end">
+                                            <button type="button" onclick="openSidebar()"
+                                                class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                                                Select Clause
+                                            </button>
+                                            <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
+                                                <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -214,7 +225,8 @@
 
                                 {{-- Tips Alert --}}
                                 <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
-                                    <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
+                                    <i
+                                        class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
                                     <div>
                                         <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                                         <p class="text-xs text-yellow-700 leading-relaxed">
@@ -257,13 +269,17 @@
                                     </div>
 
                                     <!-- Hidden file inputs - UBAH ke 'attachments[]' untuk konsistensi -->
-                                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple class="hidden">
-                                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple class="hidden">
+                                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple
+                                        class="hidden">
+                                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple
+                                        class="hidden">
 
                                     <!-- ✅ Error message container for attachments -->
-                                    <div id="attachmentErrorContainer" class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                                    <div id="attachmentErrorContainer"
+                                        class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
                                         <div class="flex items-start">
-                                            <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                            <i data-feather="alert-circle"
+                                                class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
                                             <div id="attachmentErrorMessage" class="text-sm text-red-700"></div>
                                         </div>
                                     </div>
@@ -281,7 +297,7 @@
         </div>
         <!-- Sidebar Klausul -->
         <div id="sidebarKlausul"
-            class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+            class="fixed top-24 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
             <!-- Header -->
@@ -323,7 +339,7 @@
 
         {{-- Sidebar Select Dept/Proc/Prod by Plant --}}
         <div id="sidebarPlant"
-            class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+            class="fixed top-24 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
             <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
@@ -381,7 +397,7 @@
 
         {{-- Sidebar select auditee --}}
         <div id="auditeeSidebar"
-            class="fixed top-0 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
+            class="fixed top-24 right-2 w-full md:w-1/3 lg:w-1/4 h-fit bg-white/95 backdrop-blur-xl shadow-2xl
            border-l border-gray-200 p-4 hidden overflow-y-auto rounded-xl">
 
             <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200 sticky top-0 bg-white/95">
@@ -1493,7 +1509,8 @@
                 Array.from(photoInput.files).forEach(file => {
                     if (file.size > 3 * 1024 * 1024) { // 3MB
                         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                        individualErrors.push(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
+                        individualErrors.push(
+                            `🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
                     }
                 });
             }

@@ -16,7 +16,8 @@
 @endsection
 
 @section('content')
-    <div class="mx-auto px-6" x-data="showModal()" @open-show-modal.window="openShowModal($event.detail)">
+    <div class="mx-auto px-6 bg-white rounded-xl py-4" x-data="showModal()"
+        @open-show-modal.window="openShowModal($event.detail)">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -63,7 +64,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -247,10 +248,9 @@
         <div id="liveTableWrapper">
             <!-- Table -->
             <div class="flex-1">
-                <div class="overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table
-                            class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden bg-white shadow-md shadow-gray-300">
+                <div class="overflow-hidden px-2">
+                    <div class="overflow-x-auto bg-white shadow-xl shadow-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden">
                             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
@@ -286,7 +286,8 @@
                             <tbody class="bg-white divide-y divide-x divide-gray-200">
 
                                 @forelse($findings as $finding)
-                                    <tr>
+                                    <tr
+                                        class="hover:bg-white transition-all duration-300 hover:shadow-lg hover:scale-y-105 origin-center">
                                         <td
                                             class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 border-r border-gray-200">
                                             {{ $finding->registration_number ?? '-' }}</td>

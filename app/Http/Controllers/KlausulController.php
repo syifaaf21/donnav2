@@ -17,6 +17,7 @@ class KlausulController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'audit_type_id' => 'required|exists:tm_audit_types,id',
             'klausul_id' => 'required',
             'head_klausul_id' => 'required',
             'head_code' => 'nullable|string|max:100',
@@ -31,7 +32,10 @@ class KlausulController extends Controller
             // 1) Klausul: if non-numeric -> create new Klausul and set klausul_id to new id
             $klausulId = $request->input('klausul_id');
             if (!is_numeric($klausulId)) {
-                $klausul = Klausul::create(['name' => $klausulId]);
+                $klausul = Klausul::create([
+                    'name' => $klausulId,
+                    'audit_type_id' => $request->input('audit_type_id')
+                ]);
                 $klausulId = $klausul->id;
             }
 
@@ -82,6 +86,36 @@ class KlausulController extends Controller
     public function show(string $id)
     {
         //
+    }
+
+    /**
+     * Update main klausul (the klausul itself, not head klausul)
+     */
+    public function updateMain(Request $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $request->validate([
+                'audit_type_id' => 'required|exists:tm_audit_types,id',
+                'name' => 'required|string|max:255',
+            ]);
+
+            $klausul = Klausul::findOrFail($id);
+            $klausul->update([
+                'name' => $request->name,
+                'audit_type_id' => $request->audit_type_id,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Main Klausul berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating main klausul: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal memperbarui Main Klausul: ' . $e->getMessage());
+        }
     }
 
     /**

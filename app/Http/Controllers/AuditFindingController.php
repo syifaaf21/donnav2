@@ -565,13 +565,22 @@ class AuditFindingController extends Controller
         // sync auditee relationship
         $auditFinding->auditee()->sync($validated['auditee_ids']);
 
-        // replace sub klausul relationships
-        AuditFindingSubKlausul::where('audit_finding_id', $auditFinding->id)->delete();
-        foreach ($validated['sub_klausul_id'] as $subId) {
-            AuditFindingSubKlausul::create([
-                'audit_finding_id' => $auditFinding->id,
-                'sub_klausul_id' => $subId,
-            ]);
+        // sync sub klausul relationships (add new ones, preserve existing ones if not explicitly deleted)
+        $currentSubKlausulIds = $auditFinding->subKlausuls()->pluck('sub_klausul_id')->toArray();
+        $newSubKlausulIds = $validated['sub_klausul_id'];
+        
+        // Combine old and new, keeping unique values
+        $mergedSubKlausulIds = array_unique(array_merge($currentSubKlausulIds, $newSubKlausulIds));
+        
+        // Use attach to add new ones without deleting existing
+        $toAttach = array_diff($newSubKlausulIds, $currentSubKlausulIds);
+        if (!empty($toAttach)) {
+            foreach ($toAttach as $subId) {
+                AuditFindingSubKlausul::create([
+                    'audit_finding_id' => $auditFinding->id,
+                    'sub_klausul_id' => $subId,
+                ]);
+            }
         }
 
         // handle deletion of existing attachments if requested

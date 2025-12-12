@@ -30,34 +30,40 @@
             </div>
 
             <!-- DEPARTMENT / PROCESS / PRODUCT -->
-            <div class="space-y-1">
+            <div class="flex items-center space-y-1">
                 <label class="font-semibold">Department / Process / Product: <span class="text-danger">*</span></label>
-
-                <button type="button"
-                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                    onclick="openPlantSidebar()">
-                    Choose Dept/Process/Product
-                </button>
 
                 <input type="hidden" id="selectedPlant" name="plant">
                 <input type="hidden" id="selectedDepartment" name="department_id" x-model="form.department_id">
                 <input type="hidden" id="selectedProcess" name="process_id" x-model="form.process_id">
                 <input type="hidden" id="selectedProduct" name="product_id" x-model="form.product_id">
 
-                <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'" class="mt-1 text-gray-700">
+                <div class="flex items-center ml-2">
+                    <button type="button"
+                        class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                        onclick="openPlantSidebar()">
+                        Choose
+                    </button>
+                    <div id="plantDeptDisplay" x-text="form._plant_display ?? '-'"
+                        class="ml-4 text-gray-700 border border-gray-600 w-[500px] rounded px-2 py-1">
+                        -
+                    </div>
                 </div>
             </div>
-
             <!-- AUDITEE -->
-            <div class="space-y-1">
+            <div class="flex items-center space-y-1">
                 <label class="font-semibold">Auditee: <span class="text-danger">*</span></label>
 
-                <button type="button" onclick="openAuditeeSidebar()"
-                    class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                    Select Auditee
-                </button>
+                <div class="flex items-center ml-2">
+                    <button type="button" onclick="openAuditeeSidebar()"
+                        class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        Choose
+                    </button>
 
-                <div id="selectedAuditees" x-html="form._auditee_html ?? ''" class="flex flex-wrap gap-2 mt-2">
+                    <div id="selectedAuditees" x-html="form._auditee_html ?? '-'"
+                        class="flex flex-wrap gap-2 ml-4 items-center border border-gray-600 w-[500px] h-8.5 rounded px-2 py-1">
+                        -
+                    </div>
                 </div>
 
                 <!-- Hidden holder for selected auditees (NOT submitted directly).
@@ -125,14 +131,18 @@
 
                     <!-- CLAUSE SELECT -->
                     <div class="text-right">
-                        <button type="button" onclick="openSidebar()"
-                            class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                            Select Clause
-                        </button>
 
                         <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
 
-                        <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-3 justify-end"></div>
+                        <div class="flex flex-col items-end">
+                            <button type="button" onclick="openSidebar()"
+                                class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                                Select Clause
+                            </button>
+                            <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
+                                <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -800,7 +810,7 @@
 
             // Tampilkan ke UI
             document.getElementById('selectedAuditees').innerHTML = selectedAuditees.map(a => `
-                <span data-id="${a.id}" class="bg-blue-100 px-2 py-1 rounded flex items-center gap-1">
+                <span data-id="${a.id}" class="bg-blue-100 px-2 py-1 text-xs rounded flex items-center gap-1">
                     ${a.name}
                     <button type="button" onclick="removeAuditee('${a.id}')">
                         <i data-feather="x" class="w-4 h-4 text-red-500"></i>
@@ -1138,7 +1148,8 @@
                         try {
                             firstErrorEl.focus();
                         } catch (e) {
-                            /* ignore */ }
+                            /* ignore */
+                        }
                     }
                 }
                 return;
