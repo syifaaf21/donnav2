@@ -129,6 +129,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
             Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
             Route::put('/update-main/{id}', [KlausulController::class, 'updateMain'])->name('update-main');
             Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
+            Route::delete('/destroy-main/{id}', [KlausulController::class, 'destroyMain'])->name('destroy-main');
         });
     });
     Route::resource('users', UserController::class);

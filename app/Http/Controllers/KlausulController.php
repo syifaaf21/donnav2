@@ -194,4 +194,37 @@ class KlausulController extends Controller
             return redirect()->back()->with('error', 'Gagal menghapus Klausul: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Delete main klausul (the klausul itself, including all head klausul and sub klausul)
+     */
+    public function destroyMain($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $klausul = Klausul::findOrFail($id);
+
+            // Hapus semua head klausul yang terhubung
+            $headKlausuls = HeadKlausul::where('klausul_id', $id)->get();
+            foreach ($headKlausuls as $head) {
+                // Hapus semua sub klausul yang terhubung dengan head
+                SubKlausul::where('head_klausul_id', $head->id)->delete();
+                // Hapus head klausulnya
+                $head->delete();
+            }
+
+            // Hapus klausul utama
+            $klausul->delete();
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Main Klausul dan semua data terkait berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting main klausul: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal menghapus Main Klausul: ' . $e->getMessage());
+        }
+    }
 }
