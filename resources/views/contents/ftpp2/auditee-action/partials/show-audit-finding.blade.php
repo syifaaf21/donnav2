@@ -91,7 +91,7 @@
 </div>
 
 <!-- Modal Preview File -->
-<div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+<div id="previewModal" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
     style="z-index: 9999;">
     <div id="previewModalContent"
          class="bg-white rounded-lg flex flex-col overflow-hidden shadow-2xl transition-all duration-300"
