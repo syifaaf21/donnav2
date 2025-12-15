@@ -155,7 +155,7 @@ class FtppController extends Controller
         $findingNumber = str_pad($lastCount, 3, '0', STR_PAD_LEFT);
 
         // Generate kode lengkap
-        $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/01";
+        $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/00";
 
         $auditors = User::whereHas('roles', fn($q) => $q->where('tm_roles.id', 4)) // Role auditor
             ->where('audit_type_id', $auditTypeId)

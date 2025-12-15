@@ -4,9 +4,9 @@
 
     <div class="flex items-center justify-between px-3 py-2">
         <div class="flex items-center gap-2">
-            <img src="{{ asset('images/madonna.png') }}" alt="Logo" id="sidebarLogo" style="width: 100px; height: auto;"
-                class="object-contain transition-all duration-300" data-full="{{ asset('images/madonna.png') }}"
-                data-icon="{{ asset('images/madonna-logo.png') }}" />
+            <img src="{{ asset('images/madonna-logo.png') }}" alt="Logo" id="sidebarLogo" style="width: 100px; height: auto;"
+                class="object-contain transition-all duration-300" data-full="{{ asset('images/madonna-logo.png') }}"
+                data-icon="{{ asset('images/madonna-icon.png') }}" />
         </div>
 
         {{-- Open sidebar button (moved here) --}}
