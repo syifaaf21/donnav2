@@ -177,7 +177,7 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-2">
-                                <label class="font-semibold text-gray-800">Yokoten?</label>
+                                <label class="font-semibold text-gray-800">Yokoten? <span class="text-danger">*</span></label>
                                 <div class="flex gap-6">
                                     <label><input type="radio" name="yokoten" value="1" x-model="form.yokoten">
                                         Yes</label>
@@ -188,7 +188,7 @@
                         </div>
 
                         <div x-show="form.yokoten == 1">
-                            <label class="font-semibold text-gray-800">Please Specify:</label>
+                            <label class="font-semibold text-gray-800">Please Specify: <span class="text-danger">*</span></label>
                             <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
                         </div>
 
