@@ -422,10 +422,27 @@ class DocumentControlController extends Controller
             $file->delete();
         }
 
-        // ===== UBAH SEMUA FILE PENDING MENJADI REJECTED (pending_approval = 2) =====
-        // File baru yang di-pending (baik yang replace maupun yang baru ditambah)
+        // ===== ARSIPKAN FILE YANG DIHAPUS SAAT STATUS SEBELUMNYA ACTIVE =====
+        // File dengan pending_approval = 1 dan is_active = 0 berarti user menghapusnya di modal revise.
+        // Saat direject, file ini tidak boleh muncul lagi dan langsung diarahkan ke archive (is_active tetap 0).
+        $deletedPendingFiles = $mapping->files()
+            ->where('pending_approval', 1)
+            ->where('is_active', 0)
+            ->get();
+
+        foreach ($deletedPendingFiles as $file) {
+            $file->update([
+                'pending_approval'       => 0,      // selesaikan proses pending
+                'is_active'              => 0,      // tetap nonaktif → tidak muncul lagi
+                'marked_for_deletion_at' => now()->addYear(),  // langsung masuk archive window
+            ]);
+        }
+
+        // ===== UBAH FILE PENDING LAIN MENJADI REJECTED (pending_approval = 2) =====
+        // Hanya file pending yang masih aktif yang ditampilkan sebagai "Rejected" badge.
         $pendingFiles = $mapping->files()
             ->where('pending_approval', 1)
+            ->where('is_active', 1)
             ->get();
 
         foreach ($pendingFiles as $file) {
@@ -451,17 +468,8 @@ class DocumentControlController extends Controller
             ]);
         }
 
-        // ===== HAPUS FILE YANG DIDELETE SAAT REVISE =====
-        // File yang pending_approval = 1 dengan is_active = 0 (artinya didelete, bukan direplace)
-        $deletedPendingFiles = $mapping->files()
-            ->where('pending_approval', 1)
-            ->where('is_active', 0)
-            ->get();
-
-        foreach ($deletedPendingFiles as $file) {
-            Storage::disk('public')->delete($file->file_path);
-            $file->delete();
-        }
+        // ===== FILE YANG DIHAPUS SUDAH DIARSIPKAN DI BLOK ATAS =====
+        // Tidak perlu dihapus fisik di tahap reject; cukup diarsipkan supaya tidak muncul lagi.
 
         $mapping->update([
             'status_id' => $statusRejected->id,
