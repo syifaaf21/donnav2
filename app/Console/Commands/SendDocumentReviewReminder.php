@@ -61,36 +61,16 @@ class SendDocumentReviewReminder extends Command
 
     public function handle(WhatsAppService $wa)
     {
-        $today = Carbon::now();
-
-        // Hanya kirim pada hari kerja (Senin-Jumat) pukul 08:00 via scheduler
-        if ($today->isWeekend()) {
-            $this->info('Weekend, skipping WhatsApp reminder.');
-            return;
-        }
-
-        // Ambil approvals dari hari kerja sebelumnya
-        $targetDate = $today->copy()->subDay();
-        if ($today->isMonday()) {
-            $targetDate = $today->copy()->subDays(3); // Senin kirim untuk approval hari Jumat
-        }
-
-        $start = $targetDate->copy()->startOfDay();
-        $end = $targetDate->copy()->endOfDay();
-
         $groupId = config('services.whatsapp.group_id');
+        $this->info("Running WhatsApp notification for Document Review (pending approvals).");
 
-        $this->info("Running WhatsApp notification for Document Review. Target approvals: {$targetDate->toDateString()}");
-
-        // Ambil dokumen review Approved dengan notes, approved pada hari kerja sebelumnya,
-        // dan belum pernah dikirim untuk approval tersebut
+        // Ambil dokumen review Approved dengan notes, belum pernah dikirim untuk approval terbaru
         $docs = DocumentMapping::with(['document', 'department', 'status', 'partNumber', 'productModel'])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->whereHas('status', fn($q) => $q->where('name', 'Approved'))
             ->whereNotNull('notes')
             ->where('notes', '!=', '')
             ->whereNotNull('last_approved_at')
-            ->whereBetween('last_approved_at', [$start, $end])
             ->where(function ($q) {
                 $q->whereNull('review_notified_at')
                     ->orWhereColumn('review_notified_at', '<', 'last_approved_at');

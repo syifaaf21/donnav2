@@ -15,10 +15,9 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
-        // Jalankan SendDocumentReviewReminder setiap Jumat jam 08:00
-            // Jalankan SendDocumentReviewReminder setiap hari kerja jam 08:00 (command akan skip weekend)
-            $schedule->command('document:send-review-reminder')
-                ->dailyAt('08:00')
+        // Jalankan SendDocumentReviewReminder setiap Kamis jam 08:00
+        $schedule->command('document:send-review-reminder')
+            ->weeklyOn(4, '08:00') // 4 = Kamis
             ->withoutOverlapping()
             ->runInBackground();
 
