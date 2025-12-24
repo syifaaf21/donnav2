@@ -48,17 +48,18 @@
                 </p>
             </div>
 
-            <!-- Notes -->
+            <!-- Notes (optional) -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-3">Notes Revision <span
-                        class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Notes Revision
+                    <span class="text-gray-400 text-xs">(optional)</span>
+                </label>
 
                 <!-- Quill container -->
                 <div id="quillEditor" class="bg-white border border-gray-300 rounded p-2" style="height: 150px;">
                 </div>
 
                 <!-- Hidden input untuk submit -->
-                <input type="hidden" name="notes" id="notesInput" required>
+                <input type="hidden" name="notes" id="notesInput">
             </div>
 
 
@@ -170,14 +171,11 @@
             }
 
 
-            // 2) VALIDASI: NOTES WAJIB ISI
+            // 2) Notes optional: set if provided, allow empty
             let plain = quillRevise.getText().trim();
             let html = quillRevise.root.innerHTML.trim();
-
             if (plain.length === 0 || html === "<p><br></p>") {
-                e.preventDefault();
-                showReviseError("Notes cannot be empty.");
-                isValid = false;
+                reviseNotesInput.value = '';
             } else {
                 reviseNotesInput.value = html;
             }

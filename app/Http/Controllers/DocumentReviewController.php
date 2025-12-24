@@ -336,7 +336,7 @@ class DocumentReviewController extends Controller
         $request->validate([
             'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
             'revision_file_ids.*' => 'nullable|integer',
-            'notes' => 'required|string|max:500',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         // Hitung total size semua file baru
@@ -444,7 +444,7 @@ class DocumentReviewController extends Controller
 
         $mapping->update([
             'status_id' => $needReviewStatus->id,
-            'notes' => $request->notes,
+            'notes' => $request->input('notes'),
             'user_id' => Auth::id(),
         ]);
 
@@ -474,10 +474,10 @@ class DocumentReviewController extends Controller
 
     public function approveWithDates(Request $request, $id)
     {
-        $validated = $request->validate([
-            'reminder_date' => 'required|date|after_or_equal:today',
-            'deadline' => 'required|date|after_or_equal:reminder_date',
-        ]);
+        // $validated = $request->validate([
+        //     'reminder_date' => 'required|date|after_or_equal:today',
+        //     'deadline' => 'required|date|after_or_equal:reminder_date',
+        // ]);
 
 
         $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
@@ -487,8 +487,8 @@ class DocumentReviewController extends Controller
         $mapping->timestamps = false;
         $mapping->updateQuietly([
             'status_id' => $approvedStatus->id,
-            'reminder_date' => $validated['reminder_date'],
-            'deadline' => $validated['deadline'],
+            'reminder_date' => null,
+            'deadline' => null,
         ]);
         $mapping->timestamps = true;
 

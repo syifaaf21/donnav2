@@ -20,28 +20,14 @@
             <form id="approveForm" method="POST" class="px-5 py-4">
                 @csrf
                 <div class="modal-body p-4">
-                    {{-- Reminder Date --}}
-                    <div class="mb-3">
-                        <label for="reminder_date" class="form-label fw-semibold">
-                            Reminder Date <span class="text-danger">*</span>
-                        </label>
-                        <input type="date" name="reminder_date" id="reminder_date" class="form-control"
-                            min="{{ now()->toDateString() }}" required>
-                        <div id="reminderError" class="text-danger small mt-1" style="display:none;">
-                            Reminder Date must be earlier than or equal to Deadline.
+                    <div class="d-flex align-items-start gap-3 p-3 border rounded-3 bg-light mb-0">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary"
+                             style="width: 40px; height: 40px;">
+                            <i class="bi bi-question-circle" style="font-size: 1.1rem;"></i>
                         </div>
-                    </div>
-
-                    {{-- Deadline --}}
-                    <div class="mb-3">
-                        <label for="deadline" class="form-label fw-semibold">
-                            Deadline <span class="text-danger">*</span>
-                        </label>
-                        <input type="date" name="deadline" id="deadline" class="form-control"
-                            min="{{ now()->toDateString() }}" required>
-                        <div id="deadlineError" class="text-danger small mt-1" style="display:none;">
-                            Deadline must be later than or equal to Reminder Date.
-                        </div>
+                        <p class="mb-0 text-dark" style="line-height: 1.5;">
+                            Are you sure you want to approve this document?
+                        </p>
                     </div>
                 </div>
 
@@ -57,61 +43,3 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-
-        const approveForm = document.getElementById("approveForm");
-        const reminderInput = document.getElementById("reminder_date");
-        const deadlineInput = document.getElementById("deadline");
-
-
-        // ===== FUNC: Tampilkan error mirip modal revise =====
-        function showApproveError(message) {
-
-            // Hapus alert lama
-            let oldAlert = document.getElementById("approve-alert");
-            if (oldAlert) oldAlert.remove();
-
-            const alertDiv = document.createElement("div");
-            alertDiv.id = "approve-alert";
-            alertDiv.className = "alert alert-danger mt-2";
-            alertDiv.innerText = message;
-
-            approveForm.prepend(alertDiv);
-        }
-
-
-        // ===== VALIDASI SUBMIT =====
-        approveForm.addEventListener("submit", function(e) {
-
-            let reminder = reminderInput.value;
-            let deadline = deadlineInput.value;
-
-            // Wajib isi
-            if (!reminder || !deadline) {
-                e.preventDefault();
-                showApproveError("Reminder Date and Deadline are required.");
-                return;
-            }
-
-            // Convert ke date
-            const reminderDate = new Date(reminder);
-            const deadlineDate = new Date(deadline);
-
-            // Reminder tidak boleh > deadline
-            if (reminderDate > deadlineDate) {
-                e.preventDefault();
-                showApproveError("Reminder Date must be earlier than or equal to Deadline.");
-                return;
-            }
-
-            // Deadline tidak boleh < Reminder
-            if (deadlineDate < reminderDate) {
-                e.preventDefault();
-                showApproveError("Deadline must be later than or equal to Reminder Date.");
-                return;
-            }
-        });
-
-    });
-</script>

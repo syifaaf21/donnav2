@@ -14,6 +14,13 @@ class Kernel extends ConsoleKernel
             ->weeklyOn(1, '08:00') // 1 = Senin
             ->withoutOverlapping()
             ->runInBackground();
+        
+        // Jalankan SendDocumentReviewReminder setiap Jumat jam 08:00
+        $schedule->command('document:send-review-reminder')
+            ->weeklyOn(1, '08:00') // 5 = Jumat
+            ->withoutOverlapping()
+            ->runInBackground();
+        
         // Opsional: jalankan di background
         $schedule->command('archive:delete-expired')
             ->daily()
