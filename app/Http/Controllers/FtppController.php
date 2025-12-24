@@ -144,18 +144,8 @@ class FtppController extends Controller
     {
         $auditType = Audit::with('subAudit')->findOrFail($auditTypeId);
 
-        $year = now()->year;
-        $prefix = ($auditTypeId == 1) ? 'MS' : 'MR'; // sesuaikan id audit
-
-        // Hitung berdasarkan prefix + tahun
-        $lastCount = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
-            ->count() + 1;
-
-        // Format nomor 3 digit, misal 001, 002, dst
-        $findingNumber = str_pad($lastCount, 3, '0', STR_PAD_LEFT);
-
-        // Generate kode lengkap
-        $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/00";
+        // Use the shared generator so numbering always takes the highest existing record
+        $code = $this->generateRegistrationNumber($auditTypeId);
 
         $auditors = User::whereHas('roles', fn($q) => $q->where('tm_roles.id', 4)) // Role auditor
             ->where('audit_type_id', $auditTypeId)
@@ -163,9 +153,33 @@ class FtppController extends Controller
 
         return response()->json([
             'reg_number' => $code,
-            'sub_audit' => $auditType->subAudit,
-            'auditors' => $auditors,
+            'sub_audit'  => $auditType->subAudit,
+            'auditors'   => $auditors,
         ]);
+    }
+
+    public function generateRegistrationNumber($auditTypeId)
+    {
+        $year   = now()->year;
+        $prefix = ($auditTypeId == 1) ? 'MS' : 'MR';
+
+        // Find the highest sequence for this prefix/year
+        $lastRecord = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
+            ->orderByRaw("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(registration_number, '/', 4), '/', -1) AS UNSIGNED) DESC")
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastRecord) {
+            preg_match("/{$prefix}\/FTPP\/{$year}\/(\d+)\/\d+/", $lastRecord->registration_number, $matches);
+            if (!empty($matches[1])) {
+                $nextNumber = (int) $matches[1] + 1;
+            }
+        }
+
+        $findingNumber  = str_pad($nextNumber, 3, '0', STR_PAD_LEFT); // 3-digit highest+1
+        $revisionNumber = str_pad(0, 2, '0', STR_PAD_LEFT);          // 2-digit revision (default 00)
+
+        return "{$prefix}/FTPP/{$year}/{$findingNumber}/{$revisionNumber}";
     }
 
     public function filterKlausul($auditType)
