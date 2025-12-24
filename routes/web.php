@@ -174,6 +174,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
         Route::get('/get-filters', [DocumentReviewController::class, 'getFiltersByPlant'])->name('getFiltersByPlant');
+        Route::get('/{id}/download-report', [DocumentReviewController::class, 'getDownloadReport'])->name('document-review.download-report');
+        Route::post('/{id}/log-download', [DocumentReviewController::class, 'logDownload'])->name('document-review.log-download');
+        Route::get('/{id}/check-logs', [DocumentReviewController::class, 'checkDownloadLogs'])->name('document-review.check-logs');
     });
 
     // Document Control

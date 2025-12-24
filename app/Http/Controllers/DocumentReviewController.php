@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Department, Document, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User};
+use App\Models\{Department, Document, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
 use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB, Notification, Storage};
@@ -123,10 +123,10 @@ class DocumentReviewController extends Controller
 
                 // Helper function untuk cek collection
                 $containsInCollection = fn($collection, $property) =>
-                $collection->contains(
-                    fn($item) =>
-                    str_contains(strtolower($item?->$property ?? ''), $search)
-                );
+                    $collection->contains(
+                        fn($item) =>
+                        str_contains(strtolower($item?->$property ?? ''), $search)
+                    );
 
                 return
                     // Dokumen langsung
@@ -180,17 +180,17 @@ class DocumentReviewController extends Controller
             $doc->setRelation(
                 'files',
                 $doc->files
-                    ? $doc->files
+                ? $doc->files
                     ->where('is_active', 1)
                     ->where('pending_approval', 0)
-                    : collect()
+                : collect()
             );
             return $doc;
         });
 
         // Pagination manual
-        $page     = $request->input('page', 1);
-        $perPage  = 10;
+        $page = $request->input('page', 1);
+        $perPage = 10;
 
         $documentsPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
             $documents->forPage($page, $perPage),
@@ -453,11 +453,13 @@ class DocumentReviewController extends Controller
 
     public function getFiles($id)
     {
-        $mapping = DocumentMapping::with(['files' => function ($q) {
-            $q->where('is_active', 1)
-                ->where('pending_approval', 0)
-                ->orderBy('created_at', 'asc'); // opsional: urutkan
-        }])->findOrFail($id);
+        $mapping = DocumentMapping::with([
+            'files' => function ($q) {
+                $q->where('is_active', 1)
+                    ->where('pending_approval', 0)
+                    ->orderBy('created_at', 'asc'); // opsional: urutkan
+            }
+        ])->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -516,10 +518,10 @@ class DocumentReviewController extends Controller
             fn($q) =>
             $q->where('tm_departments.id', $mapping->department_id)
         )->whereDoesntHave(
-            'roles',
-            fn($q) =>
-            $q->whereIn('name', ['Admin', 'Super Admin'])
-        )->get();
+                'roles',
+                fn($q) =>
+                $q->whereIn('name', ['Admin', 'Super Admin'])
+            )->get();
 
         $plant = $this->getPlantFromMapping($mapping);
 
@@ -597,5 +599,97 @@ class DocumentReviewController extends Controller
 
         return redirect($url)
             ->with('success', "Document '{$mapping->document_number}' has been rejected.");
+    }
+
+    public function getDownloadReport($id)
+    {
+        try {
+            $document = DocumentMapping::findOrFail($id);
+
+            // Ambil download log dengan group by user_id dan hitung jumlah download per user
+            $downloadLogs = DownloadReport::where('document_mapping_id', $id)
+                ->select('user_id', DB::raw('COUNT(*) as download_count'))
+                ->groupBy('user_id')
+                ->with('user:id,name')
+                ->orderBy('download_count', 'desc')
+                ->get();
+
+            $downloads = $downloadLogs->map(function ($log) {
+                return [
+                    'user_name' => $log->user->name ?? 'Unknown User',
+                    'download_count' => $log->download_count,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'document_number' => $document->document_number,
+                'downloads' => $downloads,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load download report',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function logDownload(Request $request, $id)
+    {
+        try {
+            $action = $request->input('action', 'view'); // default 'view'
+
+            // Validasi document exists
+            $document = DocumentMapping::findOrFail($id);
+
+            // Log ke database
+            $log = DownloadReport::create([
+                'document_mapping_id' => $id,
+                'user_id' => auth()->id(),
+            ]);
+
+            \Log::info('Download logged', [
+                'doc_id' => $id,
+                'user_id' => auth()->id(),
+                'action' => $action,
+                'log_id' => $log->id
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'action' => $action,
+                'log_id' => $log->id
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to log download', [
+                'error' => $e->getMessage(),
+                'doc_id' => $id
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function checkDownloadLogs($id)
+    {
+        $logs = DownloadReport::where('document_mapping_id', $id)
+            ->with('user:id,name')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'document_id' => $id,
+            'total_logs' => DownloadReport::where('document_mapping_id', $id)->count(),
+            'recent_logs' => $logs->map(fn($log) => [
+                'user' => $log->user->name,
+                'logged_at' => $log->created_at,
+            ])
+        ]);
     }
 }
