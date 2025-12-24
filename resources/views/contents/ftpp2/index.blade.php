@@ -403,7 +403,7 @@
                                                                 </a>
                                                             @endif
                                                         @else
-                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
+                                                            @if (strtolower(optional($finding->status)->name ?? '') !== 'close' && in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
                                                                 <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
                                                                     @click="open = false"
                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
