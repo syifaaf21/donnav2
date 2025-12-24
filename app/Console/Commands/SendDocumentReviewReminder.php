@@ -12,18 +12,89 @@ class SendDocumentReviewReminder extends Command
     protected $signature = 'document:send-review-reminder';
     protected $description = 'Send WhatsApp reminders for Document Review approaching deadline or overdue.';
 
+    /**
+     * Convert HTML from Quill editor to WhatsApp markdown format
+     */
+    private function convertHtmlToWhatsApp($html)
+    {
+        if (empty($html)) {
+            return '';
+        }
+
+        $text = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Paragraph
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
+        $text = preg_replace('/<\/p>/i', "\n", $text);
+        $text = preg_replace('/<p[^>]*>/i', '', $text);
+
+        // Italic
+        $text = preg_replace_callback('/<(em|i)>(.*?)<\/\1>/is', function ($m) {
+            return '_' . trim($m[2]) . '_';
+        }, $text);
+
+        // Bold (PASTIKAN ADA SPASI DI DEPAN JIKA SEBELUMNYA MARKER)
+        $text = preg_replace_callback('/<(strong|b)>(.*?)<\/\1>/is', function ($m) {
+            $content = '*' . trim($m[2]) . '*';
+
+            // Tambahkan spasi jika sebelumnya bukan spasi / newline
+            return ' ' . $content;
+        }, $text);
+
+        // Strikethrough
+        $text = preg_replace_callback('/<(s|del|strike)>(.*?)<\/\1>/is', function ($m) {
+            return ' ~' . trim($m[2]) . '~';
+        }, $text);
+
+        // Underline (WA tidak support)
+        $text = preg_replace('/<u>(.*?)<\/u>/is', '$1', $text);
+
+        // Remove remaining tags
+        $text = strip_tags($text);
+
+        // Cleanup spasi berlebih (aman)
+        $text = preg_replace('/\s{2,}/', ' ', $text);
+        $text = preg_replace("/\n{2,}/", "\n", $text);
+
+        return trim($text);
+    }
+
     public function handle(WhatsAppService $wa)
     {
+        $today = Carbon::now();
+
+        // Hanya kirim pada hari kerja (Senin-Jumat) pukul 08:00 via scheduler
+        if ($today->isWeekend()) {
+            $this->info('Weekend, skipping WhatsApp reminder.');
+            return;
+        }
+
+        // Ambil approvals dari hari kerja sebelumnya
+        $targetDate = $today->copy()->subDay();
+        if ($today->isMonday()) {
+            $targetDate = $today->copy()->subDays(3); // Senin kirim untuk approval hari Jumat
+        }
+
+        $start = $targetDate->copy()->startOfDay();
+        $end = $targetDate->copy()->endOfDay();
+
         $groupId = config('services.whatsapp.group_id');
 
-        $this->info("Running WhatsApp notification for Document Review.");
+        $this->info("Running WhatsApp notification for Document Review. Target approvals: {$targetDate->toDateString()}");
 
-        // Ambil dokumen review dengan status Approved dan memiliki notes revisi
+        // Ambil dokumen review Approved dengan notes, approved pada hari kerja sebelumnya,
+        // dan belum pernah dikirim untuk approval tersebut
         $docs = DocumentMapping::with(['document', 'department', 'status', 'partNumber', 'productModel'])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->whereHas('status', fn($q) => $q->where('name', 'Approved'))
             ->whereNotNull('notes')
             ->where('notes', '!=', '')
+            ->whereNotNull('last_approved_at')
+            ->whereBetween('last_approved_at', [$start, $end])
+            ->where(function ($q) {
+                $q->whereNull('review_notified_at')
+                    ->orWhereColumn('review_notified_at', '<', 'last_approved_at');
+            })
             ->get();
 
         if ($docs->isEmpty()) {
@@ -34,25 +105,48 @@ class SendDocumentReviewReminder extends Command
         // Format pesan
         $message = "📌 *DOCUMENT REMINDER ALERT*\n";
         $message .= "_(Automated Whatsapp Notification)_\n\n";
+        $message .= "The following Documents have been revised and approved: \n\n";
 
-        $docCounter = 1;
+        $groupedDocs = $docs->groupBy(fn($doc) => $doc->department ? $doc->department->name : 'N/A');
 
-        // Format setiap dokumen
-        foreach ($docs as $doc) {
-            $message .= "{$docCounter}. *Department:* " . ($doc->department->name ?? 'N/A') . "\n";
-            $message .= "   *Document Number:* {$doc->document_number}\n";
-            $message .= "   *Model:* " . ($doc->productModel->name ?? 'N/A') . "\n";
-            $message .= "   *Notes:* {$doc->notes}\n\n";
-            $docCounter++;
+        $deptCounter = 1;
+
+        foreach ($groupedDocs as $deptName => $deptDocs) {
+            $message .= "[{$deptCounter}] *{$deptName}*\n"; // Department di-bold
+
+            $docCounter = 1;
+            foreach ($deptDocs as $doc) {
+                $modelNames = $doc->productModel->isNotEmpty()
+                    ? $doc->productModel->pluck('name')->join(', ')
+                    : 'N/A';
+
+                $notes = $this->convertHtmlToWhatsApp($doc->notes);
+
+                $message .= "{$docCounter}. *Document Number* : {$doc->document_number}\n"; // Judul bold
+                $message .= "   *Model* : {$modelNames}\n"; // Judul bold
+                $message .= "   *Revision Notes* : {$notes}\n\n"; // Judul bold
+
+                $docCounter++;
+            }
+
+            $deptCounter++;
         }
 
         // Footer
+        $message .= "⚠️ Please review the revised documents at your earliest convenience.\n\n";
         $message .= "------ *BY AISIN BISA* ------";
 
         // Kirim ke WhatsApp
         $sent = $wa->sendGroupMessage($groupId, $message);
 
         if ($sent) {
+            // Tandai sudah dikirim untuk approval tersebut
+            $now = Carbon::now();
+            foreach ($docs as $doc) {
+                $doc->timestamps = false;
+                $doc->updateQuietly(['review_notified_at' => $now]);
+                $doc->timestamps = true;
+            }
             $this->info("WhatsApp message sent successfully to Group ID: $groupId");
         } else {
             $this->error("Failed to send WhatsApp message.");

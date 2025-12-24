@@ -88,7 +88,7 @@
             placeholder: "Write your revision notes...",
             modules: {
                 toolbar: [
-                    ['bold', 'italic', 'underline'],
+                    ['bold', 'italic', 'strike'],
                     ['link']
                 ]
             }
