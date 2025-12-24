@@ -65,7 +65,6 @@
            peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
                                 Type to search...
                             </label>
-
                         </div>
                     </form>
 
@@ -797,7 +796,9 @@
                 });
             }
 
+            // ===================== INITIAL BINDING =====================
             bindPagination();
+            bindDeleteSweetAlert(); // 🔧 Fix: Bind delete sweetalert on initial page load
 
         });
     </script>
