@@ -549,6 +549,11 @@ class AuditFindingController extends Controller
 
         $auditFinding = AuditFinding::findOrFail($id);
 
+        // Auto-increment registration number revision (last numeric segment),
+        // using the incoming value if provided, otherwise the current value.
+        $baseRegistration = $validated['registration_number'] ?? $auditFinding->registration_number;
+        $newRegistration = $this->incrementRegistrationRevision($baseRegistration);
+
         $auditFinding->update([
             'audit_type_id' => $validated['audit_type_id'],
             'sub_audit_type_id' => $validated['sub_audit_type_id'] ?? null,
@@ -557,7 +562,7 @@ class AuditFindingController extends Controller
             'process_id' => $validated['process_id'] ?? null,
             'product_id' => $validated['product_id'] ?? null,
             'auditor_id' => $validated['auditor_id'],
-            'registration_number' => $validated['registration_number'] ?? null,
+            'registration_number' => $newRegistration,
             'finding_description' => $validated['finding_description'],
             'due_date' => $validated['due_date'],
         ]);
@@ -605,6 +610,41 @@ class AuditFindingController extends Controller
         }
 
         return redirect('/ftpp')->with('success', 'Audit Finding updated successfully!');
+    }
+
+    /**
+     * Increment the revision part of a registration number.
+     * Expected formats like: MS/YYYY/FTPP/001/00 or MR/YYYY/FTPP/001/00
+     * This will increment the last numeric segment while preserving padding.
+     */
+    private function incrementRegistrationRevision(?string $registrationNumber): ?string
+    {
+        if (!$registrationNumber) {
+            return $registrationNumber;
+        }
+
+        $parts = explode('/', $registrationNumber);
+        if (!empty($parts)) {
+            $last = $parts[count($parts) - 1];
+            if (preg_match('/^\d+$/', $last)) {
+                $width = strlen($last);
+                $num = ((int) $last) + 1;
+                $parts[count($parts) - 1] = str_pad((string) $num, $width, '0', STR_PAD_LEFT);
+                return implode('/', $parts);
+            }
+        }
+
+        // Fallback: increment the last number anywhere in the string
+        if (preg_match('/^(.*?)(\d+)\s*$/', $registrationNumber, $m)) {
+            $prefix = $m[1];
+            $digits = $m[2];
+            $width = strlen($digits);
+            $num = ((int) $digits) + 1;
+            return $prefix . str_pad((string) $num, $width, '0', STR_PAD_LEFT);
+        }
+
+        // If no numeric segment found, return unchanged
+        return $registrationNumber;
     }
 
     /**

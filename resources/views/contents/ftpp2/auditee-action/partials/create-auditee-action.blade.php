@@ -122,8 +122,8 @@
                 </div>
 
                 <div x-show="form.yokoten == 1">
-                    <label class="font-semibold text-gray-900">Please Specify:</label>
-                    <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24"></textarea>
+                    <label class="font-semibold text-gray-900">Please Specify: <span class="text-danger">*</span></label>
+                    <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24" :required="form.yokoten == 1"></textarea>
                 </div>
 
                 @php

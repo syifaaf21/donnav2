@@ -317,19 +317,38 @@ class AuditeeActionController extends Controller
     public function edit($id)
     {
         $finding = AuditFinding::with([
-            'auditeeAction.correctiveActions',
-            'auditeeAction.preventiveActions',
-            'auditeeAction.whyCauses',
-            'auditeeAction.file',
+            'audit',
+            'subAudit',
+            'findingCategory',
+            'auditor',
             'auditee',
             'department',
             'process',
-            'product'
+            'product',
+            'subKlausuls',  // pastikan relasi ini ada
+            'file',
+            'status',
+            'auditeeAction',
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
+            'auditeeAction.file',
         ])->findOrFail($id);
 
+        $auditTypes = Audit::with('subAudit')->get();
         $subAudit = SubAudit::all();
 
-        return view('contents.ftpp2.auditee-action.edit', compact('finding', 'subAudit'));
+        $departments = Department::select('id', 'name')->get();
+        $processes = Process::select('id', 'name')->get();
+        $products = Product::select('id', 'name')->get();
+
+        $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
+            ->select('id', 'name')->get();
+
+        $findingCategories = FindingCategory::all();
+        $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
+
+        return view('contents.ftpp2.auditee-action.edit', compact('finding', 'subAudit', 'auditTypes', 'departments', 'processes', 'products', 'auditors', 'findingCategories', 'klausuls'));
     }
 
 
@@ -353,7 +372,8 @@ class AuditeeActionController extends Controller
             'files2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3072',
 
             // Attachments: max 10MB per PDF file
-            'attachments.*' => 'nullable|file|mimes:pdf|max:10240',
+            // Attachments: allow images (jpg, jpeg, png) and PDF files
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
 
             'remove_attachments.*' => 'nullable|numeric',
         ]);

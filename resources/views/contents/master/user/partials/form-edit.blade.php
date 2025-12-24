@@ -20,7 +20,7 @@
             <div class="row g-3">
                 <!-- Name -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Name</label>
+                    <label class="form-label fw-semibold">Name<span class="text-danger">*</span></label>
                     <input type="text" name="name"
                         class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
                         value="{{ $user->name }}" required>
@@ -31,7 +31,7 @@
 
                 <!-- NPK -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">NPK</label>
+                    <label class="form-label fw-semibold">NPK<span class="text-danger">*</span></label>
                     <input type="text" name="npk"
                         class="form-control border-0 shadow-sm rounded-3 @error('npk') is-invalid @enderror"
                         value="{{ $user->npk }}" required pattern="\d{6}" maxlength="6"
@@ -74,7 +74,7 @@
 
                 <!-- Role -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Role</label>
+                    <label class="form-label fw-semibold">Role<span class="text-danger">*</span></label>
                     <select name="role_ids[]" id="role_select_edit_{{ $user->id }}"
                         class="form-select border-0 shadow-sm rounded-3 @error('role_ids') is-invalid @enderror"
                         multiple required>
@@ -102,7 +102,7 @@
 
                 <div class="col-md-6" id="auditTypeContainerEdit_{{ $user->id }}"
                     style="display: {{ $user->roles->pluck('name')->map(fn($n) => strtolower($n))->contains('auditor') ? 'block' : 'none' }};">
-                    <label class="form-label fw-semibold">Audit Type</label>
+                    <label class="form-label fw-semibold">Audit Type<span class="text-danger">*</span></label>
                     <select name="audit_type_id" id="audit_type_select_edit_{{ $user->id }}"
                         class="form-select border-0 shadow-sm rounded-3 @error('audit_type_id') is-invalid @enderror">
                         <option value="" disabled
@@ -122,7 +122,7 @@
 
                 <!-- Department -->
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Department</label>
+                    <label class="form-label fw-semibold">Department<span class="text-danger">*</span></label>
                     <select name="department_ids[]" id="department_select_edit_{{ $user->id }}"
                         class="form-select border-0 shadow-sm rounded-3 @error('department_ids') is-invalid @enderror"
                         multiple required>
