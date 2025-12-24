@@ -206,8 +206,8 @@
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Process</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Notes</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
-                                    style="color: #1e2b50; letter-spacing: 0.5px;">Deadline</th>
+                                {{-- <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Deadline</th> --}}
                                 <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Updated By
                                 </th>
@@ -269,9 +269,9 @@
                                         </div>
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs">
+                                    {{-- <td class="px-4 py-3 text-xs">
                                         <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
-                                    </td>
+                                    </td> --}}
 
                                     <td class="px-4 py-3 text-xs">{{ $doc->user?->name ?? '-' }}</td>
 

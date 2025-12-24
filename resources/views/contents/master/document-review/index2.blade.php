@@ -260,12 +260,12 @@
                                         <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Process</th>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        {{-- <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Reminder Date</th>
                                         <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
-                                            Deadline</th>
+                                            Deadline</th> --}}
                                         <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Actions</th>
@@ -301,12 +301,12 @@
                                                 <td class="px-4 py-3 border-r border-gray-200 capitalize">
                                                     {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 border-r border-gray-200">
+                                                {{-- <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->reminder_date?->format('d M Y') ?? '-' }}
                                                 </td>
                                                 <td class="px-4 py-3 border-r border-gray-200">
                                                     {{ $doc->deadline?->format('d M Y') ?? '-' }}
-                                                </td>
+                                                </td> --}}
                                                 <td
                                                     class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
                                                     {{-- FILE BUTTON AREA — fixed width --}}
