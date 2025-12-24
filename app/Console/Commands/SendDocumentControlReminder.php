@@ -146,7 +146,7 @@ class SendDocumentControlReminder extends Command
         $formatCategory("⏰ *EXPIRED DOCUMENTS*", $categories['overdue']);
 
         // Footer
-        $message .= "*Action Required:* Please submit and verify to MS Department.\n";
+        $message .= "*Action Required:* Please submit to *MADONNA*and verify to MS Department.\n";
         $message .= "------ *BY AISIN BISA* ------";
 
         // Kirim ke WhatsApp
