@@ -256,22 +256,47 @@
                 feather.replace();
             }
 
-            // --- DELETE HEAD & SUB (Confirm) ---
-            document.querySelectorAll('.delete-form').forEach(form => {
+            // --- DELETE HEAD & SUB dengan SweetAlert2 ---
+            document.querySelectorAll('#section-klausul .delete-form').forEach(form => {
                 form.addEventListener('submit', e => {
                     e.preventDefault();
-                    if (confirm('Are you sure you want to delete this data?')) form
-                        .submit();
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You want to delete this klausul data?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
                 });
             });
 
-            // --- DELETE MAIN KLAUSUL (Confirm) ---
-            document.querySelectorAll('.delete-klausul-form').forEach(form => {
+            // --- DELETE MAIN KLAUSUL dengan SweetAlert2 ---
+            document.querySelectorAll('#section-klausul .delete-klausul-form').forEach(form => {
                 form.addEventListener('submit', e => {
                     e.preventDefault();
-                    if (confirm('Are you sure you want to delete this main klausul and all related data? This action cannot be undone.')) {
-                        form.submit();
-                    }
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You want to delete this main klausul and all related data? This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
                 });
             });
         });
