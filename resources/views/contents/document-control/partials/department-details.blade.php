@@ -682,6 +682,7 @@
             window.openReviseModal = function(btn) {
                 const mappingId = btn.dataset.docid;
                 const files = JSON.parse(btn.dataset.files || '[]');
+                const status = btn.dataset.status?.trim(); // Ambil status dari button
 
                 // Kosongkan container
                 reviseFilesContainer.innerHTML = '';
@@ -701,9 +702,11 @@
             <div class="p-3 border rounded bg-gray-50 mb-2">
                 <div class="flex justify-between items-start mb-2">
                     <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                    ${status === 'Active' ? `
                     <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
                         <i class="bi bi-trash"></i>
                     </button>
+                    ` : ''}
                 </div>
                 <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
                 <div class="mt-2 flex items-center gap-2">
