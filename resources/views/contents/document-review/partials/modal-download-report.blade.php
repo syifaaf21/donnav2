@@ -1,16 +1,22 @@
 <!-- filepath: d:\Sanya\donnav2\resources\views\contents\document-review\partials\modal-download-report.blade.php -->
 <!-- Modal Download Report -->
-<div class="modal fade" id="downloadReportModal" tabindex="-1" aria-labelledby="downloadReportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content rounded-2xl shadow-lg">
-            <div class="modal-header bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-t-2xl border-0">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-download me-3 fs-5"></i>
-                    <h5 class="modal-title font-semibold mb-0" id="downloadReportModalLabel">
-                        Download Report
-                    </h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="downloadReportModal" tabindex="-1" aria-labelledby="downloadReportModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;" id="rejectModalLabel">
+                    <i class="bi bi-download text-primary"></i> Download Report
+                </h5>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                </button>
             </div>
 
             <div class="modal-body p-5">
@@ -26,9 +32,9 @@
                 <div id="downloadReportContent" class="hidden">
                     <!-- Info Cards -->
                     <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                                <div class="d-flex align-items-center">
+                        <div class="col-md-4">
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 h-100">
+                                <div class="d-flex align-items-start">
                                     <i class="bi bi-file-earmark text-blue-600 fs-4 me-3"></i>
                                     <div>
                                         <small class="text-gray-600 d-block">Document Number</small>
@@ -37,9 +43,21 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="bg-green-50 border border-green-200 rounded-xl p-4">
-                                <div class="d-flex align-items-center">
+                        <div class="col-md-4">
+                            <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 h-100">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-file-earmark-text text-indigo-600 fs-4 me-3 flex-shrink-0"></i>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <small class="text-gray-600 d-block">File</small>
+                                        <span id="reportFileName" class="h6 mb-0 text-gray-900 d-block text-break"
+                                            style="word-wrap: break-word; overflow-wrap: break-word;">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bg-green-50 border border-green-200 rounded-xl p-4 h-100">
+                                <div class="d-flex align-items-start">
                                     <i class="bi bi-arrow-down-circle text-green-600 fs-4 me-3"></i>
                                     <div>
                                         <small class="text-gray-600 d-block">Total Downloads</small>
@@ -65,7 +83,8 @@
                                         <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase">
                                             <i class="bi bi-person me-2"></i>User
                                         </th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase text-center w-32">
+                                        <th
+                                            class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase text-center w-32">
                                             <i class="bi bi-download me-2"></i>Count
                                         </th>
                                     </tr>
@@ -87,4 +106,3 @@
         </div>
     </div>
 </div>
-
