@@ -3,7 +3,7 @@
 <input type="hidden" name="pic" value="{{ auth()->user()->id }}">
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
-    <div class="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-4 my-2">
+    <div class="gap-4 my-2">
         <!-- LEFT: 5 WHY -->
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-4">
             <h5 class="font-semibold text-gray-700">AUDITEE</h5>
@@ -14,14 +14,12 @@
                     <div class="mt-2 space-y-2">
                         <div class="flex flex-col space-y-1">
                             <label class="text-gray-700">Why-<span x-text="i"></span> (Mengapa):</label>
-                            <input type="text" name="why[]"
-                                class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['why_'+i+'_mengapa']">
+                            <textarea name="why[]" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                x-model="form['why_'+i+'_mengapa']"></textarea>
 
                             <label class="text-gray-700">Cause (Karena):</label>
-                            <input type="text" name="cause[]"
-                                class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['cause_'+i+'_karena']">
+                            <textarea name="cause[]" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                x-model="form['cause_'+i+'_karena']"></textarea>
                         </div>
                     </div>
                 </template>
@@ -37,13 +35,13 @@
         <div class="space-y-6">
 
             <!-- Corrective + Preventive -->
-            <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
+            <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6 mt-4">
                 <table class="w-full border border-gray-200 text-sm mt-2">
 
                     <tr class="bg-gray-100 font-semibold text-center">
                         <td class="border border-gray-200 p-1 w-8">No</td>
                         <td class="border border-gray-200 p-1">Activity</td>
-                        <td class="border border-gray-200 p-1 w-20">PIC</td>
+                        <td class="border border-gray-200 p-1 w-32">PIC</td>
                         <td class="border border-gray-200 p-1 w-20">Planning</td>
                         <td class="border border-gray-200 p-1 w-20">Actual</td>
                     </tr>
@@ -57,12 +55,12 @@
                         <tr class="corrective-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
                             <td class="border border-gray-200">
-                                <input type="text" name="activity[]" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_activity']">
+                                <textarea name="activity[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                    x-model="form['corrective_'+i+'_activity']"></textarea>
                             </td>
-                            <td class="border border-gray-200">
-                                <input type="text" name="pic[]" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_pic']">
+                            <td class="border border-gray-200 w-32">
+                                <textarea name="pic[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                    x-model="form['corrective_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
                                 <input type="date" name="planning_date[]" class="w-full p-1 border-none"
@@ -84,12 +82,12 @@
                         <tr class="preventive-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
                             <td class="border border-gray-200">
-                                <input type="text" name="activity[]" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_activity']">
+                                <textarea name="activity[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                    x-model="form['preventive_'+i+'_activity']"></textarea>
                             </td>
-                            <td class="border border-gray-200">
-                                <input type="text" name="pic[]" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_pic']">
+                            <td class="border border-gray-200 w-32">
+                                <textarea name="pic[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                    x-model="form['preventive_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
                                 <input type="date" name="planning_date[]" class="w-full p-1 border-none"
@@ -103,7 +101,6 @@
                     </template>
                 </table>
             </div>
-
 
             <!-- Yokoten -->
             <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
@@ -122,8 +119,10 @@
                 </div>
 
                 <div x-show="form.yokoten == 1">
-                    <label class="font-semibold text-gray-900">Please Specify: <span class="text-danger">*</span></label>
-                    <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24" :required="form.yokoten == 1"></textarea>
+                    <label class="font-semibold text-gray-900">Please Specify: <span
+                            class="text-danger">*</span></label>
+                    <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24"
+                        :required="form.yokoten == 1"></textarea>
                 </div>
 
                 @php
@@ -178,45 +177,45 @@
                         </div>
 
                         <!-- Hidden file inputs -->
-                        <input type="file" id="photoInput2" name="attachments[]" accept="image/*" multiple class="hidden">
-                        <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple class="hidden">
+                        <input type="file" id="photoInput2" name="attachments[]" accept="image/*" multiple
+                            class="hidden">
+                        <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple
+                            class="hidden">
 
                         <!-- ✅ Error message container for attachments -->
-                        <div id="attachmentErrorContainer" class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                        <div id="attachmentErrorContainer"
+                            class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
                             <div class="flex items-start">
-                                <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                <i data-feather="alert-circle"
+                                    class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
                                 <div id="attachmentErrorMessage" class="text-sm text-red-700"></div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <!-- Leader/SPV -->
+                <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center max-w-xs">
+                    <div>Created</div>
+
+                    {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
+                    @if ($action && $action->ldr_spv_signature == 1)
+                        <img src="/images/usr-approve.png" class="mx-auto h-24">
+                    @else
+                        {{-- Jika belum approve, tombol tetap muncul --}}
+                        <button type="button"
+                            class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                            @click="confirmApprove()">
+                            Approve
+                        </button>
+                    @endif
+
+                    <div class="mb-1 font-semibold text-gray-900">Leader / SPV</div>
+
+                    <input type="text" value="{{ auth()->user()->name }}"
+                        class="w-full border border-gray-300 rounded text-center py-1" readonly>
+                </div>
             </div>
-            <!-- Leader/SPV -->
-            <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center max-w-xs">
-                <div>Created</div>
-
-                {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
-                @if ($action && $action->ldr_spv_signature == 1)
-                    <img src="/images/usr-approve.png" class="mx-auto h-24">
-                @else
-                    {{-- Jika belum approve, tombol tetap muncul --}}
-                    <button type="button"
-                        class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                        @click="confirmApprove()">
-                        Approve
-                    </button>
-                @endif
-
-                <div class="mb-1 font-semibold text-gray-900">Leader / SPV</div>
-
-                <input type="text" value="{{ auth()->user()->name }}"
-                    class="w-full border border-gray-300 rounded text-center py-1" readonly>
-            </div>
-
-
-
         </div>
-
     </div>
 </div>
 <!-- Attachment Upload Handle Script: trigger inputs, preview, count, click-outside -->
@@ -374,7 +373,10 @@
                 feather.replace();
 
                 // Scroll to error
-                errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                errorContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
             }
         }
 
@@ -455,7 +457,8 @@
             Array.from(photoInput2.files).forEach(file => {
                 if (file.size > 3 * 1024 * 1024) { // 3MB
                     const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    individualErrors.push(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
+                    individualErrors.push(
+                        `🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
                 }
             });
         }
@@ -522,8 +525,8 @@
 
         // Corrective Action
         document.querySelectorAll('tr.corrective-row').forEach((row, i) => {
-            const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
+            const activity = row.querySelector('[name="activity[]"]')?.value || '';
+            const pic = row.querySelector('[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
 
@@ -535,8 +538,8 @@
 
         // Preventive Action
         document.querySelectorAll('tr.preventive-row').forEach((row, i) => {
-            const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
+            const activity = row.querySelector('[name="activity[]"]')?.value || '';
+            const pic = row.querySelector('[name="pic[]"]')?.value || '';
             const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
             const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
 
