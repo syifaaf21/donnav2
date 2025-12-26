@@ -100,10 +100,10 @@ class AuditFindingController extends Controller
 
         // ✅ Server-side total size check (backup - seharusnya tidak pernah tercapai)
         $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 10 * 1024 * 1024) {
+        if ($totalSize > 20 * 1024 * 1024) {
             \Log::warning('Total file size validation bypassed on client-side!');
             return back()->withErrors([
-                'attachments' => 'Total file size must not exceed 10MB. Please compress your PDF files.'
+                'attachments' => 'Total file size must not exceed 20MB. Please compress your PDF files.'
             ])->withInput();
         }
 
@@ -546,6 +546,15 @@ class AuditFindingController extends Controller
             'existing_file_delete' => 'nullable|array',
             'existing_file_delete.*' => 'integer',
         ]);
+
+        // ✅ Server-side total size check (backup - seharusnya tidak pernah tercapai)
+        $totalSize = $this->calculateTotalFileSize($request);
+        if ($totalSize > 20 * 1024 * 1024) {
+            \Log::warning('Total file size validation bypassed on client-side!');
+            return back()->withErrors([
+                'attachments' => 'Total file size must not exceed 20MB. Please compress your PDF files.'
+            ])->withInput();
+        }
 
         $auditFinding = AuditFinding::findOrFail($id);
 

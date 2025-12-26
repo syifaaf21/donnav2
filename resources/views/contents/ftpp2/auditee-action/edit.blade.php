@@ -826,11 +826,11 @@
                 console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
                 console.log('Files:', fileDetails);
 
-                // ✅ 3. CHECK jika melebihi 10MB
-                if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+                // ✅ 3. CHECK jika melebihi 20MB
+                if (totalSize > 20 * 1024 * 1024) { // 20MB in bytes
                     showAttachmentError(`
 
-                        <p class="font-semibold mb-1">❌ Total file size exceeds 10MB</p>
+                        <p class="font-semibold mb-1">❌ Total file size exceeds 20MB</p>
                         <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                         <p>
                             Please compress your PDF files and reupload it.

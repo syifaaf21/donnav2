@@ -159,7 +159,7 @@
                         <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                         <p class="text-xs text-yellow-700 leading-relaxed">
                             Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
-                            Maximum total file size is <strong>10 MB</strong>.
+                            Maximum total file size is <strong>20 MB</strong>.
                         </p>
                     </div>
                 </div>
@@ -999,8 +999,8 @@
         console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
         console.log('Files:', fileDetails);
 
-        // ✅ 3. CHECK jika melebihi 10MB - STOP DI SINI
-        if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+        // ✅ 3. CHECK jika melebihi 20MB - STOP DI SINI
+        if (totalSize > 20 * 1024 * 1024) { // 20MB in bytes
             // Tampilkan error di bawah attachment section
             const attachmentSection = document.querySelector('.bg-white.p-6.mt-6:has(#previewImageContainer)');
 
@@ -1010,7 +1010,7 @@
                 <div class="flex items-start">
                     <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
                     <div class="text-sm text-red-700">
-                        <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                        <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
                         <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                         <p>
                             Please compress your PDF files and reupload it.

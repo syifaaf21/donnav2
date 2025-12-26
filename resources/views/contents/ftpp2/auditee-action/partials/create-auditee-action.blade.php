@@ -141,7 +141,7 @@
                             <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                             <p class="text-xs text-yellow-700 leading-relaxed">
                                 Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
-                                Maximum total file size is <strong>10 MB</strong>.
+                                Maximum total file size is <strong>20 MB</strong>.
                             </p>
                         </div>
                     </div>
@@ -436,10 +436,10 @@
         console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
         console.log('Files:', fileDetails);
 
-        // ✅ 4. CHECK jika melebihi 10MB - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
-        if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+        // ✅ 4. CHECK jika melebihi 20MB - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
+        if (totalSize > 20 * 1024 * 1024) { // 20MB in bytes
             const errorHtml = `
-                <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
                 <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                 <p>
                     Please compress your PDF files and reupload it.

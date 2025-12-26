@@ -99,18 +99,18 @@ class AuditeeActionController extends Controller
 
         // ✅ VALIDASI TOTAL FILE SIZE (SERVER-SIDE BACKUP)
         $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 10 * 1024 * 1024) { // 10MB
+        if ($totalSize > 20 * 1024 * 1024) { // 20MB
             \Log::warning('Total file size validation bypassed on client-side!');
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Total file size exceeds 10MB. Please compress your PDF files using <a href="https://smallpdf.com/compress-pdf" target="_blank">this tool</a>.'
+                    'message' => 'Total file size exceeds 20MB. Please compress your PDF files using <a href="https://smallpdf.com/compress-pdf" target="_blank">this tool</a>.'
                 ], 422);
             }
 
             return back()->withErrors([
-                'attachments' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+                'attachments' => 'Total file size exceeds 20MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
             ])->withInput();
         }
 
@@ -380,9 +380,9 @@ class AuditeeActionController extends Controller
 
         // ✅ VALIDASI TOTAL FILE SIZE
         $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 10485760) { // 10MB
+        if ($totalSize > 20971520) { // 20MB
             return back()->withErrors([
-                'total_file_size' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+                'total_file_size' => 'Total file size exceeds 20MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
             ])->withInput();
         }
 
