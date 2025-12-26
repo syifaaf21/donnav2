@@ -414,7 +414,6 @@
 @endsection
 
 @push('scripts')
-    <x-sweetalert-confirm />
     <script>
         // show/hide clear button for search input (UI-only, doesn't change logic)
         document.addEventListener('DOMContentLoaded', function() {
@@ -664,18 +663,19 @@
                     });
                 });
 
-                // Delete confirmation
+                // Delete confirmation (localized + clearer impact)
                 document.querySelectorAll('.delete-form').forEach(form => {
                     form.addEventListener('submit', function(e) {
                         e.preventDefault();
                         Swal.fire({
-                            title: 'Are you sure?',
-                            text: "This will permanently delete the document!",
+                            title: 'Hapus dokumen ini?',
+                            text: 'Menghapus dokumen akan menghapus semua file terkait secara permanen. Tindakan ini tidak dapat dibatalkan.',
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonColor: '#d33',
-                            cancelButtonColor: '#3085d6',
-                            confirmButtonText: 'Yes, delete it!'
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, hapus',
+                            cancelButtonText: 'Batal'
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 form.submit();
@@ -702,6 +702,11 @@
             });
             // Inisialisasi dropdown sesuai tab aktif
             updateFiltersForPlant(window.documentTabs.activeTab);
+
+            // Bind initial event handlers (including delete confirmation)
+            if (typeof rebindListeners === 'function') {
+                rebindListeners();
+            }
 
             // Delegated click handler: toggle dropdowns and open file viewer
             document.addEventListener('click', function(e) {
