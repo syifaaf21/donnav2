@@ -83,19 +83,48 @@ class AuditeeActionController extends Controller
      */
     public function store(Request $request)
     {
-        // ✅ VALIDASI FILE SIZE
-        $validated = $request->validate([
-            'audit_finding_id' => 'required|exists:tt_audit_findings,id',
-            'root_cause' => 'required|string',
-            'pic' => 'nullable|string|max:100',
-            'yokoten' => 'required|boolean',
-            'yokoten_area' => 'nullable|string',
-            'ldr_spv_signature' => 'nullable|boolean',
+        try {
+            // ✅ VALIDASI FILE SIZE
+            $validated = $request->validate([
+                'audit_finding_id' => 'required|exists:tt_audit_findings,id',
+                'root_cause' => 'required|string',
+                'pic' => 'nullable|string|max:255',
+                'yokoten' => 'required|in:0,1',
+                'yokoten_area' => 'nullable|string',
+                'ldr_spv_signature' => 'nullable|boolean',
 
-            // Attachments: gabung semua file
-            'attachments' => 'nullable|array',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
-        ]);
+                // Why and Cause validation
+                'why_*_mengapa' => 'nullable|string',
+                'cause_*_karena' => 'nullable|string',
+
+                // Corrective and Preventive validation
+                'corrective_*_activity' => 'nullable|string',
+                'corrective_*_pic' => 'nullable|string',
+                'corrective_*_planning' => 'nullable|date',
+                'corrective_*_actual' => 'nullable|date',
+
+                'preventive_*_activity' => 'nullable|string',
+                'preventive_*_pic' => 'nullable|string',
+                'preventive_*_planning' => 'nullable|date',
+                'preventive_*_actual' => 'nullable|date',
+
+                // Attachments: gabung semua file
+                'attachments' => 'nullable|array',
+                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in auditee action store: ' . json_encode($e->errors()));
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed: ' . implode(' ', array_map(fn($err) => implode(' ', $err), $e->errors())),
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            
+            throw $e;
+        }
 
         // ✅ VALIDASI TOTAL FILE SIZE (SERVER-SIDE BACKUP)
         $totalSize = $this->calculateTotalFileSize($request);
@@ -285,15 +314,29 @@ class AuditeeActionController extends Controller
             }
 
             return back()->with('success', 'Auditee Action submitted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            \Log::error('Database error in auditee action store: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Database error occurred. Please try again or contact administrator.'
+                ], 500);
+            }
+
+            return back()
+                ->withErrors(['error' => 'Database error occurred. Please try again.'])
+                ->withInput();
         } catch (\Throwable $e) {
             DB::rollBack();
             // log error agar lebih mudah debug
             \Log::error('update_auditee_action error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => 'An error occurred: ' . $e->getMessage()
                 ], 500);
             }
 

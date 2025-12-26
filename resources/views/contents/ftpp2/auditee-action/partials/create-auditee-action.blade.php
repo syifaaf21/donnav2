@@ -14,12 +14,12 @@
                     <div class="mt-2 space-y-2">
                         <div class="flex flex-col space-y-1">
                             <label class="text-gray-700">Why-<span x-text="i"></span> (Mengapa):</label>
-                            <textarea name="why[]" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['why_'+i+'_mengapa']"></textarea>
+                            <textarea :name="'why_' + i + '_mengapa'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                x-model="form['why_'+i+'_mengapa']" rows="2"></textarea>
 
                             <label class="text-gray-700">Cause (Karena):</label>
-                            <textarea name="cause[]" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['cause_'+i+'_karena']"></textarea>
+                            <textarea :name="'cause_' + i + '_karena'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                x-model="form['cause_'+i+'_karena']" rows="2"></textarea>
                         </div>
                     </div>
                 </template>
@@ -55,19 +55,19 @@
                         <tr class="corrective-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
                             <td class="border border-gray-200">
-                                <textarea name="activity[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                <textarea :name="'corrective_' + i + '_activity'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
                                     x-model="form['corrective_'+i+'_activity']"></textarea>
                             </td>
                             <td class="border border-gray-200 w-32">
-                                <textarea name="pic[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                <textarea :name="'corrective_' + i + '_pic'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
                                     x-model="form['corrective_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" name="planning_date[]" class="w-full p-1 border-none"
+                                <input type="date" :name="'corrective_' + i + '_planning'" class="w-full p-1 border-none"
                                     x-model="form['corrective_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" name="actual_date[]" class="w-full p-1 border-none"
+                                <input type="date" :name="'corrective_' + i + '_actual'" class="w-full p-1 border-none"
                                     x-model="form['corrective_'+i+'_actual']">
                             </td>
                         </tr>
@@ -82,19 +82,19 @@
                         <tr class="preventive-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
                             <td class="border border-gray-200">
-                                <textarea name="activity[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                <textarea :name="'preventive_' + i + '_activity'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
                                     x-model="form['preventive_'+i+'_activity']"></textarea>
                             </td>
                             <td class="border border-gray-200 w-32">
-                                <textarea name="pic[]" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                                <textarea :name="'preventive_' + i + '_pic'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
                                     x-model="form['preventive_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" name="planning_date[]" class="w-full p-1 border-none"
+                                <input type="date" :name="'preventive_' + i + '_planning'" class="w-full p-1 border-none"
                                     x-model="form['preventive_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" name="actual_date[]" class="w-full p-1 border-none"
+                                <input type="date" :name="'preventive_' + i + '_actual'" class="w-full p-1 border-none"
                                     x-model="form['preventive_'+i+'_actual']">
                             </td>
                         </tr>
@@ -512,42 +512,42 @@
         formData.append('audit_finding_id', findingId);
         formData.append('pic', document.querySelector('input[name="pic"]')?.value);
 
-        // 5 WHY
-        const whyInputs = document.querySelectorAll('input[name="why[]"]');
-        const causeInputs = document.querySelectorAll('input[name="cause[]"]');
-
-        for (let i = 0; i < 5; i++) {
-            formData.append(`why_${i+1}_mengapa`, whyInputs[i]?.value || '');
-            formData.append(`cause_${i+1}_karena`, causeInputs[i]?.value || '');
+        // 5 WHY - ambil dari textarea dengan nama dinamis
+        for (let i = 1; i <= 5; i++) {
+            const whyTextarea = document.querySelector(`textarea[name="why_${i}_mengapa"]`);
+            const causeTextarea = document.querySelector(`textarea[name="cause_${i}_karena"]`);
+            
+            formData.append(`why_${i}_mengapa`, whyTextarea?.value || '');
+            formData.append(`cause_${i}_karena`, causeTextarea?.value || '');
         }
 
         formData.append('root_cause', document.querySelector('textarea[x-model="form.root_cause"]')?.value || '');
 
         // Corrective Action
-        document.querySelectorAll('tr.corrective-row').forEach((row, i) => {
-            const activity = row.querySelector('[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('[name="pic[]"]')?.value || '';
-            const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
-            const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
+        for (let i = 1; i <= 4; i++) {
+            const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value || '';
+            const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value || '';
+            const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value || '';
+            const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value || '';
 
-            formData.append(`corrective_${i+1}_activity`, activity);
-            formData.append(`corrective_${i+1}_pic`, pic);
-            formData.append(`corrective_${i+1}_planning`, planning);
-            formData.append(`corrective_${i+1}_actual`, actual);
-        });
+            formData.append(`corrective_${i}_activity`, activity);
+            formData.append(`corrective_${i}_pic`, pic);
+            formData.append(`corrective_${i}_planning`, planning);
+            formData.append(`corrective_${i}_actual`, actual);
+        }
 
         // Preventive Action
-        document.querySelectorAll('tr.preventive-row').forEach((row, i) => {
-            const activity = row.querySelector('[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('[name="pic[]"]')?.value || '';
-            const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
-            const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
+        for (let i = 1; i <= 4; i++) {
+            const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value || '';
+            const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value || '';
+            const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value || '';
+            const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value || '';
 
-            formData.append(`preventive_${i+1}_activity`, activity);
-            formData.append(`preventive_${i+1}_pic`, pic);
-            formData.append(`preventive_${i+1}_planning`, planning);
-            formData.append(`preventive_${i+1}_actual`, actual);
-        });
+            formData.append(`preventive_${i}_activity`, activity);
+            formData.append(`preventive_${i}_pic`, pic);
+            formData.append(`preventive_${i}_planning`, planning);
+            formData.append(`preventive_${i}_actual`, actual);
+        }
 
         // Yokoten
         const yokoten = document.querySelector('input[name="yokoten"]:checked');
@@ -562,6 +562,10 @@
         // SUBMIT
         // -----------------------------
         try {
+            console.log('📤 Submitting auditee action...');
+            console.log('Finding ID:', findingId);
+            console.log('Files to upload:', fileDetails);
+
             const res = await fetch("{{ route('ftpp.auditee-action.store', ['id' => $finding->id]) }}", {
                 method: "POST",
                 headers: {
@@ -572,10 +576,28 @@
                 body: formData
             });
 
+            console.log('📥 Response status:', res.status);
+            console.log('📥 Response headers:', res.headers.get('content-type'));
+
+            // ✅ Check if response is JSON
+            const contentType = res.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const textResponse = await res.text();
+                console.error('❌ Non-JSON response received:', textResponse.substring(0, 500));
+                
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    html: 'Server returned an invalid response. Please check the console for details or contact administrator.<br><small>Response type: ' + (contentType || 'unknown') + '</small>'
+                });
+                return;
+            }
+
             const result = await res.json();
+            console.log('📦 Response data:', result);
 
             if (res.ok && result.success) {
-                console.log(result);
+                console.log('✅ Success:', result);
                 window.location.href = "{{ route('ftpp.index') }}";
             } else {
                 // ✅ Jika ada error dari server tentang file size, tampilkan di field
@@ -584,17 +606,17 @@
                 } else {
                     await Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: result.message || "Unknown error"
+                        title: 'Failed',
+                        html: result.message || "Unknown error"
                     });
                 }
             }
         } catch (err) {
-            console.error(err);
+            console.error('Network or parsing error:', err);
             await Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: err.message
+                title: 'Connection Error',
+                html: 'Failed to submit data. Please check your connection and try again.<br><small>Error: ' + err.message + '</small>'
             });
         }
     }

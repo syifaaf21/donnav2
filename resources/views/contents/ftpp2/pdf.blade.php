@@ -108,6 +108,10 @@
             /* jika gambar banyak agar tidak keluar layar */
         }
 
+            .preserve-newlines {
+                white-space: pre-line;
+                word-wrap: break-word;
+            }
         .note {
             font-size: 10px;
             /* lebih kecil dari text-sm */
@@ -235,16 +239,16 @@
         @foreach ($finding->auditeeAction->whyCauses ?? [] as $index => $why)
             <tr>
                 <td style="width: 25%;">Why {{ $index + 1 }} (Mengapa)</td>
-                <td>{{ $why->why_description ?? '-' }}</td>
+                    <td class="preserve-newlines">{!! nl2br(e($why->why_description ?? '-')) !!}</td>
             </tr>
             <tr>
                 <td>Cause (Karena)</td>
-                <td>{{ $why->cause_description ?? '-' }}</td>
+                    <td class="preserve-newlines">{!! nl2br(e($why->cause_description ?? '-')) !!}</td>
             </tr>
         @endforeach
         <tr>
             <td class="font-semibold">Root Cause</td>
-            <td>{{ $finding->auditeeAction->root_cause ?? '-' }}</td>
+            <td class="preserve-newlines">{{ $finding->auditeeAction->root_cause ?? '-' }}</td>
         </tr>
     </table>
 
@@ -265,8 +269,8 @@
         @foreach ($finding->auditeeAction->correctiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $action->activity ?? '-' }}</td>
-                <td class="text-center">{{ $action->pic ?? '-' }}</td>
+                    <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
+                    <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
@@ -283,8 +287,8 @@
         @foreach ($finding->auditeeAction->preventiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $action->activity ?? '-' }}</td>
-                <td class="text-center">{{ $action->pic ?? '-' }}</td>
+                    <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
+                    <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
@@ -305,9 +309,10 @@
             <td class="text-center font-semibold">Created</td>
         </tr>
         <tr>
-            <td>
+            <td  class="preserve-newlines">
                 @if ($finding->auditeeAction->yokoten)
-                    <b>Area:</b> {{ $finding->auditeeAction->yokoten_area ?? '-' }}
+                    <b>Area:</b>
+                    <b></b>{{ $finding->auditeeAction->yokoten_area ?? '-' }}
                 @endif
             </td>
             <td class="text-center">

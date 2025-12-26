@@ -72,7 +72,7 @@
                 <input type="hidden" name="pic" value="{{ auth()->user()->name }}">
                 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+                <div class="gap-4 my-2">
                     <!-- LEFT: 5 WHY -->
                     <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
                         <h5 class="font-bold">Auditee</h5>
@@ -84,14 +84,16 @@
                                 <div class="mt-2 space-y-2">
                                     <div class="flex flex-col space-y-1">
                                         <label class="text-gray-600">Why-<span x-text="i"></span> (Mengapa):</label>
-                                        <input type="text" :name="'why_' + i + '_mengapa'"
-                                            class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
-                                            x-model="form['why_'+i+'_mengapa']">
+                                        <textarea :name="'why_' + i + '_mengapa'"
+                                            class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400 resize-none"
+                                            x-model="form['why_'+i+'_mengapa']"
+                                            rows="2"></textarea>
 
                                         <label class="text-gray-600">Cause (Karena):</label>
-                                        <input type="text" :name="'cause_' + i + '_karena'"
-                                            class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
-                                            x-model="form['cause_'+i+'_karena']">
+                                        <textarea :name="'cause_' + i + '_karena'"
+                                            class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400 resize-none"
+                                            x-model="form['cause_'+i+'_karena']"
+                                            rows="2"></textarea>
                                     </div>
                                 </div>
                             </template>
@@ -129,14 +131,18 @@
 
                                 <template x-for="i in 4">
                                     <tr class="corrective-row">
-                                        <td class="border border-gray-200 text-center" x-text="i"></td>
+                                        <td class="border border-gray-200 text-center align-top pt-2" x-text="i"></td>
                                         <td class="border border-gray-200">
-                                            <input type="text" :name="'corrective_' + i + '_activity'"
-                                                class="w-full p-1 border-none" x-model="form['corrective_'+i+'_activity']">
+                                            <textarea :name="'corrective_' + i + '_activity'"
+                                                class="w-full p-1 border-none resize-none"
+                                                x-model="form['corrective_'+i+'_activity']"
+                                                rows="2"></textarea>
                                         </td>
                                         <td class="border border-gray-200">
-                                            <input type="text" :name="'corrective_pic[' + i + ']'"
-                                                class="w-full p-1 border-none" x-model="form['corrective_'+i+'_pic']">
+                                            <textarea :name="'corrective_pic[' + i + ']'"
+                                                class="w-full p-1 border-none resize-none"
+                                                x-model="form['corrective_'+i+'_pic']"
+                                                rows="2"></textarea>
                                         </td>
                                         <td class="border border-gray-200">
                                             <input type="date" :name="'corrective_planning[' + i + ']'"
@@ -157,14 +163,18 @@
 
                                 <template x-for="i in 4">
                                     <tr class="preventive-row">
-                                        <td class="border border-gray-200 text-center" x-text="i"></td>
+                                        <td class="border border-gray-200 text-center align-top pt-2" x-text="i"></td>
                                         <td class="border border-gray-200">
-                                            <input type="text" :name="'preventive_' + i + '_activity'"
-                                                class="w-full p-1 border-none" x-model="form['preventive_'+i+'_activity']">
+                                            <textarea :name="'preventive_' + i + '_activity'"
+                                                class="w-full p-1 border-none resize-none"
+                                                x-model="form['preventive_'+i+'_activity']"
+                                                rows="2"></textarea>
                                         </td>
                                         <td class="border border-gray-200">
-                                            <input type="text" :name="'preventive_pic[' + i + ']'"
-                                                class="w-full p-1 border-none" x-model="form['preventive_'+i+'_pic']">
+                                            <textarea :name="'preventive_pic[' + i + ']'"
+                                                class="w-full p-1 border-none resize-none"
+                                                x-model="form['preventive_'+i+'_pic']"
+                                                rows="2"></textarea>
                                         </td>
                                         <td class="border border-gray-200">
                                             <input type="date" :name="'preventive_planning[' + i + ']'"
