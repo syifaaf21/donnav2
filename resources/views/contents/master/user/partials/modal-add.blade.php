@@ -165,7 +165,7 @@
 
                     function toggleAuditType() {
                         const selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
-                        const hasAuditor = selected.some(t => t.includes('auditor'));
+                        const hasAuditor = selected.some(t => t.includes('auditor') || t.includes('lead auditor'));
                         if (hasAuditor) {
                             auditTypeContainer.style.display = 'block';
                             if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');

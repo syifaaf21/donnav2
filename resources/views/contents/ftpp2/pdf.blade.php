@@ -214,7 +214,7 @@
                 <br><br>
                 <b>Due Date:</b> {{ \Carbon\Carbon::parse($finding->due_date)->format('d M Y') }}
                 <br><br>
-                <b>Clause:</b>
+                <b>Clauses/Categories:</b>
                 @foreach ($finding->subKlausuls ?? [] as $subKlausul)
                     {{ $subKlausul->code }} {{ $subKlausul->name }}{{ !$loop->last ? ', ' : '' }}
                 @endforeach

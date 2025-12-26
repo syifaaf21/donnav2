@@ -195,12 +195,24 @@
             // === Delete Action ===
             document.querySelectorAll('#section-finding-category .btn-delete').forEach(button => {
                 button.addEventListener('click', () => {
-                    const id = button.dataset.id;
-                    if (confirm('Are you sure you want to delete this data?')) {
-                        const form = document.getElementById('form-delete-category');
-                        form.action = `/master/ftpp/finding-category/${id}`;
-                        form.submit();
-                    }
+                    const id = button.getAttribute('data-id');
+                    const form = document.getElementById('form-delete-category');
+                    
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You want to delete this finding category?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.action = `/master/ftpp/finding-category/${id}`;
+                            form.submit();
+                        }
+                    });
                 });
             });
         });

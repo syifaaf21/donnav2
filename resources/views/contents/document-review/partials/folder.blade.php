@@ -13,7 +13,7 @@
             <li>/</li>
             <li>
                 <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">
-                <i class="bi bi-check-square me-1"></i> Document Review
+                    <i class="bi bi-check-square me-1"></i> Document Review
                 </a>
             </li>
             <li>/</li>
@@ -412,6 +412,14 @@
                                                                 data-id="{{ $doc->id }}">
                                                                 <i class="bi bi-x-circle mr-2"></i> Reject
                                                             </button>
+
+                                                            <button type="button"
+                                                                class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#downloadReportModal"
+                                                                data-id="{{ $doc->id }}">
+                                                                <i class="bi bi-download mr-2"></i> Download Report
+                                                            </button>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -470,6 +478,7 @@
     @include('contents.document-review.partials.modal-approve')
     @include('contents.document-review.partials.modal-edit')
     @include('contents.document-review.partials.modal-reject')
+    @include('contents.document-review.partials.modal-download-report')
     <style>
         /* --- Dropdown fix style --- */
         .dropdown-fixed {
@@ -613,9 +622,29 @@
                     const sep = url.includes('?') ? '&' : '?';
                     return `${url}${sep}_=${Date.now()}`;
                 };
+
+                let currentDocId = null; // Simpan docId yang sedang dibuka
+                let currentFileType = null; // Simpan tipe file (pdf, excel, word, etc)
+
+                // Helper: Deteksi tipe file dari URL/path
+                function getFileType(url) {
+                    if (!url) return 'unknown';
+                    const ext = url.split('.').pop().toLowerCase().split('?')[0];
+                    
+                    if (ext === 'pdf') return 'pdf';
+                    if (['xls', 'xlsx', 'xlsm'].includes(ext)) return 'excel';
+                    if (['doc', 'docx'].includes(ext)) return 'word';
+                    if (['ppt', 'pptx'].includes(ext)) return 'powerpoint';
+                    if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) return 'image';
+                    
+                    return 'other';
+                }
+
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const docId = btn.dataset.docId;
+                        currentDocId = docId; // Simpan untuk tracking
+                        
                         const clickedFileId = btn.dataset.fileId;
                         const clickedFilePath = btn.dataset.filePath;
                         let url = btn.dataset.file || '';
@@ -633,7 +662,6 @@
                                     list.find(f => String(f.id) === String(clickedFileId)) ||
                                     list.find(f => f.file_path === clickedFilePath);
 
-                                // Fallback: coba cocokkan dari URL asal
                                 if (!target && url) {
                                     const raw = url.replace(/^.*\/storage\//, '');
                                     target = list.find(f => f.file_path === raw);
@@ -652,13 +680,59 @@
                         } else {
                             url = withCacheBuster(url);
                         }
-                        // Simpan URL dulu, jangan langsung set ke iframe
+                        
+                        // Deteksi tipe file
+                        currentFileType = getFileType(url);
+                        console.log('File type detected:', currentFileType);
+                        
+                        // LOG DOWNLOAD untuk Excel/Word/PPT/Image saat button show diklik
+                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other'].includes(currentFileType)) {
+                            fetch(`/document-review/${currentDocId}/log-download`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ 
+                                    action: 'view_file',
+                                    file_type: currentFileType 
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                console.log('Download logged (non-PDF):', data);
+                            })
+                            .catch(err => console.error('Failed to log download:', err));
+                        }
+                        
                         previewFrame.dataset.url = url;
                         viewFullBtn.href = url;
-
-                        // Buka modal dulu
                         previewModal.show();
                     });
+                });
+
+                // === LOG DOWNLOAD SAAT IFRAME LOAD (HANYA UNTUK PDF) ===
+                previewFrame.addEventListener('load', function() {
+                    // HANYA log untuk PDF saat iframe load
+                    // Untuk format lain sudah di-log saat button show diklik
+                    if (currentDocId && previewFrame.src && currentFileType === 'pdf') {
+                        fetch(`/document-review/${currentDocId}/log-download`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                action: 'load_pdf',
+                                file_type: 'pdf'
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log('PDF loaded and logged:', data);
+                        })
+                        .catch(err => console.error('Failed to log PDF load:', err));
+                    }
                 });
 
                 document.getElementById('filePreviewModal')
@@ -667,14 +741,17 @@
                             previewFrame.src = previewFrame.dataset.url;
                         }
                     });
+                    
                 document.getElementById('filePreviewModal')
                     .addEventListener('hidden.bs.modal', () => {
                         previewFrame.src = '';
                         previewFrame.dataset.url = '';
                         viewFullBtn.href = '#';
+                        currentDocId = null; // Reset docId
+                        currentFileType = null; // Reset file type
                     });
 
-
+                // === PRINT BUTTON (HANYA UNTUK PDF) ===
                 const printFileBtn = document.getElementById('printFileBtn');
 
                 printFileBtn.addEventListener('click', function(e) {
@@ -687,15 +764,113 @@
                         return;
                     }
 
-                    // Pastikan iframe sudah memuat file
-                    frame.focus();
+                    // HANYA log print untuk PDF
+                    if (currentDocId && currentFileType === 'pdf') {
+                        fetch(`/document-review/${currentDocId}/log-download`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                action: 'print',
+                                file_type: 'pdf'
+                            })
+                        }).then(res => {
+                            // Setelah log berhasil, baru buka print dialog
+                            frame.focus();
+                            try {
+                                frame.contentWindow.print();
+                            } catch (err) {
+                                console.error('Unable to auto-print:', err);
+                                window.print();
+                            }
+                        }).catch(err => console.error('Failed to log print:', err));
+                    } else {
+                        // Non-PDF: langsung print tanpa log lagi
+                        frame.focus();
+                        try {
+                            frame.contentWindow.print();
+                        } catch (err) {
+                            window.print();
+                        }
+                    }
+                });
 
-                    // Panggil print dari iframe tanpa membuka tab baru
-                    try {
-                        frame.contentWindow.print();
-                    } catch (err) {
-                        console.error('Unable to auto-print:', err);
-                        alert('Failed to print file.');
+                // === VIEW FULL BUTTON (HANYA LOG UNTUK PDF) ===
+                viewFullBtn.addEventListener('click', function(e) {
+                    // HANYA log untuk PDF
+                    if (currentDocId && currentFileType === 'pdf') {
+                        fetch(`/document-review/${currentDocId}/log-download`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                action: 'view_full',
+                                file_type: 'pdf'
+                            })
+                        }).catch(err => console.error('Failed to log view full:', err));
+                    }
+                    // Biarkan link melakukan navigasi normal
+                });
+
+                // === DETECT BROWSER PRINT (Ctrl+P) - HANYA UNTUK PDF ===
+                document.addEventListener('keydown', function(e) {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                        e.preventDefault();
+                        
+                        const modal = document.getElementById('filePreviewModal');
+                        const isModalOpen = modal.classList.contains('show') || modal.style.display !== 'none';
+                        
+                        if (isModalOpen && currentDocId && currentFileType === 'pdf') {
+                            fetch(`/document-review/${currentDocId}/log-download`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ 
+                                    action: 'keyboard_print',
+                                    file_type: 'pdf'
+                                })
+                            }).then(() => {
+                                const frame = document.getElementById('filePreviewFrame');
+                                if (frame && frame.src) {
+                                    frame.focus();
+                                    try {
+                                        frame.contentWindow.print();
+                                    } catch (err) {
+                                        window.print();
+                                    }
+                                }
+                            }).catch(err => console.error('Failed to log keyboard print:', err));
+                        }
+                    }
+                });
+
+                // === DETECT RIGHT-CLICK DOWNLOAD (HANYA UNTUK PDF) ===
+                document.addEventListener('contextmenu', function(e) {
+                    const modal = document.getElementById('filePreviewModal');
+                    const isModalOpen = modal.classList.contains('show') || modal.style.display !== 'none';
+                    
+                    if (isModalOpen && e.target.tagName === 'IFRAME' && currentFileType === 'pdf') {
+                        if (currentDocId) {
+                            setTimeout(() => {
+                                fetch(`/document-review/${currentDocId}/log-download`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ 
+                                        action: 'context_menu_download',
+                                        file_type: 'pdf'
+                                    })
+                                }).catch(err => console.error('Failed to log context download:', err));
+                            }, 100);
+                        }
                     }
                 });
 
@@ -739,28 +914,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                    <div class="border rounded p-2 bg-gray-50">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-sm">📄 ${file.original_name}</span>
+                                                            <div class="border rounded p-2 bg-gray-50">
+                                                                <div class="flex items-center justify-between">
+                                                                    <span class="text-sm">📄 ${file.original_name}</span>
 
-                                            <div class="flex gap-2">
-                                                <a href="/storage/${file.file_path}"
-                                                   target="_blank"
-                                                   class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                   View
-                                                </a>
+                                                                    <div class="flex gap-2">
+                                                                        <a href="/storage/${file.file_path}"
+                                                                           target="_blank"
+                                                                           class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                           View
+                                                                        </a>
 
-                                                <button type="button"
-                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                    data-file-id="${file.id}">
-                                                    Replace
-                                                </button>
-                                            </div>
-                                        </div>
+                                                                        <button type="button"
+                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                            data-file-id="${file.id}">
+                                                                            Replace
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
 
-                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                    </div>
-                                `).join('')}
+                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                            </div>
+                                                        `).join('')}
 </div>`;
 
                             })
@@ -1051,6 +1226,72 @@ ${data.files.map(file => `
                     alertDiv.innerText = message;
                     reviseForm.prepend(alertDiv);
                 }
+
+                // === DOWNLOAD REPORT MODAL ===
+                const downloadReportModal = document.getElementById('downloadReportModal');
+
+                downloadReportModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const docId = button.getAttribute('data-id');
+
+                    // Show loading
+                    document.getElementById('downloadReportLoading').classList.remove('hidden');
+                    document.getElementById('downloadReportContent').classList.add('hidden');
+
+                    // Fetch download history
+                    fetch(`/document-review/${docId}/download-report`)
+                        .then(res => res.json())
+                        .then(data => {
+                            document.getElementById('downloadReportLoading').classList.add('hidden');
+                            document.getElementById('downloadReportContent').classList.remove('hidden');
+
+                            // Set document info
+                            document.getElementById('reportDocNumber').textContent = data.document_number ||
+                                '-';
+                            document.getElementById('reportTotalDownloads').textContent = data.downloads
+                                .reduce((sum, d) => sum + d.download_count, 0);
+
+                            const tbody = document.getElementById('downloadReportTableBody');
+                            const emptyState = document.getElementById('downloadReportEmpty');
+
+                            if (data.downloads.length === 0) {
+                                tbody.innerHTML = '';
+                                emptyState.classList.remove('hidden');
+                            } else {
+                                emptyState.classList.add('hidden');
+                                tbody.innerHTML = data.downloads.map((item, index) => `
+                                                    <tr class="hover:bg-gray-50">
+                                                        <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-900">
+                                                            <div class="flex items-center">
+                                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                                                                    <span class="text-blue-600 font-semibold text-xs">
+                                                                        ${item.user_name.charAt(0).toUpperCase()}
+                                                                    </span>
+                                                                </div>
+                                                                ${item.user_name}
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-center">
+                                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                                                ${item.download_count}x
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                `).join('');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Failed to load download report:', err);
+                            document.getElementById('downloadReportLoading').classList.add('hidden');
+                            document.getElementById('downloadReportContent').innerHTML = `
+                                                <div class="alert alert-danger">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    Failed to load download report. Please try again.
+                                                </div>
+                                            `;
+                        });
+                });
             });
         </script>
     @endpush

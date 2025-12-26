@@ -44,7 +44,7 @@
         </div> --}}
 
         {{-- Enhanced Tabs Container --}}
-        <div>
+        <div class="p-3">
             <div class="pt-2 mx-8">
                 <div class="flex items-center justify-between gap-4">
                     <nav class="flex-1-mb-px mt-6" aria-label="User categories">

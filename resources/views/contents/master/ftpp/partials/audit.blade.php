@@ -46,8 +46,7 @@
                             </button>
                             |
                             <form action="{{ route('master.ftpp.audit.destroy', $audit->id) }}" method="POST"
-                                class="inline-block delete-form"
-                                onsubmit="return confirm('Are you sure you want to delete this data?')">
+                                class="inline-block delete-form">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
@@ -341,6 +340,30 @@
                 } catch (e) {
                     console.warn('Backdrop cleanup skipped:', e);
                 }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Delete confirmation -gunakan selector spesifik untuk audit
+            document.querySelectorAll('#section-audit .delete-form').forEach(form => {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You want to delete this audit data?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
             });
         });
     </script>

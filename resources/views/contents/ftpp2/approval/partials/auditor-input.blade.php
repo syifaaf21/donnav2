@@ -121,6 +121,7 @@
                     <input type="date" name="due_date" x-model="form.due_date" class="border-b border-gray-400 bg-gray-100" readonly>
                 </div>
                 <div class="mt-2">
+                    <div class="text-right">Clauses/Categories: </div>
                     <div class="flex items-end gap-2 mb-1">
                         <!-- Tombol Trigger (disabled view only) -->
                         <div class="ml-auto">
@@ -131,7 +132,6 @@
                         </div>
                     </div>
                     <input type="hidden" id="selectedSub" name="sub_klausul_id[]">
-
                     <div id="selectedSubContainer" class="flex flex-wrap gap-2 mt-2 justify-end"></div>
                 </div>
             </div>

@@ -261,8 +261,6 @@
                                                         </button>
                                                     @endif
 
-
-
                                                     {{-- UPLOAD ALWAYS APPEARS LEFT WITH OTHER ACTIONS --}}
                                                     <button type="button"
                                                         class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"

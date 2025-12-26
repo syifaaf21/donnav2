@@ -72,7 +72,7 @@
                         <td class="px-4 py-2" x-text="form.due_date ?? '-'"></td>
                     </tr>
                     <tr>
-                        <th class="px-4 py-2 font-semibold bg-gray-50 align-top">Clauses</th>
+                        <th class="px-4 py-2 font-semibold bg-gray-50 align-top">Clauses/Categories</th>
                         <td class="px-4 py-2">
                             <div id="selectedSubContainer" class="flex flex-wrap gap-2"></div>
                         </td>
