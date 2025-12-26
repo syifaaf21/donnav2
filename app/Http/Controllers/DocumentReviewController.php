@@ -335,7 +335,7 @@ class DocumentReviewController extends Controller
             abort(403);
 
         $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
+            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
             'revision_file_ids.*' => 'nullable|integer',
             'notes' => 'nullable|string|max:500',
         ]);

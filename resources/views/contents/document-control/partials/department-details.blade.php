@@ -654,7 +654,7 @@
                     // Convert bytes ke MB (2 decimal)
                     let totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
 
-                    const maxSize = 10; // dalam MB
+                    const maxSize = 20; // dalam MB
 
                     if (totalSizeMB > maxSize) {
                         e.preventDefault();
@@ -662,7 +662,7 @@
     <div class="flex items-start">
         <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
         <div class="text-xs text-red-700">
-            <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+            <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
             <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
             <p>
                 Please compress your PDF files and reupload it.

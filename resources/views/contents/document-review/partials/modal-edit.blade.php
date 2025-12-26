@@ -26,9 +26,12 @@
                 <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
                 <div>
                     <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
-                    <p class="text-xs text-yellow-700 leading-relaxed">
-                        Gunakan tombol <strong>Replace</strong> untuk mengganti file.
-                    </p>
+                    <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
+                        <li>Allowed formats: <strong>PDF, DOCX, XLSX</strong>. Max per file: <strong>2 MB</strong>, total: <strong>20 MB</strong>.</li>
+                        <li>Gunakan tombol <strong>Replace</strong> untuk mengganti file, dan <strong>Add File</strong>
+                            untuk menambah file baru.</li>
+                        </li>
+                    </ul>
                 </div>
             </div>
             <!-- Existing Files -->
@@ -44,7 +47,7 @@
                 </button>
 
                 <p class="text-xs text-gray-500 mt-1">
-                    Allowed formats: PDF, DOCX, XLSX
+                    Allowed formats: PDF, DOCX, XLSX. Max per file: 2 MB. Total: 20 MB.
                 </p>
             </div>
 
@@ -138,7 +141,7 @@
                 isValid = false;
             }
 
-            // 1.3) VALIDASI TOTAL SIZE MAKS 10MB
+            // 1.3) VALIDASI TOTAL SIZE MAKS 20MB
             let totalSize = 0;
             allFileInputs.forEach(input => {
                 if (input.files.length > 0) {
@@ -146,7 +149,7 @@
                 }
             });
 
-            const MAX_SIZE = 10 * 1024 * 1024;
+            const MAX_SIZE = 20 * 1024 * 1024;
 
             if (totalSize > MAX_SIZE) {
                 e.preventDefault();
@@ -157,7 +160,7 @@
         <div class="flex items-start">
             <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
             <div class="text-xs text-red-700">
-                <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
                 <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                 <p>
                     Please compress your PDF files and reupload it.
