@@ -108,15 +108,13 @@
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content rounded-2xl">
 
-                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
-                        method="GET">
+                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET">
                         <div class="modal-header">
                             <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
                         <div class="modal-body space-y-4">
-
                             <!-- Part Number -->
                             <div class="flex flex-col">
                                 <label class="form-label font-semibold text-gray-700 mb-1">Part Number</label>
@@ -296,6 +294,20 @@
 
                                     <td class="px-4 py-3 text-xs text-center">
                                         <div class="flex justify-center items-center gap-2 relative">
+                                            @php
+                                                $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
+                                                $isAdmin = in_array($role, ['admin', 'super admin']);
+                                                $isAdminOrSuper = $isAdmin;
+                                                $isUser = !$isAdmin;
+
+                                                $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
+                                                $docDeptId = $doc->department_id ?? ($doc->department->id ?? null);
+                                                $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
+
+                                                $status = strtolower($statusName);
+
+                                                $showDownloadReport = $isAdmin && $status === 'approved';
+                                            @endphp
                                             {{-- ================= FILE BUTTON ================= --}}
                                             <div class="relative inline-block overflow-visible">
                                                 @php
@@ -326,14 +338,29 @@
                                                         class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
                                                         <div class="py-1 text-xs max-h-80 overflow-y-auto">
                                                             @foreach ($files as $file)
-                                                                <button type="button" title="View File"
-                                                                    class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                    data-file="{{ $file['url'] }}"
-                                                                    data-doc-id="{{ $doc->id }}"
-                                                                    data-file-id="{{ $file['id'] }}"
-                                                                    data-file-path="{{ $file['file_path'] }}">
-                                                                    📄 {{ $file['name'] }}
-                                                                </button>
+                                                                <div class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
+                                                                    <button type="button" title="View File"
+                                                                        class="flex-1 text-left view-file-btn truncate"
+                                                                        data-file="{{ $file['url'] }}"
+                                                                        data-doc-id="{{ $doc->id }}"
+                                                                        data-file-id="{{ $file['id'] }}"
+                                                                        data-file-name="{{ $file['name'] }}"
+                                                                        data-file-path="{{ $file['file_path'] }}">
+                                                                        📄 {{ $file['name'] }}
+                                                                    </button>
+                                                                    @if ($showDownloadReport)
+                                                                        <button type="button"
+                                                                            class="file-download-report-btn text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#downloadReportModal"
+                                                                            data-doc-id="{{ $doc->id }}"
+                                                                            data-file-id="{{ $file['id'] }}"
+                                                                            data-file-name="{{ $file['name'] }}"
+                                                                            title="Download report for this file">
+                                                                            <i class="bi bi-bar-chart"></i>
+                                                                        </button>
+                                                                    @endif
+                                                                </div>
                                                             @endforeach
                                                         </div>
                                                     </div>
@@ -346,6 +373,7 @@
                                                         data-file="{{ $fileUrl }}"
                                                         data-doc-id="{{ $doc->id }}"
                                                         data-file-id="{{ $files[0]['id'] ?? '' }}"
+                                                        data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
@@ -355,18 +383,6 @@
 
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
-                                                $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
-                                                $isAdmin = in_array($role, ['admin', 'super admin']);
-                                                $isAdminOrSuper = $isAdmin;
-                                                $isUser = !$isAdmin;
-
-                                                // Ambil semua department user
-                                                $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
-                                                $docDeptId = $doc->department_id ?? ($doc->department->id ?? null);
-                                                $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
-
-                                                $status = strtolower($statusName);
-
                                                 $showEdit =
                                                     ($isUser && in_array($status, ['approve', 'reject'])) ||
                                                     ($isAdmin && $status === 'approve') ||
@@ -374,7 +390,7 @@
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
-                                                $showMenu = $showEdit || $showApproveReject;
+                                                $showMenu = $showEdit || $showApproveReject || $showDownloadReport;
                                             @endphp
 
 
@@ -397,6 +413,19 @@
                                                             </button>
                                                         @endif
 
+                                                        {{-- Download Report (single file) --}}
+                                                        @if ($showDownloadReport && count($files) === 1)
+                                                            <button type="button"
+                                                                class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-blue-600 file-download-report-btn"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#downloadReportModal"
+                                                                data-doc-id="{{ $doc->id }}"
+                                                                data-file-id="{{ $files[0]['id'] ?? '' }}"
+                                                                data-file-name="{{ $files[0]['name'] ?? '' }}">
+                                                                <i class="bi bi-bar-chart mr-2"></i> Download Report
+                                                            </button>
+                                                        @endif
+
                                                         {{-- Approve --}}
                                                         @if ($showApproveReject)
                                                             <button type="button"
@@ -411,14 +440,6 @@
                                                                 data-bs-toggle="modal" data-bs-target="#rejectModal"
                                                                 data-id="{{ $doc->id }}">
                                                                 <i class="bi bi-x-circle mr-2"></i> Reject
-                                                            </button>
-
-                                                            <button type="button"
-                                                                class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#downloadReportModal"
-                                                                data-id="{{ $doc->id }}">
-                                                                <i class="bi bi-download mr-2"></i> Download Report
                                                             </button>
                                                         @endif
                                                     </div>
@@ -456,11 +477,14 @@
                     <div class="modal-header d-flex justify-content-between align-items-center">
                         <h5 class="modal-title" id="filePreviewLabel">File Preview</h5>
                         <div class="d-flex gap-2">
-                            <a id="viewFullBtn" href="#" target="_blank" class="btn btn-outline-info btn-sm">
+                            <a id="viewFullBtn" href="#" target="_blank" class="btn btn-outline-info btn-sm d-none">
                                 <i class="bi bi-arrows-fullscreen"></i> View Full
                             </a>
-                            <a id="printFileBtn" href="#" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-printer"></i> Print / Save as PDF
+                            <a id="printFileBtn" href="#" class="btn btn-outline-secondary btn-sm d-none">
+                                <i class="bi bi-printer"></i> Print
+                            </a>
+                            <a id="downloadFileBtn" href="#" download class="btn btn-outline-primary btn-sm d-none">
+                                <i class="bi bi-download"></i> Download PDF
                             </a>
 
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
@@ -624,27 +648,36 @@
                 };
 
                 let currentDocId = null; // Simpan docId yang sedang dibuka
+                let currentFileId = null; // Simpan fileId yang sedang dibuka
                 let currentFileType = null; // Simpan tipe file (pdf, excel, word, etc)
 
                 // Helper: Deteksi tipe file dari URL/path
                 function getFileType(url) {
                     if (!url) return 'unknown';
                     const ext = url.split('.').pop().toLowerCase().split('?')[0];
-                    
+
                     if (ext === 'pdf') return 'pdf';
                     if (['xls', 'xlsx', 'xlsm'].includes(ext)) return 'excel';
                     if (['doc', 'docx'].includes(ext)) return 'word';
                     if (['ppt', 'pptx'].includes(ext)) return 'powerpoint';
                     if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) return 'image';
-                    
+
                     return 'other';
+                }
+
+                // Helper: Tambahkan parameter viewer untuk menyembunyikan toolbar bawaan PDF di iframe (bila didukung)
+                function withPdfViewerParams(url) {
+                    if (!url) return url;
+                    // Hindari duplikasi jika sudah punya fragment
+                    if (url.includes('#')) return url;
+                    return `${url}#toolbar=0&navpanes=0&scrollbar=0`;
                 }
 
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const docId = btn.dataset.docId;
                         currentDocId = docId; // Simpan untuk tracking
-                        
+
                         const clickedFileId = btn.dataset.fileId;
                         const clickedFilePath = btn.dataset.filePath;
                         let url = btn.dataset.file || '';
@@ -674,17 +707,34 @@
                                 if (target?.file_path) {
                                     url = withCacheBuster(`/storage/${target.file_path}`);
                                 }
+                                currentFileId = target?.id || clickedFileId || null;
                             } catch (err) {
                                 console.error('Failed to load files', err);
+                                currentFileId = clickedFileId || null;
                             }
                         } else {
                             url = withCacheBuster(url);
+                            currentFileId = clickedFileId || null;
                         }
-                        
+
                         // Deteksi tipe file
                         currentFileType = getFileType(url);
                         console.log('File type detected:', currentFileType);
-                        
+
+                        // Toggle tombol Print, Download, dan View Full hanya untuk PDF
+                        const printBtnToggle = document.getElementById('printFileBtn');
+                        const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                        const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                        if (currentFileType === 'pdf') {
+                            printBtnToggle.classList.remove('d-none');
+                            downloadBtnToggle.classList.remove('d-none');
+                            viewFullBtnToggle.classList.remove('d-none');
+                        } else {
+                            printBtnToggle.classList.add('d-none');
+                            downloadBtnToggle.classList.add('d-none');
+                            viewFullBtnToggle.classList.add('d-none');
+                        }
+
                         // LOG DOWNLOAD untuk Excel/Word/PPT/Image saat button show diklik
                         if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other'].includes(currentFileType)) {
                             fetch(`/document-review/${currentDocId}/log-download`, {
@@ -693,9 +743,10 @@
                                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                                     'Content-Type': 'application/json'
                                 },
-                                body: JSON.stringify({ 
+                                body: JSON.stringify({
                                     action: 'view_file',
-                                    file_type: currentFileType 
+                                    file_type: currentFileType,
+                                    document_file_id: currentFileId
                                 })
                             })
                             .then(res => res.json())
@@ -704,36 +755,16 @@
                             })
                             .catch(err => console.error('Failed to log download:', err));
                         }
-                        
-                        previewFrame.dataset.url = url;
+
+                        // Untuk iframe PDF, coba sembunyikan toolbar default dengan fragment params
+                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) : url;
+                        previewFrame.dataset.url = previewUrl;
                         viewFullBtn.href = url;
                         previewModal.show();
                     });
                 });
 
-                // === LOG DOWNLOAD SAAT IFRAME LOAD (HANYA UNTUK PDF) ===
-                previewFrame.addEventListener('load', function() {
-                    // HANYA log untuk PDF saat iframe load
-                    // Untuk format lain sudah di-log saat button show diklik
-                    if (currentDocId && previewFrame.src && currentFileType === 'pdf') {
-                        fetch(`/document-review/${currentDocId}/log-download`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ 
-                                action: 'load_pdf',
-                                file_type: 'pdf'
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            console.log('PDF loaded and logged:', data);
-                        })
-                        .catch(err => console.error('Failed to log PDF load:', err));
-                    }
-                });
+                // Untuk PDF: tidak log saat load iframe, hanya log ketika user klik tombol download/print
 
                 document.getElementById('filePreviewModal')
                     .addEventListener('shown.bs.modal', function() {
@@ -741,17 +772,26 @@
                             previewFrame.src = previewFrame.dataset.url;
                         }
                     });
-                    
+
                 document.getElementById('filePreviewModal')
                     .addEventListener('hidden.bs.modal', () => {
                         previewFrame.src = '';
                         previewFrame.dataset.url = '';
                         viewFullBtn.href = '#';
                         currentDocId = null; // Reset docId
+                        currentFileId = null; // Reset file id
                         currentFileType = null; // Reset file type
+
+                        // Sembunyikan tombol Print, Download, dan View Full saat modal ditutup
+                        const printBtnToggle = document.getElementById('printFileBtn');
+                        const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                        const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                        printBtnToggle.classList.add('d-none');
+                        downloadBtnToggle.classList.add('d-none');
+                        viewFullBtnToggle.classList.add('d-none');
                     });
 
-                // === PRINT BUTTON (HANYA UNTUK PDF) ===
+                // === PRINT BUTTON (tidak log download) ===
                 const printFileBtn = document.getElementById('printFileBtn');
 
                 printFileBtn.addEventListener('click', function(e) {
@@ -764,7 +804,30 @@
                         return;
                     }
 
-                    // HANYA log print untuk PDF
+                    // Langsung print tanpa log
+                    frame.focus();
+                    try {
+                        frame.contentWindow.print();
+                    } catch (err) {
+                        console.error('Unable to auto-print:', err);
+                        window.print();
+                    }
+                });
+
+                // === DOWNLOAD BUTTON (log download untuk PDF) ===
+                const downloadFileBtn = document.getElementById('downloadFileBtn');
+
+                downloadFileBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const frame = document.getElementById('filePreviewFrame');
+                    const fileUrl = frame.src;
+
+                    if (!fileUrl) {
+                        alert('No file loaded.');
+                        return;
+                    }
+
+                    // Log download untuk PDF
                     if (currentDocId && currentFileType === 'pdf') {
                         fetch(`/document-review/${currentDocId}/log-download`, {
                             method: 'POST',
@@ -772,107 +835,31 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ 
-                                action: 'print',
-                                file_type: 'pdf'
+                            body: JSON.stringify({
+                                action: 'download_pdf',
+                                file_type: 'pdf',
+                                document_file_id: currentFileId
                             })
-                        }).then(res => {
-                            // Setelah log berhasil, baru buka print dialog
-                            frame.focus();
-                            try {
-                                frame.contentWindow.print();
-                            } catch (err) {
-                                console.error('Unable to auto-print:', err);
-                                window.print();
-                            }
-                        }).catch(err => console.error('Failed to log print:', err));
-                    } else {
-                        // Non-PDF: langsung print tanpa log lagi
-                        frame.focus();
-                        try {
-                            frame.contentWindow.print();
-                        } catch (err) {
-                            window.print();
-                        }
+                        }).then(() => {
+                            console.log('PDF download logged');
+                        }).catch(err => console.error('Failed to log download:', err));
                     }
+
+                    // Trigger download
+                    const link = document.createElement('a');
+                    link.href = fileUrl;
+                    link.download = currentFileType === 'pdf' ? 'document.pdf' : 'file';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 });
 
-                // === VIEW FULL BUTTON (HANYA LOG UNTUK PDF) ===
-                viewFullBtn.addEventListener('click', function(e) {
-                    // HANYA log untuk PDF
-                    if (currentDocId && currentFileType === 'pdf') {
-                        fetch(`/document-review/${currentDocId}/log-download`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ 
-                                action: 'view_full',
-                                file_type: 'pdf'
-                            })
-                        }).catch(err => console.error('Failed to log view full:', err));
-                    }
-                    // Biarkan link melakukan navigasi normal
+                // === VIEW FULL BUTTON (tidak dihitung download) ===
+                viewFullBtn.addEventListener('click', function() {
+                    // Tidak melog; hanya buka di tab baru
                 });
 
-                // === DETECT BROWSER PRINT (Ctrl+P) - HANYA UNTUK PDF ===
-                document.addEventListener('keydown', function(e) {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                        e.preventDefault();
-                        
-                        const modal = document.getElementById('filePreviewModal');
-                        const isModalOpen = modal.classList.contains('show') || modal.style.display !== 'none';
-                        
-                        if (isModalOpen && currentDocId && currentFileType === 'pdf') {
-                            fetch(`/document-review/${currentDocId}/log-download`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ 
-                                    action: 'keyboard_print',
-                                    file_type: 'pdf'
-                                })
-                            }).then(() => {
-                                const frame = document.getElementById('filePreviewFrame');
-                                if (frame && frame.src) {
-                                    frame.focus();
-                                    try {
-                                        frame.contentWindow.print();
-                                    } catch (err) {
-                                        window.print();
-                                    }
-                                }
-                            }).catch(err => console.error('Failed to log keyboard print:', err));
-                        }
-                    }
-                });
-
-                // === DETECT RIGHT-CLICK DOWNLOAD (HANYA UNTUK PDF) ===
-                document.addEventListener('contextmenu', function(e) {
-                    const modal = document.getElementById('filePreviewModal');
-                    const isModalOpen = modal.classList.contains('show') || modal.style.display !== 'none';
-                    
-                    if (isModalOpen && e.target.tagName === 'IFRAME' && currentFileType === 'pdf') {
-                        if (currentDocId) {
-                            setTimeout(() => {
-                                fetch(`/document-review/${currentDocId}/log-download`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ 
-                                        action: 'context_menu_download',
-                                        file_type: 'pdf'
-                                    })
-                                }).catch(err => console.error('Failed to log context download:', err));
-                            }, 100);
-                        }
-                    }
-                });
+                // Tidak lagi menghitung ctrl+P atau klik kanan sebagai download; hanya tombol print/save
 
 
                 // === MODAL REVISE (Document Review) ===
@@ -1232,24 +1219,46 @@ ${data.files.map(file => `
 
                 downloadReportModal.addEventListener('show.bs.modal', function(event) {
                     const button = event.relatedTarget;
-                    const docId = button.getAttribute('data-id');
+                    const docId = button?.getAttribute('data-doc-id') || button?.getAttribute('data-id');
+                    const fileId = button?.getAttribute('data-file-id');
+                    const fileName = button?.getAttribute('data-file-name') || '-';
+
+                    document.getElementById('reportFileName').textContent = fileName;
 
                     // Show loading
                     document.getElementById('downloadReportLoading').classList.remove('hidden');
                     document.getElementById('downloadReportContent').classList.add('hidden');
 
                     // Fetch download history
-                    fetch(`/document-review/${docId}/download-report`)
+                    const reportUrl = fileId
+                        ? `/document-review/${docId}/download-report?file_id=${fileId}`
+                        : `/document-review/${docId}/download-report`;
+
+                    fetch(reportUrl)
                         .then(res => res.json())
                         .then(data => {
                             document.getElementById('downloadReportLoading').classList.add('hidden');
                             document.getElementById('downloadReportContent').classList.remove('hidden');
 
+                            if (!data.success) {
+                                document.getElementById('downloadReportContent').innerHTML = `
+                                                <div class="alert alert-danger">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    ${data.message || 'Failed to load download report.'}
+                                                </div>
+                                            `;
+                                return;
+                            }
+
                             // Set document info
                             document.getElementById('reportDocNumber').textContent = data.document_number ||
                                 '-';
-                            document.getElementById('reportTotalDownloads').textContent = data.downloads
-                                .reduce((sum, d) => sum + d.download_count, 0);
+                            document.getElementById('reportFileName').textContent = data.file?.name ||
+                                fileName || '-';
+                            document.getElementById('reportTotalDownloads').textContent =
+                                data.total_downloads ?? (Array.isArray(data.downloads)
+                                    ? data.downloads.reduce((sum, d) => sum + d.download_count, 0)
+                                    : 0);
 
                             const tbody = document.getElementById('downloadReportTableBody');
                             const emptyState = document.getElementById('downloadReportEmpty');

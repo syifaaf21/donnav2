@@ -15,11 +15,17 @@ class DownloadReport extends Model
     protected $fillable = [
         'document_mapping_id',
         'user_id',
+        'document_file_id',
     ];
 
     public function documentMapping(): BelongsTo
     {
         return $this->belongsTo(DocumentMapping::class, 'document_mapping_id');
+    }
+
+    public function documentFile(): BelongsTo
+    {
+        return $this->belongsTo(DocumentFile::class, 'document_file_id');
     }
 
     public function user(): BelongsTo

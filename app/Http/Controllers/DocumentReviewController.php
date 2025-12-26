@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Department, Document, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
+use App\Models\{Department, Document, DocumentFile, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
 use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
@@ -349,10 +349,10 @@ class DocumentReviewController extends Controller
             }
         }
 
-        // Maksimal total 10 MB = 10 * 1024 * 1024
-        if ($totalSize > 10 * 1024 * 1024) {
+        // Maksimal total 20 MB = 20 * 1024 * 1024
+        if ($totalSize > 20 * 1024 * 1024) {
             return back()
-                ->withErrors(['revision_files' => 'Total file upload tidak boleh lebih dari 10 MB'])
+            ->withErrors(['revision_files' => 'Total file upload tidak boleh lebih dari 20 MB'])
                 ->withInput();
         }
 
@@ -601,13 +601,28 @@ class DocumentReviewController extends Controller
             ->with('success', "Document '{$mapping->document_number}' has been rejected.");
     }
 
-    public function getDownloadReport($id)
+    public function getDownloadReport(Request $request, $id)
     {
         try {
-            $document = DocumentMapping::findOrFail($id);
+            $document = DocumentMapping::with(['files' => function ($query) {
+                $query->where('is_active', 1)->where('pending_approval', 0);
+            }])->findOrFail($id);
 
-            // Ambil download log dengan group by user_id dan hitung jumlah download per user
+            $requestedFileId = (int) ($request->query('document_file_id') ?? $request->query('file_id'));
+
+            $file = $requestedFileId
+                ? $document->files->firstWhere('id', $requestedFileId)
+                : $document->files->first();
+
+            if (!$file) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No file found for this document.',
+                ], 404);
+            }
+
             $downloadLogs = DownloadReport::where('document_mapping_id', $id)
+                ->where('document_file_id', $file->id)
                 ->select('user_id', DB::raw('COUNT(*) as download_count'))
                 ->groupBy('user_id')
                 ->with('user:id,name')
@@ -624,7 +639,12 @@ class DocumentReviewController extends Controller
             return response()->json([
                 'success' => true,
                 'document_number' => $document->document_number,
+                'file' => [
+                    'id' => $file->id,
+                    'name' => $file->original_name ?? basename($file->file_path),
+                ],
                 'downloads' => $downloads,
+                'total_downloads' => $downloads->sum('download_count'),
             ]);
 
         } catch (\Exception $e) {
@@ -639,19 +659,36 @@ class DocumentReviewController extends Controller
     public function logDownload(Request $request, $id)
     {
         try {
-            $action = $request->input('action', 'view'); // default 'view'
+            $action = $request->input('action', 'view');
+            $fileId = (int) ($request->input('document_file_id') ?? $request->input('file_id'));
 
-            // Validasi document exists
-            $document = DocumentMapping::findOrFail($id);
+            $document = DocumentMapping::with(['files' => function ($query) {
+                $query->where('is_active', 1)->where('pending_approval', 0);
+            }])->findOrFail($id);
 
-            // Log ke database
+            $file = null;
+            if ($fileId) {
+                $file = $document->files->firstWhere('id', $fileId);
+            } else {
+                $file = $document->files->first();
+            }
+
+            if (!$file) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'File not found for this document.',
+                ], 404);
+            }
+
             $log = DownloadReport::create([
                 'document_mapping_id' => $id,
+                'document_file_id' => $file->id,
                 'user_id' => auth()->id(),
             ]);
 
             \Log::info('Download logged', [
                 'doc_id' => $id,
+                'file_id' => $file?->id,
                 'user_id' => auth()->id(),
                 'action' => $action,
                 'log_id' => $log->id
@@ -660,12 +697,14 @@ class DocumentReviewController extends Controller
             return response()->json([
                 'success' => true,
                 'action' => $action,
-                'log_id' => $log->id
+                'log_id' => $log->id,
+                'file_id' => $file?->id,
             ]);
         } catch (\Exception $e) {
             \Log::error('Failed to log download', [
                 'error' => $e->getMessage(),
-                'doc_id' => $id
+                'doc_id' => $id,
+                'file_id' => $fileId ?? null,
             ]);
 
             return response()->json([

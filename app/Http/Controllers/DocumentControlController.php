@@ -158,7 +158,7 @@ class DocumentControlController extends Controller
         }
 
         // ================= TOTAL SIZE LIMIT =================
-        $maxTotalSize = 10 * 1024 * 1024; // 20 MB
+        $maxTotalSize = 20 * 1024 * 1024; // 20 MB
         $totalSize = 0;
 
         foreach ($uploadedFiles as $file) {
