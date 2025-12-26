@@ -53,9 +53,12 @@
 
             <!-- Notes (optional) -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-3">Notes Revision
+                <label class="block text-sm font-medium text-gray-700 mb-2">Notes Revision
                     <span class="text-gray-400 text-xs">(optional)</span>
                 </label>
+                <p class="text-xs text-gray-600 mb-3 italic">
+                    💡 Jika dokumen ini direvisi karena dokumen induk telah diperbarui, biarkan notes kosong.
+                </p>
 
                 <!-- Quill container -->
                 <div id="quillEditor" class="bg-white border border-gray-300 rounded p-2" style="height: 150px;">

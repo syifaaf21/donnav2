@@ -83,7 +83,7 @@ class SendDocumentReviewReminder extends Command
         }
 
         // Format pesan
-        $message = "📌 *DOCUMENT REMINDER ALERT*\n";
+        $message = "📌 *DOCUMENT REVIEW ALERT*\n";
         $message .= "_(Automated Whatsapp Notification)_\n\n";
         $message .= "The following Documents have been revised and approved: \n\n";
 
@@ -113,7 +113,7 @@ class SendDocumentReviewReminder extends Command
         }
 
         // Footer
-        $message .= "*Action Required:*Please review the revised documents at your earliest convenience and upload to *MADONNA* system.\n\n";
+        $message .= "*Action Required:* Please review the revised documents at your earliest convenience and upload to *MADONNA* on *Document Review Menu*.\n\n";
         $message .= "------ *BY AISIN BISA* ------";
 
         // Kirim ke WhatsApp
