@@ -35,14 +35,20 @@ class FtppController extends Controller
         $user = auth()->user();
 
         // Determine roles lowercased for checks
-        $userRoles = $user ? $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray() : [];
+        $userRolesLowercase = $user ? $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray() : [];
+        
+        // Get original roles (non-lowercased) for blade
+        $userRoles = $user ? $user->roles->pluck('name')->toArray() : [];
+
+        // Determine filter type: 'created' (default), 'assigned'
+        $filterType = $request->input('filter_type', 'created');
 
         // Super Admin & Admin can see all records (no additional filter)
-        if (!empty($user) && (in_array('super admin', $userRoles) || in_array('admin', $userRoles))) {
+        if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
             // no department/audience filter
         }
         // Dept Head: can see all FTTP in their department(s)
-        elseif (!empty($user) && in_array('dept head', $userRoles)) {
+        elseif (!empty($user) && in_array('dept head', $userRolesLowercase)) {
             $userDeptIds = $user->departments->pluck('id')->toArray();
             if (empty($userDeptIds) && !empty($user->department_id)) {
                 $userDeptIds = [(int) $user->department_id];
@@ -53,6 +59,18 @@ class FtppController extends Controller
             } else {
                 // if dept head has no department assigned, show nothing
                 $query->whereRaw('0 = 1');
+            }
+        }
+        // Auditor: apply filter based on filter_type
+        elseif (!empty($user) && in_array('auditor', $userRolesLowercase)) {
+            if ($filterType === 'assigned') {
+                // Show FTPP where user is in auditee (assigned to them)
+                $query->whereHas('auditee', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                });
+            } else {
+                // Show FTPP where user is auditor (created by them)
+                $query->where('auditor_id', $user->id);
             }
         }
         // Default: only show FTTP where user is auditor OR listed as auditee
@@ -136,7 +154,9 @@ class FtppController extends Controller
             'auditors',
             'totalCount',
             'nearDueFindings',
-            'overdueFindings'
+            'overdueFindings',
+            'filterType',
+            'userRoles'
         ));
     }
 
