@@ -67,8 +67,8 @@
                                     x-model="form['corrective_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" :name="'corrective_' + i + '_actual'" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_actual']">
+                                <input type="text" :name="'corrective_' + i + '_actual'" class="w-full p-1 border-none"
+                                    x-model="form['corrective_'+i+'_actual']" placeholder="dd/mm/yyyy or -">
                             </td>
                         </tr>
                     </template>
@@ -94,8 +94,8 @@
                                     x-model="form['preventive_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" :name="'preventive_' + i + '_actual'" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_actual']">
+                                <input type="text" :name="'preventive_' + i + '_actual'" class="w-full p-1 border-none"
+                                    x-model="form['preventive_'+i+'_actual']" placeholder="dd/mm/yyyy or -">
                             </td>
                         </tr>
                     </template>
@@ -324,7 +324,7 @@
                 accumulatedPhotoFiles.push(file);
             }
         });
-        
+
         // Update input with accumulated files
         updatefileInput2(photoInput2, accumulatedPhotoFiles);
         displayImages2();
@@ -341,7 +341,7 @@
                 accumulatedFileFiles.push(file);
             }
         });
-        
+
         // Update input with accumulated files
         updatefileInput2(fileInput2, accumulatedFileFiles);
         displayFiles2();
@@ -543,7 +543,7 @@
         for (let i = 1; i <= 5; i++) {
             const whyTextarea = document.querySelector(`textarea[name="why_${i}_mengapa"]`);
             const causeTextarea = document.querySelector(`textarea[name="cause_${i}_karena"]`);
-            
+
             formData.append(`why_${i}_mengapa`, whyTextarea?.value || '');
             formData.append(`cause_${i}_karena`, causeTextarea?.value || '');
         }
@@ -621,7 +621,7 @@
             if (!contentType || !contentType.includes('application/json')) {
                 const textResponse = await res.text();
                 console.error('❌ Non-JSON response received:', textResponse.substring(0, 500));
-                
+
                 await Swal.fire({
                     icon: 'error',
                     title: 'Server Error',
@@ -642,7 +642,7 @@
                 if (result.errors) {
                     console.error('❌ Validation errors:', result.errors);
                 }
-                
+
                 // ✅ Jika ada error dari server tentang file size, tampilkan di field
                 if (result.message && result.message.includes('file size')) {
                     showAttachmentError(result.message);

@@ -149,8 +149,8 @@
                                                 class="w-full p-1 border-none" x-model="form['corrective_'+i+'_planning']">
                                         </td>
                                         <td class="border border-gray-200">
-                                            <input type="date" :name="'corrective_actual[' + i + ']'"
-                                                class="w-full p-1 border-none" x-model="form['corrective_'+i+'_actual']">
+                                            <input type="text" :name="'corrective_actual[' + i + ']'"
+                                                class="w-full p-1 border-none" x-model="form['corrective_'+i+'_actual']" placeholder="dd/mm/yyyy or -">
                                         </td>
                                     </tr>
                                 </template>
@@ -181,8 +181,8 @@
                                                 class="w-full p-1 border-none" x-model="form['preventive_'+i+'_planning']">
                                         </td>
                                         <td class="border border-gray-200">
-                                            <input type="date" :name="'preventive_actual[' + i + ']'"
-                                                class="w-full p-1 border-none" x-model="form['preventive_'+i+'_actual']">
+                                            <input type="text" :name="'preventive_actual[' + i + ']'"
+                                                class="w-full p-1 border-none" x-model="form['preventive_'+i+'_actual']" placeholder="dd/mm/yyyy or -">
                                         </td>
                                     </tr>
                                 </template>
@@ -738,7 +738,7 @@
                         accumulatedPhotoFiles.push(file);
                     }
                 });
-                
+
                 // Update input with accumulated files
                 updatefileInput2(photoInput2, accumulatedPhotoFiles);
                 displayImages2();
@@ -755,7 +755,7 @@
                         accumulatedFileFiles.push(file);
                     }
                 });
-                
+
                 // Update input with accumulated files
                 updatefileInput2(fileInput2, accumulatedFileFiles);
                 displayFiles2();
