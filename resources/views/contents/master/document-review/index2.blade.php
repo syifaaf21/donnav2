@@ -110,103 +110,119 @@
 
             {{-- Filter Modal --}}
             <div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content rounded-xl shadow-xl border-0 overflow-hidden">
+                <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 760px;">
+                    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
                         <form id="filterFormModal" method="GET" class="bg-white">
-                            <div class="modal-header border-b px-6 py-4">
-                                <h5 class="text-lg font-semibold text-gray-800">
-                                    <i class="bi bi-funnel-fill text-blue-600 me-2"></i> Filter Documents
+
+                            {{-- Modal Header --}}
+                            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                                style="background-color: #f5f5f7;">
+                                <h5 class="modal-title fw-semibold text-dark" id="filterModalLabel"
+                                    style="font-family: 'Inter', sans-serif; font-size: 1.15rem;">
+                                    <i class="bi bi-funnel me-2 text-primary"></i> Filter Documents
                                 </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+
+                                {{-- Close button --}}
+                                <button type="button"
+                                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                                    data-bs-dismiss="modal" aria-label="Close"
+                                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                                </button>
                             </div>
 
-                            <div class="modal-body px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {{-- Document Name --}}
-                                <div class="flex flex-col">
-                                    <label for="filterDocumentName" class="text-sm font-medium text-gray-700 mb-1">Document
-                                        Name</label>
-                                    <select name="document_name" id="filterDocumentName"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Document Names</option>
-                                        @foreach ($documentsMaster as $doc)
-                                            <option value="{{ $doc->name }}"
-                                                {{ request('document_name') == $doc->name ? 'selected' : '' }}>
-                                                {{ $doc->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            {{-- Modal Body --}}
+                            <div class="modal-body p-5 bg-gray-50"
+                                style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                                <div class="row g-4">
+                                    {{-- Document Name --}}
+                                    <div class="col-md-6">
+                                        <label for="filterDocumentName" class="form-label fw-semibold">Document Name</label>
+                                        <select name="document_name" id="filterDocumentName"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Document Names</option>
+                                            @foreach ($documentsMaster as $doc)
+                                                <option value="{{ $doc->name }}"
+                                                    {{ request('document_name') == $doc->name ? 'selected' : '' }}>
+                                                    {{ $doc->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Part Number --}}
-                                <div class="flex flex-col">
-                                    <label for="filterPartNumber" class="text-sm font-medium text-gray-700 mb-1">Part
-                                        Number</label>
-                                    <select name="part_number_id" id="filterPartNumber"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Part Numbers</option>
-                                        @foreach ($partNumbers as $pn)
-                                            <option value="{{ $pn->id }}"
-                                                {{ request('part_number_id') == $pn->id ? 'selected' : '' }}>
-                                                {{ $pn->part_number }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    {{-- Part Number --}}
+                                    <div class="col-md-6">
+                                        <label for="filterPartNumber" class="form-label fw-semibold">Part Number</label>
+                                        <select name="part_number_id" id="filterPartNumber"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Part Numbers</option>
+                                            @foreach ($partNumbers as $pn)
+                                                <option value="{{ $pn->id }}"
+                                                    {{ request('part_number_id') == $pn->id ? 'selected' : '' }}>
+                                                    {{ $pn->part_number }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Model --}}
-                                <div class="flex flex-col">
-                                    <label for="filterModel" class="text-sm font-medium text-gray-700 mb-1">Model</label>
-                                    <select name="model_id" id="filterModel"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Models</option>
-                                        @foreach ($models as $model)
-                                            <option value="{{ $model->id }}"
-                                                {{ request('model_id') == $model->id ? 'selected' : '' }}>
-                                                {{ $model->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    {{-- Model --}}
+                                    <div class="col-md-6">
+                                        <label for="filterModel" class="form-label fw-semibold">Model</label>
+                                        <select name="model_id" id="filterModel"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Models</option>
+                                            @foreach ($models as $model)
+                                                <option value="{{ $model->id }}"
+                                                    {{ request('model_id') == $model->id ? 'selected' : '' }}>
+                                                    {{ $model->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Product --}}
-                                <div class="flex flex-col">
-                                    <label for="filterProduct"
-                                        class="text-sm font-medium text-gray-700 mb-1">Product</label>
-                                    <select name="product_id" id="filterProduct"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Products</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}"
-                                                {{ request('product_id') == $product->id ? 'selected' : '' }}>
-                                                {{ $product->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    {{-- Product --}}
+                                    <div class="col-md-6">
+                                        <label for="filterProduct" class="form-label fw-semibold">Product</label>
+                                        <select name="product_id" id="filterProduct"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Products</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}"
+                                                    {{ request('product_id') == $product->id ? 'selected' : '' }}>
+                                                    {{ $product->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Process --}}
-                                <div class="flex flex-col">
-                                    <label for="filterProcess"
-                                        class="text-sm font-medium text-gray-700 mb-1">Process</label>
-                                    <select name="process_id" id="filterProcess"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Processes</option>
-                                        @foreach ($processes as $process)
-                                            <option value="{{ $process->id }}"
-                                                {{ request('process_id') == $process->id ? 'selected' : '' }}>
-                                                {{ $process->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    {{-- Process --}}
+                                    <div class="col-md-6">
+                                        <label for="filterProcess" class="form-label fw-semibold">Process</label>
+                                        <select name="process_id" id="filterProcess"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Processes</option>
+                                            @foreach ($processes as $process)
+                                                <option value="{{ $process->id }}"
+                                                    {{ request('process_id') == $process->id ? 'selected' : '' }}>
+                                                    {{ $process->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="modal-footer flex justify-end gap-3 px-6 py-4 border-t">
+                            {{-- Modal Footer --}}
+                            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
                                 <button type="button" id="clearFilterModal"
-                                    class="px-4 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 transition">Clear</button>
+                                    class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                                    style="text-decoration: none; transition: background-color 0.3s ease;">
+                                    Clear
+                                </button>
                                 <button type="submit"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Apply</button>
+                                    class="btn px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                                    Apply
+                                </button>
                             </div>
                         </form>
                     </div>
