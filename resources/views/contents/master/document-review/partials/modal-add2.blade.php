@@ -1,10 +1,11 @@
 @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 900px;">
             <form action="{{ route('master.document-review.store2') }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
-                <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="max-width: 100%;">
+
 
                     {{-- Modal Header --}}
                     <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
@@ -146,7 +147,7 @@
                                 <input type="hidden" name="notes" id="notes_input_add"
                                     value="{{ old('notes') }}">
                                 <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
-                                    style="min-height: 120px; max-height: 160px; overflow-y: auto; border: 1px solid #e2e8f0;">
+                                    style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
                                 </div>
                                 <small class="text-muted">You can format your notes with bold, italic, underline,
                                     colors, and more.</small>

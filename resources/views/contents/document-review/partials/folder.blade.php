@@ -104,73 +104,99 @@
 
 
         <!-- Modal Filter -->
-        <div class="modal fade " id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content rounded-2xl">
+        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 700px;">
+                <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
 
                     <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        {{-- Modal Header --}}
+                        <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                            style="background-color: #f5f5f7;">
+                            <h5 class="modal-title fw-semibold text-dark" id="filterModalLabel"
+                                style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                                <i class="bi bi-funnel me-2 text-primary"></i> Filter Documents
+                            </h5>
+
+                            {{-- Close button --}}
+                            <button type="button"
+                                class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                                data-bs-dismiss="modal" aria-label="Close"
+                                style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                                <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                            </button>
                         </div>
 
-                        <div class="modal-body space-y-4">
-                            <!-- Part Number -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Part Number</label>
-                                <select name="part_number" id="modalPart" class="form-select rounded-lg py-2">
-                                    <option value="">All Part Numbers</option>
-                                    @foreach ($partNumbers as $part)
-                                        <option value="{{ $part }}" @selected(request('part_number') == $part)>
-                                            {{ $part }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        {{-- Modal Body --}}
+                        <div class="modal-body p-5 bg-gray-50"
+                            style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                            <div class="row g-4">
 
-                            <!-- Model -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Model</label>
-                                <select name="model" id="modalModel" class="form-select rounded-lg py-2">
-                                    <option value="">All Models</option>
-                                    @foreach ($models as $model)
-                                        <option value="{{ $model }}" @selected(request('model') == $model)>
-                                            {{ $model }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                <!-- Part Number -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Part Number</label>
+                                    <select name="part_number" id="modalPart" 
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Part Numbers</option>
+                                        @foreach ($partNumbers as $part)
+                                            <option value="{{ $part }}" @selected(request('part_number') == $part)>
+                                                {{ $part }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            <!-- Process -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Process</label>
-                                <select name="process" id="modalProcess" class="form-select rounded-lg py-2">
-                                    <option value="">All Processes</option>
-                                    @foreach ($processes as $process)
-                                        <option value="{{ $process }}" @selected(request('process') == $process)>
-                                            {{ ucwords($process) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <!-- Product -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Product</label>
-                                <select name="product" id="modalProduct" class="form-select rounded-lg py-2">
-                                    <option value="">All Products</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product }}" @selected(request('product') == $product)>
-                                            {{ $product }}</option>
-                                    @endforeach
-                                </select>
+                                <!-- Model -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Model</label>
+                                    <select name="model" id="modalModel" 
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Models</option>
+                                        @foreach ($models as $model)
+                                            <option value="{{ $model }}" @selected(request('model') == $model)>
+                                                {{ $model }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Process -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Process</label>
+                                    <select name="process" id="modalProcess" 
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Processes</option>
+                                        @foreach ($processes as $process)
+                                            <option value="{{ $process }}" @selected(request('process') == $process)>
+                                                {{ ucwords($process) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Product -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Product</label>
+                                    <select name="product" id="modalProduct" 
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Products</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{ $product }}" @selected(request('product') == $product)>
+                                                {{ $product }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
                             </div>
                         </div>
-                        <div class="modal-footer flex justify-between">
+
+                        {{-- Modal Footer --}}
+                        <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
                             <button type="button" id="clearFilterBtn"
-                                class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                                style="text-decoration: none; transition: background-color 0.3s ease;">
                                 Clear
                             </button>
-
-                            <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 text-white hover:bg-sky-700">
+                            <button type="submit" 
+                                class="btn px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                                 Apply Filter
                             </button>
                         </div>
