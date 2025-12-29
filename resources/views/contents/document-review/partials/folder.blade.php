@@ -288,7 +288,9 @@
                                     </td>
 
                                     <td class="px-4 py-3 text-xs max-w-[250px]">
-                                        <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug">
+                                        <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug note-tooltip"
+                                            data-bs-toggle="tooltip" data-bs-placement="top"
+                                            title="{{ $doc->notes ? e(strip_tags($doc->notes)) : '-' }}">
                                             {!! $doc->notes ?? '-' !!}
                                         </div>
                                     </td>
@@ -583,6 +585,10 @@
         <script>
             const currentPlant = "{{ $plant }}";
             document.addEventListener('DOMContentLoaded', function() {
+                // Init tooltips for notes column
+                const noteTooltips = Array.from(document.querySelectorAll('.note-tooltip[data-bs-toggle="tooltip"]'));
+                noteTooltips.forEach(el => new bootstrap.Tooltip(el, { boundary: 'window' }));
+
                 const originalModelOptions = @json($models);
                 const originalProcessOptions = @json($processes);
                 const originalProductOptions = @json($products);

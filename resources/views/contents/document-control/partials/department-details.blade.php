@@ -185,7 +185,9 @@
                                                 {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
                                             </td>
                                             <td class="px-4 py-3 text-xs max-w-xs border-r border-gray-200">
-                                                <div class="overflow-y-auto max-h-16 text-xs">
+                                                <div class="overflow-y-auto max-h-16 text-xs note-tooltip"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    title="{{ $mapping->notes ? e(strip_tags($mapping->notes)) : '-' }}">
                                                     {!! $mapping->notes ?? '-' !!}
                                                 </div>
                                             </td>
@@ -387,6 +389,12 @@
             let typingTimer = null;
             const searchInputEl = document.getElementById("searchInput");
 
+            // Init tooltips for notes column
+            function initNoteTooltips(container = document) {
+                const noteTooltips = Array.from(container.querySelectorAll('.note-tooltip[data-bs-toggle="tooltip"]'));
+                noteTooltips.forEach(el => new bootstrap.Tooltip(el, { boundary: 'window' }));
+            }
+
             searchInputEl.addEventListener("keyup", function() {
                 clearTimeout(typingTimer);
                 typingTimer = setTimeout(() => {
@@ -436,6 +444,7 @@
                             current.innerHTML = newTable.innerHTML;
                             document.dispatchEvent(new Event("ajaxSearchUpdate"));
                             rebindTableEvents();
+                            initNoteTooltips(current);
                         }
                     });
             }
@@ -521,6 +530,7 @@
                 // Re-apply status button disable/enable
                 // =========================
                 updateActionButtonsByStatus(document);
+                initNoteTooltips(document);
             }
 
 
@@ -702,7 +712,7 @@
             <div class="p-3 border rounded bg-gray-50 mb-2">
                 <div class="flex justify-between items-start mb-2">
                     <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
-                    ${status === 'Active' ? `
+                    ${status === 'Active' && activeFiles.length > 1 ? `
                     <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
                         <i class="bi bi-trash"></i>
                     </button>
@@ -989,6 +999,9 @@
                 document.body.classList.remove('modal-open');
                 document.body.style.removeProperty('padding-right');
             });
+
+            // initial tooltip binding
+            initNoteTooltips(document);
 
         });
 
