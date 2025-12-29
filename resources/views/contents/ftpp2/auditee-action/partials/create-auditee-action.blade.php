@@ -12,14 +12,17 @@
 
                 <template x-for="i in 5">
                     <div class="mt-2 space-y-2">
-                        <div class="flex flex-col space-y-1">
-                            <label class="text-gray-700">Why-<span x-text="i"></span> (Mengapa):</label>
-                            <textarea :name="'why_' + i + '_mengapa'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['why_'+i+'_mengapa']" rows="2"></textarea>
+                        <div class="mt-4 p-4 border-l-4 border-blue-500 bg-blue-50 rounded">
+                            <h6 class="font-semibold text-blue-900 mb-3">WHY-<span x-text="i"></span></h6>
+                            <div class="flex flex-col space-y-1">
+                                <label class="text-gray-700">Mengapa:</label>
+                                <textarea :name="'why_' + i + '_mengapa'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                    x-model="form['why_'+i+'_mengapa']" rows="2"></textarea>
 
-                            <label class="text-gray-700">Cause (Karena):</label>
-                            <textarea :name="'cause_' + i + '_karena'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['cause_'+i+'_karena']" rows="2"></textarea>
+                                <label class="text-gray-700 mt-2">Karena:</label>
+                                <textarea :name="'cause_' + i + '_karena'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                    x-model="form['cause_'+i+'_karena']" rows="2"></textarea>
+                            </div>
                         </div>
                     </div>
                 </template>
