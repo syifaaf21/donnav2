@@ -232,6 +232,10 @@
     const previewImageContainer2 = document.getElementById('previewImageContainer2');
     const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
+    // 🔹 Store files accumulated from multiple selections
+    let accumulatedPhotoFiles = [];
+    let accumulatedFileFiles = [];
+
     // 🔹 Helper update file list setelah dihapus
     function updatefileInput2(input, filesArray2) {
         const dt = new DataTransfer();
@@ -253,7 +257,7 @@
     // 🔹 Preview Image + tombol delete
     function displayImages2() {
         previewImageContainer2.innerHTML = '';
-        Array.from(photoInput2.files).forEach((file, index) => {
+        accumulatedPhotoFiles.forEach((file, index) => {
             const wrapper = document.createElement('div');
             wrapper.className = "relative";
 
@@ -264,10 +268,10 @@
             const btn = document.createElement('button');
             btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
             btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
-            btn.onclick = () => {
-                const newFiles2 = Array.from(photoInput2.files);
-                newFiles2.splice(index, 1);
-                updatefileInput2(photoInput2, newFiles2);
+            btn.onclick = (e) => {
+                e.preventDefault();
+                accumulatedPhotoFiles.splice(index, 1);
+                updatefileInput2(photoInput2, accumulatedPhotoFiles);
                 displayImages2();
                 updateAttachCount2();
             };
@@ -282,7 +286,7 @@
     // 🔹 Preview File + tombol delete
     function displayFiles2() {
         previewFileContainer2.innerHTML = '';
-        Array.from(fileInput2.files).forEach((file, index) => {
+        accumulatedFileFiles.forEach((file, index) => {
             const wrapper = document.createElement('div');
             wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
 
@@ -295,10 +299,10 @@
             const btn = document.createElement('button');
             btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
             btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
-            btn.onclick = () => {
-                const newFiles = Array.from(fileInput2.files);
-                newFiles.splice(index, 1);
-                updatefileInput2(fileInput2, newFiles);
+            btn.onclick = (e) => {
+                e.preventDefault();
+                accumulatedFileFiles.splice(index, 1);
+                updatefileInput2(fileInput2, accumulatedFileFiles);
                 displayFiles2();
                 updateAttachCount2();
             };
@@ -309,14 +313,37 @@
         });
     }
 
-    // 🔹 Event Listener Input
-    photoInput2.addEventListener('change', () => {
+    // 🔹 Event Listener Input - ACCUMULATE files (don't replace)
+    photoInput2.addEventListener('change', (e) => {
+        // Add new files to accumulated list
+        const newFiles = Array.from(photoInput2.files);
+        newFiles.forEach(file => {
+            // Check if file already exists to avoid duplicates
+            const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+            if (!isDuplicate) {
+                accumulatedPhotoFiles.push(file);
+            }
+        });
+        
+        // Update input with accumulated files
+        updatefileInput2(photoInput2, accumulatedPhotoFiles);
         displayImages2();
         updateAttachCount2();
     });
 
-
-    fileInput2.addEventListener('change', () => {
+    fileInput2.addEventListener('change', (e) => {
+        // Add new files to accumulated list
+        const newFiles = Array.from(fileInput2.files);
+        newFiles.forEach(file => {
+            // Check if file already exists to avoid duplicates
+            const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
+            if (!isDuplicate) {
+                accumulatedFileFiles.push(file);
+            }
+        });
+        
+        // Update input with accumulated files
+        updatefileInput2(fileInput2, accumulatedFileFiles);
         displayFiles2();
         updateAttachCount2();
     });
@@ -558,6 +585,16 @@
         Array.from(photoInput2?.files || []).forEach(file => formData.append('attachments[]', file));
         Array.from(fileInput2?.files || []).forEach(file => formData.append('attachments[]', file));
 
+        // Log formData untuk debug
+        console.log('📋 FormData entries:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`);
+            } else {
+                console.log(`  ${key}: ${value}`);
+            }
+        }
+
         // -----------------------------
         // SUBMIT
         // -----------------------------
@@ -595,11 +632,17 @@
 
             const result = await res.json();
             console.log('📦 Response data:', result);
+            console.log('📦 Full response:', JSON.stringify(result, null, 2));
 
             if (res.ok && result.success) {
                 console.log('✅ Success:', result);
                 window.location.href = "{{ route('ftpp.index') }}";
             } else {
+                // ✅ Log errors lebih detail
+                if (result.errors) {
+                    console.error('❌ Validation errors:', result.errors);
+                }
+                
                 // ✅ Jika ada error dari server tentang file size, tampilkan di field
                 if (result.message && result.message.includes('file size')) {
                     showAttachmentError(result.message);

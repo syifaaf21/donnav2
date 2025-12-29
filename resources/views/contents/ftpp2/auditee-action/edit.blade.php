@@ -643,6 +643,10 @@
             const previewImageContainer2 = document.getElementById('previewImageContainer2');
             const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
+            // 🔹 Store files accumulated from multiple selections
+            let accumulatedPhotoFiles = [];
+            let accumulatedFileFiles = [];
+
             if (!photoInput2 || !fileInput2) return;
 
             function updatefileInput2(input, filesArray2) {
@@ -666,7 +670,7 @@
             function displayImages2() {
                 if (!previewImageContainer2) return;
                 previewImageContainer2.innerHTML = '';
-                Array.from(photoInput2.files).forEach((file, index) => {
+                accumulatedPhotoFiles.forEach((file, index) => {
                     const wrapper = document.createElement('div');
                     wrapper.className = "relative";
 
@@ -677,10 +681,10 @@
                     const btn = document.createElement('button');
                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                     btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
-                    btn.onclick = () => {
-                        const newFiles2 = Array.from(photoInput2.files);
-                        newFiles2.splice(index, 1);
-                        updatefileInput2(photoInput2, newFiles2);
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        accumulatedPhotoFiles.splice(index, 1);
+                        updatefileInput2(photoInput2, accumulatedPhotoFiles);
                         displayImages2();
                         updateAttachCount2();
                     };
@@ -695,7 +699,7 @@
             function displayFiles2() {
                 if (!previewFileContainer2) return;
                 previewFileContainer2.innerHTML = '';
-                Array.from(fileInput2.files).forEach((file, index) => {
+                accumulatedFileFiles.forEach((file, index) => {
                     const wrapper = document.createElement('div');
                     wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
 
@@ -708,10 +712,10 @@
                     const btn = document.createElement('button');
                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                     btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
-                    btn.onclick = () => {
-                        const newFiles = Array.from(fileInput2.files);
-                        newFiles.splice(index, 1);
-                        updatefileInput2(fileInput2, newFiles);
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        accumulatedFileFiles.splice(index, 1);
+                        updatefileInput2(fileInput2, accumulatedFileFiles);
                         displayFiles2();
                         updateAttachCount2();
                     };
@@ -724,12 +728,36 @@
                 });
             }
 
-            photoInput2.addEventListener('change', () => {
+            photoInput2.addEventListener('change', (e) => {
+                // Add new files to accumulated list
+                const newFiles = Array.from(photoInput2.files);
+                newFiles.forEach(file => {
+                    // Check if file already exists to avoid duplicates
+                    const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!isDuplicate) {
+                        accumulatedPhotoFiles.push(file);
+                    }
+                });
+                
+                // Update input with accumulated files
+                updatefileInput2(photoInput2, accumulatedPhotoFiles);
                 displayImages2();
                 updateAttachCount2();
             });
 
-            fileInput2.addEventListener('change', () => {
+            fileInput2.addEventListener('change', (e) => {
+                // Add new files to accumulated list
+                const newFiles = Array.from(fileInput2.files);
+                newFiles.forEach(file => {
+                    // Check if file already exists to avoid duplicates
+                    const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!isDuplicate) {
+                        accumulatedFileFiles.push(file);
+                    }
+                });
+                
+                // Update input with accumulated files
+                updatefileInput2(fileInput2, accumulatedFileFiles);
                 displayFiles2();
                 updateAttachCount2();
             });
