@@ -95,7 +95,7 @@
                 <div>
                     <label class="font-semibold block">Registration Number: <span class="text-danger">*</span></label>
                     <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
-                        class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
+                        class="border border-gray-300 rounded w-full p-2 bg-gray-100">
                 </div>
             </div>
             <!-- FINDING CATEGORY -->
