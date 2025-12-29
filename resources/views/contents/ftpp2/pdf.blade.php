@@ -108,10 +108,13 @@
             /* jika gambar banyak agar tidak keluar layar */
         }
 
-            .preserve-newlines {
-                white-space: pre-line;
-                word-wrap: break-word;
-            }
+        .preserve-newlines {
+            white-space: pre-line;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
         .note {
             font-size: 10px;
             /* lebih kecil dari text-sm */
@@ -239,16 +242,16 @@
         @foreach ($finding->auditeeAction->whyCauses ?? [] as $index => $why)
             <tr>
                 <td style="width: 25%;">Why {{ $index + 1 }} (Mengapa)</td>
-                    <td class="preserve-newlines">{!! nl2br(e($why->why_description ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! nl2br(e($why->why_description ?? '-')) !!}</td>
             </tr>
             <tr>
                 <td>Cause (Karena)</td>
-                    <td class="preserve-newlines">{!! nl2br(e($why->cause_description ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! nl2br(e($why->cause_description ?? '-')) !!}</td>
             </tr>
         @endforeach
         <tr>
             <td class="font-semibold">Root Cause</td>
-            <td class="preserve-newlines">{{ $finding->auditeeAction->root_cause ?? '-' }}</td>
+            <td class="preserve-newlines">{!! nl2br(e($finding->auditeeAction->root_cause ?? '-')) !!}</td>
         </tr>
     </table>
 
@@ -269,13 +272,30 @@
         @foreach ($finding->auditeeAction->correctiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
-                    <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
                 <td class="text-center">
-                    {{ $action->actual_date ? \Carbon\Carbon::parse($action->actual_date)->format('d/m/Y') : '-' }}
+                    @php
+                        $actual = trim((string)($action->actual_date ?? ''));
+                        $displayActual = '-';
+                        if ($actual !== '' && $actual !== '-' && $actual !== '0000-00-00') {
+                            if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $actual)) {
+                                // already in d/m/Y format
+                                $displayActual = $actual;
+                            } else {
+                                try {
+                                    $displayActual = \Carbon\Carbon::parse($actual)->format('d/m/Y');
+                                } catch (\Exception $e) {
+                                    // fallback: show raw string if parsing fails
+                                    $displayActual = $actual;
+                                }
+                            }
+                        }
+                    @endphp
+                    {{ $displayActual }}
                 </td>
             </tr>
         @endforeach
@@ -287,13 +307,28 @@
         @foreach ($finding->auditeeAction->preventiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
-                    <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
                 <td class="text-center">
-                    {{ $action->actual_date ? \Carbon\Carbon::parse($action->actual_date)->format('d/m/Y') : '-' }}
+                    @php
+                        $actual = trim((string)($action->actual_date ?? ''));
+                        $displayActual = '-';
+                        if ($actual !== '' && $actual !== '-' && $actual !== '0000-00-00') {
+                            if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $actual)) {
+                                $displayActual = $actual;
+                            } else {
+                                try {
+                                    $displayActual = \Carbon\Carbon::parse($actual)->format('d/m/Y');
+                                } catch (\Exception $e) {
+                                    $displayActual = $actual;
+                                }
+                            }
+                        }
+                    @endphp
+                    {{ $displayActual }}
                 </td>
             </tr>
         @endforeach
@@ -309,10 +344,9 @@
             <td class="text-center font-semibold">Created</td>
         </tr>
         <tr>
-            <td  class="preserve-newlines">
+            <td>
                 @if ($finding->auditeeAction->yokoten)
-                    <b>Area:</b>
-                    <b></b>{{ $finding->auditeeAction->yokoten_area ?? '-' }}
+                    <b>Area:</b> {{ $finding->auditeeAction->yokoten_area ?? '-' }}
                 @endif
             </td>
             <td class="text-center">
