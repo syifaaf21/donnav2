@@ -53,6 +53,11 @@ class RegisterController extends Controller
             'department_id' => $validated['department'],
         ]);
 
+        // ensure pivot table keeps the default user role (id 3)
+        if (method_exists($user, 'roles')) {
+            $user->roles()->syncWithoutDetaching([3]);
+        }
+
         // attach departments if you have a relationship
         if (method_exists($user, 'departments')) {
             $user->departments()->attach($validated['department']);
