@@ -1,27 +1,109 @@
+<style>
+    .rte-toolbar {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+    }
+    .rte-toolbar button {
+        padding: 4px 8px;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 3px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .rte-toolbar button:hover {
+        background: #e5e7eb;
+    }
+    .rte-toolbar button.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #2563eb;
+    }
+    .rte-editor {
+        min-height: 60px;
+        padding: 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 0 0 4px 4px;
+        background: white;
+        outline: none;
+    }
+    .rte-editor:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .rte-container {
+        width: 100%;
+    }
+</style>
+
 <input type="hidden" name="audit_finding_id" x-model="selectedId">
 <input type="hidden" name="action" value="update_auditee_action">
 <input type="hidden" name="pic" value="{{ auth()->user()->id }}">
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
-<div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
+<div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif
+    x-data="{ whyCount: 1, correctiveCount: 1, preventiveCount: 1 }">
     <div class="gap-4 my-2">
         <!-- LEFT: 5 WHY -->
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-4">
             <h5 class="font-semibold text-gray-700">AUDITEE</h5>
             <div>
-                <label class="font-semibold text-medium text-gray-700">Issue Causes (5 Why)</label>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="font-semibold text-medium text-gray-700">Issue Causes (5 Why)</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="whyCount > 1 && whyCount--"
+                            class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                            title="Remove Why Row">
+                            -
+                        </button>
+                        <button type="button" @click="whyCount < 5 && whyCount++"
+                            class="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                            title="Add Why Row">
+                            +
+                        </button>
+                    </div>
+                </div>
 
-                <template x-for="i in 5">
+                <template x-for="i in whyCount" :key="i">
                     <div class="mt-2 space-y-2">
                         <div class="mt-4 p-4 border-l-4 border-blue-500 bg-blue-50 rounded">
                             <h6 class="font-semibold text-blue-900 mb-3">WHY-<span x-text="i"></span></h6>
                             <div class="flex flex-col space-y-1">
-                                <label class="text-gray-700">Mengapa:</label>
-                                <textarea :name="'why_' + i + '_mengapa'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                    x-model="form['why_'+i+'_mengapa']" rows="2"></textarea>
+                                <label class="text-gray-700">Why (Mengapa):</label>
+                                <div class="rte-container">
+                                    <div class="rte-toolbar">
+                                        <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
+                                        <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
+                                        <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                    </div>
+                                    <div class="rte-editor" contenteditable="true" 
+                                        :data-field="'why_' + i + '_mengapa'"
+                                        @input="updateHiddenField($event.target)"
+                                        x-html="form['why_'+i+'_mengapa'] || ''"></div>
+                                    <textarea :name="'why_' + i + '_mengapa'" class="hidden" 
+                                        x-model="form['why_'+i+'_mengapa']"></textarea>
+                                </div>
 
-                                <label class="text-gray-700 mt-2">Karena:</label>
-                                <textarea :name="'cause_' + i + '_karena'" class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                    x-model="form['cause_'+i+'_karena']" rows="2"></textarea>
+                                <label class="text-gray-700 mt-2">Cause (Karena):</label>
+                                <div class="rte-container">
+                                    <div class="rte-toolbar">
+                                        <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
+                                        <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
+                                        <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                    </div>
+                                    <div class="rte-editor" contenteditable="true" 
+                                        :data-field="'cause_' + i + '_karena'"
+                                        @input="updateHiddenField($event.target)"
+                                        x-html="form['cause_'+i+'_karena'] || ''"></div>
+                                    <textarea :name="'cause_' + i + '_karena'" class="hidden" 
+                                        x-model="form['cause_'+i+'_karena']"></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -29,8 +111,18 @@
 
                 <div class="mt-4">
                     <label class="font-semibold text-gray-900">Root Cause <span class="text-red-500">*</span></label>
-                    <textarea name="root_cause" x-model="form.root_cause"
-                        class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400" required></textarea>
+                    <div class="rte-container">
+                        <div class="rte-toolbar">
+                            <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
+                            <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
+                            <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                        </div>
+                        <div class="rte-editor" contenteditable="true" 
+                            data-field="root_cause"
+                            @input="updateHiddenField($event.target)"
+                            x-html="form.root_cause || ''"></div>
+                        <textarea name="root_cause" class="hidden" x-model="form.root_cause" required></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -51,54 +143,120 @@
 
                     <!-- Corrective -->
                     <tr>
-                        <td colspan="5" class="border border-gray-200 p-1 font-semibold">Corrective Action</td>
+                        <td colspan="4" class="border border-gray-200 p-1 font-semibold">Corrective Action</td>
+                        <td class="border border-gray-200 p-1 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" @click="correctiveCount > 1 && correctiveCount--"
+                                    class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Remove Corrective Row">
+                                    -
+                                </button>
+                                <button type="button" @click="correctiveCount < 10 && correctiveCount++"
+                                    class="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Add Corrective Row">
+                                    +
+                                </button>
+                            </div>
+                        </td>
                     </tr>
 
-                    <template x-for="i in 4">
+                    <template x-for="i in correctiveCount" :key="i">
                         <tr class="corrective-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
-                            <td class="border border-gray-200">
-                                <textarea :name="'corrective_' + i + '_activity'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                            <td class="border border-gray-200 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'corrective_' + i + '_activity'"
+                                    @input="updateHiddenField($event.target)"
+                                    x-html="form['corrective_'+i+'_activity'] || ''"></div>
+                                <textarea :name="'corrective_' + i + '_activity'" class="hidden" 
                                     x-model="form['corrective_'+i+'_activity']"></textarea>
                             </td>
-                            <td class="border border-gray-200 w-32">
-                                <textarea :name="'corrective_' + i + '_pic'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                            <td class="border border-gray-200 w-32 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'corrective_' + i + '_pic'"
+                                    @input="updateHiddenField($event.target)"
+                                    x-html="form['corrective_'+i+'_pic'] || ''"></div>
+                                <textarea :name="'corrective_' + i + '_pic'" class="hidden" 
                                     x-model="form['corrective_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" :name="'corrective_' + i + '_planning'" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_planning']">
+                                <input type="date" :name="'corrective_' + i + '_planning'"
+                                    class="w-full p-1 border-none" x-model="form['corrective_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="text" :name="'corrective_' + i + '_actual'" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_actual']" placeholder="dd/mm/yyyy or -">
+                                <input type="text" :name="'corrective_' + i + '_actual'"
+                                    class="w-full p-1 border-none" x-model="form['corrective_'+i+'_actual']"
+                                    placeholder="dd/mm/yyyy or -">
                             </td>
                         </tr>
                     </template>
 
                     <!-- Preventive -->
                     <tr>
-                        <td colspan="5" class="border border-gray-200 p-1 font-semibold">Preventive Action</td>
+                        <td colspan="4" class="border border-gray-200 p-1 font-semibold">Preventive Action</td>
+                        <td class="border border-gray-200 p-1 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" @click="preventiveCount > 1 && preventiveCount--"
+                                    class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Remove Preventive Row">
+                                    -
+                                </button>
+                                <button type="button" @click="preventiveCount < 10 && preventiveCount++"
+                                    class="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Add Preventive Row">
+                                    +
+                                </button>
+                            </div>
+                        </td>
                     </tr>
 
-                    <template x-for="i in 4">
+                    <template x-for="i in preventiveCount" :key="i">
                         <tr class="preventive-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
-                            <td class="border border-gray-200">
-                                <textarea :name="'preventive_' + i + '_activity'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                            <td class="border border-gray-200 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'preventive_' + i + '_activity'"
+                                    @input="updateHiddenField($event.target)"
+                                    x-html="form['preventive_'+i+'_activity'] || ''"></div>
+                                <textarea :name="'preventive_' + i + '_activity'" class="hidden" 
                                     x-model="form['preventive_'+i+'_activity']"></textarea>
                             </td>
-                            <td class="border border-gray-200 w-32">
-                                <textarea :name="'preventive_' + i + '_pic'" rows="2" class="w-full p-1 border-none resize-y min-h-[38px] leading-snug"
+                            <td class="border border-gray-200 w-32 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'preventive_' + i + '_pic'"
+                                    @input="updateHiddenField($event.target)"
+                                    x-html="form['preventive_'+i+'_pic'] || ''"></div>
+                                <textarea :name="'preventive_' + i + '_pic'" class="hidden" 
                                     x-model="form['preventive_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" :name="'preventive_' + i + '_planning'" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_planning']">
+                                <input type="date" :name="'preventive_' + i + '_planning'"
+                                    class="w-full p-1 border-none" x-model="form['preventive_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="text" :name="'preventive_' + i + '_actual'" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_actual']" placeholder="dd/mm/yyyy or -">
+                                <input type="text" :name="'preventive_' + i + '_actual'"
+                                    class="w-full p-1 border-none" x-model="form['preventive_'+i+'_actual']"
+                                    placeholder="dd/mm/yyyy or -">
                             </td>
                         </tr>
                     </template>
@@ -124,8 +282,19 @@
                 <div x-show="form.yokoten == 1">
                     <label class="font-semibold text-gray-900">Please Specify: <span
                             class="text-danger">*</span></label>
-                    <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24"
-                        :required="form.yokoten == 1"></textarea>
+                    <div class="rte-container">
+                        <div class="rte-toolbar">
+                            <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
+                            <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
+                            <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                        </div>
+                        <div class="rte-editor" contenteditable="true" style="min-height: 96px;"
+                            data-field="yokoten_area"
+                            @input="updateHiddenField($event.target)"
+                            x-html="form.yokoten_area || ''"></div>
+                        <textarea name="yokoten_area" class="hidden" x-model="form.yokoten_area" 
+                            :required="form.yokoten == 1"></textarea>
+                    </div>
                 </div>
 
                 @php
@@ -207,7 +376,7 @@
                         {{-- Jika belum approve, tombol tetap muncul --}}
                         <button type="button"
                             class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                            @click="confirmApprove()">
+                            @click="window.confirmApprove()">
                             Approve
                         </button>
                     @endif
@@ -221,6 +390,81 @@
         </div>
     </div>
 </div>
+<!-- Rich Text Editor Script -->
+<script>
+    // Format text function for rich text editor
+    function formatText(button, command) {
+        // Prevent form submission
+        event.preventDefault();
+        
+        // Get the editor div (next sibling after toolbar)
+        const toolbar = button.parentElement;
+        const editor = toolbar.nextElementSibling;
+        
+        // Focus on editor
+        editor.focus();
+        
+        // Execute formatting command
+        document.execCommand(command, false, null);
+        
+        // Update button state
+        updateToolbarState(toolbar, editor);
+        
+        // Trigger input event to sync with Alpine.js
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    
+    // Update toolbar button states based on current selection
+    function updateToolbarState(toolbar, editor) {
+        const buttons = toolbar.querySelectorAll('button');
+        buttons.forEach(button => {
+            const command = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+            if (document.queryCommandState(command)) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
+    
+    // Alpine.js global function to update hidden field
+    document.addEventListener('alpine:init', () => {
+        Alpine.magic('updateHiddenField', () => {
+            return (editor) => {
+                const fieldName = editor.getAttribute('data-field');
+                const value = editor.innerHTML;
+                
+                // Update form object in Alpine
+                const component = Alpine.$data(editor.closest('[x-data]'));
+                if (component && component.form) {
+                    component.form[fieldName] = value;
+                }
+            };
+        });
+    });
+    
+    // Update hidden field function (fallback)
+    window.updateHiddenField = function(editor) {
+        const fieldName = editor.getAttribute('data-field');
+        const value = editor.innerHTML;
+        
+        // Find and update hidden textarea
+        const textarea = editor.parentElement.querySelector('textarea[name="' + fieldName + '"]');
+        if (textarea) {
+            textarea.value = value;
+        }
+        
+        // Update Alpine.js form data
+        const component = editor.closest('[x-data]');
+        if (component && component.__x) {
+            const data = component.__x.$data;
+            if (data.form) {
+                data.form[fieldName] = value;
+            }
+        }
+    };
+</script>
+
 <!-- Attachment Upload Handle Script: trigger inputs, preview, count, click-outside -->
 <script>
     const attachBtn2 = document.getElementById('attachBtn2');
@@ -322,7 +566,8 @@
         const newFiles = Array.from(photoInput2.files);
         newFiles.forEach(file => {
             // Check if file already exists to avoid duplicates
-            const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+            const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file
+                .size);
             if (!isDuplicate) {
                 accumulatedPhotoFiles.push(file);
             }
@@ -339,7 +584,8 @@
         const newFiles = Array.from(fileInput2.files);
         newFiles.forEach(file => {
             // Check if file already exists to avoid duplicates
-            const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
+            const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file
+                .size);
             if (!isDuplicate) {
                 accumulatedFileFiles.push(file);
             }
@@ -365,7 +611,7 @@
 
 {{-- Store data auditee action handler --}}
 <script>
-    async function confirmApprove() {
+    window.confirmApprove = async function() {
         const result = await Swal.fire({
             title: 'Are you sure?',
             text: "Are you sure you want to save this data?",
@@ -377,11 +623,11 @@
         });
 
         if (result.isConfirmed) {
-            await updateAuditeeAction(true);
+            await window.updateAuditeeAction(true);
         }
-    }
+    };
 
-    async function updateAuditeeAction(isApprove = false) {
+    window.updateAuditeeAction = async function(isApprove = false) {
 
         // ✅ 1. Hapus error messages lama
         const errorContainer = document.getElementById('attachmentErrorContainer');
@@ -428,6 +674,38 @@
         if (yokotenVal == "1" && !yokotenArea.trim()) {
             err.push("Yokoten Area must be filled when Yokoten = Yes.");
         }
+
+        // ✅ 2.5 VALIDASI CORRECTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
+        const correctiveRows = document.querySelectorAll('.corrective-row');
+        correctiveRows.forEach((row, index) => {
+            const i = index + 1;
+            const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value?.trim() || '';
+            const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value?.trim() || '';
+            const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value?.trim() || '';
+            const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value?.trim() || '';
+
+            if (activity) {
+                if (!pic) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, PIC must also be filled.`);
+                if (!planning) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
+                if (!actual) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
+            }
+        });
+
+        // ✅ 2.6 VALIDASI PREVENTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
+        const preventiveRows = document.querySelectorAll('.preventive-row');
+        preventiveRows.forEach((row, index) => {
+            const i = index + 1;
+            const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value?.trim() || '';
+            const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value?.trim() || '';
+            const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value?.trim() || '';
+            const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value?.trim() || '';
+
+            if (activity) {
+                if (!pic) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, PIC must also be filled.`);
+                if (!planning) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
+                if (!actual) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
+            }
+        });
 
         // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
         const photoInput2 = document.getElementById('photoInput2');
@@ -542,20 +820,26 @@
         formData.append('audit_finding_id', findingId);
         formData.append('pic', document.querySelector('input[name="pic"]')?.value);
 
-        // 5 WHY - ambil dari textarea dengan nama dinamis
+        // 5 WHY - ambil dari textarea dengan nama dinamis (dynamic count)
         for (let i = 1; i <= 5; i++) {
             const whyTextarea = document.querySelector(`textarea[name="why_${i}_mengapa"]`);
             const causeTextarea = document.querySelector(`textarea[name="cause_${i}_karena"]`);
 
-            formData.append(`why_${i}_mengapa`, whyTextarea?.value || '');
-            formData.append(`cause_${i}_karena`, causeTextarea?.value || '');
+            // Only append if textarea exists (for dynamic rows)
+            if (whyTextarea || causeTextarea) {
+                formData.append(`why_${i}_mengapa`, whyTextarea?.value || '');
+                formData.append(`cause_${i}_karena`, causeTextarea?.value || '');
+            }
         }
 
         formData.append('root_cause', document.querySelector('textarea[x-model="form.root_cause"]')?.value || '');
 
-        // Corrective Action
-        for (let i = 1; i <= 4; i++) {
-            const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value || '';
+        // Corrective Action - get all existing rows dynamically
+        let correctiveRowsSubmit = document.querySelectorAll('.corrective-row');
+        correctiveRowsSubmit.forEach((row, index) => {
+            const i = index + 1;
+            const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value ||
+                '';
             const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value || '';
             const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value || '';
             const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value || '';
@@ -564,11 +848,14 @@
             formData.append(`corrective_${i}_pic`, pic);
             formData.append(`corrective_${i}_planning`, planning);
             formData.append(`corrective_${i}_actual`, actual);
-        }
+        });
 
-        // Preventive Action
-        for (let i = 1; i <= 4; i++) {
-            const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value || '';
+        // Preventive Action - get all existing rows dynamically
+        let preventiveRowsSubmit = document.querySelectorAll('.preventive-row');
+        preventiveRowsSubmit.forEach((row, index) => {
+            const i = index + 1;
+            const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value ||
+                '';
             const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value || '';
             const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value || '';
             const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value || '';
@@ -577,7 +864,7 @@
             formData.append(`preventive_${i}_pic`, pic);
             formData.append(`preventive_${i}_planning`, planning);
             formData.append(`preventive_${i}_actual`, actual);
-        }
+        });
 
         // Yokoten
         const yokoten = document.querySelector('input[name="yokoten"]:checked');
@@ -628,7 +915,8 @@
                 await Swal.fire({
                     icon: 'error',
                     title: 'Server Error',
-                    html: 'Server returned an invalid response. Please check the console for details or contact administrator.<br><small>Response type: ' + (contentType || 'unknown') + '</small>'
+                    html: 'Server returned an invalid response. Please check the console for details or contact administrator.<br><small>Response type: ' +
+                        (contentType || 'unknown') + '</small>'
                 });
                 return;
             }
@@ -662,7 +950,8 @@
             await Swal.fire({
                 icon: 'error',
                 title: 'Connection Error',
-                html: 'Failed to submit data. Please check your connection and try again.<br><small>Error: ' + err.message + '</small>'
+                html: 'Failed to submit data. Please check your connection and try again.<br><small>Error: ' +
+                    err.message + '</small>'
             });
         }
     }

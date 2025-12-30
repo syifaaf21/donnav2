@@ -202,7 +202,7 @@ class AuditeeActionController extends Controller
                 if ($activity) {
                     CorrectiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'pic' => $pic ?: null,
+                        'pic' => $pic ?: '-',
                         'activity' => $activity,
                         'planning_date' => $plan ?: null,
                         'actual_date' => $actual ?: null,
@@ -220,7 +220,7 @@ class AuditeeActionController extends Controller
                 if ($activity) {
                     PreventiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'pic' => $pic ?: null,
+                        'pic' => $pic ?: '-',
                         'activity' => $activity,
                         'planning_date' => $plan ?: null,
                         'actual_date' => $actual ?: null,
@@ -436,7 +436,7 @@ class AuditeeActionController extends Controller
             $auditeeAction = AuditeeAction::updateOrCreate(
                 ['audit_finding_id' => $id],
                 [
-                    'pic' => $validated['pic'] ?? '-',
+                    'pic' => $request->input('pic', '-'),
                     'root_cause' => $validated['root_cause'],
                     'yokoten' => $validated['yokoten'],
                     'yokoten_area' => $validated['yokoten_area'] ?? null,
@@ -471,13 +471,17 @@ class AuditeeActionController extends Controller
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("corrective_{$i}_activity");
+                $pic = $request->input("corrective_{$i}_pic");
+                $plan = $request->input("corrective_{$i}_planning");
+                $actual = $request->input("corrective_{$i}_actual");
+
                 if ($activity) {
                     CorrectiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->corrective_pic[$i] ?? null,
-                        'planning_date' => $request->corrective_planning[$i] ?? null,
-                        'actual_date' => $request->corrective_actual[$i] ?? null,
+                        'pic' => $pic ?: '-',
+                        'planning_date' => $plan ?: null,
+                        'actual_date' => $actual ?: null,
                     ]);
                 }
             }
@@ -489,13 +493,17 @@ class AuditeeActionController extends Controller
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("preventive_{$i}_activity");
+                $pic = $request->input("preventive_{$i}_pic");
+                $plan = $request->input("preventive_{$i}_planning");
+                $actual = $request->input("preventive_{$i}_actual");
+
                 if ($activity) {
                     PreventiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->preventive_pic[$i] ?? null,
-                        'planning_date' => $request->preventive_planning[$i] ?? null,
-                        'actual_date' => $request->preventive_actual[$i] ?? null,
+                        'pic' => $pic ?: '-',
+                        'planning_date' => $plan ?: null,
+                        'actual_date' => $actual ?: null,
                     ]);
                 }
             }
