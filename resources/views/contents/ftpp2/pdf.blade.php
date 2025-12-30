@@ -113,8 +113,31 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
             word-break: break-word;
+            font-size: 11px !important;
+            line-height: 1.4;
         }
-
+        .preserve-newlines * {
+            font-size: 11px !important;
+            line-height: 1.4;
+        }
+        td.preserve-newlines {
+            font-size: 11px !important;
+        }
+        .preserve-newlines div {
+            margin: 0;
+            font-size: 11px !important;
+        }
+        .preserve-newlines p {
+            margin: 0;
+            font-size: 11px !important;
+        }
+        .preserve-newlines b,
+        .preserve-newlines strong,
+        .preserve-newlines i,
+        .preserve-newlines em,
+        .preserve-newlines u {
+            font-size: 11px !important;
+        }
         .note {
             font-size: 10px;
             /* lebih kecil dari text-sm */
@@ -197,7 +220,7 @@
         <tr>
             <td>
                 <b>Finding / Issue:</b><br>
-                {{ $finding->finding_description ?? '-' }}
+                <div class="preserve-newlines">{!! strip_tags($finding->finding_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</div>
 
                 {{-- Tampilkan lampiran gambar yang terkait dengan finding ini --}}
                 @foreach ($finding->file ?? [] as $image)
@@ -242,16 +265,16 @@
         @foreach ($finding->auditeeAction->whyCauses ?? [] as $index => $why)
             <tr>
                 <td style="width: 25%;">Why {{ $index + 1 }} (Mengapa)</td>
-                <td class="preserve-newlines">{!! nl2br(e($why->why_description ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($why->why_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
             </tr>
             <tr>
                 <td>Cause (Karena)</td>
-                <td class="preserve-newlines">{!! nl2br(e($why->cause_description ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($why->cause_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
             </tr>
         @endforeach
         <tr>
             <td class="font-semibold">Root Cause</td>
-            <td class="preserve-newlines">{!! nl2br(e($finding->auditeeAction->root_cause ?? '-')) !!}</td>
+            <td class="preserve-newlines">{!! strip_tags($finding->auditeeAction->root_cause ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
         </tr>
     </table>
 
@@ -272,8 +295,8 @@
         @foreach ($finding->auditeeAction->correctiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
-                <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->activity ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->pic ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
@@ -307,8 +330,8 @@
         @foreach ($finding->auditeeAction->preventiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td class="preserve-newlines">{!! nl2br(e($action->activity ?? '-')) !!}</td>
-                <td class="preserve-newlines">{!! nl2br(e($action->pic ?? '-')) !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->activity ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->pic ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
@@ -346,7 +369,7 @@
         <tr>
             <td>
                 @if ($finding->auditeeAction->yokoten)
-                    <b>Area:</b> {{ $finding->auditeeAction->yokoten_area ?? '-' }}
+                    <b>Area:</b> <div class="preserve-newlines" style="display: inline-block;">{!! strip_tags($finding->auditeeAction->yokoten_area ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</div>
                 @endif
             </td>
             <td class="text-center">
