@@ -541,7 +541,16 @@ class DocumentMappingController extends Controller
         //     ));
         // }
 
-        return back()->with('success', 'Document review created successfully!');
+        // Redirect dengan plant parameter agar tab otomatis pindah ke plant yang sesuai
+        // Jika tidak ada part_number, arahkan ke tab "Other / Manual Entry"
+        if (empty($request->part_number_id)) {
+            $plant = 'other-manual-entry';
+        } else {
+            $plant = strtolower($request->plant ?? 'body');
+        }
+        
+        return redirect()->route('master.document-review.index2', ['plant' => $plant])
+            ->with('success', 'Document review created successfully!');
     }
 
     public function updateReview2(Request $request, $id)

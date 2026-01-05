@@ -462,9 +462,29 @@
         window.filterDataByPlant = @json($filterDataByPlant);
 
         // Tab manager
-        function documentReviewTabs() {
+        function documentReviewTabs(defaultTab = 'body') {
+            // Cek query parameter 'plant' dari URL TERLEBIH DAHULU
+            const urlParams = new URLSearchParams(window.location.search);
+            const plantParam = urlParams.get('plant');
+
+            // Prioritas: plant dari URL > localStorage > parameter default > fallback 'body'
+            const initialTab = plantParam || localStorage.getItem('activeTab') || defaultTab || 'body';
+
+            // Simpan ke localStorage juga jika dari URL
+            if (plantParam) {
+                localStorage.setItem('activeTab', plantParam);
+            }
+
+            // Clean URL dari query parameter setelah membaca plant
+            setTimeout(() => {
+                if (urlParams.get('plant')) {
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            }, 100);
+
             return {
-                activeTab: localStorage.getItem('activeTab') || 'body',
+                activeTab: initialTab,
                 setActiveTab(tab) {
                     this.activeTab = tab;
                     localStorage.setItem('activeTab', tab);
