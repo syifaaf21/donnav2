@@ -134,7 +134,7 @@
                                 <!-- Part Number -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Part Number</label>
-                                    <select name="part_number" id="modalPart" 
+                                    <select name="part_number" id="modalPart"
                                         class="form-select border-0 shadow-sm rounded-3">
                                         <option value="">All Part Numbers</option>
                                         @foreach ($partNumbers as $part)
@@ -148,7 +148,7 @@
                                 <!-- Model -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Model</label>
-                                    <select name="model" id="modalModel" 
+                                    <select name="model" id="modalModel"
                                         class="form-select border-0 shadow-sm rounded-3">
                                         <option value="">All Models</option>
                                         @foreach ($models as $model)
@@ -161,7 +161,7 @@
                                 <!-- Process -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Process</label>
-                                    <select name="process" id="modalProcess" 
+                                    <select name="process" id="modalProcess"
                                         class="form-select border-0 shadow-sm rounded-3">
                                         <option value="">All Processes</option>
                                         @foreach ($processes as $process)
@@ -175,7 +175,7 @@
                                 <!-- Product -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Product</label>
-                                    <select name="product" id="modalProduct" 
+                                    <select name="product" id="modalProduct"
                                         class="form-select border-0 shadow-sm rounded-3">
                                         <option value="">All Products</option>
                                         @foreach ($products as $product)
@@ -195,7 +195,7 @@
                                 style="text-decoration: none; transition: background-color 0.3s ease;">
                                 Clear
                             </button>
-                            <button type="submit" 
+                            <button type="submit"
                                 class="btn px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                                 Apply Filter
                             </button>
@@ -413,7 +413,7 @@
                                             @php
                                                 // Check if user is supervisor of document's department
                                                 $isSupervisorOfDocDept = auth()->user()->isSupervisorOfDepartment($doc->department_id);
-                                                
+
                                                 // Only supervisor from document's department OR admin can edit
                                                 $showEdit = $isAdmin || $isSupervisorOfDocDept;
 
@@ -703,7 +703,8 @@
                     if (!url) return url;
                     // Hindari duplikasi jika sudah punya fragment
                     if (url.includes('#')) return url;
-                    return `${url}#toolbar=0&navpanes=0&scrollbar=0`;
+                    // Hide toolbar/print/download buttons in embedded PDF viewer
+                    return `${url}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&zoom=page-width`;
                 }
 
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
@@ -792,7 +793,8 @@
                         // Untuk iframe PDF, coba sembunyikan toolbar default dengan fragment params
                         const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) : url;
                         previewFrame.dataset.url = previewUrl;
-                        viewFullBtn.href = url;
+                        // Gunakan URL yang sudah disanitasi agar toolbar tetap tersembunyi saat "View Full"
+                        viewFullBtn.href = previewUrl;
                         previewModal.show();
                     });
                 });
