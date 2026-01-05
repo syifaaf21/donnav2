@@ -71,4 +71,32 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Audit::class, 'audit_type_id');
     }
+
+    /**
+     * Check if user is supervisor
+     */
+    public function isSupervisor()
+    {
+        return $this->roles()->where('name', 'Supervisor')->exists();
+    }
+
+    /**
+     * Check if user is supervisor of specific department
+     */
+    public function isSupervisorOfDepartment($departmentId)
+    {
+        return $this->isSupervisor() && 
+               $this->departments()->where('tm_departments.id', $departmentId)->exists();
+    }
+
+    /**
+     * Check if user can edit document mapping (supervisor dari dept pemilik dokumen)
+     * 
+     * @param \App\Models\DocumentMapping $mapping
+     * @return bool
+     */
+    public function canEditDocument($mapping)
+    {
+        return $this->isSupervisorOfDepartment($mapping->department_id);
+    }
 }

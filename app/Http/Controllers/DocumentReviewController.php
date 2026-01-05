@@ -334,6 +334,15 @@ class DocumentReviewController extends Controller
         if (!Auth::check())
             abort(403);
 
+        // Authorization check: hanya supervisor dari department pemilik dokumen yang bisa edit
+        $user = Auth::user();
+        $isAdmin = in_array(strtolower($user->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']);
+        
+        // Jika bukan admin, cek apakah supervisor dari department pemilik dokumen
+        if (!$isAdmin && !$user->canEditDocument($mapping)) {
+            abort(403, 'Unauthorized. Only supervisors from the document\'s department can edit.');
+        }
+
         $request->validate([
             'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
             'revision_file_ids.*' => 'nullable|integer',

@@ -411,10 +411,11 @@
 
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
-                                                $showEdit =
-                                                    ($isUser && in_array($status, ['approve', 'reject'])) ||
-                                                    ($isAdmin && $status === 'approve') ||
-                                                    (($isAdminOrSuper || $sameDepartment) && $status !== 'need review');
+                                                // Check if user is supervisor of document's department
+                                                $isSupervisorOfDocDept = auth()->user()->isSupervisorOfDepartment($doc->department_id);
+                                                
+                                                // Only supervisor from document's department OR admin can edit
+                                                $showEdit = $isAdmin || $isSupervisorOfDocDept;
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
