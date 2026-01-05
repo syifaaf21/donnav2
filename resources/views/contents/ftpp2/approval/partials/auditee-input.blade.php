@@ -96,9 +96,21 @@
 <table class="w-full border border-black text-sm mt-2" x-show="form.yokoten !== null && form.yokoten !== undefined && form.yokoten !== ''">
     <tr>
         <td class="border border-black p-2 w-2/3">
-            <label>Yokoten?<span class="text-danger">*</span></label>
-            <label class="ml-2"><input type="radio" name="yokoten" value="1" x-model="form.yokoten" required disabled> Yes</label>
-            <label class="ml-2"><input type="radio" name="yokoten" value="0" x-model="form.yokoten" required disabled> No</label>
+            <label class="block mb-2 font-semibold">Yokoten?<span class="text-danger">*</span></label>
+            <div class="flex gap-3">
+                <label class="flex items-center gap-2 px-4 py-2 rounded border cursor-not-allowed transition-all"
+                    :class="String(form.yokoten) === '1' ? 'bg-green-50 border-green-500 text-green-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
+                    <input type="radio" name="yokoten" value="1" x-model="form.yokoten" required disabled
+                        class="w-4 h-4 text-green-600">
+                    <span>Yes</span>
+                </label>
+                <label class="flex items-center gap-2 px-4 py-2 rounded border cursor-not-allowed transition-all"
+                    :class="String(form.yokoten) === '0' ? 'bg-red-50 border-red-500 text-red-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
+                    <input type="radio" name="yokoten" value="0" x-model="form.yokoten" required disabled
+                        class="w-4 h-4 text-red-600">
+                    <span>No</span>
+                </label>
+            </div>
         </td>
         <td class="border border-black p-1 font-semibold text-center">Checked</td>
         <td class="border border-black p-1 font-semibold text-center">Created</td>

@@ -5,9 +5,11 @@
             <span class="font-semibold">Audit Type:</span>
             <div class="mt-2 space-y-2">
                 @foreach ($auditTypes as $type)
-                    <label class="block">
-                        <input type="radio" name="audit_type_id" value="{{ $type->id }}" x-model="form.audit_type_id" disabled>
-                        {{ $type->name }}
+                    <label class="flex items-center gap-2 p-2 rounded border cursor-not-allowed transition-all"
+                        :class="String(form.audit_type_id) === '{{ $type->id }}' ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
+                        <input type="radio" name="audit_type_id" value="{{ $type->id }}" x-model="form.audit_type_id" disabled
+                            class="w-4 h-4 text-blue-600">
+                        <span>{{ $type->name }}</span>
                     </label>
                 @endforeach
             </div>
@@ -15,10 +17,13 @@
             {{-- Level 2: Sub Audit Type (muncul hanya jika audit type dipilih) --}}
             <div id="subAuditType" class="mt-2 ml-4 flex flex-wrap gap-2">
                 @foreach ($subAudit as $sub)
-                    <label class="block" x-show="String(form.audit_type_id) === '{{ $sub->audit_type_id }}'">
+                    <label class="flex items-center gap-2 p-2 rounded border cursor-not-allowed transition-all"
+                        x-show="String(form.audit_type_id) === '{{ $sub->audit_type_id }}'"
+                        :class="String(form.sub_audit_type_id) === '{{ $sub->id }}' ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
                         <input type="radio" name="sub_audit_type_id" value="{{ $sub->id }}"
-                               x-model="form.sub_audit_type_id" disabled>
-                        {{ $sub->name }}
+                               x-model="form.sub_audit_type_id" disabled
+                               class="w-4 h-4 text-blue-600">
+                        <span>{{ $sub->name }}</span>
                     </label>
                 @endforeach
             </div>
@@ -92,13 +97,17 @@
     <tr>
         <td colspan="2" class="border border-black p-1">
             <span class="font-semibold">Finding Category:</span>
-            @foreach ($findingCategories as $category)
-                <label class="ml-2">
-                    <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
-                        value="{{ $category->id }}" disabled>
-                    {{ ucfirst($category->name) }}
-                </label>
-            @endforeach
+            <div class="flex flex-wrap gap-2 mt-2">
+                @foreach ($findingCategories as $category)
+                    <label class="flex items-center gap-2 px-3 py-2 rounded border cursor-not-allowed transition-all"
+                        :class="String(form.finding_category_id) === '{{ $category->id }}' ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
+                        <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
+                            value="{{ $category->id }}" disabled
+                            class="w-4 h-4 text-blue-600">
+                        <span>{{ ucfirst($category->name) }}</span>
+                    </label>
+                @endforeach
+            </div>
         </td>
     </tr>
 </table>
