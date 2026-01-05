@@ -29,8 +29,28 @@ class Ftpp2Controller extends Controller
      */
     public function index(Request $request)
     {
+        // Get current user
+        $user = auth()->user();
+        $userRoles = $user->roles->pluck('name')->toArray();
+        
+        // Determine filter type: 'created' (default), 'assigned'
+        $filterType = $request->input('filter_type', 'created');
+        
         // Build base query
         $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee']);
+
+        // Apply filter based on user role and filter type
+        if (in_array('Auditor', $userRoles)) {
+            if ($filterType === 'assigned') {
+                // Show FTPP where user is in auditee (assigned to them)
+                $query->whereHas('auditee', function ($q) use ($user) {
+                    $q->where('id', $user->id);
+                });
+            } else {
+                // Show FTPP where user is auditor (created by them)
+                $query->where('auditor_id', $user->id);
+            }
+        }
 
         // Filters
         if ($request->filled('registration_number')) {
@@ -78,7 +98,7 @@ class Ftpp2Controller extends Controller
             $q->where('name', 'auditor');
         })->orderBy('name')->get();
 
-        return view('contents.ftpp2.index', compact('findings', 'statuses', 'departments', 'auditors', 'totalCount'));
+        return view('contents.ftpp2.index', compact('findings', 'statuses', 'departments', 'auditors', 'totalCount', 'filterType', 'userRoles'));
     }
 
     /**

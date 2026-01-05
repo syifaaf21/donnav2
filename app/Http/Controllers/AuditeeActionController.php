@@ -83,34 +83,63 @@ class AuditeeActionController extends Controller
      */
     public function store(Request $request)
     {
-        // ✅ VALIDASI FILE SIZE
-        $validated = $request->validate([
-            'audit_finding_id' => 'required|exists:tt_audit_findings,id',
-            'root_cause' => 'required|string',
-            'pic' => 'nullable|string|max:100',
-            'yokoten' => 'required|boolean',
-            'yokoten_area' => 'nullable|string',
-            'ldr_spv_signature' => 'nullable|boolean',
+        try {
+            // ✅ VALIDASI FILE SIZE
+            $validated = $request->validate([
+                'audit_finding_id' => 'required|exists:tt_audit_findings,id',
+                'root_cause' => 'required|string',
+                'pic' => 'nullable|string|max:255',
+                'yokoten' => 'required|in:0,1',
+                'yokoten_area' => 'nullable|string',
+                'ldr_spv_signature' => 'nullable|boolean',
 
-            // Attachments: gabung semua file
-            'attachments' => 'nullable|array',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
-        ]);
+                // Why and Cause validation
+                'why_*_mengapa' => 'nullable|string',
+                'cause_*_karena' => 'nullable|string',
+
+                // Corrective and Preventive validation
+                'corrective_*_activity' => 'nullable|string',
+                'corrective_*_pic' => 'nullable|string',
+                'corrective_*_planning' => 'nullable|date',
+                'corrective_*_actual' => 'nullable|date',
+
+                'preventive_*_activity' => 'nullable|string',
+                'preventive_*_pic' => 'nullable|string',
+                'preventive_*_planning' => 'nullable|date',
+                'preventive_*_actual' => 'nullable|date',
+
+                // Attachments: gabung semua file
+                'attachments' => 'nullable|array',
+                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in auditee action store: ' . json_encode($e->errors()));
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed: ' . implode(' ', array_map(fn($err) => implode(' ', $err), $e->errors())),
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            
+            throw $e;
+        }
 
         // ✅ VALIDASI TOTAL FILE SIZE (SERVER-SIDE BACKUP)
         $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 10 * 1024 * 1024) { // 10MB
+        if ($totalSize > 20 * 1024 * 1024) { // 20MB
             \Log::warning('Total file size validation bypassed on client-side!');
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Total file size exceeds 10MB. Please compress your PDF files using <a href="https://smallpdf.com/compress-pdf" target="_blank">this tool</a>.'
+                    'message' => 'Total file size exceeds 20MB. Please compress your PDF files using <a href="https://smallpdf.com/compress-pdf" target="_blank">this tool</a>.'
                 ], 422);
             }
 
             return back()->withErrors([
-                'attachments' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+                'attachments' => 'Total file size exceeds 20MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
             ])->withInput();
         }
 
@@ -173,7 +202,7 @@ class AuditeeActionController extends Controller
                 if ($activity) {
                     CorrectiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'pic' => $pic ?: null,
+                        'pic' => $pic ?: '-',
                         'activity' => $activity,
                         'planning_date' => $plan ?: null,
                         'actual_date' => $actual ?: null,
@@ -191,7 +220,7 @@ class AuditeeActionController extends Controller
                 if ($activity) {
                     PreventiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'pic' => $pic ?: null,
+                        'pic' => $pic ?: '-',
                         'activity' => $activity,
                         'planning_date' => $plan ?: null,
                         'actual_date' => $actual ?: null,
@@ -285,15 +314,29 @@ class AuditeeActionController extends Controller
             }
 
             return back()->with('success', 'Auditee Action submitted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            \Log::error('Database error in auditee action store: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Database error occurred. Please try again or contact administrator.'
+                ], 500);
+            }
+
+            return back()
+                ->withErrors(['error' => 'Database error occurred. Please try again.'])
+                ->withInput();
         } catch (\Throwable $e) {
             DB::rollBack();
             // log error agar lebih mudah debug
             \Log::error('update_auditee_action error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => 'An error occurred: ' . $e->getMessage()
                 ], 500);
             }
 
@@ -380,9 +423,9 @@ class AuditeeActionController extends Controller
 
         // ✅ VALIDASI TOTAL FILE SIZE
         $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 10485760) { // 10MB
+        if ($totalSize > 20971520) { // 20MB
             return back()->withErrors([
-                'total_file_size' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+                'total_file_size' => 'Total file size exceeds 20MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
             ])->withInput();
         }
 
@@ -393,7 +436,7 @@ class AuditeeActionController extends Controller
             $auditeeAction = AuditeeAction::updateOrCreate(
                 ['audit_finding_id' => $id],
                 [
-                    'pic' => $validated['pic'] ?? '-',
+                    'pic' => $request->input('pic', '-'),
                     'root_cause' => $validated['root_cause'],
                     'yokoten' => $validated['yokoten'],
                     'yokoten_area' => $validated['yokoten_area'] ?? null,
@@ -428,13 +471,17 @@ class AuditeeActionController extends Controller
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("corrective_{$i}_activity");
+                $pic = $request->input("corrective_{$i}_pic");
+                $plan = $request->input("corrective_{$i}_planning");
+                $actual = $request->input("corrective_{$i}_actual");
+
                 if ($activity) {
                     CorrectiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->corrective_pic[$i] ?? null,
-                        'planning_date' => $request->corrective_planning[$i] ?? null,
-                        'actual_date' => $request->corrective_actual[$i] ?? null,
+                        'pic' => $pic ?: '-',
+                        'planning_date' => $plan ?: null,
+                        'actual_date' => $actual ?: null,
                     ]);
                 }
             }
@@ -446,13 +493,17 @@ class AuditeeActionController extends Controller
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("preventive_{$i}_activity");
+                $pic = $request->input("preventive_{$i}_pic");
+                $plan = $request->input("preventive_{$i}_planning");
+                $actual = $request->input("preventive_{$i}_actual");
+
                 if ($activity) {
                     PreventiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->preventive_pic[$i] ?? null,
-                        'planning_date' => $request->preventive_planning[$i] ?? null,
-                        'actual_date' => $request->preventive_actual[$i] ?? null,
+                        'pic' => $pic ?: '-',
+                        'planning_date' => $plan ?: null,
+                        'actual_date' => $actual ?: null,
                     ]);
                 }
             }

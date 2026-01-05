@@ -18,29 +18,35 @@
 @section('content')
     <div class="mx-auto px-6 bg-white rounded-xl py-4" x-data="showModal()"
         @open-show-modal.window="openShowModal($event.detail)">
-        {{-- Header --}}
-        {{-- <div class="flex justify-between items-center my-2 pt-4">
-            <div class="py-3 mt-2 text-white">
-                <div class="mb-2 text-white">
-                    <h3 class="fw-bold">FTPP</h3>
-                    <p class="text-sm" style="font-size: 0.9rem;">
-                        Manage and organize your FTPP documents efficiently
-                    </p>
+
+        {{-- Define default values for variables --}}
+        @php
+            $filterType = $filterType ?? 'created';
+            $userRoles = $userRoles ?? auth()->user()->roles->pluck('name')->toArray();
+        @endphp
+
+        {{-- TAB FILTER FOR AUDITOR --}}
+        @php
+            $currentUserRoles = auth()->user()->roles->pluck('name')->toArray();
+            $isAuditor = in_array('Auditor', $currentUserRoles);
+        @endphp
+
+        @if ($isAuditor)
+            <div class="mb-6 border-b border-gray-200">
+                <div class="flex gap-4">
+                    <a href="{{ route('ftpp.index', array_merge(request()->except('filter_type'), ['filter_type' => 'created'])) }}"
+                        class="px-4 py-3 font-medium border-b-2 transition-colors {{ $filterType === 'created' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900' }}">
+                        <i data-feather="edit" class="inline w-4 h-4 mr-2"></i>
+                        My Created FTPP
+                    </a>
+                    <a href="{{ route('ftpp.index', array_merge(request()->except('filter_type'), ['filter_type' => 'assigned'])) }}"
+                        class="px-4 py-3 font-medium border-b-2 transition-colors {{ $filterType === 'assigned' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900' }}">
+                        <i data-feather="inbox" class="inline w-4 h-4 mr-2"></i>
+                        Assigned to Me
+                    </a>
                 </div>
             </div>
-            <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1"
-                aria-label="Breadcrumb">
-                <ol class="list-reset flex space-x-2">
-                    <li>
-                        <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
-                            <i class="bi bi-house-door me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>/</li>
-                    <li class="text-gray-700 font-bold">FTPP</li>
-                </ol>
-            </nav>
-        </div> --}}
+        @endif
 
         <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <!-- LEFT: Search + Filter -->
@@ -48,6 +54,8 @@
 
                 <!-- SEARCH -->
                 <form method="GET" id="searchForm" class="flex flex-col items-end w-auto space-y-1">
+                    {{-- Preserve filter_type --}}
+                    <input type="hidden" name="filter_type" value="{{ $filterType }}">
 
                     <div class="relative w-96">
                         <!-- Input -->
@@ -70,7 +78,7 @@
 
                         <!-- Clear Button -->
                         @if (request('search'))
-                            <a href="{{ route('ftpp.index') }}"
+                            <a href="{{ route('ftpp.index', ['filter_type' => $filterType]) }}"
                                 class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5
                                     rounded-lg text-gray-400
                                     hover:text-red-600 transition">
