@@ -82,11 +82,11 @@
                                         <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
                                         <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
                                     </div>
-                                    <div class="rte-editor" contenteditable="true" 
+                                    <div class="rte-editor" contenteditable="true"
                                         :data-field="'why_' + i + '_mengapa'"
                                         @input="updateHiddenField($event.target)"
                                         x-html="form['why_'+i+'_mengapa'] || ''"></div>
-                                    <textarea :name="'why_' + i + '_mengapa'" class="hidden" 
+                                    <textarea :name="'why_' + i + '_mengapa'" class="hidden"
                                         x-model="form['why_'+i+'_mengapa']"></textarea>
                                 </div>
 
@@ -97,11 +97,11 @@
                                         <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
                                         <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
                                     </div>
-                                    <div class="rte-editor" contenteditable="true" 
+                                    <div class="rte-editor" contenteditable="true"
                                         :data-field="'cause_' + i + '_karena'"
                                         @input="updateHiddenField($event.target)"
                                         x-html="form['cause_'+i+'_karena'] || ''"></div>
-                                    <textarea :name="'cause_' + i + '_karena'" class="hidden" 
+                                    <textarea :name="'cause_' + i + '_karena'" class="hidden"
                                         x-model="form['cause_'+i+'_karena']"></textarea>
                                 </div>
                             </div>
@@ -117,7 +117,7 @@
                             <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
                             <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
                         </div>
-                        <div class="rte-editor" contenteditable="true" 
+                        <div class="rte-editor" contenteditable="true"
                             data-field="root_cause"
                             @input="updateHiddenField($event.target)"
                             x-html="form.root_cause || ''"></div>
@@ -173,7 +173,7 @@
                                     :data-field="'corrective_' + i + '_activity'"
                                     @input="updateHiddenField($event.target)"
                                     x-html="form['corrective_'+i+'_activity'] || ''"></div>
-                                <textarea :name="'corrective_' + i + '_activity'" class="hidden" 
+                                <textarea :name="'corrective_' + i + '_activity'" class="hidden"
                                     x-model="form['corrective_'+i+'_activity']"></textarea>
                             </td>
                             <td class="border border-gray-200 w-32 p-1">
@@ -186,7 +186,7 @@
                                     :data-field="'corrective_' + i + '_pic'"
                                     @input="updateHiddenField($event.target)"
                                     x-html="form['corrective_'+i+'_pic'] || ''"></div>
-                                <textarea :name="'corrective_' + i + '_pic'" class="hidden" 
+                                <textarea :name="'corrective_' + i + '_pic'" class="hidden"
                                     x-model="form['corrective_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
@@ -233,7 +233,7 @@
                                     :data-field="'preventive_' + i + '_activity'"
                                     @input="updateHiddenField($event.target)"
                                     x-html="form['preventive_'+i+'_activity'] || ''"></div>
-                                <textarea :name="'preventive_' + i + '_activity'" class="hidden" 
+                                <textarea :name="'preventive_' + i + '_activity'" class="hidden"
                                     x-model="form['preventive_'+i+'_activity']"></textarea>
                             </td>
                             <td class="border border-gray-200 w-32 p-1">
@@ -246,7 +246,7 @@
                                     :data-field="'preventive_' + i + '_pic'"
                                     @input="updateHiddenField($event.target)"
                                     x-html="form['preventive_'+i+'_pic'] || ''"></div>
-                                <textarea :name="'preventive_' + i + '_pic'" class="hidden" 
+                                <textarea :name="'preventive_' + i + '_pic'" class="hidden"
                                     x-model="form['preventive_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
@@ -292,7 +292,7 @@
                             data-field="yokoten_area"
                             @input="updateHiddenField($event.target)"
                             x-html="form.yokoten_area || ''"></div>
-                        <textarea name="yokoten_area" class="hidden" x-model="form.yokoten_area" 
+                        <textarea name="yokoten_area" class="hidden" x-model="form.yokoten_area"
                             :required="form.yokoten == 1"></textarea>
                     </div>
                 </div>
@@ -365,26 +365,44 @@
                         </div>
                     </div>
                 </div>
-                <!-- Leader/SPV -->
-                <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center max-w-xs">
-                    <div>Created</div>
 
-                    {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
-                    @if ($action && $action->ldr_spv_signature == 1)
-                        <img src="/images/usr-approve.png" class="mx-auto h-24">
-                    @else
-                        {{-- Jika belum approve, tombol tetap muncul --}}
-                        <button type="button"
-                            class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                            @click="window.confirmApprove()">
-                            Approve
-                        </button>
+                {{-- Container for Save as Draft and Approve cards side by side --}}
+                <div class="flex gap-4 flex-wrap">
+                    {{-- Save as Draft Card - Show only when status is Need Assign or Draft --}}
+                    @if ($finding && $finding->status && in_array(strtolower($finding->status->name), ['need assign', 'draft']))
+                        <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center flex-1 min-w-[240px]">
+                            <div class="text-sm text-gray-600 mb-2">Save as Draft</div>
+                            <button type="button"
+                                class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                                @click="window.updateAuditeeAction(false, true)">
+                                Save as Draft
+                            </button>
+                            <div class="mb-1 font-semibold text-gray-900 mt-3">Simpan sebagai Draft</div>
+                            <p class="text-xs text-gray-600">Perubahan disimpan tanpa kirim notifikasi</p>
+                        </div>
                     @endif
 
-                    <div class="mb-1 font-semibold text-gray-900">Leader / SPV</div>
+                    <!-- Leader/SPV Approve Card -->
+                    <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center flex-1 min-w-[240px]">
+                        <div class="text-sm text-gray-600 mb-2">Created</div>
 
-                    <input type="text" value="{{ auth()->user()->name }}"
-                        class="w-full border border-gray-300 rounded text-center py-1" readonly>
+                        {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
+                        @if ($action && $action->ldr_spv_signature == 1)
+                            <img src="/images/usr-approve.png" class="mx-auto h-24">
+                        @else
+                            {{-- Jika belum approve, tombol tetap muncul --}}
+                            <button type="button"
+                                class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                                @click="window.confirmApprove()">
+                                Approve
+                            </button>
+                        @endif
+
+                        <div class="mb-1 font-semibold text-gray-900 mt-3">Leader / SPV</div>
+
+                        <input type="text" value="{{ auth()->user()->name }}"
+                            class="w-full border border-gray-300 rounded text-center py-1" readonly>
+                    </div>
                 </div>
             </div>
         </div>
@@ -396,24 +414,24 @@
     function formatText(button, command) {
         // Prevent form submission
         event.preventDefault();
-        
+
         // Get the editor div (next sibling after toolbar)
         const toolbar = button.parentElement;
         const editor = toolbar.nextElementSibling;
-        
+
         // Focus on editor
         editor.focus();
-        
+
         // Execute formatting command
         document.execCommand(command, false, null);
-        
+
         // Update button state
         updateToolbarState(toolbar, editor);
-        
+
         // Trigger input event to sync with Alpine.js
         editor.dispatchEvent(new Event('input', { bubbles: true }));
     }
-    
+
     // Update toolbar button states based on current selection
     function updateToolbarState(toolbar, editor) {
         const buttons = toolbar.querySelectorAll('button');
@@ -426,14 +444,14 @@
             }
         });
     }
-    
+
     // Alpine.js global function to update hidden field
     document.addEventListener('alpine:init', () => {
         Alpine.magic('updateHiddenField', () => {
             return (editor) => {
                 const fieldName = editor.getAttribute('data-field');
                 const value = editor.innerHTML;
-                
+
                 // Update form object in Alpine
                 const component = Alpine.$data(editor.closest('[x-data]'));
                 if (component && component.form) {
@@ -442,18 +460,18 @@
             };
         });
     });
-    
+
     // Update hidden field function (fallback)
     window.updateHiddenField = function(editor) {
         const fieldName = editor.getAttribute('data-field');
         const value = editor.innerHTML;
-        
+
         // Find and update hidden textarea
         const textarea = editor.parentElement.querySelector('textarea[name="' + fieldName + '"]');
         if (textarea) {
             textarea.value = value;
         }
-        
+
         // Update Alpine.js form data
         const component = editor.closest('[x-data]');
         if (component && component.__x) {
@@ -627,7 +645,7 @@
         }
     };
 
-    window.updateAuditeeAction = async function(isApprove = false) {
+    window.updateAuditeeAction = async function(isApprove = false, isDraft = false) {
 
         // ✅ 1. Hapus error messages lama
         const errorContainer = document.getElementById('attachmentErrorContainer');
@@ -656,48 +674,56 @@
             }
         }
 
+        // Get file inputs and declare variables outside validation block
+        const photoInput2 = document.getElementById('photoInput2');
+        const fileInput2 = document.getElementById('fileInput2');
+        let totalSize = 0;
+        let fileDetails = [];
+
         // -----------------------------
-        // VALIDATION (BLOCK SAVE)
+        // VALIDATION (BLOCK SAVE) - Skip if Draft
         // -----------------------------
 
-        const auditFindingId = document.querySelector('input[name="audit_finding_id"]')?.value;
-        const rootCause = document.querySelector('textarea[x-model="form.root_cause"]')?.value || '';
-        const yokotenChosen = document.querySelector('input[name="yokoten"]:checked');
-        const yokotenVal = yokotenChosen ? yokotenChosen.value : null;
-        const yokotenArea = document.querySelector('textarea[name="yokoten_area"]')?.value || '';
+        if (!isDraft) {
+            const auditFindingId = document.querySelector('input[name="audit_finding_id"]')?.value;
+            const rootCause = document.querySelector('textarea[x-model="form.root_cause"]')?.value || '';
+            const yokotenChosen = document.querySelector('input[name="yokoten"]:checked');
+            const yokotenVal = yokotenChosen ? yokotenChosen.value : null;
+            const yokotenArea = document.querySelector('textarea[name="yokoten_area"]')?.value || '';
 
-        let err = [];
+            let err = [];
 
-        if (!auditFindingId) err.push("Audit Finding ID is required.");
-        if (!rootCause.trim()) err.push("Root Cause cannot be empty.");
-        if (yokotenVal === null) err.push("Yokoten selection is required.");
-        if (yokotenVal == "1" && !yokotenArea.trim()) {
-            err.push("Yokoten Area must be filled when Yokoten = Yes.");
-        }
-
-        // ✅ 2.5 VALIDASI CORRECTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
-        const correctiveRows = document.querySelectorAll('.corrective-row');
-        correctiveRows.forEach((row, index) => {
-            const i = index + 1;
-            const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value?.trim() || '';
-            const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value?.trim() || '';
-            const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value?.trim() || '';
-            const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value?.trim() || '';
-
-            if (activity) {
-                if (!pic) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, PIC must also be filled.`);
-                if (!planning) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
-                if (!actual) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
+            if (!auditFindingId) err.push("Audit Finding ID is required.");
+            if (!rootCause.trim()) err.push("Root Cause cannot be empty.");
+            if (yokotenVal === null) err.push("Yokoten selection is required.");
+            if (yokotenVal == "1" && !yokotenArea.trim()) {
+                err.push("Yokoten Area must be filled when Yokoten = Yes.");
             }
-        });
 
-        // ✅ 2.6 VALIDASI PREVENTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
-        const preventiveRows = document.querySelectorAll('.preventive-row');
-        preventiveRows.forEach((row, index) => {
-            const i = index + 1;
-            const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value?.trim() || '';
-            const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value?.trim() || '';
-            const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value?.trim() || '';
+            // ✅ 2.5 VALIDASI CORRECTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
+            const correctiveRows = document.querySelectorAll('.corrective-row');
+            correctiveRows.forEach((row, index) => {
+                const i = index + 1;
+                const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value?.trim() || '';
+                const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value?.trim() || '';
+                const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value?.trim() || '';
+                const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value?.trim() || '';
+
+                if (activity) {
+                    if (!pic) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, PIC must also be filled.`);
+                    if (!planning) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
+                    if (!actual) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
+                }
+            });
+
+            // ✅ 2.6 VALIDASI PREVENTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
+            const preventiveRows = document.querySelectorAll('.preventive-row');
+            preventiveRows.forEach((row, index) => {
+                const i = index + 1;
+                const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value?.trim() || '';
+                const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value?.trim() || '';
+                const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value?.trim() || '';
+
             const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value?.trim() || '';
 
             if (activity) {
@@ -708,11 +734,6 @@
         });
 
         // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
-        const photoInput2 = document.getElementById('photoInput2');
-        const fileInput2 = document.getElementById('fileInput2');
-
-        let totalSize = 0;
-        let fileDetails = [];
 
         // Hitung total size dari photos (images)
         if (photoInput2 && photoInput2.files) {
@@ -801,6 +822,7 @@
             });
             return; // ⛔ STOP submit
         }
+        } // End of !isDraft validation block
 
         // -----------------------------
         // PREPARE FORM DATA
@@ -811,6 +833,7 @@
         formData.append('_token', token);
         formData.append('_method', 'POST');
         formData.append('action', 'update_auditee_action');
+        formData.append('is_draft', isDraft ? 1 : 0);
 
         if (isApprove) {
             formData.append('approve_ldr_spv', 1);

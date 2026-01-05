@@ -70,7 +70,7 @@
                         @php
                             $statusNeedsReview =
                                 ($finding->status->need_review ?? null) === true ||
-                                in_array(strtolower($finding->status->name ?? ''), ['need revision', 'need assign']);
+                                in_array(strtolower($finding->status->name ?? ''), ['need revision', 'need assign', 'draft']);
                         @endphp
 
                         @include('contents.ftpp2.auditee-action.partials.create-auditee-action', [

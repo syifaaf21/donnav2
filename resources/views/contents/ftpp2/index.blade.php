@@ -144,6 +144,7 @@
                                             $name = strtolower($status->name);
                                             $icons = [
                                                 'need assign' => 'alert-circle',
+                                                'draft' => 'file-text',
                                                 'need check' => 'upload-cloud',
                                                 'need approval by auditor' => 'user-check',
                                                 'need approval by lead auditor' => 'check-circle',
@@ -304,6 +305,7 @@
                                             @php
                                                 $statusColors = [
                                                     'need assign' => 'bg-red-100 text-red-600',
+                                                    'draft' => 'bg-gray-100 text-gray-600',
                                                     'need check' => 'bg-yellow-100 text-yellow-700',
                                                     'need approval by auditor' => 'bg-yellow-100 text-yellow-700',
                                                     'need revision' => 'bg-yellow-100 text-yellow-700',

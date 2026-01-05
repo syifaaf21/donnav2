@@ -15,6 +15,7 @@ use App\Models\PreventiveAction;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\SubAudit;
+use App\Models\Status;
 use App\Models\User;
 use App\Models\WhyCauses;
 use App\Notifications\AuditeeAssignedNotification;
@@ -25,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AuditeeActionController extends Controller
 {
@@ -83,14 +85,22 @@ class AuditeeActionController extends Controller
      */
     public function store(Request $request)
     {
+        $isDraft = $request->boolean('is_draft', false);
+
         try {
             // ✅ VALIDASI FILE SIZE
             $validated = $request->validate([
                 'audit_finding_id' => 'required|exists:tt_audit_findings,id',
-                'root_cause' => 'required|string',
+                'root_cause' => [$isDraft ? 'nullable' : 'required', 'string'],
                 'pic' => 'nullable|string|max:255',
-                'yokoten' => 'required|in:0,1',
-                'yokoten_area' => 'nullable|string',
+                'yokoten' => [$isDraft ? 'nullable' : 'required', Rule::in([0, 1, '0', '1'])],
+                'yokoten_area' => [
+                    'nullable',
+                    'string',
+                    Rule::requiredIf(function () use ($isDraft, $request) {
+                        return !$isDraft && (string) $request->input('yokoten') === '1';
+                    }),
+                ],
                 'ldr_spv_signature' => 'nullable|boolean',
 
                 // Why and Cause validation
@@ -111,10 +121,15 @@ class AuditeeActionController extends Controller
                 // Attachments: gabung semua file
                 'attachments' => 'nullable|array',
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
+
+                'is_draft' => 'nullable|boolean',
             ]);
+
+            $draftStatusId = Status::whereRaw('LOWER(name) = ?', ['draft'])->value('id');
+            $needCheckStatusId = Status::whereRaw('LOWER(name) = ?', ['need check'])->value('id') ?? 8;
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation error in auditee action store: ' . json_encode($e->errors()));
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -122,7 +137,7 @@ class AuditeeActionController extends Controller
                     'errors' => $e->errors()
                 ], 422);
             }
-            
+
             throw $e;
         }
 
@@ -151,8 +166,8 @@ class AuditeeActionController extends Controller
                 ['audit_finding_id' => $validated['audit_finding_id']],
                 [
                     'pic' => $validated['pic'] ?? '-',
-                    'root_cause' => $validated['root_cause'],
-                    'yokoten' => $validated['yokoten'],
+                    'root_cause' => $validated['root_cause'] ?? '',
+                    'yokoten' => $validated['yokoten'] ?? ($isDraft ? null : 0),
                     'yokoten_area' => $validated['yokoten_area'] ?? null,
                     'ldr_spv_id' => auth()->user()->id,
                 ]
@@ -243,10 +258,14 @@ class AuditeeActionController extends Controller
             // update status finding
             $auditFinding = AuditFinding::find($validated['audit_finding_id']);
             if ($auditFinding) {
-                $auditFinding->update(['status_id' => 8]);
+                if ($isDraft && $draftStatusId) {
+                    $auditFinding->update(['status_id' => $draftStatusId]);
+                } elseif (!$isDraft) {
+                    $auditFinding->update(['status_id' => $needCheckStatusId]);
+                }
             }
 
-            if ($request->has('approve_ldr_spv') && $request->approve_ldr_spv == 1) {
+            if (!$isDraft && $request->has('approve_ldr_spv') && $request->approve_ldr_spv == 1) {
                 $auditeeAction->update([
                     'ldr_spv_signature' => 1,
                     'ldr_spv_id' => auth()->user()->id
@@ -255,9 +274,9 @@ class AuditeeActionController extends Controller
 
             DB::commit();
 
-            // notify auditee(s) and auditor that auditee action / assignment exists
+            // notify auditee(s) and auditor that auditee action / assignment exists (skip draft)
             try {
-                if (!empty($auditFinding) && $auditFinding instanceof AuditFinding) {
+                if (!$isDraft && !empty($auditFinding) && $auditFinding instanceof AuditFinding) {
 
                     // 1️⃣ Notify auditees + auditor that auditee action / assignment exists
                     if ($auditFinding->auditor) {
@@ -305,15 +324,17 @@ class AuditeeActionController extends Controller
                 \Log::warning('FindingActionNotification failed: ' . $e->getMessage());
             }
 
+            $successMessage = $isDraft ? 'Draft saved successfully.' : 'Auditee Action submitted successfully.';
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Auditee Action submitted successfully.',
+                    'message' => $successMessage,
                     'id' => $auditeeAction->id
                 ]);
             }
 
-            return back()->with('success', 'Auditee Action submitted successfully.');
+            return back()->with('success', $successMessage);
         } catch (\Illuminate\Database\QueryException $e) {
             DB::rollBack();
             \Log::error('Database error in auditee action store: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
