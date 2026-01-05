@@ -36,7 +36,7 @@ class FtppController extends Controller
 
         // Determine roles lowercased for checks
         $userRolesLowercase = $user ? $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray() : [];
-        
+
         // Get original roles (non-lowercased) for blade
         $userRoles = $user ? $user->roles->pluck('name')->toArray() : [];
 
@@ -121,8 +121,65 @@ class FtppController extends Controller
         $findings->appends($request->except('page'));
 
         // Lists for filters and sidebar (include counts)
-        $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
-        $totalCount = AuditFinding::count();
+        // Count berdasarkan department user jika bukan admin/super admin
+        if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
+            // Admin/Super Admin: hitung semua dokumen
+            $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
+            $totalCount = AuditFinding::count();
+        } elseif (!empty($user) && in_array('dept head', $userRolesLowercase)) {
+            // Dept Head: hitung hanya dokumen dari department mereka
+            $userDeptIds = $user->departments->pluck('id')->toArray();
+            if (empty($userDeptIds) && !empty($user->department_id)) {
+                $userDeptIds = [(int) $user->department_id];
+            }
+
+            $statuses = Status::withCount(['auditFinding' => function($q) use ($userDeptIds) {
+                if (!empty($userDeptIds)) {
+                    $q->whereIn('department_id', $userDeptIds);
+                }
+            }])->orderBy('name')->get();
+
+            $totalCount = !empty($userDeptIds) ? AuditFinding::whereIn('department_id', $userDeptIds)->count() : 0;
+        } elseif (!empty($user) && in_array('auditor', $userRolesLowercase)) {
+            // Auditor: hitung berdasarkan filter_type
+            if ($filterType === 'assigned') {
+                $statuses = Status::withCount(['auditFinding' => function($q) use ($user) {
+                    $q->whereHas('auditee', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
+                }])->orderBy('name')->get();
+
+                $totalCount = AuditFinding::whereHas('auditee', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                })->count();
+            } else {
+                $statuses = Status::withCount(['auditFinding' => function($q) use ($user) {
+                    $q->where('auditor_id', $user->id);
+                }])->orderBy('name')->get();
+
+                $totalCount = AuditFinding::where('auditor_id', $user->id)->count();
+            }
+        } else {
+            // User lain: hitung dokumen yang terkait dengan mereka
+            $statuses = Status::withCount(['auditFinding' => function($q) use ($user) {
+                if (!empty($user)) {
+                    $q->where(function ($qa) use ($user) {
+                        $qa->where('auditor_id', $user->id)
+                            ->orWhereHas('auditee', function ($qb) use ($user) {
+                                $qb->where('users.id', $user->id);
+                            });
+                    });
+                }
+            }])->orderBy('name')->get();
+
+            $totalCount = !empty($user) ? AuditFinding::where(function ($q) use ($user) {
+                $q->where('auditor_id', $user->id)
+                    ->orWhereHas('auditee', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
+            })->count() : 0;
+        }
+
         $departments = Department::orderBy('name')->get();
 
         // auditors: users with role 'auditor' (case-insensitive)

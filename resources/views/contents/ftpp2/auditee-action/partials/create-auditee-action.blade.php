@@ -394,7 +394,7 @@
                             <button type="button"
                                 class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
                                 @click="window.confirmApprove()">
-                                Approve
+                                Submit
                             </button>
                         @endif
 

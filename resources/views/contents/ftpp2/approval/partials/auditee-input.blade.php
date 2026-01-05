@@ -12,13 +12,13 @@
         <td class="border border-black p-1">
             <div class="font-semibold mb-1">Issue Causes (5 Why)</div>
             <template x-for="i in 5">
-                <div class="ml-2 mb-1">
-                    <label>Why-<span x-text="i"></span> (Mengapa):</label>
+                <div class="ml-2 mb-1" x-show="form['why_'+i+'_mengapa'] || form['cause_'+i+'_karena']">
+                    <label x-show="form['why_'+i+'_mengapa']">Why-<span x-text="i"></span> (Mengapa):</label>
                     <input type="text" name="why[]" class="w-full border-b border-gray-400 p-1 bg-gray-100"
-                        x-model="form['why_'+i+'_mengapa']" readonly disabled>
-                    <label>Cause (Karena):</label>
+                        x-model="form['why_'+i+'_mengapa']" x-show="form['why_'+i+'_mengapa']" readonly disabled>
+                    <label x-show="form['cause_'+i+'_karena']">Cause (Karena):</label>
                     <input type="text" name="cause[]" class="w-full border-b border-gray-400 p-1 bg-gray-100"
-                        x-model="form['cause_'+i+'_karena']" readonly disabled>
+                        x-model="form['cause_'+i+'_karena']" x-show="form['cause_'+i+'_karena']" readonly disabled>
                 </div>
             </template>
             <div class="mt-1">
@@ -44,7 +44,7 @@
         <td colspan="5" class="border border-black p-1 font-semibold">Corrective Action</td>
     </tr>
     <template x-for="i in 4">
-        <tr class="corrective-row">
+        <tr class="corrective-row" x-show="form['corrective_'+i+'_activity']">
             <td class="border border-black text-center" x-text="i"></td>
             <td class="border border-black">
                 <input name="activity[]" type="text" class="w-full border-none p-1 bg-gray-100"
@@ -70,7 +70,7 @@
         <td colspan="5" class="border border-black p-1 font-semibold">Preventive Action</td>
     </tr>
     <template x-for="i in 4">
-        <tr class="preventive-row">
+        <tr class="preventive-row" x-show="form['preventive_'+i+'_activity']">
             <td class="border border-black text-center" x-text="i"></td>
             <td class="border border-black">
                 <input name="activity[]" type="text" class="w-full border-none p-1 bg-gray-100"
@@ -93,7 +93,7 @@
 </table>
 
 {{-- YOKOTEN --}}
-<table class="w-full border border-black text-sm mt-2">
+<table class="w-full border border-black text-sm mt-2" x-show="form.yokoten !== null && form.yokoten !== undefined && form.yokoten !== ''">
     <tr>
         <td class="border border-black p-2 w-2/3">
             <label>Yokoten?<span class="text-danger">*</span></label>
@@ -105,7 +105,7 @@
     </tr>
     <tr>
         <td>
-            <label>Please specify:</label>
+            <label x-show="form.yokoten == 1">Please specify:</label>
             <textarea name="yokoten_area" x-show="form.yokoten == 1" x-model="form.yokoten_area"
                 class="w-full border border-gray-400 rounded p-2 h-24 bg-gray-100" readonly disabled></textarea>
         </td>
