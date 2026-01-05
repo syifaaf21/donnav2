@@ -47,8 +47,7 @@
 <input type="hidden" name="action" value="update_auditee_action">
 <input type="hidden" name="pic" value="{{ auth()->user()->id }}">
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
-<div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif
-    x-data="{ whyCount: 1, correctiveCount: 1, preventiveCount: 1 }">
+<div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
     <div class="gap-4 my-2">
         <!-- LEFT: 5 WHY -->
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-4">

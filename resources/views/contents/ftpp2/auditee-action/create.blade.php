@@ -56,7 +56,7 @@
         </div> --}}
 
         <div class="space-y-6 mt-2">
-            <div x-data="editFtppApp()" x-init="init()">
+            <div x-data="editFtppApp()" x-init="init()" id="mainApp">
                 <form action="{{ route('ftpp.auditee-action.store', $finding->id) }}" method="POST">
                     @csrf
                     @method('POST')
@@ -87,6 +87,9 @@
     function editFtppApp(data) {
         return {
             selectedId: null,
+            whyCount: 1,
+            correctiveCount: 1,
+            preventiveCount: 1,
             form: {
                 status_id: 7,
                 audit_type_id: "",
@@ -99,6 +102,9 @@
                 finding_category_id: "",
                 auditee_ids: "",
                 sub_klausul_id: [],
+                yokoten: null,
+                yokoten_area: "",
+                root_cause: "",
 
                 sub_audit: [],
                 auditees: [],
@@ -200,8 +206,13 @@
                     // Root Cause
                     this.form.root_cause = action.root_cause ?? '';
 
-                    // Yokoten
-                    this.form.yokoten = action.yokoten ?? '';
+                    // Yokoten - set ke nilai aktual dari database
+                    // Jika kosong/null, biarkan tetap null (tidak ada pilihan)
+                    if (action.yokoten !== null && action.yokoten !== undefined && action.yokoten !== '') {
+                        this.form.yokoten = String(action.yokoten);
+                    } else {
+                        this.form.yokoten = null;
+                    }
                     this.form.yokoten_area = action.yokoten_area ?? '';
 
                     // ========================
@@ -213,6 +224,7 @@
                             this.form[`why_${i}_mengapa`] = row.why_description || '';
                             this.form[`cause_${i}_karena`] = row.cause_description || '';
                         });
+                        this.whyCount = action.why_causes.length;
                     }
 
                     // ========================
@@ -226,6 +238,7 @@
                             this.form[`corrective_${i}_planning`] = row.planning_date?.substring(0, 10) ?? '';
                             this.form[`corrective_${i}_actual`] = row.actual_date?.substring(0, 10) ?? '';
                         });
+                        this.correctiveCount = action.corrective_actions.length;
                     }
 
                     // ========================
@@ -239,6 +252,7 @@
                             this.form[`preventive_${i}_planning`] = row.planning_date?.substring(0, 10) ?? '';
                             this.form[`preventive_${i}_actual`] = row.actual_date?.substring(0, 10) ?? '';
                         });
+                        this.preventiveCount = action.preventive_actions.length;
                     }
 
                     this.$nextTick(() => {

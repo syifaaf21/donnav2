@@ -234,9 +234,7 @@
                 @foreach ($groupedByPlant as $plant => $documents)
                     @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
                     <div x-show="activeTab === '{{ $slug }}'" x-transition class="flex flex-col">
-                        <div class="mb-4 flex items-center justify-between">
-                            <h2 class="text-lg font-bold text-gray-800">{{ ucwords(strtolower($plant)) }}</h2>
-
+                        <div class="mb-4 flex items-center justify-end">
                             {{-- Add Document Button --}}
                             <div class="flex items-center gap-2">
                                 <button
