@@ -179,7 +179,6 @@
             </div>
             <!-- ACTION BUTTONS -->
             <div class="flex items-center gap-4">
-
                 @php
                     $userRoles = auth()->user()->roles->pluck('name')->toArray();
                 @endphp
@@ -259,9 +258,37 @@
             <div class="flex-1">
                 <div class="overflow-hidden px-2">
                     <div class="overflow-x-auto bg-white shadow-xl shadow-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden"
+                            x-data="{
+                                selectedIds: [],
+                                selectAll: false,
+                                toggleAll() {
+                                    if (this.selectAll) {
+                                        this.selectedIds = Array.from(document.querySelectorAll('.row-checkbox')).map(cb => cb.value);
+                                    } else {
+                                        this.selectedIds = [];
+                                    }
+                                    this.$dispatch('update-selected', this.selectedIds);
+                                },
+                                toggleRow(id) {
+                                    if (this.selectedIds.includes(id)) {
+                                        this.selectedIds = this.selectedIds.filter(item => item !== id);
+                                    } else {
+                                        this.selectedIds.push(id);
+                                    }
+                                    this.selectAll = this.selectedIds.length === document.querySelectorAll('.row-checkbox').length;
+                                    this.$dispatch('update-selected', this.selectedIds);
+                                }
+                            }">
                             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
+                                    @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
+                                        <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                            style="color: #1e2b50; letter-spacing: 0.5px; width: 50px;">
+                                            <input type="checkbox" x-model="selectAll" @change="toggleAll()"
+                                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        </th>
+                                    @endif
                                     <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
@@ -297,6 +324,15 @@
                                 @forelse($findings as $finding)
                                     <tr
                                         class="hover:bg-white transition-all duration-300 hover:shadow-lg hover:scale-y-105 origin-center">
+                                        @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
+                                            <td class="px-4 py-3 whitespace-nowrap text-center border-r border-gray-200">
+                                                <input type="checkbox"
+                                                    class="row-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    value="{{ $finding->id }}"
+                                                    :checked="selectedIds.includes('{{ $finding->id }}')"
+                                                    @change="toggleRow('{{ $finding->id }}')">
+                                            </td>
+                                        @endif
                                         <td
                                             class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 border-r border-gray-200">
                                             {{ $finding->registration_number ?? '-' }}</td>
@@ -464,6 +500,27 @@
         </div>
 
         @include('contents.ftpp2.show')
+
+        <!-- Floating Bulk Delete Button -->
+        <div x-data="{ selectedIds: [] }" @update-selected.window="selectedIds = $event.detail">
+            <div x-show="selectedIds.length > 0"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-4"
+                class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
+                style="display: none;">
+                <button type="button" @click="confirmBulkDelete(selectedIds)"
+                    class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-600 text-white font-medium
+                           shadow-2xl hover:bg-red-700 hover:shadow-red-500/50 transition-all duration-300
+                           transform hover:scale-105 active:scale-95">
+                    <i data-feather="trash-2" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Delete <span x-text="selectedIds.length"></span> item(s)</span>
+                </button>
+            </div>
+        </div>
     </div> {{-- end .p-6 --}}
 
 @endsection
@@ -607,6 +664,79 @@
                     }
                 });
             }
+        }
+
+        // Bulk Delete Function
+        function confirmBulkDelete(ids) {
+            if (!ids || ids.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No items selected',
+                    text: 'Please select at least one item to delete.'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Delete ' + ids.length + ' item(s)?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete them!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Send bulk delete request
+                    fetch('{{ route("ftpp.bulk-destroy") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ ids: ids })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: data.message || 'Items have been deleted.',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'Failed to delete items.'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while deleting items.'
+                        });
+                    });
+                }
+            });
         }
     </script>
 @endpush

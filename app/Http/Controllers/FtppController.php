@@ -550,6 +550,31 @@ class FtppController extends Controller
     }
 
     /**
+     * Bulk Delete Findings
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:tt_audit_findings,id'
+        ]);
+
+        try {
+            $deleted = AuditFinding::whereIn('id', $request->ids)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$deleted} finding(s) deleted successfully."
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete findings: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Download PDF Finding
      */
     public function download($id)

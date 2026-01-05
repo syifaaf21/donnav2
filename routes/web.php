@@ -217,6 +217,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
         Route::delete('/{id}', [FtppController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-destroy', [FtppController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
 
