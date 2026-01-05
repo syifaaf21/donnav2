@@ -263,14 +263,23 @@
             </td>
         </tr>
         @foreach ($finding->auditeeAction->whyCauses ?? [] as $index => $why)
-            <tr>
-                <td style="width: 25%;">Why {{ $index + 1 }} (Mengapa)</td>
-                <td class="preserve-newlines">{!! strip_tags($why->why_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
-            </tr>
-            <tr>
-                <td>Cause (Karena)</td>
-                <td class="preserve-newlines">{!! strip_tags($why->cause_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
-            </tr>
+        <tr>
+            <td style="width: 15%; font-weight: bold; vertical-align: top; border-right: 2px solid #000; padding-right: 6px;">Why-{{ $index + 1 }}</td>
+            <td style="padding-left: 6px;">
+                <table style="width: 100%; border: none;">
+                    <tr>
+                        <td style="border: none; padding: 0; width: auto; font-weight: bold;">Mengapa</td>
+                        <td style="border: none; padding: 0 2px 0 3px;">:</td>
+                        <td style="border: none; padding: 0;" class="preserve-newlines">{!! strip_tags($why->why_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 4px 0 0 0; font-weight: bold;">Karena</td>
+                        <td style="border: none; padding: 4px 2px 0 3px;">:</td>
+                        <td style="border: none; padding: 4px 0 0 0;" class="preserve-newlines">{!! strip_tags($why->cause_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
         @endforeach
         <tr>
             <td class="font-semibold">Root Cause</td>
