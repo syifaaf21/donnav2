@@ -3,29 +3,26 @@
     <tr>
         <td class="border border-black p-1 w-1/3 align-top">
             <span class="font-semibold">Audit Type:</span>
-            <div class="mt-2 space-y-2">
+            <div class="mt-2">
                 @foreach ($auditTypes as $type)
-                    <label class="flex items-center gap-2 p-2 rounded border cursor-not-allowed transition-all"
-                        :class="String(form.audit_type_id) === '{{ $type->id }}' ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
-                        <input type="radio" name="audit_type_id" value="{{ $type->id }}" x-model="form.audit_type_id" disabled
-                            class="w-4 h-4 text-blue-600">
-                        <span>{{ $type->name }}</span>
-                    </label>
+                    <div x-show="String(form.audit_type_id) === '{{ $type->id }}'" class="text-gray-700">
+                        <input type="hidden" name="audit_type_id" value="{{ $type->id }}" x-model="form.audit_type_id">
+                        {{ $type->name }}
+                    </div>
                 @endforeach
             </div>
 
             {{-- Level 2: Sub Audit Type (muncul hanya jika audit type dipilih) --}}
-            <div id="subAuditType" class="mt-2 ml-4 flex flex-wrap gap-2">
-                @foreach ($subAudit as $sub)
-                    <label class="flex items-center gap-2 p-2 rounded border cursor-not-allowed transition-all"
-                        x-show="String(form.audit_type_id) === '{{ $sub->audit_type_id }}'"
-                        :class="String(form.sub_audit_type_id) === '{{ $sub->id }}' ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
-                        <input type="radio" name="sub_audit_type_id" value="{{ $sub->id }}"
-                               x-model="form.sub_audit_type_id" disabled
-                               class="w-4 h-4 text-blue-600">
-                        <span>{{ $sub->name }}</span>
-                    </label>
-                @endforeach
+            <div id="subAuditType" class="mt-3" x-show="form.sub_audit_type_id">
+                <span class="font-semibold">Sub Audit Type:</span>
+                <div class="mt-2">
+                    @foreach ($subAudit as $sub)
+                        <div x-show="String(form.audit_type_id) === '{{ $sub->audit_type_id }}' && String(form.sub_audit_type_id) === '{{ $sub->id }}'" class="text-gray-700">
+                            <input type="hidden" name="sub_audit_type_id" value="{{ $sub->id }}" x-model="form.sub_audit_type_id">
+                            {{ $sub->name }}
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </td>
 

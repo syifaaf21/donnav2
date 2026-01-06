@@ -340,7 +340,6 @@
 
                         this.form._plant_display = [dept, proc, prod]
                             .filter(Boolean)
-                            .map(t => t.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()))
                             .join(' / ') || '-';
 
                         //
