@@ -193,9 +193,10 @@
                                     class="w-full p-1 border-none" x-model="form['corrective_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="text" :name="'corrective_' + i + '_actual'"
-                                    class="w-full p-1 border-none" x-model="form['corrective_'+i+'_actual']"
-                                    placeholder="dd/mm/yyyy or -">
+                                <input type="date" :name="'corrective_' + i + '_actual'"
+                                    class="w-full p-1 border-none" 
+                                    x-model="form['corrective_'+i+'_actual']"
+                                    @change="form['corrective_'+i+'_actual'] = $el.value || '-'">
                             </td>
                         </tr>
                     </template>
@@ -253,9 +254,10 @@
                                     class="w-full p-1 border-none" x-model="form['preventive_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="text" :name="'preventive_' + i + '_actual'"
-                                    class="w-full p-1 border-none" x-model="form['preventive_'+i+'_actual']"
-                                    placeholder="dd/mm/yyyy or -">
+                                <input type="date" :name="'preventive_' + i + '_actual'"
+                                    class="w-full p-1 border-none" 
+                                    x-model="form['preventive_'+i+'_actual']"
+                                    @change="form['preventive_'+i+'_actual'] = $el.value || '-'">
                             </td>
                         </tr>
                     </template>
@@ -699,23 +701,21 @@
                 err.push("Yokoten Area must be filled when Yokoten = Yes.");
             }
 
-            // ✅ 2.5 VALIDASI CORRECTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
+            // ✅ 2.5 VALIDASI CORRECTIVE ACTION - jika Activity diisi, maka PIC, Planning harus diisi (Actual boleh kosong = default "-")
             const correctiveRows = document.querySelectorAll('.corrective-row');
             correctiveRows.forEach((row, index) => {
                 const i = index + 1;
                 const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value?.trim() || '';
                 const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value?.trim() || '';
                 const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value?.trim() || '';
-                const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value?.trim() || '';
 
                 if (activity) {
                     if (!pic) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, PIC must also be filled.`);
                     if (!planning) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
-                    if (!actual) err.push(`❌ Corrective Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
                 }
             });
 
-            // ✅ 2.6 VALIDASI PREVENTIVE ACTION - jika Activity diisi, maka PIC, Planning, Actual harus diisi
+            // ✅ 2.6 VALIDASI PREVENTIVE ACTION - jika Activity diisi, maka PIC, Planning harus diisi (Actual boleh kosong = default "-")
             const preventiveRows = document.querySelectorAll('.preventive-row');
             preventiveRows.forEach((row, index) => {
                 const i = index + 1;
@@ -723,14 +723,11 @@
                 const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value?.trim() || '';
                 const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value?.trim() || '';
 
-            const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value?.trim() || '';
-
-            if (activity) {
-                if (!pic) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, PIC must also be filled.`);
-                if (!planning) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
-                if (!actual) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
-            }
-        });
+                if (activity) {
+                    if (!pic) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, PIC must also be filled.`);
+                    if (!planning) err.push(`❌ Preventive Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
+                }
+            });
 
         // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
 
@@ -864,7 +861,7 @@
                 '';
             const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value || '';
             const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value || '';
-            const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value || '';
+            const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value || '-';
 
             formData.append(`corrective_${i}_activity`, activity);
             formData.append(`corrective_${i}_pic`, pic);
@@ -880,7 +877,7 @@
                 '';
             const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value || '';
             const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value || '';
-            const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value || '';
+            const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value || '-';
 
             formData.append(`preventive_${i}_activity`, activity);
             formData.append(`preventive_${i}_pic`, pic);

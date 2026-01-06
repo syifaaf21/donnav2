@@ -46,21 +46,21 @@
     <template x-for="i in 4">
         <tr class="corrective-row" x-show="form['corrective_'+i+'_activity']">
             <td class="border border-black text-center" x-text="i"></td>
-            <td class="border border-black">
-                <input name="activity[]" type="text" class="w-full border-none p-1 bg-gray-100"
-                    x-model="form['corrective_'+i+'_activity']" readonly disabled>
+            <td class="border border-black p-1" style="word-wrap: break-word; white-space: normal; display: table-cell; vertical-align: top;">
+                <div class="w-full bg-gray-100 p-1 rounded min-h-10 flex items-center" x-text="form['corrective_'+i+'_activity']"></div>
             </td>
             <td class="border border-black">
-                <input name="pic[]" type="text" class="w-full border-none p-1 bg-gray-100"
+                <input name="pic[]" type="text" class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center"
                     x-model="form['corrective_'+i+'_pic']" readonly disabled>
             </td>
             <td class="border border-black">
-                <input name="planning_date[]" type="date" class="w-full border-none p-1 bg-gray-100"
+                <input name="planning_date[]" type="date" class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center"
                     x-model="form['corrective_'+i+'_planning']" readonly disabled>
             </td>
-            <td class="border border-black">
+            <td class="border border-black text-center">
+                <span x-show="form['corrective_'+i+'_actual'] === '-' || !form['corrective_'+i+'_actual']" class="block p-1">-</span>
                 <input name="actual_date[]" type="date" class="w-full border-none p-1 bg-gray-100"
-                    x-model="form['corrective_'+i+'_actual']" readonly disabled>
+                    x-model="form['corrective_'+i+'_actual']" x-show="form['corrective_'+i+'_actual'] && form['corrective_'+i+'_actual'] !== '-'" readonly disabled>
             </td>
         </tr>
     </template>
@@ -72,21 +72,21 @@
     <template x-for="i in 4">
         <tr class="preventive-row" x-show="form['preventive_'+i+'_activity']">
             <td class="border border-black text-center" x-text="i"></td>
-            <td class="border border-black">
-                <input name="activity[]" type="text" class="w-full border-none p-1 bg-gray-100"
-                    x-model="form['preventive_'+i+'_activity']" readonly disabled>
+            <td class="border border-black p-1" style="word-wrap: break-word; white-space: normal; display: table-cell; vertical-align: top;">
+                <div class="w-full bg-gray-100 p-1 rounded min-h-10 flex items-center" x-text="form['preventive_'+i+'_activity']"></div>
             </td>
             <td class="border border-black">
-                <input name="pic[]" type="text" class="w-full border-none p-1 bg-gray-100"
+                <input name="pic[]" type="text" class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center"
                     x-model="form['preventive_'+i+'_pic']" readonly disabled>
             </td>
             <td class="border border-black">
-                <input name="planning_date[]" type="date" class="w-full border-none p-1 bg-gray-100"
+                <input name="planning_date[]" type="date" class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center"
                     x-model="form['preventive_'+i+'_planning']" readonly disabled>
             </td>
-            <td class="border border-black">
+            <td class="border border-black text-center">
+                <span x-show="form['preventive_'+i+'_actual'] === '-' || !form['preventive_'+i+'_actual']" class="block p-1">-</span>
                 <input name="actual_date[]" type="date" class="w-full border-none p-1 bg-gray-100"
-                    x-model="form['preventive_'+i+'_actual']" readonly disabled>
+                    x-model="form['preventive_'+i+'_actual']" x-show="form['preventive_'+i+'_actual'] && form['preventive_'+i+'_actual'] !== '-'" readonly disabled>
             </td>
         </tr>
     </template>
