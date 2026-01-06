@@ -15,6 +15,7 @@
             <tr>
                 <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
                 <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Audit Type</th>
+                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Department</th>
                 <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Sub Audit Type</th>
                 <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Action
                 </th>
@@ -27,6 +28,13 @@
                         {{ $index + 1 }}</td>
                     <td class="py-2 px-3 border-r border-gray-200 text-sm font-semibold">
                         {{ $audit->name }}</td>
+                    <td class="py-2 px-3 border-r border-gray-200 text-sm text-center">
+                        @if ($audit->department)
+                            <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">{{ $audit->department->code }}</span>
+                        @else
+                            <span class="text-gray-400">-</span>
+                        @endif
+                    </td>
                     <td class="py-2 px-3 border-r border-gray-200 text-sm">
                         @if ($audit->subAudit->isNotEmpty())
                             <ul class="list-disc list-inside space-y-0.5">
@@ -97,6 +105,26 @@
                             class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror"
                             value="{{ old('name') }}">
                         @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- Department --}}
+                    <div class="col-md-12">
+                        <label for="department_id" class="form-label fw-semibold">Department <span
+                                class="text-danger">*</span></label>
+                        <select name="department_id" id="department_id" required
+                            class="form-select border-0 shadow-sm rounded-3 @error('department_id') is-invalid @enderror">
+                            <option value="" disabled selected>Select Department</option>
+                            @forelse ($departments as $dept)
+                                <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                    {{ $dept->name }} ({{ $dept->code }})
+                                </option>
+                            @empty
+                                <option value="" disabled>No departments available</option>
+                            @endforelse
+                        </select>
+                        @error('department_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -175,6 +203,26 @@
                         <input type="text" name="name" id="edit_audit_name" required
                             class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
                         @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- Department --}}
+                    <div class="col-md-12">
+                        <label for="edit_department_id" class="form-label fw-semibold">Department <span
+                                class="text-danger">*</span></label>
+                        <select name="department_id" id="edit_department_id" required
+                            class="form-select border-0 shadow-sm rounded-3 @error('department_id') is-invalid @enderror">
+                            <option value="" disabled selected>Select Department</option>
+                            @forelse ($departments as $dept)
+                                <option value="{{ $dept->id }}">
+                                    {{ $dept->name }} ({{ $dept->code }})
+                                </option>
+                            @empty
+                                <option value="" disabled>No departments available</option>
+                            @endforelse
+                        </select>
+                        @error('department_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -299,6 +347,7 @@
                     const data = await response.json();
 
                     document.getElementById('edit_audit_name').value = data.name;
+                    document.getElementById('edit_department_id').value = data.department_id || '';
                     document.getElementById('formEditAudit').action =
                         `/master/ftpp/audit/update/${id}`;
                     const container = document.getElementById('edit-sub-audit-container');
@@ -348,7 +397,7 @@
             document.querySelectorAll('#section-audit .delete-form').forEach(form => {
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    
+
                     Swal.fire({
                         title: 'Are you sure?',
                         text: "You want to delete this audit data?",

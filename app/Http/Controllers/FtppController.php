@@ -133,7 +133,7 @@ class FtppController extends Controller
                 $userDeptIds = [(int) $user->department_id];
             }
 
-            $statuses = Status::withCount(['auditFinding' => function($q) use ($userDeptIds) {
+            $statuses = Status::withCount(['auditFinding' => function ($q) use ($userDeptIds) {
                 if (!empty($userDeptIds)) {
                     $q->whereIn('department_id', $userDeptIds);
                 }
@@ -143,7 +143,7 @@ class FtppController extends Controller
         } elseif (!empty($user) && in_array('auditor', $userRolesLowercase)) {
             // Auditor: hitung berdasarkan filter_type
             if ($filterType === 'assigned') {
-                $statuses = Status::withCount(['auditFinding' => function($q) use ($user) {
+                $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
                     $q->whereHas('auditee', function ($qa) use ($user) {
                         $qa->where('users.id', $user->id);
                     });
@@ -153,7 +153,7 @@ class FtppController extends Controller
                     $q->where('users.id', $user->id);
                 })->count();
             } else {
-                $statuses = Status::withCount(['auditFinding' => function($q) use ($user) {
+                $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
                     $q->where('auditor_id', $user->id);
                 }])->orderBy('name')->get();
 
@@ -161,7 +161,7 @@ class FtppController extends Controller
             }
         } else {
             // User lain: hitung dokumen yang terkait dengan mereka
-            $statuses = Status::withCount(['auditFinding' => function($q) use ($user) {
+            $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
                 if (!empty($user)) {
                     $q->where(function ($qa) use ($user) {
                         $qa->where('auditor_id', $user->id)
@@ -219,7 +219,7 @@ class FtppController extends Controller
 
     public function getData($auditTypeId)
     {
-        $auditType = Audit::with('subAudit')->findOrFail($auditTypeId);
+        $auditType = Audit::with('subAudit', 'department')->findOrFail($auditTypeId);
 
         // Use the shared generator so numbering always takes the highest existing record
         $code = $this->generateRegistrationNumber($auditTypeId);
@@ -238,7 +238,16 @@ class FtppController extends Controller
     public function generateRegistrationNumber($auditTypeId)
     {
         $year   = now()->year;
-        $prefix = ($auditTypeId == 1) ? 'MS' : 'MR';
+        
+        // Get the audit type with its department
+        $auditType = Audit::with('department')->findOrFail($auditTypeId);
+        
+        // Use department code if available, otherwise fallback to auditTypeId check
+        if ($auditType->department) {
+            $prefix = $auditType->department->code;
+        } else {
+            $prefix = ($auditTypeId == 1) ? 'MS' : 'MR';
+        }
 
         // Find the highest sequence for this prefix/year
         $lastRecord = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
@@ -261,8 +270,19 @@ class FtppController extends Controller
 
     public function filterKlausul($auditType)
     {
-        // Contoh mapping manual
-        $klausuls = Klausul::where('audit_type_id', $auditType)->get();
+        // Samakan mapping dengan FtppApprovalController
+        // auditType 2 -> klausul id 1 (Management Mutu), selain itu -> id 2,3 (Management LK3)
+        $klausulIds = $auditType == 2
+            ? [1]
+            : [2, 3];
+
+        $klausuls = Klausul::whereIn('id', $klausulIds)->get();
+
+        // Fallback: jika kosong, coba berdasarkan audit_type_id agar tidak blank
+        if ($klausuls->isEmpty()) {
+            $klausuls = Klausul::where('audit_type_id', $auditType)->get();
+        }
+
         return response()->json($klausuls);
     }
 

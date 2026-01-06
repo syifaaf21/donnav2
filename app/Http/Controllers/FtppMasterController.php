@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Audit;
+use App\Models\Department;
 use App\Models\FindingCategory;
 use App\Models\Klausul;
 use Illuminate\Http\Request;
@@ -15,7 +16,8 @@ class FtppMasterController extends Controller
         $audits = Audit::with('subAudit')->get();
         $findingCategories = FindingCategory::all();
         $klausuls = Klausul::with('headKlausul.subKlausul')->get();
+        $departments = Department::all();
 
-        return view('contents.master.ftpp.index', compact('audits', 'findingCategories', 'klausuls'));
+        return view('contents.master.ftpp.index', compact('audits', 'findingCategories', 'klausuls', 'departments'));
     }
 }

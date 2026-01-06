@@ -18,6 +18,7 @@ class AuditTypeController extends Controller
         return response()->json([
             'id' => $audit->id,
             'name' => $audit->name,
+            'department_id' => $audit->department_id,
             'sub_audit' => $audit->subAudit->map(function ($sub) {
                 return [
                     'id' => $sub->id,
@@ -32,7 +33,10 @@ class AuditTypeController extends Controller
      */
     public function store(Request $request)
     {
-        $audit = Audit::create(['name' => $request->name]);
+        $audit = Audit::create([
+            'name' => $request->name,
+            'department_id' => $request->department_id,
+        ]);
 
         if ($request->has('sub_audit')) {
             foreach ($request->sub_audit as $sub) {
@@ -51,7 +55,10 @@ class AuditTypeController extends Controller
     public function update(Request $request, string $id)
     {
         $audit = Audit::findOrFail($id);
-        $audit->update(['name' => $request->name]);
+        $audit->update([
+            'name' => $request->name,
+            'department_id' => $request->department_id,
+        ]);
 
         // 🔁 Hapus semua sub audit lama terlebih dahulu
         $audit->subAudit()->delete();
