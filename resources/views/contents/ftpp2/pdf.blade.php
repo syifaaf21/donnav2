@@ -138,6 +138,22 @@
         .preserve-newlines u {
             font-size: 11px !important;
         }
+        .preserve-newlines ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 4px 0;
+            font-size: 11px !important;
+        }
+        .preserve-newlines ol {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin: 4px 0;
+            font-size: 11px !important;
+        }
+        .preserve-newlines li {
+            margin: 2px 0;
+            font-size: 11px !important;
+        }
         .note {
             font-size: 10px;
             /* lebih kecil dari text-sm */
@@ -220,7 +236,7 @@
         <tr>
             <td>
                 <b>Finding / Issue:</b><br>
-                <div class="preserve-newlines">{!! strip_tags($finding->finding_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</div>
+                <div class="preserve-newlines">{!! strip_tags($finding->finding_description ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</div>
 
                 {{-- Tampilkan lampiran gambar yang terkait dengan finding ini --}}
                 @foreach ($finding->file ?? [] as $image)
@@ -270,12 +286,12 @@
                     <tr>
                         <td style="border: none; padding: 0; width: auto; font-weight: bold;">Mengapa</td>
                         <td style="border: none; padding: 0 2px 0 3px;">:</td>
-                        <td style="border: none; padding: 0;" class="preserve-newlines">{!! strip_tags($why->why_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                        <td style="border: none; padding: 0;" class="preserve-newlines">{!! strip_tags($why->why_description ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
                     </tr>
                     <tr>
                         <td style="border: none; padding: 4px 0 0 0; font-weight: bold;">Karena</td>
                         <td style="border: none; padding: 4px 2px 0 3px;">:</td>
-                        <td style="border: none; padding: 4px 0 0 0;" class="preserve-newlines">{!! strip_tags($why->cause_description ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                        <td style="border: none; padding: 4px 0 0 0;" class="preserve-newlines">{!! strip_tags($why->cause_description ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
                     </tr>
                 </table>
             </td>
@@ -283,7 +299,7 @@
         @endforeach
         <tr>
             <td class="font-semibold">Root Cause</td>
-            <td class="preserve-newlines">{!! strip_tags($finding->auditeeAction->root_cause ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+            <td class="preserve-newlines">{!! strip_tags($finding->auditeeAction->root_cause ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
         </tr>
     </table>
 
@@ -304,8 +320,8 @@
         @foreach ($finding->auditeeAction->correctiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td class="preserve-newlines">{!! strip_tags($action->activity ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
-                <td class="preserve-newlines">{!! strip_tags($action->pic ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->activity ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->pic ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
@@ -339,8 +355,8 @@
         @foreach ($finding->auditeeAction->preventiveActions ?? [] as $index => $action)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td class="preserve-newlines">{!! strip_tags($action->activity ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
-                <td class="preserve-newlines">{!! strip_tags($action->pic ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->activity ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
+                <td class="preserve-newlines">{!! strip_tags($action->pic ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
                 <td class="text-center">
                     {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
                 </td>
@@ -378,7 +394,7 @@
         <tr>
             <td>
                 @if ($finding->auditeeAction->yokoten)
-                    <b>Area:</b> <div class="preserve-newlines" style="display: inline-block;">{!! strip_tags($finding->auditeeAction->yokoten_area ?? '-', '<b><i><u><strong><em><br><div><p>') !!}</div>
+                    <b>Area:</b> <div class="preserve-newlines" style="display: inline-block;">{!! strip_tags($finding->auditeeAction->yokoten_area ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</div>
                 @endif
             </td>
             <td class="text-center">

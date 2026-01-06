@@ -38,6 +38,19 @@
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
+    .rte-editor ul {
+        list-style-type: disc;
+        padding-left: 24px;
+        margin: 8px 0;
+    }
+    .rte-editor ol {
+        list-style-type: decimal;
+        padding-left: 24px;
+        margin: 8px 0;
+    }
+    .rte-editor li {
+        margin: 4px 0;
+    }
     .rte-container {
         width: 100%;
     }
@@ -80,6 +93,8 @@
                                         <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
                                         <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
                                         <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                        <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                        <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                     </div>
                                     <div class="rte-editor" contenteditable="true"
                                         :data-field="'why_' + i + '_mengapa'"
@@ -95,6 +110,8 @@
                                         <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
                                         <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
                                         <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                        <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                        <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                     </div>
                                     <div class="rte-editor" contenteditable="true"
                                         :data-field="'cause_' + i + '_karena'"
@@ -115,6 +132,8 @@
                             <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
                             <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
                             <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                            <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                            <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                         </div>
                         <div class="rte-editor" contenteditable="true"
                             data-field="root_cause"
@@ -167,6 +186,8 @@
                                     <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
                                     <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
                                     <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                 </div>
                                 <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
                                     :data-field="'corrective_' + i + '_activity'"
@@ -180,6 +201,8 @@
                                     <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
                                     <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
                                     <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                 </div>
                                 <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
                                     :data-field="'corrective_' + i + '_pic'"
@@ -194,7 +217,7 @@
                             </td>
                             <td class="border border-gray-200">
                                 <input type="date" :name="'corrective_' + i + '_actual'"
-                                    class="w-full p-1 border-none" 
+                                    class="w-full p-1 border-none"
                                     x-model="form['corrective_'+i+'_actual']"
                                     @change="form['corrective_'+i+'_actual'] = $el.value || '-'">
                             </td>
@@ -228,6 +251,8 @@
                                     <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
                                     <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
                                     <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                 </div>
                                 <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
                                     :data-field="'preventive_' + i + '_activity'"
@@ -241,6 +266,8 @@
                                     <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
                                     <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
                                     <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                 </div>
                                 <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
                                     :data-field="'preventive_' + i + '_pic'"
@@ -255,7 +282,7 @@
                             </td>
                             <td class="border border-gray-200">
                                 <input type="date" :name="'preventive_' + i + '_actual'"
-                                    class="w-full p-1 border-none" 
+                                    class="w-full p-1 border-none"
                                     x-model="form['preventive_'+i+'_actual']"
                                     @change="form['preventive_'+i+'_actual'] = $el.value || '-'">
                             </td>
@@ -288,6 +315,8 @@
                             <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
                             <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
                             <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                            <button type="button" onclick="formatList(this, 'insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                            <button type="button" onclick="formatList(this, 'insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
                         </div>
                         <div class="rte-editor" contenteditable="true" style="min-height: 96px;"
                             data-field="yokoten_area"
@@ -446,6 +475,51 @@
         });
     }
 
+    // Format list function for bullet and numbered lists
+    function formatList(button, command) {
+        // Prevent form submission
+        event.preventDefault();
+
+        // Get the editor div (next sibling after toolbar)
+        const toolbar = button.parentElement;
+        const editor = toolbar.nextElementSibling;
+
+        // Focus on editor
+        editor.focus();
+
+        // Get current selection
+        const selection = window.getSelection();
+
+        // If there's no selection or editor is empty, create initial content
+        if (!selection.toString() || editor.textContent.trim() === '') {
+            // Create a new list with one item
+            if (command === 'insertUnorderedList') {
+                editor.innerHTML = '<ul><li></li></ul>';
+            } else if (command === 'insertOrderedList') {
+                editor.innerHTML = '<ol><li></li></ol>';
+            }
+
+            // Move cursor to the list item
+            const listItem = editor.querySelector('li');
+            if (listItem) {
+                const range = document.createRange();
+                range.setStart(listItem, 0);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        } else {
+            // If there's text selected, wrap it in a list
+            document.execCommand(command, false, null);
+        }
+
+        // Update button state
+        updateToolbarState(toolbar, editor);
+
+        // Trigger input event to sync with Alpine.js
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     // Alpine.js global function to update hidden field
     document.addEventListener('alpine:init', () => {
         Alpine.magic('updateHiddenField', () => {
@@ -482,6 +556,57 @@
             }
         }
     };
+
+    // Add event listener to all rte-editors for handling Enter key in lists
+    document.addEventListener('DOMContentLoaded', function() {
+        // Use event delegation for dynamically created editors
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('rte-editor') && e.key === 'Enter') {
+                const editor = e.target;
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const currentNode = range.startContainer;
+
+                // Check if we're inside a list item
+                let listItem = currentNode.nodeType === 3 ? currentNode.parentElement : currentNode;
+                while (listItem && listItem !== editor && listItem.tagName !== 'LI') {
+                    listItem = listItem.parentElement;
+                }
+
+                if (listItem && listItem.tagName === 'LI') {
+                    // Check if the current list item is empty
+                    if (listItem.textContent.trim() === '') {
+                        // Exit the list if the item is empty
+                        e.preventDefault();
+                        const list = listItem.parentElement;
+                        listItem.remove();
+
+                        // Add a paragraph after the list
+                        const p = document.createElement('p');
+                        p.innerHTML = '<br>';
+                        if (list.nextSibling) {
+                            list.parentElement.insertBefore(p, list.nextSibling);
+                        } else {
+                            list.parentElement.appendChild(p);
+                        }
+
+                        // Move cursor to the new paragraph
+                        const newRange = document.createRange();
+                        newRange.setStart(p, 0);
+                        newRange.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+
+                        // If the list is empty, remove it
+                        if (list.children.length === 0) {
+                            list.remove();
+                        }
+                    }
+                    // Let default behavior create new list item if not empty
+                }
+            }
+        });
+    });
 </script>
 
 <!-- Attachment Upload Handle Script: trigger inputs, preview, count, click-outside -->

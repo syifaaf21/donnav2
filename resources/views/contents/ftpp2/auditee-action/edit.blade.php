@@ -46,6 +46,19 @@
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
+    .rte-editor ul {
+        list-style-type: disc;
+        padding-left: 24px;
+        margin: 8px 0;
+    }
+    .rte-editor ol {
+        list-style-type: decimal;
+        padding-left: 24px;
+        margin: 8px 0;
+    }
+    .rte-editor li {
+        margin: 4px 0;
+    }
     .rte-container {
         width: 100%;
     }
@@ -111,6 +124,19 @@
         .rte-editor:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .rte-editor ul {
+            list-style-type: disc;
+            padding-left: 24px;
+            margin: 8px 0;
+        }
+        .rte-editor ol {
+            list-style-type: decimal;
+            padding-left: 24px;
+            margin: 8px 0;
+        }
+        .rte-editor li {
+            margin: 4px 0;
         }
         .rte-container {
             width: 100%;
