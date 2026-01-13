@@ -488,7 +488,7 @@
     </table>
 
     <p class="note">Note : 1 Lembar form untuk satu temuan, tambahkan lampiran jika diperlukan</p>
-    <p class="note">No Form : FRM-MR-M4-001-05</p>
+    <p class="note">No Form : FRM-MR-M4-001-06</p>
 
     {{-- ==================== ATTACHMENTS ================== --}}
     {{-- LAMPIRAN FILE --}}
