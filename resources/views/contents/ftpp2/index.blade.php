@@ -283,37 +283,37 @@
                             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
                                     @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
-                                        <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                        <th class="px-4 py-2 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                             style="color: #1e2b50; letter-spacing: 0.5px; width: 50px;">
                                             <input type="checkbox" x-model="selectAll" @change="toggleAll()"
                                                 class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                         </th>
                                     @endif
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
                                     </th>
-                                    <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Status
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Department
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditor
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditee
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Due Date
                                     </th>
-                                    <th class="px-4 py-3 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Actions
                                     </th>
@@ -325,7 +325,7 @@
                                     <tr
                                         class="hover:bg-white transition-all duration-300 hover:shadow-lg hover:scale-y-105 origin-center">
                                         @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
-                                            <td class="px-4 py-3 whitespace-nowrap text-center border-r border-gray-200">
+                                            <td class="px-2 py-2 whitespace-nowrap text-center border-r border-gray-200">
                                                 <input type="checkbox"
                                                     class="row-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                     value="{{ $finding->id }}"
@@ -334,10 +334,10 @@
                                             </td>
                                         @endif
                                         <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 border-r border-gray-200">
                                             {{ $finding->registration_number ?? '-' }}</td>
                                         <td
-                                            class="px-4 py-3 whitespace-nowrap text-center text-sm border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-center text-sm border-r border-gray-200">
                                             @php
                                                 $statusColors = [
                                                     'need assign' => 'bg-red-100 text-red-600',
@@ -354,13 +354,16 @@
                                             <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
                                         </td>
                                         <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ optional($finding->department)->name ?? '-' }}</td>
                                         <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ optional($finding->auditor)->name ?? '-' }}</td>
                                         <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200 truncate max-w-xs"
+                                            @if ($finding->auditee && $finding->auditee->isNotEmpty())
+                                                title="{{ $finding->auditee->pluck('name')->join(', ') }}"
+                                            @endif>
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 {{ $finding->auditee->pluck('name')->join(', ') }}
                                             @else
@@ -368,11 +371,11 @@
                                             @endif
                                         </td>
                                         <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
                                         </td>
                                         <td
-                                            class="flex px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="flex px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
                                                 <!-- BUTTON -->
                                                 <button type="button"
