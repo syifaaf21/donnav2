@@ -360,7 +360,7 @@
                                             class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ optional($finding->auditor)->name ?? '-' }}</td>
                                         <td
-                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200 truncate max-w-xs"
+                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 title="{{ $finding->auditee->pluck('name')->join(', ') }}"
                                             @endif>
