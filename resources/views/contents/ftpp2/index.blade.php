@@ -364,6 +364,7 @@
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 title="{{ $finding->auditee->pluck('name')->join(', ') }}"
                                             @endif>
+                                            
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 {{ $finding->auditee->pluck('name')->join(', ') }}
                                             @else
