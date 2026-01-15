@@ -337,12 +337,17 @@ class AuditeeActionController extends Controller
             return back()->with('success', $successMessage);
         } catch (\Illuminate\Database\QueryException $e) {
             DB::rollBack();
-            \Log::error('Database error in auditee action store: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            \Log::error('Database error in auditee action store: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'sql' => $e->getSql() ?? 'N/A',
+                'bindings' => $e->getBindings() ?? []
+            ]);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Database error occurred. Please try again or contact administrator.'
+                    'message' => 'Database error occurred. Please try again or contact administrator.',
+                    'debug' => config('app.debug') ? $e->getMessage() : null
                 ], 500);
             }
 

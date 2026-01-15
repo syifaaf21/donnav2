@@ -6,63 +6,72 @@
     '. Please update the details
     below for the auditee action.')
 
-<style>
-    .rte-toolbar {
-        display: flex;
-        gap: 4px;
-        padding: 4px;
-        background: #f3f4f6;
-        border: 1px solid #d1d5db;
-        border-bottom: none;
-        border-radius: 4px 4px 0 0;
-    }
-    .rte-toolbar button {
-        padding: 4px 8px;
-        background: white;
-        border: 1px solid #d1d5db;
-        border-radius: 3px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 14px;
-        transition: all 0.2s;
-    }
-    .rte-toolbar button:hover {
-        background: #e5e7eb;
-    }
-    .rte-toolbar button.active {
-        background: #3b82f6;
-        color: white;
-        border-color: #2563eb;
-    }
-    .rte-editor {
-        min-height: 60px;
-        padding: 8px;
-        border: 1px solid #d1d5db;
-        border-radius: 0 0 4px 4px;
-        background: white;
-        outline: none;
-    }
-    .rte-editor:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    .rte-editor ul {
-        list-style-type: disc;
-        padding-left: 24px;
-        margin: 8px 0;
-    }
-    .rte-editor ol {
-        list-style-type: decimal;
-        padding-left: 24px;
-        margin: 8px 0;
-    }
-    .rte-editor li {
-        margin: 4px 0;
-    }
-    .rte-container {
-        width: 100%;
-    }
-</style>
+    <style>
+        .rte-toolbar {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .rte-toolbar button {
+            padding: 4px 8px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .rte-toolbar button:hover {
+            background: #e5e7eb;
+        }
+
+        .rte-toolbar button.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .rte-editor {
+            min-height: 60px;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 0 0 4px 4px;
+            background: white;
+            outline: none;
+        }
+
+        .rte-editor:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .rte-editor ul {
+            list-style-type: disc;
+            padding-left: 24px;
+            margin: 8px 0;
+        }
+
+        .rte-editor ol {
+            list-style-type: decimal;
+            padding-left: 24px;
+            margin: 8px 0;
+        }
+
+        .rte-editor li {
+            margin: 4px 0;
+        }
+
+        .rte-container {
+            width: 100%;
+        }
+    </style>
 
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
@@ -95,6 +104,7 @@
             border-bottom: none;
             border-radius: 4px 4px 0 0;
         }
+
         .rte-toolbar button {
             padding: 4px 8px;
             background: white;
@@ -105,14 +115,17 @@
             font-size: 14px;
             transition: all 0.2s;
         }
+
         .rte-toolbar button:hover {
             background: #e5e7eb;
         }
+
         .rte-toolbar button.active {
             background: #3b82f6;
             color: white;
             border-color: #2563eb;
         }
+
         .rte-editor {
             min-height: 60px;
             padding: 8px;
@@ -121,23 +134,28 @@
             background: white;
             outline: none;
         }
+
         .rte-editor:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+
         .rte-editor ul {
             list-style-type: disc;
             padding-left: 24px;
             margin: 8px 0;
         }
+
         .rte-editor ol {
             list-style-type: decimal;
             padding-left: 24px;
             margin: 8px 0;
         }
+
         .rte-editor li {
             margin: 4px 0;
         }
+
         .rte-container {
             width: 100%;
         }
@@ -219,29 +237,41 @@
                                             <label class="text-gray-700">Why (Mengapa):</label>
                                             <div class="rte-container">
                                                 <div class="rte-toolbar">
-                                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
-                                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
-                                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                                    <button type="button" onclick="formatText(this, 'bold')"
+                                                        title="Bold"><b>B</b></button>
+                                                    <button type="button" onclick="formatText(this, 'italic')"
+                                                        title="Italic"><i>I</i></button>
+                                                    <button type="button" onclick="formatText(this, 'underline')"
+                                                        title="Underline"><u>U</u></button>
+                                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                                        title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                                    <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                                        title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                                 </div>
-                                                <div class="rte-editor" contenteditable="true" 
+                                                <div class="rte-editor" contenteditable="true"
                                                     :data-field="'why_' + i + '_mengapa'"
                                                     @input="updateHiddenField($event.target)"></div>
-                                                <textarea :name="'why_' + i + '_mengapa'" class="hidden" 
-                                                    x-model="form['why_'+i+'_mengapa']"></textarea>
+                                                <textarea :name="'why_' + i + '_mengapa'" class="hidden" x-model="form['why_'+i+'_mengapa']"></textarea>
                                             </div>
 
                                             <label class="text-gray-700 mt-2">Cause (Karena):</label>
                                             <div class="rte-container">
                                                 <div class="rte-toolbar">
-                                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
-                                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
-                                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                                    <button type="button" onclick="formatText(this, 'bold')"
+                                                        title="Bold"><b>B</b></button>
+                                                    <button type="button" onclick="formatText(this, 'italic')"
+                                                        title="Italic"><i>I</i></button>
+                                                    <button type="button" onclick="formatText(this, 'underline')"
+                                                        title="Underline"><u>U</u></button>
+                                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                                        title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                                    <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                                        title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                                 </div>
-                                                <div class="rte-editor" contenteditable="true" 
+                                                <div class="rte-editor" contenteditable="true"
                                                     :data-field="'cause_' + i + '_karena'"
                                                     @input="updateHiddenField($event.target)"></div>
-                                                <textarea :name="'cause_' + i + '_karena'" class="hidden" 
-                                                    x-model="form['cause_'+i+'_karena']"></textarea>
+                                                <textarea :name="'cause_' + i + '_karena'" class="hidden" x-model="form['cause_'+i+'_karena']"></textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -249,15 +279,22 @@
                             </template>
 
                             <div class="mt-4">
-                                <label class="font-semibold text-gray-900">Root Cause <span class="text-red-500">*</span></label>
+                                <label class="font-semibold text-gray-900">Root Cause <span
+                                        class="text-red-500">*</span></label>
                                 <div class="rte-container">
                                     <div class="rte-toolbar">
-                                        <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
-                                        <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
-                                        <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                        <button type="button" onclick="formatText(this, 'bold')"
+                                            title="Bold"><b>B</b></button>
+                                        <button type="button" onclick="formatText(this, 'italic')"
+                                            title="Italic"><i>I</i></button>
+                                        <button type="button" onclick="formatText(this, 'underline')"
+                                            title="Underline"><u>U</u></button>
+                                        <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                            title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                        <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                            title="Numbered List"><i class="bi bi-list-ol"></i></button>
                                     </div>
-                                    <div class="rte-editor" contenteditable="true" 
-                                        data-field="root_cause"
+                                    <div class="rte-editor" contenteditable="true" data-field="root_cause"
                                         @input="updateHiddenField($event.target)"></div>
                                     <textarea name="root_cause" class="hidden" x-model="form.root_cause" required></textarea>
                                 </div>
@@ -283,7 +320,8 @@
 
                                 <!-- Corrective -->
                                 <tr>
-                                    <td colspan="4" class="border border-gray-200 p-1 font-semibold">Corrective Action</td>
+                                    <td colspan="4" class="border border-gray-200 p-1 font-semibold">Corrective Action
+                                    </td>
                                     <td class="border border-gray-200 p-1 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button type="button" @click="correctiveCount > 1 && correctiveCount--"
@@ -305,31 +343,54 @@
                                         <td class="border border-gray-200 text-center" x-text="i"></td>
                                         <td class="border border-gray-200 p-1">
                                             <div class="rte-toolbar" style="margin-bottom: 2px;">
-                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
-                                                <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
-                                                <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                                    style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                                <button type="button" onclick="formatText(this, 'italic')"
+                                                    title="Italic"
+                                                    style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                                <button type="button" onclick="formatText(this, 'underline')"
+                                                    title="Underline"
+                                                    style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                                    title="Bullet List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ul"></i></button>
+                                                <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                                    title="Numbered List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ol"></i></button>
                                             </div>
-                                            <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                            <div class="rte-editor" contenteditable="true"
+                                                style="min-height: 38px; border-radius: 4px;"
                                                 :data-field="'corrective_' + i + '_activity'"
                                                 @input="updateHiddenField($event.target)"></div>
-                                            <textarea :name="'corrective_' + i + '_activity'" class="hidden" 
-                                                x-model="form['corrective_'+i+'_activity']"></textarea>
+                                            <textarea :name="'corrective_' + i + '_activity'" class="hidden" x-model="form['corrective_'+i+'_activity']"></textarea>
                                         </td>
                                         <td class="border border-gray-200 w-32 p-1">
                                             <div class="rte-toolbar" style="margin-bottom: 2px;">
-                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
-                                                <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
-                                                <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                                    style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                                <button type="button" onclick="formatText(this, 'italic')"
+                                                    title="Italic"
+                                                    style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                                <button type="button" onclick="formatText(this, 'underline')"
+                                                    title="Underline"
+                                                    style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                                    title="Bullet List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ul"></i></button>
+                                                <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                                    title="Numbered List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ol"></i></button>
                                             </div>
-                                            <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                            <div class="rte-editor" contenteditable="true"
+                                                style="min-height: 38px; border-radius: 4px;"
                                                 :data-field="'corrective_' + i + '_pic'"
                                                 @input="updateHiddenField($event.target)"></div>
-                                            <textarea :name="'corrective_' + i + '_pic'" class="hidden" 
-                                                x-model="form['corrective_'+i+'_pic']"></textarea>
+                                            <textarea :name="'corrective_' + i + '_pic'" class="hidden" x-model="form['corrective_'+i+'_pic']"></textarea>
                                         </td>
                                         <td class="border border-gray-200">
                                             <input type="date" :name="'corrective_' + i + '_planning'"
-                                                class="w-full p-1 border-none" x-model="form['corrective_'+i+'_planning']">
+                                                class="w-full p-1 border-none"
+                                                x-model="form['corrective_'+i+'_planning']">
                                         </td>
                                         <td class="border border-gray-200">
                                             <input type="text" :name="'corrective_' + i + '_actual'"
@@ -341,7 +402,8 @@
 
                                 <!-- Preventive -->
                                 <tr>
-                                    <td colspan="4" class="border border-gray-200 p-1 font-semibold">Preventive Action</td>
+                                    <td colspan="4" class="border border-gray-200 p-1 font-semibold">Preventive Action
+                                    </td>
                                     <td class="border border-gray-200 p-1 text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button type="button" @click="preventiveCount > 1 && preventiveCount--"
@@ -363,31 +425,54 @@
                                         <td class="border border-gray-200 text-center" x-text="i"></td>
                                         <td class="border border-gray-200 p-1">
                                             <div class="rte-toolbar" style="margin-bottom: 2px;">
-                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
-                                                <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
-                                                <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                                    style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                                <button type="button" onclick="formatText(this, 'italic')"
+                                                    title="Italic"
+                                                    style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                                <button type="button" onclick="formatText(this, 'underline')"
+                                                    title="Underline"
+                                                    style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                                    title="Bullet List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ul"></i></button>
+                                                <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                                    title="Numbered List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ol"></i></button>
                                             </div>
-                                            <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                            <div class="rte-editor" contenteditable="true"
+                                                style="min-height: 38px; border-radius: 4px;"
                                                 :data-field="'preventive_' + i + '_activity'"
                                                 @input="updateHiddenField($event.target)"></div>
-                                            <textarea :name="'preventive_' + i + '_activity'" class="hidden" 
-                                                x-model="form['preventive_'+i+'_activity']"></textarea>
+                                            <textarea :name="'preventive_' + i + '_activity'" class="hidden" x-model="form['preventive_'+i+'_activity']"></textarea>
                                         </td>
                                         <td class="border border-gray-200 w-32 p-1">
                                             <div class="rte-toolbar" style="margin-bottom: 2px;">
-                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold" style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
-                                                <button type="button" onclick="formatText(this, 'italic')" title="Italic" style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
-                                                <button type="button" onclick="formatText(this, 'underline')" title="Underline" style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                                    style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                                <button type="button" onclick="formatText(this, 'italic')"
+                                                    title="Italic"
+                                                    style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                                <button type="button" onclick="formatText(this, 'underline')"
+                                                    title="Underline"
+                                                    style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                                <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                                    title="Bullet List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ul"></i></button>
+                                                <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                                    title="Numbered List" style="padding: 2px 6px; font-size: 12px;"><i
+                                                        class="bi bi-list-ol"></i></button>
                                             </div>
-                                            <div class="rte-editor" contenteditable="true" style="min-height: 38px; border-radius: 4px;"
+                                            <div class="rte-editor" contenteditable="true"
+                                                style="min-height: 38px; border-radius: 4px;"
                                                 :data-field="'preventive_' + i + '_pic'"
                                                 @input="updateHiddenField($event.target)"></div>
-                                            <textarea :name="'preventive_' + i + '_pic'" class="hidden" 
-                                                x-model="form['preventive_'+i+'_pic']"></textarea>
+                                            <textarea :name="'preventive_' + i + '_pic'" class="hidden" x-model="form['preventive_'+i+'_pic']"></textarea>
                                         </td>
                                         <td class="border border-gray-200">
                                             <input type="date" :name="'preventive_' + i + '_planning'"
-                                                class="w-full p-1 border-none" x-model="form['preventive_'+i+'_planning']">
+                                                class="w-full p-1 border-none"
+                                                x-model="form['preventive_'+i+'_planning']">
                                         </td>
                                         <td class="border border-gray-200">
                                             <input type="text" :name="'preventive_' + i + '_actual'"
@@ -424,15 +509,16 @@
                                         class="text-danger">*</span></label>
                                 <div class="rte-container">
                                     <div class="rte-toolbar">
-                                        <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
-                                        <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
-                                        <button type="button" onclick="formatText(this, 'underline')" title="Underline"><u>U</u></button>
+                                        <button type="button" onclick="formatText(this, 'bold')"
+                                            title="Bold"><b>B</b></button>
+                                        <button type="button" onclick="formatText(this, 'italic')"
+                                            title="Italic"><i>I</i></button>
+                                        <button type="button" onclick="formatText(this, 'underline')"
+                                            title="Underline"><u>U</u></button>
                                     </div>
                                     <div class="rte-editor" contenteditable="true" style="min-height: 96px;"
-                                        data-field="yokoten_area"
-                                        @input="updateHiddenField($event.target)"></div>
-                                    <textarea name="yokoten_area" class="hidden" x-model="form.yokoten_area" 
-                                        :required="form.yokoten == 1"></textarea>
+                                        data-field="yokoten_area" @input="updateHiddenField($event.target)"></div>
+                                    <textarea name="yokoten_area" class="hidden" x-model="form.yokoten_area" :required="form.yokoten == 1"></textarea>
                                 </div>
                             </div>
 
@@ -516,19 +602,23 @@
                                     <div id="existingFilesContainer" class="mt-3 flex flex-wrap gap-2">
                                         @foreach ($existingFiles as $file)
                                             <div id="existing-file-{{ $file->id }}"
-                                                class="relative border rounded p-1">
+                                                class="relative border rounded group hover:border-blue-400 transition cursor-pointer overflow-hidden"
+                                                onclick="showFilePreview('{{ asset('storage/' . $file->file_path) }}', '{{ $file->original_name ?? basename($file->file_path) }}', {{ preg_match('/\.(jpg|jpeg|png|gif|bmp|webp)$/i', $file->file_path) ? 'true' : 'false' }})">
                                                 @if (preg_match('/\.(jpg|jpeg|png|gif|bmp|webp)$/i', $file->file_path))
                                                     <img src="{{ asset('storage/' . $file->file_path) }}"
                                                         class="w-24 h-24 object-cover rounded" />
                                                 @else
-                                                    <div class="flex items-center gap-2 p-2 text-sm">
-                                                        <i data-feather="file-text"></i>
-                                                        <span>{{ $file->original_name ?? basename($file->file_path) }}</span>
+                                                    <!-- Compact PDF Card -->
+                                                    <div class="w-24 h-24 flex flex-col items-center justify-center bg-red-50 p-2">
+                                                        <i data-feather="file-text" class="text-red-500 w-8 h-8 mb-1"></i>
+                                                        <span class="text-xs text-center text-gray-600 line-clamp-2 leading-tight">{{ Str::limit($file->original_name ?? basename($file->file_path), 20) }}</span>
                                                     </div>
                                                 @endif
 
-                                                <button type="button" onclick="markRemoveAttachment({{ $file->id }})"
-                                                    class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">×</button>
+                                                <!-- Delete button -->
+                                                <button type="button" onclick="event.stopPropagation(); markRemoveAttachment({{ $file->id }})"
+                                                    class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700"
+                                                    title="Delete attachment">×</button>
 
                                                 <input type="hidden" id="existing-attachment-input-{{ $file->id }}"
                                                     name="existing_attachments[]" value="{{ $file->id }}">
@@ -545,10 +635,8 @@
 
                         </div>
 
-                        <!-- Attachments -->
+                        <!-- Leader/SPV -->
                         <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-
-                            <!-- Leader/SPV -->
                             <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center max-w-xs">
                                 <div>Created</div>
 
@@ -647,6 +735,7 @@
                         if (previewImageContainer && previewFileContainer) {
                             const files = this.form.file ?? [];
 
+                            // Clear containers
                             previewImageContainer.innerHTML = '';
                             previewFileContainer.innerHTML = '';
 
@@ -694,9 +783,21 @@
                                 if (typeof feather !== 'undefined') feather.replace();
                             } else {
                                 previewImageContainer.innerHTML =
-                                    '<span class="text-gray-400 text-sm">No attachments</span>';
+                                    '<span class="text-gray-400 text-sm">No existing attachments</span>';
                             }
                         }
+
+                        // ===== INITIALIZE NEW FILE CONTAINERS =====
+                        let previewImageContainer2 = document.getElementById('previewImageContainer2');
+                        let previewFileContainer2 = document.getElementById('previewFileContainer2');
+                        if (previewImageContainer2) previewImageContainer2.innerHTML = '';
+                        if (previewFileContainer2) previewFileContainer2.innerHTML = '';
+
+                        // ===== RENDER FEATHER ICONS FOR EXISTING FILES =====
+                        // Delay slightly to ensure DOM is ready
+                        setTimeout(() => {
+                            if (typeof feather !== 'undefined') feather.replace();
+                        }, 100);
                     });
 
                     // auditee action data
@@ -766,48 +867,8 @@
                             console.log('⚠️ No preventive_actions data found');
                         }
 
+                        // ✅ Sync contenteditable divs dengan form data after loading all action data
                         this.$nextTick(() => {
-                            const previewImageContainer2 = document.getElementById('previewImageContainer2');
-                            const previewFileContainer2 = document.getElementById('previewFileContainer2');
-
-                            if (!previewImageContainer2 || !previewFileContainer2) {
-                                return;
-                            }
-
-                            const aa = action ?? this.form.auditeeAction ?? this.form.auditee_action ?? null;
-                            const files = aa?.file ?? aa?.attachments ?? [];
-
-                            if (files && files.length) {
-                                previewImageContainer2.innerHTML = '';
-                                previewFileContainer2.innerHTML = '';
-
-                                const baseUrl = '/storage/';
-
-                                files.forEach(f => {
-                                    const fullUrl = baseUrl + (f.file_path ?? f.path ?? '');
-                                    const filename = f.original_name ?? (f.file_path ?? f.path ?? '').split(
-                                        '/').pop() ?? '';
-
-                                    if ((f.file_path ?? filename).match(
-                                            /\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
-                                        previewImageContainer2.innerHTML += `
-                                        <img src="${fullUrl}" class="w-24 h-24 object-cover border rounded cursor-pointer hover:opacity-80" onclick="window.open('${fullUrl}', '_blank')" />
-                                    `;
-                                    } else {
-                                        previewFileContainer2.innerHTML += `
-                                        <a href="${fullUrl}" target="_blank" class="flex gap-2 text-sm border p-2 rounded items-center text-blue-600 hover:underline">
-                                            <i data-feather="file-text"></i> ${filename}
-                                        </a>
-                                    `;
-                                    }
-                                });
-
-                                if (typeof feather !== 'undefined' && feather.replace) {
-                                    feather.replace();
-                                }
-                            }
-
-                            // ✅ Sync contenteditable divs dengan form data
                             this.syncEditorsWithForm();
                         });
                     }
@@ -878,11 +939,13 @@
                             let updatedCount = 0;
                             const editors = document.querySelectorAll('.rte-editor[data-field]');
                             console.log(`📊 Found ${editors.length} editors`);
-                            
+
                             editors.forEach(editor => {
                                 const fieldName = editor.getAttribute('data-field');
                                 const fieldValue = self.form[fieldName];
-                                console.log(`  Checking ${fieldName}: value = "${fieldValue ? fieldValue.substring(0, 50) : 'EMPTY'}"`);
+                                console.log(
+                                    `  Checking ${fieldName}: value = "${fieldValue ? fieldValue.substring(0, 50) : 'EMPTY'}"`
+                                );
                                 if (fieldValue) {
                                     editor.innerHTML = fieldValue;
                                     updatedCount++;
@@ -914,11 +977,15 @@
             const previewImageContainer2 = document.getElementById('previewImageContainer2');
             const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
-            // 🔹 Store files accumulated from multiple selections
+            // 🔹 Store files accumulated from multiple selections (ONLY NEW FILES)
             let accumulatedPhotoFiles = [];
             let accumulatedFileFiles = [];
 
             if (!photoInput2 || !fileInput2) return;
+
+            // Clear preview containers to avoid redundancy
+            if (previewImageContainer2) previewImageContainer2.innerHTML = '';
+            if (previewFileContainer2) previewFileContainer2.innerHTML = '';
 
             function updatefileInput2(input, filesArray2) {
                 const dt = new DataTransfer();
@@ -940,6 +1007,7 @@
 
             function displayImages2() {
                 if (!previewImageContainer2) return;
+                // Only show NEW files (not existing ones)
                 previewImageContainer2.innerHTML = '';
                 accumulatedPhotoFiles.forEach((file, index) => {
                     const wrapper = document.createElement('div');
@@ -1004,7 +1072,8 @@
                 const newFiles = Array.from(photoInput2.files);
                 newFiles.forEach(file => {
                     // Check if file already exists to avoid duplicates
-                    const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+                    const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f
+                        .size === file.size);
                     if (!isDuplicate) {
                         accumulatedPhotoFiles.push(file);
                     }
@@ -1021,7 +1090,8 @@
                 const newFiles = Array.from(fileInput2.files);
                 newFiles.forEach(file => {
                     // Check if file already exists to avoid duplicates
-                    const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
+                    const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f
+                        .size === file.size);
                     if (!isDuplicate) {
                         accumulatedFileFiles.push(file);
                     }
@@ -1082,6 +1152,90 @@
 
 @push('scripts')
     <script>
+        // File Preview Modal Function
+        window.showFilePreview = function(fileUrl, fileName, isImage) {
+            // Create modal backdrop
+            const backdrop = document.createElement('div');
+            backdrop.id = 'filePreviewBackdrop';
+            backdrop.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            backdrop.onclick = function(e) {
+                if (e.target === backdrop) {
+                    closeFilePreview();
+                }
+            };
+
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.className = 'bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col';
+            
+            // Modal header with close button
+            const header = document.createElement('div');
+            header.className = 'flex items-center justify-between p-4 border-b';
+            header.innerHTML = `
+                <h3 class="text-lg font-semibold text-gray-900 truncate pr-4">${fileName}</h3>
+                <button onclick="closeFilePreview()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition" title="Close">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+
+            // Modal body with content
+            const body = document.createElement('div');
+            body.className = 'flex-1 overflow-auto p-4';
+            
+            if (isImage) {
+                body.innerHTML = `<img src="${fileUrl}" class="max-w-full h-auto mx-auto rounded" alt="${fileName}">`;
+            } else {
+                // For PDF files
+                body.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full space-y-4">
+                        <i data-feather="file-text" class="text-gray-400" style="width: 80px; height: 80px;"></i>
+                        <p class="text-gray-600">${fileName}</p>
+                        <a href="${fileUrl}" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Open in New Tab
+                        </a>
+                    </div>
+                `;
+                if (typeof feather !== 'undefined') feather.replace();
+            }
+
+            modal.appendChild(header);
+            modal.appendChild(body);
+            backdrop.appendChild(modal);
+            document.body.appendChild(backdrop);
+
+            // Add ESC key listener
+            document.addEventListener('keydown', handleEscKey);
+        };
+
+        function handleEscKey(e) {
+            if (e.key === 'Escape') {
+                closeFilePreview();
+            }
+        }
+
+        window.closeFilePreview = function() {
+            const backdrop = document.getElementById('filePreviewBackdrop');
+            if (backdrop) {
+                backdrop.remove();
+                document.removeEventListener('keydown', handleEscKey);
+            }
+        };
+
+        // Clean HTML content by removing inline styles
+        window.cleanHtmlContent = function(html) {
+            if (!html) return '';
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const removeStyles = (element) => {
+                element.removeAttribute('style');
+                Array.from(element.children).forEach(child => removeStyles(child));
+            };
+            removeStyles(temp);
+            return temp.innerHTML;
+        };
+
         // ✅ RICH TEXT EDITOR FUNCTIONS
         window.formatText = function(button, command) {
             event.preventDefault();
@@ -1089,13 +1243,47 @@
             const editor = toolbar.nextElementSibling;
             editor.focus();
             document.execCommand(command, false, null);
-            editor.dispatchEvent(new Event('input', { bubbles: true }));
+            editor.dispatchEvent(new Event('input', {
+                bubbles: true
+            }));
             updateToolbarState(editor);
+        }
+
+        window.formatList = function(button, command) {
+            event.preventDefault();
+            const toolbar = button.parentElement;
+            const editor = toolbar.nextElementSibling;
+            editor.focus();
+
+            const selection = window.getSelection();
+            if (!selection.toString() || editor.textContent.trim() === '') {
+                if (command === 'insertUnorderedList') {
+                    editor.innerHTML = '<ul><li></li></ul>';
+                } else if (command === 'insertOrderedList') {
+                    editor.innerHTML = '<ol><li></li></ol>';
+                }
+                const listItem = editor.querySelector('li');
+                if (listItem) {
+                    const range = document.createRange();
+                    range.setStart(listItem, 0);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            } else {
+                document.execCommand(command, false, null);
+            }
+
+            updateToolbarState(editor);
+            editor.dispatchEvent(new Event('input', {
+                bubbles: true
+            }));
         }
 
         window.updateHiddenField = function(editor) {
             const fieldName = editor.getAttribute('data-field');
-            const value = editor.innerHTML;
+            let value = editor.innerHTML;
+            value = window.cleanHtmlContent(value);
             const textarea = editor.parentElement.querySelector('textarea[name="' + fieldName + '"]');
             if (textarea) {
                 textarea.value = value;
@@ -1105,12 +1293,11 @@
         window.updateToolbarState = function(editor) {
             const toolbar = editor.previousElementSibling;
             if (!toolbar || !toolbar.classList.contains('rte-toolbar')) return;
-            
+
             const buttons = toolbar.querySelectorAll('button');
-            const commands = ['bold', 'italic', 'underline'];
-            
             buttons.forEach((btn, idx) => {
                 if (idx < 3) {
+                    const commands = ['bold', 'italic', 'underline'];
                     const isActive = document.queryCommandState(commands[idx]);
                     btn.classList.toggle('active', isActive);
                 }
@@ -1127,12 +1314,15 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault(); // Stop default submit dulu
 
-                // ✅ 0. SYNC contenteditable divs ke hidden textareas
+                // ✅ 0. SYNC contenteditable divs ke hidden textareas and clean HTML
                 document.querySelectorAll('[data-field]').forEach(editor => {
                     if (editor.classList.contains('rte-editor')) {
                         const fieldName = editor.getAttribute('data-field');
-                        const value = editor.innerHTML;
-                        const textarea = editor.parentElement.querySelector('textarea[name="' + fieldName + '"]');
+                        let value = editor.innerHTML;
+                        // Clean HTML content before saving
+                        value = window.cleanHtmlContent(value);
+                        const textarea = editor.parentElement.querySelector('textarea[name="' +
+                            fieldName + '"]');
                         if (textarea) {
                             textarea.value = value;
                         }
@@ -1146,15 +1336,25 @@
                 const correctiveRows = document.querySelectorAll('.corrective-row');
                 correctiveRows.forEach((row, index) => {
                     const i = index + 1;
-                    const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value?.trim() || '';
-                    const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value?.trim() || '';
-                    const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value?.trim() || '';
-                    const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value?.trim() || '';
+                    const activity = document.querySelector(
+                        `textarea[name="corrective_${i}_activity"]`)?.value?.trim() || '';
+                    const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)
+                        ?.value?.trim() || '';
+                    const planning = document.querySelector(
+                        `input[name="corrective_${i}_planning"]`)?.value?.trim() || '';
+                    const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)
+                        ?.value?.trim() || '';
 
                     if (activity) {
-                        if (!pic) validationErrors.push(`❌ Corrective Action Row ${i}: If Activity is filled, PIC must also be filled.`);
-                        if (!planning) validationErrors.push(`❌ Corrective Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
-                        if (!actual) validationErrors.push(`❌ Corrective Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
+                        if (!pic) validationErrors.push(
+                            `❌ Corrective Action Row ${i}: If Activity is filled, PIC must also be filled.`
+                        );
+                        if (!planning) validationErrors.push(
+                            `❌ Corrective Action Row ${i}: If Activity is filled, Planning date must also be filled.`
+                        );
+                        if (!actual) validationErrors.push(
+                            `❌ Corrective Action Row ${i}: If Activity is filled, Actual field must also be filled.`
+                        );
                     }
                 });
 
@@ -1162,15 +1362,25 @@
                 const preventiveRows = document.querySelectorAll('.preventive-row');
                 preventiveRows.forEach((row, index) => {
                     const i = index + 1;
-                    const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value?.trim() || '';
-                    const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value?.trim() || '';
-                    const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value?.trim() || '';
-                    const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value?.trim() || '';
+                    const activity = document.querySelector(
+                        `textarea[name="preventive_${i}_activity"]`)?.value?.trim() || '';
+                    const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)
+                        ?.value?.trim() || '';
+                    const planning = document.querySelector(
+                        `input[name="preventive_${i}_planning"]`)?.value?.trim() || '';
+                    const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)
+                        ?.value?.trim() || '';
 
                     if (activity) {
-                        if (!pic) validationErrors.push(`❌ Preventive Action Row ${i}: If Activity is filled, PIC must also be filled.`);
-                        if (!planning) validationErrors.push(`❌ Preventive Action Row ${i}: If Activity is filled, Planning date must also be filled.`);
-                        if (!actual) validationErrors.push(`❌ Preventive Action Row ${i}: If Activity is filled, Actual field must also be filled.`);
+                        if (!pic) validationErrors.push(
+                            `❌ Preventive Action Row ${i}: If Activity is filled, PIC must also be filled.`
+                        );
+                        if (!planning) validationErrors.push(
+                            `❌ Preventive Action Row ${i}: If Activity is filled, Planning date must also be filled.`
+                        );
+                        if (!actual) validationErrors.push(
+                            `❌ Preventive Action Row ${i}: If Activity is filled, Actual field must also be filled.`
+                        );
                     }
                 });
 
