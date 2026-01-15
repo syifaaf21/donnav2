@@ -755,6 +755,25 @@
 
 {{-- Store data auditee action handler --}}
 <script>
+    // Clean HTML content by removing inline styles and unnecessary attributes
+    window.cleanHtmlContent = function(html) {
+        if (!html) return '';
+        
+        // Create a temporary div to parse HTML
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        
+        // Remove all style attributes recursively
+        const removeStyles = (element) => {
+            element.removeAttribute('style');
+            Array.from(element.children).forEach(child => removeStyles(child));
+        };
+        
+        removeStyles(temp);
+        
+        return temp.innerHTML;
+    };
+
     window.confirmApprove = async function() {
         const result = await Swal.fire({
             title: 'Are you sure?',
@@ -971,22 +990,34 @@
 
             // Only append if textarea exists (for dynamic rows)
             if (whyTextarea || causeTextarea) {
-                formData.append(`why_${i}_mengapa`, whyTextarea?.value || '');
-                formData.append(`cause_${i}_karena`, causeTextarea?.value || '');
+                let whyValue = whyTextarea?.value || '';
+                let causeValue = causeTextarea?.value || '';
+                
+                // Clean HTML content
+                whyValue = window.cleanHtmlContent(whyValue);
+                causeValue = window.cleanHtmlContent(causeValue);
+                
+                formData.append(`why_${i}_mengapa`, whyValue);
+                formData.append(`cause_${i}_karena`, causeValue);
             }
         }
 
-        formData.append('root_cause', document.querySelector('textarea[x-model="form.root_cause"]')?.value || '');
+        let rootCause = document.querySelector('textarea[x-model="form.root_cause"]')?.value || '';
+        rootCause = window.cleanHtmlContent(rootCause);
+        formData.append('root_cause', rootCause);
 
-        // Corrective Action - get all existing rows dynamically
+        // Corrective Action - get all existing rows dynamically and clean HTML
         let correctiveRowsSubmit = document.querySelectorAll('.corrective-row');
         correctiveRowsSubmit.forEach((row, index) => {
             const i = index + 1;
-            const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value ||
-                '';
-            const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value || '';
+            let activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value || '';
+            let pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value || '';
             const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value || '';
             const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value || '-';
+
+            // Clean HTML content
+            activity = window.cleanHtmlContent(activity);
+            pic = window.cleanHtmlContent(pic);
 
             formData.append(`corrective_${i}_activity`, activity);
             formData.append(`corrective_${i}_pic`, pic);
@@ -994,15 +1025,18 @@
             formData.append(`corrective_${i}_actual`, actual);
         });
 
-        // Preventive Action - get all existing rows dynamically
+        // Preventive Action - get all existing rows dynamically and clean HTML
         let preventiveRowsSubmit = document.querySelectorAll('.preventive-row');
         preventiveRowsSubmit.forEach((row, index) => {
             const i = index + 1;
-            const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value ||
-                '';
-            const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value || '';
+            let activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value || '';
+            let pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value || '';
             const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value || '';
             const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value || '-';
+
+            // Clean HTML content
+            activity = window.cleanHtmlContent(activity);
+            pic = window.cleanHtmlContent(pic);
 
             formData.append(`preventive_${i}_activity`, activity);
             formData.append(`preventive_${i}_pic`, pic);
@@ -1010,10 +1044,13 @@
             formData.append(`preventive_${i}_actual`, actual);
         });
 
-        // Yokoten
+        // Yokoten - clean HTML content
         const yokoten = document.querySelector('input[name="yokoten"]:checked');
+        let yokotenArea = document.querySelector('textarea[name="yokoten_area"]')?.value || '';
+        yokotenArea = window.cleanHtmlContent(yokotenArea);
+        
         formData.append('yokoten', yokoten ? yokoten.value : 0);
-        formData.append('yokoten_area', document.querySelector('textarea[name="yokoten_area"]')?.value || '');
+        formData.append('yokoten_area', yokotenArea);
 
         // Attachments
         Array.from(photoInput2?.files || []).forEach(file => formData.append('attachments[]', file));

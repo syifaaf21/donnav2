@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', "Document Control – {$department->name}")
+@section('title', "{$department->name}")
 @section('subtitle', 'Manage Obsolete Docuemnt Records')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
