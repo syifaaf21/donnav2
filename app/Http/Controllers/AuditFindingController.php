@@ -14,6 +14,7 @@ use App\Models\Process;
 use App\Models\Product;
 use App\Models\SubAudit;
 use App\Models\User;
+use App\Models\Status;
 use App\Notifications\FindingCreatedNotification;
 use App\Notifications\FtppActionNotification;
 use Illuminate\Http\Request;
@@ -72,26 +73,28 @@ class AuditFindingController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate request (TANPA individual file size check)
+        $isDraft = $request->input('action') === 'draft';
+
+        // When saving as draft, relax most required fields
         $validated = $request->validate([
-            'audit_type_id' => 'required|exists:tm_audit_types,id',
+            'audit_type_id' => [$isDraft ? 'nullable' : 'required', 'exists:tm_audit_types,id'],
             'sub_audit_type_id' => [
                 'nullable',
                 'exists:tm_sub_audit_types,id',
-                Rule::requiredIf(fn() => $request->input('audit_type_id') == 2),
+                Rule::requiredIf(fn() => !$isDraft && $request->input('audit_type_id') == 2),
             ],
-            'finding_category_id' => 'required|exists:tm_finding_categories,id',
-            'sub_klausul_id' => 'required|array',
+            'finding_category_id' => [$isDraft ? 'nullable' : 'required', 'exists:tm_finding_categories,id'],
+            'sub_klausul_id' => [$isDraft ? 'nullable' : 'required', 'array'],
             'sub_klausul_id.*' => 'exists:tm_sub_klausuls,id',
-            'department_id' => 'required|exists:tm_departments,id',
+            'department_id' => [$isDraft ? 'nullable' : 'required', 'exists:tm_departments,id'],
             'process_id' => 'nullable|exists:tm_processes,id',
             'product_id' => 'nullable|exists:tm_products,id',
-            'auditor_id' => 'required|exists:users,id',
-            'auditee_ids' => 'required|array',
+            'auditor_id' => [$isDraft ? 'nullable' : 'required', 'exists:users,id'],
+            'auditee_ids' => [$isDraft ? 'nullable' : 'required', 'array'],
             'auditee_ids.*' => 'exists:users,id',
             'registration_number' => 'nullable|string|max:100',
-            'finding_description' => 'required|string',
-            'due_date' => 'required|date',
+            'finding_description' => [$isDraft ? 'nullable' : 'required', 'string'],
+            'due_date' => [$isDraft ? 'nullable' : 'required', 'date'],
 
             // ✅ Hilangkan custom closure validation - biarkan client-side handle
             'attachments' => 'nullable|array',
@@ -108,22 +111,34 @@ class AuditFindingController extends Controller
         }
 
         // Create the audit finding
+        // Determine status ID - use Draft Finding for draft, or default status (7) for normal save
+        $statusId = 7; // default status for normal save
+        if ($isDraft) {
+            $draftStatus = Status::firstOrCreate(
+                ['name' => 'Draft Finding'],
+                ['name' => 'Draft Finding']
+            );
+            $statusId = $draftStatus->id;
+        }
+
         $auditFinding = AuditFinding::create([
-            'audit_type_id' => $validated['audit_type_id'],
+            'audit_type_id' => $validated['audit_type_id'] ?? null,
             'sub_audit_type_id' => $validated['sub_audit_type_id'] ?? null,
-            'finding_category_id' => $validated['finding_category_id'],
-            'department_id' => $validated['department_id'],
+            'finding_category_id' => $validated['finding_category_id'] ?? null,
+            'department_id' => $validated['department_id'] ?? null,
             'process_id' => $validated['process_id'] ?? null,
             'product_id' => $validated['product_id'] ?? null,
-            'auditor_id' => $validated['auditor_id'],
+            'auditor_id' => $validated['auditor_id'] ?? null,
             'registration_number' => $validated['registration_number'] ?? null,
-            'finding_description' => $validated['finding_description'],
-            'status_id' => 7,
-            'due_date' => $validated['due_date'],
+            'finding_description' => $validated['finding_description'] ?? null,
+            'status_id' => $statusId,
+            'due_date' => $validated['due_date'] ?? null,
         ]);
 
         // Store auditee relationship
-        $auditFinding->auditee()->attach($validated['auditee_ids']);
+        if (!empty($validated['auditee_ids'])) {
+            $auditFinding->auditee()->attach($validated['auditee_ids']);
+        }
 
         // ✅ ATTACH SUB KLAUSUL
         if (!empty($validated['sub_klausul_id'])) {
@@ -135,7 +150,7 @@ class AuditFindingController extends Controller
             $recipients = $auditFinding->auditee()->get();
             $recipients = $recipients->unique('id')->filter()->values();
 
-            if ($recipients->isNotEmpty()) {
+            if (!$isDraft && $recipients->isNotEmpty()) {
                 Notification::send(
                     $recipients,
                     new FtppActionNotification(
@@ -153,14 +168,17 @@ class AuditFindingController extends Controller
         $this->handleFileUploads($request, $auditFinding);
 
         // Return response
+        $message = $isDraft ? 'Draft saved successfully!' : 'Audit Finding saved successfully!';
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Audit Finding saved successfully!',
+                'message' => $message,
+                'draft' => $isDraft,
             ]);
         }
 
-        return redirect('/ftpp')->with('success', 'Audit Finding saved successfully!');
+        return redirect('/ftpp')->with('success', $message);
     }
 
     /**

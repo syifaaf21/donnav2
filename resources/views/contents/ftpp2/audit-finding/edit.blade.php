@@ -285,10 +285,16 @@
                                     </div>
                                 </div>
 
-                                <button type="button" onclick="saveChangesFinding()"
-                                    class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                    Save Changes
-                                </button>
+                                <div class="ml-auto mt-2 flex gap-2">
+                                    <button type="button" onclick="saveChangesFinding('draft')"
+                                        class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-3 py-1 rounded-md hover:from-yellow-500 hover:to-yellow-600 transition-colors">
+                                        Save as Draft
+                                    </button>
+                                    <button type="button" onclick="saveChangesFinding('save')"
+                                        class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
+                                        Save Changes
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1460,10 +1466,12 @@
     </script>
     {{-- Store header data handler --}}
     <script>
-        async function saveChangesFinding() {
+        async function saveChangesFinding(mode = 'save') {
             const form = document.querySelector(
                 'form[action="{{ route('ftpp.audit-finding.update', $finding->id) }}"]');
             if (!form) return alert('Form not found');
+
+            const isDraft = mode === 'draft';
 
             // ✅ 1. Hapus error lama
             const errorContainer = document.getElementById('attachmentErrorContainer');
@@ -1501,9 +1509,13 @@
                 console.log('✅ Error displayed in container');
             }
 
-            // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
-            const photoInput = document.getElementById('photoInput');
-            const fileInput = document.getElementById('fileInput');
+            // ✅ 3. Skip validation if saving as draft (relaxed validation)
+            if (isDraft) {
+                console.log('📝 Saving as draft - skipping file size validation');
+            } else {
+                // ✅ 3b. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE) - only for regular save
+                const photoInput = document.getElementById('photoInput');
+                const fileInput = document.getElementById('fileInput');
 
             let totalSize = 0;
             let fileDetails = [];
@@ -1585,6 +1597,7 @@
                 showAttachmentError(errorHtml);
                 return; // ⛔ STOP submit
             }
+            }
 
             // ✅ 6. Jika lolos validasi, lanjutkan submit form
             // remove any previously added dynamic inputs to avoid duplicates
@@ -1600,9 +1613,14 @@
             const actionInput = document.createElement('input');
             actionInput.type = 'hidden';
             actionInput.name = 'action';
-            actionInput.value = 'save_header';
+            actionInput.value = isDraft ? 'draft' : 'save_header';
             actionInput.setAttribute('data-dyn-input', '1');
             form.appendChild(actionInput);
+
+            // Log draft mode for debugging
+            if (isDraft) {
+                console.log('✅ Draft mode enabled - relaxed validation applied');
+            }
 
             // Collect auditee ids
             let auditeeIds = [];

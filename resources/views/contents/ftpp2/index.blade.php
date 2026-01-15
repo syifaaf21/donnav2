@@ -397,85 +397,113 @@
                                                         class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
                                                         :style="`top:${y}px; left:${x}px; width:170px;`">
 
-                                                        @if (strtolower(optional($finding->status)->name ?? '') !== 'need assign')
-                                                            <!-- ITEM: Show -->
-                                                            <button type="button"
-                                                                @click="
-                                                                 open = false;
-                                                                 $dispatch('open-show-modal', {{ $finding->id }})"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                <i data-feather="eye" class="w-4 h-4"></i>
-                                                                Show
-                                                            </button>
-                                                        @endif
-
-                                                        <!-- ITEM: Download -->
-                                                        <a href="{{ route('ftpp.download', $finding->id) }}"
-                                                            @click="open = false"
-                                                            class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
-                                                            <i data-feather="download" class="w-4 h-4"></i>
-                                                            Download
-                                                        </a>
-
-                                                        <!-- ITEM: Assign Auditee Action -->
                                                         @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
-                                                        @if ($statusName === 'need assign')
+
+                                                        <!-- Draft Finding: Only Show Edit and Delete -->
+                                                        @if ($statusName === 'draft finding')
                                                             @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                                <!-- ITEM: Edit -->
                                                                 <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
                                                                     @click="open = false"
                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
                                                                     <i data-feather="edit" class="w-4 h-4"></i>
                                                                     Edit
                                                                 </a>
+
+                                                                <!-- ITEM: Delete -->
+                                                                <form id="delete-form-{{ $finding->id }}" method="POST"
+                                                                    action="{{ route('ftpp.destroy', $finding->id) }}"
+                                                                    onsubmit="return false;">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="button" @click="open = false"
+                                                                        onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
+                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                                        Delete
+                                                                    </button>
+                                                                </form>
                                                             @endif
-                                                        @endif
-                                                        @if ($statusName === 'need revision')
-                                                            <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                        <!-- Non Draft Finding: Show other options -->
+                                                        @else
+                                                            @if (strtolower(optional($finding->status)->name ?? '') !== 'need assign')
+                                                                <!-- ITEM: Show -->
+                                                                <button type="button"
+                                                                    @click="
+                                                                     open = false;
+                                                                     $dispatch('open-show-modal', {{ $finding->id }})"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="eye" class="w-4 h-4"></i>
+                                                                    Show
+                                                                </button>
+                                                            @endif
+
+                                                            <!-- ITEM: Download -->
+                                                            <a href="{{ route('ftpp.download', $finding->id) }}"
                                                                 @click="open = false"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                <i data-feather="edit" class="w-4 h-4"></i>
-                                                                Revise
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
+                                                                <i data-feather="download" class="w-4 h-4"></i>
+                                                                Download
                                                             </a>
-                                                        @elseif ($statusName === 'need check')
-                                                            @if (in_array(optional(auth()->user()->roles->first())->name, [
-                                                                    'Super Admin',
-                                                                    'Admin',
-                                                                    'Auditor',
-                                                                    'Supervisor',
-                                                                    'Leader',
-                                                                    'User',
-                                                                ]))
+
+                                                            @if ($statusName === 'need assign')
+                                                                @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                                    <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
+                                                                        @click="open = false"
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                                                        Edit
+                                                                    </a>
+                                                                @endif
+                                                            @endif
+                                                            @if ($statusName === 'need revision')
                                                                 <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
                                                                     @click="open = false"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
-                                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                                    Edit
-                                                                </a>
-                                                            @endif
-                                                        @else
-                                                            @if (in_array($statusName, ['need assign', 'draft']) && in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
-                                                                <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
-                                                                    @click="open = false"
                                                                     class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
-                                                                    <i data-feather="edit-2" class="w-4 h-4"></i>
-                                                                    Assign
+                                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                                    Revise
                                                                 </a>
+                                                            @elseif ($statusName === 'need check')
+                                                                @if (in_array(optional(auth()->user()->roles->first())->name, [
+                                                                        'Super Admin',
+                                                                        'Admin',
+                                                                        'Auditor',
+                                                                        'Supervisor',
+                                                                        'Leader',
+                                                                        'User',
+                                                                    ]))
+                                                                    <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                                        @click="open = false"
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                                                        Edit
+                                                                    </a>
+                                                                @endif
+                                                            @else
+                                                                @if (in_array($statusName, ['need assign', 'draft']) && in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
+                                                                    <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
+                                                                        @click="open = false"
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                                        Assign
+                                                                    </a>
+                                                                @endif
                                                             @endif
-                                                        @endif
-                                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                                                            <!-- ITEM: Delete (SweetAlert confirm) -->
-                                                            <form id="delete-form-{{ $finding->id }}" method="POST"
-                                                                action="{{ route('ftpp.destroy', $finding->id) }}"
-                                                                onsubmit="return false;">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="button" @click="open = false"
-                                                                    onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
-                                                                    class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
-                                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                                    Delete
-                                                                </button>
-                                                            </form>
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                                <!-- ITEM: Delete (SweetAlert confirm) -->
+                                                                <form id="delete-form-{{ $finding->id }}" method="POST"
+                                                                    action="{{ route('ftpp.destroy', $finding->id) }}"
+                                                                    onsubmit="return false;">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="button" @click="open = false"
+                                                                        onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
+                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                                        Delete
+                                                                    </button>
+                                                                </form>
+                                                            @endif
                                                         @endif
                                                     </div>
                                                 </template>

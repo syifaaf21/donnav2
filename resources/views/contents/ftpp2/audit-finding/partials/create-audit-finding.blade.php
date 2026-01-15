@@ -215,10 +215,16 @@
                     @enderror
                 </div>
 
-                <button type="button" onclick="saveHeaderOnly()"
-                    class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
-                    Save Finding
-                </button>
+                <div class="ml-auto flex gap-2 mt-2">
+                    <button type="button" onclick="saveHeaderOnly('draft')"
+                        class="border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100 transition-colors">
+                        Save as Draft
+                    </button>
+                    <button type="button" onclick="saveHeaderOnly('save')"
+                        class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        Save Finding
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -982,9 +988,11 @@
 
 {{-- Store header data handler --}}
 <script>
-    async function saveHeaderOnly() {
+    async function saveHeaderOnly(mode = 'save') {
         const form = document.querySelector('form[action="{{ route('ftpp.audit-finding.store') }}"]');
         if (!form) return alert('Form not found');
+
+        const isDraft = mode === 'draft';
 
         // ✅ 1. Hapus pesan error lama
         document.querySelectorAll('.validation-error').forEach(n => n.remove());
@@ -1107,8 +1115,8 @@
         // Prepare FormData
         const formData = new FormData(form);
 
-        // Add action indicator
-        formData.set('action', 'save_header');
+        // Add action indicator (draft vs save)
+        formData.set('action', isDraft ? 'draft' : 'save');
 
         // Add selected auditees (deduplicated by id)
         if (typeof selectedAuditees !== 'undefined' && selectedAuditees.length) {
