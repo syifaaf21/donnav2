@@ -238,10 +238,10 @@ class FtppController extends Controller
     public function generateRegistrationNumber($auditTypeId)
     {
         $year   = now()->year;
-        
+
         // Get the audit type with its department
         $auditType = Audit::with('department')->findOrFail($auditTypeId);
-        
+
         // Use department code if available, otherwise fallback to auditTypeId check
         if ($auditType->department) {
             $prefix = $auditType->department->code;
@@ -270,18 +270,8 @@ class FtppController extends Controller
 
     public function filterKlausul($auditType)
     {
-        // Samakan mapping dengan FtppApprovalController
-        // auditType 2 -> klausul id 1 (Management Mutu), selain itu -> id 2,3 (Management LK3)
-        $klausulIds = $auditType == 2
-            ? [1]
-            : [2, 3];
-
-        $klausuls = Klausul::whereIn('id', $klausulIds)->get();
-
-        // Fallback: jika kosong, coba berdasarkan audit_type_id agar tidak blank
-        if ($klausuls->isEmpty()) {
-            $klausuls = Klausul::where('audit_type_id', $auditType)->get();
-        }
+        // Get klausuls based on audit_type_id
+        $klausuls = Klausul::where('audit_type_id', $auditType)->get();
 
         return response()->json($klausuls);
     }
