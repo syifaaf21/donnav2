@@ -286,10 +286,19 @@
                                 </div>
 
                                 <div class="ml-auto mt-2 flex gap-2">
-                                    <button type="button" onclick="saveChangesFinding('draft')"
-                                        class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-3 py-1 rounded-md hover:from-yellow-500 hover:to-yellow-600 transition-colors">
-                                        Save as Draft
-                                    </button>
+                                    @php
+                                        $currentStatus = strtolower(optional($finding->status)->name ?? '');
+                                        $isDraftStatus = $currentStatus === 'draft finding';
+                                        $isNeedAssignStatus = $currentStatus === 'need assign';
+                                    @endphp
+                                    
+                                    @if ($isDraftStatus)
+                                        <button type="button" onclick="saveChangesFinding('submit')"
+                                            class="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-md hover:from-green-600 hover:to-green-700 transition-colors">
+                                            Submit
+                                        </button>
+                                    @endif
+                                    
                                     <button type="button" onclick="saveChangesFinding('save')"
                                         class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                                         Save Changes
@@ -1613,14 +1622,12 @@
             const actionInput = document.createElement('input');
             actionInput.type = 'hidden';
             actionInput.name = 'action';
-            actionInput.value = isDraft ? 'draft' : 'save_header';
+            actionInput.value = mode === 'submit' ? 'submit' : (mode === 'draft' ? 'draft' : 'save_header');
             actionInput.setAttribute('data-dyn-input', '1');
             form.appendChild(actionInput);
 
-            // Log draft mode for debugging
-            if (isDraft) {
-                console.log('✅ Draft mode enabled - relaxed validation applied');
-            }
+            // Log mode for debugging
+            console.log(`✅ Mode: ${mode} - Action value: ${actionInput.value}`);
 
             // Collect auditee ids
             let auditeeIds = [];

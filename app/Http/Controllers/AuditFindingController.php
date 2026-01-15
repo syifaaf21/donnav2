@@ -520,21 +520,26 @@ class AuditFindingController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $action = $request->input('action'); // 'save' or 'submit'
+        $isSubmit = $action === 'submit';
+        $isDraft = false; // No more draft mode in edit - only in create
+
+        // For submit action, require all fields; for save, allow partial
         $validated = $request->validate([
-            'audit_type_id' => 'required|exists:tm_audit_types,id',
+            'audit_type_id' => [$isSubmit ? 'required' : 'nullable', 'exists:tm_audit_types,id'],
             'sub_audit_type_id' => 'nullable|exists:tm_sub_audit_types,id',
-            'finding_category_id' => 'required|exists:tm_finding_categories,id',
-            'sub_klausul_id' => 'required|array',
+            'finding_category_id' => [$isSubmit ? 'required' : 'nullable', 'exists:tm_finding_categories,id'],
+            'sub_klausul_id' => [$isSubmit ? 'required' : 'nullable', 'array'],
             'sub_klausul_id.*' => 'exists:tm_sub_klausuls,id',
-            'department_id' => 'required|exists:tm_departments,id',
+            'department_id' => [$isSubmit ? 'required' : 'nullable', 'exists:tm_departments,id'],
             'process_id' => 'nullable|exists:tm_processes,id',
             'product_id' => 'nullable|exists:tm_products,id',
-            'auditor_id' => 'required|exists:users,id',
-            'auditee_ids' => 'required|array',
+            'auditor_id' => [$isSubmit ? 'required' : 'nullable', 'exists:users,id'],
+            'auditee_ids' => [$isSubmit ? 'required' : 'nullable', 'array'],
             'auditee_ids.*' => 'exists:users,id',
             'registration_number' => 'nullable|string|max:100',
-            'finding_description' => 'required|string',
-            'due_date' => 'required|date',
+            'finding_description' => [$isSubmit ? 'required' : 'nullable', 'string'],
+            'due_date' => [$isSubmit ? 'required' : 'nullable', 'date'],
             'photos' => 'nullable|array',
             'photos.*' => 'file|mimes:jpg,jpeg,png|max:5120', // 5 MB
             'files' => 'nullable|array',
@@ -565,16 +570,30 @@ class AuditFindingController extends Controller
             'existing_file_delete.*' => 'integer',
         ]);
 
-        // ✅ Server-side total size check (backup - seharusnya tidak pernah tercapai)
-        $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 20 * 1024 * 1024) {
-            \Log::warning('Total file size validation bypassed on client-side!');
-            return back()->withErrors([
-                'attachments' => 'Total file size must not exceed 20MB. Please compress your PDF files.'
-            ])->withInput();
+        // ✅ Server-side total size check (skip for save, enforce for submit)
+        if ($isSubmit) {
+            $totalSize = $this->calculateTotalFileSize($request);
+            if ($totalSize > 20 * 1024 * 1024) {
+                \Log::warning('Total file size validation bypassed on client-side!');
+                return back()->withErrors([
+                    'attachments' => 'Total file size must not exceed 20MB. Please compress your PDF files.'
+                ])->withInput();
+            }
         }
 
         $auditFinding = AuditFinding::findOrFail($id);
+
+        // ✅ Determine status based on action
+        // - submit: Change to "Need Assign"
+        // - save: Keep current status
+        $statusId = $auditFinding->status_id;
+        if ($isSubmit) {
+            $needAssignStatus = Status::firstOrCreate(
+                ['name' => 'Need Assign'],
+                ['name' => 'Need Assign']
+            );
+            $statusId = $needAssignStatus->id;
+        }
 
         // Auto-increment registration number revision (last numeric segment),
         // using the incoming value if provided, otherwise the current value.
@@ -582,36 +601,41 @@ class AuditFindingController extends Controller
         $newRegistration = $this->incrementRegistrationRevision($baseRegistration);
 
         $auditFinding->update([
-            'audit_type_id' => $validated['audit_type_id'],
+            'audit_type_id' => $validated['audit_type_id'] ?? $auditFinding->audit_type_id,
             'sub_audit_type_id' => $validated['sub_audit_type_id'] ?? null,
-            'finding_category_id' => $validated['finding_category_id'],
-            'department_id' => $validated['department_id'],
+            'finding_category_id' => $validated['finding_category_id'] ?? $auditFinding->finding_category_id,
+            'department_id' => $validated['department_id'] ?? $auditFinding->department_id,
             'process_id' => $validated['process_id'] ?? null,
             'product_id' => $validated['product_id'] ?? null,
-            'auditor_id' => $validated['auditor_id'],
+            'auditor_id' => $validated['auditor_id'] ?? $auditFinding->auditor_id,
             'registration_number' => $newRegistration,
-            'finding_description' => $validated['finding_description'],
-            'due_date' => $validated['due_date'],
+            'finding_description' => $validated['finding_description'] ?? null,
+            'due_date' => $validated['due_date'] ?? null,
+            'status_id' => $statusId,
         ]);
 
-        // sync auditee relationship
-        $auditFinding->auditee()->sync($validated['auditee_ids']);
+        // sync auditee relationship (only if provided)
+        if (!empty($validated['auditee_ids'])) {
+            $auditFinding->auditee()->sync($validated['auditee_ids']);
+        }
 
         // sync sub klausul relationships (add new ones, preserve existing ones if not explicitly deleted)
-        $currentSubKlausulIds = $auditFinding->subKlausuls()->pluck('sub_klausul_id')->toArray();
-        $newSubKlausulIds = $validated['sub_klausul_id'];
-        
-        // Combine old and new, keeping unique values
-        $mergedSubKlausulIds = array_unique(array_merge($currentSubKlausulIds, $newSubKlausulIds));
-        
-        // Use attach to add new ones without deleting existing
-        $toAttach = array_diff($newSubKlausulIds, $currentSubKlausulIds);
-        if (!empty($toAttach)) {
-            foreach ($toAttach as $subId) {
-                AuditFindingSubKlausul::create([
-                    'audit_finding_id' => $auditFinding->id,
-                    'sub_klausul_id' => $subId,
-                ]);
+        if (!empty($validated['sub_klausul_id'])) {
+            $currentSubKlausulIds = $auditFinding->subKlausuls()->pluck('sub_klausul_id')->toArray();
+            $newSubKlausulIds = $validated['sub_klausul_id'];
+
+            // Combine old and new, keeping unique values
+            $mergedSubKlausulIds = array_unique(array_merge($currentSubKlausulIds, $newSubKlausulIds));
+
+            // Use attach to add new ones without deleting existing
+            $toAttach = array_diff($newSubKlausulIds, $currentSubKlausulIds);
+            if (!empty($toAttach)) {
+                foreach ($toAttach as $subId) {
+                    AuditFindingSubKlausul::create([
+                        'audit_finding_id' => $auditFinding->id,
+                        'sub_klausul_id' => $subId,
+                    ]);
+                }
             }
         }
 
@@ -632,11 +656,13 @@ class AuditFindingController extends Controller
         // Handle new uploads
         $this->handleFileUploads($request, $auditFinding);
 
+        $message = $isSubmit ? 'Finding submitted successfully! Status changed to Need Assign.' : 'Audit Finding saved successfully!';
+
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Audit Finding updated successfully!']);
+            return response()->json(['success' => true, 'message' => $message, 'submitted' => $isSubmit]);
         }
 
-        return redirect('/ftpp')->with('success', 'Audit Finding updated successfully!');
+        return redirect('/ftpp')->with('success', $message);
     }
 
     /**
