@@ -225,7 +225,7 @@ class FtppController extends Controller
         $code = $this->generateRegistrationNumber($auditTypeId);
 
         $auditors = User::whereHas('roles', fn($q) => $q->where('tm_roles.id', 4)) // Role auditor
-            ->where('audit_type_id', $auditTypeId)
+            ->whereHas('auditTypes', fn($q) => $q->where('tm_audit_types.id', $auditTypeId))
             ->get();
 
         return response()->json([
