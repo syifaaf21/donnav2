@@ -1,0 +1,498 @@
+@extends('layouts.app')
+@section('title', 'FTPP Dashboard')
+@section('subtitle', 'Comprehensive overview of all FTPP (Finding, Target, Plan, Progress) activities and statuses.')
+
+@section('content')
+    <div class="px-4 mt-4">
+        {{-- ===== SUMMARY CARDS ===== --}}
+        <div class="row g-4 mb-5">
+            @php
+                $needAssign = $chartData['Need Assign'] ?? 0;
+                $needCheck = $chartData['Need Check'] ?? 0;
+                $needApproval = $chartData['Need Approval by Auditor'] ?? 0;
+                $close = $chartData['Close'] ?? 0;
+
+                $cards = [
+                    [
+                        'label' => 'Total FTPP',
+                        'value' => $totalFtpp,
+                        'color' => 'primary',
+                        'icon' => 'bi-file-earmark-post',
+                    ],
+                    [
+                        'label' => 'Need Assign',
+                        'value' => $needAssign,
+                        'color' => 'danger',
+                        'icon' => 'bi-exclamation-circle',
+                    ],
+                    [
+                        'label' => 'Need Check',
+                        'value' => $needCheck,
+                        'color' => 'warning',
+                        'icon' => 'bi-clock-history',
+                    ],
+                    [
+                        'label' => 'Closed',
+                        'value' => $close,
+                        'color' => 'success',
+                        'icon' => 'bi-check-circle',
+                    ],
+                ];
+            @endphp
+
+            @foreach ($cards as $c)
+                <div class="col-6 col-md-3">
+                    <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                        transition-all duration-200 border-0 h-100 overflow-hidden"
+                        style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
+
+                        <div class="card-body p-3 d-flex flex-column justify-content-between">
+
+                            {{-- Label --}}
+                            <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
+                                {{ $c['label'] }}
+                            </small>
+
+                            {{-- Value --}}
+                            <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
+                                {{ $c['value'] }}
+                            </div>
+
+                            {{-- Icon --}}
+                            <div class="ms-auto mt-2"
+                                style="
+                            font-size: 1.7rem;
+                            padding: 8px 12px;
+                            border-radius: 12px;
+                            background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
+                            color: var(--bs-{{ $c['color'] }});
+                        ">
+                                <i class="bi {{ $c['icon'] }}"></i>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- ===== CHARTS SECTION ROW 1: FTPP Status + Pie Chart ===== --}}
+        <div class="row g-3">
+            {{-- Bar Chart - FTPP Status --}}
+            <div class="col-lg-6">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
+                    style="border-radius: 10px;">
+                    <div class="card-body p-2">
+                        <div class="fw-semibold mb-2 d-flex align-items-center gap-2"
+                            style="font-size: 0.95rem; color: #1f2937;">
+                            <div
+                                style="width: 28px; height: 28px; background-color: rgba(251,191,36,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <i data-feather="file-text"
+                                    style="width: 16px; height: 16px; color: rgba(251,191,36,0.7);"></i>
+                            </div>
+                            <span>FTPP Status Summary</span>
+                        </div>
+                        <canvas id="ftppStatusChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Pie Chart - Status Distribution --}}
+            <div class="col-lg-6">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+                    hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
+                    style="border-radius: 10px;">
+                    <div class="card-body p-2">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span
+                                style="display: inline-flex; align-items: center; justify-content: center;
+                                 width: 24px; height: 24px;
+                                 background-color: rgba(251,191,36,0.15); border-radius: 4px;">
+                                <i data-feather="pie-chart"
+                                    style="width: 16px; height: 16px; color: rgba(251,191,36,0.7);"></i>
+                            </span>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 1rem; color: #1f2937;">
+                                Status Distribution
+                            </h6>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <canvas id="statusPie" style="max-width: 100%; max-height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ===== CHARTS SECTION ROW 2: Findings per Department (Full Width) ===== --}}
+        <div class="row g-3 mt-3">
+            <div class="col-12">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2"
+                    style="border-radius: 10px;">
+                    <div class="card-body p-2">
+                        <div class="fw-semibold mb-2 d-flex align-items-center gap-2"
+                            style="font-size: 0.95rem; color: #1f2937;">
+                            <div
+                                style="width: 28px; height: 28px; background-color: rgba(251,191,36,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <i data-feather="bar-chart-2"
+                                    style="width: 16px; height: 16px; color: rgba(251,191,36,0.7);"></i>
+                            </div>
+                            <span>Findings per Department</span>
+                        </div>
+                        <canvas id="findingLineChart" height="90"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ===== CHARTS SECTION ROW 3: Recent Findings Table (Full Width) ===== --}}
+        <div class="row g-3 mt-3">
+            <div class="col-12">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+                    hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2"
+                    style="border-radius: 10px;">
+                    <div class="card-body p-2">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span
+                                    style="display: inline-flex; align-items: center; justify-content: center;
+                                     width: 24px; height: 24px;
+                                     background-color: rgba(251,191,36,0.15); border-radius: 4px;">
+                                    <i data-feather="list"
+                                        style="width: 16px; height: 16px; color: rgba(251,191,36,0.7);"></i>
+                                </span>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold" style="font-size: 1rem; color: #1f2937;">
+                                        Recent Findings
+                                    </h6>
+                                    <small class="text-muted" style="font-size: 0.75rem;">
+                                        Showing 10 most recent findings
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive recent-table">
+                            <table class="table table-sm table-hover mb-0 align-middle"
+                                style="border-radius: 12px; overflow: hidden; border:1px solid #e5e7eb;">
+                                <colgroup>
+                                    <col class="col-reg">
+                                    <col class="col-dept">
+                                    <col class="col-status">
+                                    <col class="col-date">
+                                </colgroup>
+                                <thead class="table-header-blue">
+                                    <tr>
+                                        <th class="small py-2 text-nowrap col-reg">Registration Number</th>
+                                        <th class="small py-2 col-dept">Department</th>
+                                        <th class="small py-2 text-center col-status">Status</th>
+                                        <th class="small py-2 text-nowrap col-date">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($recentFindings as $finding)
+                                        <tr class="table-row-hover">
+                                            <td class="small py-2 text-nowrap col-reg">
+                                                <span class="fw-semibold text-bold">{{ $finding->registration_number ?? '-' }}</span>
+                                            </td>
+                                            <td class="small py-2 col-dept">{{ $finding->department->name ?? '-' }}</td>
+                                            <td class="small py-2 text-center col-status">
+                                                @php
+                                                    $statusName = $finding->status->name ?? '-';
+                                                    $badgeClass = 'secondary';
+                                                    if (str_contains($statusName, 'Close')) {
+                                                        $badgeClass = 'success';
+                                                    } elseif (str_contains($statusName, 'Need Assign')) {
+                                                        $badgeClass = 'danger';
+                                                    } elseif (str_contains($statusName, 'Need Check')) {
+                                                        $badgeClass = 'warning';
+                                                    } elseif (str_contains($statusName, 'Approve')) {
+                                                        $badgeClass = 'primary';
+                                                    }
+                                                @endphp
+                                                <span class="badge status-badge bg-{{ $badgeClass }} px-3 py-1">
+                                                    {{ $statusName }}
+                                                </span>
+                                            </td>
+                                            <td class="small py-2 text-nowrap col-date">
+                                                {{ $finding->created_at ? $finding->created_at->format('d M Y') : '-' }}
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-muted small py-4 text-center">
+                                                No recent findings available.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Scroll to Top Button --}}
+        <button id="scrollUpBtn"
+            class="fixed text-white rounded-full shadow-lg transition-all duration-300"
+            title="Scroll to top" style="background: linear-gradient(135deg, #3b82f6, #0ea5e9); z-index: 50; border: none;">
+            <i class="bi bi-chevron-up text-lg"></i>
+        </button>
+    </div>
+@endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const chartData = @json($chartData);
+        const deptLabels = @json($deptLabels);
+        const deptTotals = @json($deptTotals);
+        const statusBreakdown = @json($statusBreakdown);
+    </script>
+
+    <script>
+        /* ===================== BAR CHART - FTPP STATUS ===================== */
+        const ctx = document.getElementById('ftppStatusChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    'Need Assign',
+                    'Need Check',
+                    'Checked by Dept Head',
+                    'Need Approve by Lead Auditor',
+                    'Need Revision',
+                    'Close'
+                ],
+                datasets: [{
+                    label: 'Total Findings',
+                    data: [
+                        chartData['Need Assign'] ?? 0,
+                        chartData['Need Check'] ?? 0,
+                        chartData['Checked by Dept Head'] ?? 0,
+                        chartData['Need Approval by Lead Auditor'] ?? 0,
+                        chartData['Need Revision'] ?? 0,
+                        chartData['Close'] ?? 0,
+                    ],
+                    backgroundColor: [
+                        '#FFAAA5', // Need Assign (pastel red)
+                        '#FFD3B6', // Need Check (pastel orange)
+                        '#A8D8EA', // Checked by Dept Head (pastel blue)
+                        '#D4A5A5', // Need Approval (muted rose)
+                        '#FFE0AC', // Need Revision (soft amber)
+                        '#A8E6CF'  // Close (pastel green)
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    barThickness: 28
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            padding: 6
+                        },
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 0
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        /* ===================== LINE CHART - FINDINGS PER DEPARTMENT ===================== */
+        const shortFindingLabels = deptLabels.map(name => {
+            const words = name.split(' ');
+            return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
+        });
+
+        new Chart(document.getElementById('findingLineChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: shortFindingLabels,
+                datasets: [{
+                    label: 'Total Findings',
+                    data: deptTotals,
+                    borderColor: '#7BA7FF',
+                    backgroundColor: 'rgba(123,167,255,0.25)',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            padding: 10,
+                        }
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        /* ===================== PIE CHART - STATUS DISTRIBUTION ===================== */
+        const statusLabels = Object.keys(statusBreakdown);
+        const statusData = Object.values(statusBreakdown);
+        const statusColors = [
+            '#A8E6CF', '#FFD3B6', '#FFAAA5', '#FF8B94', '#A8D8EA', '#D4A5A5',
+            '#7BA7FF', '#6EC6E2', '#8BD3C7', '#A3A0FB', '#F7C97F', '#FFB38A',
+            '#E5C7FF', '#C0E4FF'
+        ];
+
+        new Chart(document.getElementById('statusPie'), {
+            type: 'pie',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: statusColors,
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 12,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        /* ===================== SCROLL TO TOP BUTTON ===================== */
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollBtn = document.getElementById('scrollUpBtn');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 100) {
+                    scrollBtn.classList.remove('hidden');
+                } else {
+                    scrollBtn.classList.add('hidden');
+                }
+            });
+
+            scrollBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+
+            scrollBtn.classList.add('hidden');
+        });
+
+        feather.replace();
+    </script>
+@endpush
+
+@push('styles')
+    <style>
+        .table-header-blue th {
+            background-color: #dbeafe;
+            color: #1f2937;
+        }
+
+        .table-row-hover:hover {
+            background-color: #f3f4f6;
+            transition: background-color 0.2s;
+        }
+
+        /* Keep badges and cells tidy */
+        .status-badge {
+            display: inline-block;
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .recent-table table {
+            min-width: 720px;
+        }
+
+        /* Column sizing to keep proportions stable */
+        .col-reg {
+            width: 32%;
+        }
+
+        .col-dept {
+            width: 32%;
+        }
+
+        .col-status {
+            width: 18%;
+        }
+
+        .col-date {
+            width: 18%;
+        }
+
+        .recent-table th,
+        .recent-table td {
+            vertical-align: middle;
+        }
+
+        #scrollUpBtn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            right: 18px;
+            bottom: 18px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+@endpush
