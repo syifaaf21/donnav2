@@ -257,6 +257,24 @@
                 }
             });
 
+            // TomSelect untuk modal Add - Audit Type
+            new TomSelect('#audit_type_select', {
+                create: false,
+                maxItems: null,
+                valueField: 'id',
+                labelField: 'text',
+                searchField: 'text',
+                preload: true,
+                placeholder: 'Select or search audit types',
+                load: function(query, callback) {
+                    let url = '/api/audit-types?q=' + encodeURIComponent(query);
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(json => callback(json))
+                        .catch(() => callback());
+                }
+            });
+
             // TomSelect untuk modal Edit (semua modal edit role select)
             document.querySelectorAll('select[id^="role_select_edit_"]').forEach(function(el) {
                 new TomSelect(el, {
@@ -289,6 +307,26 @@
                     placeholder: 'Select departments',
                     load: function(query, callback) {
                         let url = '/api/departments?q=' + encodeURIComponent(query);
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(json => callback(json))
+                            .catch(() => callback());
+                    }
+                });
+            });
+
+            // TomSelect untuk modal Edit (semua modal edit audit type select)
+            document.querySelectorAll('select[id^="audit_type_select_edit_"]').forEach(function(el) {
+                new TomSelect(el, {
+                    create: false,
+                    maxItems: null,
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: 'text',
+                    preload: true,
+                    placeholder: 'Select audit types',
+                    load: function(query, callback) {
+                        let url = '/api/audit-types?q=' + encodeURIComponent(query);
                         fetch(url)
                             .then(response => response.json())
                             .then(json => callback(json))
@@ -419,12 +457,24 @@
                         // Reinit TomSelect untuk select di dalam modal edit
                         new TomSelect(`#role_select_edit_${userId}`, {
                             create: false,
-                            maxItems: null
+                            maxItems: null,
+                            placeholder: 'Select roles'
                         });
                         new TomSelect(`#department_select_edit_${userId}`, {
                             create: false,
-                            maxItems: null
+                            maxItems: null,
+                            placeholder: 'Select departments'
                         });
+                        
+                        // TomSelect untuk audit type di modal edit
+                        const auditTypeSelect = document.getElementById(`audit_type_select_edit_${userId}`);
+                        if (auditTypeSelect) {
+                            new TomSelect(`#audit_type_select_edit_${userId}`, {
+                                create: false,
+                                maxItems: null,
+                                placeholder: 'Select audit types'
+                            });
+                        }
 
                         if (typeof feather !== 'undefined') feather.replace();
                     },

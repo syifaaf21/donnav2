@@ -121,17 +121,16 @@
 
                     <div class="col-md-6" id="auditTypeContainer" style="display: none;">
                         <label class="form-label fw-medium">Audit Type <span class="text-danger">*</span></label>
-                        <select id="audit_type_select" name="audit_type_id"
-                            class="form-select rounded-3 @error('audit_type_id') is-invalid @enderror">
-                            <option value="" disabled {{ old('audit_type_id') ? '' : 'selected' }}>-- Select
-                                Audit Type --</option>
+                        <select id="audit_type_select" name="audit_type_ids[]"
+                            class="form-select rounded-3 @error('audit_type_ids') is-invalid @enderror"
+                            multiple>
                             @foreach ($auditTypes as $a)
                                 <option value="{{ $a->id }}"
-                                    {{ old('audit_type_id') == $a->id ? 'selected' : '' }}>{{ $a->name }}
+                                    {{ in_array($a->id, (array) old('audit_type_ids', [])) ? 'selected' : '' }}>{{ $a->name }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('audit_type_id')
+                        @error('audit_type_ids')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

@@ -103,19 +103,17 @@
                 <div class="col-md-6" id="auditTypeContainerEdit_{{ $user->id }}"
                     style="display: {{ $user->roles->pluck('name')->map(fn($n) => strtolower($n))->contains('auditor') ? 'block' : 'none' }};">
                     <label class="form-label fw-semibold">Audit Type<span class="text-danger">*</span></label>
-                    <select name="audit_type_id" id="audit_type_select_edit_{{ $user->id }}"
-                        class="form-select border-0 shadow-sm rounded-3 @error('audit_type_id') is-invalid @enderror">
-                        <option value="" disabled
-                            {{ old('audit_type_id', $user->audit_type_id) ? '' : 'selected' }}>-- Select
-                            Audit Type --</option>
+                    <select name="audit_type_ids[]" id="audit_type_select_edit_{{ $user->id }}"
+                        class="form-select border-0 shadow-sm rounded-3 @error('audit_type_ids') is-invalid @enderror"
+                        multiple>
                         @foreach ($auditTypes as $a)
                             <option value="{{ $a->id }}"
-                                {{ (old('audit_type_id') ? old('audit_type_id') == $a->id : $user->audit_type_id == $a->id) ? 'selected' : '' }}>
+                                {{ $user->auditTypes->contains('id', $a->id) ? 'selected' : '' }}>
                                 {{ $a->name }}
                             </option>
                         @endforeach
                     </select>
-                    @error('audit_type_id')
+                    @error('audit_type_ids')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -140,27 +138,60 @@
             </div>
             <script>
                 (function() {
-                    const roleSelect = document.getElementById('role_select_edit_{{ $user->id }}');
-                    const auditTypeContainer = document.getElementById('auditTypeContainerEdit_{{ $user->id }}');
-                    const auditTypeSelect = document.getElementById('audit_type_select_edit_{{ $user->id }}');
+                    // Delay untuk memastikan TomSelect sudah diinisialisasi
+                    setTimeout(function() {
+                        const roleSelect = document.getElementById('role_select_edit_{{ $user->id }}');
+                        const auditTypeContainer = document.getElementById('auditTypeContainerEdit_{{ $user->id }}');
+                        const auditTypeSelect = document.getElementById('audit_type_select_edit_{{ $user->id }}');
 
-                    if (!roleSelect || !auditTypeContainer) return;
+                        if (!roleSelect || !auditTypeContainer) return;
 
-                    function toggleAuditType() {
-                        const selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
-                        const hasAuditor = selected.some(t => t.includes('auditor') || t.includes('lead auditor'));
-                        if (hasAuditor) {
-                            auditTypeContainer.style.display = 'block';
-                            if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');
-                        } else {
-                            auditTypeContainer.style.display = 'none';
-                            if (auditTypeSelect) auditTypeSelect.removeAttribute('required');
+                        function toggleAuditType() {
+                            // Cek apakah roleSelect sudah di-TomSelect-kan
+                            const tomSelectInstance = roleSelect.tomselect;
+                            let selected;
+                            
+                            if (tomSelectInstance) {
+                                // Jika sudah TomSelect, ambil dari instance
+                                selected = Object.values(tomSelectInstance.options).map(o => (o.text || '').toLowerCase());
+                            } else {
+                                // Fallback ke native select
+                                selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
+                            }
+                            
+                            const hasAuditor = selected.some(t => t.includes('auditor') || t.includes('lead auditor'));
+                            if (hasAuditor) {
+                                auditTypeContainer.style.display = 'block';
+                                if (auditTypeSelect) {
+                                    const auditTomSelect = auditTypeSelect.tomselect;
+                                    if (auditTomSelect) {
+                                        auditTomSelect.enable();
+                                    }
+                                    auditTypeSelect.setAttribute('required', 'required');
+                                }
+                            } else {
+                                auditTypeContainer.style.display = 'none';
+                                if (auditTypeSelect) {
+                                    const auditTomSelect = auditTypeSelect.tomselect;
+                                    if (auditTomSelect) {
+                                        auditTomSelect.clear();
+                                        auditTomSelect.disable();
+                                    }
+                                    auditTypeSelect.removeAttribute('required');
+                                }
+                            }
                         }
-                    }
 
-                    roleSelect.addEventListener('change', toggleAuditType);
-                    // initial state
-                    toggleAuditType();
+                        // Listen to TomSelect change event
+                        if (roleSelect.tomselect) {
+                            roleSelect.tomselect.on('change', toggleAuditType);
+                        } else {
+                            roleSelect.addEventListener('change', toggleAuditType);
+                        }
+                        
+                        // initial state
+                        toggleAuditType();
+                    }, 300); // Delay 300ms untuk memastikan TomSelect sudah ready
                 })();
             </script>
         </div>

@@ -18,7 +18,7 @@ class UserController extends Controller
         $tab = $request->input('tab', 'all');
         $perPage = $request->input('per_page', 10); // default 10 per page
 
-        $query = User::with(['roles', 'departments']);
+        $query = User::with(['roles', 'departments', 'auditTypes']);
 
         // Filter berdasarkan tab
         switch ($tab) {
@@ -45,8 +45,7 @@ class UserController extends Controller
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('roles', fn($r) => $r->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('departments', fn($d) => $d->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));
-                ;
+                    ->orWhereHas('auditTypes', fn($d) => $d->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -86,7 +85,8 @@ class UserController extends Controller
             ],
             'role_ids' => 'required|array|min:1',
             'department_ids' => 'required|array|min:1',
-            'audit_type_id' => 'nullable',
+            'audit_type_ids' => 'nullable|array',
+            'audit_type_ids.*' => 'exists:tm_audit_types,id',
         ], [
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
@@ -121,7 +121,6 @@ class UserController extends Controller
             'npk' => $request->npk,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'audit_type_id' => is_numeric($request->audit_type_id) ? $request->audit_type_id : null,
         ]);
 
         if (!empty($roleIds)) {
@@ -130,6 +129,11 @@ class UserController extends Controller
 
         if (!empty($departmentIds)) {
             $user->departments()->sync(array_values($departmentIds));
+        }
+
+        // Sync audit types
+        if ($request->has('audit_type_ids') && is_array($request->audit_type_ids)) {
+            $user->auditTypes()->sync($request->audit_type_ids);
         }
 
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
@@ -157,7 +161,8 @@ class UserController extends Controller
             'email' => 'nullable|email|unique:users,email,' . $user->id,
             'role_ids' => 'required|array|min:1',
             'department_ids' => 'required|array|min:1',
-            'audit_type_id' => 'nullable',
+            'audit_type_ids' => 'nullable|array',
+            'audit_type_ids.*' => 'exists:tm_audit_types,id',
         ];
 
         if ($request->filled('password')) {
@@ -194,7 +199,7 @@ class UserController extends Controller
             }
         }
 
-        $data = $request->only(['name', 'npk', 'email', 'audit_type_id']);
+        $data = $request->only(['name', 'npk', 'email']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -208,6 +213,13 @@ class UserController extends Controller
 
         if (!empty($roleIds)) {
             $user->roles()->sync(array_values($roleIds));
+        }
+
+        // Sync audit types
+        if ($request->has('audit_type_ids') && is_array($request->audit_type_ids)) {
+            $user->auditTypes()->sync($request->audit_type_ids);
+        } else {
+            $user->auditTypes()->detach();
         }
 
         return redirect()->route('master.users.index')->with('success', 'User updated successfully.');

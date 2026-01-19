@@ -23,7 +23,6 @@ class User extends Authenticatable
         'npk',
         'email',
         'password',
-        'audit_type_id',
     ];
 
     /**
@@ -67,9 +66,10 @@ class User extends Authenticatable
         return $this->hasMany(AuditFinding::class, 'auditor_id');
     }
 
-    public function auditType()
+    // Many-to-many relation: users <-> audit types (pivot: tt_user_audit_type)
+    public function auditTypes()
     {
-        return $this->belongsTo(Audit::class, 'audit_type_id');
+        return $this->belongsToMany(Audit::class, 'tt_user_audit_type', 'user_id', 'audit_id');
     }
 
     /**
@@ -85,13 +85,13 @@ class User extends Authenticatable
      */
     public function isSupervisorOfDepartment($departmentId)
     {
-        return $this->isSupervisor() && 
+        return $this->isSupervisor() &&
                $this->departments()->where('tm_departments.id', $departmentId)->exists();
     }
 
     /**
      * Check if user can edit document mapping (supervisor dari dept pemilik dokumen)
-     * 
+     *
      * @param \App\Models\DocumentMapping $mapping
      * @return bool
      */
