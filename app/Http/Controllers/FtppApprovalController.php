@@ -48,9 +48,10 @@ class FtppApprovalController extends Controller
 
         $user = auth()->user();
         $userDeptIds = $user->departments->pluck('id')->toArray();
+        $userRoles = $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray();
 
-        // jika user adalah admin, super admin, atau auditor => tampilkan semua findings
-        $isPrivileged = $user->roles()->whereIn('name', ['admin', 'super admin', 'auditor'])->exists();
+        // Check if user is admin/super admin (fully privileged)
+        $isFullyPrivileged = in_array('admin', $userRoles) || in_array('super admin', $userRoles);
 
         $query = AuditFinding::with([
             'auditee',
@@ -64,7 +65,16 @@ class FtppApprovalController extends Controller
             'auditeeAction.leadAuditor',
         ])->orderByDesc('created_at');
 
-        if (!$isPrivileged) {
+        // For auditors: only show findings assigned to them
+        if (in_array('auditor', $userRoles)) {
+            $query->where('auditor_id', $user->id);
+        }
+        // For dept heads: only show findings from their departments
+        elseif (in_array('dept head', $userRoles)) {
+            $query->whereIn('department_id', $userDeptIds);
+        }
+        // For lead auditors and non-privileged users: show based on department
+        elseif (!$isFullyPrivileged) {
             $query->whereIn('department_id', $userDeptIds);
         }
 
