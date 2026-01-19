@@ -137,7 +137,7 @@
                         <div class="flex flex-col items-end">
                             <button type="button" onclick="openSidebar()"
                                 class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                Select Clause/Categories
+                                Select Clause/Criteria
                             </button>
                             <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
                                 <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end"></div>
