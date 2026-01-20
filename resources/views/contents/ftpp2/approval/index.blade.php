@@ -250,6 +250,7 @@
                     finding_category_id: "",
                     auditee_ids: "",
                     sub_klausul_id: [],
+                    selected_lead_auditor_id: "",
 
                     sub_audit: [],
                     auditees: [],

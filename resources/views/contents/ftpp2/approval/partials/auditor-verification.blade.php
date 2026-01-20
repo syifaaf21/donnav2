@@ -34,6 +34,17 @@
             <div class="my-4">
                 <template x-if="!form.lead_auditor_ack && userRoles.includes('admin') && form.status_id == 10">
                     <div class="flex flex-col gap-3">
+                        <!-- SELECT LEAD AUDITOR DROPDOWN -->
+                        <div class="mb-2">
+                            <label class="block text-sm font-semibold mb-1">Select Lead Auditor</label>
+                            <select id="lead_auditor_select" x-model="form.selected_lead_auditor_id"
+                                class="w-full border border-gray-400 rounded p-2 text-sm">
+                                <option value="">-- Choose Lead Auditor --</option>
+                                @foreach($leadAuditors as $auditor)
+                                    <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
                         <!-- VERIFY BUTTON -->
                         <button type="button" onclick="verifyLeadAuditor()"
@@ -218,11 +229,23 @@
     async function verifyLeadAuditor() {
         await ensureSwal();
         const auditeeActionId = document.getElementById('auditee_action_id')?.value;
-        if (!auditeeActionId) return Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No auditee action ID found'
-        });
+        const leadAuditorId = document.getElementById('lead_auditor_select')?.value;
+
+        if (!auditeeActionId) {
+            return Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No auditee action ID found'
+            });
+        }
+
+        if (!leadAuditorId) {
+            return Swal.fire({
+                icon: 'warning',
+                title: 'Missing',
+                text: 'Please select a Lead Auditor before verifying.'
+            });
+        }
 
         const confirm = await Swal.fire({
             title: 'Confirm Acknowledge',
@@ -243,7 +266,8 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    auditee_action_id: auditeeActionId
+                    auditee_action_id: auditeeActionId,
+                    lead_auditor_id: leadAuditorId
                 })
             });
 
