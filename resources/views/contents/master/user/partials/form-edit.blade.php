@@ -93,19 +93,17 @@
                 <!-- Audit Type (shown only when Role = Auditor) -->
                 @php
                     $auditTypes = \App\Models\Audit::select('id', 'name')->get();
-                    $roleName = $user->roles->pluck('name')->first() ?? null;
-                    if (old('role_id')) {
-                        $r = collect($roles)->firstWhere('id', (int) old('role_id'));
-                        $roleName = $r->name ?? $roleName;
-                    }
+                    $hasAuditorRole = $user->roles->pluck('name')->filter(function($name) {
+                        return stripos($name, 'auditor') !== false;
+                    })->count() > 0;
                 @endphp
 
                 <div class="col-md-6" id="auditTypeContainerEdit_{{ $user->id }}"
-                    style="display: {{ $user->roles->pluck('name')->map(fn($n) => strtolower($n))->contains('auditor') ? 'block' : 'none' }};">
+                    style="display: {{ $hasAuditorRole ? 'block' : 'none' }};">
                     <label class="form-label fw-semibold">Audit Type<span class="text-danger">*</span></label>
                     <select name="audit_type_ids[]" id="audit_type_select_edit_{{ $user->id }}"
                         class="form-select border-0 shadow-sm rounded-3 @error('audit_type_ids') is-invalid @enderror"
-                        multiple>
+                        multiple {{ $hasAuditorRole ? 'required' : '' }}>
                         @foreach ($auditTypes as $a)
                             <option value="{{ $a->id }}"
                                 {{ $user->auditTypes->contains('id', $a->id) ? 'selected' : '' }}>
@@ -146,27 +144,42 @@
 
                         if (!roleSelect || !auditTypeContainer) return;
 
-                        function toggleAuditType() {
-                            // Cek apakah roleSelect sudah di-TomSelect-kan
+                        function updateAuditTypeVisibility() {
+                            let hasAuditor = false;
                             const tomSelectInstance = roleSelect.tomselect;
-                            let selected;
-                            
+
                             if (tomSelectInstance) {
-                                // Jika sudah TomSelect, ambil dari instance
-                                selected = Object.values(tomSelectInstance.options).map(o => (o.text || '').toLowerCase());
+                                // Ambil value yang selected dari TomSelect menggunakan getValue()
+                                const selectedValues = tomSelectInstance.getValue();
+                                
+                                if (Array.isArray(selectedValues)) {
+                                    // Jika multiple select
+                                    hasAuditor = selectedValues.some(val => {
+                                        const option = roleSelect.querySelector(`option[value="${val}"]`);
+                                        if (option) {
+                                            const roleName = (option.textContent || '').toLowerCase();
+                                            return roleName.includes('auditor');
+                                        }
+                                        return false;
+                                    });
+                                } else if (selectedValues) {
+                                    // Jika single value
+                                    const option = roleSelect.querySelector(`option[value="${selectedValues}"]`);
+                                    if (option) {
+                                        hasAuditor = (option.textContent || '').toLowerCase().includes('auditor');
+                                    }
+                                }
                             } else {
-                                // Fallback ke native select
-                                selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
+                                // Fallback ke native select jika TomSelect belum ready
+                                const selectedOptions = Array.from(roleSelect.selectedOptions);
+                                hasAuditor = selectedOptions.some(opt =>
+                                    (opt.text || '').toLowerCase().includes('auditor')
+                                );
                             }
-                            
-                            const hasAuditor = selected.some(t => t.includes('auditor') || t.includes('lead auditor'));
+
                             if (hasAuditor) {
                                 auditTypeContainer.style.display = 'block';
                                 if (auditTypeSelect) {
-                                    const auditTomSelect = auditTypeSelect.tomselect;
-                                    if (auditTomSelect) {
-                                        auditTomSelect.enable();
-                                    }
                                     auditTypeSelect.setAttribute('required', 'required');
                                 }
                             } else {
@@ -175,23 +188,21 @@
                                     const auditTomSelect = auditTypeSelect.tomselect;
                                     if (auditTomSelect) {
                                         auditTomSelect.clear();
-                                        auditTomSelect.disable();
                                     }
                                     auditTypeSelect.removeAttribute('required');
                                 }
                             }
                         }
 
-                        // Listen to TomSelect change event
+                        // Listen to change event
                         if (roleSelect.tomselect) {
-                            roleSelect.tomselect.on('change', toggleAuditType);
-                        } else {
-                            roleSelect.addEventListener('change', toggleAuditType);
+                            roleSelect.tomselect.on('change', updateAuditTypeVisibility);
                         }
-                        
-                        // initial state
-                        toggleAuditType();
-                    }, 300); // Delay 300ms untuk memastikan TomSelect sudah ready
+                        roleSelect.addEventListener('change', updateAuditTypeVisibility);
+
+                        // Initial state
+                        updateAuditTypeVisibility();
+                    }, 800);
                 })();
             </script>
         </div>

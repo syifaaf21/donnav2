@@ -49,7 +49,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('created_at', 'asc')
+        $users = $query->orderBy('name', 'asc')
             ->paginate($perPage)
             ->appends($request->query());
 
