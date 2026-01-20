@@ -36,6 +36,9 @@ class DatabaseSeeder extends Seeder
         KlausulsSeeder::class,
         HeadKlausulsSeeder::class,
         SubKlausulsSeeder::class,
+        AddLeadAuditorRoleSeeder::class,
+        AddDraftStatusSeeder::class,
+        AddDraftFindingStatusSeeder::class,
         ]);
 
     }
