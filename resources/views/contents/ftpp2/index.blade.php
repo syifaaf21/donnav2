@@ -183,7 +183,7 @@
                     $userRoles = auth()->user()->roles->pluck('name')->toArray();
                 @endphp
 
-                @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
+                @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles) || in_array('Lead Auditor', $userRoles))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
                         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 font-medium
                        shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
@@ -195,6 +195,7 @@
                 @if (in_array('Super Admin', $userRoles) ||
                         in_array('Admin', $userRoles) ||
                         in_array('Auditor', $userRoles) ||
+                        in_array('Lead Auditor', $userRoles) ||
                         in_array('Dept Head', $userRoles))
                     @php
                         $badgeCount = 0;
@@ -227,6 +228,10 @@
 
                         if (in_array('Auditor', $userRoles)) {
                             $badgeCount += $findCount('need approval by auditor');
+                        }
+
+                        if (in_array('Lead Auditor', $userRoles)) {
+                            $badgeCount += $findCount('need approval by lead auditor');
                         }
 
                         if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles)) {
@@ -364,7 +369,7 @@
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 title="{{ $finding->auditee->pluck('name')->join(', ') }}"
                                             @endif>
-                                            
+
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 {{ $finding->auditee->pluck('name')->join(', ') }}
                                             @else
@@ -489,7 +494,7 @@
                                                                     </a>
                                                                 @endif
                                                             @endif
-                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Lead Auditor']))
                                                                 <!-- ITEM: Delete (SweetAlert confirm) -->
                                                                 <form id="delete-form-{{ $finding->id }}" method="POST"
                                                                     action="{{ route('ftpp.destroy', $finding->id) }}"

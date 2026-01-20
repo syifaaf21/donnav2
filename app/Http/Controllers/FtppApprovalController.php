@@ -65,8 +65,11 @@ class FtppApprovalController extends Controller
             'auditeeAction.leadAuditor',
         ])->orderByDesc('created_at');
 
+        if (in_array('lead auditor', $userRoles)) {
+            $query->whereIn('department_id', $userDeptIds);
+        }
         // For auditors: only show findings assigned to them
-        if (in_array('auditor', $userRoles)) {
+        elseif (in_array('auditor', $userRoles)) {
             $query->where('auditor_id', $user->id);
         }
         // For dept heads: only show findings from their departments

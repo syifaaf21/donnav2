@@ -32,7 +32,7 @@
         </td>
         <td class="border border-black p-2">
             <div class="my-4">
-                <template x-if="!form.lead_auditor_ack && userRoles.includes('admin') && form.status_id == 10">
+                <template x-if="!form.lead_auditor_ack && (userRoles.includes('admin') || userRoles.includes('super admin') || userRoles.includes('lead auditor')) && form.status_id == 10">
                     <div class="flex flex-col gap-3">
 
                         <!-- VERIFY BUTTON -->
