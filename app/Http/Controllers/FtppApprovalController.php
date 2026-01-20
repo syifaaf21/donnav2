@@ -38,6 +38,9 @@ class FtppApprovalController extends Controller
         $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
             ->select('id', 'name')->get();
 
+        $leadAuditors = User::whereHas('roles', fn($q) => $q->whereIn('name', ['lead auditor', 'admin', 'super admin']))
+            ->select('id', 'name')->get();
+
         $auditTypes = Audit::with('subAudit')->get();
 
         $subAudit = SubAudit::all();
@@ -89,6 +92,7 @@ class FtppApprovalController extends Controller
             'processes',
             'products',
             'auditors',
+            'leadAuditors',
             'klausuls',
             'auditTypes',
             'findingCategories',
@@ -764,11 +768,16 @@ class FtppApprovalController extends Controller
 
     public function leadAuditorAcknowledge(Request $request)
     {
+        $request->validate([
+            'auditee_action_id' => 'required|exists:tt_auditee_actions,id',
+            'lead_auditor_id' => 'required|exists:users,id',
+        ]);
+
         $action = AuditeeAction::findOrFail($request->auditee_action_id);
         $finding = AuditFinding::findOrFail($action->audit_finding_id);
 
         $action->acknowledge_by_lead_auditor = true;
-        $action->lead_auditor_id = auth()->id();
+        $action->lead_auditor_id = $request->lead_auditor_id;
         $action->save();
 
         $finding->status_id = 11; // closed

@@ -1,13 +1,51 @@
 <ul class="font-heading py-4">
 
-    <!-- Dashboard -->
+    <!-- Dashboard Dropdown -->
     <li>
-        <a href="{{ route('dashboard') }}" data-bs-title="Dashboard"
-            class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
-        {{ request()->is('dashboard*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
-            <i data-feather="home" class="menu-icon w-4 h-4"></i>
-            <span class="sidebar-text ">Dashboard</span>
+        <a data-bs-title="Dashboard"
+            class="collapse-toggle menu-item w-full flex items-center justify-between px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-left font-medium
+            {{ Route::is('dashboard*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}"
+            data-collapse="dashboardMenu">
+            <div class="flex items-center gap-3">
+                <i data-feather="home" class="menu-icon w-4 h-4"></i>
+                <span class="sidebar-text">Dashboard</span>
+            </div>
+            <i data-feather="chevron-right" class="menu-icon w-4 h-4"></i>
         </a>
+        <ul id="dashboardMenu" class="ml-2 mt-1 hidden">
+            <li>
+                <a href="{{ route('dashboard') }}" data-bs-title="Dashboard Overview"
+                    class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                    {{ Route::is('dashboard') && !Route::is('dashboard.control') && !Route::is('dashboard.review') && !Route::is('dashboard.ftpp') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                    <i data-feather="pie-chart" class="menu-icon w-4 h-4"></i>
+                    <span class="sidebar-text">Overview</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('dashboard.control') }}" data-bs-title="Document Control Dashboard"
+                    class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                    {{ Route::is('dashboard.control') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                    <i class="bi bi-calendar-range" style="width: 1rem; height: 1rem;"></i>
+                    <span class="sidebar-text">Document Control</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('dashboard.review') }}" data-bs-title="Document Review Dashboard"
+                    class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                    {{ Route::is('dashboard.review') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                    <i data-feather="check-square" class="menu-icon w-4 h-4"></i>
+                    <span class="sidebar-text">Document Review</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('dashboard.ftpp') }}" data-bs-title="FTPP Dashboard"
+                    class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                    {{ Route::is('dashboard.ftpp') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                    <i data-feather="file-text" class="menu-icon w-4 h-4"></i>
+                    <span class="sidebar-text">FTPP</span>
+                </a>
+            </li>
+        </ul>
     </li>
 
     <li>
