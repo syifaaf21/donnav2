@@ -23,7 +23,7 @@ class Audit extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class, 'audit_type_id');
+        return $this->belongsToMany(User::class, 'tt_user_audit_type', 'audit_id', 'user_id');
     }
 
     public function department()

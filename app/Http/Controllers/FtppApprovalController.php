@@ -35,28 +35,39 @@ class FtppApprovalController extends Controller
         $processes = Process::select('id', 'name')->get();
         $products = Product::select('id', 'name')->get();
 
-        $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
+        $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'Auditor'))
             ->select('id', 'name')->get();
 
-        $leadAuditors = User::whereHas('roles', fn($q) => $q->whereIn('name', ['lead auditor', 'admin', 'super admin']))
-            ->select('id', 'name')->get();
+        $leadAuditors = User::whereHas(
+            'roles',
+            fn($q) =>
+            $q->whereIn('name', ['Lead Auditor', 'Admin', 'Super Admin'])
+        )->select('id', 'name')->get();
 
         $auditTypes = Audit::with('subAudit')->get();
-
         $subAudit = SubAudit::all();
-
         $findingCategories = FindingCategory::all();
-
         $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
 
         $user = auth()->user();
-        $userDeptIds = $user->departments->pluck('id')->toArray();
-        $userRoles = $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray();
 
-        // Check if user is admin/super admin (fully privileged)
-        $isFullyPrivileged = in_array('admin', $userRoles) || in_array('super admin', $userRoles);
+        $userDeptIds = $user->departments->pluck('id')->toArray();
+        $userAuditTypeIds = $user->auditTypes->pluck('id')->toArray();
+
+        if (empty($userDeptIds) && !empty($user->department_id)) {
+            $userDeptIds = [(int) $user->department_id];
+        }
+
+        $userRoles = $user->roles
+            ->pluck('name')
+            ->map(fn($r) => strtolower($r))
+            ->toArray();
+
+        $isFullyPrivileged = in_array('admin', $userRoles)
+            || in_array('super admin', $userRoles);
 
         $query = AuditFinding::with([
+            'audit',
             'auditee',
             'auditor',
             'findingCategory',
@@ -68,20 +79,37 @@ class FtppApprovalController extends Controller
             'auditeeAction.leadAuditor',
         ])->orderByDesc('created_at');
 
-        if (in_array('lead auditor', $userRoles)) {
-            $query->whereIn('department_id', $userDeptIds);
+        // ADMIN / SUPER ADMIN
+        if ($isFullyPrivileged) {
+            // no filter
         }
-        // For auditors: only show findings assigned to them
+        // LEAD AUDITOR → filter by assigned audit types
+        elseif (in_array('lead auditor', $userRoles)) {
+            if (!empty($userAuditTypeIds)) {
+                $query->whereIn('audit_type_id', $userAuditTypeIds);
+            } else {
+                $query->whereRaw('0 = 1');
+            }
+        }
+        // DEPT HEAD → filter by department
+        elseif (in_array('dept head', $userRoles)) {
+            if (!empty($userDeptIds)) {
+                $query->whereIn('department_id', $userDeptIds);
+            } else {
+                $query->whereRaw('0 = 1');
+            }
+        }
+        // AUDITOR → only their findings
         elseif (in_array('auditor', $userRoles)) {
             $query->where('auditor_id', $user->id);
         }
-        // For dept heads: only show findings from their departments
-        elseif (in_array('dept head', $userRoles)) {
-            $query->whereIn('department_id', $userDeptIds);
-        }
-        // For lead auditors and non-privileged users: show based on department
-        elseif (!$isFullyPrivileged) {
-            $query->whereIn('department_id', $userDeptIds);
+        // DEFAULT → department based
+        else {
+            if (!empty($userDeptIds)) {
+                $query->whereIn('department_id', $userDeptIds);
+            } else {
+                $query->whereRaw('0 = 1');
+            }
         }
 
         $findings = $query->get();
@@ -681,27 +709,28 @@ class FtppApprovalController extends Controller
 
             // dept head if present on auditee action
             if (!empty($action->dept_head_id)) {
-            $dh = User::find($action->dept_head_id);
-            if ($dh) $recipients->push($dh);
+                $dh = User::find($action->dept_head_id);
+                if ($dh)
+                    $recipients->push($dh);
             }
 
             // include lead auditors (role-based)
             $leadAuditors = User::whereHas('roles', fn($q) => $q->where('name', 'admin'))->get();
             if ($leadAuditors->isNotEmpty()) {
-            $recipients = $recipients->merge($leadAuditors);
+                $recipients = $recipients->merge($leadAuditors);
             }
 
             $recipients = $recipients->unique('id')->filter()->values();
 
             if ($recipients->isNotEmpty()) {
-            Notification::send(
-                $recipients,
-                new FtppActionNotification(
-                $finding,
-                'auditor_approved',
-                auth()->user()?->name
-                )
-            );
+                Notification::send(
+                    $recipients,
+                    new FtppActionNotification(
+                        $finding,
+                        'auditor_approved',
+                        auth()->user()?->name
+                    )
+                );
             }
         } catch (\Throwable $e) {
             \Log::warning('FtppActionNotification (auditor_approved) failed: ' . $e->getMessage());
@@ -741,20 +770,20 @@ class FtppApprovalController extends Controller
             $recipients = $finding->auditee()->get()->unique('id')->filter()->values();
 
             if ($recipients->isNotEmpty()) {
-            $by = auth()->user()?->name ?? 'Auditor';
-            $reg = $finding->registration_number ?? '-';
-            $reason = $auditeeAction->effectiveness_verification ?? $request->effectiveness_verification;
-            $customMessage = "{$by} has returned the finding (Registration No: {$reg}) for revision. Note: {$reason}";
+                $by = auth()->user()?->name ?? 'Auditor';
+                $reg = $finding->registration_number ?? '-';
+                $reason = $auditeeAction->effectiveness_verification ?? $request->effectiveness_verification;
+                $customMessage = "{$by} has returned the finding (Registration No: {$reg}) for revision. Note: {$reason}";
 
-            Notification::send(
-                $recipients,
-                new FtppActionNotification(
-                $finding,
-                'auditor_return',
-                auth()->user()?->name,
-                $customMessage
-                )
-            );
+                Notification::send(
+                    $recipients,
+                    new FtppActionNotification(
+                        $finding,
+                        'auditor_return',
+                        auth()->user()?->name,
+                        $customMessage
+                    )
+                );
             }
         } catch (\Throwable $e) {
             \Log::warning('FtppActionNotification (auditor_return) failed: ' . $e->getMessage());
@@ -788,22 +817,23 @@ class FtppApprovalController extends Controller
             $recipients = collect();
             $recipients = $recipients->merge($finding->auditee()->get());
             if ($finding->auditor) {
-            $recipients->push($finding->auditor);
+                $recipients->push($finding->auditor);
             }
             if ($action->dept_head_id) {
-            $dh = User::find($action->dept_head_id);
-            if ($dh) $recipients->push($dh);
+                $dh = User::find($action->dept_head_id);
+                if ($dh)
+                    $recipients->push($dh);
             }
             $recipients = $recipients->unique('id')->filter()->values();
             if ($recipients->isNotEmpty()) {
-            Notification::send(
-                $recipients,
-                new FtppActionNotification(
-                $finding,
-                'lead_approved',
-                auth()->user()?->name
-                )
-            );
+                Notification::send(
+                    $recipients,
+                    new FtppActionNotification(
+                        $finding,
+                        'lead_approved',
+                        auth()->user()?->name
+                    )
+                );
             }
         } catch (\Throwable $e) {
             \Log::warning('FtppActionNotification (lead_approved) failed: ' . $e->getMessage());

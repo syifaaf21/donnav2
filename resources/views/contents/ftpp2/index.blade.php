@@ -183,7 +183,7 @@
                     $userRoles = auth()->user()->roles->pluck('name')->toArray();
                 @endphp
 
-                @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles) || in_array('Lead Auditor', $userRoles))
+                @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
                         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 font-medium
                        shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">

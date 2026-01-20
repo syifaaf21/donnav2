@@ -30,7 +30,7 @@ class FtppController extends Controller
     public function index(Request $request)
     {
         // Build base query with eager loads
-        $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee']);
+        $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee', 'audit']);
 
         $user = auth()->user();
 
