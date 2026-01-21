@@ -148,6 +148,9 @@ Route::middleware('auth')->group(function () {
 
     // Dashboard & Profile
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/control', [DashboardController::class, 'controlDashboard'])->name('dashboard.control');
+    Route::get('/dashboard/review', [DashboardController::class, 'reviewDashboard'])->name('dashboard.review');
+    Route::get('/dashboard/ftpp', [DashboardController::class, 'ftppDashboard'])->name('dashboard.ftpp');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
 

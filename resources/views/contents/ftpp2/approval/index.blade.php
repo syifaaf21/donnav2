@@ -52,7 +52,7 @@
             </nav>
         </div> --}}
 
-        <div x-data="ftppApp()">
+        <div x-data="ftppApp()" x-init="init()">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
@@ -69,8 +69,20 @@
                     </div>
 
                     <ul>
+                        <!-- Debug info -->
+                        <li class="text-xs text-gray-400 px-2 py-1 mb-2 border-b" x-show="findings.length === 0">
+                            ⚠️ No findings loaded from controller. Check user department assignment.
+                        </li>
+                        
                         <template
-                            x-for="item in filteredFindings.filter(i => ['need check','need approval by auditor','need approval by lead auditor'].includes((i.status?.name || '').toLowerCase()))"
+                            x-for="item in filteredFindings.filter(i => {
+                                const statusName = (i.status?.name || '').toLowerCase();
+                                // Lead Auditor can see all statuses, others see specific statuses
+                                if (userRoles.includes('lead auditor') || userRoles.includes('admin') || userRoles.includes('super admin')) {
+                                    return ['need check','need approval by auditor','need approval by lead auditor'].includes(statusName);
+                                }
+                                return ['need check','need approval by auditor','need approval by lead auditor'].includes(statusName);
+                            })"
                             :key="item.id">
                             <li @click="loadForm(item.id)"
                                 class="cursor-pointer px-2 py-2 mb-2 border rounded shadow hover:bg-slate-50">
@@ -238,6 +250,14 @@
                 mode: 'create',
                 selectedId: null,
                 userRoles: @json(auth()->user()->roles->pluck('name')->map('strtolower')->toArray() ?? []),
+                
+                init() {
+                    console.log('🔍 Total findings from controller:', this.findings.length);
+                    console.log('👤 User roles:', this.userRoles);
+                    console.log('📋 All findings:', this.findings);
+                    console.log('✅ Filtered findings:', this.filteredFindings);
+                },
+                
                 form: {
                     status_id: 7,
                     audit_type_id: "",
@@ -250,6 +270,7 @@
                     finding_category_id: "",
                     auditee_ids: "",
                     sub_klausul_id: [],
+                    selected_lead_auditor_id: "",
 
                     sub_audit: [],
                     auditees: [],

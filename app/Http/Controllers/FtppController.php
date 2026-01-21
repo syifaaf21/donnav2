@@ -30,7 +30,7 @@ class FtppController extends Controller
     public function index(Request $request)
     {
         // Build base query with eager loads
-        $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee']);
+        $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee', 'audit']);
 
         $user = auth()->user();
 
@@ -47,8 +47,8 @@ class FtppController extends Controller
         if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
             // no department/audience filter
         }
-        // Dept Head: can see all FTTP in their department(s)
-        elseif (!empty($user) && in_array('dept head', $userRolesLowercase)) {
+        // Dept Head & Lead Auditor: can see all FTTP in their department(s)
+        elseif (!empty($user) && (in_array('dept head', $userRolesLowercase) || in_array('lead auditor', $userRolesLowercase))) {
             $userDeptIds = $user->departments->pluck('id')->toArray();
             if (empty($userDeptIds) && !empty($user->department_id)) {
                 $userDeptIds = [(int) $user->department_id];
@@ -57,7 +57,7 @@ class FtppController extends Controller
             if (!empty($userDeptIds)) {
                 $query->whereIn('department_id', $userDeptIds);
             } else {
-                // if dept head has no department assigned, show nothing
+                // if dept head/lead auditor has no department assigned, show nothing
                 $query->whereRaw('0 = 1');
             }
         }
@@ -126,8 +126,8 @@ class FtppController extends Controller
             // Admin/Super Admin: hitung semua dokumen
             $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
             $totalCount = AuditFinding::count();
-        } elseif (!empty($user) && in_array('dept head', $userRolesLowercase)) {
-            // Dept Head: hitung hanya dokumen dari department mereka
+        } elseif (!empty($user) && (in_array('dept head', $userRolesLowercase) || in_array('lead auditor', $userRolesLowercase))) {
+            // Dept Head & Lead Auditor: hitung hanya dokumen dari department mereka
             $userDeptIds = $user->departments->pluck('id')->toArray();
             if (empty($userDeptIds) && !empty($user->department_id)) {
                 $userDeptIds = [(int) $user->department_id];

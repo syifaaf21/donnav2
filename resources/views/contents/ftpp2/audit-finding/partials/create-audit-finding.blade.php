@@ -137,7 +137,7 @@
                         <div class="flex flex-col items-end">
                             <button type="button" onclick="openSidebar()"
                                 class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                Select Clause/Categories
+                                Select Clause/Criteria
                             </button>
                             <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
                                 <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end"></div>
@@ -171,14 +171,12 @@
 
                     <!-- Attachment button (paperclip) -->
                     <div class="relative inline-block">
-                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                            <button id="attachBtn" type="button"
-                                class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
-                                aria-haspopup="true" aria-expanded="false" title="Attach files">
-                                <i data-feather="paperclip" class="w-4 h-4"></i>
-                                <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
-                            </button>
-                        @endif
+                        <button id="attachBtn" type="button"
+                            class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
+                            aria-haspopup="true" aria-expanded="false" title="Attach files">
+                            <i data-feather="paperclip" class="w-4 h-4"></i>
+                            <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                        </button>
 
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
@@ -855,6 +853,12 @@
         const previewImageContainer = document.getElementById('previewImageContainer');
         const previewFileContainer = document.getElementById('previewFileContainer');
 
+        // 🔹 Check if all required elements exist before proceeding
+        if (!attachBtn || !attachMenu || !attachImages || !attachDocs || !photoInput || !fileInput || !previewImageContainer || !previewFileContainer) {
+            console.warn('⚠️ Some attachment elements not found. Skipping attachment functionality.');
+            return;
+        }
+
         // 🔹 Store files accumulated from multiple selections
         let accumulatedPhotoFiles = [];
         let accumulatedFileFiles = [];
@@ -949,7 +953,7 @@
                     accumulatedPhotoFiles.push(file);
                 }
             });
-            
+
             // Update input with accumulated files
             updateFileInput(photoInput, accumulatedPhotoFiles);
             displayImages();
@@ -966,7 +970,7 @@
                     accumulatedFileFiles.push(file);
                 }
             });
-            
+
             // Update input with accumulated files
             updateFileInput(fileInput, accumulatedFileFiles);
             displayFiles();
