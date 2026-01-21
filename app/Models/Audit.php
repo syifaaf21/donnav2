@@ -13,7 +13,8 @@ class Audit extends Model
 
     protected $fillable = [
         'name',
-        'department_id',
+        'prefix_code',
+        'registration_number_format',
     ];
 
     public function subAudit()
@@ -24,10 +25,5 @@ class Audit extends Model
     public function users()
     {
         return $this->hasMany(User::class, 'audit_type_id');
-    }
-
-    public function department()
-    {
-        return $this->belongsTo(Department::class, 'department_id');
     }
 }

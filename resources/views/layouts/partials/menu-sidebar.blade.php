@@ -156,12 +156,45 @@
                     </ul>
                 </li>
                 <li>
-                    <a href="{{ route('master.ftpp.index') }}" data-bs-title="FTPP"
-                        class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm {{ Route::is('master.ftpp.*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
-                        {{-- <i data-feather="alert-circle" class="menu-icon w-4 h-4"></i> --}}
-                        <i data-feather="file-text" class="w-4 h-4"></i>
-                        <span class="sidebar-text">FTPP</span>
+                    <a type="button" data-bs-title="FTPP"
+                        class="collapse-toggle menu-item w-full flex items-center justify-between px-2 py-3 rounded-l-full hover:bg-gray-200 text-left font-medium
+                        {{ Route::is('master.ftpp*') || Route::is('master.audit*') || Route::is('master.finding*') || Route::is('master.klausul*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}"
+                        data-collapse="ftppDropdown">
+                        <div class="flex items-center gap-3">
+                            <i data-feather="file-text" class="w-4 h-4"></i>
+                            <span class="sidebar-text">FTPP</span>
+                        </div>
+                        <i data-feather="chevron-right" class="menu-icon w-4 h-4"></i>
                     </a>
+
+                    <ul id="ftppDropdown" class="ml-2 mt-1 hidden space-y-1">
+                        <li>
+                            <a href="{{ route('master.ftpp.audit.index') }}" data-bs-title="Audit Type"
+                                class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                                {{ Route::is('master.ftpp.audit.*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                                <i data-feather="tag" class="menu-icon w-4 h-4"></i>
+                                <span class="sidebar-text">Audit Type</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{{ route('master.ftpp.finding-category.index') }}" data-bs-title="Finding Category"
+                                class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                                {{ Route::is('master.ftpp.finding-category.*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                                <i data-feather="list" class="menu-icon w-4 h-4"></i>
+                                <span class="sidebar-text">Finding Category</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{{ route('master.ftpp.klausul.index') }}" data-bs-title="Klausul"
+                                class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                                {{ Route::is('master.ftpp.klausul.*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                                <i data-feather="layers" class="menu-icon w-4 h-4"></i>
+                                <span class="sidebar-text">Klausul</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li>
                     <a href="{{ route('master.users.index') }}" data-bs-title="User"

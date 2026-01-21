@@ -219,13 +219,14 @@ class FtppController extends Controller
 
     public function getData($auditTypeId)
     {
-        $auditType = Audit::with('subAudit', 'department')->findOrFail($auditTypeId);
+        $auditType = Audit::with('subAudit')->findOrFail($auditTypeId);
 
         // Use the shared generator so numbering always takes the highest existing record
         $code = $this->generateRegistrationNumber($auditTypeId);
 
+        // Get auditors that have this audit type in their pivot table
         $auditors = User::whereHas('roles', fn($q) => $q->where('tm_roles.id', 4)) // Role auditor
-            ->where('audit_type_id', $auditTypeId)
+            ->whereHas('auditTypes', fn($q) => $q->where('tm_audit_types.id', $auditTypeId))
             ->get();
 
         return response()->json([
@@ -237,35 +238,122 @@ class FtppController extends Controller
 
     public function generateRegistrationNumber($auditTypeId)
     {
-        $year   = now()->year;
+        // Get the audit type
+        $auditType = Audit::findOrFail($auditTypeId);
 
-        // Get the audit type with its department
-        $auditType = Audit::with('department')->findOrFail($auditTypeId);
+        // If no custom format, fallback to old logic
+        if (empty($auditType->registration_number_format)) {
+            $year = now()->year;
+            $prefix = $auditType->prefix_code ?? (($auditTypeId == 1) ? 'MS' : 'MR');
 
-        // Use department code if available, otherwise fallback to auditTypeId check
-        if ($auditType->department) {
-            $prefix = $auditType->department->code;
-        } else {
-            $prefix = ($auditTypeId == 1) ? 'MS' : 'MR';
+            $lastRecord = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
+                ->orderByRaw("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(registration_number, '/', 4), '/', -1) AS UNSIGNED) DESC")
+                ->first();
+
+            $nextNumber = 1;
+            if ($lastRecord) {
+                preg_match("/{$prefix}\/FTPP\/{$year}\/(\d+)\/\d+/", $lastRecord->registration_number, $matches);
+                if (!empty($matches[1])) {
+                    $nextNumber = (int) $matches[1] + 1;
+                }
+            }
+
+            $findingNumber  = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $revisionNumber = str_pad(0, 2, '0', STR_PAD_LEFT);
+            return "{$prefix}/FTPP/{$year}/{$findingNumber}/{$revisionNumber}";
         }
 
-        // Find the highest sequence for this prefix/year
-        $lastRecord = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
-            ->orderByRaw("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(registration_number, '/', 4), '/', -1) AS UNSIGNED) DESC")
-            ->first();
+        // Parse custom format
+        $format = $auditType->registration_number_format;
+        $result = '';
+        $counterPattern = ''; // pattern untuk cari last record
+        $counterDigits = 0;
+        $hasCounter = false;
 
-        $nextNumber = 1;
-        if ($lastRecord) {
-            preg_match("/{$prefix}\/FTPP\/{$year}\/(\d+)\/\d+/", $lastRecord->registration_number, $matches);
-            if (!empty($matches[1])) {
-                $nextNumber = (int) $matches[1] + 1;
+        // Parse format character by character
+        $i = 0;
+        $length = strlen($format);
+        while ($i < $length) {
+            $char = $format[$i];
+
+            // Check if it's a separator
+            if (in_array($char, ['-', '/', '.'])) {
+                $result .= $char;
+                $counterPattern .= preg_quote($char, '/');
+                $i++;
+                continue;
+            }
+
+            // Check for component patterns
+            if (substr($format, $i, 6) === 'PREFIX') {
+                $prefix = $auditType->prefix_code ?? 'FTPP';
+                $result .= $prefix;
+                $counterPattern .= preg_quote($prefix, '/');
+                $i += 6;
+            } elseif (substr($format, $i, 4) === 'YYYY') {
+                $year = now()->year;
+                $result .= $year;
+                $counterPattern .= $year;
+                $i += 4;
+            } elseif (substr($format, $i, 2) === 'YY') {
+                $year = now()->format('y');
+                $result .= $year;
+                $counterPattern .= $year;
+                $i += 2;
+            } elseif (substr($format, $i, 2) === 'MM') {
+                $month = now()->format('m');
+                $result .= $month;
+                $counterPattern .= $month;
+                $i += 2;
+            } elseif (substr($format, $i, 4) === 'NNNN') {
+                $hasCounter = true;
+                $counterDigits = 4;
+                $result .= '{COUNTER}';
+                $counterPattern .= '(\d+)';
+                $i += 4;
+            } elseif (substr($format, $i, 3) === 'NNN') {
+                $hasCounter = true;
+                $counterDigits = 3;
+                $result .= '{COUNTER}';
+                $counterPattern .= '(\d+)';
+                $i += 3;
+            } elseif (substr($format, $i, 3) === 'REV') {
+                $result .= '00'; // default revision
+                $counterPattern .= '\d+';
+                $i += 3;
+            } else {
+                // Unknown character, just append
+                $result .= $char;
+                $counterPattern .= preg_quote($char, '/');
+                $i++;
             }
         }
 
-        $findingNumber  = str_pad($nextNumber, 3, '0', STR_PAD_LEFT); // 3-digit highest+1
-        $revisionNumber = str_pad(0, 2, '0', STR_PAD_LEFT);          // 2-digit revision (default 00)
+        // If format has counter (NNN or NNNN), find the highest existing number
+        $nextNumber = 1;
+        if ($hasCounter) {
+            // Build pattern for searching - replace {COUNTER} with wildcard for LIKE
+            $searchPattern = str_replace('{COUNTER}', str_repeat('_', $counterDigits), $result);
 
-        return "{$prefix}/FTPP/{$year}/{$findingNumber}/{$revisionNumber}";
+            // Find last record matching the pattern (without counter)
+            $lastRecord = AuditFinding::where('registration_number', 'like', str_replace('{COUNTER}', '%', $result))
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastRecord) {
+                // Extract counter using regex
+                if (preg_match('/' . $counterPattern . '/', $lastRecord->registration_number, $matches)) {
+                    if (!empty($matches[1])) {
+                        $nextNumber = (int) $matches[1] + 1;
+                    }
+                }
+            }
+
+            // Replace {COUNTER} with padded number
+            $result = str_replace('{COUNTER}', str_pad($nextNumber, $counterDigits, '0', STR_PAD_LEFT), $result);
+        }
+
+        return $result;
     }
 
     public function filterKlausul($auditType)

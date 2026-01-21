@@ -10,6 +10,14 @@ use Illuminate\Http\Request;
 
 class AuditTypeController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $audits = Audit::with('subAudit')->orderBy('created_at', 'asc')->get();
+        return view('contents.master.ftpp.audit.index', compact('audits'));
+    }
 
     public function show($id)
     {
@@ -18,7 +26,8 @@ class AuditTypeController extends Controller
         return response()->json([
             'id' => $audit->id,
             'name' => $audit->name,
-            'department_id' => $audit->department_id,
+            'prefix_code' => $audit->prefix_code,
+            'registration_number_format' => $audit->registration_number_format,
             'sub_audit' => $audit->subAudit->map(function ($sub) {
                 return [
                     'id' => $sub->id,
@@ -35,7 +44,8 @@ class AuditTypeController extends Controller
     {
         $audit = Audit::create([
             'name' => $request->name,
-            'department_id' => $request->department_id,
+            'prefix_code' => $request->prefix_code,
+            'registration_number_format' => $request->registration_number_format,
         ]);
 
         if ($request->has('sub_audit')) {
@@ -57,7 +67,8 @@ class AuditTypeController extends Controller
         $audit = Audit::findOrFail($id);
         $audit->update([
             'name' => $request->name,
-            'department_id' => $request->department_id,
+            'prefix_code' => $request->prefix_code,
+            'registration_number_format' => $request->registration_number_format,
         ]);
 
         // 🔁 Hapus semua sub audit lama terlebih dahulu

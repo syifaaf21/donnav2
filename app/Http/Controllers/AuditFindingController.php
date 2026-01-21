@@ -583,6 +583,12 @@ class AuditFindingController extends Controller
 
         $auditFinding = AuditFinding::findOrFail($id);
 
+        // Check if current status is "Draft Finding"
+        $isDraftFinding = false;
+        if ($auditFinding->status) {
+            $isDraftFinding = strtolower($auditFinding->status->name) === 'draft finding';
+        }
+
         // ✅ Determine status based on action
         // - submit: Change to "Need Assign"
         // - save: Keep current status
@@ -596,9 +602,15 @@ class AuditFindingController extends Controller
         }
 
         // Auto-increment registration number revision (last numeric segment),
-        // using the incoming value if provided, otherwise the current value.
+        // BUT only if NOT Draft Finding
         $baseRegistration = $validated['registration_number'] ?? $auditFinding->registration_number;
-        $newRegistration = $this->incrementRegistrationRevision($baseRegistration);
+        if ($isDraftFinding) {
+            // Draft Finding: keep same registration number (no increment)
+            $newRegistration = $baseRegistration;
+        } else {
+            // Non-Draft: increment revision
+            $newRegistration = $this->incrementRegistrationRevision($baseRegistration);
+        }
 
         $auditFinding->update([
             'audit_type_id' => $validated['audit_type_id'] ?? $auditFinding->audit_type_id,
