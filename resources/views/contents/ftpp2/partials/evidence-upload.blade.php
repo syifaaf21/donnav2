@@ -63,23 +63,28 @@
                         });
                     @endphp
                     @forelse($evidenceFiles as $file)
-                        <li class="flex items-center justify-between bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-2 mb-1 hover:shadow-md transition-all">
+                        <li
+                            class="flex items-center justify-between bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-2 mb-1 hover:shadow-md transition-all">
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="flex-shrink-0">
                                     <i class="bi bi-file-earmark-text text-primary fs-4"></i>
                                 </div>
                                 <div class="flex flex-col min-w-0">
-                                    <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank" class="text-blue-700 font-semibold truncate hover:underline" style="max-width: 220px;">
+                                    <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
+                                        class="text-blue-700 font-semibold truncate hover:underline"
+                                        style="max-width: 220px;">
                                         {{ $file->original_name ?? basename($file->file_path) }}
                                     </a>
                                     <span class="text-xs text-gray-500 mt-1">
                                         {{ strtoupper(pathinfo($file->file_path, PATHINFO_EXTENSION)) }}
                                         &bull;
-                                        {{ number_format((file_exists(storage_path('app/public/' . $file->file_path)) ? filesize(storage_path('app/public/' . $file->file_path)) : 0) / 1024, 2) }} KB
+                                        {{ number_format((file_exists(storage_path('app/public/' . $file->file_path)) ? filesize(storage_path('app/public/' . $file->file_path)) : 0) / 1024, 2) }}
+                                        KB
                                     </span>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-icon btn-sm btn-light border-0 text-danger ms-2" title="Delete Evidence" onclick="deleteEvidenceFile({{ $file->id }}, this)">
+                            <button type="button" class="btn btn-icon btn-sm btn-light border-0 text-danger ms-2"
+                                title="Delete Evidence" onclick="deleteEvidenceFile({{ $file->id }}, this)">
                                 <i class="bi bi-trash fs-5"></i>
                             </button>
                         </li>
@@ -96,14 +101,24 @@
 
             <!-- Upload New Evidence -->
             <div class="mb-4">
-                <label for="evidence" class="block text-sm font-medium text-gray-700">Upload New Evidence</label>
-                <input type="file" name="evidence" id="evidence"
-                    class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200"
-                    required accept=".jpg,.jpeg,.png,.pdf">
-                @error('evidence')
-                    <span class="text-red-600 text-xs">{{ $message }}</span>
-                @enderror
+                <label class="block text-sm font-medium text-gray-700 mb-2">Upload New Evidence</label>
+
+                <div id="evidence-inputs">
+                    <div class="evidence-input-item">
+                        <input type="file" name="evidence[]"
+                            class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200"
+                            accept=".jpg,.jpeg,.png,.pdf">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 mt-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMoreEvidenceInput()">
+                        <i class="bi bi-plus-circle me-1"></i> Add File
+                    </button>
+                    <span class="text-xs text-gray-500">You can upload multiple files.</span>
+                </div>
             </div>
+
 
             <div class="flex justify-end gap-2 mt-4">
                 <button type="button" class="btn btn-outline-secondary fw-semibold" onclick="closeEvidenceModal()">
@@ -116,60 +131,6 @@
         </form>
     </div>
 </div>
-<script>
-    function closeEvidenceModal() {
-        document.getElementById('modal-upload-evidence').classList.add('hidden');
-    }
-
-    function deleteEvidenceFile(fileId, btn) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/ftpp/audit-finding/attachment/${fileId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            // remove row from list
-                            btn.closest('li').remove();
-
-                            Swal.fire(
-                                'Deleted!',
-                                'Your file has been deleted.',
-                                'success'
-                            )
-                        } else {
-                            Swal.fire(
-                                'Failed!',
-                                'Failed to delete file.',
-                                'error'
-                            )
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        Swal.fire(
-                            'Failed!',
-                            'Failed to delete file.',
-                            'error'
-                        )
-                    });
-            }
-        })
-    }
-</script>
 <style>
     .swal2-container {
         z-index: 99999 !important;

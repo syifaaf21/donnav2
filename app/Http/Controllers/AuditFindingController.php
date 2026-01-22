@@ -56,23 +56,25 @@ class AuditFindingController extends Controller
     public function uploadEvidence(Request $request, $id)
     {
         $finding = AuditFinding::findOrFail($id);
+
         $request->validate([
-            'evidence' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240', // max 10MB
+            'evidence' => 'required|array',
+            'evidence.*' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
         ]);
 
-        $file = $request->file('evidence');
-        $path = $file->store('ftpp/audit_finding_attachments', 'public');
+        foreach ($request->file('evidence') as $file) {
+            $path = $file->store('ftpp/audit_finding_attachments', 'public');
 
-        // Save to DocumentFile (assuming relation exists)
-
-        $docFile = new \App\Models\DocumentFile();
-        $docFile->auditee_action_id = optional($finding->auditeeAction)->id;
-        $docFile->file_path = $path;
-        $docFile->original_name = $file->getClientOriginalName();
-        $docFile->save();
+            $docFile = new \App\Models\DocumentFile();
+            $docFile->auditee_action_id = optional($finding->auditeeAction)->id;
+            $docFile->file_path = $path;
+            $docFile->original_name = $file->getClientOriginalName();
+            $docFile->save();
+        }
 
         return redirect()->route('ftpp.index')->with('success', 'Evidence uploaded successfully.');
     }
+
     /**
      * Display a listing of the resource.
      */

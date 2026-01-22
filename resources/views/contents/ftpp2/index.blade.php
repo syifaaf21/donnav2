@@ -72,7 +72,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -569,8 +569,7 @@
         </div>
     </div> {{-- end .p-6 --}}
 @endsection
-@include('contents.ftpp2.partials.evidence-upload')
-<div id="uploadEvidenceContainer"></div>  <!-- optional -->
+<div id="uploadEvidenceContainer"></div> <!-- optional -->
 @push('scripts')
     <script>
         function showModal() {
@@ -805,12 +804,80 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    alert('Failed to load upload evidence');
+                    Swal.fire('Error', 'Failed to load upload evidence', 'error');
                 });
         }
 
+        let evidenceIndex = 1;
+
+        function addMoreEvidenceInput() {
+            const container = document.getElementById('evidence-inputs');
+
+            const html = `
+        <div class="evidence-input-item mt-2 flex gap-2 items-center">
+            <input type="file" name="evidence[]" class="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200" accept=".jpg,.jpeg,.png,.pdf">
+
+            <!-- tombol remove kecil -->
+            <button type="button" class="btn btn-light btn-sm p-2" onclick="removeEvidenceInput(this)" title="Remove">
+                <i class="bi bi-trash text-danger"></i>
+            </button>
+        </div>
+    `;
+
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function removeEvidenceInput(btn) {
+            btn.closest('.evidence-input-item').remove();
+        }
+
+
         function closeEvidenceModal() {
-            document.getElementById('modal-upload-evidence')?.remove();
+            const modal = document.getElementById('modal-upload-evidence');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function deleteEvidenceFile(fileId, btn) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/ftpp/audit-finding/attachment/${fileId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+
+                                const list = btn.closest('ul');
+                                btn.closest('li').remove();
+
+                                // Kalau list kosong, tampilkan message
+                                if (list.children.length === 0) {
+                                    list.innerHTML = `<li class="text-gray-400">No evidence uploaded yet.</li>`;
+                                }
+
+                                Swal.fire('Deleted!', 'Your file has been deleted.', 'success');
+                            } else {
+                                Swal.fire('Failed!', 'Failed to delete file.', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire('Failed!', 'Failed to delete file.', 'error');
+                        });
+                }
+            })
         }
     </script>
 @endpush
