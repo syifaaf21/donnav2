@@ -27,7 +27,7 @@
                 <div>
                     <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                     <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
-                        <li>Allowed formats: <strong>PDF, DOCX, XLSX</strong>. Max per file: <strong>2 MB</strong>, total: <strong>20 MB</strong>.</li>
+                        <li>Allowed formats: <strong>PDF, DOCX, XLSX</strong>. Max total file: <strong>20 MB</strong>.</li>
                         <li>Gunakan tombol <strong>Replace</strong> untuk mengganti file, dan <strong>Add File</strong>
                             untuk menambah file baru.</li>
                         </li>
