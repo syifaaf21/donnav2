@@ -671,26 +671,25 @@
                     });
 
                     // Convert bytes ke MB (2 decimal)
-                    let totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
 
+                    // Use float for comparison, allow up to and including 20.00 MB
+                    let totalSizeMBFloat = totalSize / (1024 * 1024);
                     const maxSize = 20; // dalam MB
 
-                    if (totalSizeMB > maxSize) {
+                    if (totalSizeMBFloat > maxSize) {
                         e.preventDefault();
                         showReviseError(`
     <div class="flex items-start">
         <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
         <div class="text-xs text-red-700">
             <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
-            <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+            <p>Current total size: <strong>${totalSizeMBFloat.toFixed(2)} MB</strong></p>
             <p>
                 Please compress your PDF files and reupload it.
             </p>
         </div>
     </div>
 `);
-
-
                         return;
                     }
 
@@ -717,10 +716,30 @@
                 // --- Render file lama aktif di bawah ---
                 if (files.length > 0) {
                     const activeFiles = files.filter(f => f.is_active == 1);
-                    reviseFilesContainer.innerHTML = activeFiles.map((f, i) => `
+                    // Hitung total size file aktif
+                    const totalSize = activeFiles.reduce((sum, f) => {
+                        if (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(Number(f.size))) {
+                            return sum + Number(f.size);
+                        }
+                        return sum;
+                    }, 0);
+                    // Tampilkan total size di atas daftar file
+                    let totalSizeHtml = `<div class="mb-2 text-xs text-gray-700 font-semibold">Total size: <span class="${totalSize > 20*1024*1024 ? 'text-red-600' : ''}">${window.formatFileSize(totalSize)} / 20 MB</span></div>`;
+                    // Debug: cek isi file lama
+                    console.log('Active files for modal:', activeFiles);
+                    reviseFilesContainer.innerHTML = totalSizeHtml + activeFiles.map((f, i) => `
             <div class="p-3 border rounded bg-gray-50 mb-2">
                 <div class="flex justify-between items-start mb-2">
-                    <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                    <div>
+                        <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                        <p class="text-xs text-gray-500 mb-1">
+                            Size: ${
+                                (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(Number(f.size)))
+                                    ? window.formatFileSize(Number(f.size))
+                                    : 'Unknown'
+                            }
+                        </p>
+                    </div>
                     ${status === 'Active' && activeFiles.length > 1 ? `
                                         <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
                                             <i class="bi bi-trash"></i>
@@ -1090,6 +1109,16 @@
             if (window.feather) {
                 feather.replace();
             }
+        }
+
+        window.formatFileSize = function(bytes) {
+            if (typeof bytes !== 'number' || isNaN(bytes)) return 'Unknown';
+            if (bytes >= 1024 * 1024) {
+                return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            } else if (bytes >= 1024) {
+                return (bytes / 1024).toFixed(2) + ' KB';
+            }
+            return bytes + ' bytes';
         }
     </script>
 @endpush

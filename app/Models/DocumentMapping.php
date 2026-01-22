@@ -73,6 +73,7 @@ class DocumentMapping extends Model
                 'url' => Storage::url($file->file_path),
                 'is_active' => (int) $file->is_active,
                 'created_at' => $file->created_at->toDateTimeString(),
+                'size' => Storage::disk('public')->exists($file->file_path) ? Storage::disk('public')->size($file->file_path) : null,
             ];
         })->values()->toArray();
     }
@@ -91,6 +92,8 @@ class DocumentMapping extends Model
                 'is_active' => (int) $file->is_active,
                 'replaced_by_id' => $file->replaced_by_id,
                 'created_at' => $file->created_at->toDateTimeString(),
+                                'size' => Storage::disk('public')->exists($file->file_path) ? Storage::disk('public')->size($file->file_path) : null,
+
             ];
         })->values()->toArray();
     }
