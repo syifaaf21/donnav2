@@ -223,6 +223,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/bulk-destroy', [FtppController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        // Upload Evidence
+        Route::get('/{id}/evidence/upload', [AuditFindingController::class, 'showUploadEvidenceForm'])->name('evidence.upload');
+        Route::post('/{id}/evidence/upload', [AuditFindingController::class, 'uploadEvidence'])->name('evidence.upload.post');
 
         Route::prefix('audit-finding')->name('audit-finding.')->group(function () {
             // Audit Finding routes

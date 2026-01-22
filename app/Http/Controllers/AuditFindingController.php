@@ -26,6 +26,54 @@ use Smalot\PdfParser\Parser;
 class AuditFindingController extends Controller
 {
     /**
+     * Show the form for uploading evidence.
+     */
+    public function showUploadEvidenceForm(Request $request, $id)
+    {
+        $finding = AuditFinding::with([
+            'department',
+            'auditor',
+            'auditee',
+            'status',
+            'file',
+            'auditeeAction.file'
+        ])->findOrFail($id);
+
+        // ✅ HANYA BOLEH VIA AJAX (MODAL)
+        if ($request->ajax()) {
+            return view('contents.ftpp2.partials.evidence-upload', compact('finding'));
+        }
+
+        // ❌ JIKA DIAKSES LANGSUNG → KEMBALIKAN KE INDEX
+        return redirect()
+            ->route('ftpp.index')
+            ->with('warning', 'Upload Evidence must be opened from the FTPP list.');
+    }
+
+    /**
+     * Handle evidence upload.
+     */
+    public function uploadEvidence(Request $request, $id)
+    {
+        $finding = AuditFinding::findOrFail($id);
+        $request->validate([
+            'evidence' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240', // max 10MB
+        ]);
+
+        $file = $request->file('evidence');
+        $path = $file->store('ftpp/audit_finding_attachments', 'public');
+
+        // Save to DocumentFile (assuming relation exists)
+
+        $docFile = new \App\Models\DocumentFile();
+        $docFile->auditee_action_id = optional($finding->auditeeAction)->id;
+        $docFile->file_path = $path;
+        $docFile->original_name = $file->getClientOriginalName();
+        $docFile->save();
+
+        return redirect()->route('ftpp.index')->with('success', 'Evidence uploaded successfully.');
+    }
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -159,7 +207,6 @@ class AuditFindingController extends Controller
                     )
                 );
             }
-
         } catch (\Throwable $e) {
             \Log::warning('Notify auditee (finding created) failed: ' . $e->getMessage());
         }
@@ -297,7 +344,6 @@ class AuditFindingController extends Controller
                 $image->writeImage($filePath);
                 $image->clear();
                 $image->destroy();
-
             } else {
                 // Fallback: use GD library
                 $this->compressImageWithGD($filePath, $extension);
@@ -364,7 +410,6 @@ class AuditFindingController extends Controller
             }
 
             imagedestroy($image);
-
         } catch (\Exception $e) {
             \Log::warning("GD image compression failed: " . $e->getMessage());
         }
@@ -456,14 +501,12 @@ class AuditFindingController extends Controller
                 } else {
                     \Log::warning("❌ Failed to create compressed PDF");
                 }
-
             } catch (\Exception $e) {
                 \Log::error("FPDI PDF compression error: " . $e->getMessage());
                 if (isset($outputPath) && file_exists($outputPath)) {
                     @unlink($outputPath);
                 }
             }
-
         } catch (\Exception $e) {
             \Log::error("PDF compression exception: " . $e->getMessage());
         }

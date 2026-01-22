@@ -72,7 +72,7 @@
                                 {{ request('search')
                                     ? '-top-3 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -169,10 +169,8 @@
                                             </label>
                                         @endif
                                     @endforeach
-
                                 </div>
                             </form>
-
                         </div>
                     </template>
                 </div>
@@ -364,11 +362,8 @@
                                         <td
                                             class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
                                             {{ optional($finding->auditor)->name ?? '-' }}</td>
-                                        <td
-                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
-                                            @if ($finding->auditee && $finding->auditee->isNotEmpty())
-                                                title="{{ $finding->auditee->pluck('name')->join(', ') }}"
-                                            @endif>
+                                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
+                                            @if ($finding->auditee && $finding->auditee->isNotEmpty()) title="{{ $finding->auditee->pluck('name')->join(', ') }}" @endif>
 
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
                                                 {{ $finding->auditee->pluck('name')->join(', ') }}
@@ -429,7 +424,7 @@
                                                                     </button>
                                                                 </form>
                                                             @endif
-                                                        <!-- Non Draft Finding: Show other options -->
+                                                            <!-- Non Draft Finding: Show other options -->
                                                         @else
                                                             @if (strtolower(optional($finding->status)->name ?? '') !== 'need assign')
                                                                 <!-- ITEM: Show -->
@@ -450,6 +445,17 @@
                                                                 <i data-feather="download" class="w-4 h-4"></i>
                                                                 Download
                                                             </a>
+
+                                                            {{-- Upload Evidence Button: Only for Admin and certain statuses --}}
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin']) &&
+                                                                    in_array($statusName, ['need check', 'need approval by auditor', 'need approval by lead auditor', 'close']))
+                                                                <button type="button"
+                                                                    onclick="openUploadEvidence({{ $finding->id }})"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-green-600 hover:bg-gray-50 transition">
+                                                                    <i data-feather="upload" class="w-4 h-4"></i>
+                                                                    Upload Evidence
+                                                                </button>
+                                                            @endif
 
                                                             @if ($statusName === 'need assign')
                                                                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
@@ -485,7 +491,14 @@
                                                                     </a>
                                                                 @endif
                                                             @else
-                                                                @if (in_array($statusName, ['need assign', 'draft']) && in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'User', 'Supervisor', 'Leader']))
+                                                                @if (in_array($statusName, ['need assign', 'draft']) &&
+                                                                        in_array(optional(auth()->user()->roles->first())->name, [
+                                                                            'Super Admin',
+                                                                            'Admin',
+                                                                            'User',
+                                                                            'Supervisor',
+                                                                            'Leader',
+                                                                        ]))
                                                                     <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
                                                                         @click="open = false"
                                                                         class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -540,15 +553,11 @@
 
         <!-- Floating Bulk Delete Button -->
         <div x-data="{ selectedIds: [] }" @update-selected.window="selectedIds = $event.detail">
-            <div x-show="selectedIds.length > 0"
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-4"
-                x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0"
+            <div x-show="selectedIds.length > 0" x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 translate-y-4"
-                class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
-                style="display: none;">
+                class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50" style="display: none;">
                 <button type="button" @click="confirmBulkDelete(selectedIds)"
                     class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-600 text-white font-medium
                            shadow-2xl hover:bg-red-700 hover:shadow-red-500/50 transition-all duration-300
@@ -559,8 +568,9 @@
             </div>
         </div>
     </div> {{-- end .p-6 --}}
-
 @endsection
+@include('contents.ftpp2.partials.evidence-upload')
+<div id="uploadEvidenceContainer"></div>  <!-- optional -->
 @push('scripts')
     <script>
         function showModal() {
@@ -735,45 +745,72 @@
                     });
 
                     // Send bulk delete request
-                    fetch('{{ route("ftpp.bulk-destroy") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ ids: ids })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Deleted!',
-                                text: data.message || 'Items have been deleted.',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
-                                window.location.reload();
-                            });
-                        } else {
+                    fetch('{{ route('ftpp.bulk-destroy') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ids: ids
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted!',
+                                    text: data.message || 'Items have been deleted.',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message || 'Failed to delete items.'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: data.message || 'Failed to delete items.'
+                                text: 'An error occurred while deleting items.'
                             });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'An error occurred while deleting items.'
                         });
-                    });
                 }
             });
+        }
+    </script>
+    <script>
+        function openUploadEvidence(id) {
+            fetch(`/ftpp/${id}/evidence/upload`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    const container = document.getElementById('uploadEvidenceContainer');
+                    container.innerHTML = html;
+
+                    const modal = document.getElementById('modal-upload-evidence');
+                    if (modal) modal.classList.remove('hidden');
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Failed to load upload evidence');
+                });
+        }
+
+        function closeEvidenceModal() {
+            document.getElementById('modal-upload-evidence')?.remove();
         }
     </script>
 @endpush

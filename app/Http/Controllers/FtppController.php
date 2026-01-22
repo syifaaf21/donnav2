@@ -350,7 +350,13 @@ class FtppController extends Controller
             'auditeeAction.file'
         ])->findOrFail($id);
 
-        return view('contents.ftpp2.partials.detail', compact('finding'));
+        // Merge all evidence from auditeeAction->file (auditee_action_id)
+        $evidenceFiles = collect();
+        if ($finding->auditeeAction && $finding->auditeeAction->file) {
+            $evidenceFiles = $evidenceFiles->merge($finding->auditeeAction->file);
+        }
+
+        return view('contents.ftpp2.partials.detail', compact('finding', 'evidenceFiles'));
     }
 
     public function previewPdf($id)
