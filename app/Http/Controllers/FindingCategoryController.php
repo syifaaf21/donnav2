@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 
 class FindingCategoryController extends Controller
 {
+    public function index()
+    {
+        $categories = FindingCategory::orderBy('created_at', 'asc')->get();
+        return view('contents.master.ftpp.finding_category.index', compact('categories'));
+    }
     public function show($id)
     {
         $category = FindingCategory::findOrFail($id);
