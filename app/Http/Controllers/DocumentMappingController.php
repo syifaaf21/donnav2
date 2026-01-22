@@ -982,26 +982,27 @@ class DocumentMappingController extends Controller
         // Pastikan relasi 'files' dimuat
         $mapping->load('files');
 
-        // === 1️⃣ Hapus semua file di tabel relasi (document_files) ===
+        // Jadwalkan penghapusan file 1 tahun setelah hari ini
+        $markedForDeletionAt = now()->addYear();
+
+        // Tandai file-file relasi untuk dihapus 1 tahun kemudian
         foreach ($mapping->files as $file) {
-            if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
-                Storage::disk('public')->delete($file->file_path);
-            }
-            $file->delete(); // Hapus record dari tabel document_files
+            $file->marked_for_deletion_at = $markedForDeletionAt;
+            $file->save();
         }
 
-        // === 2️⃣ Hapus file utama jika disimpan di kolom 'file_path' DocumentMapping ===
-        if ($mapping->file_path && Storage::disk('public')->exists($mapping->file_path)) {
-            Storage::disk('public')->delete($mapping->file_path);
+        // Tandai file utama DocumentMapping (jika ada) untuk dihapus 1 tahun kemudian
+        if (isset($mapping->file_path)) {
+            $mapping->marked_for_deletion_at = $markedForDeletionAt;
+            $mapping->save();
         }
 
-        // === 3️⃣ Hapus data DocumentMapping ===
-        $mapping->delete();
+        // Tidak menghapus file fisik atau record file di sini
 
-        // === 4️⃣ (Opsional) Hapus anak-anak jika ini parent ===
+        // Hapus relasi anak-anak jika ini parent
         DocumentMapping::where('parent_id', $mapping->id)->update(['parent_id' => null]);
 
-        return redirect()->back()->with('success', 'Document and associated files deleted successfully!');
+        return redirect()->back()->with('success', 'Document and associated files scheduled for deletion in 1 year!');
     }
 
     public function reject(DocumentMapping $mapping)
