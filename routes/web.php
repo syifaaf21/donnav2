@@ -133,6 +133,11 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
             Route::put('/update-main/{id}', [KlausulController::class, 'updateMain'])->name('update-main');
             Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
             Route::delete('/destroy-main/{id}', [KlausulController::class, 'destroyMain'])->name('destroy-main');
+
+            // Sub Klausul CRUD
+            Route::post('/sub', [KlausulController::class, 'storeSub'])->name('sub.store');
+            Route::put('/sub/{id}', [KlausulController::class, 'updateSub'])->name('sub.update');
+            Route::delete('/sub/{id}', [KlausulController::class, 'destroySub'])->name('sub.destroy');
         });
     });
     Route::resource('users', UserController::class);
