@@ -67,6 +67,10 @@ class FtppController extends Controller
                 // Show FTPP where user is in auditee (assigned to them)
                 $query->whereHas('auditee', function ($q) use ($user) {
                     $q->where('users.id', $user->id);
+                })
+                // auditee view should not see draft findings
+                ->whereHas('status', function ($qs) {
+                    $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
                 });
             } else {
                 // Show FTPP where user is auditor (created by them)
@@ -84,6 +88,10 @@ class FtppController extends Controller
                         ->orWhereHas('auditee', function ($qa) use ($user) {
                             $qa->where('users.id', $user->id);
                         });
+                })
+                // for non-auditor users (auditee) do not show draft findings
+                ->whereHas('status', function ($qs) {
+                    $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
                 });
             }
         }
@@ -113,6 +121,11 @@ class FtppController extends Controller
                         $qs->where('name', 'like', "%{$search}%");
                     });
             });
+        }
+
+        // Apply audit type filter if provided
+        if ($request->filled('audit_type')) {
+            $query->where('audit_type_id', $request->input('audit_type'));
         }
 
         // order and paginate
@@ -182,6 +195,9 @@ class FtppController extends Controller
 
         $departments = Department::orderBy('name')->get();
 
+        // audit types for filter tabs
+        $auditTypes = \App\Models\Audit::orderBy('name')->get();
+
         // auditors: users with role 'auditor' (case-insensitive)
         $auditors = User::whereHas('roles', function ($q) {
             $q->whereRaw('LOWER(name) = ?', ['auditor']);
@@ -213,7 +229,8 @@ class FtppController extends Controller
             'nearDueFindings',
             'overdueFindings',
             'filterType',
-            'userRoles'
+            'userRoles',
+            'auditTypes'
         ));
     }
 

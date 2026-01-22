@@ -2,7 +2,7 @@
 @section('title', 'FTPP')
 @section('subtitle', 'Manage and organize your FTPP documents efficiently')
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -32,15 +32,15 @@
         @endphp
 
         @if ($isAuditor)
-            <div class="mb-6 border-b border-gray-200">
+            <div class="mb-2 border-b border-gray-200">
                 <div class="flex gap-4">
                     <a href="{{ route('ftpp.index', array_merge(request()->except('filter_type'), ['filter_type' => 'created'])) }}"
-                        class="px-4 py-3 font-medium border-b-2 transition-colors {{ $filterType === 'created' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900' }}">
+                        class="px-4 pb-2 text-xs font-medium border-b-2 transition-colors {{ $filterType === 'created' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900' }}">
                         <i data-feather="edit" class="inline w-4 h-4 mr-2"></i>
                         My Created FTPP
                     </a>
                     <a href="{{ route('ftpp.index', array_merge(request()->except('filter_type'), ['filter_type' => 'assigned'])) }}"
-                        class="px-4 py-3 font-medium border-b-2 transition-colors {{ $filterType === 'assigned' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900' }}">
+                        class="px-4 pb-2 text-xs font-medium border-b-2 transition-colors {{ $filterType === 'assigned' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900' }}">
                         <i data-feather="inbox" class="inline w-4 h-4 mr-2"></i>
                         Assigned to Me
                     </a>
@@ -48,7 +48,28 @@
             </div>
         @endif
 
-        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {{-- Audit Type Tabs --}}
+        @if (!empty($auditTypes) && $auditTypes->isNotEmpty())
+            <div class="mb-4 overflow-x-auto py-2">
+                <div class="flex gap-3 items-center whitespace-nowrap">
+                    {{-- All tab --}}
+                    <a href="{{ route('ftpp.index', request()->except('audit_type')) }}"
+                        class="px-3 py-2 text-xs rounded-xl transition-colors {{ request()->filled('audit_type') ? 'text-gray-600 bg-white border border-transparent' : 'bg-primaryDark text-white' }}">
+                        All
+                    </a>
+
+                    {{-- Individual audit types --}}
+                    @foreach($auditTypes as $atype)
+                        <a href="{{ route('ftpp.index', array_merge(request()->except('audit_type'), ['audit_type' => $atype->id])) }}"
+                            class="flex-shrink-0 px-3 py-2 text-xs rounded-xl transition-colors {{ (int) request('audit_type') === $atype->id ? 'bg-primaryDark text-white' : 'text-gray-600 bg-white border border-gray-200 hover:text-gray-900' }}">
+                            {{ $atype->name }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <div class="mb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <!-- LEFT: Search + Filter -->
             <div class="flex items-center gap-2 w-full md:w-1/3">
 
@@ -61,18 +82,18 @@
                         <!-- Input -->
                         <input type="text" name="search" id="searchInput"
                             class="peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
-                            text-sm text-gray-700 shadow-sm transition-all duration-200
+                            text-xs text-gray-700 shadow-sm transition-all duration-200
                             focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-                            placeholder="Type to search..." value="{{ request('search') }}">
+                            value="{{ request('search') }}">
 
                         <!-- Floating Label -->
                         <label for="searchInput"
-                            class="absolute left-4 px-1 bg-white text-gray-400 rounded transition-all duration-150
+                            class="absolute left-4 px-1 bg-white text-sm text-gray-400 rounded transition-all duration-150
                                 pointer-events-none
                                 {{ request('search')
-                                    ? '-top-3 text-xs text-sky-600'
-                                    : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                    ? '-top-2 text-xs text-sky-600'
+                                    : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-xs
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -96,19 +117,19 @@
                 </form>
 
                 <!-- FILTER BUTTON -->
-                <div x-data="statusFilter()" x-init="init()" class="relative">
+                <div x-data="statusFilter()" x-init="init()" class="relative mb-2">
                     <button @click="toggle($event)"
-                        class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition">
-                        <i data-feather="filter" class="w-5 h-5"></i>
+                        class="bg-white border border-gray-200 rounded-xl shadow-sm p-2 hover:bg-gray-100 transition">
+                        <i data-feather="filter" class="w-4 h-4"></i>
                     </button>
 
                     <!-- Teleported dropdown -->
                     <template x-teleport="body">
                         <div x-show="open" x-transition.opacity.duration.150ms @click.outside="open=false"
-                            class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] p-2 mt-1"
+                            class="absolute bg-white border border-gray-200 rounded-xl shadow-sm z-[9999] p-2 mt-1"
                             :style="`top:${dropdown.y}px; left:${dropdown.x}px; width:300px;`">
 
-                            <div class="p-2 border-b font-semibold text-gray-700">
+                            <div class="p-2 border-b text-xs font-semibold text-gray-700">
                                 Filter by Status
                             </div>
 
@@ -131,7 +152,7 @@
                                         class="flex justify-between items-center px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
                                         <div class="flex items-center gap-2">
                                             <input type="checkbox" value="all" x-model="selected" @change="onAllChange">
-                                            <span>All</span>
+                                            <span class="text-xs">All</span>
                                         </div>
                                         <span class="text-xs bg-gray-200 text-gray-800 px-2 py-0.5 rounded-full">
                                             {{ $totalCount ?? 0 }}
@@ -143,6 +164,7 @@
                                         @php
                                             $name = strtolower($status->name);
                                             $icons = [
+                                                'draft finding' => 'file-minus',
                                                 'need assign' => 'alert-circle',
                                                 'draft' => 'file-text',
                                                 'need check' => 'upload-cloud',
@@ -160,7 +182,7 @@
                                                     <input type="checkbox" name="status_id[]" value="{{ $status->id }}"
                                                         x-model="selected" @change="onStatusChange">
                                                     <i data-feather="{{ $icons[$name] }}" class="w-4 h-4"></i>
-                                                    <span class="capitalize">{{ $status->name }}</span>
+                                                    <span class="capitalize text-xs">{{ $status->name }}</span>
                                                 </div>
 
                                                 <span class="text-xs bg-gray-200 text-gray-800 px-2 py-0.5 rounded-full">
@@ -183,8 +205,8 @@
 
                 @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
                     <a href="{{ route('ftpp.audit-finding.create') }}"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 font-medium
-                       shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 text-sm font-medium
+                       shadow-sm hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                         <i data-feather="plus" class="w-4 h-4"></i>
                         Add Finding
                     </a>
@@ -246,8 +268,8 @@
                         @endif
 
                         <a href="{{ route('approval.index') }}"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 font-medium
-                           shadow hover:bg-blue-200 hover:shadow-md transition-all duration-150">
+                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 text-sm font-medium
+                           shadow-sm hover:bg-blue-200 hover:shadow-md transition-all duration-150">
                             <i data-feather="pen-tool" class="w-4 h-4"></i>
                             Approval
                         </a>
@@ -259,8 +281,8 @@
         <div id="liveTableWrapper">
             <!-- Table -->
             <div class="flex-1">
-                <div class="overflow-hidden px-2">
-                    <div class="overflow-x-auto bg-white shadow-xl shadow-gray-200">
+                <div class="overflow-hidden">
+                    <div class="overflow-x-auto bg-white rounded-xl shadow-sm shadow-gray-200">
                         <table class="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden"
                             x-data="{
                                 selectedIds: [],
@@ -286,37 +308,33 @@
                             <thead style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
                                     @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
-                                        <th class="px-4 py-2 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                        <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                             style="color: #1e2b50; letter-spacing: 0.5px; width: 50px;">
                                             <input type="checkbox" x-model="selectAll" @change="toggleAll()"
                                                 class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                         </th>
                                     @endif
-                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Registration No
                                     </th>
-                                    <th class="px-2 py-2 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Status
                                     </th>
-                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
-                                        style="color: #1e2b50; letter-spacing: 0.5px;">
-                                        Department
-                                    </th>
-                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditor
                                     </th>
-                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Auditee
                                     </th>
-                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Due Date
                                     </th>
-                                    <th class="px-2 py-2 text-left text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-2 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Actions
                                     </th>
@@ -337,12 +355,20 @@
                                             </td>
                                         @endif
                                         <td
-                                            class="px-2 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 border-r border-gray-200">
-                                            {{ $finding->registration_number ?? '-' }}</td>
+                                            class="px-2 py-2 whitespace-nowrap border-r border-gray-200">
+                                            <div class="flex flex-col gap-1">
+                                                    <span class="text-xs font-semibold">{{ $finding->registration_number ?? '-' }}</span>
+                                                    <span class="text-xs bg-blue-50 text-blue-700 rounded-full">
+                                                        {{ optional($finding->department)->name ?? '-' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td
-                                            class="px-2 py-2 whitespace-nowrap text-center text-sm border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-center text-xs border-r border-gray-200">
                                             @php
                                                 $statusColors = [
+                                                    'draft finding' => 'bg-gray-100 text-gray-600',
                                                     'need assign' => 'bg-red-100 text-red-600',
                                                     'draft' => 'bg-gray-100 text-gray-600',
                                                     'need check' => 'bg-yellow-100 text-yellow-700',
@@ -357,12 +383,9 @@
                                             <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
                                         </td>
                                         <td
-                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
-                                            {{ optional($finding->department)->name ?? '-' }}</td>
-                                        <td
-                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
                                             {{ optional($finding->auditor)->name ?? '-' }}</td>
-                                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
+                                        <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty()) title="{{ $finding->auditee->pluck('name')->join(', ') }}" @endif>
 
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty())
@@ -372,11 +395,11 @@
                                             @endif
                                         </td>
                                         <td
-                                            class="px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
                                             {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
                                         </td>
                                         <td
-                                            class="flex px-2 py-2 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                                            class="flex px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
                                             <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
                                                 <!-- BUTTON -->
                                                 <button type="button"
@@ -405,7 +428,7 @@
                                                                 <!-- ITEM: Edit -->
                                                                 <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
                                                                     @click="open = false"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
                                                                     <i data-feather="edit" class="w-4 h-4"></i>
                                                                     Edit
                                                                 </a>
@@ -418,7 +441,7 @@
                                                                     @method('DELETE')
                                                                     <button type="button" @click="open = false"
                                                                         onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
-                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
                                                                         <i data-feather="trash-2" class="w-4 h-4"></i>
                                                                         Delete
                                                                     </button>
@@ -432,7 +455,7 @@
                                                                     @click="
                                                                      open = false;
                                                                      $dispatch('open-show-modal', {{ $finding->id }})"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                                                                     <i data-feather="eye" class="w-4 h-4"></i>
                                                                     Show
                                                                 </button>
@@ -441,7 +464,7 @@
                                                             <!-- ITEM: Download -->
                                                             <a href="{{ route('ftpp.download', $finding->id) }}"
                                                                 @click="open = false"
-                                                                class="flex items-center gap-2 px-3 py-2.5 text-sm text-blue-600 hover:bg-gray-50 transition">
+                                                                class="flex items-center gap-2 px-3 py-2.5 text-xs text-blue-600 hover:bg-gray-50 transition">
                                                                 <i data-feather="download" class="w-4 h-4"></i>
                                                                 Download
                                                             </a>
@@ -451,7 +474,7 @@
                                                                     in_array($statusName, ['need check', 'need approval by auditor', 'need approval by lead auditor', 'close']))
                                                                 <button type="button"
                                                                     onclick="openUploadEvidence({{ $finding->id }})"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-green-600 hover:bg-gray-50 transition">
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-600 hover:bg-gray-50 transition">
                                                                     <i data-feather="upload" class="w-4 h-4"></i>
                                                                     Upload Evidence
                                                                 </button>
@@ -461,7 +484,7 @@
                                                                 @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
                                                                     <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
                                                                         @click="open = false"
-                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
                                                                         <i data-feather="edit" class="w-4 h-4"></i>
                                                                         Edit
                                                                     </a>
@@ -470,7 +493,7 @@
                                                             @if ($statusName === 'need revision')
                                                                 <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
                                                                     @click="open = false"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                                                                     <i data-feather="edit" class="w-4 h-4"></i>
                                                                     Revise
                                                                 </a>
@@ -485,7 +508,7 @@
                                                                     ]))
                                                                     <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
                                                                         @click="open = false"
-                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-yellow-500 hover:bg-gray-50 transition">
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
                                                                         <i data-feather="edit" class="w-4 h-4"></i>
                                                                         Edit
                                                                     </a>
@@ -501,7 +524,7 @@
                                                                         ]))
                                                                     <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
                                                                         @click="open = false"
-                                                                        class="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                                                                         <i data-feather="edit-2" class="w-4 h-4"></i>
                                                                         Assign
                                                                     </a>
@@ -516,7 +539,7 @@
                                                                     @method('DELETE')
                                                                     <button type="button" @click="open = false"
                                                                         onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
-                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition">
+                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
                                                                         <i data-feather="trash-2" class="w-4 h-4"></i>
                                                                         Delete
                                                                     </button>
@@ -532,7 +555,7 @@
                                     <tr colspan="12">
                                         <td colspan="12">
                                             <div
-                                                class="flex flex-col items-center justify-center py-8 text-gray-400 text-sm gap-2 min-h-[120px]">
+                                                class="flex flex-col items-center justify-center py-8 text-gray-400 text-xs gap-2 min-h-[120px]">
                                                 <i class="bi bi-inbox text-4xl"></i>
                                                 <span>No Records found</span>
                                             </div>
@@ -563,7 +586,7 @@
                            shadow-2xl hover:bg-red-700 hover:shadow-red-500/50 transition-all duration-300
                            transform hover:scale-105 active:scale-95">
                     <i data-feather="trash-2" class="w-5 h-5"></i>
-                    <span class="text-sm font-semibold">Delete <span x-text="selectedIds.length"></span> item(s)</span>
+                    <span class="text-xs font-semibold">Delete <span x-text="selectedIds.length"></span> item(s)</span>
                 </button>
             </div>
         </div>
