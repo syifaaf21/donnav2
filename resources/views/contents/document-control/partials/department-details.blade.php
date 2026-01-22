@@ -15,7 +15,7 @@
 
             <li>
                 <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-calendar-range me-1" ></i> Document Control
+                    <i class="bi bi-calendar-range me-1"></i> Document Control
                 </a>
             </li>
 
@@ -103,36 +103,36 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">No
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Document
                                         Name
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    {{-- <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Status
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    </th> --}}
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Obsolete
                                         Date
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Updated By
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    {{-- <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Last
                                         Update
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    </th> --}}
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Notes</th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                    <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Actions</th>
                                 </tr>
@@ -151,45 +151,51 @@
                                 @else
                                     @foreach ($mappings as $mapping)
                                         <tr class="hover:bg-gray-50 transition-all duration-150">
-                                            <td class="px-4 py-3 text-xs border-r border-gray-200">
+                                            <td class="px-2 py-3 text-center text-xs border-r border-gray-200">
                                                 {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                             </td>
-                                            <td class="px-4 py-2 text-xs font-semibold max-w-xs border-r border-gray-200"
-                                                title="{{ $mapping->document->name }}">
-                                                {{ $mapping->document->name }}
+                                            <td class="px-2 py-2 text-xs max-w-xs border-r border-gray-200">
+                                                <div class="flex flex-col gap-1">
+                                                    <div class="font-semibold truncate"
+                                                        title="{{ $mapping->document->name }}">
+                                                        {{ $mapping->document->name }}
+                                                    </div>
+
+                                                    @php
+                                                        $statusColor = match ($mapping->status->name) {
+                                                            'Active' => 'bg-green-100 text-green-800',
+                                                            'Need Review' => 'bg-yellow-100 text-yellow-800',
+                                                            'Rejected' => 'bg-red-100 text-red-800',
+                                                            'Obsolete' => 'bg-gray-200 text-gray-800',
+                                                            'Uncomplete' => 'bg-orange-100 text-orange-800',
+                                                            default => 'bg-blue-100 text-blue-800',
+                                                        };
+                                                    @endphp
+
+                                                    <!-- Tambahkan self-start supaya tidak stretch -->
+                                                    <span
+                                                        class="self-start inline-flex px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
+                                                        {{ $mapping->status->name }}
+                                                    </span>
+                                                </div>
                                             </td>
-                                            {{-- Status badge --}}
-                                            <td class="px-4 py-2 text-xs border-r border-gray-200">
-                                                @php
-                                                    $statusColor = match ($mapping->status->name) {
-                                                        'Active' => 'bg-green-100 text-green-800',
-                                                        'Need Review' => 'bg-yellow-100 text-yellow-800',
-                                                        'Rejected' => 'bg-red-100 text-red-800',
-                                                        'Obsolete' => 'bg-gray-200 text-gray-800',
-                                                        'Uncomplete' => 'bg-orange-100 text-orange-800',
-                                                        default => 'bg-blue-100 text-blue-800',
-                                                    };
-                                                @endphp
-                                                <span
-                                                    class="inline-block px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
-                                                    {{ $mapping->status->name }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 text-xs font-semibold border-r border-gray-200">
+                                            <td class="px-2 py-3 text-center text-xs font-semibold border-r border-gray-200">
                                                 {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
                                             </td>
-                                            <td class="px-4 py-3 text-xs truncate border-r border-gray-200">
+                                            <td class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
                                                 {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
                                             </td>
-                                            <td class="px-4 py-3 text-xs border-r border-gray-200">
+                                            {{-- <td class="px-2 py-3 text-xs border-r border-gray-200">
                                                 {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
-                                            </td>
-                                            <td class="px-4 py-3 text-xs max-w-xs border-r border-gray-200">
+                                            </td> --}}
+                                            <td class="px-4 py-3 text-left text-xs max-w-xs border-r border-gray-200">
                                                 <div class="overflow-y-auto max-h-16 text-xs note-tooltip"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    data-bs-container="body"
                                                     title="{{ $mapping->notes ? e(strip_tags($mapping->notes)) : '-' }}">
                                                     {!! $mapping->notes ?? '-' !!}
                                                 </div>
+
                                             </td>
                                             {{-- Actions --}}
                                             <td class="px-4 py-2 text-center">
@@ -391,8 +397,11 @@
 
             // Init tooltips for notes column
             function initNoteTooltips(container = document) {
-                const noteTooltips = Array.from(container.querySelectorAll('.note-tooltip[data-bs-toggle="tooltip"]'));
-                noteTooltips.forEach(el => new bootstrap.Tooltip(el, { boundary: 'window' }));
+                const noteTooltips = Array.from(container.querySelectorAll(
+                    '.note-tooltip[data-bs-toggle="tooltip"]'));
+                noteTooltips.forEach(el => new bootstrap.Tooltip(el, {
+                    boundary: 'window'
+                }));
             }
 
             searchInputEl.addEventListener("keyup", function() {
@@ -713,10 +722,10 @@
                 <div class="flex justify-between items-start mb-2">
                     <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
                     ${status === 'Active' && activeFiles.length > 1 ? `
-                    <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    ` : ''}
+                                        <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        ` : ''}
                 </div>
                 <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
                 <div class="mt-2 flex items-center gap-2">

@@ -108,7 +108,8 @@
             <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 700px;">
                 <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
 
-                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET">
+                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
+                        method="GET">
                         {{-- Modal Header --}}
                         <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
                             style="background-color: #f5f5f7;">
@@ -148,8 +149,7 @@
                                 <!-- Model -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Model</label>
-                                    <select name="model" id="modalModel"
-                                        class="form-select border-0 shadow-sm rounded-3">
+                                    <select name="model" id="modalModel" class="form-select border-0 shadow-sm rounded-3">
                                         <option value="">All Models</option>
                                         @foreach ($models as $model)
                                             <option value="{{ $model }}" @selected(request('model') == $model)>
@@ -213,34 +213,34 @@
                     <table class="min-w-full divide-y divide-gray-200 folder-table" style="solid #e5e7eb;">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Number
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Part Number
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Product</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Model</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Process</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Notes</th>
-                                {{-- <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                {{-- <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Deadline</th> --}}
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Updated By
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Last Update
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
-                                    style="color: #1e2b50; letter-spacing: 0.5px;">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                {{-- <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Status</th> --}}
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
@@ -248,14 +248,33 @@
                         <tbody class="divide-y divide-x divide-gray-200">
                             @forelse ($documents as $doc)
                                 <tr>
-                                    <td class="px-4 py-3">
+                                    <td class="px-2 py-3 text-xs text-center">
                                         {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-xs font-medium text-gray-800">
-                                        {{ $doc->document_number ?? '-' }}
-                                    </td>
+                                    <td class="px-2 py-3 text-left text-xs font-medium text-gray-800 min-w-[210px]">
+                                        <div class="flex flex-col gap-1">
+                                            <div class="font-semibold">{{ $doc->document_number ?? '-' }}</div>
 
-                                    <td class="px-4 py-3 text-xs font-medium">
+                                            @php
+                                                $statusName = strtolower($doc->status?->name ?? '');
+                                                $statusClass = match ($statusName) {
+                                                    'approved'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                                                    'rejected'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                                                    'need review'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
+                                                    default
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
+                                                };
+                                            @endphp
+
+                                            <span class="{{ $statusClass }} w-max inline-block">
+                                                {{ ucwords($statusName ?: '-') }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="px-2 py-3 text-center text-xs font-medium min-w-[100px]">
                                         @if ($doc->partNumber->isNotEmpty())
                                             {{ $doc->partNumber->pluck('part_number')->join(', ') }}
                                         @else
@@ -263,15 +282,15 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs">
+                                    <td class="px-2 py-3 text-center text-xs">
                                         @if ($doc->product->isNotEmpty())
-                                            {{ $doc->product->pluck('name')->join(', ') }}
+                                            {{ $doc->product->pluck('code')->join(', ') }}
                                         @else
                                             -
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs">
+                                    <td class="px-2 py-3 text-center text-xs">
                                         @if ($doc->productModel->isNotEmpty())
                                             {{ $doc->productModel->pluck('name')->join(', ') }}
                                         @else
@@ -279,7 +298,7 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs capitalize">
+                                    <td class="px-2 py-3 text-center text-xs capitalize">
                                         @if ($doc->process->isNotEmpty())
                                             {{ $doc->process->pluck('code')->join(', ') }}
                                         @else
@@ -299,11 +318,11 @@
                                         <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
                                     </td> --}}
 
-                                    <td class="px-4 py-3 text-xs">{{ $doc->user?->name ?? '-' }}</td>
+                                    <td class="px-2 py-3 text-center text-xs">{{ $doc->user?->name ?? '-' }}</td>
 
-                                    <td class="px-4 py-3 text-xs">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
+                                    <td class="px-2 py-3 text-center text-xs">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
 
-                                    @php
+                                    {{-- @php
                                         $statusName = strtolower($doc->status?->name ?? '');
                                         $statusClass = match ($statusName) {
                                             'approved'
@@ -318,9 +337,9 @@
                                     @endphp
                                     <td class="px-4 py-3 text-xs">
                                         <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
-                                    </td>
+                                    </td> --}}
 
-                                    <td class="px-4 py-3 text-xs text-center">
+                                    <td class="px-2 py-3 text-xs text-center">
                                         <div class="flex justify-center items-center gap-2 relative">
                                             @php
                                                 $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
@@ -366,7 +385,8 @@
                                                         class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
                                                         <div class="py-1 text-xs max-h-80 overflow-y-auto">
                                                             @foreach ($files as $file)
-                                                                <div class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
+                                                                <div
+                                                                    class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
                                                                     <button type="button" title="View File"
                                                                         class="flex-1 text-left view-file-btn truncate"
                                                                         data-file="{{ $file['url'] }}"
@@ -412,7 +432,9 @@
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
                                                 // Check if user is supervisor of document's department
-                                                $isSupervisorOfDocDept = auth()->user()->isSupervisorOfDepartment($doc->department_id);
+                                                $isSupervisorOfDocDept = auth()
+                                                    ->user()
+                                                    ->isSupervisorOfDepartment($doc->department_id);
 
                                                 // Only supervisor from document's department OR admin can edit
                                                 $showEdit = $isAdmin || $isSupervisorOfDocDept;
@@ -506,13 +528,15 @@
                     <div class="modal-header d-flex justify-content-between align-items-center">
                         <h5 class="modal-title" id="filePreviewLabel">File Preview</h5>
                         <div class="d-flex gap-2">
-                            <a id="viewFullBtn" href="#" target="_blank" class="btn btn-outline-info btn-sm d-none">
+                            <a id="viewFullBtn" href="#" target="_blank"
+                                class="btn btn-outline-info btn-sm d-none">
                                 <i class="bi bi-arrows-fullscreen"></i> View Full
                             </a>
                             <a id="printFileBtn" href="#" class="btn btn-outline-secondary btn-sm d-none">
                                 <i class="bi bi-printer"></i> Print
                             </a>
-                            <a id="downloadFileBtn" href="#" download class="btn btn-outline-primary btn-sm d-none">
+                            <a id="downloadFileBtn" href="#" download
+                                class="btn btn-outline-primary btn-sm d-none">
                                 <i class="bi bi-download"></i> Download PDF
                             </a>
 
@@ -588,7 +612,9 @@
             document.addEventListener('DOMContentLoaded', function() {
                 // Init tooltips for notes column
                 const noteTooltips = Array.from(document.querySelectorAll('.note-tooltip[data-bs-toggle="tooltip"]'));
-                noteTooltips.forEach(el => new bootstrap.Tooltip(el, { boundary: 'window' }));
+                noteTooltips.forEach(el => new bootstrap.Tooltip(el, {
+                    boundary: 'window'
+                }));
 
                 const originalModelOptions = @json($models);
                 const originalProcessOptions = @json($processes);
@@ -770,28 +796,31 @@
                         }
 
                         // LOG DOWNLOAD untuk Excel/Word/PPT/Image saat button show diklik
-                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other'].includes(currentFileType)) {
+                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other']
+                            .includes(currentFileType)) {
                             fetch(`/document-review/${currentDocId}/log-download`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    action: 'view_file',
-                                    file_type: currentFileType,
-                                    document_file_id: currentFileId
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector(
+                                            'meta[name="csrf-token"]').content,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        action: 'view_file',
+                                        file_type: currentFileType,
+                                        document_file_id: currentFileId
+                                    })
                                 })
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                console.log('Download logged (non-PDF):', data);
-                            })
-                            .catch(err => console.error('Failed to log download:', err));
+                                .then(res => res.json())
+                                .then(data => {
+                                    console.log('Download logged (non-PDF):', data);
+                                })
+                                .catch(err => console.error('Failed to log download:', err));
                         }
 
                         // Untuk iframe PDF, coba sembunyikan toolbar default dengan fragment params
-                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) : url;
+                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) :
+                            url;
                         previewFrame.dataset.url = previewUrl;
                         // Gunakan URL yang sudah disanitasi agar toolbar tetap tersembunyi saat "View Full"
                         viewFullBtn.href = previewUrl;
@@ -867,7 +896,8 @@
                         fetch(`/document-review/${currentDocId}/log-download`, {
                             method: 'POST',
                             headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                    .content,
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -936,28 +966,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                                            <div class="border rounded p-2 bg-gray-50">
-                                                                <div class="flex items-center justify-between">
-                                                                    <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                    <div class="border rounded p-2 bg-gray-50">
+                                                                                        <div class="flex items-center justify-between">
+                                                                                            <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                    <div class="flex gap-2">
-                                                                        <a href="/storage/${file.file_path}"
-                                                                           target="_blank"
-                                                                           class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                           View
-                                                                        </a>
+                                                                                            <div class="flex gap-2">
+                                                                                                <a href="/storage/${file.file_path}"
+                                                                                                   target="_blank"
+                                                                                                   class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                   View
+                                                                                                </a>
 
-                                                                        <button type="button"
-                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                            data-file-id="${file.id}">
-                                                                            Replace
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                                                                                                <button type="button"
+                                                                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                    data-file-id="${file.id}">
+                                                                                                    Replace
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
 
-                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                                            </div>
-                                                        `).join('')}
+                                                                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                                                    </div>
+                                                                                `).join('')}
 </div>`;
 
                             })
@@ -1265,9 +1295,9 @@ ${data.files.map(file => `
                     document.getElementById('downloadReportContent').classList.add('hidden');
 
                     // Fetch download history
-                    const reportUrl = fileId
-                        ? `/document-review/${docId}/download-report?file_id=${fileId}`
-                        : `/document-review/${docId}/download-report`;
+                    const reportUrl = fileId ?
+                        `/document-review/${docId}/download-report?file_id=${fileId}` :
+                        `/document-review/${docId}/download-report`;
 
                     fetch(reportUrl)
                         .then(res => res.json())
@@ -1291,9 +1321,9 @@ ${data.files.map(file => `
                             document.getElementById('reportFileName').textContent = data.file?.name ||
                                 fileName || '-';
                             document.getElementById('reportTotalDownloads').textContent =
-                                data.total_downloads ?? (Array.isArray(data.downloads)
-                                    ? data.downloads.reduce((sum, d) => sum + d.download_count, 0)
-                                    : 0);
+                                data.total_downloads ?? (Array.isArray(data.downloads) ?
+                                    data.downloads.reduce((sum, d) => sum + d.download_count, 0) :
+                                    0);
 
                             const tbody = document.getElementById('downloadReportTableBody');
                             const emptyState = document.getElementById('downloadReportEmpty');
