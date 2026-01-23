@@ -46,26 +46,27 @@ class SendDocumentControlReminder extends Command
             $status = $doc->status->name ?? '';
             $obsoleteDate = Carbon::parse($doc->obsolete_date);
             $reminderDate = $doc->reminder_date ? Carbon::parse($doc->reminder_date) : null;
+            $deptName = $doc->department?->name ?? 'Unknown Department';
 
             // Uncomplete
             if ($status === 'Uncomplete') {
                 if (!$doc->last_reminder_date || Carbon::parse($doc->last_reminder_date)->lt($now)) {
-                    $categories['uncomplete'][$doc->department->name][] = $doc;
+                    $categories['uncomplete'][$deptName][] = $doc;
                     $doc->last_reminder_date = $now;
                     $doc->save();
                 }
             }
             // Active dengan reminder jatuh tempo
             elseif ($status === 'Active' && $obsoleteDate->gt($now) && $reminderDate && $reminderDate->lte($now)) {
-                $categories['active'][$doc->department->name][] = $doc;
+                $categories['active'][$deptName][] = $doc;
             }
             // Obsolete hari ini — HANYA jika statusnya bukan Uncomplete
             elseif ($status !== 'Uncomplete' && $obsoleteDate->eq($now)) {
-                $categories['obsolete_today'][$doc->department->name][] = $doc;
+                $categories['obsolete_today'][$deptName][] = $doc;
             }
             // Overdue — HANYA jika statusnya bukan Uncomplete
             elseif ($status !== 'Uncomplete' && $obsoleteDate->lt($now)) {
-                $categories['overdue'][$doc->department->name][] = $doc;
+                $categories['overdue'][$deptName][] = $doc;
             }
         }
 

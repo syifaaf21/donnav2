@@ -14,13 +14,15 @@ class Kernel extends ConsoleKernel
             ->weeklyOn(1, '08:00') // 1 = Senin
             ->withoutOverlapping()
             ->runInBackground();
-
+        $schedule->command('documents:check-obsolete')
+            ->daily()
+            ->withoutOverlapping()
+            ->runInBackground();
         // Jalankan SendDocumentReviewReminder setiap Kamis jam 08:00
         $schedule->command('document:send-review-reminder')
             ->weeklyOn(4, '08:00') // 4 = Kamis
             ->withoutOverlapping()
             ->runInBackground();
-
         // Opsional: jalankan di background
         $schedule->command('archive:delete-expired')
             ->daily()
@@ -31,6 +33,11 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
         $schedule->command('notifications:purge-old')
+            ->daily()
+            ->withoutOverlapping()
+            ->runInBackground();
+        // Hapus dokumen dan mapping yang sudah expired (hard delete)
+        $schedule->command('documents:delete-expired')
             ->daily()
             ->withoutOverlapping()
             ->runInBackground();

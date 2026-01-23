@@ -170,8 +170,18 @@ class DocumentMapping extends Model
 
     public function files()
     {
+        // Hanya file aktif yang masih terhubung ke mapping
         return $this->hasMany(DocumentFile::class);
     }
+
+    /**
+     * Ambil file archive (document_mapping_id null dan replaced_by_id tidak null)
+     */
+    // public static function archiveFiles()
+    // {
+    //     return \App\Models\DocumentFile::whereNull('document_mapping_id')
+    //         ->whereNotNull('replaced_by_id');
+    // }
     public function statusHistories()
     {
         return $this->hasMany(StatusHistory::class);

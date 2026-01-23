@@ -1,5 +1,7 @@
 @extends('layouts.app')
-@section('title', "{$department->name}")
+@section('title')
+    {{ $department?->name ?? 'Unknown' }}
+@endsection
 @section('subtitle', 'Manage Obsolete Docuemnt Records')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
@@ -25,7 +27,7 @@
 
             <li>/</li>
 
-            <li class="text-gray-700 font-bold">{{ $department->name }}</li>
+            <li class="text-gray-700 font-bold">{{ $department?->name ?? 'Unknown' }}</li>
         </ol>
     </nav>
 @endsection
@@ -78,7 +80,7 @@
 
         <!-- Search Form -->
         <div class="flex justify-end w-full mb-2">
-            <form id="filterForm" method="GET" action="{{ route('document-control.department', $department->name) }}"
+            <form id="filterForm" method="GET" action="{{ route('document-control.department', $department?->name ?? 'Unknown') }}"
                 class="flex flex-col items-end w-auto space-y-1">
                 <div class="relative w-96">
                     <input type="text" name="search" id="searchInput"
@@ -151,7 +153,7 @@
                                 @else
                                     @foreach ($mappings as $mapping)
                                         <tr class="hover:bg-gray-50 transition-all duration-150">
-                                            <td class="px-2 py-3 text-center text-xs border-r border-gray-200">
+                                            <td class="px-1 py-3 text-center text-xs border-r border-gray-200" style="width: 40px; min-width: 32px;">
                                                 {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                             </td>
                                             <td class="px-2 py-2 text-xs max-w-xs border-r border-gray-200">
@@ -179,7 +181,7 @@
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td class="px-2 py-3 text-center text-xs font-semibold border-r border-gray-200">
+                                            <td class="px-1 py-3 text-center text-xs font-semibold border-r border-gray-200" style="width: 90px; min-width: 70px;">
                                                 {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
                                             </td>
                                             <td class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
@@ -198,8 +200,8 @@
 
                                             </td>
                                             {{-- Actions --}}
-                                            <td class="px-4 py-2 text-center">
-                                                <div class="flex justify-start items-center gap-2 flex-wrap">
+                                            <td class="px-1 py-2 text-center" style="width: 120px; min-width: 90px;">
+                                                <div class="flex justify-center items-center gap-1 flex-wrap">
 
                                                     {{-- VIEW FILES --}}
                                                     @php
