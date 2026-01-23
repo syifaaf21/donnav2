@@ -15,7 +15,7 @@ class SendDocumentControlReminder extends Command
     public function handle(WhatsAppService $wa)
     {
         $today = Carbon::now();
-        if (!$today->isMonday()) {
+        if (!$today->isFriday()) {
             $this->info("Not Monday, skipping WhatsApp reminder.");
             return;
         }
@@ -26,7 +26,9 @@ class SendDocumentControlReminder extends Command
         $this->info("Running WhatsApp reminder for documents. Date: {$now->toDateString()}");
 
         // Ambil semua dokumen sekaligus
-        $docs = DocumentMapping::with(['document', 'department', 'status'])->get();
+        $docs = DocumentMapping::with(['document', 'department', 'status'])
+            ->whereNull('marked_for_deletion_at')
+            ->get();
 
         if ($docs->isEmpty()) {
             $this->info("No documents to send reminders today.");
