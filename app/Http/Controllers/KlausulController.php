@@ -19,7 +19,7 @@ class KlausulController extends Controller
         $klausuls = Klausul::with('headKlausuls.subKlausuls')->orderBy('created_at', 'asc')->get();
         return view('contents.master.ftpp.clause.index', compact('klausuls'));
     }
-    
+
     /**
      * Store a newly created resource in storage.
      */
@@ -259,6 +259,67 @@ class KlausulController extends Controller
             Log::error('Error deleting main klausul: ' . $e->getMessage());
 
             return redirect()->back()->with('error', 'Gagal menghapus Main Klausul: ' . $e->getMessage());
+        }
+    }
+
+        /**
+     * Store a new sub klausul for a head klausul.
+     */
+    public function storeSub(Request $request)
+    {
+        $request->validate([
+            'head_id' => 'required|exists:tm_head_klausuls,id',
+            'sub_names' => 'required|array|min:1',
+            'sub_names.0' => 'required|string|max:255',
+            'sub_codes' => 'array',
+        ]);
+        try {
+            $subName = $request->input('sub_names')[0];
+            $subCode = $request->input('sub_codes')[0] ?? null;
+            \App\Models\SubKlausul::create([
+                'head_klausul_id' => $request->input('head_id'),
+                'name' => $subName,
+                'code' => $subCode,
+            ]);
+            return redirect()->back()->with('success', 'Sub Klausul berhasil ditambahkan.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Gagal menambah Sub Klausul: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update a sub klausul.
+     */
+    public function updateSub(Request $request, $id)
+    {
+        $request->validate([
+            'sub_names' => 'required|array|min:1',
+            'sub_names.0' => 'required|string|max:255',
+            'sub_codes' => 'array',
+        ]);
+        try {
+            $sub = \App\Models\SubKlausul::findOrFail($id);
+            $sub->update([
+                'name' => $request->input('sub_names')[0],
+                'code' => $request->input('sub_codes')[0] ?? null,
+            ]);
+            return redirect()->back()->with('success', 'Sub Klausul berhasil diupdate.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Gagal update Sub Klausul: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a sub klausul.
+     */
+    public function destroySub($id)
+    {
+        try {
+            $sub = \App\Models\SubKlausul::findOrFail($id);
+            $sub->delete();
+            return redirect()->back()->with('success', 'Sub Klausul berhasil dihapus.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus Sub Klausul: ' . $e->getMessage());
         }
     }
 }

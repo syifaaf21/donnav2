@@ -57,8 +57,8 @@
                                 <div class="font-semibold text-gray-800">{{ $klausul->name }}</div>
                                 <div class="text-xs text-gray-500">
                                     Audit Type:
-                                    <span
-                                        class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{{ $klausul->audit->name ?? 'N/A' }}</span>
+                                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"
+                                        data-id="{{ $klausul->audit_type_id }}">{{ $klausul->audit->name ?? 'N/A' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -89,37 +89,41 @@
 
                         @forelse ($klausul->headKlausuls as $head)
                             <div class="head-item border border-gray-300 rounded-lg p-3 mb-3">
-                                {{-- Head Klausul Row --}}
-                                <div class="flex justify-between items-start">
-                                    <div class="flex-1">
-                                        <div class="font-semibold text-gray-700">{{ $head->name }}</div>
-                                        <div class="text-xs text-gray-500 mt-1">
-                                            Code: <span
-                                                class="font-mono bg-gray-200 px-2 py-1 rounded">{{ $head->code ?? '-' }}</span>
+                                {{-- Head Klausul Row with Toggle --}}
+                                <div class="flex justify-between items-start cursor-pointer"
+                                    onclick="toggleHeadKlausulCollapse(this)">
+                                    <div class="flex-1 flex items-center gap-2">
+                                        <i
+                                            class="bi bi-chevron-right text-gray-400 transition-transform w-5 h-5 head-klausul-chevron"></i>
+                                        <div>
+                                            <div class="font-semibold text-gray-700">{{ $head->name }}</div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                Code: <span
+                                                    class="font-mono bg-gray-200 px-2 py-1 rounded">{{ $head->code ?? '-' }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="flex gap-2">
                                         <button data-id="{{ $head->id }}"
-                                            class="btn-edit-head w-7 h-7 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-1 text-xs"
+                                            class="btn-edit-head w-7 h-7 d-flex align-items-center justify-content-center rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-0 text-xs"
+                                            style="display: flex; align-items: center; justify-content: center;"
                                             onclick="event.stopPropagation();">
-                                            <i data-feather="edit" class="w-3 h-3"></i>
+                                            <i data-feather="edit" class="w-4 h-4 mx-auto"></i>
                                         </button>
                                         <button data-id="{{ $head->id }}"
-                                            class="btn-delete-head w-7 h-7 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-1 text-xs"
+                                            class="btn-delete-head w-7 h-7 d-flex align-items-center justify-content-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-0 text-xs"
+                                            style="display: flex; align-items: center; justify-content: center;"
                                             onclick="event.stopPropagation();">
-                                            <i data-feather="trash-2" class="w-3 h-3"></i>
+                                            <i data-feather="trash-2" class="w-4 h-4 mx-auto"></i>
                                         </button>
                                     </div>
                                 </div>
-
-                                {{-- Sub Klausul List --}}
-                                <div class="mt-3 pl-4 border-l-2 border-gray-300">
+                                <div class="head-klausul-collapse hidden mt-3 pl-4 border-l-2 border-gray-300">
                                     <button data-head-id="{{ $head->id }}"
                                         class="btn-add-sub text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors mb-2"
                                         onclick="event.stopPropagation();">
                                         <i class="bi bi-plus"></i> Add Sub Klausul
                                     </button>
-
                                     @forelse ($head->subKlausuls as $sub)
                                         <div
                                             class="sub-item flex justify-between items-center bg-white border border-gray-200 rounded p-2 mb-2">
@@ -131,14 +135,16 @@
                                             </div>
                                             <div class="flex gap-1">
                                                 <button data-id="{{ $sub->id }}" data-head-id="{{ $head->id }}"
-                                                    class="btn-edit-sub w-6 h-6 rounded bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-1 text-xs"
+                                                    class="btn-edit-sub w-6 h-6 d-flex align-items-center justify-content-center rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors p-0 text-xs"
+                                                    style="display: flex; align-items: center; justify-content: center;"
                                                     onclick="event.stopPropagation();">
-                                                    <i data-feather="edit" class="w-3 h-3"></i>
+                                                    <i data-feather="edit" class="w-4 h-4 mx-auto"></i>
                                                 </button>
                                                 <button data-id="{{ $sub->id }}"
-                                                    class="btn-delete-sub w-6 h-6 rounded bg-red-500 text-white hover:bg-red-600 transition-colors p-1 text-xs"
+                                                    class="btn-delete-sub w-6 h-6 d-flex align-items-center justify-content-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-0 text-xs"
+                                                    style="display: flex; align-items: center; justify-content: center;"
                                                     onclick="event.stopPropagation();">
-                                                    <i data-feather="trash-2" class="w-3 h-3"></i>
+                                                    <i data-feather="trash-2" class="w-4 h-4 mx-auto"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -314,12 +320,15 @@
                             <input type="text" id="add_head_klausul_name" class="form-control border-1" disabled>
                         </div>
                         <div>
-                            <label class="form-label fw-semibold">Head Klausul Name <span class="text-danger">*</span></label>
-                            <input type="text" name="head_name" class="form-control border-1" placeholder="Input head klausul name" required>
+                            <label class="form-label fw-semibold">Head Klausul Name <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="head_name" class="form-control border-1"
+                                placeholder="Input head klausul name" required>
                         </div>
                         <div>
                             <label class="form-label fw-semibold">Head Code</label>
-                            <input type="text" name="head_code" class="form-control border-1" placeholder="Input head code (optional)">
+                            <input type="text" name="head_code" class="form-control border-1"
+                                placeholder="Input head code (optional)">
                         </div>
                         <hr class="my-3">
                         <div>
@@ -334,7 +343,8 @@
                     </div>
                     <div class="modal-footer border-t">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Submit</button>
+                        <button type="submit"
+                            class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Submit</button>
                     </div>
                 </form>
             </div>
@@ -358,7 +368,13 @@
                     <div class="modal-body p-4 space-y-3">
                         <div>
                             <label class="form-label fw-semibold">Head Name <span class="text-danger">*</span></label>
-                            <input type="text" name="head_name" id="edit_head_name" class="form-control border-1" required>
+                            <input type="text" name="head_name" id="edit_head_name" class="form-control border-1"
+                                required>
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold">Head Code</label>
+                            <input type="text" name="head_code" id="edit_head_code" class="form-control border-1"
+                                placeholder="Input head code (optional)">
                         </div>
                         <hr class="my-3">
                         <div>
@@ -373,7 +389,9 @@
                     </div>
                     <div class="modal-footer border-t">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Save Changes</button>
+                        <button type="submit"
+                            class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Save
+                            Changes</button>
                     </div>
                 </form>
             </div>
@@ -393,8 +411,8 @@
                 </div>
                 <form id="formSubKlausul" method="POST">
                     @csrf
-                    @method('PUT')
                     <input type="hidden" name="sub_id" id="sub_id">
+                    <input type="hidden" name="head_id" id="sub_head_id">
                     <div class="modal-body p-4 space-y-3">
                         <div>
                             <label class="form-label fw-semibold">Sub Name <span class="text-danger">*</span></label>
@@ -429,71 +447,71 @@
         @csrf
         @method('DELETE')
     </form>
-
-    @push('scripts')
+@endsection
+@push('scripts')
     <script>
-            function addSubKlausulFieldEdit(name = '', code = '') {
-                const container = document.getElementById('subKlausulListEdit');
-                const subIndex = container.children.length;
-                const subDiv = document.createElement('div');
-                subDiv.className = 'sub-klausul-item border rounded p-2 mb-2 bg-white';
-                subDiv.innerHTML = [
-                    '<div class="d-flex justify-content-between align-items-center mb-2">',
-                    `<small class="fw-semibold">Sub #${subIndex + 1}</small>`,
-                    '<button type="button" onclick="removeSubKlausulEdit(this)" class="btn btn-sm btn-danger btn-xs">',
-                    '<i class="bi bi-x"></i>',
-                    '</button>',
-                    '</div>',
-                    '<div class="mb-2">',
-                    `<input type="text" name="sub_names[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub name" value="${name || ''}" required>`,
-                    '</div>',
-                    '<div>',
-                    `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)" value="${code || ''}">`,
-                    '</div>'
-                ].join('');
-                container.appendChild(subDiv);
-            }
+        function addSubKlausulFieldEdit(name = '', code = '') {
+            const container = document.getElementById('subKlausulListEdit');
+            const subIndex = container.children.length;
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-klausul-item border rounded p-2 mb-2 bg-white';
+            subDiv.innerHTML = [
+                '<div class="d-flex justify-content-between align-items-center mb-2">',
+                `<small class="fw-semibold">Sub #${subIndex + 1}</small>`,
+                '<button type="button" onclick="removeSubKlausulEdit(this)" class="btn btn-sm btn-danger btn-xs">',
+                '<i class="bi bi-x"></i>',
+                '</button>',
+                '</div>',
+                '<div class="mb-2">',
+                `<input type="text" name="sub_names[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub name" value="${name || ''}" required>`,
+                '</div>',
+                '<div>',
+                `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)" value="${code || ''}">`,
+                '</div>'
+            ].join('');
+            container.appendChild(subDiv);
+        }
 
-            function removeSubKlausulEdit(btn) {
-                btn.closest('.sub-klausul-item').remove();
-            }
+        function removeSubKlausulEdit(btn) {
+            btn.closest('.sub-klausul-item').remove();
+        }
 
-            // === SUB KLAUSUL FIELDS FOR ADD HEAD ===
-            function addSubKlausulFieldHead() {
-                const container = document.getElementById('subKlausulListHead');
-                const subIndex = container.children.length;
-                const subDiv = document.createElement('div');
-                subDiv.className = 'sub-klausul-item border rounded p-2 mb-2 bg-white';
-                subDiv.innerHTML = [
-                    '<div class="d-flex justify-content-between align-items-center mb-2">',
-                    `<small class="fw-semibold">Sub #${subIndex + 1}</small>`,
-                    '<button type="button" onclick="removeSubKlausulHead(this)" class="btn btn-sm btn-danger btn-xs">',
-                    '<i class="bi bi-x"></i>',
-                    '</button>',
-                    '</div>',
-                    '<div class="mb-2">',
-                    `<input type="text" name="sub_names[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub name" required>`,
-                    '</div>',
-                    '<div>',
-                    `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)">`,
-                    '</div>'
-                ].join('');
-                container.appendChild(subDiv);
-            }
+        // === SUB KLAUSUL FIELDS FOR ADD HEAD ===
+        function addSubKlausulFieldHead() {
+            const container = document.getElementById('subKlausulListHead');
+            const subIndex = container.children.length;
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-klausul-item border rounded p-2 mb-2 bg-white';
+            subDiv.innerHTML = [
+                '<div class="d-flex justify-content-between align-items-center mb-2">',
+                `<small class="fw-semibold">Sub #${subIndex + 1}</small>`,
+                '<button type="button" onclick="removeSubKlausulHead(this)" class="btn btn-sm btn-danger btn-xs">',
+                '<i class="bi bi-x"></i>',
+                '</button>',
+                '</div>',
+                '<div class="mb-2">',
+                `<input type="text" name="sub_names[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub name" required>`,
+                '</div>',
+                '<div>',
+                `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)">`,
+                '</div>'
+            ].join('');
+            container.appendChild(subDiv);
+        }
 
-            function removeSubKlausulHead(btn) {
-                btn.closest('.sub-klausul-item').remove();
-            }
+        function removeSubKlausulHead(btn) {
+            btn.closest('.sub-klausul-item').remove();
+        }
 
-            let headKlausulIndex = 0;
+        let headKlausulIndex = 0;
 
-            function addHeadKlausulField() {
-                headKlausulIndex++;
-                const container = document.getElementById('headKlausulContainer');
-                const headDiv = document.createElement('div');
-                headDiv.className = 'head-klausul-group border rounded p-3 mb-3 bg-light';
-                headDiv.setAttribute('data-head-index', headKlausulIndex);
-                headDiv.innerHTML = `
+        function addHeadKlausulField() {
+            headKlausulIndex++;
+            const container = document.getElementById('headKlausulContainer');
+            const headDiv = document.createElement('div');
+            headDiv.className = 'head-klausul-group border rounded p-3 mb-3 bg-light';
+            headDiv.setAttribute('data-head-index', headKlausulIndex);
+            headDiv.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <strong class="text-primary">Head #${headKlausulIndex + 1}</strong>
                         <button type="button" onclick="removeHeadKlausul(this)" class="btn btn-sm btn-danger">
@@ -518,27 +536,27 @@
                         <div class="sub-klausul-list"></div>
                     </div>
                 `;
-                container.appendChild(headDiv);
-            }
+            container.appendChild(headDiv);
+        }
 
-            function removeHeadKlausul(btn) {
-                btn.closest('.head-klausul-group').remove();
-                updateHeadNumbers();
-            }
+        function removeHeadKlausul(btn) {
+            btn.closest('.head-klausul-group').remove();
+            updateHeadNumbers();
+        }
 
-            function updateHeadNumbers() {
-                document.querySelectorAll('.head-klausul-group').forEach((group, index) => {
-                    group.querySelector('strong').textContent = `Head #${index + 1}`;
-                });
-            }
+        function updateHeadNumbers() {
+            document.querySelectorAll('.head-klausul-group').forEach((group, index) => {
+                group.querySelector('strong').textContent = `Head #${index + 1}`;
+            });
+        }
 
-            function addSubKlausulField(headIndex) {
-                const container = document.querySelector(
-                    `.sub-klausul-container[data-head-index="${headIndex}"] .sub-klausul-list`);
-                const subIndex = container.children.length;
-                const subDiv = document.createElement('div');
-                subDiv.className = 'sub-klausul-item border rounded p-2 mb-2 bg-white';
-                subDiv.innerHTML = `
+        function addSubKlausulField(headIndex) {
+            const container = document.querySelector(
+                `.sub-klausul-container[data-head-index="${headIndex}"] .sub-klausul-list`);
+            const subIndex = container.children.length;
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-klausul-item border rounded p-2 mb-2 bg-white';
+            subDiv.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <small class="fw-semibold">Sub #${subIndex + 1}</small>
                         <button type="button" onclick="removeSubKlausul(this)" class="btn btn-sm btn-danger btn-xs">
@@ -552,289 +570,329 @@
                         <input type="text" name="heads[${headIndex}][subs][${subIndex}][code]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)">
                     </div>
                 `;
-                container.appendChild(subDiv);
-            }
+            container.appendChild(subDiv);
+        }
 
-            function removeSubKlausul(btn) {
-                btn.closest('.sub-klausul-item').remove();
-            }
+        function removeSubKlausul(btn) {
+            btn.closest('.sub-klausul-item').remove();
+        }
 
-            function toggleKlausulCollapse(element) {
-                const collapse = element.nextElementSibling;
-                const chevron = element.querySelector('.klausul-chevron');
-                collapse.classList.toggle('hidden');
-                chevron.style.transform = collapse.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
-            }
+        function toggleKlausulCollapse(element) {
+            const collapse = element.nextElementSibling;
+            const chevron = element.querySelector('.klausul-chevron');
+            collapse.classList.toggle('hidden');
+            chevron.style.transform = collapse.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
+        }
 
-            document.addEventListener('DOMContentLoaded', () => {
-                // === ADD KLAUSUL ===
-                document.getElementById('btnAddKlausul').addEventListener('click', () => {
-                    // Reset form
-                    document.getElementById('formAddKlausul').reset();
-                    headKlausulIndex = 0;
-                    const container = document.getElementById('headKlausulContainer');
-                    // Keep only first head, remove others
-                    const allHeads = container.querySelectorAll('.head-klausul-group');
-                    allHeads.forEach((head, index) => {
-                        if (index > 0) head.remove();
-                    });
-                    // Clear subs from first head
-                    container.querySelector('.sub-klausul-list').innerHTML = '';
+        document.addEventListener('DOMContentLoaded', () => {
+            // === ADD KLAUSUL ===
+            document.getElementById('btnAddKlausul').addEventListener('click', () => {
+                // Reset form
+                document.getElementById('formAddKlausul').reset();
+                headKlausulIndex = 0;
+                const container = document.getElementById('headKlausulContainer');
+                // Keep only first head, remove others
+                const allHeads = container.querySelectorAll('.head-klausul-group');
+                allHeads.forEach((head, index) => {
+                    if (index > 0) head.remove();
+                });
+                // Clear subs from first head
+                container.querySelector('.sub-klausul-list').innerHTML = '';
 
-                    const modal = new bootstrap.Modal(document.getElementById('modalAddKlausul'));
+                const modal = new bootstrap.Modal(document.getElementById('modalAddKlausul'));
+                modal.show();
+            });
+
+            // === EDIT KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-edit-klausul').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.dataset.id;
+                    const klausulItem = btn.closest('.klausul-item');
+                    const klausulName = klausulItem.querySelector('.font-semibold').textContent
+                        .trim();
+
+                    document.getElementById('edit_klausul_name').value = klausulName;
+                    document.getElementById('formEditKlausul').action =
+                        `/master/ftpp/klausul/update-main/${id}`;
+
+                    // Set audit type value
+                    const auditTypeSpan = klausulItem.querySelector('.text-xs span[data-id]');
+                    if (auditTypeSpan) {
+                        const auditTypeId = auditTypeSpan.getAttribute('data-id');
+                        document.getElementById('edit_audit_type_id').value = auditTypeId;
+                    }
+
+                    const modal = new bootstrap.Modal(document.getElementById(
+                        'modalEditKlausul'));
                     modal.show();
                 });
+            });
 
-                // === EDIT KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-edit-klausul').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const id = btn.dataset.id;
-                        const klausulItem = btn.closest('.klausul-item');
-                        const klausulName = klausulItem.querySelector(
-                            '.klausul-item > div:first-child .font-semibold').textContent.trim();
-
-                        document.getElementById('edit_klausul_name').value = klausulName;
-                        document.getElementById('formEditKlausul').action =
-                            `/master/ftpp/klausul/update-main/${id}`;
-
-                        const modal = new bootstrap.Modal(document.getElementById(
-                            'modalEditKlausul'));
-                        modal.show();
-                    });
-                });
-
-                // === DELETE KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-delete-klausul').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const id = btn.dataset.id;
-                        Swal.fire({
-                            title: 'Delete Klausul?',
-                            text: 'This will delete all related head and sub klausuls',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            confirmButtonText: 'Delete'
-                        }).then(result => {
-                            if (result.isConfirmed) {
-                                const form = document.getElementById('form-delete-klausul');
-                                form.action = `/master/ftpp/klausul/destroy-main/${id}`;
-                                form.submit();
-                            }
-                        });
-                    });
-                });
-
-                // === ADD HEAD KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-add-head').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const klausulId = btn.dataset.klausulId;
-                        const klausulItem = btn.closest('.klausul-item');
-                        const klausulName = klausulItem.querySelector('.font-semibold').textContent;
-
-                        document.getElementById('add_head_klausul_name').value = klausulName;
-                        document.getElementById('add_head_klausul_id').value = klausulId;
-                        const form = document.getElementById('formAddHead');
-                        form.action = `/master/ftpp/klausul`;
-                        // Remove _method input if exists (should be POST for add)
-                        let methodInput = form.querySelector('input[name="_method"]');
-                        if (methodInput) methodInput.remove();
-
-                        // Clear previous sub klausul fields
-                        document.getElementById('subKlausulListHead').innerHTML = '';
-
-                        const modal = new bootstrap.Modal(document.getElementById('modalAddHead'));
-                        modal.show();
-                    });
-                });
-
-                // === EDIT HEAD KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-edit-head').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const id = btn.dataset.id;
-                        const headItem = btn.closest('.head-item');
-                        const headName = headItem.querySelector('.font-semibold').textContent;
-
-                        document.getElementById('edit_head_name').value = headName;
-                        // Set correct action for update route
-                        document.getElementById('formEditHead').action = `/master/ftpp/klausul/update/${id}`;
-
-                        // Clear previous sub klausul fields
-                        const subList = document.getElementById('subKlausulListEdit');
-                        subList.innerHTML = '';
-
-                        // Populate sub klausul fields from DOM
-                        const subItems = headItem.querySelectorAll('.sub-item');
-                        if (subItems.length > 0) {
-                            subItems.forEach(sub => {
-                                const subName = sub.querySelector('.text-sm').textContent.trim();
-                                const subCode = sub.querySelector('.font-mono').textContent.trim() || '';
-                                addSubKlausulFieldEdit(subName, subCode === '-' ? '' : subCode);
-                            });
+            // === DELETE KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-delete-klausul').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    Swal.fire({
+                        title: 'Delete Klausul?',
+                        text: 'This will delete all related head and sub klausuls',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Delete'
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            const form = document.getElementById('form-delete-klausul');
+                            form.action = `/master/ftpp/klausul/destroy-main/${id}`;
+                            form.submit();
                         }
-
-                        const modal = new bootstrap.Modal(document.getElementById('modalEditHead'));
-                        modal.show();
-                    });
-                });
-
-                // === DELETE HEAD KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-delete-head').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const id = btn.dataset.id;
-                        Swal.fire({
-                            title: 'Delete Head Klausul?',
-                            text: 'This will delete all related sub klausuls',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            confirmButtonText: 'Delete'
-                        }).then(result => {
-                            if (result.isConfirmed) {
-                                const form = document.getElementById('form-delete-head');
-                                form.action = `/master/ftpp/klausul/${id}`;
-                                form.submit();
-                            }
-                        });
-                    });
-                });
-
-                // === ADD SUB KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-add-sub').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const headId = btn.dataset.headId;
-                        document.getElementById('subKlausulTitle').innerHTML =
-                            '<i class="bi bi-plus-circle me-2"></i> Add Sub Klausul';
-                        document.getElementById('sub_id').value = '';
-                        document.getElementById('sub_name').value = '';
-                        document.getElementById('sub_code').value = '';
-                        document.getElementById('formSubKlausul').action =
-                            `/master/ftpp/klausul/${headId}`;
-
-                        const modal = new bootstrap.Modal(document.getElementById('modalSubKlausul'));
-                        modal.show();
-                    });
-                });
-
-                // === EDIT SUB KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-edit-sub').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const id = btn.dataset.id;
-                        const headId = btn.dataset.headId;
-                        const subItem = btn.closest('.sub-item');
-                        const subName = subItem.querySelector('.text-sm').textContent;
-                        const subCode = subItem.querySelector('.font-mono').textContent.replace(
-                            'Code: ', '') || '';
-
-                        document.getElementById('subKlausulTitle').innerHTML =
-                            '<i class="bi bi-pencil-square me-2"></i> Edit Sub Klausul';
-                        document.getElementById('sub_id').value = id;
-                        document.getElementById('sub_name').value = subName;
-                        document.getElementById('sub_code').value = subCode;
-                        document.getElementById('formSubKlausul').action =
-                            `/master/ftpp/klausul/${headId}`;
-
-                        const modal = new bootstrap.Modal(document.getElementById('modalSubKlausul'));
-                        modal.show();
-                    });
-                });
-
-                // === DELETE SUB KLAUSUL ===
-                document.querySelectorAll('#section-klausul .btn-delete-sub').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const id = btn.dataset.id;
-                        Swal.fire({
-                            title: 'Delete Sub Klausul?',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            confirmButtonText: 'Delete'
-                        }).then(result => {
-                            if (result.isConfirmed) {
-                                const form = document.getElementById('form-delete-sub');
-                                form.action = `/master/ftpp/klausul/${id}`;
-                                form.submit();
-                            }
-                        });
                     });
                 });
             });
 
-            // Feather icons
-            feather.replace();
-        </script>
-    @endpush
+            // === ADD HEAD KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-add-head').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const klausulId = btn.dataset.klausulId;
+                    const klausulItem = btn.closest('.klausul-item');
+                    const klausulName = klausulItem.querySelector('.font-semibold').textContent;
 
-    @push('styles')
-        <style>
-            .form-control,
-            .form-select {
-                border: 1px solid #d1d5db !important;
-                box-shadow: none !important;
-                transition: all 0.3s ease;
-            }
+                    document.getElementById('add_head_klausul_name').value = klausulName;
+                    document.getElementById('add_head_klausul_id').value = klausulId;
+                    const form = document.getElementById('formAddHead');
+                    form.action = `/master/ftpp/klausul`;
+                    // Remove _method input if exists (should be POST for add)
+                    let methodInput = form.querySelector('input[name="_method"]');
+                    if (methodInput) methodInput.remove();
 
-            .form-control:focus,
-            .form-select:focus {
-                border-color: #3b82f6 !important;
-                box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
-            }
+                    // Clear previous sub klausul fields
+                    document.getElementById('subKlausulListHead').innerHTML = '';
 
-            .klausul-item {
-                transition: all 0.2s ease;
-            }
+                    const modal = new bootstrap.Modal(document.getElementById('modalAddHead'));
+                    modal.show();
+                });
+            });
 
-            .klausul-collapse {
-                animation: slideDown 0.3s ease;
-            }
+            // === EDIT HEAD KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-edit-head').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.dataset.id;
+                    const headItem = btn.closest('.head-item');
+                    const headName = headItem.querySelector('.font-semibold').textContent;
+                    const headCode = headItem.querySelector('.font-mono')?.textContent.trim() ||
+                        '';
 
-            @keyframes slideDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-10px);
+                    document.getElementById('edit_head_name').value = headName;
+                    document.getElementById('edit_head_code').value = headCode === '-' ? '' :
+                        headCode;
+                    // Set correct action for update route
+                    document.getElementById('formEditHead').action =
+                        `/master/ftpp/klausul/update/${id}`;
+
+                    // Clear previous sub klausul fields
+                    const subList = document.getElementById('subKlausulListEdit');
+                    subList.innerHTML = '';
+
+                    // Populate sub klausul fields from DOM
+                    const subItems = headItem.querySelectorAll('.sub-item');
+                    if (subItems.length > 0) {
+                        subItems.forEach(sub => {
+                            const subName = sub.querySelector('.text-sm').textContent
+                                .trim();
+                            const subCode = sub.querySelector('.font-mono').textContent
+                                .trim() || '';
+                            addSubKlausulFieldEdit(subName, subCode === '-' ? '' :
+                                subCode);
+                        });
+                    }
+
+                    const modal = new bootstrap.Modal(document.getElementById('modalEditHead'));
+                    modal.show();
+                });
+            });
+
+            // === DELETE HEAD KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-delete-head').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    Swal.fire({
+                        title: 'Delete Head Klausul?',
+                        text: 'This will delete all related sub klausuls',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Delete'
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            const form = document.getElementById('form-delete-head');
+                            form.action = `/master/ftpp/klausul/${id}`;
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            // === ADD SUB KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-add-sub').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const headId = btn.dataset.headId;
+                    document.getElementById('subKlausulTitle').innerHTML =
+                        '<i class="bi bi-plus-circle me-2"></i> Add Sub Klausul';
+                    document.getElementById('sub_id').value = '';
+                    document.getElementById('sub_name').value = '';
+                    document.getElementById('sub_code').value = '';
+                    document.getElementById('sub_head_id').value = headId;
+                    const form = document.getElementById('formSubKlausul');
+                    form.action = `/master/ftpp/klausul/sub`;
+                    // Remove _method for POST
+                    let methodInput = form.querySelector('input[name="_method"]');
+                    if (methodInput) methodInput.remove();
+                    const modal = new bootstrap.Modal(document.getElementById('modalSubKlausul'));
+                    modal.show();
+                });
+            });
+
+            // === EDIT SUB KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-edit-sub').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    const headId = btn.dataset.headId;
+                    const subItem = btn.closest('.sub-item');
+                    const subName = subItem.querySelector('.text-sm').textContent;
+                    const subCode = subItem.querySelector('.font-mono').textContent.replace(
+                        'Code: ', '') || '';
+
+                    document.getElementById('subKlausulTitle').innerHTML =
+                        '<i class="bi bi-pencil-square me-2"></i> Edit Sub Klausul';
+                    document.getElementById('sub_id').value = id;
+                    document.getElementById('sub_name').value = subName;
+                    document.getElementById('sub_code').value = subCode;
+                    document.getElementById('sub_head_id').value = headId;
+                    const form = document.getElementById('formSubKlausul');
+                    form.action = `/master/ftpp/klausul/sub/${id}`;
+                    // Set method to PUT for edit
+                    let methodInput = form.querySelector('input[name="_method"]');
+                    if (!methodInput) {
+                        methodInput = document.createElement('input');
+                        methodInput.type = 'hidden';
+                        methodInput.name = '_method';
+                        form.appendChild(methodInput);
+                    }
+                    methodInput.value = 'PUT';
+                    const modal = new bootstrap.Modal(document.getElementById('modalSubKlausul'));
+                    modal.show();
+                });
+            });
+
+            // === DELETE SUB KLAUSUL ===
+            document.querySelectorAll('#section-klausul .btn-delete-sub').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    Swal.fire({
+                        title: 'Delete Sub Klausul?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Delete'
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            const form = document.getElementById('form-delete-sub');
+                            form.action = `/master/ftpp/klausul/sub/${id}`;
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+
+        // Feather icons
+        feather.replace();
+    </script>
+
+    {{-- Toggle head klausul --}}
+    <script>
+        function toggleHeadKlausulCollapse(element) {
+            const collapse = element.parentElement.querySelector('.head-klausul-collapse');
+            const chevron = element.querySelector('.head-klausul-chevron');
+            if (collapse) {
+                collapse.classList.toggle('hidden');
+                if (chevron) {
+                    chevron.style.transform = collapse.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
                 }
+            }
+        }
+    </script>
+@endpush
 
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+@push('styles')
+    <style>
+        .form-control,
+        .form-select {
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+        }
+
+        .klausul-item {
+            transition: all 0.2s ease;
+        }
+
+        .klausul-collapse {
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
             }
 
-            .head-item {
-                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-                transition: all 0.2s ease;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
+        }
 
-            .head-item:hover {
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
+        .head-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            transition: all 0.2s ease;
+        }
 
-            .sub-item {
-                background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
-                transition: all 0.2s ease;
-            }
+        .head-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
 
-            .sub-item:hover {
-                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-            }
+        .sub-item {
+            background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+            transition: all 0.2s ease;
+        }
 
-            .head-klausul-group {
-                background: linear-gradient(135deg, #f0f9ff 0%, #f8f9fa 100%);
-                border: 2px solid #e0e7ff !important;
-            }
+        .sub-item:hover {
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
 
-            .sub-klausul-item {
-                background: #ffffff;
-                border: 1px solid #e5e7eb !important;
-            }
+        .head-klausul-group {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f8f9fa 100%);
+            border: 2px solid #e0e7ff !important;
+        }
 
-            .sub-klausul-item:hover {
-                background: #f9fafb;
-            }
+        .sub-klausul-item {
+            background: #ffffff;
+            border: 1px solid #e5e7eb !important;
+        }
 
-            .btn-xs {
-                padding: 0.15rem 0.3rem;
-                font-size: 0.75rem;
-            }
-        </style>
-    @endpush
-@endsection
+        .sub-klausul-item:hover {
+            background: #f9fafb;
+        }
+
+        .btn-xs {
+            padding: 0.15rem 0.3rem;
+            font-size: 0.75rem;
+        }
+    </style>
+@endpush
