@@ -23,7 +23,7 @@
 
     <div>
         <span class="font-semibold my-1">Dept. Head</span>
-        <input type="text" class="text-center" value="{{ $finding->auditeeAction->deptHead->name ?? '-' }}" readonly>
+        <div class="text-center text-gray-700" x-text="form.auditeeAction?.deptHead?.name || '{{ $finding->auditeeAction->deptHead->name ?? '-' }}'">{{ $finding->auditeeAction->deptHead->name ?? '-' }}</div>
     </div>
 </td>
 
@@ -37,7 +37,7 @@
 
     <div>
         <span class="font-semibold my-1">Leader/Spv</span>
-        <input type="text" class="text-center" value="{{ $finding->auditeeAction->user->name ?? '-' }}" readonly>
+        <div class="text-center text-gray-700" x-text="form.auditeeAction?.user?.name || '{{ $finding->auditeeAction->user->name ?? '-' }}'">{{ $finding->auditeeAction->user->name ?? '-' }}</div>
     </div>
 </td>
 

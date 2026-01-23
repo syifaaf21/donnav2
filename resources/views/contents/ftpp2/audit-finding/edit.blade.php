@@ -249,6 +249,7 @@
                                                 aria-haspopup="true" aria-expanded="false" title="Attach files">
                                                 <i data-feather="paperclip" class="w-4 h-4"></i>
                                                 <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                                                <div id="attachTotalSize" class="text-sm text-gray-600 ml-2">Total: 0.00 MB</div>
                                             </button>
                                         @endif
 
@@ -548,10 +549,18 @@
                                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
 
                                     btn.addEventListener('click', async (e) => {
-                                        if (!fid) return alert('Cannot remove unsaved file');
-                                        if (!confirm(
-                                                'Remove this attachment? This will delete the file from storage.'
-                                            )) return;
+                                        if (!fid) {
+                                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Cannot remove unsaved file' });
+                                            return;
+                                        }
+
+                                        if (typeof Swal !== 'undefined') {
+                                            const c = await Swal.fire({ title: 'Confirm remove', text: 'Remove this attachment? This will delete the file from storage.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, remove', cancelButtonText: 'Cancel' });
+                                            if (!c.isConfirmed) return;
+                                        } else {
+                                            if (!confirm('Remove this attachment? This will delete the file from storage.')) return;
+                                        }
+
                                         try {
                                             const token = document.querySelector(
                                                 'meta[name="csrf-token"]')?.getAttribute(
@@ -567,8 +576,11 @@
                                                 });
                                             const data = await res.json().catch(() => ({}));
                                             if (!res.ok) {
-                                                alert(data.message ||
-                                                    'Failed to remove attachment');
+                                                if (typeof Swal !== 'undefined') {
+                                                    Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Failed to remove attachment' });
+                                                } else {
+                                                    alert(data.message || 'Failed to remove attachment');
+                                                }
                                                 return;
                                             }
 
@@ -581,7 +593,11 @@
                                                 String(x.id) !== String(fid));
                                         } catch (err) {
                                             console.error(err);
-                                            alert('Error removing attachment');
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({ icon: 'error', title: 'Error', text: 'Error removing attachment' });
+                                            } else {
+                                                alert('Error removing attachment');
+                                            }
                                         }
                                     });
 
@@ -607,10 +623,17 @@
                                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
 
                                     btn.addEventListener('click', async () => {
-                                        if (!fid) return alert('Cannot remove unsaved file');
-                                        if (!confirm(
-                                                'Remove this attachment? This will delete the file from storage.'
-                                            )) return;
+                                        if (!fid) {
+                                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Cannot remove unsaved file' });
+                                            return;
+                                        }
+
+                                        if (typeof Swal !== 'undefined') {
+                                            const c = await Swal.fire({ title: 'Confirm remove', text: 'Remove this attachment? This will delete the file from storage.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, remove', cancelButtonText: 'Cancel' });
+                                            if (!c.isConfirmed) return;
+                                        } else {
+                                            if (!confirm('Remove this attachment? This will delete the file from storage.')) return;
+                                        }
                                         try {
                                             const token = document.querySelector(
                                                 'meta[name="csrf-token"]')?.getAttribute(
@@ -626,8 +649,11 @@
                                                 });
                                             const data = await res.json().catch(() => ({}));
                                             if (!res.ok) {
-                                                alert(data.message ||
-                                                    'Failed to remove attachment');
+                                                if (typeof Swal !== 'undefined') {
+                                                    Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Failed to remove attachment' });
+                                                } else {
+                                                    alert(data.message || 'Failed to remove attachment');
+                                                }
                                                 return;
                                             }
 
@@ -638,7 +664,11 @@
                                                 String(x.id) !== String(fid));
                                         } catch (err) {
                                             console.error(err);
-                                            alert('Error removing attachment');
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({ icon: 'error', title: 'Error', text: 'Error removing attachment' });
+                                            } else {
+                                                alert('Error removing attachment');
+                                            }
                                         }
                                     });
 
@@ -657,9 +687,12 @@
                                 auditeeContainer.querySelectorAll('.remove-auditee').forEach(btn => {
                                     btn.addEventListener('click', async (ev) => {
                                         const id = btn.getAttribute('data-id');
-                                        if (!confirm(
-                                                'Remove this auditee from finding? This will remove it immediately.'
-                                            )) return;
+                                        if (typeof Swal !== 'undefined') {
+                                            const c = await Swal.fire({ title: 'Confirm remove', text: 'Remove this auditee from finding? This will remove it immediately.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, remove', cancelButtonText: 'Cancel' });
+                                            if (!c.isConfirmed) return;
+                                        } else {
+                                            if (!confirm('Remove this auditee from finding? This will remove it immediately.')) return;
+                                        }
 
                                         try {
                                             const token = document.querySelector(
@@ -676,8 +709,11 @@
                                                 });
                                             const data = await res.json().catch(() => ({}));
                                             if (!res.ok) {
-                                                alert(data.message ||
-                                                    'Failed to remove auditee');
+                                                if (typeof Swal !== 'undefined') {
+                                                    Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Failed to remove auditee' });
+                                                } else {
+                                                    alert(data.message || 'Failed to remove auditee');
+                                                }
                                                 return;
                                             }
 
@@ -709,7 +745,11 @@
                                             });
                                         } catch (err) {
                                             console.error(err);
-                                            alert('Error removing auditee');
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({ icon: 'error', title: 'Error', text: 'Error removing auditee' });
+                                            } else {
+                                                alert('Error removing auditee');
+                                            }
                                         }
                                     });
                                 });
@@ -1016,7 +1056,12 @@
             window.pilihSubKlausul = function() {
                 const subSelect = document.getElementById('selectSub');
                 if (!subSelect || !subSelect.value) {
-                    return alert('Please choose a sub clause first');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
+                    } else {
+                        alert('Please choose a sub clause first');
+                    }
+                    return;
                 }
                 const subId = subSelect.value;
                 const subText = subSelect.selectedOptions[0].text;
@@ -1043,8 +1088,22 @@
             const subId = subSelect.value;
             const subText = subSelect.selectedOptions[0]?.text;
 
-            if (!subId) return alert('Please choose a sub clause first');
-            if (selectedSubIds.includes(subId)) return alert('This sub clause is already added');
+            if (!subId) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
+                } else {
+                    alert('Please choose a sub clause first');
+                }
+                return;
+            }
+            if (selectedSubIds.includes(subId)) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'info', title: 'Already added', text: 'This sub clause is already added' });
+                } else {
+                    alert('This sub clause is already added');
+                }
+                return;
+            }
 
             selectedSubIds.push(subId);
 
@@ -1182,12 +1241,22 @@
             const prod = prodSelect.value;
 
             if (!plant) {
-                return alert("Please choose plant first");
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose plant first' });
+                } else {
+                    alert("Please choose plant first");
+                }
+                return;
             }
 
             // ✅ harus pilih department
             if (!dept) {
-                return alert("Please select Department.");
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please select Department.' });
+                } else {
+                    alert("Please select Department.");
+                }
+                return;
             }
 
             // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
@@ -1261,7 +1330,14 @@
 
         function openAuditeeSidebar() {
             const dept = document.getElementById('selectedDepartment').value;
-            if (!dept) return alert("Please choose department/plant first!");
+            if (!dept) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose department/plant first!' });
+                } else {
+                    alert("Please choose department/plant first!");
+                }
+                return;
+            }
             loadAuditeeOptions(dept);
             document.getElementById('auditeeSidebar').classList.remove('hidden');
         }
@@ -1330,6 +1406,8 @@
                 const dt = new DataTransfer();
                 filesArray.forEach(file => dt.items.add(file));
                 input.files = dt.files;
+                // update total size UI after changing input files
+                updateTotalSize();
             }
 
             // 🔹 Update badge total attachment
@@ -1341,6 +1419,8 @@
                 } else {
                     attachCount.classList.add('hidden');
                 }
+                // update total size
+                updateTotalSize();
             }
 
             // 🔹 Preview Image + tombol delete
@@ -1375,6 +1455,7 @@
                         updateFileInput(photoInput, accumulatedPhotoFiles);
                         displayImages();
                         updateAttachCount();
+                        updateTotalSize();
                     };
 
                     wrapper.appendChild(img);
@@ -1418,6 +1499,7 @@
                         updateFileInput(fileInput, accumulatedFileFiles);
                         displayFiles();
                         updateAttachCount();
+                        updateTotalSize();
                     };
 
                     wrapper.append(icon, name, btn);
@@ -1442,6 +1524,7 @@
                 updateFileInput(photoInput, accumulatedPhotoFiles);
                 displayImages();
                 updateAttachCount();
+                updateTotalSize();
             });
 
             fileInput.addEventListener('change', (e) => {
@@ -1459,7 +1542,32 @@
                 updateFileInput(fileInput, accumulatedFileFiles);
                 displayFiles();
                 updateAttachCount();
+                updateTotalSize();
             });
+
+            // === Total size helpers ===
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+
+            function updateTotalSize() {
+                const el = document.getElementById('attachTotalSize');
+                if (!el) return;
+                let total = 0;
+                accumulatedPhotoFiles.forEach(f => { total += f.size || 0; });
+                accumulatedFileFiles.forEach(f => { total += f.size || 0; });
+                if (total === 0) {
+                    if (photoInput.files) Array.from(photoInput.files).forEach(f => total += f.size || 0);
+                    if (fileInput.files) Array.from(fileInput.files).forEach(f => total += f.size || 0);
+                }
+                const mb = (total / (1024 * 1024));
+                el.textContent = `Total: ${mb.toFixed(2)} MB`;
+            }
 
             // 🔹 Toggle menu
             attachBtn.addEventListener('click', (e) => {
@@ -1471,6 +1579,8 @@
 
             attachImages.addEventListener('click', () => photoInput.click());
             attachDocs.addEventListener('click', () => fileInput.click());
+            // initialize total size display
+            updateTotalSize();
         });
     </script>
     {{-- Store header data handler --}}
@@ -1572,40 +1682,7 @@
                 return; // ⛔ STOP submit
             }
 
-            // ✅ 5. CHECK individual file size - TAMPILKAN DI FIELD (BUKAN ALERT)
-            let individualErrors = [];
-
-            // Check individual image files (max 3MB)
-            if (photoInput && photoInput.files) {
-                Array.from(photoInput.files).forEach(file => {
-                    if (file.size > 3 * 1024 * 1024) { // 3MB
-                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                        individualErrors.push(
-                            `🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
-                    }
-                });
-            }
-
-            // Check individual PDF files (max 10MB)
-            if (fileInput && fileInput.files) {
-                Array.from(fileInput.files).forEach(file => {
-                    if (file.size > 10 * 1024 * 1024) { // 10MB
-                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                        individualErrors.push(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
-                    }
-                });
-            }
-
-            if (individualErrors.length > 0) {
-                const errorHtml = `
-                    <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
-                    <ul class="list-disc list-inside space-y-1">
-                        ${individualErrors.map(e => `<li>${e}</li>`).join('')}
-                    </ul>
-                `;
-                showAttachmentError(errorHtml);
-                return; // ⛔ STOP submit
-            }
+            // ✅ 5. Skip individual per-file size validation — only total size (20MB) is enforced
             }
 
             // ✅ 6. Jika lolos validasi, lanjutkan submit form

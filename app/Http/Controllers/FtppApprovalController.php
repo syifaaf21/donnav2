@@ -192,8 +192,8 @@ class FtppApprovalController extends Controller
         // Generate kode lengkap
         $code = "{$prefix}/FTPP/{$year}/{$findingNumber}/01";
 
-        $auditors = User::whereHas('roles', fn($q) => $q->where('id', 4)) // Role auditor
-            ->where('audit_type_id', $auditTypeId)
+        $auditors = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['auditor']))
+            ->whereHas('auditTypes', fn($q) => $q->where('tm_audit_types.id', $auditTypeId))
             ->get();
 
         return response()->json([

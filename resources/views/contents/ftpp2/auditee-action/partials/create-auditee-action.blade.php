@@ -335,6 +335,17 @@
                 {{-- ATTACHMENT SECTION --}}
                 <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
                     <div class="font-semibold text-lg text-gray-700">Attachments</div>
+                    <div class="flex items-center gap-4">
+                        <div id="attachBadgeWrapper" class="flex items-center gap-2">
+                            <button id="attachBtn2" type="button" class="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded">
+                                <i data-feather="paperclip" class="w-4 h-4"></i>
+                                <span class="text-sm">Attach</span>
+                                <span id="attachCount2" class="ml-2 hidden inline-flex items-center justify-center bg-red-500 text-white text-xs font-semibold h-5 w-5 rounded-full">0</span>
+                            </button>
+                        </div>
+
+                        <div id="attachTotalSize2" class="text-sm text-gray-600">Total: 0.00 MB</div>
+                    </div>
 
                     {{-- Tips Alert --}}
                     <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
@@ -643,6 +654,37 @@
         } else {
             attachCount2.classList.add('hidden');
         }
+        // update total size display whenever count changes
+        updateTotalSize2();
+    }
+
+    // 🔹 Format bytes to human readable
+    function formatBytes(bytes, decimals = 2) {
+        if (!bytes) return '0.00 B';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    // 🔹 Update total size text based on accumulated files
+    function updateTotalSize2() {
+        const total = (accumulatedPhotoFiles || []).reduce((s, f) => s + (f.size || 0), 0)
+            + (accumulatedFileFiles || []).reduce((s, f) => s + (f.size || 0), 0);
+
+        const totalMB = (total / (1024 * 1024));
+        const el = document.getElementById('attachTotalSize2');
+        if (el) {
+            el.textContent = `Total: ${formatBytes(total, 2)}`;
+            if (total > 20 * 1024 * 1024) {
+                el.classList.remove('text-gray-600');
+                el.classList.add('text-red-600', 'font-semibold');
+            } else {
+                el.classList.remove('text-red-600', 'font-semibold');
+                el.classList.add('text-gray-600');
+            }
+        }
     }
 
     // 🔹 Preview Image + tombol delete
@@ -751,6 +793,10 @@
 
     attachImages2.addEventListener('click', () => photoInput2.click());
     attachDocs2.addEventListener('click', () => fileInput2.click());
+
+    // Initialize display
+    updateAttachCount2();
+    updateTotalSize2();
 </script>
 
 {{-- Store data auditee action handler --}}
@@ -918,40 +964,7 @@
             return; // ⛔ STOP submit
         }
 
-        // ✅ 5. CHECK individual file size - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
-        let individualErrors = [];
-
-        // Check individual image files (max 3MB)
-        if (photoInput2 && photoInput2.files) {
-            Array.from(photoInput2.files).forEach(file => {
-                if (file.size > 3 * 1024 * 1024) { // 3MB
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    individualErrors.push(
-                        `🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
-                }
-            });
-        }
-
-        // Check individual PDF files (max 10MB)
-        if (fileInput2 && fileInput2.files) {
-            Array.from(fileInput2.files).forEach(file => {
-                if (file.size > 10 * 1024 * 1024) { // 10MB
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    individualErrors.push(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
-                }
-            });
-        }
-
-        if (individualErrors.length > 0) {
-            const errorHtml = `
-                <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
-                <ul class="list-disc list-inside space-y-1">
-                    ${individualErrors.map(e => `<li>${e}</li>`).join('')}
-                </ul>
-            `;
-            showAttachmentError(errorHtml);
-            return; // ⛔ STOP submit
-        }
+        // Individual file size checks removed — only total size (20MB) is enforced.
 
         // ✅ 6. Check other validation errors (tetap di SweetAlert - bukan file attachment)
         if (err.length > 0) {

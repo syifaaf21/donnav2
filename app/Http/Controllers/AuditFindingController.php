@@ -59,7 +59,7 @@ class AuditFindingController extends Controller
 
         $request->validate([
             'evidence' => 'required|array',
-            'evidence.*' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'evidence.*' => 'file|mimes:jpg,jpeg,png,pdf',
         ]);
 
         foreach ($request->file('evidence') as $file) {
@@ -586,31 +586,11 @@ class AuditFindingController extends Controller
             'finding_description' => [$isSubmit ? 'required' : 'nullable', 'string'],
             'due_date' => [$isSubmit ? 'required' : 'nullable', 'date'],
             'photos' => 'nullable|array',
-            'photos.*' => 'file|mimes:jpg,jpeg,png|max:5120', // 5 MB
+            'photos.*' => 'file|mimes:jpg,jpeg,png',
             'files' => 'nullable|array',
-            'files.*' => 'file|mimes:pdf|max:10240', // 10 MB
+            'files.*' => 'file|mimes:pdf',
             'attachments' => 'nullable|array',
-            'attachments.*' => [
-                'file',
-                'mimes:jpg,jpeg,png,pdf',
-                function ($attribute, $file, $fail) {
-                    if (!$file) {
-                        return;
-                    }
-                    $mime = $file->getClientMimeType();
-                    $size = $file->getSize(); // bytes
-
-                    $isPdf = str_contains($mime, 'pdf');
-                    $isImage = str_contains($mime, 'image/');
-
-                    if ($isPdf && $size > 10 * 1024 * 1024) {
-                        return $fail('PDF must be 10MB or smaller.');
-                    }
-                    if ($isImage && $size > 5 * 1024 * 1024) {
-                        return $fail('Image must be 5MB or smaller.');
-                    }
-                },
-            ],
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
             'existing_file_delete' => 'nullable|array',
             'existing_file_delete.*' => 'integer',
         ]);

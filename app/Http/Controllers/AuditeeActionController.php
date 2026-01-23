@@ -120,7 +120,7 @@ class AuditeeActionController extends Controller
 
                 // Attachments: gabung semua file
                 'attachments' => 'nullable|array',
-                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
+                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
 
                 'is_draft' => 'nullable|boolean',
             ]);
@@ -434,15 +434,14 @@ class AuditeeActionController extends Controller
             'yokoten_area' => 'nullable|string',
             'ldr_spv_signature' => 'nullable|boolean',
 
-            // Image: max 3MB per file
-            'photos2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3072',
+            // Images: allow common image types (no individual size limit)
+            'photos2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
 
-            // Files: max 3MB per file (images)
-            'files2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3072',
+            // Files: allow common image types (no individual size limit)
+            'files2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
 
-            // Attachments: max 10MB per PDF file
-            // Attachments: allow images (jpg, jpeg, png) and PDF files
-            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            // Attachments: allow images and PDF (no individual size limit — total enforced separately)
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
 
             'remove_attachments.*' => 'nullable|numeric',
         ]);

@@ -22,7 +22,7 @@
 @endsection
 
 @section('content')
-    <div class="px-6 space-y-4">
+    <div class=" space-y-4">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -57,56 +57,96 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
                 {{-- LEFT SIDE --}}
-                <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow p-4 overflow-auto h-[90vh]">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-lg font-semibold text-gray-700">FTPP Approval List</h2>
+                <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow p-3 flex flex-col">
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-3">
+                            FTPP Approval List
+                            <span class="inline-flex items-center justify-center bg-primaryDark text-white text-xs font-semibold px-2 py-0.5 rounded">
+                                <span x-text="findings.length"></span>
+                            </span>
+                        </h2>
+                        <button type="button" @click="search = ''" class="text-xs text-gray-500 hover:text-gray-700">Clear</button>
                     </div>
 
-                    <!-- 🔍 Single Search Bar -->
-                    <div class="m-3">
-                        <input type="text" x-model="search" placeholder="Search..."
-                            class="border border-gray-300 rounded-md px-2 py-1 w-full text-sm focus:ring focus:ring-blue-200">
+                    <div class="space-y-2 flex-1 flex flex-col">
+                        <div class="px-3 py-2">
+                            <input type="text" x-model="search"
+                                placeholder="Search findings by reg. number, dept, status..."
+                                class="w-full text-sm border rounded px-3 py-2 focus:ring focus:ring-sky-100" />
+                        </div>
+
+                        <ul class="px-2 overflow-auto flex-1">
+                            <template x-if="findings.length === 0">
+                                <li class="text-xs text-gray-400 px-2 py-4 text-center border rounded">No findings
+                                    available.</li>
+                            </template>
+
+                            <template x-for="item in filteredFindings" :key="item.id">
+                                <li @click="loadForm(item.id)" :title="item.registration_number"
+                                    class="relative cursor-pointer mb-2 border rounded-lg bg-white hover:shadow-md transition p-3 flex items-start gap-3">
+                                    <div class="absolute right-3 top-3" x-show="loading == item.id">
+                                        <svg class="w-5 h-5 text-sky-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <div class="font-semibold text-sm truncate" x-text="item.registration_number">
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-1 text-xs text-gray-600 flex flex-col gap-2">
+                                            <span class="truncate" x-text="item.department?.name ?? '-'"
+                                                style="max-width:160px"></span>
+                                            <span class="" x-text="item.audit?.name ?? (item.audit_type?.name || '-')"
+                                                style="max-width:140px" title=""></span>
+                                            <span x-text="item.status?.name || 'Unknown'"
+                                                :class="{
+                                                    'inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700': (
+                                                        item.status?.name || '').toLowerCase() === 'need check',
+                                                    'inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800': (
+                                                            item.status?.name || '')
+                                                    .toLowerCase() === 'need approval by auditor',
+                                                    'inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800': (
+                                                            item.status?.name || '')
+                                                    .toLowerCase() === 'need approval by lead auditor',
+                                                    'inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700': (
+                                                        item.status?.name || '').toLowerCase() === 'closed' || (
+                                                        item.status?.name || '').toLowerCase() === 'resolved'
+                                                }">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
                     </div>
-
-                    <ul>
-                        <!-- Debug info -->
-                        <li class="text-xs text-gray-400 px-2 py-1 mb-2 border-b" x-show="findings.length === 0">
-                            ⚠️ No findings loaded from controller. Check user department assignment.
-                        </li>
-                        
-                        <template
-                            x-for="item in filteredFindings.filter(i => {
-                                const statusName = (i.status?.name || '').toLowerCase();
-                                // Lead Auditor can see all statuses, others see specific statuses
-                                if (userRoles.includes('lead auditor') || userRoles.includes('admin') || userRoles.includes('super admin')) {
-                                    return ['need check','need approval by auditor','need approval by lead auditor'].includes(statusName);
-                                }
-                                return ['need check','need approval by auditor','need approval by lead auditor'].includes(statusName);
-                            })"
-                            :key="item.id">
-                            <li @click="loadForm(item.id)"
-                                class="cursor-pointer px-2 py-2 mb-2 border rounded shadow hover:bg-slate-50">
-                                <div class="font-semibold text-sm" x-text="item.registration_number"></div>
-                                <div class="text-xs" x-text="item.department?.name ?? '-'"></div>
-                                <div class="text-xs mt-1" x-text="item.status?.name ?? 'Unknown Status'"
-                                    :class="{
-                                        'text-red-500 hover:text-red-600': item.status_id === 7,
-                                        'text-yellow-500 hover:text-yellow-600': item.status_id !== 7 && item
-                                            .status_id !== 11,
-                                        'text-green-600 hover:text-green-700': item.status_id === 11
-                                    }">
-                                </div>
-                            </li>
-                        </template>
-
-                        <template x-if="filteredFindings.length === 0">
-                            <li class="text-gray-400 text-sm text-center py-4">No results found.</li>
-                        </template>
-                    </ul>
                 </div>
 
                 {{-- RIGHT SIDE --}}
-                <div class="lg:col-span-9 bg-white border border-gray-100 rounded-2xl shadow p-3 overflow-auto h-[90vh]">
+                <div class="lg:col-span-9 bg-white border border-gray-100 rounded-2xl shadow p-4 overflow-auto relative">
+                    <!-- Loading overlay -->
+                    <div x-show="loading" x-cloak class="absolute inset-0 bg-white/70 z-40 flex items-center justify-center">
+                        <div class="text-center">
+                            <svg class="w-12 h-12 mx-auto text-sky-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            <div class="mt-2 text-sm text-gray-700">Loading FTPP details…</div>
+                        </div>
+                    </div>
+                    <style>
+                        /* Approval view table styling to resemble PDF layout */
+                        .approval-view { font-size: 12px; }
+                        .approval-view table { border-collapse: collapse; width: 100%; }
+                        .approval-view td, .approval-view th { border: 1px solid #000; padding: 6px; vertical-align: top; }
+                        .approval-view .header-table td { border: 1px solid #000; }
+                        .approval-view .text-sm { font-size: 12px; }
+                        .approval-view .approval-content { background: #f7fafc; padding: 6px; }
+                    </style>
+
+                    <div class="approval-view">
                     <template x-if="!formLoaded">
                         <div class="text-center text-gray-400 mt-20">
                             Choose FTPP from the list or click add
@@ -115,11 +155,6 @@
 
                     <template x-if="formLoaded">
                         <form>
-                            {{-- @csrf
-                        @if (isset($finding))
-                            @method('PUT')
-                        @endif --}}
-
                             {{-- HEADER --}}
                             <table class="header-table border border-black rounded mb-2 w-full">
                                 <tr>
@@ -133,7 +168,6 @@
                                     </td>
                                 </tr>
                             </table>
-
                             @include('contents.ftpp2.approval.partials.auditor-input')
                             @include('contents.ftpp2.approval.partials.auditee-input')
                             @include('contents.ftpp2.approval.partials.auditor-verification')
@@ -247,21 +281,23 @@
                 search: '',
                 findings: @json($findings),
                 formLoaded: false,
+                loading: null, // id of finding currently loading (or null)
                 mode: 'create',
                 selectedId: null,
                 userRoles: @json(auth()->user()->roles->pluck('name')->map('strtolower')->toArray() ?? []),
-                
+
                 init() {
                     console.log('🔍 Total findings from controller:', this.findings.length);
                     console.log('👤 User roles:', this.userRoles);
                     console.log('📋 All findings:', this.findings);
                     console.log('✅ Filtered findings:', this.filteredFindings);
                 },
-                
+
                 form: {
                     status_id: 7,
                     audit_type_id: "",
                     sub_audit_type_id: "",
+                    sub_audit_name: '',
                     auditor_id: "",
                     created_at: "",
                     due_date: "",
@@ -290,6 +326,9 @@
 
                 async loadForm(id) {
                     try {
+                        this.loading = id;
+                        this.formLoaded = false;
+
                         const res = await fetch(`/approval/${id}`);
 
                         if (!res.ok) throw new Error('Failed to fetch data');
@@ -302,6 +341,7 @@
                         this.form = finding; // isi semua field utama
                         this.selectedId = id;
                         this.formLoaded = true;
+                        this.loading = null;
                         // Tampilkan tanda tangan jika ada
                         const deptHeadSignatureUrl = finding.dept_head_signature_url || '';
                         const ldrSpvSignatureUrl = finding.ldr_spv_signature_url || '';
@@ -324,32 +364,19 @@
                         //
                         // ✅ SUB AUDIT TYPE (Level 2)
                         //
-                        if (finding.audit_type_id) {
-                            fetch(`/approval/get-data/${finding.audit_type_id}`)
-                                .then(res => res.json())
-                                .then(data => {
-                                    const subContainer = document.getElementById('subAuditType');
-                                    subContainer.innerHTML = '';
-
-                                    if (data.sub_audit?.length) {
-                                        data.sub_audit.forEach(s => {
-                                            subContainer.insertAdjacentHTML('beforeend', `
-                                                <label class="block">
-                                                    <input type="radio"
-                                                        name="sub_audit_type_id"
-                                                        value="${s.id}"
-                                                        ${s.id === finding.sub_audit_type_id ? 'checked' : ''}
-                                                    >
-                                                    ${s.name}
-                                                </label>
-                                    `);
-                                        });
-                                    } else {
-                                        subContainer.innerHTML =
-                                            '<small class="text-gray-500">There is no sub audit type</small>';
-                                    }
-                                })
-                                .catch(err => console.error('❌ Gagal ambil sub audit type:', err));
+                        // Use finding relation to display sub audit type (level 2)
+                        if (finding.sub_audit) {
+                            this.form.sub_audit_type_id = finding.sub_audit.id ?? finding.sub_audit_type_id ?? '';
+                            this.form.sub_audit_name = finding.sub_audit.name || '';
+                            const subContainer = document.getElementById('subAuditType');
+                            if (subContainer) {
+                                subContainer.innerHTML = `<div class="mt-2 text-gray-700 font-semibold">${this.form.sub_audit_name}</div>`;
+                            }
+                        } else {
+                            this.form.sub_audit_type_id = finding.sub_audit_type_id || '';
+                            this.form.sub_audit_name = '';
+                            const subContainer = document.getElementById('subAuditType');
+                            if (subContainer) subContainer.innerHTML = '<small class="text-gray-500">There is no sub audit type</small>';
                         }
 
                         //
@@ -486,7 +513,7 @@
 
                             this.$nextTick(() => {
                                 const previewImageContainer2 = document.getElementById(
-                                'previewImageContainer2');
+                                    'previewImageContainer2');
                                 const previewFileContainer2 = document.getElementById('previewFileContainer2');
 
                                 if (!previewImageContainer2 || !previewFileContainer2) {
@@ -495,7 +522,7 @@
                                 }
 
                                 renderAttachmentPreview(previewImageContainer2, previewFileContainer2, act
-                                .file);
+                                    .file);
                             });
 
                             this.form.auditee_action_id = act.id;
@@ -540,7 +567,12 @@
 
                     } catch (error) {
                         console.error(error);
-                        alert('Gagal mengambil data FTPP');
+                        this.loading = null;
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal mengambil data FTPP' });
+                        } else {
+                            alert('Gagal mengambil data FTPP');
+                        }
                     }
                 },
                 get filteredFindings() {
@@ -555,7 +587,13 @@
                     );
                 },
                 async deleteFinding(id) {
-                    if (!confirm("Are you sure you want to delete this item?")) return;
+                    if (typeof Swal === 'undefined') {
+                        if (!confirm("Are you sure you want to delete this item?")) return;
+                    } else {
+                        const c = await Swal.fire({ title: 'Confirm delete', text: 'Are you sure you want to delete this item?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, delete', cancelButtonText: 'Cancel' });
+                        if (!c.isConfirmed) return;
+                    }
+
                     try {
                         const res = await fetch(`/approval/${id}`, {
                             method: 'DELETE',
@@ -565,13 +603,25 @@
                         });
                         if (res.ok) {
                             this.filteredFindings = this.filteredFindings.filter(f => f.id !== id);
-                            alert("Deleted successfully.");
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({ icon: 'success', title: 'Deleted', text: 'Deleted successfully.' });
+                            } else {
+                                alert("Deleted successfully.");
+                            }
                         } else {
-                            alert("Failed to delete.");
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({ icon: 'error', title: 'Failed', text: 'Failed to delete.' });
+                            } else {
+                                alert("Failed to delete.");
+                            }
                         }
                     } catch (err) {
                         console.error(err);
-                        alert("Error deleting item.");
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'Error deleting item.' });
+                        } else {
+                            alert("Error deleting item.");
+                        }
                     }
                 },
             }

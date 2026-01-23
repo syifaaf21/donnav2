@@ -13,16 +13,12 @@
             </div>
 
             {{-- Level 2: Sub Audit Type (muncul hanya jika audit type dipilih) --}}
-            <div id="subAuditType" class="mt-3" x-show="form.sub_audit_type_id">
+            <div id="subAuditType" class="mt-3">
                 <span class="font-semibold">Sub Audit Type:</span>
                 <div class="mt-2">
-                    @foreach ($subAudit as $sub)
-                        <div x-show="String(form.audit_type_id) === '{{ $sub->audit_type_id }}' && String(form.sub_audit_type_id) === '{{ $sub->id }}'" class="text-gray-700">
-                            <input type="hidden" name="sub_audit_type_id" value="{{ $sub->id }}" x-model="form.sub_audit_type_id">
-                            {{ $sub->name }}
-                        </div>
-                    @endforeach
+                    <div class="text-gray-700" x-text="form.sub_audit_name || '-'">-</div>
                 </div>
+                <input type="hidden" name="sub_audit_type_id" x-model="form.sub_audit_type_id">
             </div>
         </td>
 
@@ -62,51 +58,44 @@
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Auditor / Inisiator:</td>
                     <td class="py-2">
-                        <select name="auditor_id" x-model="form.auditor_id"
-                            class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" disabled>
-                            <option value="">-- Choose Auditor --</option>
-                            @foreach ($auditors as $auditor)
-                                <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="border-b border-gray-200 py-1 text-gray-700" x-text="form.auditor?.name || '-'">-</div>
+                        <input type="hidden" name="auditor_id" x-model="form.auditor_id">
                     </td>
                 </tr>
 
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Date:</td>
                     <td class="py-2">
-                        <input type="date" name="created_at" x-model="form.created_at"
-                            class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" readonly>
+                        <div class="text-gray-700" x-text="form.created_at ? form.created_at.substring(0,10) : '-'">-</div>
+                        <input type="hidden" name="created_at" x-model="form.created_at">
                     </td>
                 </tr>
 
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Registration Number:</td>
                     <td class="py-2">
-                        <input type="text" id="reg_number" name="registration_number"
-                            x-model="form.registration_number"
-                            class="border-b border-gray-400 w-full focus:outline-none bg-gray-100" readonly>
+                        <div class="text-gray-700 font-mono" x-text="form.registration_number || '-'">-</div>
+                        <input type="hidden" id="reg_number" name="registration_number" x-model="form.registration_number">
                     </td>
                 </tr>
             </table>
         </td>
     </tr>
-    <tr>
-        <td colspan="2" class="border border-black p-1">
-            <span class="font-semibold">Finding Category:</span>
-            <div class="flex flex-wrap gap-2 mt-2">
-                @foreach ($findingCategories as $category)
-                    <label class="flex items-center gap-2 px-3 py-2 rounded border cursor-not-allowed transition-all"
-                        :class="String(form.finding_category_id) === '{{ $category->id }}' ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold' : 'bg-gray-50 border-gray-200 text-gray-600'">
-                        <input type="radio" name="finding_category_id" x-model="form.finding_category_id"
-                            value="{{ $category->id }}" disabled
-                            class="w-4 h-4 text-blue-600">
-                        <span>{{ ucfirst($category->name) }}</span>
-                    </label>
-                @endforeach
-            </div>
-        </td>
-    </tr>
+                <tr>
+                    <td colspan="2" class="border border-black p-1">
+                        <span class="font-semibold">Finding Category:</span>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            @foreach ($findingCategories as $category)
+                                <div
+                                    :class="String(form.finding_category_id) === '{{ $category->id }}' ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold px-3 py-2 rounded border' : 'bg-gray-50 border-gray-200 text-gray-600 px-3 py-2 rounded border'"
+                                    class="px-3 py-2 rounded border">
+                                    <span x-text="'{{ ucfirst($category->name) }}'"></span>
+                                </div>
+                            @endforeach
+                        </div>
+                        <input type="hidden" name="finding_category_id" x-model="form.finding_category_id">
+                    </td>
+                </tr>
 </table>
 
 {{-- TEMUAN --}}
@@ -118,13 +107,12 @@
         <td class="border border-black p-2">
             <div>
                 <label class="font-semibold">Finding / Issue:</label>
-                <textarea name="finding_description" x-model="form.finding_description"
-                    class="w-full border border-gray-400 rounded p-1 h-24 bg-gray-100" readonly></textarea>
+                <div class="w-full border border-gray-400 rounded p-1 h-24 bg-gray-100 approval-content" x-html="form.finding_description || '-'">-</div>
             </div>
             <div class="flex justify-between mt-2">
                 <div class="mr-8">
                     <span class="font-semibold">Duedate:</span>
-                    <input type="date" name="due_date" x-model="form.due_date" class="border-b border-gray-400 bg-gray-100" readonly>
+                    <span class="border-b border-gray-400 bg-gray-100 px-2 py-1 rounded text-gray-700" x-text="form.due_date || '-'">-</span>
                 </div>
                 <div class="mt-2">
                     <div class="text-right">Clauses/Categories: </div>

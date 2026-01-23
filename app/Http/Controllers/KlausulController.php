@@ -29,6 +29,7 @@ class KlausulController extends Controller
         if ($request->has('head_name')) {
             $request->validate([
                 'klausul_id' => 'required|exists:tm_klausuls,id',
+                'name' => 'required|string|max:255',
                 'head_name' => 'required|string|max:255',
                 'head_code' => 'nullable|string|max:100',
                 'sub_names' => 'array',

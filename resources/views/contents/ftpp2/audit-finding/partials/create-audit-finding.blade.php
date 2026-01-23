@@ -140,7 +140,9 @@
                                 Select Clause/Criteria
                             </button>
                             <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
-                                <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end"></div>
+                                <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end">
+                                    <span id="noClausePlaceholder" class="text-gray-400 text-sm">No Clause</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -176,11 +178,14 @@
                             aria-haspopup="true" aria-expanded="false" title="Attach files">
                             <i data-feather="paperclip" class="w-4 h-4"></i>
                             <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                            <div id="attachTotalSize" class="ml-2 inline-flex items-center px-2 py-0.5 text-sm rounded-full bg-gray-100 text-gray-700">
+                                <span id="attachTotalSizeText">Total: 0.00 MB</span>
+                            </div>
                         </button>
 
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
-                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
+                            class="hidden absolute left-0 mt-2 w-44 bg-white border rounded shadow-lg z-20">
                             <button id="attachImages" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="image" class="w-4 h-4"></i>
@@ -356,7 +361,14 @@
             document.getElementById('sidebarKlausul').classList.remove('hidden');
 
             let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-            if (!auditType) return alert('Please choose audit type first');
+                    if (!auditType) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose audit type first' });
+                        } else {
+                            alert('Please choose audit type first');
+                        }
+                        return;
+                    }
 
             // Ambil klausul berdasarkan audit type
             fetch(`/filter-klausul/${auditType}`)
@@ -429,7 +441,14 @@
                 document.getElementById('sidebarKlausul').classList.remove('hidden');
 
                 let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-                if (!auditType) return alert('Please choose audit type first');
+                if (!auditType) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose audit type first' });
+                    } else {
+                        alert('Please choose audit type first');
+                    }
+                    return;
+                }
 
                 fetch(`/filter-klausul/${auditType}`)
                     .then(r => r.json())
@@ -546,8 +565,13 @@
             window.pilihSubKlausul = function() {
                 const subSelect = document.getElementById('selectSub');
                 if (!subSelect || !subSelect.value) {
-                    return alert('Please choose a sub clause first');
-                }
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
+                        } else {
+                            alert('Please choose a sub clause first');
+                        }
+                        return;
+                    }
                 const subId = subSelect.value;
                 const subText = subSelect.selectedOptions[0].text;
                 document.getElementById('selectedSub').value = subId;
@@ -573,29 +597,55 @@
             const subId = subSelect.value;
             const subText = subSelect.selectedOptions[0]?.text;
 
-            if (!subId) return alert('Please choose a sub clause first');
-            if (selectedSubIds.includes(subId)) return alert('This sub clause is already added');
+            if (!subId) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
+                } else {
+                    alert('Please choose a sub clause first');
+                }
+                return;
+            }
+            if (selectedSubIds.includes(subId)) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'info', title: 'Already added', text: 'This sub clause is already added' });
+                } else {
+                    alert('This sub clause is already added');
+                }
+                return;
+            }
 
             selectedSubIds.push(subId);
 
             // Render preview di form utama
             const container = document.getElementById('selectedSubContainer');
+
+            // remove placeholder if present
+            const placeholder = document.getElementById('noClausePlaceholder');
+            if (placeholder) placeholder.remove();
+
             const span = document.createElement('span');
             span.className = "flex items-end gap-1 bg-blue-100 text-gray-700 px-2 py-1 rounded";
             span.dataset.id = subId;
             span.innerHTML =
                 `${subText} <button type="button" class="text-red-500 font-bold"><i data-feather="x" class="w-4 h-4"></i></button>`;
-            container.appendChild(span);
-            feather.replace(); // render ulang icon feather
-
 
             // tombol hapus
             span.querySelector('button').onclick = function() {
                 selectedSubIds = selectedSubIds.filter(id => id !== subId);
                 span.remove();
+
+                // if container empty after removal, restore placeholder
+                if (!container.querySelector('span')) {
+                    const ph = document.createElement('span');
+                    ph.id = 'noClausePlaceholder';
+                    ph.className = 'text-gray-400 text-sm';
+                    ph.textContent = 'No Clause';
+                    container.appendChild(ph);
+                }
             }
 
             container.appendChild(span);
+            feather.replace(); // render ulang icon feather
         }
 
         // Handle select Department/Process/Product by plant
@@ -712,12 +762,22 @@
             const prod = prodSelect.value;
 
             if (!plant) {
-                return alert("Please choose plant first");
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose plant first' });
+                } else {
+                    alert("Please choose plant first");
+                }
+                return;
             }
 
             // ✅ harus pilih department
             if (!dept) {
-                return alert("Please select Department.");
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please select Department.' });
+                } else {
+                    alert("Please select Department.");
+                }
+                return;
             }
 
             // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
@@ -791,7 +851,14 @@
 
         function openAuditeeSidebar() {
             const dept = document.getElementById('selectedDepartment').value;
-            if (!dept) return alert("Please choose department/plant first!");
+            if (!dept) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose department/plant first!' });
+                } else {
+                    alert("Please choose department/plant first!");
+                }
+                return;
+            }
             loadAuditeeOptions(dept);
             document.getElementById('auditeeSidebar').classList.remove('hidden');
         }
@@ -868,6 +935,8 @@
             const dt = new DataTransfer();
             filesArray.forEach(file => dt.items.add(file));
             input.files = dt.files;
+            // update total size UI after changing input files
+            updateTotalSize();
         }
 
         // 🔹 Update badge total attachment
@@ -879,11 +948,22 @@
             } else {
                 attachCount.classList.add('hidden');
             }
+            // update total size as well
+            updateTotalSize();
         }
 
         // 🔹 Preview Image + tombol delete
         function displayImages() {
+            // clear only new-files area but show placeholder when empty
             previewImageContainer.innerHTML = '';
+            if (accumulatedPhotoFiles.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'text-sm text-gray-500 italic';
+                placeholder.textContent = 'No image attachments';
+                previewImageContainer.appendChild(placeholder);
+                return;
+            }
+
             accumulatedPhotoFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "relative";
@@ -902,6 +982,7 @@
                     updateFileInput(photoInput, accumulatedPhotoFiles);
                     displayImages();
                     updateAttachCount();
+                    updateTotalSize();
                 };
 
                 wrapper.appendChild(img);
@@ -914,6 +995,14 @@
         // 🔹 Preview File + tombol delete
         function displayFiles() {
             previewFileContainer.innerHTML = '';
+            if (accumulatedFileFiles.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'text-sm text-gray-500 italic';
+                placeholder.textContent = 'No document attachments';
+                previewFileContainer.appendChild(placeholder);
+                return;
+            }
+
             accumulatedFileFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
@@ -922,7 +1011,7 @@
                 icon.setAttribute('data-feather', 'file-text');
 
                 const name = document.createElement('span');
-                name.textContent = file.name;
+                name.textContent = file.name + ' (' + formatBytes(file.size) + ')';
 
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -934,6 +1023,7 @@
                     updateFileInput(fileInput, accumulatedFileFiles);
                     displayFiles();
                     updateAttachCount();
+                    updateTotalSize();
                 };
 
                 wrapper.append(icon, name, btn);
@@ -958,6 +1048,7 @@
             updateFileInput(photoInput, accumulatedPhotoFiles);
             displayImages();
             updateAttachCount();
+            updateTotalSize();
         });
 
         fileInput.addEventListener('change', (e) => {
@@ -975,7 +1066,47 @@
             updateFileInput(fileInput, accumulatedFileFiles);
             displayFiles();
             updateAttachCount();
+            updateTotalSize();
         });
+
+        // === Total size helpers ===
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function updateTotalSize() {
+            const el = document.getElementById('attachTotalSize');
+            const elText = document.getElementById('attachTotalSizeText');
+            if (!el || !elText) return;
+            let total = 0;
+            accumulatedPhotoFiles.forEach(f => { total += f.size || 0; });
+            accumulatedFileFiles.forEach(f => { total += f.size || 0; });
+            // fallback to inputs if accumulated arrays empty
+            if (total === 0) {
+                if (photoInput.files) Array.from(photoInput.files).forEach(f => total += f.size || 0);
+                if (fileInput.files) Array.from(fileInput.files).forEach(f => total += f.size || 0);
+            }
+
+            const mb = (total / (1024 * 1024));
+            elText.textContent = `Total: ${mb.toFixed(2)} MB`;
+
+            // color hint: green when safe, yellow when near limit, red when over
+            el.classList.remove('bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800', 'bg-red-100', 'text-red-800', 'bg-gray-100', 'text-gray-700');
+            if (total === 0) {
+                el.classList.add('bg-gray-100', 'text-gray-700');
+            } else if (total > 20 * 1024 * 1024) {
+                el.classList.add('bg-red-100', 'text-red-800');
+            } else if (total > 15 * 1024 * 1024) {
+                el.classList.add('bg-yellow-100', 'text-yellow-800');
+            } else {
+                el.classList.add('bg-green-100', 'text-green-800');
+            }
+        }
 
         // 🔹 Toggle menu
         attachBtn.addEventListener('click', (e) => {
@@ -987,6 +1118,11 @@
 
         attachImages.addEventListener('click', () => photoInput.click());
         attachDocs.addEventListener('click', () => fileInput.click());
+        // initialize preview placeholders and total size display
+        displayImages();
+        displayFiles();
+        updateAttachCount();
+        updateTotalSize();
     });
 </script>
 
@@ -1079,34 +1215,7 @@
             return; // ❌ STOP - JANGAN LANJUT KE SERVER
         }
 
-        // ✅ 4. VALIDASI FILE INDIVIDUAL (opsional)
-        let hasIndividualError = false;
-
-        // Check individual image files (max 3MB)
-        if (photoInput && photoInput.files) {
-            Array.from(photoInput.files).forEach(file => {
-                if (file.size > 3 * 1024 * 1024) { // 3MB
-                    hasIndividualError = true;
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    showFileError(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
-                }
-            });
-        }
-
-        // Check individual PDF files (max 10MB)
-        if (fileInput && fileInput.files) {
-            Array.from(fileInput.files).forEach(file => {
-                if (file.size > 10 * 1024 * 1024) { // 10MB
-                    hasIndividualError = true;
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    showFileError(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
-                }
-            });
-        }
-
-        if (hasIndividualError) {
-            return; // ❌ STOP - JANGAN LANJUT KE SERVER
-        }
+        // ✅ 4. Skip individual per-file size validation - only total size is enforced (20MB)
 
         // ✅ 5. LANJUT KE SERVER (jika semua validasi OK)
 
