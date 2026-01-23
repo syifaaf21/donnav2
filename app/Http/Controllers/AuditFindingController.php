@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use setasign\Fpdi\Fpdi;
+// PDF compression removed — FPDI not used
 use App\Models\Audit;
 use App\Models\AuditFinding;
 use App\Models\AuditFindingSubKlausul;
@@ -21,7 +21,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
-use Smalot\PdfParser\Parser;
+// Smalot PDF parser removed (PDF compression disabled)
+use Intervention\Image\Facades\Image;
 
 class AuditFindingController extends Controller
 {
@@ -160,6 +161,33 @@ class AuditFindingController extends Controller
             ])->withInput();
         }
 
+        // Defensive guard: ensure required fields are present after validation
+        $requiredWhenNotDraft = [
+            'finding_category_id',
+            'department_id',
+            'auditor_id',
+            'finding_description',
+            'due_date',
+        ];
+
+        $missing = [];
+        foreach ($requiredWhenNotDraft as $field) {
+            if (!$isDraft && (empty($validated[$field]) && $validated[$field] !== '0')) {
+                $missing[] = $field;
+            }
+        }
+
+        if (!empty($missing)) {
+            \Log::warning('AuditFinding store: missing required fields after validation', ['missing' => $missing, 'payload' => $request->all()]);
+
+            $msg = 'Required fields missing: ' . implode(', ', $missing);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg, 'missing' => $missing], 422);
+            }
+
+            return back()->withErrors(['missing' => $msg])->withInput();
+        }
+
         // Create the audit finding
         // Determine status ID - use Draft Finding for draft, or default status (7) for normal save
         $statusId = 7; // default status for normal save
@@ -213,8 +241,25 @@ class AuditFindingController extends Controller
             \Log::warning('Notify auditee (finding created) failed: ' . $e->getMessage());
         }
 
-        // Handle file uploads
-        $this->handleFileUploads($request, $auditFinding);
+        // Handle file uploads (defensive: don't let upload processing break the whole save)
+        try {
+            $this->handleFileUploads($request, $auditFinding);
+        } catch (\Throwable $e) {
+            \Log::error('File processing after finding save failed: ' . $e->getMessage());
+
+            $message = $isDraft ? 'Draft saved successfully! (file processing failed)' : 'Audit Finding saved successfully! (file processing failed)';
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'draft' => $isDraft,
+                    'warning' => 'Some attachments could not be processed. Check server logs.'
+                ]);
+            }
+
+            return redirect('/ftpp')->with('success', $message)->with('warning', 'Some attachments could not be processed. Check server logs.');
+        }
 
         // Return response
         $message = $isDraft ? 'Draft saved successfully!' : 'Audit Finding saved successfully!';
@@ -260,8 +305,130 @@ class AuditFindingController extends Controller
                 $this->storeFile($file, $auditFinding);
             }
         }
+
+        // Also accept temp uploaded files from client (uploaded earlier via AJAX)
+        if ($request->filled('temp_attachments')) {
+            $tempPaths = $request->input('temp_attachments', []);
+            $originalNames = $request->input('temp_original_names', []);
+
+            foreach ($tempPaths as $index => $tempPath) {
+                try {
+                    // Ensure path is within public disk and exists
+                    if (!Storage::disk('public')->exists($tempPath)) {
+                        \Log::warning("Temp attachment not found: {$tempPath}");
+                        continue;
+                    }
+
+                    $fileName = basename($tempPath);
+                    $finalPath = 'ftpp/audit_finding_attachments/' . $fileName;
+
+                    // Move file
+                    Storage::disk('public')->move($tempPath, $finalPath);
+
+                    $original = $originalNames[$index] ?? $fileName;
+
+                    // Prevent duplicate
+                    $exists = DocumentFile::where('audit_finding_id', $auditFinding->id)
+                        ->where('original_name', $original)
+                        ->where('file_path', $finalPath)
+                        ->exists();
+
+                    if (!$exists) {
+                        DocumentFile::create([
+                            'audit_finding_id' => $auditFinding->id,
+                            'file_path' => $finalPath,
+                            'original_name' => $original,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('Failed to move temp attachment: ' . $e->getMessage());
+                }
+            }
+        }
+
     }
 
+    /**
+     * Upload a single file to temporary storage, compress if needed, and return metadata.
+     * This endpoint is intended for AJAX upload on file selection.
+     */
+    public function uploadTemp(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:jpg,jpeg,png,pdf',
+            ]);
+
+            $file = $request->file('file');
+            $originalName = $file->getClientOriginalName();
+            $extension = strtolower($file->getClientOriginalExtension());
+
+            $timestamp = now()->format('YmdHis') . '_' . uniqid();
+            $safeOriginal = preg_replace('/[^A-Za-z0-9\-\_\.]/', '_', $originalName);
+            $fileName = $timestamp . '-' . pathinfo($safeOriginal, PATHINFO_FILENAME) . '.' . $extension;
+
+            // ensure temp directory exists on public disk
+            Storage::disk('public')->makeDirectory('temp');
+
+            $tempPath = $file->storeAs('temp', $fileName, 'public');
+            $fullPath = storage_path('app/public/' . $tempPath);
+
+            $fileSize = @filesize($fullPath) ?: 0;
+
+            try {
+                // Image: compress if > 2MB
+                if (in_array($extension, ['jpg', 'jpeg', 'png']) && $fileSize > 2 * 1024 * 1024) {
+                    try {
+                        $this->compressImage($fullPath, $file->getClientMimeType());
+                    } catch (\Throwable $e) {
+                        \Log::warning('Temp image compression failed: ' . $e->getMessage());
+                    }
+                }
+
+                // PDF compression disabled — skip PDF processing here
+            } catch (\Throwable $e) {
+                \Log::warning('Temp compression general error: ' . $e->getMessage());
+            }
+
+            // Generate small thumb for images (200px width) if image
+            $thumbUrl = null;
+            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                try {
+                    $thumbName = 'temp/thumb_' . $fileName . '.jpg';
+                    $thumbFull = storage_path('app/public/' . $thumbName);
+                    @mkdir(dirname($thumbFull), 0755, true);
+
+                    $img = Image::make($fullPath)->resize(200, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    })->encode('jpg', 70);
+
+                    file_put_contents($thumbFull, (string) $img);
+
+                    if (Storage::disk('public')->exists($thumbName)) {
+                        $thumbUrl = Storage::disk('public')->url($thumbName);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('Thumb generation failed: ' . $e->getMessage());
+                }
+            }
+
+            // Return metadata
+            return response()->json([
+                'success' => true,
+                'temp_path' => $tempPath,
+                'original_name' => $originalName,
+                'size' => @filesize(storage_path('app/public/' . $tempPath)) ?: $fileSize,
+                'thumb' => $thumbUrl,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('uploadTemp failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Upload failed. See server logs.'], 500);
+            }
+            abort(500, 'Upload failed');
+        }
+    }
     private function storeFile($file, $auditFinding)
     {
         // generate a more unique filename to avoid collisions
@@ -278,10 +445,25 @@ class AuditFindingController extends Controller
         $fullPath = storage_path('app/public/' . $tempPath);
 
         // Compress based on file type
-        if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png'])) {
-            $this->compressImage($fullPath, $mime);
-        } elseif (strtolower($extension) === 'pdf') {
-            $this->compressPdf($fullPath);
+        // Increase memory temporarily for compression to avoid exhausting default limit
+        $previousMemoryLimit = ini_get('memory_limit');
+        // Allow larger memory for image/pdf processing; adjust if needed
+        @ini_set('memory_limit', '256M');
+
+        try {
+            $fileSize = @filesize($fullPath) ?: 0;
+            if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png'])) {
+                try {
+                    $this->compressImage($fullPath, $mime);
+                } catch (\Throwable $e) {
+                    \Log::warning('storeFile image compression failed: ' . $e->getMessage());
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Compression failed: ' . $e->getMessage());
+        } finally {
+            // restore previous memory limit
+            @ini_set('memory_limit', $previousMemoryLimit ?: '-1');
         }
 
         // Move to final destination
@@ -314,205 +496,24 @@ class AuditFindingController extends Controller
     private function compressImage($filePath, $mimeType)
     {
         try {
-            $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-
-            // Try using Imagick if available
-            if (extension_loaded('imagick')) {
-                $image = new \Imagick($filePath);
-
-                // Set compression quality
-                $image->setImageCompressionQuality(75);
-
-                // Strip metadata to reduce size
-                $image->stripImage();
-
-                // For PNG
-                if ($extension === 'png') {
-                    $image->setImageFormat('png');
-                    $image->setOption('png:compression-level', '9');
-                }
-
-                // For JPEG
-                if (in_array($extension, ['jpg', 'jpeg'])) {
-                    $image->setImageFormat('jpg');
-                    $image->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                }
-
-                // Resize if too large (max 1920px width)
-                if ($image->getImageWidth() > 1920) {
-                    $image->scaleImage(1920, 0);
-                }
-
-                $image->writeImage($filePath);
-                $image->clear();
-                $image->destroy();
-            } else {
-                // Fallback: use GD library
-                $this->compressImageWithGD($filePath, $extension);
+            $img = Image::make($filePath);
+            $maxWidth = 1920;
+            if ($img->width() > $maxWidth) {
+                $img->resize($maxWidth, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
             }
+            $img->encode(null, 75)->save($filePath);
         } catch (\Exception $e) {
-            \Log::warning("Image compression failed: " . $e->getMessage());
+            \Log::warning('Image compression (Intervention) failed: ' . $e->getMessage());
         }
     }
 
     /**
      * Compress image using GD library (fallback)
      */
-    private function compressImageWithGD($filePath, $extension)
-    {
-        try {
-            // Load image based on type
-            switch ($extension) {
-                case 'jpg':
-                case 'jpeg':
-                    $image = imagecreatefromjpeg($filePath);
-                    break;
-                case 'png':
-                    $image = imagecreatefrompng($filePath);
-                    break;
-                default:
-                    return;
-            }
-
-            if (!$image) {
-                return;
-            }
-
-            // Get dimensions
-            $width = imagesx($image);
-            $height = imagesy($image);
-
-            // Resize if too large
-            if ($width > 1920) {
-                $newWidth = 1920;
-                $newHeight = (int)(($height / $width) * $newWidth);
-
-                $resized = imagecreatetruecolor($newWidth, $newHeight);
-
-                // Preserve transparency for PNG
-                if ($extension === 'png') {
-                    imagealphablending($resized, false);
-                    imagesavealpha($resized, true);
-                }
-
-                imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                imagedestroy($image);
-                $image = $resized;
-            }
-
-            // Save compressed image
-            switch ($extension) {
-                case 'jpg':
-                case 'jpeg':
-                    imagejpeg($image, $filePath, 75); // 75% quality
-                    break;
-                case 'png':
-                    imagepng($image, $filePath, 9); // Max compression
-                    break;
-            }
-
-            imagedestroy($image);
-        } catch (\Exception $e) {
-            \Log::warning("GD image compression failed: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Compress PDF using FPDI (pure PHP, no Ghostscript needed)
-     */
-    private function compressPdf($filePath)
-    {
-        try {
-            if (!file_exists($filePath)) {
-                \Log::warning("PDF file not found: {$filePath}");
-                return;
-            }
-
-            $originalSize = filesize($filePath);
-
-            if ($originalSize < 100000) { // < 100KB
-                \Log::info("PDF too small to compress ({$originalSize} bytes), skipping");
-                return;
-            }
-
-            $outputPath = $filePath . '.compressed';
-
-            try {
-                // Create FPDI instance
-                $pdf = new Fpdi();
-
-                // Get page count
-                $pageCount = $pdf->setSourceFile($filePath);
-
-                // Loop through pages and import them
-                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                    $templateId = $pdf->importPage($pageNo);
-                    $size = $pdf->getTemplateSize($templateId);
-
-                    // Add page dengan compressed settings
-                    $pdf->addPage(
-                        $size['orientation'] == 'L' ? 'L' : 'P',
-                        [$size['width'], $size['height']]
-                    );
-                    $pdf->useTemplate($templateId);
-                }
-
-                // Enable compression
-                $pdf->setCompression(true);
-
-                // Save compressed PDF
-                $pdf->Output($outputPath, 'F');
-
-                // Verify result
-                if (file_exists($outputPath)) {
-                    $compressedSize = filesize($outputPath);
-
-                    if ($compressedSize === 0 || $compressedSize === false) {
-                        \Log::warning('Compressed PDF is empty, keeping original');
-                        @unlink($outputPath);
-                        return;
-                    }
-
-                    // Verify PDF header
-                    $handle = fopen($outputPath, 'r');
-                    $header = fread($handle, 5);
-                    fclose($handle);
-
-                    if ($header !== '%PDF-') {
-                        \Log::warning('Compressed PDF has invalid header (corrupted)');
-                        @unlink($outputPath);
-                        return;
-                    }
-
-                    $reduction = round((1 - $compressedSize / $originalSize) * 100, 1);
-
-                    \Log::info("✅ PDF Compression Result (FPDI):");
-                    \Log::info("   Original: " . number_format($originalSize) . " bytes");
-                    \Log::info("   Compressed: " . number_format($compressedSize) . " bytes");
-                    \Log::info("   Reduction: {$reduction}%");
-
-                    // Replace jika gain > 5%
-                    if ($compressedSize < $originalSize && $reduction > 5) {
-                        @unlink($filePath);
-                        rename($outputPath, $filePath);
-                        \Log::info("✅ PDF successfully compressed (saved {$reduction}%)");
-                    } else {
-                        @unlink($outputPath);
-                        \Log::info("⚠️ Compression gain < 5%, keeping original");
-                    }
-                } else {
-                    \Log::warning("❌ Failed to create compressed PDF");
-                }
-            } catch (\Exception $e) {
-                \Log::error("FPDI PDF compression error: " . $e->getMessage());
-                if (isset($outputPath) && file_exists($outputPath)) {
-                    @unlink($outputPath);
-                }
-            }
-        } catch (\Exception $e) {
-            \Log::error("PDF compression exception: " . $e->getMessage());
-        }
-    }
+    
 
     /**
      * Display the specified resource.

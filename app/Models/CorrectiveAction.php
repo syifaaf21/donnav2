@@ -4,10 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CorrectiveAction extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    /**
+     * Use project-specific marked_for_deletion_at column for soft deletes.
+     */
+    const DELETED_AT = 'marked_for_deletion_at';
 
     protected $table = 'tt_corrective_actions';
 

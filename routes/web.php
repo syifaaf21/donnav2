@@ -240,6 +240,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
             Route::post('/store', [AuditFindingController::class, 'store'])
                 ->name('store');
+            // Temp upload for client-side compression + preview
+            Route::post('/upload-temp', [AuditFindingController::class, 'uploadTemp'])->name('uploadTemp');
             Route::get('/{id}/edit', [AuditFindingController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AuditFindingController::class, 'update'])->name('update');
             // Immediate delete endpoints for UI remove buttons (AJAX)

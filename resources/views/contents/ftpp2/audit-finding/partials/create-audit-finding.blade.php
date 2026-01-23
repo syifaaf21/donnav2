@@ -140,9 +140,7 @@
                                 Select Clause/Criteria
                             </button>
                             <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
-                                <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end">
-                                    <span id="noClausePlaceholder" class="text-gray-400 text-sm">No Clause</span>
-                                </div>
+                                <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end"></div>
                             </div>
                         </div>
                     </div>
@@ -178,14 +176,11 @@
                             aria-haspopup="true" aria-expanded="false" title="Attach files">
                             <i data-feather="paperclip" class="w-4 h-4"></i>
                             <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
-                            <div id="attachTotalSize" class="ml-2 inline-flex items-center px-2 py-0.5 text-sm rounded-full bg-gray-100 text-gray-700">
-                                <span id="attachTotalSizeText">Total: 0.00 MB</span>
-                            </div>
                         </button>
 
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
-                            class="hidden absolute left-0 mt-2 w-44 bg-white border rounded shadow-lg z-20">
+                            class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
                             <button id="attachImages" type="button"
                                 class="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2">
                                 <i data-feather="image" class="w-4 h-4"></i>
@@ -219,11 +214,11 @@
                 </div>
 
                 <div class="ml-auto flex gap-2 mt-2">
-                    <button type="button" onclick="saveHeaderOnly('draft')"
+                    <button type="button" onclick="saveHeaderOnly('draft', this)"
                         class="border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100 transition-colors">
                         Save as Draft
                     </button>
-                    <button type="button" onclick="saveHeaderOnly('save')"
+                    <button type="button" onclick="saveHeaderOnly('save', this)"
                         class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                         Save Finding
                     </button>
@@ -361,14 +356,7 @@
             document.getElementById('sidebarKlausul').classList.remove('hidden');
 
             let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-                    if (!auditType) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose audit type first' });
-                        } else {
-                            alert('Please choose audit type first');
-                        }
-                        return;
-                    }
+            if (!auditType) return alert('Please choose audit type first');
 
             // Ambil klausul berdasarkan audit type
             fetch(`/filter-klausul/${auditType}`)
@@ -441,14 +429,7 @@
                 document.getElementById('sidebarKlausul').classList.remove('hidden');
 
                 let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-                if (!auditType) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose audit type first' });
-                    } else {
-                        alert('Please choose audit type first');
-                    }
-                    return;
-                }
+                if (!auditType) return alert('Please choose audit type first');
 
                 fetch(`/filter-klausul/${auditType}`)
                     .then(r => r.json())
@@ -565,13 +546,8 @@
             window.pilihSubKlausul = function() {
                 const subSelect = document.getElementById('selectSub');
                 if (!subSelect || !subSelect.value) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
-                        } else {
-                            alert('Please choose a sub clause first');
-                        }
-                        return;
-                    }
+                    return alert('Please choose a sub clause first');
+                }
                 const subId = subSelect.value;
                 const subText = subSelect.selectedOptions[0].text;
                 document.getElementById('selectedSub').value = subId;
@@ -597,55 +573,29 @@
             const subId = subSelect.value;
             const subText = subSelect.selectedOptions[0]?.text;
 
-            if (!subId) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
-                } else {
-                    alert('Please choose a sub clause first');
-                }
-                return;
-            }
-            if (selectedSubIds.includes(subId)) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'info', title: 'Already added', text: 'This sub clause is already added' });
-                } else {
-                    alert('This sub clause is already added');
-                }
-                return;
-            }
+            if (!subId) return alert('Please choose a sub clause first');
+            if (selectedSubIds.includes(subId)) return alert('This sub clause is already added');
 
             selectedSubIds.push(subId);
 
             // Render preview di form utama
             const container = document.getElementById('selectedSubContainer');
-
-            // remove placeholder if present
-            const placeholder = document.getElementById('noClausePlaceholder');
-            if (placeholder) placeholder.remove();
-
             const span = document.createElement('span');
             span.className = "flex items-end gap-1 bg-blue-100 text-gray-700 px-2 py-1 rounded";
             span.dataset.id = subId;
             span.innerHTML =
                 `${subText} <button type="button" class="text-red-500 font-bold"><i data-feather="x" class="w-4 h-4"></i></button>`;
+            container.appendChild(span);
+            feather.replace(); // render ulang icon feather
+
 
             // tombol hapus
             span.querySelector('button').onclick = function() {
                 selectedSubIds = selectedSubIds.filter(id => id !== subId);
                 span.remove();
-
-                // if container empty after removal, restore placeholder
-                if (!container.querySelector('span')) {
-                    const ph = document.createElement('span');
-                    ph.id = 'noClausePlaceholder';
-                    ph.className = 'text-gray-400 text-sm';
-                    ph.textContent = 'No Clause';
-                    container.appendChild(ph);
-                }
             }
 
             container.appendChild(span);
-            feather.replace(); // render ulang icon feather
         }
 
         // Handle select Department/Process/Product by plant
@@ -762,22 +712,12 @@
             const prod = prodSelect.value;
 
             if (!plant) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose plant first' });
-                } else {
-                    alert("Please choose plant first");
-                }
-                return;
+                return alert("Please choose plant first");
             }
 
             // ✅ harus pilih department
             if (!dept) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please select Department.' });
-                } else {
-                    alert("Please select Department.");
-                }
-                return;
+                return alert("Please select Department.");
             }
 
             // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
@@ -851,14 +791,7 @@
 
         function openAuditeeSidebar() {
             const dept = document.getElementById('selectedDepartment').value;
-            if (!dept) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose department/plant first!' });
-                } else {
-                    alert("Please choose department/plant first!");
-                }
-                return;
-            }
+            if (!dept) return alert("Please choose department/plant first!");
             loadAuditeeOptions(dept);
             document.getElementById('auditeeSidebar').classList.remove('hidden');
         }
@@ -935,8 +868,6 @@
             const dt = new DataTransfer();
             filesArray.forEach(file => dt.items.add(file));
             input.files = dt.files;
-            // update total size UI after changing input files
-            updateTotalSize();
         }
 
         // 🔹 Update badge total attachment
@@ -948,22 +879,11 @@
             } else {
                 attachCount.classList.add('hidden');
             }
-            // update total size as well
-            updateTotalSize();
         }
 
         // 🔹 Preview Image + tombol delete
         function displayImages() {
-            // clear only new-files area but show placeholder when empty
             previewImageContainer.innerHTML = '';
-            if (accumulatedPhotoFiles.length === 0) {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'text-sm text-gray-500 italic';
-                placeholder.textContent = 'No image attachments';
-                previewImageContainer.appendChild(placeholder);
-                return;
-            }
-
             accumulatedPhotoFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "relative";
@@ -982,7 +902,6 @@
                     updateFileInput(photoInput, accumulatedPhotoFiles);
                     displayImages();
                     updateAttachCount();
-                    updateTotalSize();
                 };
 
                 wrapper.appendChild(img);
@@ -995,14 +914,6 @@
         // 🔹 Preview File + tombol delete
         function displayFiles() {
             previewFileContainer.innerHTML = '';
-            if (accumulatedFileFiles.length === 0) {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'text-sm text-gray-500 italic';
-                placeholder.textContent = 'No document attachments';
-                previewFileContainer.appendChild(placeholder);
-                return;
-            }
-
             accumulatedFileFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
@@ -1011,7 +922,7 @@
                 icon.setAttribute('data-feather', 'file-text');
 
                 const name = document.createElement('span');
-                name.textContent = file.name + ' (' + formatBytes(file.size) + ')';
+                name.textContent = file.name;
 
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -1023,7 +934,6 @@
                     updateFileInput(fileInput, accumulatedFileFiles);
                     displayFiles();
                     updateAttachCount();
-                    updateTotalSize();
                 };
 
                 wrapper.append(icon, name, btn);
@@ -1048,7 +958,6 @@
             updateFileInput(photoInput, accumulatedPhotoFiles);
             displayImages();
             updateAttachCount();
-            updateTotalSize();
         });
 
         fileInput.addEventListener('change', (e) => {
@@ -1066,47 +975,7 @@
             updateFileInput(fileInput, accumulatedFileFiles);
             displayFiles();
             updateAttachCount();
-            updateTotalSize();
         });
-
-        // === Total size helpers ===
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-
-        function updateTotalSize() {
-            const el = document.getElementById('attachTotalSize');
-            const elText = document.getElementById('attachTotalSizeText');
-            if (!el || !elText) return;
-            let total = 0;
-            accumulatedPhotoFiles.forEach(f => { total += f.size || 0; });
-            accumulatedFileFiles.forEach(f => { total += f.size || 0; });
-            // fallback to inputs if accumulated arrays empty
-            if (total === 0) {
-                if (photoInput.files) Array.from(photoInput.files).forEach(f => total += f.size || 0);
-                if (fileInput.files) Array.from(fileInput.files).forEach(f => total += f.size || 0);
-            }
-
-            const mb = (total / (1024 * 1024));
-            elText.textContent = `Total: ${mb.toFixed(2)} MB`;
-
-            // color hint: green when safe, yellow when near limit, red when over
-            el.classList.remove('bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800', 'bg-red-100', 'text-red-800', 'bg-gray-100', 'text-gray-700');
-            if (total === 0) {
-                el.classList.add('bg-gray-100', 'text-gray-700');
-            } else if (total > 20 * 1024 * 1024) {
-                el.classList.add('bg-red-100', 'text-red-800');
-            } else if (total > 15 * 1024 * 1024) {
-                el.classList.add('bg-yellow-100', 'text-yellow-800');
-            } else {
-                el.classList.add('bg-green-100', 'text-green-800');
-            }
-        }
 
         // 🔹 Toggle menu
         attachBtn.addEventListener('click', (e) => {
@@ -1118,21 +987,49 @@
 
         attachImages.addEventListener('click', () => photoInput.click());
         attachDocs.addEventListener('click', () => fileInput.click());
-        // initialize preview placeholders and total size display
-        displayImages();
-        displayFiles();
-        updateAttachCount();
-        updateTotalSize();
     });
 </script>
 
 {{-- Store header data handler --}}
 <script>
-    async function saveHeaderOnly(mode = 'save') {
+    async function saveHeaderOnly(mode = 'save', btn = null) {
         const form = document.querySelector('form[action="{{ route('ftpp.audit-finding.store') }}"]');
         if (!form) return alert('Form not found');
 
         const isDraft = mode === 'draft';
+
+        // --- Loader: show spinner on clicked button and disable save buttons ---
+        const saveButtons = document.querySelectorAll('button[onclick*="saveHeaderOnly"]');
+        const clickedBtn = btn || document.activeElement;
+        // lightweight spinner SVG (uses Tailwind `animate-spin` if available)
+        const spinnerSVG = '<svg class="inline-block w-4 h-4 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+        let _originalHtml = null;
+        function setLoading() {
+            try {
+                saveButtons.forEach(b => b.disabled = true);
+                if (clickedBtn && clickedBtn.tagName === 'BUTTON') {
+                    _originalHtml = clickedBtn.innerHTML;
+                    clickedBtn.dataset._orig = _originalHtml;
+                    clickedBtn.innerHTML = spinnerSVG + (isDraft ? 'Saving...' : 'Saving...');
+                    clickedBtn.disabled = true;
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        }
+        function restoreButtons() {
+            try {
+                saveButtons.forEach(b => b.disabled = false);
+                if (clickedBtn && clickedBtn.tagName === 'BUTTON' && clickedBtn.dataset._orig) {
+                    clickedBtn.innerHTML = clickedBtn.dataset._orig;
+                    delete clickedBtn.dataset._orig;
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        }
+
+        setLoading();
 
         // ✅ 1. Hapus pesan error lama
         document.querySelectorAll('.validation-error').forEach(n => n.remove());
@@ -1212,10 +1109,13 @@
                 block: 'center'
             });
 
+            // restore buttons since we won't continue
+            try { restoreButtons(); } catch (e) {}
+
             return; // ❌ STOP - JANGAN LANJUT KE SERVER
         }
 
-        // ✅ 4. Skip individual per-file size validation - only total size is enforced (20MB)
+        // ✅ 4. Individual file size checks removed — only total size is enforced.
 
         // ✅ 5. LANJUT KE SERVER (jika semua validasi OK)
 
@@ -1253,7 +1153,7 @@
                 credentials: 'same-origin'
             });
 
-            if (res.status === 422) {
+                if (res.status === 422) {
                 const data = await res.json();
                 const errors = data.errors || {};
                 let firstErrorEl = null;
@@ -1301,12 +1201,18 @@
                         }
                     }
                 }
+
+                // restore buttons after validation errors
+                try { restoreButtons(); } catch (e) {}
+
                 return;
             }
 
             if (!res.ok) {
                 const text = await res.text();
                 console.error('Unexpected response', res.status, text);
+                // restore buttons on unexpected server error
+                try { restoreButtons(); } catch (e) {}
                 return alert('Server error. Check console.');
             }
 
@@ -1315,32 +1221,12 @@
             window.location.href = '/ftpp';
         } catch (err) {
             console.error('Save error', err);
+            try { restoreButtons(); } catch (e) {}
             alert('Error saat menyimpan. Lihat console untuk detail.');
         }
     }
 
-    // ✅ Helper function untuk show individual file error
-    function showFileError(message) {
-        const attachmentSection = document.querySelector('.bg-white.p-6.mt-6:has(#previewImageContainer)');
-
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'attachment-error mt-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded';
-        errorDiv.innerHTML = `
-            <div class="flex items-start gap-2">
-                <i data-feather="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
-                <span class="text-sm">${message}</span>
-            </div>
-        `;
-
-        const submitBtn = attachmentSection.querySelector('button[onclick="saveHeaderOnly()"]');
-        if (submitBtn) {
-            submitBtn.insertAdjacentElement('beforebegin', errorDiv);
-        } else {
-            attachmentSection.appendChild(errorDiv);
-        }
-
-        feather.replace();
-    }
+    // Individual file error helper removed because individual limits were removed.
 </script>
 
 {{-- icon feather init --}}

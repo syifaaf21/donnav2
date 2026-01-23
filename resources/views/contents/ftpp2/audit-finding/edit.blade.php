@@ -294,13 +294,13 @@
                                     @endphp
                                     
                                     @if ($isDraftStatus)
-                                        <button type="button" onclick="saveChangesFinding('submit')"
+                                        <button type="button" onclick="saveChangesFinding('submit', this)"
                                             class="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-md hover:from-green-600 hover:to-green-700 transition-colors">
                                             Submit
                                         </button>
                                     @endif
                                     
-                                    <button type="button" onclick="saveChangesFinding('save')"
+                                    <button type="button" onclick="saveChangesFinding('save', this)"
                                         class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                                         Save Changes
                                     </button>
@@ -1585,7 +1585,7 @@
     </script>
     {{-- Store header data handler --}}
     <script>
-        async function saveChangesFinding(mode = 'save') {
+        async function saveChangesFinding(mode = 'save', btn) {
             const form = document.querySelector(
                 'form[action="{{ route('ftpp.audit-finding.update', $finding->id) }}"]');
             if (!form) return alert('Form not found');
@@ -1759,6 +1759,23 @@
             });
 
             // Submit the form
+            // Show loader and disable action buttons to prevent double submit
+            function setLoading() {
+                try {
+                    // disable any action buttons in the actions container
+                    document.querySelectorAll('.ml-auto button').forEach(b => b.disabled = true);
+                    if (btn) {
+                        // store original HTML to allow restoration if needed
+                        btn.__origInner = btn.innerHTML;
+                        btn.innerHTML = '<svg class="animate-spin inline-block w-4 h-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>' + (btn.__origInner.replace(/<[^>]*>/g, ''));
+                    }
+                } catch (e) {
+                    console.error('Failed to set loading state', e);
+                }
+            }
+
+            setLoading();
+
             form.submit();
         }
     </script>

@@ -34,6 +34,12 @@ class Kernel extends ConsoleKernel
             ->daily()
             ->withoutOverlapping()
             ->runInBackground();
+
+        // Purge soft-deleted FTTP records older than 1 year
+        $schedule->command('ftpp:purge-soft-deleted --days=365')
+            ->daily()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     protected function commands()
