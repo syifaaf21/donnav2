@@ -22,6 +22,16 @@ class Klausul extends Model
         return $this->hasMany(HeadKlausul::class, 'klausul_id', 'id');
     }
 
+    public function headKlausuls()
+    {
+        return $this->hasMany(HeadKlausul::class, 'klausul_id', 'id');
+    }
+
+    public function audit()
+    {
+        return $this->belongsTo(Audit::class, 'audit_type_id', 'id');
+    }
+
     public function auditType()
     {
         return $this->belongsTo(Audit::class, 'audit_type_id', 'id');

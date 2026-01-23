@@ -1,0 +1,322 @@
+@extends('layouts.app')
+@section('title', 'Master Finding Category')
+@section('subtitle', 'Manage Finding Categories')
+@section('breadcrumbs')
+    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+        <ol class="list-reset flex space-x-2">
+            <li>
+                <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
+                    <i class="bi bi-house-door me-1"></i> Dashboard
+                </a>
+            </li>
+            <li>/</li>
+            <li class="text-gray-500 font-medium">Master</li>
+            <li>/</li>
+            <li class="text-gray-700 font-bold">Finding Category</li>
+        </ol>
+    </nav>
+@endsection
+
+@section('content')
+    <div id="section-finding-category" class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-2">
+            {{-- Search Bar (left) --}}
+            <form id="searchForm" method="GET" class="flex items-end w-full md:w-96">
+                <div class="relative w-full">
+                    <input type="text" name="search" id="searchInput"
+                        class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
+                            focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                        placeholder="Type to search..." value="{{ request('search') }}">
+
+                    <label for="searchInput"
+                        class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
+           transition-all duration-150
+           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
+                        Type to search...
+                    </label>
+                </div>
+            </form>
+
+            <button id="btnAddCategory"
+                class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                <i class="bi bi-plus"></i> Add Category
+            </button>
+        </div>
+
+        {{-- Table --}}
+        <div
+            class="mb-2 overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
+            <table class="min-w-full text-sm text-gray-700">
+                <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                    <tr>
+                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                            style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
+                        <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                            style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
+                        <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                            style="color: #1e2b50; letter-spacing: 0.5px;">Action
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse ($categories as $index => $category)
+                        <tr class="hover:bg-gray-50 transition-all duration-150">
+                            <td class="px-4 py-3 border-r border-gray-200 text-sm">{{ $index + 1 }}</td>
+                            <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold">{{ $category->name }}</td>
+                            <td class="px-4 py-3 border-r border-gray-200 text-sm text-center">
+                                <div class="flex justify-center gap-2">
+                                    <button data-id="{{ $category->id }}"
+                                        class="btn-edit w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    |
+                                    <button data-id="{{ $category->id }}"
+                                        class="btn-delete w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors p-2">
+                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center text-gray-400 py-4">No data available.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- MODAL ADD FINDING CATEGORY --}}
+    <div class="modal fade" id="modalAddCategory" tabindex="-1" aria-labelledby="modalAddCategoryLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST"
+                class="modal-content rounded-4 shadow-lg">
+                @csrf
+
+                {{-- Header --}}
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark" id="modalAddCategoryLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i> Add Finding Category
+                    </h5>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                    <div class="row g-4">
+                        <div class="col-md-12">
+                            <label for="category_name" class="form-label fw-semibold">Category Name <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="name" id="category_name" placeholder="Input Category Name"
+                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal"
+                        style="text-decoration: none; transition: background-color 0.3s ease;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="btn px-3 py-2 bg-gradient-to-r from-primaryLight
+                    to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    {{-- MODAL EDIT FINDING CATEGORY --}}
+    <div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form id="formEditCategory" method="POST" class="modal-content rounded-4 shadow-lg">
+                @csrf
+                @method('PUT')
+
+                {{-- Header --}}
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark" id="modalEditCategoryLabel"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Finding Category
+                    </h5>
+                    <button type="button"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                    <div class="row g-4">
+                        <div class="col-md-12">
+                            <label for="edit_category_name" class="form-label fw-semibold">Category Name <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="name" id="edit_category_name"
+                                placeholder="Input Category Name" required
+                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                        data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    {{-- HIDDEN DELETE FORM --}}
+    <form class="delete-form" id="form-delete-category" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // === Show Add Modal ===
+                document.getElementById('btnAddCategory').addEventListener('click', () => {
+                    const modal = new bootstrap.Modal(document.getElementById('modalAddCategory'));
+                    modal.show();
+                });
+
+                // === Show Edit Modal ===
+                document.querySelectorAll('#section-finding-category .btn-edit').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const id = button.dataset.id;
+                        try {
+                            const response = await fetch(`/master/ftpp/finding-category/${id}`);
+                            if (!response.ok) {
+                                alert('Failed to fetch category data.');
+                                return;
+                            }
+                            const data = await response.json();
+
+                            document.getElementById('edit_category_name').value = data.name;
+                            document.getElementById('formEditCategory').action =
+                                `/master/ftpp/finding-category/${id}`;
+
+                            const modal = new bootstrap.Modal(document.getElementById(
+                                'modalEditCategory'));
+                            modal.show();
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Failed to load category data');
+                        }
+                    });
+                });
+
+                // === Delete Action ===
+                document.querySelectorAll('#section-finding-category .btn-delete').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        const form = document.getElementById('form-delete-category');
+
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "You want to delete this finding category?",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Yes, delete it!',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.action = `/master/ftpp/finding-category/${id}`;
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+            });
+
+            document.addEventListener('hidden.bs.modal', function() {
+                // Hapus semua backdrop yang masih tersisa
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = ''; // biar bisa scroll lagi
+            });
+        </script>
+    @endpush
+    @push('styles')
+        <style>
+            /* Default border */
+            #modalAddCategory input.form-control,
+            #modalAddCategory select.form-select {
+                border: 1px solid #d1d5db !important;
+                /* abu-abu halus */
+                box-shadow: none !important;
+            }
+
+            /* Hover (opsional) */
+            #modalAddCategory input.form-control:hover,
+            #modalAddCategory select.form-select:hover {
+                border-color: #bfc3ca !important;
+            }
+
+            /* Fokus / diklik */
+            #modalAddCategory input.form-control:focus,
+            #modalAddCategory select.form-select:focus {
+                border-color: #3b82f6 !important;
+                /* biru */
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+                /* efek biru lembut */
+            }
+
+            [id^="modalEditCategory"] input.form-control,
+            [id^="modalEditCategory"] select.form-select {
+                border: 1px solid #d1d5db !important;
+                box-shadow: none !important;
+            }
+
+            /* Hover */
+            [id^="modalEditCategory"] input.form-control:hover,
+            [id^="modalEditCategory"] select.form-select:hover {
+                border-color: #bfc3ca !important;
+            }
+
+            /* Fokus */
+            [id^="modalEditCategory"] input.form-control:focus,
+            [id^="modalEditCategory"] select.form-select:focus {
+                border-color: #3b82f6 !important;
+                /* biru */
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+            }
+        </style>
+    @endpush
+@endsection

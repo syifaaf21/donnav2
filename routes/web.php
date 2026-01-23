@@ -108,6 +108,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 
         // Audit
         Route::prefix('audit')->name('audit.')->group(function () {
+            Route::get('/', [AuditTypeController::class, 'index'])->name('index');
             Route::get('/{id}', [AuditTypeController::class, 'show']);
             Route::post('/store', [AuditTypeController::class, 'store'])->name('store');
             Route::put('/update/{id}', [AuditTypeController::class, 'update'])->name('update');
@@ -116,20 +117,27 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 
         // Finding Category
         Route::prefix('finding-category')->name('finding-category.')->group(function () {
+            Route::get('/', [FindingCategoryController::class, 'index'])->name('index');
             Route::get('/{id}', [FindingCategoryController::class, 'show']);
             Route::post('/', [FindingCategoryController::class, 'store'])->name('store');
-            Route::put('/update/{id}', [FindingCategoryController::class, 'update'])->name('update');
+            Route::put('/{id}', [FindingCategoryController::class, 'update'])->name('update');
             Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
         });
 
         // Klausul
         Route::prefix('klausul')->name('klausul.')->group(function () {
+            Route::get('/', [KlausulController::class, 'index'])->name('index');
             Route::get('/{id}', [KlausulController::class, 'show']);
             Route::post('/', [KlausulController::class, 'store'])->name('store');
             Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
             Route::put('/update-main/{id}', [KlausulController::class, 'updateMain'])->name('update-main');
             Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
             Route::delete('/destroy-main/{id}', [KlausulController::class, 'destroyMain'])->name('destroy-main');
+
+            // Sub Klausul CRUD
+            Route::post('/sub', [KlausulController::class, 'storeSub'])->name('sub.store');
+            Route::put('/sub/{id}', [KlausulController::class, 'updateSub'])->name('sub.update');
+            Route::delete('/sub/{id}', [KlausulController::class, 'destroySub'])->name('sub.destroy');
         });
     });
     Route::resource('users', UserController::class);

@@ -8,7 +8,7 @@
 <style>
     .approval-content {
         font-family: inherit;
-        font-size: 0.875rem !important; /* text-sm = 14px */
+        font-size: 0.75rem !important; /* smaller font for approval view (~12px) */
         line-height: 1.25rem;
         color: inherit;
         word-wrap: break-word;
@@ -111,13 +111,10 @@
                 <div class="w-full bg-gray-100 p-1 rounded min-h-10 approval-content" x-html="form['corrective_'+i+'_pic']"></div>
             </td>
             <td class="border border-black">
-                <input name="planning_date[]" type="date" class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center"
-                    x-model="form['corrective_'+i+'_planning']" readonly disabled>
+                <div class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center text-gray-700" x-text="form['corrective_'+i+'_planning'] || '-'">-</div>
             </td>
             <td class="border border-black text-center">
-                <span x-show="form['corrective_'+i+'_actual'] === '-' || !form['corrective_'+i+'_actual']" class="block p-1">-</span>
-                <input name="actual_date[]" type="date" class="w-full border-none p-1 bg-gray-100"
-                    x-model="form['corrective_'+i+'_actual']" x-show="form['corrective_'+i+'_actual'] && form['corrective_'+i+'_actual'] !== '-'" readonly disabled>
+                <div class="block p-1 text-gray-700" x-text="form['corrective_'+i+'_actual'] || '-'">-</div>
             </td>
         </tr>
     </template>
@@ -136,13 +133,10 @@
                 <div class="w-full bg-gray-100 p-1 rounded min-h-10 approval-content" x-html="form['preventive_'+i+'_pic']"></div>
             </td>
             <td class="border border-black">
-                <input name="planning_date[]" type="date" class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center"
-                    x-model="form['preventive_'+i+'_planning']" readonly disabled>
+                <div class="w-full border-none p-1 bg-gray-100 rounded min-h-10 flex items-center text-gray-700" x-text="form['preventive_'+i+'_planning'] || '-'">-</div>
             </td>
             <td class="border border-black text-center">
-                <span x-show="form['preventive_'+i+'_actual'] === '-' || !form['preventive_'+i+'_actual']" class="block p-1">-</span>
-                <input name="actual_date[]" type="date" class="w-full border-none p-1 bg-gray-100"
-                    x-model="form['preventive_'+i+'_actual']" x-show="form['preventive_'+i+'_actual'] && form['preventive_'+i+'_actual'] !== '-'" readonly disabled>
+                <div class="block p-1 text-gray-700" x-text="form['preventive_'+i+'_actual'] || '-'">-</div>
             </td>
         </tr>
     </template>
@@ -168,8 +162,12 @@
                 </label>
             </div>
         </td>
-        <td class="border border-black p-1 font-semibold text-center">Checked</td>
-        <td class="border border-black p-1 font-semibold text-center">Created</td>
+        <td class="border border-black p-1 font-semibold text-center">
+            <div class="my-4">Checked</div>
+        </td>
+        <td class="border border-black p-1 font-semibold text-center">
+            <div class="my-4">Created</div>
+        </td>
     </tr>
     <tr>
         <td>

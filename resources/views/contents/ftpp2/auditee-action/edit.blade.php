@@ -536,7 +536,7 @@
                                     <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                                     <p class="text-xs text-yellow-700 leading-relaxed">
                                         Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
-                                        Maximum total file size is <strong>10 MB</strong>.
+                                        Maximum total file size is <strong>20 MB</strong>.
                                     </p>
                                 </div>
                             </div>
@@ -545,12 +545,16 @@
                                 <div class="items-center gap-4 mt-4">
 
                                     <!-- Attachment button -->
-                                    <button id="attachBtn2" type="button"
-                                        class="items-center gap-2 px-4 py-2 border rounded-lg text-gray-800 hover:bg-gray-100 focus:outline-none"
-                                        title="Attach files">
-                                        <i data-feather="paperclip" class="w-4 h-4"></i>
-                                        <span id="attachCount2" class="text-xs text-gray-600 hidden">0</span>
-                                    </button>
+                                    <div class="inline-flex items-center gap-3">
+                                        <button id="attachBtn2" type="button"
+                                            class="items-center gap-2 px-4 py-2 border rounded-lg text-gray-800 hover:bg-gray-100 focus:outline-none"
+                                            title="Attach files">
+                                            <i data-feather="paperclip" class="w-4 h-4"></i>
+                                            <span id="attachCount2" class="text-xs text-gray-600 hidden">0</span>
+                                        </button>
+
+                                        <div id="attachTotalSize2" class="text-sm text-gray-600">Total: 0.00 MB</div>
+                                    </div>
 
                                     <!-- Attachment Menu -->
                                     <div id="attachMenu2"
@@ -1003,6 +1007,36 @@
                         attachCount2.classList.add('hidden');
                     }
                 }
+                // update total size display whenever count changes
+                updateTotalSize2();
+            }
+
+            // 🔹 Format bytes to human readable
+            function formatBytes(bytes, decimals = 2) {
+                if (!bytes) return '0.00 B';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+
+            // 🔹 Update total size text based on accumulated files
+            function updateTotalSize2() {
+                const total = (accumulatedPhotoFiles || []).reduce((s, f) => s + (f.size || 0), 0)
+                    + (accumulatedFileFiles || []).reduce((s, f) => s + (f.size || 0), 0);
+
+                const el = document.getElementById('attachTotalSize2');
+                if (el) {
+                    el.textContent = `Total: ${formatBytes(total, 2)}`;
+                    if (total > 20 * 1024 * 1024) {
+                        el.classList.remove('text-gray-600');
+                        el.classList.add('text-red-600', 'font-semibold');
+                    } else {
+                        el.classList.remove('text-red-600', 'font-semibold');
+                        el.classList.add('text-gray-600');
+                    }
+                }
             }
 
             function displayImages2() {
@@ -1113,11 +1147,18 @@
             attachImages2?.addEventListener('click', () => photoInput2.click());
             attachDocs2?.addEventListener('click', () => fileInput2.click());
 
+            // Initialize display
+            updateAttachCount2();
+            updateTotalSize2();
+
             // markRemoveAttachment for existing files — confirm then delete via AJAX
-            window.markRemoveAttachment = function(id) {
-                if (!confirm(
-                        'Are you sure you want to delete this attachment? This will remove the file from storage and the database.'
-                    )) return;
+            window.markRemoveAttachment = async function(id) {
+                if (typeof Swal !== 'undefined') {
+                    const c = await Swal.fire({ title: 'Confirm delete', text: 'Are you sure you want to delete this attachment? This will remove the file from storage and the database.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, delete', cancelButtonText: 'Cancel' });
+                    if (!c.isConfirmed) return;
+                } else {
+                    if (!confirm('Are you sure you want to delete this attachment? This will remove the file from storage and the database.')) return;
+                }
 
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 fetch(`/ftpp/auditee-action/attachment/${id}`, {
@@ -1135,15 +1176,27 @@
                         if (existingInput) existingInput.remove();
                         // optional: show a brief message
                         try {
-                            alert('Attachment deleted');
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({ icon: 'success', title: 'Deleted', text: 'Attachment deleted' });
+                            } else {
+                                alert('Attachment deleted');
+                            }
                         } catch (e) {}
                     } else {
                         console.error('Failed to delete attachment', json);
-                        alert('Failed to delete attachment');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'error', title: 'Failed', text: 'Failed to delete attachment' });
+                        } else {
+                            alert('Failed to delete attachment');
+                        }
                     }
                 }).catch(err => {
                     console.error('Error deleting attachment', err);
-                    alert('Error deleting attachment');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Error deleting attachment' });
+                    } else {
+                        alert('Error deleting attachment');
+                    }
                 });
             };
         })();
@@ -1450,43 +1503,7 @@
                     return; // ⛔ STOP submit
                 }
 
-                // ✅ 4. CHECK individual file size
-                let individualErrors = [];
-
-                // Check individual image files (max 3MB)
-                if (photoInput2 && photoInput2.files) {
-                    Array.from(photoInput2.files).forEach(file => {
-                        if (file.size > 3 * 1024 * 1024) { // 3MB
-                            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                            individualErrors.push(
-                                `🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`
-                            );
-                        }
-                    });
-                }
-
-                // Check individual PDF files (max 10MB)
-                if (fileInput2 && fileInput2.files) {
-                    Array.from(fileInput2.files).forEach(file => {
-                        if (file.size > 10 * 1024 * 1024) { // 10MB
-                            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                            individualErrors.push(
-                                `📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`
-                            );
-                        }
-                    });
-                }
-
-                if (individualErrors.length > 0) {
-                    const errorHtml = `
-                        <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
-                        <ul class="list-disc list-inside space-y-1">
-                            ${individualErrors.map(e => `<li>${e}</li>`).join('')}
-                        </ul>
-                    `;
-                    showAttachmentError(errorHtml);
-                    return; // ⛔ STOP submit
-                }
+                // Individual file size checks removed — only total size (20MB) is enforced.
 
                 // ✅ 5. Jika lolos semua validasi, lanjut submit
                 form.submit();
