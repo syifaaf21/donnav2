@@ -971,11 +971,11 @@ ${data.files.map(file => `
                                                                                             <span class="text-sm">📄 ${file.original_name}</span>
 
                                                                                             <div class="flex gap-2">
-                                                                                                <a href="/storage/${file.file_path}"
-                                                                                                   target="_blank"
-                                                                                                   class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                                                   View
-                                                                                                </a>
+                                                                                                {{-- <a href="/storage/${file.file_path}"
+                                                                                                    target="_blank"
+                                                                                                    class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                    View
+                                                                                                </a> --}}
 
                                                                                                 <button type="button"
                                                                                                     class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
