@@ -195,7 +195,7 @@
                         </div>
                         <div>
                             <label class="form-label fw-semibold">Klausul Name <span class="text-danger">*</span></label>
-                            <input type="text" name="klausul_id" class="form-control border-1"
+                            <input type="text" name="klausul_name" class="form-control border-1"
                                 placeholder="Input klausul name" required>
                         </div>
 
