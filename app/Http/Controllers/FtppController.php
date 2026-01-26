@@ -585,7 +585,7 @@ class FtppController extends Controller
         $tmpMain = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_main_' . uniqid() . '.pdf';
         file_put_contents($tmpMain, $mainPdf);
 
-        // import main PDF pages properly (importPage -> getTemplateSize -> AddPage -> useTemplate)
+        // Only merge once: main PDF, then covers+attachments
         $pageCount = $merger->setSourceFile($tmpMain);
         for ($i = 1; $i <= $pageCount; $i++) {
             $tplId = $merger->importPage($i);
@@ -595,45 +595,121 @@ class FtppController extends Controller
             $merger->useTemplate($tplId);
         }
 
-        // Collect attachment PDF paths from finding->file and auditeeAction->file
-        $pdfFilesToAppend = [];
+        // Helper to generate a cover PDF and return its temp path
+        $generateCoverPdf = function($coverTitle) {
+            $coverHtml = view('contents.ftpp2.pdf_cover', ['coverTitle' => $coverTitle])->render();
+            $coverPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'chroot' => base_path(),
+            ])->loadHTML($coverHtml)->output();
+            $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_cover_' . uniqid() . '.pdf';
+            file_put_contents($tmp, $coverPdf);
+            return $tmp;
+        };
 
+        // Separate auditor and auditee PDF files
+        $auditorPdfFiles = [];
         if (!empty($finding->file)) {
             foreach ($finding->file as $file) {
                 $path = storage_path('app/public/' . $file->file_path);
                 if (file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
-                    $pdfFilesToAppend[] = $path;
+                    $auditorPdfFiles[] = $path;
                 }
             }
         }
-
+        $auditeePdfFiles = [];
         if (!empty($finding->auditeeAction) && !empty($finding->auditeeAction->file)) {
             foreach ($finding->auditeeAction->file as $file) {
                 $path = storage_path('app/public/' . $file->file_path);
                 if (file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
-                    $pdfFilesToAppend[] = $path;
+                    $auditeePdfFiles[] = $path;
                 }
             }
         }
 
-        // Append each PDF file correctly
-        foreach ($pdfFilesToAppend as $pf) {
-            try {
-                $pc = $merger->setSourceFile($pf);
-                for ($p = 1; $p <= $pc; $p++) {
-                    $tplId = $merger->importPage($p);
-                    $size = $merger->getTemplateSize($tplId);
-                    $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
-                    $merger->AddPage($orientation, [$size['width'], $size['height']]);
-                    $merger->useTemplate($tplId);
-                }
-            } catch (\Throwable $e) {
-                \Log::warning("Failed to append PDF {$pf}: " . $e->getMessage());
-                // continue with other files
+        // Insert cover and files for auditor, then auditee
+        if (count($auditorPdfFiles)) {
+            $coverAuditor = $generateCoverPdf('ATTACHMENT: AUDITOR');
+            $pc = $merger->setSourceFile($coverAuditor);
+            for ($p = 1; $p <= $pc; $p++) {
+                $tplId = $merger->importPage($p);
+                $size = $merger->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                $merger->useTemplate($tplId);
             }
+            foreach ($auditorPdfFiles as $pf) {
+                try {
+                    $pc = $merger->setSourceFile($pf);
+                    for ($p = 1; $p <= $pc; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                        $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning("Failed to append PDF {$pf}: " . $e->getMessage());
+                }
+            }
+            @unlink($coverAuditor);
+        }
+        if (count($auditeePdfFiles)) {
+            $coverAuditee = $generateCoverPdf('ATTACHMENT: AUDITEE');
+            $pc = $merger->setSourceFile($coverAuditee);
+            for ($p = 1; $p <= $pc; $p++) {
+                $tplId = $merger->importPage($p);
+                $size = $merger->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                $merger->useTemplate($tplId);
+            }
+            foreach ($auditeePdfFiles as $pf) {
+                try {
+                    $pc = $merger->setSourceFile($pf);
+                    for ($p = 1; $p <= $pc; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                        $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning("Failed to append PDF {$pf}: " . $e->getMessage());
+                }
+            }
+            // Render image attachments from auditee action after auditee cover and PDFs
+            $auditeeImageFiles = [];
+            if (!empty($finding->auditeeAction) && !empty($finding->auditeeAction->file)) {
+                foreach ($finding->auditeeAction->file as $file) {
+                    $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'])) {
+                        $auditeeImageFiles[] = $file->full_url ?? $file->file_url ?? $file->file_path;
+                    }
+                }
+            }
+            if (count($auditeeImageFiles)) {
+                foreach ($auditeeImageFiles as $imgPath) {
+                    $imgPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                        'isHtml5ParserEnabled' => true,
+                        'isRemoteEnabled' => true,
+                        'chroot' => base_path(),
+                    ])->loadView('contents.ftpp2.pdf_image', ['imagePath' => $imgPath])->output();
+                    $tmpImgPdf = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_img_' . uniqid() . '.pdf';
+                    file_put_contents($tmpImgPdf, $imgPdf);
+                    $imgPageCount = $merger->setSourceFile($tmpImgPdf);
+                    for ($i = 1; $i <= $imgPageCount; $i++) {
+                        $tpl = $merger->importPage($i);
+                        $merger->AddPage();
+                        $merger->useTemplate($tpl);
+                    }
+                    @unlink($tmpImgPdf);
+                }
+            }
+            @unlink($coverAuditee);
         }
 
-        // Save merged to unique temp file and return for iframe preview
         $tmpMerged = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_merged_' . uniqid() . '.pdf';
         $merger->Output($tmpMerged, 'F');
 
@@ -806,36 +882,37 @@ class FtppController extends Controller
         $mainTempPath = $tempDir . DIRECTORY_SEPARATOR . 'ftpp_main_' . uniqid() . '.pdf';
         file_put_contents($mainTempPath, $mainPdfContent);
 
-        // Collect attachment PDF paths
-        $pdfFilesToMerge = [];
-
+        // Only merge once: main PDF, then covers+attachments
+        $auditorPdfFiles = [];
         if ($finding->file) {
             foreach ($finding->file as $file) {
                 $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
                 if ($ext === 'pdf') {
                     $diskPath = storage_path('app/public/' . $file->file_path);
                     if (file_exists($diskPath)) {
-                        $pdfFilesToMerge[] = $diskPath;
+                        $auditorPdfFiles[] = $diskPath;
                     }
                 }
             }
         }
-
+        $auditeePdfFiles = [];
         if ($finding->auditeeAction && $finding->auditeeAction->file) {
             foreach ($finding->auditeeAction->file as $file) {
                 $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
                 if ($ext === 'pdf') {
                     $diskPath = storage_path('app/public/' . $file->file_path);
                     if (file_exists($diskPath)) {
-                        $pdfFilesToMerge[] = $diskPath;
+                        $auditeePdfFiles[] = $diskPath;
                     }
                 }
             }
         }
 
-        $finalFilename = 'FTPP_Finding_' . preg_replace('/[\/\\\\]/', '_', $finding->registration_number) . '.pdf';
+        // Use only safe characters for filename (alphanumeric, dash, underscore)
+        $safeRegNum = preg_replace('/[^A-Za-z0-9\-_]/', '_', $finding->registration_number);
+        $finalFilename = 'FTPP_Finding_' . $safeRegNum . '.pdf';
 
-        if (empty($pdfFilesToMerge)) {
+        if (empty($auditorPdfFiles) && empty($auditeePdfFiles)) {
             // No other PDFs to merge — return main PDF
             // Clean up temp
             @unlink($mainTempPath);
@@ -845,32 +922,50 @@ class FtppController extends Controller
             ]);
         }
 
-        // Merge using FPDI if available. If not installed, log a hint and return main PDF.
-        if (!empty($pdfFilesToMerge)) {
-            if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
-                \Log::warning('FPDI not available. Install it with: composer require setasign/fpdi-fpdf');
-                @unlink($mainTempPath);
-                return response($mainPdfContent, 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
-                ]);
+        if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
+            \Log::warning('FPDI not available. Install it with: composer require setasign/fpdi-fpdf');
+            @unlink($mainTempPath);
+            return response($mainPdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+            ]);
+        }
+
+        try {
+            $merger = new \setasign\Fpdi\Fpdi();
+            $pageCount = $merger->setSourceFile($mainTempPath);
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $tplId = $merger->importPage($pageNo);
+                $size = $merger->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                $merger->useTemplate($tplId);
             }
 
-            try {
-                $merger = new \setasign\Fpdi\Fpdi();
+            // Helper to generate a cover PDF and return its temp path
+            $generateCoverPdf = function($coverTitle) {
+                $coverHtml = view('contents.ftpp2.pdf_cover', ['coverTitle' => $coverTitle])->render();
+                $coverPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'chroot' => base_path(),
+                ])->loadHTML($coverHtml)->output();
+                $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_cover_' . uniqid() . '.pdf';
+                file_put_contents($tmp, $coverPdf);
+                return $tmp;
+            };
 
-                // import main PDF
-                $pageCount = $merger->setSourceFile($mainTempPath);
-                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                    $tplId = $merger->importPage($pageNo);
+            if (count($auditorPdfFiles)) {
+                $coverAuditor = $generateCoverPdf('ATTACHMENT: AUDITOR');
+                $pc = $merger->setSourceFile($coverAuditor);
+                for ($p = 1; $p <= $pc; $p++) {
+                    $tplId = $merger->importPage($p);
                     $size = $merger->getTemplateSize($tplId);
                     $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
                     $merger->AddPage($orientation, [$size['width'], $size['height']]);
                     $merger->useTemplate($tplId);
                 }
-
-                // append other pdfs
-                foreach ($pdfFilesToMerge as $pf) {
+                foreach ($auditorPdfFiles as $pf) {
                     $pc = $merger->setSourceFile($pf);
                     for ($p = 1; $p <= $pc; $p++) {
                         $tplId = $merger->importPage($p);
@@ -880,26 +975,72 @@ class FtppController extends Controller
                         $merger->useTemplate($tplId);
                     }
                 }
-
-                // Output merged PDF as string
-                $mergedPdfString = $merger->Output('', 'S');
-
-                // cleanup temp
-                @unlink($mainTempPath);
-
-                return response($mergedPdfString, 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
-                ]);
-            } catch (\Throwable $e) {
-                // If merging fails, fall back to main PDF
-                \Log::error('PDF merge failed: ' . $e->getMessage());
-                @unlink($mainTempPath);
-                return response($mainPdfContent, 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
-                ]);
+                @unlink($coverAuditor);
             }
+            if (count($auditeePdfFiles)) {
+                $coverAuditee = $generateCoverPdf('ATTACHMENT: AUDITEE');
+                $pc = $merger->setSourceFile($coverAuditee);
+                for ($p = 1; $p <= $pc; $p++) {
+                    $tplId = $merger->importPage($p);
+                    $size = $merger->getTemplateSize($tplId);
+                    $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                    $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                    $merger->useTemplate($tplId);
+                }
+                foreach ($auditeePdfFiles as $pf) {
+                    $pc = $merger->setSourceFile($pf);
+                    for ($p = 1; $p <= $pc; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                        $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                }
+                // Render image attachments from auditee action after auditee cover and PDFs
+                $auditeeImageFiles = [];
+                if (!empty($finding->auditeeAction) && !empty($finding->auditeeAction->file)) {
+                    foreach ($finding->auditeeAction->file as $file) {
+                        $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'])) {
+                            $auditeeImageFiles[] = $file->full_url ?? $file->file_url ?? $file->file_path;
+                        }
+                    }
+                }
+                if (count($auditeeImageFiles)) {
+                    foreach ($auditeeImageFiles as $imgPath) {
+                        $imgPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                            'isHtml5ParserEnabled' => true,
+                            'isRemoteEnabled' => true,
+                            'chroot' => base_path(),
+                        ])->loadView('contents.ftpp2.pdf_image', ['imagePath' => $imgPath])->output();
+                        $tmpImgPdf = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_img_' . uniqid() . '.pdf';
+                        file_put_contents($tmpImgPdf, $imgPdf);
+                        $imgPageCount = $merger->setSourceFile($tmpImgPdf);
+                        for ($i = 1; $i <= $imgPageCount; $i++) {
+                            $tpl = $merger->importPage($i);
+                            $merger->AddPage();
+                            $merger->useTemplate($tpl);
+                        }
+                        @unlink($tmpImgPdf);
+                    }
+                }
+                @unlink($coverAuditee);
+            }
+
+            $mergedPdfString = $merger->Output('', 'S');
+            @unlink($mainTempPath);
+            return response($mergedPdfString, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('PDF merge failed: ' . $e->getMessage());
+            @unlink($mainTempPath);
+            return response($mainPdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+            ]);
         }
     }
 }
