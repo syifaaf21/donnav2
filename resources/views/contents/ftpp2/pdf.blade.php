@@ -499,16 +499,22 @@
             @foreach ($finding->file as $file)
                 @php
                     $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                    $uploadedAt = $file->created_at ? \Carbon\Carbon::parse($file->created_at)->format('d M Y') : '-';
                 @endphp
 
                 @if (in_array($ext, ['pdf']))
-                    <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
+                    <p class="text-sm">
+                        - {{ $file->original_name ?? basename($file->file_path) }}
+                        <br>
+                        <span style="font-size:10px; color:#888;">Uploaded: {{ $uploadedAt }}</span>
+                    </p>
                 @endif
             @endforeach
 
             @foreach ($finding->auditeeAction->file as $file)
                 @php
                     $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                    $uploadedAt = $file->created_at ? \Carbon\Carbon::parse($file->created_at)->format('d M Y') : '-';
                 @endphp
 
                 @if (in_array($ext, ['jpg', 'jpeg', 'png']))
@@ -516,10 +522,16 @@
                         <img src="{{ $file->full_url }}"
                             style="max-width:400px; max-height:250px; display:block; margin:auto;">
                         <div class="text-sm" style="font-size:10px; text-align:center;">
-                            {{ $file->original_name ?? basename($file->file_path) }}</div>
+                            {{ $file->original_name ?? basename($file->file_path) }}<br>
+                            <span style="font-size:10px; color:#888;">Uploaded: {{ $uploadedAt }}</span>
+                        </div>
                     </div>
                 @else
-                    <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
+                    <p class="text-sm">
+                        - {{ $file->original_name ?? basename($file->file_path) }}
+                        <br>
+                        <span style="font-size:10px; color:#888;">Uploaded: {{ $uploadedAt }}</span>
+                    </p>
                 @endif
             @endforeach
         </div>

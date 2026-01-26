@@ -532,15 +532,26 @@ class AuditFindingController extends Controller
         $processes = Process::select('id', 'name')->get();
         $products = Product::select('id', 'name')->get();
 
-        $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
-            ->select('id', 'name')->get();
+
+        // Filter auditors by audit type (if available on finding)
+        $auditTypeId = null;
+        $finding = AuditFinding::with(['auditee', 'subKlausuls', 'file', 'department', 'process', 'product'])
+            ->findOrFail($id);
+        if ($finding && $finding->audit_type_id) {
+            $auditTypeId = $finding->audit_type_id;
+        }
+        if ($auditTypeId) {
+            $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
+                ->whereHas('auditTypes', fn($q) => $q->where('tm_audit_types.id', $auditTypeId))
+                ->select('id', 'name')->get();
+        } else {
+            $auditors = User::whereHas('roles', fn($q) => $q->where('name', 'auditor'))
+                ->select('id', 'name')->get();
+        }
 
         $auditTypes = Audit::with('subAudit')->get();
-
         $subAudit = SubAudit::all();
-
         $findingCategories = FindingCategory::all();
-
         $klausuls = Klausul::with(['headKlausul.subKlausul'])->get();
         $findings = AuditFinding::with([
             'auditee',
@@ -552,12 +563,7 @@ class AuditFindingController extends Controller
         ])
             ->orderByDesc('created_at')
             ->get();
-
         $user = auth()->user();
-
-        $finding = AuditFinding::with(['auditee', 'subKlausuls', 'file', 'department', 'process', 'product'])
-            ->findOrFail($id);
-
         return view('contents.ftpp2.audit-finding.edit', compact('findings', 'departments', 'processes', 'products', 'auditors', 'klausuls', 'auditTypes', 'findingCategories', 'user', 'subAudit', 'finding'));
     }
 

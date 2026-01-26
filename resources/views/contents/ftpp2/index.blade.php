@@ -481,11 +481,13 @@
                                         @endif
 
                                         <!-- ITEM: Download -->
-                                        <a href="{{ route('ftpp.download', $finding->id) }}" @click="open = false"
-                                            class="flex items-center gap-2 px-3 py-2.5 text-xs text-blue-600 hover:bg-gray-50 transition">
-                                            <i data-feather="download" class="w-4 h-4"></i>
-                                            Download
-                                        </a>
+                                        @if ($statusName !== 'need assign')
+                                            <a href="{{ route('ftpp.download', $finding->id) }}" @click="open = false"
+                                                class="flex items-center gap-2 px-3 py-2.5 text-xs text-blue-600 hover:bg-gray-50 transition">
+                                                <i data-feather="download" class="w-4 h-4"></i>
+                                                Download
+                                            </a>
+                                        @endif
 
                                         {{-- Upload Evidence Button: Only for Admin and certain statuses --}}
                                         @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin']) &&

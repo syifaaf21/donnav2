@@ -91,7 +91,7 @@
 
                         <div>
                             <h3 class="text-sm font-bold text-gray-800 group-hover:text-sky-700 transition">
-                                {{ $department }}
+                                {{ $department ? $department : 'Unknown' }}
                             </h3>
                             <p class="text-xs text-gray-500">
                                 {{ count($mappings) }} Documents
@@ -128,7 +128,15 @@
                 </a>
 
             @empty
-                <p class="text-sm text-gray-500 text-center py-10 col-span-3">No documents found.</p>
+                <div class="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-xl shadow-inner border border-dashed border-gray-200">
+                    <div class="flex flex-col items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mb-4 text-sky-300">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2 0 01-2 2z" />
+                        </svg>
+                        <span class="text-xl text-gray-600 font-semibold">No Departments Found</span>
+                        <span class="text-sm text-gray-400 mt-2 text-center">There are no departments or documents to display.<br>Please contact the administrator if you believe this is an error.</span>
+                    </div>
+                </div>
             @endforelse
         </div>
     </div>

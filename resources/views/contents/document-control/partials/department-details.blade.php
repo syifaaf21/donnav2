@@ -1,5 +1,7 @@
 @extends('layouts.app')
-@section('title', "{$department->name}")
+@section('title')
+    {{ $department?->name ?? 'Unknown' }}
+@endsection
 @section('subtitle', 'Manage Obsolete Docuemnt Records')
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
@@ -25,7 +27,7 @@
 
             <li>/</li>
 
-            <li class="text-gray-700 font-bold">{{ $department->name }}</li>
+            <li class="text-gray-700 font-bold">{{ $department?->name ?? 'Unknown' }}</li>
         </ol>
     </nav>
 @endsection
@@ -76,9 +78,67 @@
             </nav>
         </div> --}}
 
-        <!-- Search Form -->
-        <div class="flex justify-end w-full mb-2">
-            <form id="filterForm" method="GET" action="{{ route('document-control.department', $department->name) }}"
+        <!-- Search & Filter Form -->
+        <div class="flex justify-end w-full mb-2 gap-2 items-start">
+            <!-- Filter Dropdown Button -->
+            <div class="relative">
+                <button id="filterStatusBtn" type="button" class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors" title="Filter by Status">
+                    <i class="bi bi-funnel-fill text-xl text-sky-600"></i>
+                </button>
+                <!-- Dropdown menu -->
+                <div id="filterStatusDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
+                    <div class="py-2 text-sm">
+                        <div class="px-3 pb-2">
+                            <input type="text" id="statusSearchInput" class="w-full rounded border border-gray-200 px-2 py-1 text-sm" placeholder="Type to filter status...">
+                        </div>
+                        <form id="statusFilterForm" method="GET" action="{{ route('document-control.department', $department?->name ?? 'Unknown') }}">
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                            <ul id="statusList" class="flex flex-col gap-1 max-h-64 overflow-y-auto px-2">
+                                <!-- Status list dari controller -->
+                                <li>
+                                    <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                        <input type="checkbox" name="status[]" value="all" class="status-checkbox" id="statusAllCheckbox"
+                                            {{ empty($selectedStatuses) || in_array('all', $selectedStatuses) ? 'checked' : '' }}>
+                                        <i class="bi bi-list-check text-gray-700 text-lg"></i>
+                                        <span class="flex-1 text-sm">All</span>
+                                        <span class="text-xs text-gray-500 font-semibold">{{ array_sum($statusCounts ?? []) }}</span>
+                                    </label>
+                                </li>
+                                @php
+                                    $icons = [
+                                        'active' => 'bi bi-check-circle-fill',
+                                        'need_review' => 'bi bi-exclamation-circle-fill',
+                                        'rejected' => 'bi bi-x-circle-fill',
+                                        'obsolete' => 'bi bi-archive-fill',
+                                        'uncomplete' => 'bi bi-slash-circle-fill',
+                                    ];
+                                    $colors = [
+                                        'active' => 'text-green-700',
+                                        'need_review' => 'text-yellow-700',
+                                        'rejected' => 'text-red-700',
+                                        'obsolete' => 'text-gray-700',
+                                        'uncomplete' => 'text-orange-700',
+                                    ];
+                                @endphp
+                                @foreach ($statuses as $key => $label)
+                                    <li>
+                                        <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                            <input type="checkbox" name="status[]" value="{{ $key }}" class="status-checkbox"
+                                                {{ (!empty($selectedStatuses) && in_array($key, $selectedStatuses)) ? 'checked' : '' }}>
+                                            <i class="{{ $icons[$key] ?? '' }} {{ $colors[$key] ?? '' }} text-lg"></i>
+                                            <span class="flex-1 text-sm">{{ $label }}</span>
+                                            <span class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$key] ?? 0 }}</span>
+                                        </label>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <!-- Live filter: no apply button -->
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Search Form -->
+            <form id="filterForm" method="GET" action="{{ route('document-control.department', $department?->name ?? 'Unknown') }}"
                 class="flex flex-col items-end w-auto space-y-1">
                 <div class="relative w-96">
                     <input type="text" name="search" id="searchInput"
@@ -151,7 +211,7 @@
                                 @else
                                     @foreach ($mappings as $mapping)
                                         <tr class="hover:bg-gray-50 transition-all duration-150">
-                                            <td class="px-2 py-3 text-center text-xs border-r border-gray-200">
+                                            <td class="px-1 py-3 text-center text-xs border-r border-gray-200" style="width: 40px; min-width: 32px;">
                                                 {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                             </td>
                                             <td class="px-2 py-2 text-xs max-w-xs border-r border-gray-200">
@@ -179,7 +239,7 @@
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td class="px-2 py-3 text-center text-xs font-semibold border-r border-gray-200">
+                                            <td class="px-1 py-3 text-center text-xs font-semibold border-r border-gray-200" style="width: 90px; min-width: 70px;">
                                                 {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
                                             </td>
                                             <td class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
@@ -198,8 +258,8 @@
 
                                             </td>
                                             {{-- Actions --}}
-                                            <td class="px-4 py-2 text-center">
-                                                <div class="flex justify-start items-center gap-2 flex-wrap">
+                                            <td class="px-1 py-2 text-center" style="width: 120px; min-width: 90px;">
+                                                <div class="flex justify-center items-center gap-1 flex-wrap">
 
                                                     {{-- VIEW FILES --}}
                                                     @php
@@ -392,6 +452,70 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Filter Status Dropdown
+            const filterStatusBtn = document.getElementById('filterStatusBtn');
+            const filterStatusDropdown = document.getElementById('filterStatusDropdown');
+            const statusListEl = document.getElementById('statusList');
+            const statusSearchInput = document.getElementById('statusSearchInput');
+            // Search status in dropdown (Blade only, no JS counting)
+            if (statusSearchInput) {
+                statusSearchInput.addEventListener('input', function() {
+                    const filter = this.value.toLowerCase();
+                    document.querySelectorAll('#statusList li').forEach(li => {
+                        const label = li.querySelector('span.flex-1');
+                        if (label && label.textContent.toLowerCase().includes(filter)) {
+                            li.style.display = '';
+                        } else {
+                            li.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Checkbox logic (multi-select, all) + live submit
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('status-checkbox')) {
+                    const allCheckbox = document.getElementById('statusAllCheckbox');
+                    const statusCheckboxes = Array.from(document.querySelectorAll('.status-checkbox')).filter(cb => cb !== allCheckbox);
+                    if (e.target === allCheckbox) {
+                        // Jika 'all' dicentang, centang semua, jika uncheck, uncheck semua
+                        statusCheckboxes.forEach(cb => cb.checked = allCheckbox.checked);
+                    } else {
+                        // Jika status lain dicentang, uncheck 'all'
+                        if (allCheckbox) allCheckbox.checked = false;
+                    }
+                    setTimeout(function() {
+                        document.getElementById('statusFilterForm').submit();
+                    }, 10);
+                }
+            });
+
+            // Show/hide dropdown
+            if (filterStatusBtn && filterStatusDropdown) {
+                filterStatusBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isVisible = !filterStatusDropdown.classList.contains('hidden');
+                    document.querySelectorAll('#filterStatusDropdown').forEach(d => d.classList.add('hidden'));
+                    if (isVisible) {
+                        filterStatusDropdown.classList.add('hidden');
+                        return;
+                    }
+                    // Position dropdown
+                    const rect = filterStatusBtn.getBoundingClientRect();
+                    filterStatusDropdown.style.position = 'fixed';
+                    filterStatusDropdown.style.top = `${rect.bottom + 6}px`;
+                    filterStatusDropdown.style.left = `${rect.left - 220}px`;
+                    filterStatusDropdown.classList.remove('hidden');
+                    filterStatusDropdown.classList.add('dropdown-fixed');
+                });
+                // Close dropdown on outside click
+                document.addEventListener('click', function(e) {
+                    if (!filterStatusDropdown.contains(e.target) && !filterStatusBtn.contains(e.target)) {
+                        filterStatusDropdown.classList.add('hidden');
+                    }
+                });
+            }
+            // ...existing code...
             let typingTimer = null;
             const searchInputEl = document.getElementById("searchInput");
 
@@ -671,26 +795,25 @@
                     });
 
                     // Convert bytes ke MB (2 decimal)
-                    let totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
 
+                    // Use float for comparison, allow up to and including 20.00 MB
+                    let totalSizeMBFloat = totalSize / (1024 * 1024);
                     const maxSize = 20; // dalam MB
 
-                    if (totalSizeMB > maxSize) {
+                    if (totalSizeMBFloat > maxSize) {
                         e.preventDefault();
                         showReviseError(`
     <div class="flex items-start">
         <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
         <div class="text-xs text-red-700">
             <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
-            <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+            <p>Current total size: <strong>${totalSizeMBFloat.toFixed(2)} MB</strong></p>
             <p>
                 Please compress your PDF files and reupload it.
             </p>
         </div>
     </div>
 `);
-
-
                         return;
                     }
 
@@ -717,10 +840,30 @@
                 // --- Render file lama aktif di bawah ---
                 if (files.length > 0) {
                     const activeFiles = files.filter(f => f.is_active == 1);
-                    reviseFilesContainer.innerHTML = activeFiles.map((f, i) => `
+                    // Hitung total size file aktif
+                    const totalSize = activeFiles.reduce((sum, f) => {
+                        if (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(Number(f.size))) {
+                            return sum + Number(f.size);
+                        }
+                        return sum;
+                    }, 0);
+                    // Tampilkan total size di atas daftar file
+                    let totalSizeHtml = `<div class="mb-2 text-xs text-gray-700 font-semibold">Total size: <span class="${totalSize > 20*1024*1024 ? 'text-red-600' : ''}">${window.formatFileSize(totalSize)} / 20 MB</span></div>`;
+                    // Debug: cek isi file lama
+                    console.log('Active files for modal:', activeFiles);
+                    reviseFilesContainer.innerHTML = totalSizeHtml + activeFiles.map((f, i) => `
             <div class="p-3 border rounded bg-gray-50 mb-2">
                 <div class="flex justify-between items-start mb-2">
-                    <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                    <div>
+                        <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                        <p class="text-xs text-gray-500 mb-1">
+                            Size: ${
+                                (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(Number(f.size)))
+                                    ? window.formatFileSize(Number(f.size))
+                                    : 'Unknown'
+                            }
+                        </p>
+                    </div>
                     ${status === 'Active' && activeFiles.length > 1 ? `
                                         <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
                                             <i class="bi bi-trash"></i>
@@ -1090,6 +1233,16 @@
             if (window.feather) {
                 feather.replace();
             }
+        }
+
+        window.formatFileSize = function(bytes) {
+            if (typeof bytes !== 'number' || isNaN(bytes)) return 'Unknown';
+            if (bytes >= 1024 * 1024) {
+                return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            } else if (bytes >= 1024) {
+                return (bytes / 1024).toFixed(2) + ' KB';
+            }
+            return bytes + ' bytes';
         }
     </script>
 @endpush

@@ -172,7 +172,7 @@
                                     <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold text-gray-800">
                                         {{ $mapping->document->name ?? '-' }} <span
                                             class="text-xs text-gray-400 mt-1 block">
-                                            {{ $mapping->department->name ?? '-' }}
+                                            {{ $mapping->department->name ?? 'Unknown' }}
                                         </span></td>
                                     <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold">
                                         {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}

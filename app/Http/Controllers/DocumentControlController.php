@@ -23,6 +23,7 @@ class DocumentControlController extends Controller
     {
         // Ambil base query untuk document mapping
         $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
+            ->whereNull('marked_for_deletion_at')
             ->whereHas('document', fn($q) => $q->where('type', 'control'));
 
         // Tentukan role user
@@ -67,6 +68,7 @@ class DocumentControlController extends Controller
             $adminUsers = User::whereHas('roles', fn($q) => $q->where('name', 'Admin'))->get();
             $notifiableUsers = $departmentUsers->merge($adminUsers)->unique('id');
 
+            $departmentName = $mapping->department?->name ?? 'Unknown';
             foreach ($notifiableUsers as $user) {
                 $alreadyNotified = $user->notifications()
                     ->where('type', DocumentStatusNotification::class)
@@ -79,7 +81,7 @@ class DocumentControlController extends Controller
                         $mapping->document->name,
                         'obsolete',
                         Auth::user()->name ?? 'System',
-                        route('document-control.index')
+                        route('document-control.department', $departmentName)
                     ));
                 }
             }
@@ -95,11 +97,18 @@ class DocumentControlController extends Controller
         $activeDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Active')->count();
         $obsoleteDocuments = $documentsMapping->filter(fn($d) => $d->status?->name === 'Obsolete')->count();
 
+
         // Gabungkan department + dokumen untuk grouping
         $groupedDocuments = $departments->mapWithKeys(function ($dept) use ($documentsMapping) {
             $docs = $documentsMapping->where('department_id', $dept->id);
             return [$dept->name => $docs];
         });
+
+        // Tambahkan dokumen yang department_id-nya null ke grouping 'Unknown'
+        $unknownDocs = $documentsMapping->whereNull('department_id');
+        if ($unknownDocs->count() > 0) {
+            $groupedDocuments = $groupedDocuments->merge(['Unknown' => $unknownDocs]);
+        }
 
         return view('contents.document-control.index', compact(
             'documentsMapping',
@@ -113,13 +122,26 @@ class DocumentControlController extends Controller
 
     public function showByDepartment($department, Request $request)
     {
-        // Ambil department
-        $dept = Department::where('name', $department)->firstOrFail();
-
-        // Base query
-        $query = DocumentMapping::with(['document', 'user', 'status', 'files'])
-            ->where('department_id', $dept->id)
-            ->whereHas('document', fn($q) => $q->where('type', 'control'));
+        if ($department === 'Unknown') {
+            // Ambil dokumen dengan department_id null
+            $query = DocumentMapping::with(['document', 'user', 'status', 'files'])
+                ->whereNull('department_id')
+                ->whereNull('marked_for_deletion_at')
+                ->whereHas('document', fn($q) => $q->where('type', 'control'));
+            $dept = null;
+        } else {
+            // Ambil department normal, jika tidak ada redirect ke index
+            $dept = Department::where('name', $department)->first();
+            if (!$dept) {
+                // Jika department sudah dihapus, redirect ke index
+                return redirect()->route('document-control.index');
+            } else {
+                $query = DocumentMapping::with(['document', 'user', 'status', 'files'])
+                    ->where('department_id', $dept->id)
+                    ->whereNull('marked_for_deletion_at')
+                    ->whereHas('document', fn($q) => $q->where('type', 'control'));
+            }
+        }
 
         // Search filter
         if ($request->filled('search')) {
@@ -132,6 +154,29 @@ class DocumentControlController extends Controller
             });
         }
 
+        // Statuses untuk filter
+        $statuses = [
+            'active' => 'Active',
+            'need_review' => 'Need Review',
+            'rejected' => 'Rejected',
+            'obsolete' => 'Obsolete',
+            'uncomplete' => 'Uncomplete',
+        ];
+
+        // Status yang dipilih
+        $selectedStatuses = $request->input('status', []);
+
+        // Filter query jika status dipilih dan bukan 'all'
+        if (!empty($selectedStatuses) && !in_array('all', $selectedStatuses)) {
+            $selectedLabels = array_map(fn($k) => $statuses[$k] ?? null, $selectedStatuses);
+            $selectedLabels = array_filter($selectedLabels); // buang null
+            if (!empty($selectedLabels)) {
+                $query->whereHas('status', function($q) use ($selectedLabels) {
+                    $q->whereIn('name', $selectedLabels);
+                });
+            }
+        }
+
         // Ambil hasil dengan paginate
         $mappings = $query->paginate(10)->appends($request->query());
 
@@ -141,9 +186,28 @@ class DocumentControlController extends Controller
             $mapping->files_for_modal_all;
         });
 
+        // Counting per status
+        $statusCounts = [];
+        foreach ($statuses as $key => $label) {
+            $statusCounts[$key] = DocumentMapping::where(function($q) use ($dept, $department) {
+                if ($department === 'Unknown') {
+                    $q->whereNull('department_id');
+                } else if ($dept) {
+                    $q->where('department_id', $dept->id);
+                }
+            })
+            ->whereHas('status', fn($q) => $q->where('name', $label))
+            ->whereNull('marked_for_deletion_at')
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+            ->count();
+        }
+
         return view('contents.document-control.partials.department-details', [
             'department' => $dept,
-            'mappings' => $mappings
+            'mappings' => $mappings,
+            'statuses' => $statuses,
+            'statusCounts' => $statusCounts,
+            'selectedStatuses' => $selectedStatuses,
         ]);
     }
 
@@ -174,7 +238,7 @@ class DocumentControlController extends Controller
         }
 
         $request->validate([
-            'revision_files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
+            'revision_files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:20480', // 20MB per file
         ]);
 
         $mapping->load('document');
@@ -304,13 +368,14 @@ class DocumentControlController extends Controller
         $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
         if (!in_array($userRole, ['admin', 'super admin'])) {
             $admins = User::whereHas('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))->get();
+            $departmentName = $mapping->department?->name ?? 'Unknown';
             foreach ($admins as $admin) {
                 $admin->notify(new DocumentActionNotification(
                     'revised',
                     $uploader->name,
                     null,
                     $mapping->document->name,
-                    route('document-control.department', $mapping->department->name),
+                    route('document-control.department', $departmentName),
                     $uploader->department?->name
                 ));
             }
@@ -383,12 +448,13 @@ class DocumentControlController extends Controller
             ->where('id', '!=', Auth::id())
             ->get();
 
+        $departmentName = $mapping->department?->name ?? 'Unknown';
         Notification::send($departmentUsers, new DocumentActionNotification(
             'approved',
             Auth::user()->name,
             null,
             $mapping->document->name,
-            route('document-control.department', $mapping->department->name)
+            route('document-control.department', $departmentName)
         ));
 
         return back()->with('success', 'Document approved successfully!');
@@ -480,12 +546,13 @@ class DocumentControlController extends Controller
             ->where('id', '!=', Auth::id())
             ->get();
 
+        $departmentName = $mapping->department?->name ?? 'Unknown';
         Notification::send($departmentUsers, new DocumentActionNotification(
             'rejected',
             Auth::user()->name,
             null,
             $mapping->document->name,
-            route('document-control.department', $mapping->department->name)
+            route('document-control.department', $departmentName)
         ));
 
         return redirect()->back()->with('success', 'Document rejected successfully');

@@ -28,7 +28,10 @@ class DocumentMappingController extends Controller
     // ================= Document Review Index =================
     public function reviewIndex(Request $request)
     {
-        $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
+        $documentsMaster = Document::with('childrenRecursive')
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->get();
         $partNumbers = PartNumber::all();
         $statuses = Status::all();
         $departments = Department::all();
@@ -39,7 +42,6 @@ class DocumentMappingController extends Controller
         $groupedByPlant = [];
 
         foreach ($plants as $plant) {
-            // di dalam foreach ($plants as $plant) { ... }
             $query = DocumentMapping::with([
                 'document.parent',
                 'document.children',
@@ -55,7 +57,8 @@ class DocumentMappingController extends Controller
                 })
                 ->whereHas('partNumber', function ($q) use ($plant) {
                     $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
-                });
+                })
+                                ->whereNull('marked_for_deletion_at');
 
             // Search by part number (tetap)
             $search = trim($request->search);
@@ -174,7 +177,8 @@ class DocumentMappingController extends Controller
                     'partNumber',
                     fn($q2) =>
                     $q2->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
-                );
+                                )
+                                ->whereNull('marked_for_deletion_at');
 
             // 🔹 Filter search global
             if (!empty($search)) {
@@ -548,7 +552,7 @@ class DocumentMappingController extends Controller
         } else {
             $plant = strtolower($request->plant ?? 'body');
         }
-        
+
         return redirect()->route('master.document-review.index2', ['plant' => $plant])
             ->with('success', 'Document review created successfully!');
     }
@@ -979,29 +983,32 @@ class DocumentMappingController extends Controller
             abort(403);
         }
 
-        // Pastikan relasi 'files' dimuat
-        $mapping->load('files');
+        // Pastikan relasi 'files' dan 'document' dimuat
+        $mapping->load('files', 'document');
 
-        // === 1️⃣ Hapus semua file di tabel relasi (document_files) ===
+        // Jadwalkan penghapusan 1 tahun setelah hari ini
+        $markedForDeletionAt = now()->addYear();
+
+        // Tandai file-file relasi untuk dihapus 1 tahun kemudian
         foreach ($mapping->files as $file) {
-            if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
-                Storage::disk('public')->delete($file->file_path);
-            }
-            $file->delete(); // Hapus record dari tabel document_files
+            $file->marked_for_deletion_at = $markedForDeletionAt;
+            $file->save();
         }
 
-        // === 2️⃣ Hapus file utama jika disimpan di kolom 'file_path' DocumentMapping ===
-        if ($mapping->file_path && Storage::disk('public')->exists($mapping->file_path)) {
-            Storage::disk('public')->delete($mapping->file_path);
+        // Tandai Document utama untuk dihapus 1 tahun kemudian
+        if ($mapping->document) {
+            $mapping->document->marked_for_deletion_at = $markedForDeletionAt;
+            $mapping->document->save();
         }
 
-        // === 3️⃣ Hapus data DocumentMapping ===
-        $mapping->delete();
+        // Tandai DocumentMapping untuk dihapus 1 tahun kemudian
+        $mapping->marked_for_deletion_at = $markedForDeletionAt;
+        $mapping->save();
 
-        // === 4️⃣ (Opsional) Hapus anak-anak jika ini parent ===
+        // Hapus relasi anak-anak jika ini parent
         DocumentMapping::where('parent_id', $mapping->id)->update(['parent_id' => null]);
 
-        return redirect()->back()->with('success', 'Document and associated files deleted successfully!');
+        return redirect()->back()->with('success', 'Document scheduled for deletion in 1 year. Files will be deleted automatically after 1 year.');
     }
 
     public function reject(DocumentMapping $mapping)
@@ -1029,7 +1036,8 @@ class DocumentMappingController extends Controller
     public function controlIndex(Request $request)
     {
         $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
-            ->whereHas('document', fn($q) => $q->where('type', 'control'));
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereNull('marked_for_deletion_at');
 
         // 🔍 Filter by search (document name, number, or department)
         if ($request->filled('search')) {
@@ -1040,7 +1048,7 @@ class DocumentMappingController extends Controller
             });
         }
         if ($request->filled('department')) {
-            $query->whereIn('department_id', $request->department);
+             $query->whereIn('department_id', $request->department);
         }
 
 

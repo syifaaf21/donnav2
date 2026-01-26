@@ -81,7 +81,10 @@ class FtppApprovalController extends Controller
 
         // ADMIN / SUPER ADMIN
         if ($isFullyPrivileged) {
-            // no filter
+            // Only show status 'need approval by lead auditor' for admin/super admin
+            $query->whereHas('status', function ($q) {
+                $q->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
+            });
         }
         // LEAD AUDITOR → filter by assigned audit types
         elseif (in_array('lead auditor', $userRoles)) {
@@ -91,17 +94,27 @@ class FtppApprovalController extends Controller
                 $query->whereRaw('0 = 1');
             }
         }
-        // DEPT HEAD → filter by department
+        // DEPT HEAD → only show 'need check' for their department
         elseif (in_array('dept head', $userRoles)) {
             if (!empty($userDeptIds)) {
-                $query->whereIn('department_id', $userDeptIds);
+                $query->whereHas('status', function ($q) {
+                    $q->whereRaw('LOWER(name) = ?', ['need check']);
+                })->whereIn('department_id', $userDeptIds);
             } else {
                 $query->whereRaw('0 = 1');
             }
         }
-        // AUDITOR → only their findings
+        // AUDITOR → only show 'need approval by auditor' for their audit type(s)
         elseif (in_array('auditor', $userRoles)) {
-            $query->where('auditor_id', $user->id);
+            if (!empty($userAuditTypeIds)) {
+                $query->whereHas('status', function ($q) {
+                    $q->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
+                })
+                ->where('auditor_id', $user->id)
+                ->whereIn('audit_type_id', $userAuditTypeIds);
+            } else {
+                $query->whereRaw('0 = 1');
+            }
         }
         // DEFAULT → department based
         else {
@@ -114,18 +127,25 @@ class FtppApprovalController extends Controller
 
         // --- Restrict visibility of some statuses for non-admin users ---
         // Rules:
+        // 0) Always hide 'draft finding' for non-admin/super admin
         // 1) 'need check' -> only visible to dept head of that department
         // 2) 'need approval by auditor' -> only visible to the auditor assigned in auditor_id
         // 3) 'need approval by lead auditor' -> only visible to lead auditor(s) who have the audit type
         // Admin / Super Admin can see everything (no extra restriction)
         if (!in_array('admin', $userRoles) && !in_array('super admin', $userRoles)) {
             $restrictedStatuses = ['need check', 'need approval by auditor', 'need approval by lead auditor'];
+            $alwaysHiddenStatuses = ['draft finding'];
 
-            $query->where(function ($q) use ($user, $userRoles, $userDeptIds, $userAuditTypeIds, $restrictedStatuses) {
+            $query->where(function ($q) use ($user, $userRoles, $userDeptIds, $userAuditTypeIds, $restrictedStatuses, $alwaysHiddenStatuses) {
+                // 0) Always hide 'draft finding' for non-admin/super admin
+                $q->whereHas('status', function ($qs) use ($alwaysHiddenStatuses) {
+                    $placeholders = implode(',', array_fill(0, count($alwaysHiddenStatuses), '?'));
+                    $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $alwaysHiddenStatuses);
+                });
+
                 // 1) allow findings whose status is NOT one of the restricted statuses
                 $q->whereHas('status', function ($qs) use ($restrictedStatuses) {
                     $placeholders = implode(',', array_fill(0, count($restrictedStatuses), '?'));
-                    // whereRaw with lowered name not in (...) - secure via bindings
                     $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $restrictedStatuses);
                 });
 
