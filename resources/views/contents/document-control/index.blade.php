@@ -81,7 +81,7 @@
             @forelse ($groupedDocuments as $department => $mappings)
                 <a href="{{ route('document-control.department', ['department' => $department]) }}"
                     class="block p-6 rounded-xl border border-gray-200 shadow-xl hover:shadow-2xl hover:border-sky-300
-                   bg-white transition-all duration-200 group">
+                   bg-white transition-all duration-200 group department-link">
 
                     {{-- Header --}}
                     <div class="flex items-center gap-3 mb-3">
@@ -150,6 +150,74 @@
 
 
 @push('scripts')
+    <style>
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(17, 24, 39, 0.72); /* dark bg with opacity */
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+            display: none;
+        }
+        .custom-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        .loader-gradient {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #0ea5e9 10%,
+                #38bdf8 30%,
+                #818cf8 60%,
+                #0ea5e9 100%
+            );
+            animation: spin 1.1s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 32px 0 #0ea5e955;
+        }
+        .loader-dot {
+            width: 28px;
+            height: 28px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px #0ea5e9, 0 0 16px 0 #38bdf8aa;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        .loader-text {
+            background: linear-gradient(90deg, #0ea5e9, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-shadow: 0 4px 24px #0ea5e955;
+            filter: drop-shadow(0 2px 8px #818cf855);
+            text-align: center;
+        }
+    </style>
+    <div id="loadingOverlay">
+        <div class="custom-loader">
+            <div class="loader-gradient">
+                <div class="loader-dot"></div>
+            </div>
+            <div class="loader-text">Loading...</div>
+        </div>
+    </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const baseUrl = "{{ url('document-control') }}";
@@ -171,6 +239,14 @@
                 });
             }
 
+            // Loading overlay saat klik department
+            document.querySelectorAll('.department-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Tampilkan overlay loading
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay) overlay.style.display = 'flex';
+                });
+            });
         });
         const scrollBtn = document.getElementById('scrollUpBtn');
 

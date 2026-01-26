@@ -135,10 +135,29 @@
                             style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit"
-                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                            Submit
+                        <button type="submit" id="submit-add-doc-btn"
+                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors d-flex align-items-center"
+                            style="min-width: 100px;">
+                            <span class="spinner-border spinner-border-sm me-2 d-none" id="submit-add-doc-spinner" role="status" aria-hidden="true"></span>
+                            <span id="submit-add-doc-text">Submit</span>
                         </button>
+                    @push('scripts')
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const form = document.querySelector('#addDocumentControlModal form');
+                            const submitBtn = document.getElementById('submit-add-doc-btn');
+                            const spinner = document.getElementById('submit-add-doc-spinner');
+                            const btnText = document.getElementById('submit-add-doc-text');
+                            if (form && submitBtn && spinner && btnText) {
+                                form.addEventListener('submit', function () {
+                                    submitBtn.disabled = true;
+                                    spinner.classList.remove('d-none');
+                                    btnText.textContent = 'Loading...';
+                                });
+                            }
+                        });
+                    </script>
+                    @endpush
                     </div>
                 </form>
             </div>

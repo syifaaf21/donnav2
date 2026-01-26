@@ -44,8 +44,8 @@
                         style="color: #1e2b50; letter-spacing: 0.5px;">Name</th>
                     <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                         style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
-                    {{-- <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
-                        style="color: #1e2b50; letter-spacing: 0.5px;">Email</th> --}}
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Email</th>
                     <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                         style="color: #1e2b50; letter-spacing: 0.5px;">Role</th>
                     <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
@@ -72,11 +72,11 @@
                         <td class="px-4 py-3 border-r border-gray-200 align-top whitespace-nowrap text-sm font-semibold">
                             <div class="text-sm text-gray-600" title="{{ $user->npk }}">{{ $user->npk }}</div>
                         </td>
-                        {{-- <td class="px-4 py-3 border-r border-gray-200 align-top">
+                        <td class="px-4 py-3 border-r border-gray-200 align-top">
                             <div class="truncate max-w-[18rem] text-sm text-gray-600" title="{{ $user->email }}">
                                 {{ $user->email }}
                             </div>
-                        </td> --}}
+                        </td>
                         <td class="px-4 py-3 border-r border-gray-200 align-top">
                             @if ($user->roles->isNotEmpty())
                                 <div class="flex flex-wrap gap-1">
@@ -130,8 +130,6 @@
                                     aria-label="Edit user {{ $user->name }}">
                                     <i data-feather="edit" class="w-4 h-4" aria-hidden="true"></i>
                                 </button>
-
-                                {{-- Delete Button --}}
                                 {{-- Delete Button --}}
                                 @php
                                     $userRoles = $user->roles->pluck('name')->toArray();

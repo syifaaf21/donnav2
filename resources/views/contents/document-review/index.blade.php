@@ -115,6 +115,69 @@
 @endsection
 
 @push('scripts')
+    <style>
+        #folderLoadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(17,24,39,0.72);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+            display: none;
+        }
+        .custom-loader-folder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        .loader-gradient-folder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#0ea5e9 10%,#38bdf8 30%,#818cf8 60%,#0ea5e9 100%);
+            animation: spin 1.1s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 32px 0 #0ea5e955;
+        }
+        .loader-dot-folder {
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px #0ea5e9, 0 0 16px 0 #38bdf8aa;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        .loader-text-folder {
+            background: linear-gradient(90deg, #0ea5e9, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-shadow: 0 4px 24px #0ea5e955;
+            filter: drop-shadow(0 2px 8px #818cf855);
+            text-align: center;
+        }
+    </style>
+    <div id="folderLoadingOverlay">
+        <div class="custom-loader-folder">
+            <div class="loader-gradient-folder">
+                <div class="loader-dot-folder"></div>
+            </div>
+            <div class="loader-text-folder">Loading...</div>
+        </div>
+    </div>
     <script>
         // ✅ REVISI AKTIF: Border 4 sisi (top, left, right) dan shadow-md
         const ACTIVE_TAB_CLASSES = [
@@ -227,9 +290,23 @@
                     updateTabState(this, content, true);
                 });
             });
+
+            // Loading overlay saat klik folder (tree node)
+            // Tangkap semua <a> yang mengarah ke folder (harus punya class folder-link atau data-folder-link)
+            document.querySelectorAll('a.folder-link, a[data-folder-link], a[href*="/document-review/"]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Hanya tampilkan loading jika link menuju folder (bukan # atau javascript:void(0))
+                    const href = link.getAttribute('href');
+                    if (href && href !== '#' && !href.startsWith('javascript')) {
+                        const overlay = document.getElementById('folderLoadingOverlay');
+                        if (overlay) overlay.style.display = 'flex';
+                    }
+                });
+            });
         });
     </script>
 @endpush
+
 <style>
     /* Ensure active tab always shows the desired gradient and styles,
                        including when JS toggles aria-selected="true" */

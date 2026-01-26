@@ -435,9 +435,20 @@
             // Set old value jika ada
             quill.root.innerHTML = hiddenInput.value || '';
 
-            // Saat submit form, isi hidden input dari Quill
+
+            // Saat submit form, isi hidden input dari Quill dan tampilkan loading pada tombol submit
             form.addEventListener('submit', function() {
                 hiddenInput.value = quill.root.innerHTML;
+
+                // Temukan tombol submit
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    // Simpan teks asli
+                    submitBtn.dataset.originalText = submitBtn.innerHTML;
+                    // Tampilkan spinner dan teks Loading
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+                    submitBtn.disabled = true;
+                }
             });
 
 

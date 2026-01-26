@@ -285,6 +285,16 @@
             }
 
             document.querySelectorAll('[id^="editForm-"]').forEach(form => {
+                // Tambahkan loading pada tombol submit saat form disubmit
+                form.addEventListener('submit', function() {
+                    // Cari tombol submit di seluruh dokumen yang memiliki atribut form sesuai id form
+                    const submitBtn = document.querySelector('button[type="submit"][form="' + form.id + '"]');
+                    if (submitBtn) {
+                        submitBtn.dataset.originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+                        submitBtn.disabled = true;
+                    }
+                });
                 const id = form.id.split("-").pop();
                 const plantEl = form.querySelector('[name="plant"]');
                 const modelEl = form.querySelector('[name="model_id[]"]');

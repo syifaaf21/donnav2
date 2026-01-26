@@ -155,10 +155,24 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
 
+
+        // Cek apakah salah satu role yang dipilih adalah dept head
+        $rawRoles = (array) $request->input('role_ids', []);
+        $isDeptHead = false;
+        foreach ($rawRoles as $roleId) {
+            $roleObj = is_numeric($roleId)
+                ? Role::find($roleId)
+                : Role::where('name', $roleId)->first();
+            if ($roleObj && stripos($roleObj->name, 'dept head') !== false) {
+                $isDeptHead = true;
+                break;
+            }
+        }
+
         $rules = [
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users,npk,' . $user->id,
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
+            'email' => ($isDeptHead ? 'required' : 'nullable') . '|email|unique:users,email,' . $user->id,
             'role_ids' => 'required|array|min:1',
             'department_ids' => 'required|array|min:1',
             'audit_type_ids' => 'nullable|array',

@@ -58,6 +58,7 @@
                 </button>
 
                 <button type="submit"
+                    id="reviseSubmitBtn"
                     class="px-4 py-1.5 bg-sky-600 text-white rounded hover:bg-sky-700 fw-semibold transition">
                     <i class="bi bi-check2-circle me-1"></i> Submit
                 </button>
@@ -65,3 +66,17 @@
         </form>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var reviseForm = document.getElementById('reviseFormDynamic');
+    var submitBtn = document.getElementById('reviseSubmitBtn');
+    if (reviseForm && submitBtn) {
+        reviseForm.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.style.pointerEvents = 'none';
+            submitBtn.style.opacity = '0.7';
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Uploading...';
+        });
+    }
+});
+</script>

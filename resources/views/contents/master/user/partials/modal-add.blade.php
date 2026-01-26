@@ -47,10 +47,28 @@
                         @enderror
                     </div>
 
-                    {{-- Email
+                    {{-- Department --}}
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Email</label>
-                        <input type="email" name="email" placeholder="Input user Email"
+                        <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+                        <select id="department_select" name="department_ids[]"
+                            class="form-select border-0 shadow-sm rounded-3 @error('department_ids') is-invalid @enderror"
+                            multiple required>
+                            @foreach ($departments as $department)
+                                <option value="{{ $department->id }}"
+                                    {{ in_array($department->id, (array) old('department_ids', [])) ? 'selected' : '' }}>
+                                    {{ $department->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('department_ids')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    {{-- Email (shown only when Role = Dept Head) --}}
+                    <div class="col-md-6" id="emailContainerAdd" style="display: none;">
+                        <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" id="emailInputAdd" placeholder="Input user Email"
                             class="form-control border-0 shadow-sm rounded-3 @error('email') is-invalid @enderror"
                             pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                             title="Please enter a valid email address (e.g. user@example.com)"
@@ -58,21 +76,43 @@
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div> --}}
+                        <div id="emailAddInvalidFeedback" class="invalid-feedback" style="display:none;">Email is required for Dept Head.</div>
+                    </div>
 
                     {{-- Password --}}
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
-                        <input type="password" name="password" placeholder="Input user password"
+                        <input type="password" name="password" id="addPasswordInput" placeholder="Input user password"
                             class="form-control border-0 shadow-sm rounded-3 @error('password') is-invalid @enderror"
                             minlength="8"
-                            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#_.])[A-Za-z\d@$!%*?&#_.]{8,}$"
                             title="Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
                             value="{{ old('password') }}" required>
-                        <small class="text-muted fst-italic d-block mt-1">
-                            Must be at least 8 characters, include uppercase, lowercase, a number, and a special
-                            character.
-                        </small>
+                        <style>
+                            .pwcheck-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; }
+                        </style>
+                        <div id="addPasswordChecklist" class="mb-2" style="margin-top: 6px; font-size: 0.93em; color: #444;">
+                            <div id="addpwlen" class="d-flex align-items-center mb-1">
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="pw-label">At least 8 characters</span>
+                            </div>
+                            <div id="addpwlower" class="d-flex align-items-center mb-1">
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="pw-label">Lowercase letter</span>
+                            </div>
+                            <div id="addpwupper" class="d-flex align-items-center mb-1">
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="pw-label">Uppercase letter</span>
+                            </div>
+                            <div id="addpwnum" class="d-flex align-items-center mb-1">
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="pw-label">Number</span>
+                            </div>
+                            <div id="addpwspecial" class="d-flex align-items-center mb-1">
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="pw-label">Special character (@$!%*?&#_.)</span>
+                            </div>
+                        </div>
                         @error('password')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -80,14 +120,12 @@
 
                     {{-- Confirm Password --}}
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Confirm Password <span
-                                class="text-danger">*</span></label>
-                        <input type="password" name="password_confirmation" id="password_confirmation" placeholder="Input confirm password"
+                        <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                        <input type="password" name="password_confirmation" id="addConfirmPasswordInput" placeholder="Input confirm password"
                             class="form-control border-0 shadow-sm rounded-3" minlength="8" autocomplete="new-password"
                             required title="Please retype the same password">
-                        <small class="text-muted fst-italic d-block mt-1">
-                            Please retype the same password for confirmation.
-                        </small>
+                        <small class="text-muted fst-italic d-block mt-1">Please retype the same password for confirmation.</small>
+                        <div id="addConfirmPasswordFeedback" class="invalid-feedback" style="display:none;">Confirm password doesn't match</div>
                     </div>
 
                     {{-- Role --}}
@@ -134,24 +172,6 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
-                    {{-- Department --}}
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
-                        <select id="department_select" name="department_ids[]"
-                            class="form-select border-0 shadow-sm rounded-3 @error('department_ids') is-invalid @enderror"
-                            multiple required>
-                            @foreach ($departments as $department)
-                                <option value="{{ $department->id }}"
-                                    {{ in_array($department->id, (array) old('department_ids', [])) ? 'selected' : '' }}>
-                                    {{ $department->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('department_ids')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
                 </div>
             </div>
             <script>
@@ -159,12 +179,79 @@
                     const roleSelect = document.getElementById('role_select');
                     const auditTypeContainer = document.getElementById('auditTypeContainer');
                     const auditTypeSelect = document.getElementById('audit_type_select');
+                    const emailContainer = document.getElementById('emailContainerAdd');
+                    const emailInput = document.getElementById('emailInputAdd');
+                    const emailInvalidFeedback = document.getElementById('emailAddInvalidFeedback');
+                    const form = roleSelect ? roleSelect.closest('form') : null;
 
+                    // Password validation
+                    const passwordInput = document.getElementById('addPasswordInput');
+                    const confirmInput = document.getElementById('addConfirmPasswordInput');
+                    const confirmFeedback = document.getElementById('addConfirmPasswordFeedback');
+                    const checklist = {
+                        len: document.getElementById('addpwlen'),
+                        lower: document.getElementById('addpwlower'),
+                        upper: document.getElementById('addpwupper'),
+                        num: document.getElementById('addpwnum'),
+                        special: document.getElementById('addpwspecial'),
+                    };
+                    function updateChecklist(val) {
+                        // length
+                        const lenOk = val.length >= 8;
+                        checklist.len.querySelector('.icon-status').innerHTML = lenOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.len.querySelector('.pw-label').className = 'pw-label ' + (lenOk ? 'text-success' : 'text-danger');
+                        // lowercase
+                        const lowerOk = /[a-z]/.test(val);
+                        checklist.lower.querySelector('.icon-status').innerHTML = lowerOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.lower.querySelector('.pw-label').className = 'pw-label ' + (lowerOk ? 'text-success' : 'text-danger');
+                        // uppercase
+                        const upperOk = /[A-Z]/.test(val);
+                        checklist.upper.querySelector('.icon-status').innerHTML = upperOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.upper.querySelector('.pw-label').className = 'pw-label ' + (upperOk ? 'text-success' : 'text-danger');
+                        // number
+                        const numOk = /[0-9]/.test(val);
+                        checklist.num.querySelector('.icon-status').innerHTML = numOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.num.querySelector('.pw-label').className = 'pw-label ' + (numOk ? 'text-success' : 'text-danger');
+                        // special
+                        const specialOk = /[@$!%*?&#_.]/.test(val);
+                        checklist.special.querySelector('.icon-status').innerHTML = specialOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.special.querySelector('.pw-label').className = 'pw-label ' + (specialOk ? 'text-success' : 'text-danger');
+                    }
+                    if (passwordInput) {
+                        passwordInput.addEventListener('input', function(e) {
+                            updateChecklist(e.target.value);
+                        });
+                        // Initial state
+                        updateChecklist(passwordInput.value || '');
+                    }
+                    function validateConfirmPassword() {
+                        if (!confirmInput) return;
+                        if (confirmInput.value.length === 0) {
+                            confirmInput.classList.remove('is-invalid');
+                            if (confirmFeedback) confirmFeedback.style.display = 'none';
+                            return;
+                        }
+                        if (passwordInput && confirmInput.value !== passwordInput.value) {
+                            confirmInput.classList.add('is-invalid');
+                            if (confirmFeedback) confirmFeedback.style.display = 'block';
+                        } else {
+                            confirmInput.classList.remove('is-invalid');
+                            if (confirmFeedback) confirmFeedback.style.display = 'none';
+                        }
+                    }
+                    if (confirmInput && passwordInput) {
+                        confirmInput.addEventListener('input', validateConfirmPassword);
+                        passwordInput.addEventListener('input', validateConfirmPassword);
+                    }
+
+                    // Audit type & email logic
                     if (!roleSelect || !auditTypeContainer) return;
 
-                    function toggleAuditType() {
+                    function toggleAuditTypeAndEmail() {
                         const selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
                         const hasAuditor = selected.some(t => t.includes('auditor') || t.includes('lead auditor'));
+                        const hasDeptHead = selected.some(t => t.includes('dept head'));
+                        // Audit type
                         if (hasAuditor) {
                             auditTypeContainer.style.display = 'block';
                             if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');
@@ -172,11 +259,49 @@
                             auditTypeContainer.style.display = 'none';
                             if (auditTypeSelect) auditTypeSelect.removeAttribute('required');
                         }
+                        // Email
+                        if (emailContainer) {
+                            if (hasDeptHead) {
+                                emailContainer.style.display = 'block';
+                                if (emailInput) emailInput.setAttribute('required', 'required');
+                            } else {
+                                emailContainer.style.display = 'none';
+                                if (emailInput) {
+                                    emailInput.removeAttribute('required');
+                                    emailInput.value = '';
+                                    emailInput.classList.remove('is-invalid');
+                                    if (emailInvalidFeedback) emailInvalidFeedback.style.display = 'none';
+                                }
+                            }
+                        }
                     }
-
-                    roleSelect.addEventListener('change', toggleAuditType);
+                    roleSelect.addEventListener('change', toggleAuditTypeAndEmail);
                     // initial state
-                    toggleAuditType();
+                    toggleAuditTypeAndEmail();
+
+                    // Client-side validation: require email if dept head, and confirm password match
+                    if (form) {
+                        form.addEventListener('submit', function(e) {
+                            // Email required for dept head
+                            const selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
+                            const hasDeptHead = selected.some(t => t.includes('dept head'));
+                            if (hasDeptHead && emailContainer && emailInput) {
+                                if (!emailInput.value.trim()) {
+                                    e.preventDefault();
+                                    emailInput.classList.add('is-invalid');
+                                    if (emailInvalidFeedback) emailInvalidFeedback.style.display = 'block';
+                                    emailInput.focus();
+                                }
+                            }
+                            // Confirm password match
+                            if (confirmInput && passwordInput && confirmInput.value !== passwordInput.value) {
+                                e.preventDefault();
+                                confirmInput.classList.add('is-invalid');
+                                if (confirmFeedback) confirmFeedback.style.display = 'block';
+                                confirmInput.focus();
+                            }
+                        });
+                    }
                 })();
             </script>
 

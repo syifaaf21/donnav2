@@ -44,6 +44,8 @@
                     <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                         style="color: #1e2b50; letter-spacing: 0.5px;">NPK</th>
                     <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                        style="color: #1e2b50; letter-spacing: 0.5px;">Email</th>
+                    <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                         style="color: #1e2b50; letter-spacing: 0.5px;">Action</th>
                 </tr>
             </thead>
@@ -54,12 +56,19 @@
                             <td class="px-4 py-2 border-r border-gray-200">
                                 {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
                             </td>
-                            <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">{{ ucwords(strtolower($user->name)) }}
+                            <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">
+                                {{ ucwords(strtolower($user->name)) }}
                                 <span class="text-xs text-gray-400 block">
                                     {{ $user->departments->pluck('name')->join(', ') ?: '-' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">{{ $user->npk }}</td>
+                            <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">{{ $user->npk }}
+                            </td>
+                            <td class="px-4 py-3 border-r border-gray-200 align-top">
+                                <div class="truncate max-w-[18rem] text-sm text-gray-600" title="{{ $user->email }}">
+                                    {{ $user->email }}
+                                </div>
+                            </td>
                             <td class="px-4 py-2 border-r border-gray-200 flex gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal" data-id="{{ $user->id }}"

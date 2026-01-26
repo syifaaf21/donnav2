@@ -185,9 +185,9 @@
                             // attempt to reinitialize TomSelects if present
                             if (typeof TomSelect !== 'undefined') {
                                 try {
-                                    new TomSelect(`#role_select_edit_${userId}`, {
-                                        create: false,
-                                        maxItems: 1
+                                        new TomSelect(`#role_select_edit_${userId}`, {
+                                            create: false,
+                                            maxItems: null
                                     });
                                 } catch (e) {}
                                 try {
@@ -228,6 +228,7 @@
                 valueField: 'id',
                 labelField: 'text',
                 searchField: 'text',
+                plugins: ['remove_button'],
                 preload: true,
                 placeholder: 'Select or search roles',
                 load: function(query, callback) {
@@ -285,6 +286,7 @@
                     searchField: 'text',
                     preload: true,
                     placeholder: 'Select roles',
+                    plugins: ['remove_button'],
                     load: function(query, callback) {
                         let url = '/api/roles?q=' + encodeURIComponent(query);
                         fetch(url)
@@ -465,7 +467,7 @@
                             maxItems: null,
                             placeholder: 'Select departments'
                         });
-                        
+
                         // TomSelect untuk audit type di modal edit
                         const auditTypeSelect = document.getElementById(`audit_type_select_edit_${userId}`);
                         if (auditTypeSelect) {
