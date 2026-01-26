@@ -154,6 +154,29 @@ class DocumentControlController extends Controller
             });
         }
 
+        // Statuses untuk filter
+        $statuses = [
+            'active' => 'Active',
+            'need_review' => 'Need Review',
+            'rejected' => 'Rejected',
+            'obsolete' => 'Obsolete',
+            'uncomplete' => 'Uncomplete',
+        ];
+
+        // Status yang dipilih
+        $selectedStatuses = $request->input('status', []);
+
+        // Filter query jika status dipilih dan bukan 'all'
+        if (!empty($selectedStatuses) && !in_array('all', $selectedStatuses)) {
+            $selectedLabels = array_map(fn($k) => $statuses[$k] ?? null, $selectedStatuses);
+            $selectedLabels = array_filter($selectedLabels); // buang null
+            if (!empty($selectedLabels)) {
+                $query->whereHas('status', function($q) use ($selectedLabels) {
+                    $q->whereIn('name', $selectedLabels);
+                });
+            }
+        }
+
         // Ambil hasil dengan paginate
         $mappings = $query->paginate(10)->appends($request->query());
 
@@ -163,9 +186,28 @@ class DocumentControlController extends Controller
             $mapping->files_for_modal_all;
         });
 
+        // Counting per status
+        $statusCounts = [];
+        foreach ($statuses as $key => $label) {
+            $statusCounts[$key] = DocumentMapping::where(function($q) use ($dept, $department) {
+                if ($department === 'Unknown') {
+                    $q->whereNull('department_id');
+                } else if ($dept) {
+                    $q->where('department_id', $dept->id);
+                }
+            })
+            ->whereHas('status', fn($q) => $q->where('name', $label))
+            ->whereNull('marked_for_deletion_at')
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+            ->count();
+        }
+
         return view('contents.document-control.partials.department-details', [
             'department' => $dept,
-            'mappings' => $mappings
+            'mappings' => $mappings,
+            'statuses' => $statuses,
+            'statusCounts' => $statusCounts,
+            'selectedStatuses' => $selectedStatuses,
         ]);
     }
 
