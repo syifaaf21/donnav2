@@ -1505,7 +1505,20 @@
 
                 // Individual file size checks removed — only total size (20MB) is enforced.
 
-                // ✅ 5. Jika lolos semua validasi, lanjut submit
+                // ✅ 5. Jika lolos semua validasi, show loader on submit button and submit
+                try {
+                    const submitBtn = e.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+                    const spinnerSVG = '<svg class="inline-block w-4 h-4 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+                    if (submitBtn && submitBtn.tagName === 'BUTTON') {
+                        submitBtn.dataset._orig = submitBtn.innerHTML;
+                        submitBtn.innerHTML = spinnerSVG + 'Saving...';
+                        // disable submit buttons in the form to prevent double submit
+                        Array.from(form.querySelectorAll('button, input[type="submit"]')).forEach(b => b.disabled = true);
+                    }
+                } catch (e) {
+                    /* ignore */
+                }
+
                 form.submit();
             });
 

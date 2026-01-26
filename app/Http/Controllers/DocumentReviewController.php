@@ -176,7 +176,39 @@ class DocumentReviewController extends Controller
             $products = $allProducts;
         }
 
-        // 5. Pagination manual (karena Collection)
+        // 5. Filter by status (setelah search/filter lain)
+        $statusMap = [
+            'approved' => 'Approved',
+            'need_review' => 'Need Review',
+            'rejected' => 'Rejected',
+            'uncomplete' => 'Uncomplete',
+        ];
+        $selectedStatuses = $request->input('status', []);
+        if (!is_array($selectedStatuses)) {
+            $selectedStatuses = [$selectedStatuses];
+        }
+        if (!empty($selectedStatuses) && !in_array('all', $selectedStatuses)) {
+            $documents = $documents->filter(function ($doc) use ($selectedStatuses, $statusMap) {
+                $docStatus = strtolower(str_replace(' ', '_', $doc->status?->name ?? ''));
+                return in_array($docStatus, $selectedStatuses);
+            });
+        }
+
+        // Hitung jumlah dokumen per status
+        $statusCounts = [
+            'approved' => 0,
+            'need_review' => 0,
+            'rejected' => 0,
+            'uncomplete' => 0,
+        ];
+        foreach ($documents as $doc) {
+            $docStatus = strtolower(str_replace(' ', '_', $doc->status?->name ?? ''));
+            if (isset($statusCounts[$docStatus])) {
+                $statusCounts[$docStatus]++;
+            }
+        }
+
+        // 6. Pagination manual (karena Collection)
         $documents = $documents->map(function ($doc) {
             $doc->setRelation(
                 'files',
@@ -212,6 +244,7 @@ class DocumentReviewController extends Controller
             'models' => $models,
             'processes' => $processes,
             'products' => $products,
+            'statusCounts' => $statusCounts,
         ]);
     }
 

@@ -4,10 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DocumentFile extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    /**
+     * Use existing column as soft-deletes marker in this project.
+     */
+    const DELETED_AT = 'marked_for_deletion_at';
 
     protected $fillable = [
         'document_mapping_id',

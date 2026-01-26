@@ -226,9 +226,10 @@
                                         placeholder="Input head klausul name" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label fw-semibold">Head Code</label>
+                                    <label class="form-label fw-semibold">Head Code <span
+                                            class="text-danger">*</span></label>
                                     <input type="text" name="heads[0][code]" class="form-control border-1"
-                                        placeholder="Input head code (optional)">
+                                        placeholder="Input head code" required>
                                 </div>
 
                                 {{-- Sub Klausul for this Head --}}
@@ -372,9 +373,9 @@
                                 required>
                         </div>
                         <div>
-                            <label class="form-label fw-semibold">Head Code</label>
+                            <label class="form-label fw-semibold">Head Code <span class="text-danger">*</span></label>
                             <input type="text" name="head_code" id="edit_head_code" class="form-control border-1"
-                                placeholder="Input head code (optional)">
+                                placeholder="Input head code" required>
                         </div>
                         <hr class="my-3">
                         <div>
@@ -420,8 +421,8 @@
                                 required>
                         </div>
                         <div>
-                            <label class="form-label fw-semibold">Sub Code</label>
-                            <input type="text" name="sub_codes[0]" id="sub_code" class="form-control border-1">
+                            <label class="form-label fw-semibold">Sub Code <span class="text-danger">*</span></label>
+                            <input type="text" name="sub_codes[0]" id="sub_code" class="form-control border-1" required>
                         </div>
                     </div>
                     <div class="modal-footer border-t">
@@ -466,7 +467,7 @@
                 `<input type="text" name="sub_names[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub name" value="${name || ''}" required>`,
                 '</div>',
                 '<div>',
-                `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)" value="${code || ''}">`,
+                `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code" value="${code || ''}" required>`,
                 '</div>'
             ].join('');
             container.appendChild(subDiv);
@@ -493,7 +494,7 @@
                 `<input type="text" name="sub_names[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub name" required>`,
                 '</div>',
                 '<div>',
-                `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)">`,
+                `<input type="text" name="sub_codes[${subIndex}]" class="form-control form-control-sm border-1" placeholder="Sub code" required>`,
                 '</div>'
             ].join('');
             container.appendChild(subDiv);
@@ -567,7 +568,7 @@
                         <input type="text" name="heads[${headIndex}][subs][${subIndex}][name]" class="form-control form-control-sm border-1" placeholder="Sub name" required>
                     </div>
                     <div>
-                        <input type="text" name="heads[${headIndex}][subs][${subIndex}][code]" class="form-control form-control-sm border-1" placeholder="Sub code (optional)">
+                        <input type="text" name="heads[${headIndex}][subs][${subIndex}][code]" class="form-control form-control-sm border-1" placeholder="Sub code" required>
                     </div>
                 `;
             container.appendChild(subDiv);

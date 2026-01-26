@@ -68,23 +68,16 @@
             <!-- Search Input -->
             <div class="relative w-full md:w-96">
                 <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
-                    class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
-                 focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                    class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
                     placeholder="Type to search...">
-
                 <label for="searchInput"
-                    class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-                            text-gray-400 text-sm
-                            {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                    class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                     Type to search...
                 </label>
-
                 <button type="submit"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                            rounded-lg text-gray-400 hover:text-blue-700 transition">
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-blue-700 transition">
                     <i data-feather="search" class="w-5 h-5"></i>
                 </button>
-
                 @if (request('q'))
                     <button type="button" id="clearSearch"
                         class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
@@ -92,6 +85,87 @@
                         <i data-feather="x" class="w-5 h-5"></i>
                     </button>
                 @endif
+            </div>
+
+            <!-- Status Filter Dropdown -->
+            <div class="relative">
+                <button id="filterStatusBtn" type="button"
+                    class="flex items-center gap-2 px-4 h-10 rounded-xl bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors font-semibold text-gray-700 text-sm"
+                    title="Filter by Status">
+                    Status
+                    <svg class="w-4 h-4 ml-1 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <!-- Dropdown menu -->
+                <div id="filterStatusDropdown"
+                    class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
+                    <div class="py-2 text-sm">
+                        <div class="px-3 pb-2">
+                            <input type="text" id="statusSearchInput"
+                                class="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                                placeholder="Type to filter status...">
+                        </div>
+                        <ul id="statusList" class="flex flex-col gap-1 max-h-64 overflow-y-auto px-2">
+                            <li>
+                                <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                    <input type="checkbox" name="status[]" value="all" class="status-checkbox"
+                                        id="statusAllCheckbox"
+                                        {{ empty(request('status')) || (is_array(request('status')) && in_array('all', request('status'))) ? 'checked' : '' }}>
+                                    <i class="bi bi-list-check text-gray-700 text-lg"></i>
+                                    <span class="flex-1 text-sm">All</span>
+                                    <span class="text-xs text-gray-500 font-semibold">0</span>
+                                </label>
+                            </li>
+                            @php
+                                $statusOptions = [
+                                    [
+                                        'key' => 'approved',
+                                        'label' => 'Approved',
+                                        'icon' => 'bi bi-check-circle-fill',
+                                        'color' => 'text-green-700',
+                                    ],
+                                    [
+                                        'key' => 'need_review',
+                                        'label' => 'Need Review',
+                                        'icon' => 'bi bi-exclamation-circle-fill',
+                                        'color' => 'text-yellow-700',
+                                    ],
+                                    [
+                                        'key' => 'rejected',
+                                        'label' => 'Rejected',
+                                        'icon' => 'bi bi-x-circle-fill',
+                                        'color' => 'text-red-700',
+                                    ],
+                                    [
+                                        'key' => 'uncomplete',
+                                        'label' => 'Uncomplete',
+                                        'icon' => 'bi bi-slash-circle-fill',
+                                        'color' => 'text-orange-700',
+                                    ],
+                                ];
+                                $selectedStatuses = request('status', []);
+                                if (!is_array($selectedStatuses)) {
+                                    $selectedStatuses = [$selectedStatuses];
+                                }
+                            @endphp
+                            @foreach ($statusOptions as $opt)
+                                <li>
+                                    <label
+                                        class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                        <input type="checkbox" name="status[]" value="{{ $opt['key'] }}"
+                                            class="status-checkbox"
+                                            {{ in_array($opt['key'], $selectedStatuses) ? 'checked' : '' }}>
+                                        <i class="{{ $opt['icon'] }} {{ $opt['color'] }} text-lg"></i>
+                                        <span class="flex-1 text-sm">{{ $opt['label'] }}</span>
+                                        <span class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$opt['key']] ?? 0 }}</span>
+                                    </label>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <!-- Filter Button -->
@@ -149,7 +223,8 @@
                                 <!-- Model -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Model</label>
-                                    <select name="model" id="modalModel" class="form-select border-0 shadow-sm rounded-3">
+                                    <select name="model" id="modalModel"
+                                        class="form-select border-0 shadow-sm rounded-3">
                                         <option value="">All Models</option>
                                         @foreach ($models as $model)
                                             <option value="{{ $model }}" @selected(request('model') == $model)>
@@ -320,7 +395,8 @@
 
                                     <td class="px-2 py-3 text-center text-xs">{{ $doc->user?->name ?? '-' }}</td>
 
-                                    <td class="px-2 py-3 text-center text-xs">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
+                                    <td class="px-2 py-3 text-center text-xs">
+                                        {{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
 
                                     {{-- @php
                                         $statusName = strtolower($doc->status?->name ?? '');
@@ -432,11 +508,11 @@
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
                                                 // Check if user is supervisor of document's department
-                                                $isSupervisorOfDocDept = auth()
-                                                    ->user()
-                                                    ->isSupervisorOfDepartment($doc->department_id);
+$isSupervisorOfDocDept = auth()
+    ->user()
+    ->isSupervisorOfDepartment($doc->department_id);
 
-                                                // Only supervisor from document's department OR admin can edit
+// Only supervisor from document's department OR admin can edit
                                                 $showEdit = $isAdmin || $isSupervisorOfDocDept;
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
@@ -697,7 +773,6 @@
                         }
                     });
                 });
-
 
                 // === File preview modal ===
                 const withCacheBuster = (url) => {
@@ -966,28 +1041,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                                                                    <div class="border rounded p-2 bg-gray-50">
-                                                                                        <div class="flex items-center justify-between">
-                                                                                            <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                            <div class="border rounded p-2 bg-gray-50">
+                                                                                                <div class="flex items-center justify-between">
+                                                                                                    <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                            <div class="flex gap-2">
-                                                                                                {{-- <a href="/storage/${file.file_path}"
+                                                                                                    <div class="flex gap-2">
+                                                                                                        {{-- <a href="/storage/${file.file_path}"
                                                                                                     target="_blank"
                                                                                                     class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
                                                                                                     View
                                                                                                 </a> --}}
 
-                                                                                                <button type="button"
-                                                                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                    data-file-id="${file.id}">
-                                                                                                    Replace
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        </div>
+                                                                                                        <button type="button"
+                                                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                            data-file-id="${file.id}">
+                                                                                                            Replace
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                </div>
 
-                                                                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                                                                    </div>
-                                                                                `).join('')}
+                                                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                                                            </div>
+                                                                                        `).join('')}
 </div>`;
 
                             })
@@ -1365,6 +1440,66 @@ ${data.files.map(file => `
                                                 </div>
                                             `;
                         });
+                });
+                const filterStatusBtn = document.getElementById('filterStatusBtn');
+                const filterStatusDropdown = document.getElementById('filterStatusDropdown');
+                const statusSearchInput = document.getElementById('statusSearchInput');
+                if (filterStatusBtn && filterStatusDropdown) {
+                    filterStatusBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const isVisible = !filterStatusDropdown.classList.contains('hidden');
+                        document.querySelectorAll('#filterStatusDropdown').forEach(d => d.classList.add(
+                            'hidden'));
+                        if (isVisible) {
+                            filterStatusDropdown.classList.add('hidden');
+                            return;
+                        }
+                        // Position dropdown
+                        const rect = filterStatusBtn.getBoundingClientRect();
+                        filterStatusDropdown.style.position = 'fixed';
+                        filterStatusDropdown.style.top = `${rect.bottom + 6}px`;
+                        filterStatusDropdown.style.left = `${rect.left - 220}px`;
+                        filterStatusDropdown.classList.remove('hidden');
+                        filterStatusDropdown.classList.add('dropdown-fixed');
+                    });
+                    // Close dropdown on outside click
+                    document.addEventListener('click', function(e) {
+                        if (!filterStatusDropdown.contains(e.target) && !filterStatusBtn.contains(e.target)) {
+                            filterStatusDropdown.classList.add('hidden');
+                        }
+                    });
+                }
+                // Search status in dropdown
+                if (statusSearchInput) {
+                    statusSearchInput.addEventListener('input', function() {
+                        const filter = this.value.toLowerCase();
+                        document.querySelectorAll('#statusList li').forEach(li => {
+                            const label = li.querySelector('span.flex-1');
+                            if (label && label.textContent.toLowerCase().includes(filter)) {
+                                li.style.display = '';
+                            } else {
+                                li.style.display = 'none';
+                            }
+                        });
+                    });
+                }
+                // Checkbox logic (multi-select, all) + live submit
+                document.addEventListener('change', function(e) {
+                    if (e.target.classList.contains('status-checkbox')) {
+                        const allCheckbox = document.getElementById('statusAllCheckbox');
+                        const statusCheckboxes = Array.from(document.querySelectorAll('.status-checkbox'))
+                            .filter(cb => cb !== allCheckbox);
+                        if (e.target === allCheckbox) {
+                            // Jika 'all' dicentang, centang semua, jika uncheck, uncheck semua
+                            statusCheckboxes.forEach(cb => cb.checked = allCheckbox.checked);
+                        } else {
+                            // Jika status lain dicentang, uncheck 'all'
+                            if (allCheckbox) allCheckbox.checked = false;
+                        }
+                        setTimeout(function() {
+                            document.getElementById('searchForm').submit();
+                        }, 10);
+                    }
                 });
             });
         </script>
