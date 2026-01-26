@@ -14,9 +14,21 @@ class AuditTypeController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $audits = Audit::with('subAudit')->orderBy('created_at', 'asc')->get();
-        return view('contents.master.ftpp.audit.index', compact('audits'));
+    {   
+
+        $search = request('search');
+        $audits = Audit::with('subAudit')
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%$search%")
+                    ->orWhere('prefix_code', 'like', "%$search%")
+                    ->orWhere('registration_number_format', 'like', "%$search%")
+                    ->orWhereHas('subAudit', function ($q) use ($search) {
+                        $q->where('name', 'like', "%$search%") ;
+                    });
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
+        return view('contents.master.ftpp.audit.index', compact('audits', 'search'));
     }
 
     public function show($id)

@@ -16,8 +16,22 @@ class KlausulController extends Controller
      */
     public function index()
     {
-        $klausuls = Klausul::with('headKlausuls.subKlausuls')->orderBy('created_at', 'asc')->get();
-        return view('contents.master.ftpp.clause.index', compact('klausuls'));
+        $search = request('search');
+        $klausuls = Klausul::with(['headKlausuls.subKlausuls'])
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%$search%")
+                    ->orWhereHas('headKlausuls', function ($q) use ($search) {
+                        $q->where('name', 'like', "%$search%")
+                            ->orWhereHas('subKlausuls', function ($qq) use ($search) {
+                                $qq->where('name', 'like', "%$search%")
+                                    ->orWhere('code', 'like', "%$search%") ;
+                            });
+                    })
+                    ->orWhere('id', $search);
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
+        return view('contents.master.ftpp.clause.index', compact('klausuls', 'search'));
     }
 
     /**
@@ -29,7 +43,6 @@ class KlausulController extends Controller
         if ($request->has('head_name')) {
             $request->validate([
                 'klausul_id' => 'required|exists:tm_klausuls,id',
-                'name' => 'required|string|max:255',
                 'head_name' => 'required|string|max:255',
                 'head_code' => 'nullable|string|max:100',
                 'sub_names' => 'array',

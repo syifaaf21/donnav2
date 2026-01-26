@@ -9,8 +9,13 @@ class FindingCategoryController extends Controller
 {
     public function index()
     {
-        $categories = FindingCategory::orderBy('created_at', 'asc')->get();
-        return view('contents.master.ftpp.finding_category.index', compact('categories'));
+        $search = request('search');
+        $categories = FindingCategory::when($search, function ($query, $search) {
+                $query->where('name', 'like', "%$search%") ;
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
+        return view('contents.master.ftpp.finding_category.index', compact('categories', 'search'));
     }
     public function show($id)
     {

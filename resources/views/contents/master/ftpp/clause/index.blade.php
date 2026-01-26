@@ -17,31 +17,55 @@
     </nav>
 @endsection
 
+@php
+    function highlight($text, $search) {
+        if (!$search) return e($text);
+        return preg_replace('/(' . preg_quote($search, '/') . ')/i', '<span class="bg-yellow-200 text-black">$1</span>', e($text));
+    }
+@endphp
 @section('content')
     <div id="section-klausul" class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
         {{-- Header --}}
-        <div class="flex justify-between items-center mb-2">
-            {{-- Search Bar (left) --}}
-            <form id="searchForm" method="GET" class="flex items-end w-full md:w-96">
-                <div class="relative w-full">
-                    <input type="text" name="search" id="searchInput"
-                        class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
-                            focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                        placeholder="Type to search..." value="{{ request('search') }}">
+        {{-- Search Bar --}}
+        <div class="p-2 flex justify-between items-center mb-4">
+            <div>
+                <form method="GET" class="searchForm flex items-center w-full max-w-sm relative">
+                    <div class="relative w-96">
+                        <input type="text" name="search"
+                            class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
+                        text-sm text-gray-700 shadow-sm transition-all duration-200
+                        focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            placeholder="Type to search..." value="{{ request('search') }}">
 
-                    <label for="searchInput"
-                        class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
-           transition-all duration-150
-           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
-           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
-                        Type to search...
-                    </label>
-                </div>
-            </form>
-            <button id="btnAddKlausul"
-                class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                <i class="bi bi-plus"></i> Add Klausul
-            </button>
+                        <!-- Floating Label -->
+                        <label for="searchInput"
+                            class="absolute left-4 px-1 bg-white text-gray-400 rounded transition-all duration-150
+                        pointer-events-none
+                        {{ request('search')
+                            ? '-top-3 text-xs text-sky-600'
+                            : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            Type to search...
+                        </label>
+
+                        <button type="submit"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-blue-700 transition">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
+                        @if (request('search'))
+                            <button type="button"
+                                class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </button>
+                        @endif
+                    </div>
+                </form>
+            </div>
+            <div>
+                <button id="btnAddKlausul"
+                    class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                    <i class="bi bi-plus"></i> Add Klausul
+                </button>
+            </div>
         </div>
 
         {{-- Klausul List --}}
@@ -88,7 +112,7 @@
                         </div>
 
                         @forelse ($klausul->headKlausuls as $head)
-                            <div class="head-item border border-gray-300 rounded-lg p-3 mb-3">
+                            <div class="head-item border border-gray-300 rounded-lg p-3 mb-3 mr-4">
                                 {{-- Head Klausul Row with Toggle --}}
                                 <div class="flex justify-between items-start cursor-pointer"
                                     onclick="toggleHeadKlausulCollapse(this)">
@@ -96,10 +120,10 @@
                                         <i
                                             class="bi bi-chevron-right text-gray-400 transition-transform w-5 h-5 head-klausul-chevron"></i>
                                         <div>
-                                            <div class="font-semibold text-gray-700">{{ $head->name }}</div>
+                                            <div class="font-semibold text-gray-700">{!! highlight($head->name, request('search')) !!}</div>
                                             <div class="text-xs text-gray-500 mt-1">
                                                 Code: <span
-                                                    class="font-mono bg-gray-200 px-2 py-1 rounded">{{ $head->code ?? '-' }}</span>
+                                                    class="font-mono bg-gray-200 px-2 py-1 rounded">{!! highlight($head->code ?? '-', request('search')) !!}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -128,9 +152,9 @@
                                         <div
                                             class="sub-item flex justify-between items-center bg-white border border-gray-200 rounded p-2 mb-2">
                                             <div class="flex-1">
-                                                <div class="text-sm font-medium text-gray-700">{{ $sub->name }}</div>
+                                                <div class="text-sm font-medium text-gray-700">{!! highlight($sub->name, request('search')) !!}</div>
                                                 <div class="text-xs text-gray-500">
-                                                    Code: <span class="font-mono">{{ $sub->code ?? '-' }}</span>
+                                                    Code: <span class="font-mono">{!! highlight($sub->code ?? '-', request('search')) !!}</span>
                                                 </div>
                                             </div>
                                             <div class="flex gap-1">
@@ -220,15 +244,18 @@
                                     </button>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="form-label fw-semibold">Head Name <span
-                                            class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">
+                                        Head Name <span class="text-danger">*</span>
+                                    </label>
                                     <input type="text" name="heads[0][name]" class="form-control border-1"
                                         placeholder="Input head klausul name" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label fw-semibold">Head Code</label>
+                                    <label class="form-label fw-semibold">
+                                        Head Code <span class="text-danger">*</span>
+                                    </label>
                                     <input type="text" name="heads[0][code]" class="form-control border-1"
-                                        placeholder="Input head code (optional)">
+                                        placeholder="Input head code (optional)" required>
                                 </div>
 
                                 {{-- Sub Klausul for this Head --}}
@@ -326,9 +353,11 @@
                                 placeholder="Input head klausul name" required>
                         </div>
                         <div>
-                            <label class="form-label fw-semibold">Head Code</label>
+                            <label class="form-label fw-semibold">
+                                Head Code <span class="text-danger">*</span>
+                            </label>
                             <input type="text" name="head_code" class="form-control border-1"
-                                placeholder="Input head code (optional)">
+                                placeholder="Input head code (optional)" required>
                         </div>
                         <hr class="my-3">
                         <div>
@@ -367,14 +396,18 @@
                     @method('PUT')
                     <div class="modal-body p-4 space-y-3">
                         <div>
-                            <label class="form-label fw-semibold">Head Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">
+                                Head Name <span class="text-danger">*</span>
+                            </label>
                             <input type="text" name="head_name" id="edit_head_name" class="form-control border-1"
                                 required>
                         </div>
                         <div>
-                            <label class="form-label fw-semibold">Head Code</label>
+                            <label class="form-label fw-semibold">
+                                Head Code <span class="text-danger">*</span>
+                            </label>
                             <input type="text" name="head_code" id="edit_head_code" class="form-control border-1"
-                                placeholder="Input head code (optional)">
+                                placeholder="Input head code (optional)" required>
                         </div>
                         <hr class="my-3">
                         <div>
@@ -415,13 +448,18 @@
                     <input type="hidden" name="head_id" id="sub_head_id">
                     <div class="modal-body p-4 space-y-3">
                         <div>
-                            <label class="form-label fw-semibold">Sub Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">
+                                Sub Name <span class="text-danger">*</span>
+                            </label>
                             <input type="text" name="sub_names[0]" id="sub_name" class="form-control border-1"
                                 required>
                         </div>
                         <div>
-                            <label class="form-label fw-semibold">Sub Code</label>
-                            <input type="text" name="sub_codes[0]" id="sub_code" class="form-control border-1">
+                            <label class="form-label fw-semibold">
+                                Sub Code <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="sub_codes[0]" id="sub_code" class="form-control border-1"
+                                required>
                         </div>
                     </div>
                     <div class="modal-footer border-t">
@@ -449,6 +487,48 @@
     </form>
 @endsection
 @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const search = @json(request('search'));
+                if (search && search.length > 0) {
+                    // Expand klausul yang mengandung head/sub cocok
+                    document.querySelectorAll('.klausul-item').forEach(function(item) {
+                        let found = false;
+                        // Cek head
+                        item.querySelectorAll('.head-item .font-semibold').forEach(function(head) {
+                            if (head.textContent.toLowerCase().includes(search.toLowerCase())) found = true;
+                        });
+                        // Cek sub
+                        item.querySelectorAll('.sub-item .text-sm').forEach(function(sub) {
+                            if (sub.textContent.toLowerCase().includes(search.toLowerCase())) found = true;
+                        });
+                        if (found) {
+                            // Expand klausul
+                            const collapse = item.querySelector('.klausul-collapse');
+                            if (collapse) collapse.classList.remove('hidden');
+                            // Putar chevron
+                            const chevron = item.querySelector('.klausul-chevron');
+                            if (chevron) chevron.style.transform = 'rotate(90deg)';
+                        }
+
+                        // Expand head klausul jika sub cocok
+                        item.querySelectorAll('.head-item').forEach(function(headItem) {
+                            let headFound = false;
+                            // Cek sub di dalam head
+                            headItem.querySelectorAll('.sub-item .text-sm').forEach(function(sub) {
+                                if (sub.textContent.toLowerCase().includes(search.toLowerCase())) headFound = true;
+                            });
+                            if (headFound) {
+                                const collapse = headItem.querySelector('.head-klausul-collapse');
+                                if (collapse) collapse.classList.remove('hidden');
+                                const chevron = headItem.querySelector('.head-klausul-chevron');
+                                if (chevron) chevron.style.transform = 'rotate(90deg)';
+                            }
+                        });
+                    });
+                }
+            });
+        </script>
     <script>
         function addSubKlausulFieldEdit(name = '', code = '') {
             const container = document.getElementById('subKlausulListEdit');
@@ -820,6 +900,23 @@
                 }
             }
         }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Use class selectors because the elements use class, not id
+            const clearBtn = document.querySelector('.clearSearch');
+            const searchInput = document.querySelector('.searchInput');
+            const searchForm = document.querySelector('.searchForm');
+
+            clearBtn?.addEventListener('click', function(e) {
+                if (searchInput && searchForm) {
+                    e.preventDefault();
+                    searchInput.value = '';
+                    searchForm.submit();
+                }
+            });
+        });
     </script>
 @endpush
 

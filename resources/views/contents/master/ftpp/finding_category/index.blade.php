@@ -21,28 +21,45 @@
     <div id="section-finding-category" class="mx-auto px-4 py-2 bg-white rounded-lg shadow">
         {{-- Header --}}
         <div class="flex justify-between items-center mb-2">
-            {{-- Search Bar (left) --}}
-            <form id="searchForm" method="GET" class="flex items-end w-full md:w-96">
-                <div class="relative w-full">
-                    <input type="text" name="search" id="searchInput"
-                        class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
-                            focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
-                        placeholder="Type to search..." value="{{ request('search') }}">
+            <div>
+                <form method="GET" class="searchForm flex items-center w-full max-w-sm relative">
+                    <div class="relative w-96">
+                        <input type="text" name="search"
+                            class="searchInput peer w-full rounded-xl border border-gray-300 bg-white pl-4 pr-20 py-2.5
+                        text-sm text-gray-700 shadow-sm transition-all duration-200
+                        focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            placeholder="Type to search..." value="{{ request('search') }}">
 
-                    <label for="searchInput"
-                        class="absolute left-3 -top-2.5 bg-white px-1 rounded text-xs text-sky-600
-           transition-all duration-150
-           peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
-           peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-sky-600">
-                        Type to search...
-                    </label>
-                </div>
-            </form>
+                        <!-- Floating Label -->
+                        <label for="searchInput"
+                            class="absolute left-4 px-1 bg-white text-gray-400 rounded transition-all duration-150
+                        pointer-events-none
+                        {{ request('search')
+                            ? '-top-3 text-xs text-sky-600'
+                            : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                            Type to search...
+                        </label>
 
-            <button id="btnAddCategory"
-                class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                <i class="bi bi-plus"></i> Add Category
-            </button>
+                        <button type="submit"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-blue-700 transition">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
+                        @if (request('search'))
+                            <button type="button"
+                                class="clearSearch absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition">
+                                <i data-feather="x" class="w-5 h-5"></i>
+                            </button>
+                        @endif
+                    </div>
+                </form>
+            </div>
+
+            <div>
+                <button id="btnAddCategory"
+                    class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                    <i class="bi bi-plus"></i> Add Category
+                </button>
+            </div>
         </div>
 
         {{-- Table --}}
@@ -92,109 +109,64 @@
     {{-- MODAL ADD FINDING CATEGORY --}}
     <div class="modal fade" id="modalAddCategory" tabindex="-1" aria-labelledby="modalAddCategoryLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST"
-                class="modal-content rounded-4 shadow-lg">
-                @csrf
-
-                {{-- Header --}}
-                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
-                    style="background-color: #f5f5f7;">
-                    <h5 class="modal-title fw-semibold text-dark" id="modalAddCategoryLabel"
-                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
-                        <i class="bi bi-plus-circle me-2 text-primary"></i> Add Finding Category
+            <div class="modal-content rounded-lg shadow-lg">
+                <div class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i> Add Finding Category
                     </h5>
-                    <button type="button"
-                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
-                        data-bs-dismiss="modal" aria-label="Close"
-                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
-                {{-- Body --}}
-                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
-                    <div class="row g-4">
-                        <div class="col-md-12">
-                            <label for="category_name" class="form-label fw-semibold">Category Name <span
-                                    class="text-danger">*</span></label>
+                <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4 space-y-3" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                        <div>
+                            <label for="category_name" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" id="category_name" placeholder="Input Category Name"
-                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
+                                class="form-control border-1 @error('name') is-invalid @enderror" required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                </div>
-
-                {{-- Footer --}}
-                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
-                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal"
-                        style="text-decoration: none; transition: background-color 0.3s ease;">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="btn px-3 py-2 bg-gradient-to-r from-primaryLight
-                    to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                        Submit
-                    </button>
-                </div>
-            </form>
+                    <div class="modal-footer border-t">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Submit</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
 
+
     {{-- MODAL EDIT FINDING CATEGORY --}}
-    <div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form id="formEditCategory" method="POST" class="modal-content rounded-4 shadow-lg">
-                @csrf
-                @method('PUT')
-
-                {{-- Header --}}
-                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
-                    style="background-color: #f5f5f7;">
-                    <h5 class="modal-title fw-semibold text-dark" id="modalEditCategoryLabel"
-                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
-                        <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Finding Category
+            <div class="modal-content rounded-lg shadow-lg">
+                <div class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i> Edit Finding Category
                     </h5>
-                    <button type="button"
-                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
-                        data-bs-dismiss="modal" aria-label="Close"
-                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
-                {{-- Body --}}
-                <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
-                    <div class="row g-4">
-                        <div class="col-md-12">
-                            <label for="edit_category_name" class="form-label fw-semibold">Category Name <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" name="name" id="edit_category_name"
-                                placeholder="Input Category Name" required
-                                class="form-control border-0 shadow-sm rounded-3 @error('name') is-invalid @enderror">
+                <form id="formEditCategory" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body p-4 space-y-3" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                        <div>
+                            <label for="edit_category_name" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="edit_category_name" placeholder="Input Category Name" required class="form-control border-1 @error('name') is-invalid @enderror">
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                </div>
-
-                {{-- Footer --}}
-                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
-                    <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
-                        data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-
-                        Save Changes
-                    </button>
-                </div>
-            </form>
+                    <div class="modal-footer border-t">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -270,6 +242,22 @@
                 document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
                 document.body.classList.remove('modal-open');
                 document.body.style.overflow = ''; // biar bisa scroll lagi
+            });
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Use class selectors because the elements use class, not id
+                const clearBtn = document.querySelector('.clearSearch');
+                const searchInput = document.querySelector('.searchInput');
+                const searchForm = document.querySelector('.searchForm');
+
+                clearBtn?.addEventListener('click', function(e) {
+                    if (searchInput && searchForm) {
+                        e.preventDefault();
+                        searchInput.value = '';
+                        searchForm.submit();
+                    }
+                });
             });
         </script>
     @endpush
