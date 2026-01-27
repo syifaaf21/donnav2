@@ -191,7 +191,7 @@
                     <tr>
                         <td class="font-semibold">Department / Process / Product:</td>
                         <td>
-                            {{ \Illuminate\Support\Str::title($finding->department->name ?? '-') .
+                            {{ \Illuminate\Support\Str::title($finding->department_name ?? 'Unknown') .
                                 ' / ' .
                                 \Illuminate\Support\Str::title($finding->process->name ?? '-') .
                                 ' / ' .
@@ -201,9 +201,11 @@
                     <tr>
                         <td class="font-semibold">Auditee:</td>
                         <td>
-                            @foreach ($finding->auditee ?? [] as $auditee)
-                                {{ $auditee->name }}{{ !$loop->last ? ', ' : '' }}
-                            @endforeach
+                            @if ($finding->auditee && $finding->auditee->isNotEmpty())
+                                {{ $finding->auditee->pluck('name')->join(', ') }}
+                            @else
+                                -
+                            @endif
                         </td>
                     </tr>
                     <tr>

@@ -99,6 +99,43 @@ class  AuditFinding extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function getDepartmentNameAttribute()
+    {
+        return $this->department ? $this->department->name : 'Unknown';
+    }
+     public function getProductNameAttribute()
+    {
+        return $this->product ? $this->product->name : '-';
+    }
+
+    public function getProcessNameAttribute()
+    {
+        return $this->process ? $this->process->name : '-';
+    }
+
+    public function getFindingCategoryNameAttribute()
+    {
+        return $this->findingCategory ? $this->findingCategory->name : '-';
+    }
+
+    public function getAuditTypeNameAttribute()
+    {
+        return $this->audit ? $this->audit->name : '-';
+    }
+
+    public function getAuditorNameAttribute()
+    {
+        return $this->auditor ? $this->auditor->name : '-';
+    }
+
+    public function getAuditeeNamesAttribute()
+    {
+        if ($this->auditee && $this->auditee->isNotEmpty()) {
+            return $this->auditee->pluck('name')->join(', ');
+        }
+        return '-';
+    }
+    
     public function process()
     {
         return $this->belongsTo(Process::class);

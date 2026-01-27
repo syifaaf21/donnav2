@@ -383,7 +383,7 @@
                                                 <span
                                                     class="text-xs font-semibold">{{ $finding->registration_number ?? '-' }}</span>
                                                 <span class="text-xs text-gray-500">
-                                                    {{ optional($finding->department)->name ?? '-' }}
+                                                    {{ $finding->department_name ?? 'Unknown' }}
                                                 </span>
                                             </div>
                     </div>
@@ -406,7 +406,7 @@
                         <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
                     </td>
                     <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
-                        {{ optional($finding->auditor)->name ?? '-' }}</td>
+                        {{ $finding->auditor_name }}</td>
                     <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
                         @if ($finding->auditee && $finding->auditee->isNotEmpty()) title="{{ $finding->auditee->pluck('name')->join(', ') }}" @endif>
 
