@@ -47,7 +47,7 @@ class FtppController extends Controller
         if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
             // no department/audience filter
         }
-        // Dept Head & Lead Auditor: can see all FTTP in their department(s)
+        // Dept Head & Lead Auditor: can see all FTTP in their department(s), but exclude draft/draft finding
         elseif (!empty($user) && (in_array('dept head', $userRolesLowercase) || in_array('lead auditor', $userRolesLowercase))) {
             $userDeptIds = $user->departments->pluck('id')->toArray();
             if (empty($userDeptIds) && !empty($user->department_id)) {
@@ -55,7 +55,10 @@ class FtppController extends Controller
             }
 
             if (!empty($userDeptIds)) {
-                $query->whereIn('department_id', $userDeptIds);
+                $query->whereIn('department_id', $userDeptIds)
+                    ->whereHas('status', function ($qs) {
+                        $qs->whereRaw('LOWER(name) NOT IN (?, ?)', ['draft', 'draft finding']);
+                    });
             } else {
                 // if dept head/lead auditor has no department assigned, show nothing
                 $query->whereRaw('0 = 1');
