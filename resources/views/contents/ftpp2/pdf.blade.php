@@ -301,6 +301,28 @@
             <td class="font-semibold">Root Cause</td>
             <td class="preserve-newlines">{!! strip_tags($finding->auditeeAction->root_cause ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
         </tr>
+        {{-- List image attachments from auditee action --}}
+        @php
+            $auditeeImages = collect($finding->auditeeAction->file ?? [])->filter(function($file) {
+                $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+                return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']);
+            });
+        @endphp
+        @if($auditeeImages->count())
+        <tr>
+            <td colspan="2">
+                <b>Attachment Images (Auditee Action):</b>
+                <ol style="margin: 0 0 0 18px; padding: 0;">
+                @foreach($auditeeImages as $img)
+                    <li style="margin-bottom: 6px;">
+                        {{ $img->file_name }}<br>
+                        <span style="font-size:10px;color:#888;">Uploaded at: {{ \Carbon\Carbon::parse($img->created_at)->format('d M Y H:i') }}</span>
+                    </li>
+                @endforeach
+                </ol>
+            </td>
+        </tr>
+        @endif
     </table>
 
     {{-- ==================== CORRECTIVE & PREVENTIVE ==================== --}}
@@ -490,7 +512,7 @@
     <p class="note">Note : 1 Lembar form untuk satu temuan, tambahkan lampiran jika diperlukan</p>
     <p class="note">No Form : FRM-MR-M4-001-06</p>
 
-    {{-- ==================== ATTACHMENTS ================== --}}
+     {{-- ==================== ATTACHMENTS ================== --}}
     {{-- LAMPIRAN FILE --}}
     @if ($finding->auditeeAction && $finding->auditeeAction->file->count())
         <div class="page-break">

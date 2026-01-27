@@ -20,6 +20,8 @@ use App\Models\User;
 use App\Models\WhyCauses;
 use App\Notifications\AuditeeAssignedNotification;
 use App\Notifications\FtppActionNotification;
+use App\Notifications\DeptHeadNeedCheckNotification;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
@@ -301,6 +303,10 @@ class AuditeeActionController extends Controller
                                         ->whereColumn('tt_user_department.user_id', 'users.id')
                                         ->where('tt_user_department.department_id', $deptId);
                                 });
+
+                                if (Schema::hasColumn('users', 'department_id')) {
+                                    $q->orWhere('department_id', $deptId);
+                                }
                             })
                             ->get();
 
@@ -308,15 +314,43 @@ class AuditeeActionController extends Controller
                             $regNum = $auditFinding?->registration_number ?? 'N/A';
                             $customMessage = "Finding (No: {$regNum}) needs your review.";
 
+                            // Separate mail recipients (have email) from all dept heads
+                            $allDeptHeads = $deptHeads->unique('id')->values();
+                            $mailRecipients = $allDeptHeads->filter(fn($u) => !empty($u->email))->values();
+
+                            try {
+                                $emailsAll = $allDeptHeads->pluck('email')->toArray();
+                                $emailsMail = $mailRecipients->pluck('email')->toArray();
+                                \Log::info('DeptHeadNeedCheckNotification: recipients', ['all' => $emailsAll, 'mail' => $emailsMail, 'reply_to' => auth()->user()?->email]);
+                            } catch (\Throwable $e) {
+                                \Log::warning('Failed to log dept head recipients: ' . $e->getMessage());
+                            }
+
+                            // 1) database notification for all dept heads (so they see it in-app)
                             Notification::send(
-                                $deptHeads->unique('id')->values(),
+                                $allDeptHeads,
                                 new FtppActionNotification(
                                     $auditFinding,
-                                    'assigned', // action type
-                                    null,                // byUser optional
-                                    $customMessage       // custom message
+                                    'assigned',
+                                    null,
+                                    $customMessage
                                 )
                             );
+
+                            // 2) send email-only notification to users that have email addresses
+                            if ($mailRecipients->isNotEmpty()) {
+                                Notification::send(
+                                    $mailRecipients,
+                                    new DeptHeadNeedCheckNotification(
+                                        $auditFinding,
+                                        $auditeeAction,
+                                        auth()->user()?->name,
+                                        auth()->user()?->email
+                                    )
+                                );
+                            } else {
+                                \Log::warning('DeptHeadNeedCheckNotification: no dept head email addresses found for department_id ' . ($deptId ?? 'N/A'));
+                            }
                         }
                     }
                 }
@@ -642,22 +676,42 @@ class AuditeeActionController extends Controller
                     $deptId = (int) $auditFinding->department_id;
                     $regNum = (string) $auditFinding->registration_number;
 
-                    $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['dept head']))
-                        ->where(function ($q) use ($deptId) {
-                            // avoid ambiguous `id` by checking existence in pivot table explicitly
-                            $q->whereExists(function ($sub) use ($deptId) {
-                                $sub->select(\DB::raw(1))
-                                    ->from('tt_user_department')
-                                    ->whereColumn('tt_user_department.user_id', 'users.id')
-                                    ->where('tt_user_department.department_id', $deptId);
-                            });
-                        })
-                        ->get();
+                        $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['dept head']))
+                            ->where(function ($q) use ($deptId) {
+                                // avoid ambiguous `id` by checking existence in pivot table explicitly
+                                $q->whereExists(function ($sub) use ($deptId) {
+                                    $sub->select(\DB::raw(1))
+                                        ->from('tt_user_department')
+                                        ->whereColumn('tt_user_department.user_id', 'users.id')
+                                        ->where('tt_user_department.department_id', $deptId);
+                                });
+
+                                // also include users who have department_id set on users table,
+                                // but only if that column exists in the current schema
+                                if (Schema::hasColumn('users', 'department_id')) {
+                                    $q->orWhere('department_id', $deptId);
+                                }
+                            })
+                            ->get();
 
                     if ($deptHeads->isNotEmpty()) {
                         $customMessage = "Finding (No: {$regNum}) needs your review.";
+
+                        // Separate mail recipients (have email) from all dept heads
+                        $allDeptHeads = $deptHeads->unique('id')->values();
+                        $mailRecipients = $allDeptHeads->filter(fn($u) => !empty($u->email))->values();
+
+                        try {
+                            $emailsAll = $allDeptHeads->pluck('email')->toArray();
+                            $emailsMail = $mailRecipients->pluck('email')->toArray();
+                            \Log::info('DeptHeadNeedCheckNotification (update): recipients', ['all' => $emailsAll, 'mail' => $emailsMail, 'reply_to' => auth()->user()?->email]);
+                        } catch (\Throwable $e) {
+                            \Log::warning('Failed to log dept head recipients (update): ' . $e->getMessage());
+                        }
+
+                        // database notification for all dept heads
                         Notification::send(
-                            $deptHeads->unique('id')->values(),
+                            $allDeptHeads,
                             new FtppActionNotification(
                                 $auditFinding,
                                 'auditee_revised', // custom action type
@@ -665,6 +719,21 @@ class AuditeeActionController extends Controller
                                 $customMessage
                             )
                         );
+
+                        // send email-only notification to users that have email addresses
+                        if ($mailRecipients->isNotEmpty()) {
+                            Notification::send(
+                                $mailRecipients,
+                                new DeptHeadNeedCheckNotification(
+                                    $auditFinding,
+                                    $auditeeAction,
+                                    auth()->user()?->name,
+                                    auth()->user()?->email
+                                )
+                            );
+                        } else {
+                            \Log::warning('DeptHeadNeedCheckNotification (update): no dept head email addresses found for department_id ' . ($deptId ?? 'N/A'));
+                        }
                     }
                 }
             } catch (\Throwable $e) {
