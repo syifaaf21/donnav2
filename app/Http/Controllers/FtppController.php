@@ -724,7 +724,13 @@ class FtppController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        $finding = AuditFinding::find($id);
+        $finding = AuditFinding::with([
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
+            'auditeeAction.file',
+            'file',
+        ])->find($id);
         if (!$finding) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Finding not found'], 404);
@@ -733,16 +739,59 @@ class FtppController extends Controller
         }
 
         try {
-            $finding->delete();
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['message' => 'Finding deleted successfully']);
+            $markedForDeletionAt = now()->addYear();
+            // Tandai finding utama
+            $finding->marked_for_deletion_at = $markedForDeletionAt;
+            $finding->save();
+
+            // Tandai auditee action dan relasi-relasinya jika ada
+            if ($finding->auditeeAction) {
+                $finding->auditeeAction->marked_for_deletion_at = $markedForDeletionAt;
+                $finding->auditeeAction->save();
+                // WhyCauses
+                foreach ($finding->auditeeAction->whyCauses as $why) {
+                    $why->marked_for_deletion_at = $markedForDeletionAt;
+                    $why->save();
+                }
+                // CorrectiveActions
+                foreach ($finding->auditeeAction->correctiveActions as $corr) {
+                    $corr->marked_for_deletion_at = $markedForDeletionAt;
+                    $corr->save();
+                }
+                // PreventiveActions
+                foreach ($finding->auditeeAction->preventiveActions as $prev) {
+                    $prev->marked_for_deletion_at = $markedForDeletionAt;
+                    $prev->save();
+                }
+                // Files (auditeeAction)
+                foreach ($finding->auditeeAction->file as $file) {
+                    $file->marked_for_deletion_at = $markedForDeletionAt;
+                    $file->save();
+                }
             }
-            return redirect('/ftpp')->with('success', 'Record deleted.');
+            // Files (finding)
+            foreach ($finding->file as $file) {
+                $file->marked_for_deletion_at = $markedForDeletionAt;
+                $file->save();
+            }
+
+            // Tandai AuditFindingAuditee (pivot auditee)
+            \App\Models\AuditFindingAuditee::where('audit_finding_id', $finding->id)
+                ->update(['marked_for_deletion_at' => $markedForDeletionAt]);
+
+            // Tandai AuditFindingSubKlausul (pivot sub klausul)
+            \App\Models\AuditFindingSubKlausul::where('audit_finding_id', $finding->id)
+                ->update(['marked_for_deletion_at' => $markedForDeletionAt]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['message' => 'Finding scheduled for deletion in 1 year']);
+            }
+            return redirect('/ftpp')->with('success', 'Finding scheduled for deletion in 1 year.');
         } catch (\Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['message' => 'Failed to delete'], 500);
+                return response()->json(['message' => 'Failed to schedule deletion'], 500);
             }
-            return redirect('/ftpp')->with('error', 'Failed to delete record.');
+            return redirect('/ftpp')->with('error', 'Failed to schedule deletion.');
         }
     }
 

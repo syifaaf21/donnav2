@@ -31,6 +31,7 @@ class DocumentMapping extends Model
         'last_approved_at',
         'review_notified_at',
         'plant',
+        'marked_for_deletion_at',
     ];
 
     protected $casts = [

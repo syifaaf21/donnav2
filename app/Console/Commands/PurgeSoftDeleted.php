@@ -13,7 +13,7 @@ class PurgeSoftDeleted extends Command
      *
      * @var string
      */
-    protected $signature = 'ftpp:purge-soft-deleted {--days=365 : Age in days to keep soft deleted records}';
+    protected $signature = 'ftpp:purge-soft-deleted {--days=0 : Age in days to keep soft deleted records}';
 
     /**
      * The console command description.
@@ -28,7 +28,10 @@ class PurgeSoftDeleted extends Command
     public function handle(): int
     {
         $days = (int) $this->option('days');
-        $threshold = Carbon::now()->subDays($days);
+        $threshold = \Carbon\Carbon::now()->subDays($days);
+
+        $this->info('Carbon now: ' . \Carbon\Carbon::now());
+        $this->info('Threshold: ' . $threshold);
 
         $models = [
             \App\Models\AuditFinding::class,
@@ -43,19 +46,22 @@ class PurgeSoftDeleted extends Command
 
         foreach ($models as $modelClass) {
             try {
-                // Resolve the deleted-at column for the model (respect DELETED_AT constant overrides)
                 $modelInstance = new $modelClass;
                 $deletedAtCol = $modelInstance->getDeletedAtColumn();
 
-                $count = $modelClass::onlyTrashed()->where($deletedAtCol, '<=', $threshold)->count();
+                $query = $modelClass::withoutGlobalScopes()
+                    ->whereNotNull($deletedAtCol)
+                    ->whereDate($deletedAtCol, '<=', $threshold->toDateString());
+
+                $count = $query->count();
                 if ($count > 0) {
                     $this->info("Purging {$count} records from {$modelClass} (column: {$deletedAtCol})");
-                    $modelClass::onlyTrashed()->where($deletedAtCol, '<=', $threshold)->forceDelete();
+                    $query->forceDelete();
                 } else {
                     $this->info("No records to purge for {$modelClass}");
                 }
             } catch (\Throwable $e) {
-                Log::error('PurgeSoftDeleted error for ' . $modelClass . ': ' . $e->getMessage());
+                \Log::error('PurgeSoftDeleted error for ' . $modelClass . ': ' . $e->getMessage());
                 $this->error('Error purging ' . $modelClass . ': ' . $e->getMessage());
             }
         }

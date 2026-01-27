@@ -41,7 +41,7 @@ class Kernel extends ConsoleKernel
             ->daily()
             ->withoutOverlapping()
             ->runInBackground();
-        $schedule->command('ftpp:purge-soft-deleted --days=365')
+        $schedule->command('ftpp:purge-soft-deleted')
             ->daily()
             ->withoutOverlapping()
             ->runInBackground();
