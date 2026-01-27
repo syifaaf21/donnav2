@@ -94,37 +94,37 @@
 
             <div id="tableContainer">
                 {{-- Table --}}
-                <div
+               <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
-                    <table class="min-w-full text-sm text-gray-700">
-                        <thead class="sticky top-0 z-10">
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">No</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Part
+                    <table class="min-w-full divide-y divide-gray-200 text-gray-700">
+                        <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
+                            <tr>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">No</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Part
                                     Number</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Product
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Product
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Model</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Process
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Model</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Process
                                 </th>
-                                <th class="px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wide">Plant</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Plant</th>
                                 <th
-                                    class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                    Actions</th>
+                                    class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-x divide-gray-200">
                             @forelse ($partNumbers as $part)
                                 <tr class="hover:bg-gray-50 transition-all duration-150">
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-3 border-r border-gray-200">
                                         {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3">{{ $part->part_number }}</td>
-                                    <td class="px-4 py-3">{{ $part->product->name ?? '-' }}</td>
-                                    <td class="px-4 py-3">{{ $part->productModel->name ?? '-' }}</td>
-                                    <td class="px-4 py-3">{{ ucwords($part->process->name) ?? '-' }}</td>
-                                    <td class="px-4 py-3">{{ ucwords($part->plant) }}</td>
-                                    <td class="px-4 py-3 text-center">
+                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">{{ $part->part_number }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->product->name ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->productModel->name ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ ucwords($part->process->name) ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ ucwords($part->plant) }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200 text-center">
                                         <button type="button" data-bs-toggle="modal"
                                             data-bs-target="#editPartNumberModal-{{ $part->id }}"
                                             data-bs-title="Edit Part Number"
