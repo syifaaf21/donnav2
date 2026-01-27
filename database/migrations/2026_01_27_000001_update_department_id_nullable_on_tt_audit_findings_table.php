@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // --- tt_audit_findings ---
         // Drop foreign key constraints first
         Schema::table('tt_audit_findings', function (Blueprint $table) {
             $table->dropForeign(['department_id']);
@@ -56,6 +57,35 @@ return new class extends Migration
                 ->on('users')
                 ->nullOnDelete();
         });
+
+        // --- tm_part_numbers ---
+        // Drop foreign key constraints first
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
+            $table->dropForeign(['product_id']);
+            $table->dropForeign(['model_id']);
+            $table->dropForeign(['process_id']);
+        });
+        // Make product_id, model_id, process_id nullable
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
+            $table->unsignedBigInteger('product_id')->nullable()->change();
+            $table->unsignedBigInteger('model_id')->nullable()->change();
+            $table->unsignedBigInteger('process_id')->nullable()->change();
+        });
+        // Add new foreign keys with set null on delete
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
+            $table->foreign('product_id')
+                ->references('id')
+                ->on('tm_products')
+                ->nullOnDelete();
+            $table->foreign('model_id')
+                ->references('id')
+                ->on('tm_models')
+                ->nullOnDelete();
+            $table->foreign('process_id')
+                ->references('id')
+                ->on('tm_processes')
+                ->nullOnDelete();
+        });
     }
 
     /**
@@ -63,6 +93,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // --- tt_audit_findings ---
         // Drop the modified foreign keys
         Schema::table('tt_audit_findings', function (Blueprint $table) {
             $table->dropForeign(['department_id']);
@@ -112,6 +143,35 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('cascade')
                 ->change();
+        });
+
+        // --- tm_part_numbers ---
+        // Drop the modified foreign keys
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
+            $table->dropForeign(['product_id']);
+            $table->dropForeign(['model_id']);
+            $table->dropForeign(['process_id']);
+        });
+        // Make product_id, model_id, process_id not nullable
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
+            $table->unsignedBigInteger('product_id')->nullable(false)->change();
+            $table->unsignedBigInteger('model_id')->nullable(false)->change();
+            $table->unsignedBigInteger('process_id')->nullable(false)->change();
+        });
+        // Add new foreign keys with cascade on delete
+        Schema::table('tm_part_numbers', function (Blueprint $table) {
+            $table->foreign('product_id')
+                ->references('id')
+                ->on('tm_products')
+                ->onDelete('cascade');
+            $table->foreign('model_id')
+                ->references('id')
+                ->on('tm_models')
+                ->onDelete('cascade');
+            $table->foreign('process_id')
+                ->references('id')
+                ->on('tm_processes')
+                ->onDelete('cascade');
         });
     }
 };

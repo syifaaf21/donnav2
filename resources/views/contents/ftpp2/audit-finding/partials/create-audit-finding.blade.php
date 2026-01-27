@@ -149,9 +149,7 @@
 
             {{-- ATTACHMENT --}}
             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-
                 <div class="font-semibold text-lg text-gray-700">Attachments</div>
-
                 {{-- Tips Alert --}}
                 <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
                     <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
@@ -163,12 +161,10 @@
                         </p>
                     </div>
                 </div>
-
                 <div>
                     <!-- Preview containers (sesuaikan posisi di form) -->
                     <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
                     <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
-
                     <!-- Attachment button (paperclip) -->
                     <div class="relative inline-block">
                         <button id="attachBtn" type="button"
@@ -177,7 +173,6 @@
                             <i data-feather="paperclip" class="w-4 h-4"></i>
                             <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
                         </button>
-
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
                             class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
@@ -193,13 +188,9 @@
                             </button>
                         </div>
                     </div>
-
                     <!-- ✅ Hidden file inputs - Ubah ke 'attachments[]' -->
-                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple
-                        class="hidden">
-                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple
-                        class="hidden">
-
+                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple class="hidden">
+                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple class="hidden">
                     <!-- ✅ Error message container for attachments -->
                     @error('attachments')
                         <div class="mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
@@ -212,7 +203,6 @@
                         </div>
                     @enderror
                 </div>
-
                 <div class="ml-auto flex gap-2 mt-2">
                     <button type="button" onclick="saveHeaderOnly('draft', this)"
                         class="border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100 transition-colors">
