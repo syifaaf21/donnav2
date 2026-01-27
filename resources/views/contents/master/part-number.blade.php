@@ -122,7 +122,7 @@
                                     <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">{{ $part->part_number }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->product->name ?? '-' }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->productModel->name ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ ucwords($part->process->name) ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->process ? ucwords($part->process->name) : '-' }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ ucwords($part->plant) }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200 text-center">
                                         <button type="button" data-bs-toggle="modal"
