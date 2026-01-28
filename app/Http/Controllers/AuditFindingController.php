@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Models\Status;
 use App\Notifications\FindingCreatedNotification;
 use App\Notifications\FtppActionNotification;
+use App\Notifications\AuditeeNeedAssignNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
@@ -236,6 +237,13 @@ class AuditFindingController extends Controller
                         'created'
                     )
                 );
+                // Also send an email prompting auditees to fill Why-Cause, root cause,
+                // Corrective and Preventive actions.
+                try {
+                    Notification::send($recipients, new AuditeeNeedAssignNotification($auditFinding));
+                } catch (\Throwable $e) {
+                    \Log::warning('AuditeeNeedAssignNotification failed: ' . $e->getMessage());
+                }
             }
         } catch (\Throwable $e) {
             \Log::warning('Notify auditee (finding created) failed: ' . $e->getMessage());
@@ -513,7 +521,7 @@ class AuditFindingController extends Controller
     /**
      * Compress image using GD library (fallback)
      */
-    
+
 
     /**
      * Display the specified resource.
@@ -615,10 +623,12 @@ class AuditFindingController extends Controller
 
         $auditFinding = AuditFinding::findOrFail($id);
 
-        // Check if current status is "Draft Finding"
+        // Check if current status is "Draft Finding" (use status id lookup for robustness)
         $isDraftFinding = false;
-        if ($auditFinding->status) {
-            $isDraftFinding = strtolower($auditFinding->status->name) === 'draft finding';
+        $previousStatusId = $auditFinding->status_id;
+        $draftStatus = Status::where('name', 'Draft Finding')->first();
+        if ($draftStatus && $previousStatusId) {
+            $isDraftFinding = $previousStatusId == $draftStatus->id;
         }
 
         // ✅ Determine status based on action
@@ -701,6 +711,36 @@ class AuditFindingController extends Controller
         $this->handleFileUploads($request, $auditFinding);
 
         $message = $isSubmit ? 'Finding submitted successfully! Status changed to Need Assign.' : 'Audit Finding saved successfully!';
+
+        // Notify auditees on update only when submitted.
+        // Send in-app notification on submit; send email only if resulting status is 'Need Assign'.
+        try {
+            if ($isSubmit) {
+                $recipients = $auditFinding->auditee()->get()->unique('id')->filter()->values();
+                if ($recipients->isNotEmpty()) {
+                    // in-app / system notification
+                    Notification::send(
+                        $recipients,
+                        new FtppActionNotification(
+                            $auditFinding,
+                            'submitted'
+                        )
+                    );
+
+                    // Only send email when status is Need Assign (even if previously Draft)
+                    try {
+                        $needAssignStatus = Status::where('name', 'Need Assign')->first();
+                        if ($needAssignStatus && $statusId == $needAssignStatus->id) {
+                            Notification::send($recipients, new AuditeeNeedAssignNotification($auditFinding));
+                        }
+                    } catch (\Throwable $e) {
+                        \Log::warning('AuditeeNeedAssignNotification (update) failed: ' . $e->getMessage());
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Notify auditee (update) failed: ' . $e->getMessage());
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $message, 'submitted' => $isSubmit]);

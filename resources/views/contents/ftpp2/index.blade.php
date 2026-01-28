@@ -243,14 +243,11 @@
                         in_array('Dept Head', $userRoles))
                     @php
                         $badgeCount = 0;
-                        $findCount = fn($needle) => collect($statuses)->first(
-                            fn($s) => strtolower($s->name) === strtolower($needle),
-                        )->audit_finding_count ?? 0;
+                        $user = auth()->user();
 
+                        // Dept Head: count 'need check' for their departments
                         if (in_array('Dept Head', $userRoles)) {
-                            $user = auth()->user();
                             $userDepts = $user->departments ?? ($user->department ?? null);
-
                             $deptIds = [];
                             if (
                                 $userDepts instanceof \Illuminate\Database\Eloquent\Collection ||
@@ -270,16 +267,28 @@
                             }
                         }
 
+                        // Auditor: count 'need approval by auditor' assigned to current user
                         if (in_array('Auditor', $userRoles)) {
-                            $badgeCount += $findCount('need approval by auditor');
+                            $badgeCount += \App\Models\AuditFinding::where('auditor_id', $user->id)
+                                ->whereHas('status', function ($q) {
+                                    $q->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
+                                })->count();
                         }
 
-                        if (in_array('Lead Auditor', $userRoles)) {
-                            $badgeCount += $findCount('need approval by lead auditor');
-                        }
-
+                        // Lead Auditor vs Admin: Admin/super admin see all 'need approval by lead auditor'.
+                        // If user is admin, count global; otherwise, if lead auditor, count only those matching their audit types.
                         if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles)) {
-                            $badgeCount += $findCount('need approval by lead auditor');
+                            $badgeCount += \App\Models\AuditFinding::whereHas('status', function ($q) {
+                                $q->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
+                            })->count();
+                        } elseif (in_array('Lead Auditor', $userRoles)) {
+                            $userAuditTypeIds = $user->auditTypes->pluck('id')->toArray();
+                            if (!empty($userAuditTypeIds)) {
+                                $badgeCount += \App\Models\AuditFinding::whereIn('audit_type_id', $userAuditTypeIds)
+                                    ->whereHas('status', function ($q) {
+                                        $q->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
+                                    })->count();
+                            }
                         }
                     @endphp
 

@@ -149,49 +149,75 @@ class FtppApprovalController extends Controller
         // 3) 'need approval by lead auditor' -> only visible to lead auditor(s) who have the audit type
         // Admin / Super Admin can see everything (no extra restriction)
         if (!in_array('admin', $userRoles) && !in_array('super admin', $userRoles)) {
-            $restrictedStatuses = ['need check', 'need approval by auditor', 'need approval by lead auditor'];
-            $alwaysHiddenStatuses = ['draft finding'];
+            // Build allowed statuses based on user roles. When a user has multiple roles,
+            // show the union of statuses relevant to each role (e.g., dept head + lead auditor
+            // => show 'need check' and 'need approval by lead auditor'). Always hide 'Draft Finding'.
+            $allowedStatuses = [];
+            if (in_array('dept head', $userRoles)) {
+                $allowedStatuses[] = 'need check';
+            }
+            if (in_array('auditor', $userRoles)) {
+                $allowedStatuses[] = 'need approval by auditor';
+            }
+            if (in_array('lead auditor', $userRoles)) {
+                $allowedStatuses[] = 'need approval by lead auditor';
+            }
 
-            $query->where(function ($q) use ($user, $userRoles, $userDeptIds, $userAuditTypeIds, $restrictedStatuses, $alwaysHiddenStatuses) {
-                // 0) Always hide 'draft finding' for non-admin/super admin
-                $q->whereHas('status', function ($qs) use ($alwaysHiddenStatuses) {
-                    $placeholders = implode(',', array_fill(0, count($alwaysHiddenStatuses), '?'));
-                    $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $alwaysHiddenStatuses);
+            // Ensure uniqueness and lowercase for comparison
+            $allowedStatuses = array_values(array_unique(array_map('strtolower', $allowedStatuses)));
+
+            // If no specific role-based statuses computed, fallback to department-based visibility
+            if (!empty($allowedStatuses)) {
+                $query->whereHas('status', function ($qs) use ($allowedStatuses) {
+                    $placeholders = implode(',', array_fill(0, count($allowedStatuses), '?'));
+                    $qs->whereRaw("LOWER(name) IN ($placeholders)", $allowedStatuses);
                 });
-
-                // 1) allow findings whose status is NOT one of the restricted statuses
-                $q->whereHas('status', function ($qs) use ($restrictedStatuses) {
-                    $placeholders = implode(',', array_fill(0, count($restrictedStatuses), '?'));
-                    $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $restrictedStatuses);
+                // Always exclude draft finding
+                $query->whereHas('status', function ($qs) {
+                    $qs->whereRaw("LOWER(name) <> 'draft finding'");
                 });
+            } else {
+                // Keep previous behavior when no role-specific statuses are applicable
+                // (use department-based visibility as before)
+                $restrictedStatuses = ['need check', 'need approval by auditor', 'need approval by lead auditor'];
+                $alwaysHiddenStatuses = ['draft finding'];
 
-                // 2) OR allow 'need check' for dept heads of the related department
-                if (in_array('dept head', $userRoles) && !empty($userDeptIds)) {
-                    $q->orWhere(function ($qa) use ($userDeptIds) {
-                        $qa->whereHas('status', function ($qs) {
-                            $qs->whereRaw('LOWER(name) = ?', ['need check']);
-                        })->whereIn('department_id', $userDeptIds);
+                $query->where(function ($q) use ($user, $userRoles, $userDeptIds, $userAuditTypeIds, $restrictedStatuses, $alwaysHiddenStatuses) {
+                    $q->whereHas('status', function ($qs) use ($alwaysHiddenStatuses) {
+                        $placeholders = implode(',', array_fill(0, count($alwaysHiddenStatuses), '?'));
+                        $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $alwaysHiddenStatuses);
                     });
-                }
 
-                // 3) OR allow 'need approval by auditor' for the auditor assigned on the finding
-                if (in_array('auditor', $userRoles)) {
-                    $q->orWhere(function ($qa) use ($user) {
-                        $qa->whereHas('status', function ($qs) {
-                            $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                        })->where('auditor_id', $user->id);
+                    $q->whereHas('status', function ($qs) use ($restrictedStatuses) {
+                        $placeholders = implode(',', array_fill(0, count($restrictedStatuses), '?'));
+                        $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $restrictedStatuses);
                     });
-                }
 
-                // 4) OR allow 'need approval by lead auditor' for lead auditors with matching audit types
-                if (in_array('lead auditor', $userRoles) && !empty($userAuditTypeIds)) {
-                    $q->orWhere(function ($qa) use ($userAuditTypeIds) {
-                        $qa->whereHas('status', function ($qs) {
-                            $qs->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
-                        })->whereIn('audit_type_id', $userAuditTypeIds);
-                    });
-                }
-            });
+                    if (in_array('dept head', $userRoles) && !empty($userDeptIds)) {
+                        $q->orWhere(function ($qa) use ($userDeptIds) {
+                            $qa->whereHas('status', function ($qs) {
+                                $qs->whereRaw('LOWER(name) = ?', ['need check']);
+                            })->whereIn('department_id', $userDeptIds);
+                        });
+                    }
+
+                    if (in_array('auditor', $userRoles)) {
+                        $q->orWhere(function ($qa) use ($user) {
+                            $qa->whereHas('status', function ($qs) {
+                                $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
+                            })->where('auditor_id', $user->id);
+                        });
+                    }
+
+                    if (in_array('lead auditor', $userRoles) && !empty($userAuditTypeIds)) {
+                        $q->orWhere(function ($qa) use ($userAuditTypeIds) {
+                            $qa->whereHas('status', function ($qs) {
+                                $qs->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
+                            })->whereIn('audit_type_id', $userAuditTypeIds);
+                        });
+                    }
+                });
+            }
         }
 
         $findings = $query->get();
