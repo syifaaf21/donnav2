@@ -343,12 +343,26 @@
 <x-flash-message />
 @push('scripts')
     <script>
+        // Small helper to show warnings via SweetAlert (fallback to native alert)
+        function showWarning(message) {
+            if (window.Swal && typeof Swal.fire === 'function') {
+                Swal.fire({ icon: 'warning', title: message, confirmButtonText: 'OK' });
+            } else if (window.swal && typeof window.swal === 'function') {
+                window.swal(message, { icon: 'warning' });
+            } else {
+                alert(message);
+            }
+        }
+
+        // global selectedSubIds used across functions
+        var selectedSubIds = [];
+
         // === SIDEBAR OPEN/CLOSE ===
         function openSidebar() {
-            document.getElementById('sidebarKlausul').classList.remove('hidden');
-
             let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-            if (!auditType) return alert('Please choose audit type first');
+            if (!auditType) { showWarning('Please choose audit type first'); return; }
+
+            document.getElementById('sidebarKlausul').classList.remove('hidden');
 
             // Ambil klausul berdasarkan audit type
             fetch(`/filter-klausul/${auditType}`)
@@ -371,11 +385,10 @@
             console.log("✅ FTTP script ready");
 
             // initialize selectedSubIds from any existing preview (if any)
-            if (typeof window.selectedSubIds === 'undefined') window.selectedSubIds = [];
             try {
                 const existing = Array.from(document.querySelectorAll('#selectedSubContainer [data-id]'))
                     .map(el => String(el.getAttribute('data-id')));
-                if (existing.length) window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), ...existing]));
+                if (existing.length) selectedSubIds = Array.from(new Set([...(selectedSubIds||[]), ...existing]));
             } catch (e) { /* ignore */ }
 
             // ensure placeholder shown when no sub klausul selected
@@ -434,10 +447,10 @@
 
             // --- Open/Close sidebar (tidak berubah) ---
             window.openSidebar = function() {
-                document.getElementById('sidebarKlausul').classList.remove('hidden');
-
                 let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-                if (!auditType) return alert('Please choose audit type first');
+                if (!auditType) { showWarning('Please choose audit type first'); return; }
+
+                document.getElementById('sidebarKlausul').classList.remove('hidden');
 
                 fetch(`/filter-klausul/${auditType}`)
                     .then(r => r.json())
@@ -554,7 +567,8 @@
             window.pilihSubKlausul = function() {
                 const subSelect = document.getElementById('selectSub');
                 if (!subSelect || !subSelect.value) {
-                    return alert('Please choose a sub clause first');
+                    showWarning('Please choose a sub clause first');
+                    return;
                 }
                 const subId = subSelect.value;
                 const subText = subSelect.selectedOptions[0].text;
@@ -574,18 +588,24 @@
             closeSidebar();
         }
 
-        let selectedSubIds = []; // simpan id yang sudah dipilih
+        
 
         function addSubKlausul() {
             const subSelect = document.getElementById('selectSub');
             const subId = subSelect.value;
             const subText = subSelect.selectedOptions[0]?.text;
 
-            if (!subId) return alert('Please choose a sub clause first');
-            if ((window.selectedSubIds || []).includes(String(subId))) return alert('This sub clause is already added');
+            if (!subId) {
+                showWarning('Please choose a sub clause first');
+                return;
+            }
+            if ((selectedSubIds || []).includes(String(subId))) {
+                showWarning('This sub clause is already added');
+                return;
+            }
 
             // mark as selected and remove option from select to prevent re-adding
-            window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), String(subId)]));
+            selectedSubIds = Array.from(new Set([...(selectedSubIds||[]), String(subId)]));
             if (subSelect) {
                 const opt = subSelect.querySelector(`option[value="${subId}"]`);
                 if (opt) opt.remove();
@@ -608,7 +628,7 @@
 
             // tombol hapus — restore option to select when removed
             span.querySelector('button').onclick = function() {
-                window.selectedSubIds = (window.selectedSubIds || []).filter(id => String(id) !== String(subId));
+                selectedSubIds = (selectedSubIds || []).filter(id => String(id) !== String(subId));
                 // re-insert option back to select if sidebar is open / select exists
                 const sel = document.getElementById('selectSub');
                 if (sel && !sel.querySelector(`option[value="${subId}"]`)) {
@@ -742,12 +762,14 @@
             const prod = prodSelect.value;
 
             if (!plant) {
-                return alert("Please choose plant first");
+                showWarning("Please choose plant first");
+                return;
             }
 
             // ✅ harus pilih department
             if (!dept) {
-                return alert("Please select Department.");
+                showWarning("Please select Department.");
+                return;
             }
 
             // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
@@ -821,7 +843,7 @@
 
         function openAuditeeSidebar() {
             const dept = document.getElementById('selectedDepartment').value;
-            if (!dept) return alert("Please choose department/plant first!");
+            if (!dept) { showWarning("Please choose department/plant first!"); return; }
             loadAuditeeOptions(dept);
             document.getElementById('auditeeSidebar').classList.remove('hidden');
         }
