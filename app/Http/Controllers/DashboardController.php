@@ -316,13 +316,40 @@ class DashboardController extends Controller
         // Status breakdown untuk distribusi
         $statusBreakdown = $chartData->toArray();
 
+        // Departments list (id => name)
+        $departments = Department::pluck('name', 'id')->toArray();
+
+        // Build per-department status matrix, excluding statuses that contain 'draft'
+        $deptStatusMatrix = [];
+        foreach ($departments as $deptId => $deptName) {
+            $rows = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
+                ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
+                ->where('tt_audit_findings.department_id', $deptId)
+                ->groupBy('tm_statuses.name')
+                ->pluck('total', 'status')
+                ->toArray();
+
+            // filter out statuses containing 'draft' (case-insensitive)
+            $filtered = [];
+            foreach ($rows as $s => $count) {
+                if (stripos($s, 'draft') !== false) {
+                    continue;
+                }
+                $filtered[$s] = (int) $count;
+            }
+
+            // store keyed by department name for display in the view
+            $deptStatusMatrix[$deptName] = $filtered;
+        }
+
         return view('contents.ftpp-dashboard', compact(
             'totalFtpp',
             'chartData',
             'deptLabels',
             'deptTotals',
             'recentFindings',
-            'statusBreakdown'
+            'statusBreakdown',
+            'deptStatusMatrix'
         ));
     }
 }

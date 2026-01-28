@@ -146,6 +146,79 @@
             </div>
         </div>
 
+        {{-- ===== DETAILS: Department Status Breakdown (Full Width) ===== --}}
+        <div class="row g-3 mt-3">
+            <div class="col-12">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2"
+                    style="border-radius: 10px;">
+                    <div class="card-body p-2">
+                        <div class="fw-semibold mb-2 d-flex align-items-center gap-2"
+                            style="font-size: 0.95rem; color: #1f2937;">
+                            <div
+                                style="width: 28px; height: 28px; background-color: rgba(99,102,241,0.12); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <i data-feather="layers"
+                                    style="width: 16px; height: 16px; color: rgba(99,102,241,0.85);"></i>
+                            </div>
+                            <span>Department Status Details</span>
+                        </div>
+
+                        @php
+                            // Expected format: [ 'Dept Name' => [ 'Status Name' => count, ... ], ... ]
+                            $matrix = $deptStatusMatrix ?? [];
+                            $statuses = [];
+                            foreach ($matrix as $dept => $map) {
+                                if (!is_array($map)) continue;
+                                foreach ($map as $s => $v) {
+                                    // exclude any status containing 'draft' (case-insensitive)
+                                    if (stripos($s, 'draft') !== false) continue;
+                                    if (!in_array($s, $statuses)) $statuses[] = $s;
+                                }
+                            }
+                        @endphp
+
+                        @if (empty($matrix))
+                            <div class="alert alert-info small mb-0">
+                                Department status breakdown not available. Please provide <strong>$deptStatusMatrix</strong> from the controller in the format: <em>['Dept Name' => ['Status Name' => count]]</em>.
+                            </div>
+                        @else
+                            {{-- Chart: Department status (stacked bar) --}}
+                            <div class="mb-3">
+                                <canvas id="deptStatusChart" height="140"></canvas>
+                            </div>
+
+                            <div class="table-responsive mt-2">
+                                <table class="table table-sm table-hover mb-0 align-middle" style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
+                                    <thead class="table-header-blue">
+                                        <tr>
+                                            <th class="small py-2">Department</th>
+                                            @foreach($statuses as $s)
+                                                <th class="small py-2 text-center">{{ $s }}</th>
+                                            @endforeach
+                                            <th class="small py-2 text-center">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($matrix as $dept => $map)
+                                            <tr>
+                                                <td class="small py-2">{{ $dept }}</td>
+                                                @php $rowTotal = 0; @endphp
+                                                @foreach($statuses as $s)
+                                                    @php $val = isset($map[$s]) ? (int) $map[$s] : 0; $rowTotal += $val; @endphp
+                                                    <td class="small py-2 text-center">{{ $val }}</td>
+                                                @endforeach
+                                                <td class="small py-2 text-center fw-semibold">{{ $rowTotal }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- ===== CHARTS SECTION ROW 3: Recent Findings Table (Full Width) ===== --}}
         <div class="row g-3 mt-3">
             <div class="col-12">
@@ -250,6 +323,7 @@
         const deptLabels = @json($deptLabels);
         const deptTotals = @json($deptTotals);
         const statusBreakdown = @json($statusBreakdown);
+        const deptStatusMatrix = @json($deptStatusMatrix ?? []);
     </script>
 
     <script>
@@ -410,6 +484,60 @@
                 }
             }
         });
+
+        /* ===================== DEPARTMENT STATUS CHART (STACKED) ===================== */
+        (function renderDeptStatusChart() {
+            try {
+                const matrix = deptStatusMatrix || {};
+                const departments = Object.keys(matrix);
+                if (!departments.length) return;
+
+                // collect unique statuses across departments (preserve order found)
+                const statusSet = new Set();
+                departments.forEach(d => {
+                    const map = matrix[d] || {};
+                    Object.keys(map).forEach(s => statusSet.add(s));
+                });
+                const statuses = Array.from(statusSet);
+                if (!statuses.length) return;
+
+                // color generator
+                const preset = [
+                    '#7BA7FF', '#A8E6CF', '#FFD3B6', '#FFAAA5', '#D4A5A5', '#FFE0AC', '#6EC6E2', '#8BD3C7', '#C0E4FF'
+                ];
+                const colorFor = i => preset[i % preset.length] || `hsl(${(i*47)%360} 70% 65%)`;
+
+                const datasets = statuses.map((s, idx) => ({
+                    label: s,
+                    data: departments.map(d => (matrix[d] && matrix[d][s]) ? matrix[d][s] : 0),
+                    backgroundColor: colorFor(idx),
+                    borderWidth: 0,
+                }));
+
+                const ctx = document.getElementById('deptStatusChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: departments,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                        scales: {
+                            x: { stacked: true, ticks: { autoSkip: false } },
+                            y: { stacked: true, beginAtZero: true }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('deptStatusChart error', e);
+            }
+        })();
 
         /* ===================== SCROLL TO TOP BUTTON ===================== */
         document.addEventListener('DOMContentLoaded', function() {
