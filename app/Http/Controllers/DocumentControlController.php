@@ -171,7 +171,7 @@ class DocumentControlController extends Controller
             $selectedLabels = array_map(fn($k) => $statuses[$k] ?? null, $selectedStatuses);
             $selectedLabels = array_filter($selectedLabels); // buang null
             if (!empty($selectedLabels)) {
-                $query->whereHas('status', function($q) use ($selectedLabels) {
+                $query->whereHas('status', function ($q) use ($selectedLabels) {
                     $q->whereIn('name', $selectedLabels);
                 });
             }
@@ -189,17 +189,17 @@ class DocumentControlController extends Controller
         // Counting per status
         $statusCounts = [];
         foreach ($statuses as $key => $label) {
-            $statusCounts[$key] = DocumentMapping::where(function($q) use ($dept, $department) {
+            $statusCounts[$key] = DocumentMapping::where(function ($q) use ($dept, $department) {
                 if ($department === 'Unknown') {
                     $q->whereNull('department_id');
                 } else if ($dept) {
                     $q->where('department_id', $dept->id);
                 }
             })
-            ->whereHas('status', fn($q) => $q->where('name', $label))
-            ->whereNull('marked_for_deletion_at')
-            ->whereHas('document', fn($q) => $q->where('type', 'control'))
-            ->count();
+                ->whereHas('status', fn($q) => $q->where('name', $label))
+                ->whereNull('marked_for_deletion_at')
+                ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                ->count();
         }
 
         return view('contents.document-control.partials.department-details', [
@@ -210,6 +210,48 @@ class DocumentControlController extends Controller
             'selectedStatuses' => $selectedStatuses,
         ]);
     }
+
+    public function approvalIndex(Request $request)
+    {
+        if (!in_array(
+            strtolower(Auth::user()->roles->pluck('name')->first() ?? ''),
+            ['admin', 'super admin']
+        )) {
+            abort(403);
+        }
+
+        $query = DocumentMapping::with(['document', 'department', 'user', 'status', 'files'])
+            ->whereNull('marked_for_deletion_at')
+            ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+            ->whereHas('document', fn($q) => $q->where('type', 'control'));
+
+        // Search global (document, department, user)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('document', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('department', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhere('notes', 'like', "%{$search}%");
+            });
+        }
+
+        $mappings = $query->paginate(10)->appends($request->query());
+        $departments = Department::orderBy('name')->get();
+
+        $mappings->each(function ($mapping) {
+            $mapping->files_for_modal;
+            $mapping->files_for_modal_all;
+        });
+
+        return view('contents.document-control.approval.index', [
+            'mappings' => $mappings,
+            'departments' => $departments,
+            'approvalMode' => true,
+        ]);
+    }
+
+
 
     public function revise(Request $request, DocumentMapping $mapping)
     {
@@ -558,9 +600,7 @@ class DocumentControlController extends Controller
         return redirect()->back()->with('success', 'Document rejected successfully');
     }
 
-    // ===============================
     // COMPRESS PDF
-    // ===============================
     private function compressPdf($filePath)
     {
         $fullPath = storage_path("app/public/" . $filePath);
@@ -584,9 +624,7 @@ class DocumentControlController extends Controller
     }
 
 
-    // ===============================
     // COMPRESS IMAGE
-    // ===============================
     private function compressImage($filePath)
     {
         $fullPath = storage_path("app/public/" . $filePath);
