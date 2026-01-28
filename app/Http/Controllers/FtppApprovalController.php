@@ -85,44 +85,60 @@ class FtppApprovalController extends Controller
             $query->whereHas('status', function ($q) {
                 $q->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
             });
-        }
-        // LEAD AUDITOR → filter by assigned audit types
-        elseif (in_array('lead auditor', $userRoles)) {
-            if (!empty($userAuditTypeIds)) {
-                $query->whereIn('audit_type_id', $userAuditTypeIds);
-            } else {
-                $query->whereRaw('0 = 1');
-            }
-        }
-        // DEPT HEAD → only show 'need check' for their department
-        elseif (in_array('dept head', $userRoles)) {
-            if (!empty($userDeptIds)) {
-                $query->whereHas('status', function ($q) {
-                    $q->whereRaw('LOWER(name) = ?', ['need check']);
-                })->whereIn('department_id', $userDeptIds);
-            } else {
-                $query->whereRaw('0 = 1');
-            }
-        }
-        // AUDITOR → only show 'need approval by auditor' for their audit type(s)
-        elseif (in_array('auditor', $userRoles)) {
-            if (!empty($userAuditTypeIds)) {
-                $query->whereHas('status', function ($q) {
-                    $q->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                })
-                ->where('auditor_id', $user->id)
-                ->whereIn('audit_type_id', $userAuditTypeIds);
-            } else {
-                $query->whereRaw('0 = 1');
-            }
-        }
-        // DEFAULT → department based
-        else {
-            if (!empty($userDeptIds)) {
-                $query->whereIn('department_id', $userDeptIds);
-            } else {
-                $query->whereRaw('0 = 1');
-            }
+        } else {
+            // Support users with multiple roles (e.g., dept head + lead auditor)
+            // by allowing findings that match ANY of their role-based filters.
+            $query->where(function ($q) use ($user, $userRoles, $userDeptIds, $userAuditTypeIds) {
+                $hasAnyRoleFilter = false;
+
+                // Lead Auditor → filter by assigned audit types
+                if (in_array('lead auditor', $userRoles)) {
+                    $hasAnyRoleFilter = true;
+                    if (!empty($userAuditTypeIds)) {
+                        $q->orWhereIn('audit_type_id', $userAuditTypeIds);
+                    } else {
+                        $q->orWhereRaw('0 = 1');
+                    }
+                }
+
+                // Dept Head → only show 'need check' for their department
+                if (in_array('dept head', $userRoles)) {
+                    $hasAnyRoleFilter = true;
+                    if (!empty($userDeptIds)) {
+                        $q->orWhere(function ($qa) use ($userDeptIds) {
+                            $qa->whereHas('status', function ($qs) {
+                                $qs->whereRaw('LOWER(name) = ?', ['need check']);
+                            })->whereIn('department_id', $userDeptIds);
+                        });
+                    } else {
+                        $q->orWhereRaw('0 = 1');
+                    }
+                }
+
+                // Auditor → only show 'need approval by auditor' for their audit type(s)
+                if (in_array('auditor', $userRoles)) {
+                    $hasAnyRoleFilter = true;
+                    if (!empty($userAuditTypeIds)) {
+                        $q->orWhere(function ($qa) use ($user, $userAuditTypeIds) {
+                            $qa->whereHas('status', function ($qs) {
+                                $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
+                            })->where('auditor_id', $user->id)
+                              ->whereIn('audit_type_id', $userAuditTypeIds);
+                        });
+                    } else {
+                        $q->orWhereRaw('0 = 1');
+                    }
+                }
+
+                // Default → department based (applied only when no other role filters exist)
+                if (!$hasAnyRoleFilter) {
+                    if (!empty($userDeptIds)) {
+                        $q->whereIn('department_id', $userDeptIds);
+                    } else {
+                        $q->whereRaw('0 = 1');
+                    }
+                }
+            });
         }
 
         // --- Restrict visibility of some statuses for non-admin users ---
