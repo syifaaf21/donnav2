@@ -21,7 +21,40 @@ class FtppActionNotification extends Notification
         $this->action = $action;
         $this->byUser = $byUser ? ucwords(strtolower($byUser)) : null;
         $this->customMessage = $customMessage;
-        $this->url = $url ?? route('ftpp.index');
+        // Determine URL by action if not explicitly provided
+        if ($url) {
+            $this->url = $url;
+        } else {
+            $act = strtolower($this->action);
+            switch ($act) {
+                case 'created':
+                    // view auditee action for this finding
+                    $this->url = url('/ftpp/auditee-action/' . ($this->finding->id ?? ''));
+                    break;
+
+                case 'assigned':
+                case 'dept_head_checked':
+                case 'auditor_approved':
+                    // these actions are managed from the approval list
+                    $this->url = route('approval.index');
+                    break;
+
+                case 'lead_approved':
+                case 'auditee_revised':
+                    // general ftpp listing
+                    $this->url = url('/ftpp');
+                    break;
+
+                case 'auditor_return':
+                    // open auditee action edit
+                    $this->url = url('/ftpp/auditee-action/' . ($this->finding->id ?? '') . '/edit');
+                    break;
+
+                default:
+                    $this->url = route('ftpp.index');
+                    break;
+            }
+        }
     }
 
     public function via($notifiable)
