@@ -23,7 +23,7 @@ class Kernel extends ConsoleKernel
             ->weeklyOn(4, '08:00') // 4 = Kamis
             ->withoutOverlapping()
             ->runInBackground();
-        // Opsional: jalankan di background
+        // Hapus file arsip yang sudah melewati batas 1 tahun (hard delete)
         $schedule->command('archive:delete-expired')
             ->daily()
             ->withoutOverlapping()
