@@ -40,7 +40,19 @@
     <div class="mx-auto px-6 py-2">
 
         {{-- 🔹 Header + Breadcrumb --}}
-        <div class="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
+        @php
+            // count documents with 'Need Review' status for badge
+            $approvalCount = 0;
+            foreach ($groupedDocuments ?? [] as $deptDocs) {
+                foreach ($deptDocs as $doc) {
+                    if (optional($doc->status)->name === 'Need Review') {
+                        $approvalCount++;
+                    }
+                }
+            }
+        @endphp
+
+        <div class="bg-white rounded-xl p-4 shadow-sm flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
 
             {{-- Filter --}}
             @if (auth()->user()->roles->pluck('name')->contains('Admin') ||
@@ -66,19 +78,27 @@
                     </div>
                 </form>
             @endif
+            @if (auth()->user()->roles->pluck('name')->contains(fn($r) => in_array($r, ['Admin', 'Super Admin'])))
+                <a href="{{ route('document-control.approval') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 text-sm font-medium
+                           shadow-sm hover:bg-blue-200 hover:shadow-md transition-all duration-150">
+                    <i class="bi bi-check2-square mr-2"></i>
+                    Approval Queue
+                    <span class="ml-3 inline-flex items-center justify-center w-6 h-6 text-xs font-semibold bg-red-500 text-white rounded-full">{{ $approvalCount }}</span>
+                </a>
+            @endif
         </div>
+
 
         {{-- 🔹 Accordion --}}
         @php
             $countDept = count($groupedDocuments);
         @endphp
 
-        <div id="docList"
-            class="
-                grid gap-6 grid-cols-1
-                @if ($countDept > 1) md:grid-cols-2 lg:grid-cols-3 @endif
-            ">
-            @forelse ($groupedDocuments as $department => $mappings)
+        <div class="bg-white rounded-xl p-4 shadow-sm">
+            <div id="docList"
+                class="grid gap-6 grid-cols-1 @if ($countDept > 1) md:grid-cols-2 lg:grid-cols-3 @endif">
+                @forelse ($groupedDocuments as $department => $mappings)
                 <a href="{{ route('document-control.department', ['department' => $department]) }}"
                     class="block p-6 rounded-xl border border-gray-200 shadow-xl hover:shadow-2xl hover:border-sky-300
                    bg-white transition-all duration-200 group department-link">
@@ -128,16 +148,21 @@
                 </a>
 
             @empty
-                <div class="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-xl shadow-inner border border-dashed border-gray-200">
+                <div
+                    class="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-xl shadow-inner border border-dashed border-gray-200">
                     <div class="flex flex-col items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mb-4 text-sky-300">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2 0 01-2 2z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="w-16 h-16 mb-4 text-sky-300">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2 0 01-2 2z" />
                         </svg>
                         <span class="text-xl text-gray-600 font-semibold">No Departments Found</span>
-                        <span class="text-sm text-gray-400 mt-2 text-center">There are no departments or documents to display.<br>Please contact the administrator if you believe this is an error.</span>
+                        <span class="text-sm text-gray-400 mt-2 text-center">There are no departments or documents to
+                            display.<br>Please contact the administrator if you believe this is an error.</span>
                     </div>
                 </div>
             @endforelse
+            </div>
         </div>
     </div>
     <!-- Scroll Up Button -->
@@ -157,7 +182,8 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(17, 24, 39, 0.72); /* dark bg with opacity */
+            background: rgba(17, 24, 39, 0.72);
+            /* dark bg with opacity */
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -165,28 +191,29 @@
             backdrop-filter: blur(2px);
             display: none;
         }
+
         .custom-loader {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 2rem;
         }
+
         .loader-gradient {
             width: 70px;
             height: 70px;
             border-radius: 50%;
-            background: conic-gradient(
-                #0ea5e9 10%,
-                #38bdf8 30%,
-                #818cf8 60%,
-                #0ea5e9 100%
-            );
+            background: conic-gradient(#0ea5e9 10%,
+                    #38bdf8 30%,
+                    #818cf8 60%,
+                    #0ea5e9 100%);
             animation: spin 1.1s linear infinite;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 32px 0 #0ea5e955;
         }
+
         .loader-dot {
             width: 28px;
             height: 28px;
@@ -194,9 +221,13 @@
             border-radius: 50%;
             box-shadow: 0 0 0 4px #0ea5e9, 0 0 16px 0 #38bdf8aa;
         }
+
         @keyframes spin {
-            100% { transform: rotate(360deg); }
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
         .loader-text {
             background: linear-gradient(90deg, #0ea5e9, #38bdf8, #818cf8);
             -webkit-background-clip: text;

@@ -3,6 +3,13 @@
     {{ $department?->name ?? 'Unknown' }}
 @endsection
 @section('subtitle', 'Manage Obsolete Docuemnt Records')
+@php
+    /**
+     * approvalMode = false → halaman department biasa
+     * approvalMode = true  → halaman approval queue
+     */
+    $approvalMode = $approvalMode ?? false;
+@endphp
 @section('breadcrumbs')
     <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
@@ -27,7 +34,7 @@
 
             <li>/</li>
 
-            <li class="text-gray-700 font-bold">{{ $department?->name ?? 'Unknown' }}</li>
+            <li class="text-gray-700 font-bold">{{ $approvalMode ? 'Approval' : $department?->name ?? 'Unknown' }}</li>
         </ol>
     </nav>
 @endsection
@@ -81,64 +88,79 @@
         <!-- Search & Filter Form -->
         <div class="flex justify-end w-full mb-2 gap-2 items-start">
             <!-- Filter Dropdown Button -->
-            <div class="relative">
-                <button id="filterStatusBtn" type="button" class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors" title="Filter by Status">
-                    <i class="bi bi-funnel-fill text-xl text-sky-600"></i>
-                </button>
-                <!-- Dropdown menu -->
-                <div id="filterStatusDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
-                    <div class="py-2 text-sm">
-                        <div class="px-3 pb-2">
-                            <input type="text" id="statusSearchInput" class="w-full rounded border border-gray-200 px-2 py-1 text-sm" placeholder="Type to filter status...">
-                        </div>
-                        <form id="statusFilterForm" method="GET" action="{{ route('document-control.department', $department?->name ?? 'Unknown') }}">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                            <ul id="statusList" class="flex flex-col gap-1 max-h-64 overflow-y-auto px-2">
-                                <!-- Status list dari controller -->
-                                <li>
-                                    <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
-                                        <input type="checkbox" name="status[]" value="all" class="status-checkbox" id="statusAllCheckbox"
-                                            {{ empty($selectedStatuses) || in_array('all', $selectedStatuses) ? 'checked' : '' }}>
-                                        <i class="bi bi-list-check text-gray-700 text-lg"></i>
-                                        <span class="flex-1 text-sm">All</span>
-                                        <span class="text-xs text-gray-500 font-semibold">{{ array_sum($statusCounts ?? []) }}</span>
-                                    </label>
-                                </li>
-                                @php
-                                    $icons = [
-                                        'active' => 'bi bi-check-circle-fill',
-                                        'need_review' => 'bi bi-exclamation-circle-fill',
-                                        'rejected' => 'bi bi-x-circle-fill',
-                                        'obsolete' => 'bi bi-archive-fill',
-                                        'uncomplete' => 'bi bi-slash-circle-fill',
-                                    ];
-                                    $colors = [
-                                        'active' => 'text-green-700',
-                                        'need_review' => 'text-yellow-700',
-                                        'rejected' => 'text-red-700',
-                                        'obsolete' => 'text-gray-700',
-                                        'uncomplete' => 'text-orange-700',
-                                    ];
-                                @endphp
-                                @foreach ($statuses as $key => $label)
+            @if (!$approvalMode)
+                <div class="relative">
+                    <button id="filterStatusBtn" type="button"
+                        class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors"
+                        title="Filter by Status">
+                        <i class="bi bi-funnel-fill text-xl text-sky-600"></i>
+                    </button>
+                    <!-- Dropdown menu -->
+                    <div id="filterStatusDropdown"
+                        class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
+                        <div class="py-2 text-sm">
+                            <div class="px-3 pb-2">
+                                <input type="text" id="statusSearchInput"
+                                    class="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                                    placeholder="Type to filter status...">
+                            </div>
+                            <form id="statusFilterForm" method="GET"
+                                action="{{ $approvalMode ? route('document-control.approval') : route('document-control.department', $department?->name ?? 'Unknown') }}">
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                                <ul id="statusList" class="flex flex-col gap-1 max-h-64 overflow-y-auto px-2">
+                                    <!-- Status list dari controller -->
                                     <li>
-                                        <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
-                                            <input type="checkbox" name="status[]" value="{{ $key }}" class="status-checkbox"
-                                                {{ (!empty($selectedStatuses) && in_array($key, $selectedStatuses)) ? 'checked' : '' }}>
-                                            <i class="{{ $icons[$key] ?? '' }} {{ $colors[$key] ?? '' }} text-lg"></i>
-                                            <span class="flex-1 text-sm">{{ $label }}</span>
-                                            <span class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$key] ?? 0 }}</span>
+                                        <label
+                                            class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                            <input type="checkbox" name="status[]" value="all" class="status-checkbox"
+                                                id="statusAllCheckbox"
+                                                {{ empty($selectedStatuses) || in_array('all', $selectedStatuses) ? 'checked' : '' }}>
+                                            <i class="bi bi-list-check text-gray-700 text-lg"></i>
+                                            <span class="flex-1 text-sm">All</span>
+                                            <span
+                                                class="text-xs text-gray-500 font-semibold">{{ array_sum($statusCounts ?? []) }}</span>
                                         </label>
                                     </li>
-                                @endforeach
-                            </ul>
-                            <!-- Live filter: no apply button -->
-                        </form>
+                                    @php
+                                        $icons = [
+                                            'active' => 'bi bi-check-circle-fill',
+                                            'need_review' => 'bi bi-exclamation-circle-fill',
+                                            'rejected' => 'bi bi-x-circle-fill',
+                                            'obsolete' => 'bi bi-archive-fill',
+                                            'uncomplete' => 'bi bi-slash-circle-fill',
+                                        ];
+                                        $colors = [
+                                            'active' => 'text-green-700',
+                                            'need_review' => 'text-yellow-700',
+                                            'rejected' => 'text-red-700',
+                                            'obsolete' => 'text-gray-700',
+                                            'uncomplete' => 'text-orange-700',
+                                        ];
+                                    @endphp
+                                    @foreach ($statuses as $key => $label)
+                                        <li>
+                                            <label
+                                                class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                                <input type="checkbox" name="status[]" value="{{ $key }}"
+                                                    class="status-checkbox"
+                                                    {{ !empty($selectedStatuses) && in_array($key, $selectedStatuses) ? 'checked' : '' }}>
+                                                <i class="{{ $icons[$key] ?? '' }} {{ $colors[$key] ?? '' }} text-lg"></i>
+                                                <span class="flex-1 text-sm">{{ $label }}</span>
+                                                <span
+                                                    class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$key] ?? 0 }}</span>
+                                            </label>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <!-- Live filter: no apply button -->
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
             <!-- Search Form -->
-            <form id="filterForm" method="GET" action="{{ route('document-control.department', $department?->name ?? 'Unknown') }}"
+            <form id="filterForm" method="GET"
+                action="{{ $approvalMode ? route('document-control.approval') : route('document-control.department', $department?->name ?? 'Unknown') }}"
                 class="flex flex-col items-end w-auto space-y-1">
                 <div class="relative w-96">
                     <input type="text" name="search" id="searchInput"
@@ -180,6 +202,12 @@
                                         Obsolete
                                         Date
                                     </th>
+                                    @if ($approvalMode)
+                                        <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                            style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Department
+                                        </th>
+                                    @endif
                                     <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Updated By
@@ -211,7 +239,8 @@
                                 @else
                                     @foreach ($mappings as $mapping)
                                         <tr class="hover:bg-gray-50 transition-all duration-150">
-                                            <td class="px-1 py-3 text-center text-xs border-r border-gray-200" style="width: 40px; min-width: 32px;">
+                                            <td class="px-1 py-3 text-center text-xs border-r border-gray-200"
+                                                style="width: 40px; min-width: 32px;">
                                                 {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                             </td>
                                             <td class="px-2 py-2 text-xs max-w-xs border-r border-gray-200">
@@ -239,9 +268,16 @@
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td class="px-1 py-3 text-center text-xs font-semibold border-r border-gray-200" style="width: 90px; min-width: 70px;">
+                                            <td class="px-1 py-3 text-center text-xs font-semibold border-r border-gray-200"
+                                                style="width: 90px; min-width: 70px;">
                                                 {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
                                             </td>
+                                            @if ($approvalMode)
+                                                <td
+                                                    class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
+                                                    {{ $mapping->department?->name ?? '-' }}
+                                                </td>
+                                            @endif
                                             <td class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
                                                 {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
                                             </td>
@@ -258,7 +294,8 @@
 
                                             </td>
                                             {{-- Actions --}}
-                                            <td class="px-1 py-2 text-center" style="width: 120px; min-width: 90px;">
+                                            <td class="px-1 py-2 text-center"
+                                                style="@if ($approvalMode) width:140px; min-width:120px; @else width:120px; min-width:90px; @endif">
                                                 <div class="flex justify-center items-center gap-1 flex-wrap">
 
                                                     {{-- VIEW FILES --}}
@@ -330,18 +367,20 @@
                                                     @endif
 
                                                     {{-- UPLOAD ALWAYS APPEARS LEFT WITH OTHER ACTIONS --}}
-                                                    <button type="button"
-                                                        class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
-                                                        data-docid="{{ $mapping->id }}"
-                                                        data-doc-title="{{ $mapping->document->name }}"
-                                                        data-status="{{ $mapping->status->name }}"
-                                                        data-files='@json($mapping->files_for_modal_all)'
-                                                        onclick="openReviseModal(this)" title="Upload">
-                                                        <i class="bi bi-upload"></i>
-                                                    </button>
+                                                    @if (!$approvalMode)
+                                                        <button type="button"
+                                                            class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
+                                                            data-docid="{{ $mapping->id }}"
+                                                            data-doc-title="{{ $mapping->document->name }}"
+                                                            data-status="{{ $mapping->status->name }}"
+                                                            data-files='@json($mapping->files_for_modal_all)'
+                                                            onclick="openReviseModal(this)" title="Upload">
+                                                            <i class="bi bi-upload"></i>
+                                                        </button>
+                                                    @endif
 
                                                     {{-- ADMIN ACTIONS --}}
-                                                    @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+                                                    @if ($approvalMode && in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
                                                         <form
                                                             action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
                                                             method="POST" class="inline-flex items-center m-0 p-0">
@@ -432,21 +471,17 @@
 
     .action-btn {
         width: 34px;
-        /* fix width */
         height: 34px;
-        /* fix height */
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0 !important;
-        /* hilangkan perbedaan padding */
         border-radius: 6px;
-        /* biar rapi */
     }
 
     .action-btn i {
         font-size: 16px;
-        /* bikin semua icon seragam */
+        line-height: 1;
     }
 </style>
 @push('scripts')
@@ -476,7 +511,8 @@
             document.addEventListener('change', function(e) {
                 if (e.target.classList.contains('status-checkbox')) {
                     const allCheckbox = document.getElementById('statusAllCheckbox');
-                    const statusCheckboxes = Array.from(document.querySelectorAll('.status-checkbox')).filter(cb => cb !== allCheckbox);
+                    const statusCheckboxes = Array.from(document.querySelectorAll('.status-checkbox'))
+                        .filter(cb => cb !== allCheckbox);
                     if (e.target === allCheckbox) {
                         // Jika 'all' dicentang, centang semua, jika uncheck, uncheck semua
                         statusCheckboxes.forEach(cb => cb.checked = allCheckbox.checked);
@@ -495,16 +531,23 @@
                 filterStatusBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const isVisible = !filterStatusDropdown.classList.contains('hidden');
-                    document.querySelectorAll('#filterStatusDropdown').forEach(d => d.classList.add('hidden'));
+                    document.querySelectorAll('#filterStatusDropdown').forEach(d => d.classList.add(
+                        'hidden'));
                     if (isVisible) {
                         filterStatusDropdown.classList.add('hidden');
                         return;
                     }
-                    // Position dropdown
+                    // Position dropdown (clamped to viewport to avoid overflow)
                     const rect = filterStatusBtn.getBoundingClientRect();
                     filterStatusDropdown.style.position = 'fixed';
                     filterStatusDropdown.style.top = `${rect.bottom + 6}px`;
-                    filterStatusDropdown.style.left = `${rect.left - 220}px`;
+                    // Estimate dropdown width and clamp left to viewport
+                    const preferredLeft = rect.left - 220;
+                    const estimatedWidth = Math.max(240, Math.min(360, filterStatusDropdown.offsetWidth ||
+                        280));
+                    const maxLeft = window.innerWidth - estimatedWidth - 12;
+                    const clampedLeft = Math.min(Math.max(8, preferredLeft), maxLeft);
+                    filterStatusDropdown.style.left = `${clampedLeft}px`;
                     filterStatusDropdown.classList.remove('hidden');
                     filterStatusDropdown.classList.add('dropdown-fixed');
                 });
@@ -623,7 +666,12 @@
                         const rect = btn.getBoundingClientRect();
                         dropdown.style.position = 'fixed';
                         dropdown.style.top = `${rect.bottom + 6}px`;
-                        dropdown.style.left = `${rect.left - 120}px`;
+                        const preferredLeft = rect.left - 120;
+                        const estimatedWidth = Math.max(200, Math.min(360, dropdown.offsetWidth ||
+                        260));
+                        const maxLeft = window.innerWidth - estimatedWidth - 12;
+                        const clampedLeft = Math.min(Math.max(8, preferredLeft), maxLeft);
+                        dropdown.style.left = `${clampedLeft}px`;
                         dropdown.classList.remove('hidden');
                         dropdown.classList.add('dropdown-fixed');
                     };
@@ -842,13 +890,15 @@
                     const activeFiles = files.filter(f => f.is_active == 1);
                     // Hitung total size file aktif
                     const totalSize = activeFiles.reduce((sum, f) => {
-                        if (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(Number(f.size))) {
+                        if (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(
+                                Number(f.size))) {
                             return sum + Number(f.size);
                         }
                         return sum;
                     }, 0);
                     // Tampilkan total size di atas daftar file
-                    let totalSizeHtml = `<div class="mb-2 text-xs text-gray-700 font-semibold">Total size: <span class="${totalSize > 20*1024*1024 ? 'text-red-600' : ''}">${window.formatFileSize(totalSize)} / 20 MB</span></div>`;
+                    let totalSizeHtml =
+                        `<div class="mb-2 text-xs text-gray-700 font-semibold">Total size: <span class="${totalSize > 20*1024*1024 ? 'text-red-600' : ''}">${window.formatFileSize(totalSize)} / 20 MB</span></div>`;
                     // Debug: cek isi file lama
                     console.log('Active files for modal:', activeFiles);
                     reviseFilesContainer.innerHTML = totalSizeHtml + activeFiles.map((f, i) => `
@@ -865,10 +915,10 @@
                         </p>
                     </div>
                     ${status === 'Active' && activeFiles.length > 1 ? `
-                                        <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                        ` : ''}
+                                                                <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                                ` : ''}
                 </div>
                 <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
                 <div class="mt-2 flex items-center gap-2">

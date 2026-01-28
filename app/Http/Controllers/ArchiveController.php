@@ -15,11 +15,12 @@ class ArchiveController extends Controller
     public function index(Request $request)
     {
         // 1. CONTROL ARCHIVE
-        $controlQuery = DocumentFile::query()
-            ->with(['mapping.document', 'mapping.department']) // Load relasi ke atas
-            ->where('is_active', false)
+        $controlQuery = DocumentFile::withTrashed()
+            ->with(['mapping.document', 'mapping.department'])
+            ->where('is_active', 0)
+            ->where('pending_approval', 0)
+            ->whereNotNull('marked_for_deletion_at')
             ->where('marked_for_deletion_at', '>', now())
-            ->where('pending_approval', false)
             ->whereHas('mapping.document', fn($q) => $q->where('type', 'control'));
 
         // Filter department (non admin)
@@ -43,14 +44,16 @@ class ArchiveController extends Controller
             });
         }
 
+        \Log::info('ARCHIVE DATA', $controlQuery->get()->toArray());
         // BERUBAH: Paginate sekarang menghitung total file (misal: 12 item)
         $controlDocuments = $controlQuery->paginate(10, ['*'], 'page_control');
 
         // 2. REVIEW ARCHIVE
-        $reviewQuery = DocumentFile::query()
+        $reviewQuery = DocumentFile::withTrashed()
             ->with(['mapping.document', 'mapping.department'])
             ->where('is_active', false)
-            ->where('marked_for_deletion_at', '>', now()) // tambahkan ini
+            ->whereNotNull('marked_for_deletion_at')
+            ->where('marked_for_deletion_at', '>', now())
             ->whereHas('mapping.document', fn($q) => $q->where('type', 'review'));
 
 
@@ -72,9 +75,11 @@ class ArchiveController extends Controller
         $query = $request->input('q', '');
 
         // CONTROL ARCHIVE SEARCH
-        $controlQuery = DocumentFile::query()
+        $controlQuery = DocumentFile::withTrashed()
             ->with(['mapping.document', 'mapping.department'])
-            ->where('is_active', false)
+            ->where('is_active', 0)
+            ->where('pending_approval', 0)
+            ->whereNotNull('marked_for_deletion_at')
             ->where('marked_for_deletion_at', '>', now())
             ->whereHas('mapping.document', fn($q) => $q->where('type', 'control'));
 
@@ -97,7 +102,7 @@ class ArchiveController extends Controller
 
         // REVIEW ARCHIVE SEARCH
         // 2. REVIEW SEARCH (FIXED)
-        $reviewQuery = DocumentFile::query()
+        $reviewQuery = DocumentFile::withTrashed()
             ->with(['mapping.document', 'mapping.department'])
             ->where('is_active', false)
             ->whereHas('mapping.document', fn($q) => $q->where('type', 'review'));

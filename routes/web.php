@@ -194,6 +194,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('document-control')->name('document-control.')->group(function () {
         Route::get('/', [DocumentControlController::class, 'index'])->name('index');
         Route::get('/department/{department}', [DocumentControlController::class, 'showByDepartment'])->name('department');
+        Route::get('/approval', [DocumentControlController::class, 'approvalIndex'])
+        ->name('approval');
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
