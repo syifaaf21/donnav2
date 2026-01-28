@@ -30,10 +30,6 @@
 
             <li>/</li>
 
-            <li class="text-gray-500 font-medium">Documents</li>
-
-            <li>/</li>
-
             <li class="text-gray-700 font-bold">{{ $approvalMode ? 'Approval' : $department?->name ?? 'Unknown' }}</li>
         </ol>
     </nav>
