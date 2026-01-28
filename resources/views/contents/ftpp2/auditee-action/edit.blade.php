@@ -625,7 +625,7 @@
                                                     title="Delete attachment">×</button>
 
                                                 <input type="hidden" id="existing-attachment-input-{{ $file->id }}"
-                                                    name="existing_attachments[]" value="{{ $file->id }}">
+                                                    name="existing_evidence_ids[]" value="{{ $file->id }}">
                                             </div>
                                         @endforeach
                                     </div>

@@ -160,8 +160,8 @@ class AuditeeActionController extends Controller
             ])->withInput();
         }
 
-        DB::beginTransaction();
 
+        DB::beginTransaction();
         try {
             // 1️⃣ Simpan tt_auditee_actions
             $auditeeAction = AuditeeAction::updateOrCreate(
@@ -191,8 +191,53 @@ class AuditeeActionController extends Controller
                     PreventiveAction::where('auditee_action_id', $aid)->delete();
                 }
 
-                if (DocumentFile::where('auditee_action_id', $aid)->exists()) {
-                    DocumentFile::where('auditee_action_id', $aid)->delete();
+                // PATCH: Only delete DocumentFile not in existing_evidence_ids[]
+                $keepIds = $request->input('existing_evidence_ids', []);
+                $keepIds = array_map('intval', (array)$keepIds);
+                $allFiles = DocumentFile::where('auditee_action_id', $aid)->get();
+                foreach ($allFiles as $file) {
+                    if (!in_array($file->id, $keepIds)) {
+                        // Validasi: hanya hapus jika file milik auditee_action_id ini
+                        if ($file->auditee_action_id != $aid) {
+                            // Bisa log error atau return response error jika ajax
+                            if ($request->ajax() || $request->wantsJson()) {
+                                return response()->json([
+                                    'success' => false,
+                                    'message' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'
+                                ], 403);
+                            } else {
+                                return back()->withErrors(['attachments' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'])->withInput();
+                            }
+                        }
+                        try {
+                            $original = $file->file_path ?? '';
+                            $candidates = [];
+                            if ($original !== '') {
+                                $candidates[] = $original;
+                                $candidates[] = ltrim($original, '/');
+                                if (preg_match('#/storage/(.*)$#', $original, $m)) {
+                                    $candidates[] = $m[1];
+                                }
+                                $candidates[] = preg_replace('#^public/storage/#', '', $original);
+                                $candidates[] = basename($original);
+                            }
+                            foreach (array_filter(array_unique($candidates)) as $p) {
+                                if ($p === '') continue;
+                                if (Storage::disk('public')->exists($p)) {
+                                    Storage::disk('public')->delete($p);
+                                    break;
+                                }
+                                $fsPath = storage_path('app/public/' . $p);
+                                if (file_exists($fsPath)) {
+                                    @unlink($fsPath);
+                                    break;
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            \Log::warning("Failed to delete file for DocumentFile id={$file->id}: " . $e->getMessage());
+                        }
+                        $file->delete();
+                    }
                 }
             }
 
@@ -488,8 +533,8 @@ class AuditeeActionController extends Controller
             ])->withInput();
         }
 
-        DB::beginTransaction();
 
+        DB::beginTransaction();
         try {
             // Find or create AuditeeAction by audit_finding_id (route param is the finding id)
             $auditeeAction = AuditeeAction::updateOrCreate(
@@ -568,69 +613,52 @@ class AuditeeActionController extends Controller
             }
 
             /* =====================================================
-             * 4️⃣ Handle removed attachments first (from edit UI)
+             * 4️⃣ PATCH: Only delete DocumentFile not in existing_evidence_ids[]
              * ===================================================== */
-            if ($request->has('remove_attachments')) {
-                $removeIds = (array) $request->input('remove_attachments');
-                foreach ($removeIds as $rid) {
-                    $df = DocumentFile::find($rid);
-                    if ($df && $df->auditee_action_id == $auditeeAction->id) {
-                        try {
-                            $original = $df->file_path ?? '';
-                            $candidates = [];
-
-                            if ($original !== '') {
-                                $candidates[] = $original;
-                                $candidates[] = ltrim($original, '/');
-                                // if stored as full URL like https://.../storage/..., extract path after '/storage/'
-                                if (preg_match('#/storage/(.*)$#', $original, $m)) {
-                                    $candidates[] = $m[1];
-                                }
-                                // if stored as public/storage/..., normalize
-                                $candidates[] = preg_replace('#^public/storage/#', '', $original);
-                                $candidates[] = basename($original);
-                            }
-
-                            $deleted = false;
-                            foreach (array_filter(array_unique($candidates)) as $p) {
-                                try {
-                                    if ($p === '')
-                                        continue;
-                                    if (Storage::disk('public')->exists($p)) {
-                                        Storage::disk('public')->delete($p);
-                                        $deleted = true;
-                                        break;
-                                    }
-                                    // try direct filesystem path: storage/app/public/{p}
-                                    $fsPath = storage_path('app/public/' . $p);
-                                    if (file_exists($fsPath)) {
-                                        @unlink($fsPath);
-                                        $deleted = true;
-                                        break;
-                                    }
-                                } catch (\Throwable $inner) {
-                                    \Log::debug("Attempt to delete file candidate failed for {$p}: " . $inner->getMessage());
-                                }
-                            }
-
-                            if (!$deleted && $original) {
-                                // final fallback: attempt delete using original value
-                                try {
-                                    Storage::disk('public')->delete($original);
-                                } catch (\Throwable $inner) {
-                                    \Log::warning("Final delete attempt failed for {$original}: " . $inner->getMessage());
-                                }
-                            }
-                        } catch (\Throwable $e) {
-                            \Log::warning("Failed to delete file for DocumentFile id={$rid}: " . $e->getMessage());
-                        }
-
-                        try {
-                            $df->delete();
-                        } catch (\Throwable $e) {
-                            \Log::warning("Failed to delete DocumentFile record id={$rid}: " . $e->getMessage());
+            $keepIds = $request->input('existing_evidence_ids', []);
+            $keepIds = array_map('intval', (array)$keepIds);
+            $allFiles = DocumentFile::where('auditee_action_id', $aid)->get();
+            foreach ($allFiles as $file) {
+                if (!in_array($file->id, $keepIds)) {
+                    // Validasi: hanya hapus jika file milik auditee_action_id ini
+                    if ($file->auditee_action_id != $aid) {
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'
+                            ], 403);
+                        } else {
+                            return back()->withErrors(['attachments' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'])->withInput();
                         }
                     }
+                    try {
+                        $original = $file->file_path ?? '';
+                        $candidates = [];
+                        if ($original !== '') {
+                            $candidates[] = $original;
+                            $candidates[] = ltrim($original, '/');
+                            if (preg_match('#/storage/(.*)$#', $original, $m)) {
+                                $candidates[] = $m[1];
+                            }
+                            $candidates[] = preg_replace('#^public/storage/#', '', $original);
+                            $candidates[] = basename($original);
+                        }
+                        foreach (array_filter(array_unique($candidates)) as $p) {
+                            if ($p === '') continue;
+                            if (Storage::disk('public')->exists($p)) {
+                                Storage::disk('public')->delete($p);
+                                break;
+                            }
+                            $fsPath = storage_path('app/public/' . $p);
+                            if (file_exists($fsPath)) {
+                                @unlink($fsPath);
+                                break;
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        \Log::warning("Failed to delete file for DocumentFile id={$file->id}: " . $e->getMessage());
+                    }
+                    $file->delete();
                 }
             }
 

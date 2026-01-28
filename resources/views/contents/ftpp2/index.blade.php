@@ -490,7 +490,7 @@
                                         @endif
 
                                         {{-- Upload Evidence Button: Only for Admin and certain statuses --}}
-                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin']) &&
+                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin']) &&
                                                 in_array($statusName, ['need check', 'need approval by auditor', 'need approval by lead auditor', 'close']))
                                             <button type="button" onclick="openUploadEvidence({{ $finding->id }})"
                                                 class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-600 hover:bg-gray-50 transition">

@@ -66,6 +66,7 @@ class FtppController extends Controller
         }
         // Auditor: apply filter based on filter_type
         elseif (!empty($user) && in_array('auditor', $userRolesLowercase)) {
+            // Auditor tidak boleh melihat status draft, tapi boleh melihat draft finding
             if ($filterType === 'assigned') {
                 // Show FTPP where user is in auditee (assigned to them)
                 $query->whereHas('auditee', function ($q) use ($user) {

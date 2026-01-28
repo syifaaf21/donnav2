@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     .rte-toolbar {
         display: flex;
@@ -385,9 +386,33 @@
                         <div id="attachTotalSize2" class="text-sm text-gray-600">Total: 0.00 MB</div>
                     </div>
 
+                    {{-- Gabungan preview evidence lama (DB) dan baru (input) --}}
+                    {{-- Preview evidence baru akan diinject JS di sini --}}
+
+                    <div id="evidencePreviewContainer" class="mt-2 flex flex-wrap gap-2"></div>
+
+                    {{-- List evidence lama (file lama) --}}
+                    @if(isset($action) && $action->file && count($action->file))
+                        <div class="mt-2 flex flex-col gap-2">
+                            @foreach($action->file as $file)
+                                <div class="flex items-center gap-2 evidence-item-db" data-file-id="{{ $file->id }}">
+                                    <a href="{{ asset('storage/'.$file->file_path) }}" target="_blank" class="text-blue-700 underline flex-1 truncate">
+                                        <i class="bi bi-file-earmark-pdf text-lg text-red-600 align-middle"></i>
+                                        {{ $file->original_name ?? basename($file->file_path) }}
+                                    </a>
+                                    <button type="button" class="delete-existing-evidence bg-transparent text-red-600 hover:text-red-800 p-1" data-file-id="{{ $file->id }}" title="Hapus Evidence Lama">
+                                        <i class="bi bi-x-circle-fill text-xl"></i>
+                                    </button>
+                                    <input type="hidden" name="existing_evidence_ids[]" value="{{ $file->id }}" class="existing-evidence-input">
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
 
                     <div>
-                        <!-- Preview containers -->
+
+                        <!-- Preview containers (hanya untuk file baru, evidence lama sudah di atas) -->
                         <div id="previewImageContainer2" class="mt-2 flex flex-wrap gap-2"></div>
                         <div id="previewFileContainer2" class="mt-2 flex flex-col gap-1"></div>
 
@@ -718,12 +743,18 @@
         }
     }
 
-    // 🔹 Preview Image + tombol delete
-    function displayImages2() {
-        previewImageContainer2.innerHTML = '';
+    // Gabungan preview evidence lama (DB) dan baru (input)
+    function renderEvidencePreview() {
+        const container = document.getElementById('evidencePreviewContainer');
+        if (!container) return;
+
+        // Hapus preview evidence baru sebelumnya
+        container.querySelectorAll('.evidence-item-new').forEach(el => el.remove());
+
+        // Images
         accumulatedPhotoFiles.forEach((file, index) => {
             const wrapper = document.createElement('div');
-            wrapper.className = "relative";
+            wrapper.className = "relative evidence-item-new";
 
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
@@ -736,46 +767,77 @@
                 e.preventDefault();
                 accumulatedPhotoFiles.splice(index, 1);
                 updatefileInput2(photoInput2, accumulatedPhotoFiles);
-                displayImages2();
+                renderEvidencePreview();
                 updateAttachCount2();
             };
 
             wrapper.appendChild(img);
             wrapper.appendChild(btn);
-            previewImageContainer2.appendChild(wrapper);
+            container.appendChild(wrapper);
             feather.replace();
         });
-    }
 
-    // 🔹 Preview File + tombol delete
-    function displayFiles2() {
-        previewFileContainer2.innerHTML = '';
+        // Files (PDF)
         accumulatedFileFiles.forEach((file, index) => {
             const wrapper = document.createElement('div');
-            wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
+            wrapper.className = "relative evidence-item-new";
 
             const icon = document.createElement('i');
-            icon.setAttribute('data-feather', 'file-text');
-
-            const name = document.createElement('span');
-            name.textContent = file.name;
+            icon.className = 'bi bi-file-earmark-pdf text-4xl text-red-600';
+            const link = document.createElement('span');
+            link.textContent = file.name;
+            link.className = 'block text-xs mt-1 truncate w-24';
 
             const btn = document.createElement('button');
             btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
-            btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
+            btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
             btn.onclick = (e) => {
                 e.preventDefault();
                 accumulatedFileFiles.splice(index, 1);
                 updatefileInput2(fileInput2, accumulatedFileFiles);
-                displayFiles2();
+                renderEvidencePreview();
                 updateAttachCount2();
             };
 
-            wrapper.append(icon, name, btn);
-            previewFileContainer2.appendChild(wrapper);
+            const box = document.createElement('div');
+            box.className = 'w-24 h-24 border rounded flex items-center justify-center bg-gray-50 flex-col';
+            box.appendChild(icon);
+            box.appendChild(link);
+
+            wrapper.appendChild(box);
+            wrapper.appendChild(btn);
+            container.appendChild(wrapper);
             feather.replace();
         });
     }
+
+    // 🔹 Hapus evidence lama dari UI
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-existing-evidence')) {
+            const btn = e.target.closest('.delete-existing-evidence');
+            (async () => {
+                const result = await Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'Are you sure you want to delete this file? The file will be deleted from storage.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                });
+                if (!result.isConfirmed) return;
+                const fileId = btn.getAttribute('data-file-id');
+                // Hapus input hidden evidence lama
+                const input = btn.parentElement.querySelector('input.existing-evidence-input');
+                if (input) input.remove();
+                // Sembunyikan preview
+                btn.parentElement.style.display = 'none';
+            })();
+        }
+    });
+
+    // Tidak perlu displayFiles2, sudah digabung di renderEvidencePreview
 
     // 🔹 Event Listener Input - ACCUMULATE files (don't replace)
     photoInput2.addEventListener('change', (e) => {
@@ -783,8 +845,7 @@
         const newFiles = Array.from(photoInput2.files);
         newFiles.forEach(file => {
             // Check if file already exists to avoid duplicates
-            const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file
-                .size);
+            const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
             if (!isDuplicate) {
                 accumulatedPhotoFiles.push(file);
             }
@@ -792,7 +853,7 @@
 
         // Update input with accumulated files
         updatefileInput2(photoInput2, accumulatedPhotoFiles);
-        displayImages2();
+        renderEvidencePreview();
         updateAttachCount2();
     });
 
@@ -801,8 +862,7 @@
         const newFiles = Array.from(fileInput2.files);
         newFiles.forEach(file => {
             // Check if file already exists to avoid duplicates
-            const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file
-                .size);
+            const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
             if (!isDuplicate) {
                 accumulatedFileFiles.push(file);
             }
@@ -810,7 +870,7 @@
 
         // Update input with accumulated files
         updatefileInput2(fileInput2, accumulatedFileFiles);
-        displayFiles2();
+        renderEvidencePreview();
         updateAttachCount2();
     });
 
@@ -826,6 +886,7 @@
     attachDocs2.addEventListener('click', () => fileInput2.click());
 
     // Initialize display
+    renderEvidencePreview();
     updateAttachCount2();
     updateTotalSize2();
 </script>
@@ -1152,6 +1213,11 @@
         // Attachments
         Array.from(photoInput2?.files || []).forEach(file => formData.append('attachments[]', file));
         Array.from(fileInput2?.files || []).forEach(file => formData.append('attachments[]', file));
+
+        // Evidence lama yang masih dipertahankan
+        document.querySelectorAll('input.existing-evidence-input').forEach(input => {
+            formData.append('existing_evidence_ids[]', input.value);
+        });
 
         // Log formData untuk debug
         console.log('📋 FormData entries:');
