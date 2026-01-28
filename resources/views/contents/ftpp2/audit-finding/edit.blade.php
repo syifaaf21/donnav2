@@ -208,7 +208,7 @@
                                         <div class="flex flex-col items-end">
                                             <button type="button" onclick="openSidebar()"
                                                 class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                                Select Clause
+                                                Select Clause/Criteria
                                             </button>
                                             <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
                                                 <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end">
@@ -292,14 +292,14 @@
                                         $isDraftStatus = $currentStatus === 'draft finding';
                                         $isNeedAssignStatus = $currentStatus === 'need assign';
                                     @endphp
-                                    
+
                                     @if ($isDraftStatus)
                                         <button type="button" onclick="saveChangesFinding('submit', this)"
                                             class="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-md hover:from-green-600 hover:to-green-700 transition-colors">
                                             Submit
                                         </button>
                                     @endif
-                                    
+
                                     <button type="button" onclick="saveChangesFinding('save', this)"
                                         class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
                                         Save Changes
@@ -795,7 +795,7 @@
                         container.innerHTML = "";
 
                         if (!list.length) {
-                            container.innerHTML = `<small class="text-gray-500">No Sub Klausul</small>`;
+                            container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
                             return;
                         }
 
@@ -887,6 +887,14 @@
         // === Audit type relation handler (sub audit type, auditor, klausul) ===
         document.addEventListener('DOMContentLoaded', function() {
             console.log("✅ FTTP script ready");
+
+            // initialize selectedSubIds from any server-rendered sub-klausul preview
+            if (typeof window.selectedSubIds === 'undefined') window.selectedSubIds = [];
+            try {
+                const existing = Array.from(document.querySelectorAll('#selectedSubContainer [data-id]'))
+                    .map(el => String(el.getAttribute('data-id')));
+                if (existing.length) window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), ...existing]));
+            } catch (e) { /* ignore */ }
 
             // --- Event delegation untuk audit type (tetap pakai karena sudah aman) ---
             document.addEventListener('change', function(e) {
@@ -1064,8 +1072,10 @@
                     return;
                 }
                 const subId = subSelect.value;
-                const subText = subSelect.selectedOptions[0].text;
+                const subText = subSelect.selectedOptions[0]?.text;
+
                 document.getElementById('selectedSub').value = subId;
+
                 closeSidebar();
             };
 
@@ -1096,7 +1106,7 @@
                 }
                 return;
             }
-            if (selectedSubIds.includes(subId)) {
+            if ((window.selectedSubIds || []).includes(String(subId))) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({ icon: 'info', title: 'Already added', text: 'This sub clause is already added' });
                 } else {
@@ -1105,10 +1115,20 @@
                 return;
             }
 
-            selectedSubIds.push(subId);
+            // mark as selected and remove option from select to prevent re-adding
+            window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), String(subId)]));
+            if (subSelect) {
+                const opt = subSelect.querySelector(`option[value="${subId}"]`);
+                if (opt) opt.remove();
+            }
 
             // Render preview di form utama
             const container = document.getElementById('selectedSubContainer');
+
+            // remove placeholder if present
+            const placeholder = container.querySelector('small');
+            if (placeholder) placeholder.remove();
+
             const span = document.createElement('span');
             span.className = "flex items-end gap-1 bg-blue-100 text-gray-700 px-2 py-1 rounded";
             span.dataset.id = subId;
@@ -1117,11 +1137,23 @@
             container.appendChild(span);
             feather.replace(); // render ulang icon feather
 
-
-            // tombol hapus
+            // tombol hapus — restore option to select when removed
             span.querySelector('button').onclick = function() {
-                selectedSubIds = selectedSubIds.filter(id => id !== subId);
+                window.selectedSubIds = (window.selectedSubIds || []).filter(id => String(id) !== String(subId));
+                // re-insert option back to select if sidebar is open / select exists
+                const sel = document.getElementById('selectSub');
+                if (sel && !sel.querySelector(`option[value="${subId}"]`)) {
+                    const opt = document.createElement('option');
+                    opt.value = subId;
+                    opt.text = subText;
+                    sel.appendChild(opt);
+                }
                 span.remove();
+
+                // if container empty now, show placeholder
+                if (!container.querySelector('[data-id]')) {
+                    container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
+                }
             }
 
             container.appendChild(span);

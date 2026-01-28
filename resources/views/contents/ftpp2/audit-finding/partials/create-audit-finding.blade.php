@@ -172,6 +172,8 @@
                             aria-haspopup="true" aria-expanded="false" title="Attach files">
                             <i data-feather="paperclip" class="w-4 h-4"></i>
                             <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                            <!-- added total size display (matches edit view) -->
+                            <div id="attachTotalSize" class="text-sm text-gray-600 ml-2">Total: 0.00 MB</div>
                         </button>
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
@@ -367,6 +369,22 @@
         // === Audit type relation handler (sub audit type, auditor, klausul) ===
         document.addEventListener('DOMContentLoaded', function() {
             console.log("✅ FTTP script ready");
+
+            // initialize selectedSubIds from any existing preview (if any)
+            if (typeof window.selectedSubIds === 'undefined') window.selectedSubIds = [];
+            try {
+                const existing = Array.from(document.querySelectorAll('#selectedSubContainer [data-id]'))
+                    .map(el => String(el.getAttribute('data-id')));
+                if (existing.length) window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), ...existing]));
+            } catch (e) { /* ignore */ }
+
+            // ensure placeholder shown when no sub klausul selected
+            try {
+                const container = document.getElementById('selectedSubContainer');
+                if (container && !container.querySelector('[data-id]')) {
+                    container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
+                }
+            } catch (e) { /* ignore */ }
 
             // --- Event delegation untuk audit type (tetap pakai karena sudah aman) ---
             document.addEventListener('change', function(e) {
@@ -564,12 +582,22 @@
             const subText = subSelect.selectedOptions[0]?.text;
 
             if (!subId) return alert('Please choose a sub clause first');
-            if (selectedSubIds.includes(subId)) return alert('This sub clause is already added');
+            if ((window.selectedSubIds || []).includes(String(subId))) return alert('This sub clause is already added');
 
-            selectedSubIds.push(subId);
+            // mark as selected and remove option from select to prevent re-adding
+            window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), String(subId)]));
+            if (subSelect) {
+                const opt = subSelect.querySelector(`option[value="${subId}"]`);
+                if (opt) opt.remove();
+            }
 
             // Render preview di form utama
             const container = document.getElementById('selectedSubContainer');
+
+            // remove placeholder if present
+            const placeholder = container.querySelector('small');
+            if (placeholder) placeholder.remove();
+
             const span = document.createElement('span');
             span.className = "flex items-end gap-1 bg-blue-100 text-gray-700 px-2 py-1 rounded";
             span.dataset.id = subId;
@@ -578,11 +606,23 @@
             container.appendChild(span);
             feather.replace(); // render ulang icon feather
 
-
-            // tombol hapus
+            // tombol hapus — restore option to select when removed
             span.querySelector('button').onclick = function() {
-                selectedSubIds = selectedSubIds.filter(id => id !== subId);
+                window.selectedSubIds = (window.selectedSubIds || []).filter(id => String(id) !== String(subId));
+                // re-insert option back to select if sidebar is open / select exists
+                const sel = document.getElementById('selectSub');
+                if (sel && !sel.querySelector(`option[value="${subId}"]`)) {
+                    const opt = document.createElement('option');
+                    opt.value = subId;
+                    opt.text = subText;
+                    sel.appendChild(opt);
+                }
                 span.remove();
+
+                // if container empty now, show placeholder
+                if (!container.querySelector('[data-id]')) {
+                    container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
+                }
             }
 
             container.appendChild(span);
@@ -835,45 +875,55 @@
         const attachImages = document.getElementById('attachImages');
         const attachDocs = document.getElementById('attachDocs');
         const attachCount = document.getElementById('attachCount');
+        const attachTotalSizeEl = document.getElementById('attachTotalSize');
 
         const photoInput = document.getElementById('photoInput');
         const fileInput = document.getElementById('fileInput');
 
-
         const previewImageContainer = document.getElementById('previewImageContainer');
         const previewFileContainer = document.getElementById('previewFileContainer');
 
-        // 🔹 Check if all required elements exist before proceeding
-        if (!attachBtn || !attachMenu || !attachImages || !attachDocs || !photoInput || !fileInput || !previewImageContainer || !previewFileContainer) {
-            console.warn('⚠️ Some attachment elements not found. Skipping attachment functionality.');
+        // defensive: if required elements missing, skip
+        if (!photoInput || !fileInput || !previewImageContainer || !previewFileContainer) {
+            console.warn('Attachment elements missing - attachment features disabled.');
             return;
         }
 
-        // 🔹 Store files accumulated from multiple selections
+        // accumulate selected files across multiple selections
         let accumulatedPhotoFiles = [];
         let accumulatedFileFiles = [];
 
-        // 🔹 Helper update file list setelah dihapus
         function updateFileInput(input, filesArray) {
             const dt = new DataTransfer();
             filesArray.forEach(file => dt.items.add(file));
             input.files = dt.files;
+            updateTotalSize();
         }
 
-        // 🔹 Update badge total attachment
         function updateAttachCount() {
             const total = (photoInput.files?.length || 0) + (fileInput.files?.length || 0);
-            if (total > 0) {
-                attachCount.textContent = total;
-                attachCount.classList.remove('hidden');
-            } else {
-                attachCount.classList.add('hidden');
+            if (attachCount) {
+                if (total > 0) {
+                    attachCount.textContent = total;
+                    attachCount.classList.remove('hidden');
+                } else {
+                    attachCount.classList.add('hidden');
+                }
             }
+            updateTotalSize();
         }
 
-        // 🔹 Preview Image + tombol delete
+        // preview containers keep separate "new-files" blocks to avoid clobbering server-rendered previews
         function displayImages() {
-            previewImageContainer.innerHTML = '';
+            let newFilesContainer = previewImageContainer.querySelector('.new-files-container');
+            if (!newFilesContainer) {
+                newFilesContainer = document.createElement('div');
+                newFilesContainer.className = 'new-files-container flex flex-wrap gap-2';
+                previewImageContainer.appendChild(newFilesContainer);
+            } else {
+                newFilesContainer.innerHTML = '';
+            }
+
             accumulatedPhotoFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "relative";
@@ -896,14 +946,22 @@
 
                 wrapper.appendChild(img);
                 wrapper.appendChild(btn);
-                previewImageContainer.appendChild(wrapper);
-                feather.replace();
+                newFilesContainer.appendChild(wrapper);
             });
+
+            if (typeof feather !== 'undefined' && feather.replace) feather.replace();
         }
 
-        // 🔹 Preview File + tombol delete
         function displayFiles() {
-            previewFileContainer.innerHTML = '';
+            let newFilesContainer = previewFileContainer.querySelector('.new-files-container');
+            if (!newFilesContainer) {
+                newFilesContainer = document.createElement('div');
+                newFilesContainer.className = 'new-files-container flex flex-col gap-2';
+                previewFileContainer.appendChild(newFilesContainer);
+            } else {
+                newFilesContainer.innerHTML = '';
+            }
+
             accumulatedFileFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
@@ -927,56 +985,73 @@
                 };
 
                 wrapper.append(icon, name, btn);
-                previewFileContainer.appendChild(wrapper);
-                feather.replace();
+                newFilesContainer.appendChild(wrapper);
             });
+
+            if (typeof feather !== 'undefined' && feather.replace) feather.replace();
         }
 
-        // 🔹 Event Listener Input - ACCUMULATE files (don't replace)
+        // total size helpers
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function updateTotalSize() {
+            if (!attachTotalSizeEl) return;
+            let total = 0;
+            accumulatedPhotoFiles.forEach(f => { total += f.size || 0; });
+            accumulatedFileFiles.forEach(f => { total += f.size || 0; });
+            // fallback to input.files if accumulators empty (defensive)
+            if (total === 0) {
+                if (photoInput.files) Array.from(photoInput.files).forEach(f => total += f.size || 0);
+                if (fileInput.files) Array.from(fileInput.files).forEach(f => total += f.size || 0);
+            }
+            const mb = (total / (1024 * 1024));
+            attachTotalSizeEl.textContent = `Total: ${mb.toFixed(2)} MB`;
+        }
+
+        // event listeners to accumulate files
         photoInput.addEventListener('change', (e) => {
-            // Add new files to accumulated list
             const newFiles = Array.from(photoInput.files);
             newFiles.forEach(file => {
-                // Check if file already exists to avoid duplicates
                 const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
-                if (!isDuplicate) {
-                    accumulatedPhotoFiles.push(file);
-                }
+                if (!isDuplicate) accumulatedPhotoFiles.push(file);
             });
-
-            // Update input with accumulated files
             updateFileInput(photoInput, accumulatedPhotoFiles);
             displayImages();
             updateAttachCount();
         });
 
         fileInput.addEventListener('change', (e) => {
-            // Add new files to accumulated list
             const newFiles = Array.from(fileInput.files);
             newFiles.forEach(file => {
-                // Check if file already exists to avoid duplicates
                 const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
-                if (!isDuplicate) {
-                    accumulatedFileFiles.push(file);
-                }
+                if (!isDuplicate) accumulatedFileFiles.push(file);
             });
-
-            // Update input with accumulated files
             updateFileInput(fileInput, accumulatedFileFiles);
             displayFiles();
             updateAttachCount();
         });
 
-        // 🔹 Toggle menu
-        attachBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            attachMenu.classList.toggle('hidden');
-        });
+        // toggle menu & triggers
+        if (attachBtn) {
+            attachBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (attachMenu) attachMenu.classList.toggle('hidden');
+            });
+        }
+        document.addEventListener('click', () => { if (attachMenu) attachMenu.classList.add('hidden'); });
+        if (attachImages) attachImages.addEventListener('click', () => photoInput.click());
+        if (attachDocs) attachDocs.addEventListener('click', () => fileInput.click());
 
-        document.addEventListener('click', () => attachMenu.classList.add('hidden'));
-
-        attachImages.addEventListener('click', () => photoInput.click());
-        attachDocs.addEventListener('click', () => fileInput.click());
+        // initialize display
+        updateTotalSize();
+        updateAttachCount();
     });
 </script>
 
