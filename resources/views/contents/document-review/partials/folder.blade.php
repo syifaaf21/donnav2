@@ -512,8 +512,10 @@ $isSupervisorOfDocDept = auth()
     ->user()
     ->isSupervisorOfDepartment($doc->department_id);
 
-// Only supervisor from document's department OR admin can edit
-                                                $showEdit = $isAdmin || $isSupervisorOfDocDept;
+
+                                                // Only supervisor from document's department OR admin can edit
+                                                // But hide Edit when status is 'need review' (approval flow)
+                                                $showEdit = ($isAdmin || $isSupervisorOfDocDept) && $status !== 'need review';
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
