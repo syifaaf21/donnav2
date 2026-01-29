@@ -185,15 +185,22 @@
                             // attempt to reinitialize TomSelects if present
                             if (typeof TomSelect !== 'undefined') {
                                 try {
-                                        new TomSelect(`#role_select_edit_${userId}`, {
-                                            create: false,
-                                            maxItems: null
+                                    new TomSelect(`#role_select_edit_${userId}`, {
+                                        create: false,
+                                        maxItems: null
                                     });
                                 } catch (e) {}
                                 try {
                                     new TomSelect(`#department_select_edit_${userId}`, {
                                         create: false,
                                         maxItems: 1
+                                    });
+                                } catch (e) {}
+                                try {
+                                    // Ensure audit type select also becomes TomSelect when validation returns the form
+                                    new TomSelect(`#audit_type_select_edit_${userId}`, {
+                                        create: false,
+                                        maxItems: null
                                     });
                                 } catch (e) {}
                             }
