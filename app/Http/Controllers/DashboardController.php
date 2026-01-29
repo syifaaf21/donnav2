@@ -36,11 +36,12 @@ class DashboardController extends Controller
         // Hitung user
         $totalUsers = User::count();
 
-        // Semua department untuk Control Documents
-        $departments = Department::pluck('name', 'id')->toArray();
+        // Semua department untuk Control Documents (urut berdasarkan nama)
+            $departments = Department::orderBy('name')->pluck('name', 'id')->toArray();
 
-        // Hanya department dengan plant Body, Unit, Electric untuk Review Documents
+        // Hanya department dengan plant Body, Unit, Electric untuk Review Documents (urut berdasarkan nama)
         $departmentsReview = Department::whereIn('plant', ['Body', 'Unit', 'Electric'])
+            ->orderBy('name')
             ->pluck('name', 'id')->toArray();
 
         // Jumlah dokumen control per department keyed by department_id
@@ -179,7 +180,7 @@ class DashboardController extends Controller
             ->count();
 
         // Semua department untuk Control Documents
-        $departments = Department::pluck('name', 'id')->toArray();
+            $departments = Department::orderBy('name')->pluck('name', 'id')->toArray();
 
         // Jumlah dokumen control per department
         $controlDocuments = DocumentMapping::selectRaw('department_id, COUNT(*) as total')
@@ -241,8 +242,9 @@ class DashboardController extends Controller
         // Data spesifik untuk Document Review
         $totalDocuments = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'review'))->count();
 
-        // Hanya department dengan plant Body, Unit, Electric
+        // Hanya department dengan plant Body, Unit, Electric (urut berdasarkan nama)
         $departmentsReview = Department::whereIn('plant', ['Body', 'Unit', 'Electric'])
+            ->orderBy('name')
             ->pluck('name', 'id')->toArray();
 
         // Jumlah dokumen review per department
@@ -316,8 +318,8 @@ class DashboardController extends Controller
         // Status breakdown untuk distribusi
         $statusBreakdown = $chartData->toArray();
 
-        // Departments list (id => name)
-        $departments = Department::pluck('name', 'id')->toArray();
+        // Departments list (id => name) - urut berdasarkan nama
+        $departments = Department::orderBy('name')->pluck('name', 'id')->toArray();
 
         // Build per-department status matrix, excluding statuses that contain 'draft'
         $deptStatusMatrix = [];

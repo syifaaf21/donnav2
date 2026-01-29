@@ -40,6 +40,19 @@
                 ];
             @endphp
 
+            @php
+                // Status color mapping (soft/formal) for table badges
+                $statusColors = [
+                    'Need Assign' => '#F7A29A',
+                    'Need Check' => '#FCE9B8',
+                    'Need Approval by Auditor' => '#9CC2E5',
+                    'Need Approval by Lead Auditor' => '#7EA6D1',
+                    'Need Revision' => '#F7C6B5',
+                    'Close' => '#B7E4C7',
+                    'Checked by Dept Head' => '#BEEAEF'
+                ];
+            @endphp
+
             @foreach ($cards as $c)
                 <div class="col-6 col-md-3">
                     <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
@@ -273,18 +286,11 @@
                                             <td class="small py-2 text-center col-status">
                                                 @php
                                                     $statusName = $finding->status->name ?? '-';
-                                                    $badgeClass = 'secondary';
-                                                    if (str_contains($statusName, 'Close')) {
-                                                        $badgeClass = 'success';
-                                                    } elseif (str_contains($statusName, 'Need Assign')) {
-                                                        $badgeClass = 'danger';
-                                                    } elseif (str_contains($statusName, 'Need Check')) {
-                                                        $badgeClass = 'warning';
-                                                    } elseif (str_contains($statusName, 'Approve')) {
-                                                        $badgeClass = 'primary';
-                                                    }
+                                                    $badgeColor = $statusColors[$statusName] ?? '#E5E7EB';
+                                                    $badgeText = '#1f2937';
                                                 @endphp
-                                                <span class="badge status-badge bg-{{ $badgeClass }} px-3 py-1">
+                                                <span class="badge status-badge px-3 py-1"
+                                                      style="background-color: {{ $badgeColor }}; color: {{ $badgeText }};">
                                                     {{ $statusName }}
                                                 </span>
                                             </td>
@@ -328,19 +334,75 @@
 
     <script>
         /* ===================== BAR CHART - FTPP STATUS ===================== */
+        // Formal-but-soft corporate palette (used across all charts)
+        const corporatePalette = [
+            '#254E70', // deep slate blue
+            '#43698B', // muted steel blue
+            '#6CA6A9', // soft teal
+            '#8FA3B8', // warm slate
+            '#6B8E6E', // moss green
+            '#E6B89C', // soft amber/peach
+            '#C57D7D', // muted rose
+            '#7E5A83'  // soft muted purple
+        ];
+
+        // Map important statuses to lighter soft/formal colors (used by charts)
+        const statusColorMap = {
+            'Need Assign': '#F7A29A',               // light coral
+            'Need Check': '#FCE9B8',                // pale amber
+            'Need Approval by Auditor': '#9CC2E5',  // light sky
+            'Need Approval by Lead Auditor': '#7EA6D1', // muted blue
+            'Need Revision': '#F7C6B5',             // light peach
+            'Close': '#B7E4C7',                     // soft mint
+            'Checked by Dept Head': '#BEEAEF'       // pale teal
+        };
+
+        const fallbackColors = corporatePalette.slice();
+
+        const ftppLabels = [
+            'Need Assign',
+            'Need Check',
+            'Checked by Dept Head',
+            'Need Approval by Lead Auditor',
+            'Need Revision',
+            'Close'
+        ];
+
+        // Gradient helpers (from start -> end across N steps)
+        function hexToRgb(hex) {
+            const v = parseInt(hex.replace('#', ''), 16);
+            return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };
+        }
+
+        function rgbToHex(r, g, b) {
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+
+        function interpolateHex(a, b, t) {
+            const A = hexToRgb(a);
+            const B = hexToRgb(b);
+            const r = Math.round(A.r + (B.r - A.r) * t);
+            const g = Math.round(A.g + (B.g - A.g) * t);
+            const bl = Math.round(A.b + (B.b - A.b) * t);
+            return rgbToHex(r, g, bl);
+        }
+
+        function gradientColors(startHex, endHex, steps) {
+            if (steps <= 1) return [startHex];
+            return Array.from({ length: steps }, (_, i) => interpolateHex(startHex, endHex, i / (steps - 1)));
+        }
+
+        // Build a soft red -> soft green gradient for status ordering (Need Assign -> Close)
+        const gradientStart = statusColorMap['Need Assign'] || '#F7A29A';
+        const gradientEnd = statusColorMap['Close'] || '#B7E4C7';
+        const ftppBg = gradientColors(gradientStart, gradientEnd, ftppLabels.length);
+
         const ctx = document.getElementById('ftppStatusChart').getContext('2d');
 
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: [
-                    'Need Assign',
-                    'Need Check',
-                    'Checked by Dept Head',
-                    'Need Approve by Lead Auditor',
-                    'Need Revision',
-                    'Close'
-                ],
+                labels: ftppLabels,
                 datasets: [{
                     label: 'Total Findings',
                     data: [
@@ -351,14 +413,7 @@
                         chartData['Need Revision'] ?? 0,
                         chartData['Close'] ?? 0,
                     ],
-                    backgroundColor: [
-                        '#FFAAA5', // Need Assign (pastel red)
-                        '#FFD3B6', // Need Check (pastel orange)
-                        '#A8D8EA', // Checked by Dept Head (pastel blue)
-                        '#D4A5A5', // Need Approval (muted rose)
-                        '#FFE0AC', // Need Revision (soft amber)
-                        '#A8E6CF'  // Close (pastel green)
-                    ],
+                    backgroundColor: ftppBg,
                     borderWidth: 0,
                     borderRadius: 6,
                     barThickness: 28
@@ -401,6 +456,14 @@
             const words = name.split(' ');
             return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
         });
+        // small helper: convert hex to rgba
+        function hexToRgba(hex, alpha) {
+            const bigint = parseInt(hex.replace('#', ''), 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
 
         new Chart(document.getElementById('findingLineChart').getContext('2d'), {
             type: 'line',
@@ -409,8 +472,8 @@
                 datasets: [{
                     label: 'Total Findings',
                     data: deptTotals,
-                    borderColor: '#7BA7FF',
-                    backgroundColor: 'rgba(123,167,255,0.25)',
+                    borderColor: corporatePalette[0],
+                    backgroundColor: hexToRgba(corporatePalette[0], 0.12),
                     tension: 0.3,
                     borderWidth: 2,
                     pointRadius: 4,
@@ -457,11 +520,9 @@
         /* ===================== PIE CHART - STATUS DISTRIBUTION ===================== */
         const statusLabels = Object.keys(statusBreakdown);
         const statusData = Object.values(statusBreakdown);
-        const statusColors = [
-            '#A8E6CF', '#FFD3B6', '#FFAAA5', '#FF8B94', '#A8D8EA', '#D4A5A5',
-            '#7BA7FF', '#6EC6E2', '#8BD3C7', '#A3A0FB', '#F7C97F', '#FFB38A',
-            '#E5C7FF', '#C0E4FF'
-        ];
+
+        // Build pie colors from statusColorMap where available, fallback to corporatePalette
+        const statusColors = statusLabels.map((s, i) => statusColorMap[s] || corporatePalette[i % corporatePalette.length]);
 
         new Chart(document.getElementById('statusPie'), {
             type: 'pie',
@@ -501,16 +562,14 @@
                 const statuses = Array.from(statusSet);
                 if (!statuses.length) return;
 
-                // color generator
-                const preset = [
-                    '#7BA7FF', '#A8E6CF', '#FFD3B6', '#FFAAA5', '#D4A5A5', '#FFE0AC', '#6EC6E2', '#8BD3C7', '#C0E4FF'
-                ];
-                const colorFor = i => preset[i % preset.length] || `hsl(${(i*47)%360} 70% 65%)`;
+                // color generator with explicit mapping for key statuses, fall back to corporate palette
+                const preset = corporatePalette.slice();
+                const colorFor = (status, i) => (statusColorMap && statusColorMap[status]) ? statusColorMap[status] : (preset[i % preset.length] || `hsl(${(i*47)%360} 70% 65%)`);
 
                 const datasets = statuses.map((s, idx) => ({
                     label: s,
                     data: departments.map(d => (matrix[d] && matrix[d][s]) ? matrix[d][s] : 0),
-                    backgroundColor: colorFor(idx),
+                    backgroundColor: colorFor(s, idx),
                     borderWidth: 0,
                 }));
 
