@@ -167,7 +167,20 @@
                     </div>
                 </div>
 
-                <form action="{{ route('logout') }}" method="POST" role="none">
+                {{-- Edit Profile --}}
+                <div class="px-2 pt-1">
+                    <a href="{{ route('profile.index') }}"
+                        class="w-full flex items-center gap-2 px-4 py-2.5
+                   text-sm text-gray-700 rounded-lg
+                   hover:bg-gray-50 transition
+                   no-underline">
+                        <i data-feather="user" class="w-4 h-4"></i>
+                        <span>Edit Profile</span>
+                    </a>
+                </div>
+
+                {{-- Logout --}}
+                <form action="{{ route('logout') }}" method="POST" role="none" class="px-2 pb-1">
                     @csrf
                     <button type="submit"
                         class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors">

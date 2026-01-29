@@ -72,6 +72,15 @@ class User extends Authenticatable
         return $this->belongsToMany(Audit::class, 'tt_user_audit_type', 'user_id', 'audit_id');
     }
 
+    protected static function booted()
+    {
+        static::saving(function ($user) {
+            if ($user->isDirty('password')) {
+                $user->password_changed_at = now();
+            }
+        });
+    }
+
     /**
      * Check if user is supervisor
      */
