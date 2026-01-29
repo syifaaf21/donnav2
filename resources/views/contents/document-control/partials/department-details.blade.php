@@ -306,7 +306,8 @@
                                                         <div class="relative">
                                                             <!-- Dropdown toggle button -->
                                                             <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
-                                                                class="text-gray-700 hover:text-blue-600 toggle-files-dropdown">
+                                                                class="text-gray-700 hover:text-blue-600 toggle-files-dropdown"
+                                                                data-files='@json($filesToShow->values()->all())'>
                                                                 <i class="bi bi-file-earmark-text text-2xl"></i>
                                                                 <span
                                                                     class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
@@ -314,7 +315,7 @@
                                                                 </span>
                                                             </button>
 
-                                                            <!-- Dropdown menu -->
+                                                            <!-- Dropdown menu (vertical list) -->
                                                             <div id="viewFilesDropdown-{{ $mapping->id }}"
                                                                 class="hidden absolute right-0 bottom-full mb-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
                                                                 <div class="py-1 text-sm max-h-80 overflow-y-auto">
@@ -325,21 +326,27 @@
                                                                             data-file="{{ $file['url'] }}"
                                                                             data-doc-title="{{ $file['name'] }}">
 
-                                                                            <span class="truncate pr-2"
-                                                                                style="flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                                                                📄 {{ $file['name'] }}
-                                                                            </span>
-                                                                            @if (($file['pending_approval'] ?? 0) == 2)
-                                                                                <span
-                                                                                    class="ml-2 inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
-                                                                                    Rejected
-                                                                                </span>
-                                                                            @elseif (!empty($file['replaced_by_id']))
-                                                                                <span
-                                                                                    class="ml-2 inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
-                                                                                    Replaced
-                                                                                </span>
-                                                                            @endif
+                                                                            <div class="flex items-center gap-2" style="min-width:0;">
+                                                                                <i class="bi bi-file-earmark-text text-lg text-gray-600"></i>
+                                                                                <span class="truncate" style="flex:1 1 auto;min-width:0;">{{ $file['name'] }}</span>
+                                                                            </div>
+                                                                            <div class="flex items-center gap-2">
+                                                                                @if (($file['pending_approval'] ?? 0) == 2)
+                                                                                    <span
+                                                                                        class="inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                        Rejected
+                                                                                    </span>
+                                                                                @elseif (!empty($file['replaced_by_id']))
+                                                                                    <span
+                                                                                        class="inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                        Replaced
+                                                                                    </span>
+                                                                                @else
+                                                                                    @if(!empty($file['size']))
+                                                                                        <span class="text-xs text-gray-500">{{ $file['size'] }}</span>
+                                                                                    @endif
+                                                                                @endif
+                                                                            </div>
                                                                         </button>
                                                                     @endforeach
                                                                 </div>
@@ -382,24 +389,24 @@
                                                             method="POST" class="inline-flex items-center m-0 p-0">
                                                             @csrf
                                                             <button type="button"
-                                                                class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors btn-approve"
+                                                                class="action-btn inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors btn-approve"
                                                                 data-status="{{ $mapping->status->name }}"
                                                                 data-obsolete="{{ $mapping->obsolete_date }}"
                                                                 data-period="{{ $mapping->period_years }}"
-                                                                onclick="confirmApprove(this)" title="Approve">
+                                                                onclick="confirmApprove(this)" title="Approve" aria-label="Approve document">
                                                                 <i class="bi bi-check2-circle"></i>
                                                             </button>
                                                         </form>
 
                                                         <button type="button"
-                                                            class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors btn-reject"
+                                                            class="action-btn inline-flex items-center justify-center w-9 h-9 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors btn-reject"
                                                             data-docid="{{ $mapping->id }}"
                                                             data-doc-title="{{ $mapping->document->name }}"
                                                             data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
                                                             data-status="{{ $mapping->status->name }}"
                                                             data-reject-url="{{ route('document-control.reject', $mapping) }}"
-                                                            title="Reject">
-                                                            <i class="bi bi-x-circle"></i>
+                                                            title="Reject" aria-label="Reject document">
+                                                            <i class="bi bi-x-circle-fill"></i>
                                                         </button>
                                                     @endif
                                                 </div>
@@ -642,34 +649,119 @@
                 });
 
                 // =========================
-                // Rebind dropdown file
+                // Rebind dropdown file (build popup from data-files)
                 // =========================
                 document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
                     btn.onclick = (e) => {
                         e.stopPropagation();
-                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
 
-                        const isVisible = !dropdown.classList.contains('hidden');
+                        // close any existing popup
+                        document.querySelectorAll('.file-popup').forEach(p => p.remove());
 
-                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                            .add('hidden'));
-
-                        if (isVisible) {
-                            dropdown.classList.add('hidden');
+                        // toggle state
+                        if (btn.dataset.popupOpen === '1') {
+                            btn.dataset.popupOpen = '0';
                             return;
                         }
 
+                        const files = JSON.parse(btn.dataset.files || '[]');
                         const rect = btn.getBoundingClientRect();
-                        dropdown.style.position = 'fixed';
-                        dropdown.style.top = `${rect.bottom + 6}px`;
-                        const preferredLeft = rect.left - 120;
-                        const estimatedWidth = Math.max(200, Math.min(360, dropdown.offsetWidth ||
-                        260));
-                        const maxLeft = window.innerWidth - estimatedWidth - 12;
-                        const clampedLeft = Math.min(Math.max(8, preferredLeft), maxLeft);
-                        dropdown.style.left = `${clampedLeft}px`;
-                        dropdown.classList.remove('hidden');
-                        dropdown.classList.add('dropdown-fixed');
+
+                        const popup = document.createElement('div');
+                        popup.className = 'file-popup dropdown-fixed';
+                        popup.style.position = 'fixed';
+                        popup.style.top = `${rect.bottom + 6}px`;
+                        popup.style.left = `${Math.min(Math.max(8, rect.left - 120), window.innerWidth - 260)}px`;
+                        popup.style.backgroundColor = '#fff';
+                        popup.style.opacity = '1';
+                        popup.style.visibility = 'visible';
+                        popup.style.zIndex = '999999';
+                        popup.style.border = '1px solid rgba(0,0,0,0.08)';
+                        popup.style.borderRadius = '8px';
+                        popup.style.boxShadow = '0 8px 24px rgba(16,24,40,0.12)';
+                        popup.style.padding = '6px';
+                        popup.style.maxHeight = '320px';
+                        popup.style.overflow = 'auto';
+                        popup.style.minWidth = '220px';
+
+                        // build list
+                        files.forEach(f => {
+                            const row = document.createElement('button');
+                            row.type = 'button';
+                            row.className = 'w-full flex justify-between items-center px-3 py-2 rounded-md text-sm text-left view-file-btn';
+                            row.style.background = 'transparent';
+                            row.style.border = 'none';
+                            row.style.display = 'flex';
+                            row.style.alignItems = 'center';
+                            row.style.gap = '8px';
+                            row.dataset.file = f.url || '';
+                            row.dataset.docTitle = f.name || '';
+
+                            const left = document.createElement('div');
+                            left.style.display = 'flex';
+                            left.style.alignItems = 'center';
+                            left.style.gap = '8px';
+                            const ico = document.createElement('i');
+                            ico.className = 'bi bi-file-earmark-text text-gray-600';
+                            ico.style.minWidth = '18px';
+                            left.appendChild(ico);
+                            const name = document.createElement('span');
+                            name.className = 'truncate';
+                            name.style.maxWidth = '160px';
+                            name.textContent = f.name || '—';
+                            left.appendChild(name);
+
+                            const right = document.createElement('div');
+                            right.style.display = 'flex';
+                            right.style.alignItems = 'center';
+                            right.style.gap = '6px';
+                            if ((f.pending_approval || 0) == 2) {
+                                const badge = document.createElement('span');
+                                badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
+                                badge.textContent = 'Rejected';
+                                right.appendChild(badge);
+                            } else if (f.replaced_by_id) {
+                                const badge = document.createElement('span');
+                                badge.className = 'inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full';
+                                badge.textContent = 'Replaced';
+                                right.appendChild(badge);
+                            } else if (f.size) {
+                                const size = document.createElement('span');
+                                size.className = 'text-xs text-gray-500';
+                                size.textContent = f.size;
+                                right.appendChild(size);
+                            }
+
+                            row.appendChild(left);
+                            row.appendChild(right);
+
+                            popup.appendChild(row);
+                        });
+
+                        document.body.appendChild(popup);
+                        btn.dataset.popupOpen = '1';
+
+                        // bind preview events
+                        popup.querySelectorAll('.view-file-btn').forEach(b => {
+                            b.addEventListener('click', function(ev) {
+                                ev.stopPropagation();
+                                document.getElementById('previewTitle').textContent = this.dataset.docTitle || 'File Preview';
+                                document.getElementById('previewIframe').src = this.dataset.file || '';
+                                new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                                popup.remove();
+                                btn.dataset.popupOpen = '0';
+                            });
+                        });
+
+                        // close on outside click
+                        const closeHandler = (ev) => {
+                            if (!popup.contains(ev.target) && ev.target !== btn) {
+                                popup.remove();
+                                btn.dataset.popupOpen = '0';
+                                document.removeEventListener('click', closeHandler);
+                            }
+                        };
+                        setTimeout(() => document.addEventListener('click', closeHandler), 10);
                     };
                 });
 
@@ -1129,28 +1221,105 @@
             document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
 
-                    const isVisible = !dropdown.classList.contains('hidden');
+                    // close existing popups
+                    document.querySelectorAll('.file-popup').forEach(p => p.remove());
 
-                    // Tutup semua dropdown lain
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                        .add('hidden'));
+                    if (btn.dataset.popupOpen === '1') { btn.dataset.popupOpen = '0'; return; }
 
-                    // Kalau yang diklik sedang terbuka → tutup saja
-                    if (isVisible) {
-                        dropdown.classList.add('hidden');
-                        return;
-                    }
-
-                    // Hitung posisi
+                    const files = JSON.parse(btn.dataset.files || '[]');
                     const rect = btn.getBoundingClientRect();
-                    const offsetX = -120;
-                    dropdown.style.position = 'fixed';
-                    dropdown.style.top = `${rect.bottom + 6}px`;
-                    dropdown.style.left = `${rect.left + offsetX}px`;
-                    dropdown.classList.remove('hidden');
-                    dropdown.classList.add('dropdown-fixed');
+                    const popup = document.createElement('div');
+                    popup.className = 'file-popup dropdown-fixed';
+                    popup.style.position = 'fixed';
+                    popup.style.top = `${rect.bottom + 6}px`;
+                    popup.style.left = `${Math.min(Math.max(8, rect.left - 120), window.innerWidth - 260)}px`;
+                    popup.style.backgroundColor = '#fff';
+                    popup.style.opacity = '1';
+                    popup.style.visibility = 'visible';
+                    popup.style.zIndex = '999999';
+                    popup.style.border = '1px solid rgba(0,0,0,0.08)';
+                    popup.style.borderRadius = '8px';
+                    popup.style.boxShadow = '0 8px 24px rgba(16,24,40,0.12)';
+                    popup.style.padding = '6px';
+                    popup.style.maxHeight = '320px';
+                    popup.style.overflow = 'auto';
+                    popup.style.minWidth = '220px';
+
+                    files.forEach(f => {
+                        const row = document.createElement('button');
+                        row.type = 'button';
+                        row.className = 'w-full flex justify-between items-center px-3 py-2 rounded-md text-sm text-left view-file-btn';
+                        row.style.background = 'transparent';
+                        row.style.border = 'none';
+                        row.style.display = 'flex';
+                        row.style.alignItems = 'center';
+                        row.style.gap = '8px';
+                        row.dataset.file = f.url || '';
+                        row.dataset.docTitle = f.name || '';
+
+                        const left = document.createElement('div');
+                        left.style.display = 'flex';
+                        left.style.alignItems = 'center';
+                        left.style.gap = '8px';
+                        const ico = document.createElement('i');
+                        ico.className = 'bi bi-file-earmark-text text-gray-600';
+                        ico.style.minWidth = '18px';
+                        left.appendChild(ico);
+                        const name = document.createElement('span');
+                        name.className = 'truncate';
+                        name.style.maxWidth = '160px';
+                        name.textContent = f.name || '—';
+                        left.appendChild(name);
+
+                        const right = document.createElement('div');
+                        right.style.display = 'flex';
+                        right.style.alignItems = 'center';
+                        right.style.gap = '6px';
+                        if ((f.pending_approval || 0) == 2) {
+                            const badge = document.createElement('span');
+                            badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
+                            badge.textContent = 'Rejected';
+                            right.appendChild(badge);
+                        } else if (f.replaced_by_id) {
+                            const badge = document.createElement('span');
+                            badge.className = 'inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full';
+                            badge.textContent = 'Replaced';
+                            right.appendChild(badge);
+                        } else if (f.size) {
+                            const size = document.createElement('span');
+                            size.className = 'text-xs text-gray-500';
+                            size.textContent = f.size;
+                            right.appendChild(size);
+                        }
+
+                        row.appendChild(left);
+                        row.appendChild(right);
+                        popup.appendChild(row);
+                    });
+
+                    document.body.appendChild(popup);
+                    btn.dataset.popupOpen = '1';
+
+                    popup.querySelectorAll('.view-file-btn').forEach(b => {
+                        b.addEventListener('click', function(ev) {
+                            ev.stopPropagation();
+                            document.getElementById('previewTitle').textContent = this.dataset.docTitle || 'File Preview';
+                            document.getElementById('previewIframe').src = this.dataset.file || '';
+                            new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                            popup.remove();
+                            btn.dataset.popupOpen = '0';
+                        });
+                    });
+
+                    const closeHandler = (ev) => {
+                        if (!popup.contains(ev.target) && ev.target !== btn) {
+                            popup.remove();
+                            btn.dataset.popupOpen = '0';
+                            document.removeEventListener('click', closeHandler);
+                        }
+                    };
+                    setTimeout(() => document.addEventListener('click', closeHandler), 10);
                 });
             });
 
@@ -1158,6 +1327,8 @@
             window.addEventListener('scroll', () => {
                 document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
                     'hidden'));
+                // also remove dynamic file popups
+                document.querySelectorAll('.file-popup').forEach(p => p.remove());
             });
 
             // Tutup dropdown saat klik di luar
