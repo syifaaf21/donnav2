@@ -16,10 +16,14 @@ class BulkAuditeeNeedAssignNotification extends Notification
     /** @var \Illuminate\Support\Collection|null */
     private $findings;
 
-    public function __construct(array $registrationNumbers, $findings = null)
+    /** @var \DateTimeInterface|string|null */
+    private $dueDate;
+
+    public function __construct(array $registrationNumbers, $findings = null, $dueDate = null)
     {
         $this->registrationNumbers = $registrationNumbers;
         $this->findings = $findings;
+        $this->dueDate = $dueDate;
     }
 
     /**
@@ -50,11 +54,20 @@ class BulkAuditeeNeedAssignNotification extends Notification
             $mail->line("• {$reg}");
         }
 
+        // Show due date if provided
+        if ($this->dueDate) {
+            $due = $this->dueDate instanceof \DateTimeInterface
+                ? $this->dueDate->format('d M Y')
+                : (string) $this->dueDate;
+            $mail->line("Due date: {$due}");
+        }
+
         $mail->line('Required actions:')
             ->line('- Complete the Why-Cause (5 Whys) analysis')
             ->line('- Provide the root cause')
             ->line('- Fill in Corrective and Preventive Actions')
             ->action('Open your FTPP dashboard', url('/ftpp'))
+            ->line('')
             ->line('Please use a laptop and the AIIA network when completing this task.')
             ->line('Thank you for your prompt attention to these assignments.')
             ->salutation("Regards,\n\nManagement System Team");
@@ -72,6 +85,7 @@ class BulkAuditeeNeedAssignNotification extends Notification
         return [
             'registrations' => $this->registrationNumbers,
             'count' => count($this->registrationNumbers),
+            'due_date' => $this->dueDate ? ($this->dueDate instanceof \DateTimeInterface ? $this->dueDate->format('Y-m-d') : $this->dueDate) : null,
         ];
     }
 }

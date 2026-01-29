@@ -15,14 +15,16 @@ class DeptHeadNeedCheckNotification extends Notification
     protected $byUserName;
     protected $replyToEmail;
     protected $url;
+    protected $dueDate;
 
-    public function __construct($finding, $auditeeAction = null, $byUserName = null, $replyToEmail = null, $url = null)
+    public function __construct($finding, $auditeeAction = null, $byUserName = null, $replyToEmail = null, $url = null, $dueDate = null)
     {
         $this->finding = $finding;
         $this->auditeeAction = $auditeeAction;
         $this->byUserName = $byUserName;
         $this->replyToEmail = $replyToEmail;
         $this->url = $url ?? route('ftpp.index');
+        $this->dueDate = $dueDate;
     }
 
     public function via($notifiable)
@@ -38,7 +40,14 @@ class DeptHeadNeedCheckNotification extends Notification
             ->subject("[FTPP] Need Check – Finding {$reg}")
             ->greeting('Hello ' . ($notifiable->name ?? 'Dept Head') . ',')
             ->line("Finding No: {$reg} requires your review.")
-            ->line('Please review the FTPP and respond accordingly.')
+            ->line('Please review the FTPP and respond accordingly.');
+
+        if (!empty($this->dueDate)) {
+            $due = $this->dueDate instanceof \DateTimeInterface
+                ? $this->dueDate->format('d M Y')
+                : (string) $this->dueDate;
+            $mail->line("Due date: {$due}");
+        }
             ->action('Open FTPP', $this->url)
             ->line('Please use a laptop and the AIIA network when completing this task.')
             ->line('Thank you for your attention.');
@@ -64,6 +73,7 @@ class DeptHeadNeedCheckNotification extends Notification
             'message' => "Finding (No: {$reg}) needs your review.",
             'finding_id' => $this->finding->id ?? null,
             'url' => $this->url,
+            'due_date' => $this->dueDate ? ($this->dueDate instanceof \DateTimeInterface ? $this->dueDate->format('Y-m-d') : $this->dueDate) : null,
         ];
     }
 }
