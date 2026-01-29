@@ -24,10 +24,10 @@
                                 <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Document Review
                             </h5>
                             <button type="button"
-                                class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                                class="btn btn-light position-absolute top-0 end-0 m-3 p-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
                                 data-bs-dismiss="modal" aria-label="Close"
                                 style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                                <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                                <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
 
@@ -288,10 +288,12 @@
                 // Tambahkan loading pada tombol submit saat form disubmit
                 form.addEventListener('submit', function() {
                     // Cari tombol submit di seluruh dokumen yang memiliki atribut form sesuai id form
-                    const submitBtn = document.querySelector('button[type="submit"][form="' + form.id + '"]');
+                    const submitBtn = document.querySelector('button[type="submit"][form="' + form
+                        .id + '"]');
                     if (submitBtn) {
                         submitBtn.dataset.originalText = submitBtn.innerHTML;
-                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+                        submitBtn.innerHTML =
+                            '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
                         submitBtn.disabled = true;
                     }
                 });
@@ -305,10 +307,18 @@
                 const docEl = form.querySelector('[name="document_id"]');
 
                 const tsPlant = createTS(plantEl);
-                const tsModel = createTS(modelEl, { maxItems: null });
-                const tsProduct = createTS(prodEl, { maxItems: null });
-                const tsProcess = createTS(procEl, { maxItems: null });
-                const tsPart = createTS(partEl, { maxItems: null });
+                const tsModel = createTS(modelEl, {
+                    maxItems: null
+                });
+                const tsProduct = createTS(prodEl, {
+                    maxItems: null
+                });
+                const tsProcess = createTS(procEl, {
+                    maxItems: null
+                });
+                const tsPart = createTS(partEl, {
+                    maxItems: null
+                });
                 const tsDept = createTS(deptEl);
                 const tsDoc = createTS(docEl);
 
@@ -371,7 +381,9 @@
 
                     if (!Array.isArray(val)) val = [val];
 
-                    let allProducts = [], allModels = [], allProcesses = [];
+                    let allProducts = [],
+                        allModels = [],
+                        allProcesses = [];
 
                     // Batch fetch all part details
                     const detailPromises = val.map(partId =>

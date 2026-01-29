@@ -195,12 +195,18 @@
     <div class="modal fade" id="modalAddKlausul" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content rounded-lg shadow-lg">
-                <div
-                    class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                    <h5 class="modal-title">
-                        <i class="bi bi-plus-circle me-2"></i> Add Klausul
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i> Add Klausul
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <form id="formAddKlausul" method="POST" action="{{ route('master.ftpp.klausul.store') }}">
                     @csrf
@@ -272,10 +278,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-t">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
                         <button type="submit"
-                            class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Submit</button>
+                            class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">Submit</button>
                     </div>
                 </form>
             </div>
@@ -286,12 +295,18 @@
     <div class="modal fade" id="modalEditKlausul" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-lg shadow-lg">
-                <div
-                    class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                    <h5 class="modal-title">
-                        <i class="bi bi-pencil-square me-2"></i> Edit Klausul
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Klausul
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <form id="formEditKlausul" method="POST">
                     @csrf
@@ -315,10 +330,13 @@
                                 required>
                         </div>
                     </div>
-                    <div class="modal-footer border-t">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
                         <button type="submit"
-                            class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Save
+                            class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">Save
                             Changes</button>
                     </div>
                 </form>
@@ -330,12 +348,18 @@
     <div class="modal fade" id="modalAddHead" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-lg shadow-lg">
-                <div
-                    class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                    <h5 class="modal-title">
-                        <i class="bi bi-plus-circle me-2"></i> Add Head Klausul
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i> Add Head Klausul
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <form id="formAddHead" method="POST">
                     @csrf
@@ -370,10 +394,13 @@
                             <div id="subKlausulListHead"></div>
                         </div>
                     </div>
-                    <div class="modal-footer border-t">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
                         <button type="submit"
-                            class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Submit</button>
+                            class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">Submit</button>
                     </div>
                 </form>
             </div>
@@ -384,12 +411,18 @@
     <div class="modal fade" id="modalEditHead" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-lg shadow-lg">
-                <div
-                    class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                    <h5 class="modal-title">
-                        <i class="bi bi-pencil-square me-2"></i> Edit Head Klausul
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Head Klausul
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <form id="formEditHead" method="POST">
                     @csrf
@@ -420,10 +453,13 @@
                             <div id="subKlausulListEdit"></div>
                         </div>
                     </div>
-                    <div class="modal-footer border-t">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
                         <button type="submit"
-                            class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Save
+                            class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">Save
                             Changes</button>
                     </div>
                 </form>
@@ -435,12 +471,18 @@
     <div class="modal fade" id="modalSubKlausul" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-lg shadow-lg">
-                <div
-                    class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                    <h5 class="modal-title" id="subKlausulTitle">
-                        <i class="bi bi-plus-circle me-2"></i> Add Sub Klausul
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark" id="subKlausulTitle"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i> Add Sub Klausul
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <form id="formSubKlausul" method="POST">
                     @csrf
@@ -462,10 +504,13 @@
                                 required>
                         </div>
                     </div>
-                    <div class="modal-footer border-t">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
                         <button type="submit"
-                            class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Save</button>
+                            class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">Save</button>
                     </div>
                 </form>
             </div>

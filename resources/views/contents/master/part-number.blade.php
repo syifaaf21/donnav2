@@ -94,22 +94,27 @@
 
             <div id="tableContainer">
                 {{-- Table --}}
-               <div
+                <div
                     class="overflow-hidden bg-white rounded-xl shadow border border-gray-100 overflow-x-auto overflow-y-auto max-h-[460px]">
                     <table class="min-w-full divide-y divide-gray-200 text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">No</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Part
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">No
+                                </th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">
+                                    Part
                                     Number</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Product
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">
+                                    Product
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Model</th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Process
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">
+                                    Model</th>
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">
+                                    Process
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">Plant</th>
-                                <th
-                                    class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200">
+                                    Plant</th>
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
@@ -119,10 +124,14 @@
                                     <td class="px-4 py-3 border-r border-gray-200">
                                         {{ ($partNumbers->currentPage() - 1) * $partNumbers->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">{{ $part->part_number }}</td>
-                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->product->name ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->productModel->name ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->process ? ucwords($part->process->name) : '-' }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold border-r border-gray-200">
+                                        {{ $part->part_number }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">{{ $part->product->name ?? '-' }}
+                                    </td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">
+                                        {{ $part->productModel->name ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-sm border-r border-gray-200">
+                                        {{ $part->process ? ucwords($part->process->name) : '-' }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200">{{ ucwords($part->plant) }}</td>
                                     <td class="px-4 py-3 text-sm border-r border-gray-200 text-center">
                                         <button type="button" data-bs-toggle="modal"
@@ -153,8 +162,8 @@
                                                 stroke-width="1.5" stroke="currentColor"
                                                 class="w-12 h-12 mb-2 text-gray-400">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2
-                                     2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
-                                     0 01-2 2z" />
+                                             2 0 012-2h4l2 2h6a2 2 0 012 2v14a2 2
+                                             0 01-2 2z" />
                                             </svg>
 
                                             <span class="text-gray-500 text-sm">
@@ -195,10 +204,10 @@
                             <i class="bi bi-pencil-square text-primary me-2"></i>Edit Part Number
                         </h5>
                         <button type="button"
-                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                             data-bs-dismiss="modal" aria-label="Close"
                             style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                            <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
 
@@ -312,10 +321,10 @@
                         <i class="bi bi-plus-circle text-primary me-2"></i> Add New Part Number
                     </h5>
                     <button type="button"
-                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                         data-bs-dismiss="modal" aria-label="Close"
                         style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
 

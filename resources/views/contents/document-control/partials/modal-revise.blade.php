@@ -9,10 +9,11 @@
                     class="bi bi-cloud-upload text-primary"></i>
                 Upload Document
             </h5>
-            <button type="button" class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+            <button type="button" class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+
                 onclick="closeReviseModal()" aria-label="Close"
                 style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                <i class="bi bi-x-lg"></i>
             </button>
         </div>
 
@@ -28,7 +29,8 @@
                 <div>
                     <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                     <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
-                        <li>Allowed formats: <strong>PDF, DOCX, XLSX, JPG, PNG, JPEG</strong>. Max total file: <strong>20 MB</strong>.</li>
+                        <li>Allowed formats: <strong>PDF, DOCX, XLSX, JPG, PNG, JPEG</strong>. Max total file:
+                            <strong>20 MB</strong>.</li>
                         <li>Gunakan tombol <strong>Replace</strong> untuk mengganti file, dan <strong>Add File</strong>
                             untuk menambah file baru.</li>
                         <li>File yang dihapus akan hilang secara <strong>permanen</strong> dan tidak dapat dipulihkan.
@@ -57,8 +59,7 @@
                     <i class="bi bi-x-circle me-1"></i> Cancel
                 </button>
 
-                <button type="submit"
-                    id="reviseSubmitBtn"
+                <button type="submit" id="reviseSubmitBtn"
                     class="px-4 py-1.5 bg-sky-600 text-white rounded hover:bg-sky-700 fw-semibold transition">
                     <i class="bi bi-check2-circle me-1"></i> Submit
                 </button>
@@ -67,16 +68,17 @@
     </div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var reviseForm = document.getElementById('reviseFormDynamic');
-    var submitBtn = document.getElementById('reviseSubmitBtn');
-    if (reviseForm && submitBtn) {
-        reviseForm.addEventListener('submit', function() {
-            submitBtn.disabled = true;
-            submitBtn.style.pointerEvents = 'none';
-            submitBtn.style.opacity = '0.7';
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Uploading...';
-        });
-    }
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        var reviseForm = document.getElementById('reviseFormDynamic');
+        var submitBtn = document.getElementById('reviseSubmitBtn');
+        if (reviseForm && submitBtn) {
+            reviseForm.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.style.pointerEvents = 'none';
+                submitBtn.style.opacity = '0.7';
+                submitBtn.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Uploading...';
+            });
+        }
+    });
 </script>

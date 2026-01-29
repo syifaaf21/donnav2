@@ -6,11 +6,18 @@
             <input type="hidden" name="_form" value="add">
 
             {{-- Header --}}
-            <div class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                <h5 class="modal-title fw-semibold text-white" id="addUserModalLabel">
-                    <i class="bi bi-plus-circle me-2"></i> Create New User
+            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                style="background-color: #f5f5f7;">
+                <h5 class="modal-title fw-semibold text-dark" id="addUserModalLabel"
+                    style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i> Create New User
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button"
+                    class="btn btn-light position-absolute top-0 end-0 m-3 p-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
 
             {{-- Body --}}
@@ -69,7 +76,8 @@
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div id="emailAddInvalidFeedback" class="invalid-feedback" style="display:none;">Email is required for Dept Head.</div>
+                        <div id="emailAddInvalidFeedback" class="invalid-feedback" style="display:none;">Email is
+                            required for Dept Head.</div>
                     </div>
 
                     {{-- Password --}}
@@ -82,27 +90,63 @@
                             title="Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
                             value="{{ old('password') }}" required>
                         <style>
-                            .pwcheck-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; }
+                            .pwcheck-icon {
+                                width: 18px;
+                                height: 18px;
+                                display: inline-block;
+                                vertical-align: middle;
+                            }
                         </style>
-                        <div id="addPasswordChecklist" class="mb-2" style="margin-top: 6px; font-size: 0.93em; color: #444;">
+                        <div id="addPasswordChecklist" class="mb-2"
+                            style="margin-top: 6px; font-size: 0.93em; color: #444;">
                             <div id="addpwlen" class="d-flex align-items-center mb-1">
-                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20"
+                                        fill="none">
+                                        <circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2"
+                                            fill="#fff" />
+                                        <path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg></span>
                                 <span class="pw-label">At least 8 characters</span>
                             </div>
                             <div id="addpwlower" class="d-flex align-items-center mb-1">
-                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20"
+                                        fill="none">
+                                        <circle cx="10" cy="10" r="9" stroke="#ef4444"
+                                            stroke-width="2" fill="#fff" />
+                                        <path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg></span>
                                 <span class="pw-label">Lowercase letter</span>
                             </div>
                             <div id="addpwupper" class="d-flex align-items-center mb-1">
-                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20"
+                                        fill="none">
+                                        <circle cx="10" cy="10" r="9" stroke="#ef4444"
+                                            stroke-width="2" fill="#fff" />
+                                        <path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg></span>
                                 <span class="pw-label">Uppercase letter</span>
                             </div>
                             <div id="addpwnum" class="d-flex align-items-center mb-1">
-                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20"
+                                        fill="none">
+                                        <circle cx="10" cy="10" r="9" stroke="#ef4444"
+                                            stroke-width="2" fill="#fff" />
+                                        <path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg></span>
                                 <span class="pw-label">Number</span>
                             </div>
                             <div id="addpwspecial" class="d-flex align-items-center mb-1">
-                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                <span class="icon-status me-2"><svg class="pwcheck-icon" viewBox="0 0 20 20"
+                                        fill="none">
+                                        <circle cx="10" cy="10" r="9" stroke="#ef4444"
+                                            stroke-width="2" fill="#fff" />
+                                        <path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg></span>
                                 <span class="pw-label">Special character (@$!%*?&#_.)</span>
                             </div>
                         </div>
@@ -113,12 +157,16 @@
 
                     {{-- Confirm Password --}}
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
-                        <input type="password" name="password_confirmation" id="addConfirmPasswordInput" placeholder="Input confirm password"
-                            class="form-control border-0 shadow-sm rounded-3" minlength="8" autocomplete="new-password"
-                            required title="Please retype the same password">
-                        <small class="text-muted fst-italic d-block mt-1">Please retype the same password for confirmation.</small>
-                        <div id="addConfirmPasswordFeedback" class="invalid-feedback" style="display:none;">Confirm password doesn't match</div>
+                        <label class="form-label fw-semibold">Confirm Password <span
+                                class="text-danger">*</span></label>
+                        <input type="password" name="password_confirmation" id="addConfirmPasswordInput"
+                            placeholder="Input confirm password" class="form-control border-0 shadow-sm rounded-3"
+                            minlength="8" autocomplete="new-password" required
+                            title="Please retype the same password">
+                        <small class="text-muted fst-italic d-block mt-1">Please retype the same password for
+                            confirmation.</small>
+                        <div id="addConfirmPasswordFeedback" class="invalid-feedback" style="display:none;">Confirm
+                            password doesn't match</div>
                     </div>
 
                     {{-- Role --}}
@@ -153,11 +201,11 @@
                     <div class="col-md-6" id="auditTypeContainer" style="display: none;">
                         <label class="form-label fw-medium">Audit Type <span class="text-danger">*</span></label>
                         <select id="audit_type_select" name="audit_type_ids[]"
-                            class="form-select rounded-3 @error('audit_type_ids') is-invalid @enderror"
-                            multiple>
+                            class="form-select rounded-3 @error('audit_type_ids') is-invalid @enderror" multiple>
                             @foreach ($auditTypes as $a)
                                 <option value="{{ $a->id }}"
-                                    {{ in_array($a->id, (array) old('audit_type_ids', [])) ? 'selected' : '' }}>{{ $a->name }}
+                                    {{ in_array($a->id, (array) old('audit_type_ids', [])) ? 'selected' : '' }}>
+                                    {{ $a->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -188,27 +236,43 @@
                         num: document.getElementById('addpwnum'),
                         special: document.getElementById('addpwspecial'),
                     };
+
                     function updateChecklist(val) {
                         // length
                         const lenOk = val.length >= 8;
-                        checklist.len.querySelector('.icon-status').innerHTML = lenOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
-                        checklist.len.querySelector('.pw-label').className = 'pw-label ' + (lenOk ? 'text-success' : 'text-danger');
+                        checklist.len.querySelector('.icon-status').innerHTML = lenOk ?
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' :
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.len.querySelector('.pw-label').className = 'pw-label ' + (lenOk ? 'text-success' :
+                            'text-danger');
                         // lowercase
                         const lowerOk = /[a-z]/.test(val);
-                        checklist.lower.querySelector('.icon-status').innerHTML = lowerOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
-                        checklist.lower.querySelector('.pw-label').className = 'pw-label ' + (lowerOk ? 'text-success' : 'text-danger');
+                        checklist.lower.querySelector('.icon-status').innerHTML = lowerOk ?
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' :
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.lower.querySelector('.pw-label').className = 'pw-label ' + (lowerOk ? 'text-success' :
+                            'text-danger');
                         // uppercase
                         const upperOk = /[A-Z]/.test(val);
-                        checklist.upper.querySelector('.icon-status').innerHTML = upperOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
-                        checklist.upper.querySelector('.pw-label').className = 'pw-label ' + (upperOk ? 'text-success' : 'text-danger');
+                        checklist.upper.querySelector('.icon-status').innerHTML = upperOk ?
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' :
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.upper.querySelector('.pw-label').className = 'pw-label ' + (upperOk ? 'text-success' :
+                            'text-danger');
                         // number
                         const numOk = /[0-9]/.test(val);
-                        checklist.num.querySelector('.icon-status').innerHTML = numOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
-                        checklist.num.querySelector('.pw-label').className = 'pw-label ' + (numOk ? 'text-success' : 'text-danger');
+                        checklist.num.querySelector('.icon-status').innerHTML = numOk ?
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' :
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.num.querySelector('.pw-label').className = 'pw-label ' + (numOk ? 'text-success' :
+                            'text-danger');
                         // special
                         const specialOk = /[@$!%*?&#_.]/.test(val);
-                        checklist.special.querySelector('.icon-status').innerHTML = specialOk ? '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
-                        checklist.special.querySelector('.pw-label').className = 'pw-label ' + (specialOk ? 'text-success' : 'text-danger');
+                        checklist.special.querySelector('.icon-status').innerHTML = specialOk ?
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' :
+                            '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#ef4444" stroke-width="2" fill="#fff"/><path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>';
+                        checklist.special.querySelector('.pw-label').className = 'pw-label ' + (specialOk ? 'text-success' :
+                            'text-danger');
                     }
                     if (passwordInput) {
                         passwordInput.addEventListener('input', function(e) {
@@ -217,6 +281,7 @@
                         // Initial state
                         updateChecklist(passwordInput.value || '');
                     }
+
                     function validateConfirmPassword() {
                         if (!confirmInput) return;
                         if (confirmInput.value.length === 0) {
@@ -287,11 +352,13 @@
             </script>
 
             {{-- Footer --}}
-            <div class="modal-footer border-t p-4 justify-content-between bg-white rounded-b-lg">
-                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal">
+            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                    data-bs-dismiss="modal">
                     Cancel
                 </button>
-                <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded">
+                <button type="submit"
+                    class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded">
                     Submit
                 </button>
             </div>

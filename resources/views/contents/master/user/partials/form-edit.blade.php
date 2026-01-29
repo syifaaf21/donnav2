@@ -4,11 +4,17 @@
     <input type="hidden" name="_form" value="edit">
 
     <div class="modal-content rounded-lg shadow-lg">
-        <div class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-            <h5 class="modal-title fw-semibold text-white" id="editUserModalLabel-{{ $user->id }}">
-                <i class="bi bi-pencil-square me-2"></i> Edit User
+        <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+            style="background-color: #f5f5f7;">
+            <h5 class="modal-title fw-semibold text-dark" id="editUserModalLabel-{{ $user->id }}"
+                style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                <i class="bi bi-pencil-square me-2 text-primary"></i> Edit User
             </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button"
+                class="btn btn-light position-absolute top-0 end-0 m-3 p-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                data-bs-dismiss="modal" aria-label="Close" style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
 
         <div class="modal-body p-4" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
@@ -36,7 +42,7 @@
                     @enderror
                 </div>
 
-                                <!-- Department -->
+                <!-- Department -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Department<span class="text-danger">*</span></label>
                     <select name="department_ids[]" id="department_select_edit_{{ $user->id }}"
@@ -86,11 +92,13 @@
                 <!-- Password -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Password</label>
-                    <input type="password" name="password" id="editPasswordInput_{{ $user->id }}" placeholder="Input the new password"
+                    <input type="password" name="password" id="editPasswordInput_{{ $user->id }}"
+                        placeholder="Input the new password"
                         class="form-control border-0 shadow-sm rounded-3 @error('password') is-invalid @enderror"
                         pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#_.])[A-Za-z\d@$!%*?&#_.]{8,}$"
                         minlength="8"
-                        title="Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (@$!%*?&#_.)" value="">
+                        title="Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (@$!%*?&#_.)"
+                        value="">
                     <small class="text-muted fst-italic">Leave blank if not changing password</small>
                     <style>
                         .pwcheck-icon {
@@ -100,7 +108,8 @@
                             vertical-align: middle;
                         }
                     </style>
-                    <div id="editPasswordChecklist_{{ $user->id }}" class="mb-2" style="margin-top: 6px; font-size: 0.93em; color: #444;">
+                    <div id="editPasswordChecklist_{{ $user->id }}" class="mb-2"
+                        style="margin-top: 6px; font-size: 0.93em; color: #444;">
                         <div id="editpwlen_{{ $user->id }}" class="d-flex align-items-center mb-1">
                             <span class="icon-status me-2">{!! pwcheck_svg('fail') !!}</span>
                             <span class="pw-label">At least 8 characters</span>
@@ -123,7 +132,8 @@
                         </div>
                     </div>
                     @php
-                        function pwcheck_svg($type) {
+                        function pwcheck_svg($type)
+                        {
                             if ($type === 'pass') {
                                 return '<svg class="pwcheck-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#22c55e" stroke-width="2" fill="#fff"/><path d="M6 10.5l3 3 5-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                             } else {
@@ -144,31 +154,42 @@
                                 num: document.getElementById('editpwnum_{{ $user->id }}'),
                                 special: document.getElementById('editpwspecial_{{ $user->id }}'),
                             };
+
                             function updateChecklist(val) {
                                 // length
                                 const lenOk = val.length >= 8;
-                                checklist.len.querySelector('.icon-status').innerHTML = lenOk ? `{!! pwcheck_svg('pass') !!}` : `{!! pwcheck_svg('fail') !!}`;
-                                checklist.len.querySelector('.pw-label').className = 'pw-label ' + (lenOk ? 'text-success' : 'text-danger');
+                                checklist.len.querySelector('.icon-status').innerHTML = lenOk ? `{!! pwcheck_svg('pass') !!}` :
+                                    `{!! pwcheck_svg('fail') !!}`;
+                                checklist.len.querySelector('.pw-label').className = 'pw-label ' + (lenOk ? 'text-success' :
+                                    'text-danger');
 
                                 // lowercase
                                 const lowerOk = /[a-z]/.test(val);
-                                checklist.lower.querySelector('.icon-status').innerHTML = lowerOk ? `{!! pwcheck_svg('pass') !!}` : `{!! pwcheck_svg('fail') !!}`;
-                                checklist.lower.querySelector('.pw-label').className = 'pw-label ' + (lowerOk ? 'text-success' : 'text-danger');
+                                checklist.lower.querySelector('.icon-status').innerHTML = lowerOk ? `{!! pwcheck_svg('pass') !!}` :
+                                    `{!! pwcheck_svg('fail') !!}`;
+                                checklist.lower.querySelector('.pw-label').className = 'pw-label ' + (lowerOk ? 'text-success' :
+                                    'text-danger');
 
                                 // uppercase
                                 const upperOk = /[A-Z]/.test(val);
-                                checklist.upper.querySelector('.icon-status').innerHTML = upperOk ? `{!! pwcheck_svg('pass') !!}` : `{!! pwcheck_svg('fail') !!}`;
-                                checklist.upper.querySelector('.pw-label').className = 'pw-label ' + (upperOk ? 'text-success' : 'text-danger');
+                                checklist.upper.querySelector('.icon-status').innerHTML = upperOk ? `{!! pwcheck_svg('pass') !!}` :
+                                    `{!! pwcheck_svg('fail') !!}`;
+                                checklist.upper.querySelector('.pw-label').className = 'pw-label ' + (upperOk ? 'text-success' :
+                                    'text-danger');
 
                                 // number
                                 const numOk = /[0-9]/.test(val);
-                                checklist.num.querySelector('.icon-status').innerHTML = numOk ? `{!! pwcheck_svg('pass') !!}` : `{!! pwcheck_svg('fail') !!}`;
-                                checklist.num.querySelector('.pw-label').className = 'pw-label ' + (numOk ? 'text-success' : 'text-danger');
+                                checklist.num.querySelector('.icon-status').innerHTML = numOk ? `{!! pwcheck_svg('pass') !!}` :
+                                    `{!! pwcheck_svg('fail') !!}`;
+                                checklist.num.querySelector('.pw-label').className = 'pw-label ' + (numOk ? 'text-success' :
+                                    'text-danger');
 
                                 // special
                                 const specialOk = /[@$!%*?&#_.]/.test(val);
-                                checklist.special.querySelector('.icon-status').innerHTML = specialOk ? `{!! pwcheck_svg('pass') !!}` : `{!! pwcheck_svg('fail') !!}`;
-                                checklist.special.querySelector('.pw-label').className = 'pw-label ' + (specialOk ? 'text-success' : 'text-danger');
+                                checklist.special.querySelector('.icon-status').innerHTML = specialOk ? `{!! pwcheck_svg('pass') !!}` :
+                                    `{!! pwcheck_svg('fail') !!}`;
+                                checklist.special.querySelector('.pw-label').className = 'pw-label ' + (specialOk ? 'text-success' :
+                                    'text-danger');
                             }
                             input && input.addEventListener('input', function(e) {
                                 updateChecklist(e.target.value);
@@ -182,9 +203,11 @@
                 <!-- Confirm Password -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Confirm Password</label>
-                    <input type="password" name="password_confirmation" id="editConfirmPasswordInput_{{ $user->id }}" class="form-control rounded-3"
+                    <input type="password" name="password_confirmation"
+                        id="editConfirmPasswordInput_{{ $user->id }}" class="form-control rounded-3"
                         placeholder="Please retype the same password" minlength="6" value="">
-                    <div id="editConfirmPasswordFeedback_{{ $user->id }}" class="invalid-feedback" style="display:none;">Confirm password doesn't match</div>
+                    <div id="editConfirmPasswordFeedback_{{ $user->id }}" class="invalid-feedback"
+                        style="display:none;">Confirm password doesn't match</div>
                 </div>
 
                 <!-- Role -->
@@ -240,7 +263,8 @@
                     // Delay untuk memastikan TomSelect sudah diinisialisasi
                     setTimeout(function() {
                         const roleSelect = document.getElementById('role_select_edit_{{ $user->id }}');
-                        const auditTypeContainer = document.getElementById('auditTypeContainerEdit_{{ $user->id }}');
+                        const auditTypeContainer = document.getElementById(
+                            'auditTypeContainerEdit_{{ $user->id }}');
                         const auditTypeSelect = document.getElementById('audit_type_select_edit_{{ $user->id }}');
                         const emailContainer = document.getElementById('emailContainerEdit_{{ $user->id }}');
                         const form = roleSelect.closest('form');
@@ -249,7 +273,8 @@
                         // Password confirmation validation
                         const passwordInput = document.getElementById('editPasswordInput_{{ $user->id }}');
                         const confirmInput = document.getElementById('editConfirmPasswordInput_{{ $user->id }}');
-                        const confirmFeedback = document.getElementById('editConfirmPasswordFeedback_{{ $user->id }}');
+                        const confirmFeedback = document.getElementById(
+                            'editConfirmPasswordFeedback_{{ $user->id }}');
 
                         function validateConfirmPassword() {
                             if (!confirmInput) return;
@@ -314,8 +339,10 @@
                                 hasDeptHead = foundDeptHead;
                             } else {
                                 const selectedOptions = Array.from(roleSelect.selectedOptions);
-                                hasAuditor = selectedOptions.some(opt => (opt.text || '').toLowerCase().includes('auditor'));
-                                hasDeptHead = selectedOptions.some(opt => (opt.text || '').toLowerCase().includes('dept head'));
+                                hasAuditor = selectedOptions.some(opt => (opt.text || '').toLowerCase().includes(
+                                    'auditor'));
+                                hasDeptHead = selectedOptions.some(opt => (opt.text || '').toLowerCase().includes(
+                                    'dept head'));
                             }
 
                             // Audit Type visibility
@@ -358,12 +385,15 @@
                                 if (tomSelectInstance) {
                                     selectedValues = tomSelectInstance.getValue();
                                 } else {
-                                    selectedValues = Array.from(roleSelect.selectedOptions).map(opt => opt.value);
+                                    selectedValues = Array.from(roleSelect.selectedOptions).map(opt => opt
+                                        .value);
                                 }
                                 if (Array.isArray(selectedValues)) {
                                     hasDeptHead = selectedValues.some(val => {
-                                        const option = roleSelect.querySelector(`option[value="${val}"]`);
-                                        return option && (option.textContent || '').toLowerCase().includes('dept head');
+                                        const option = roleSelect.querySelector(
+                                            `option[value="${val}"]`);
+                                        return option && (option.textContent || '').toLowerCase()
+                                            .includes('dept head');
                                     });
                                 }
                                 if (emailContainer && emailInput) {
@@ -381,7 +411,8 @@
                                     }
                                 }
                                 // Confirm password match validation on submit
-                                if (confirmInput && passwordInput && confirmInput.value !== passwordInput.value) {
+                                if (confirmInput && passwordInput && confirmInput.value !== passwordInput
+                                    .value) {
                                     e.preventDefault();
                                     confirmInput.classList.add('is-invalid');
                                     if (confirmFeedback) confirmFeedback.style.display = 'block';
@@ -394,11 +425,12 @@
             </script>
         </div>
 
-        <div class="modal-footer border-t p-4 justify-content-between bg-white rounded-b-lg">
+        <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
             <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal">
                 Cancel
             </button>
-            <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded">
+            <button type="submit"
+                class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded">
                 Save Changes
             </button>
         </div>

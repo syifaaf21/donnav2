@@ -9,10 +9,11 @@
                     class="bi bi-cloud-upload text-primary"></i>
                 Upload Document
             </h5>
-            <button type="button" class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+            <button type="button"
+                class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                 onclick="closeReviseModal()" aria-label="Close"
                 style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                <i class="bi bi-x-lg"></i>
             </button>
         </div>
 
@@ -27,7 +28,8 @@
                 <div>
                     <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                     <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
-                        <li>Allowed formats: <strong>PDF, DOCX, XLSX</strong>. Max total file: <strong>20 MB</strong>.</li>
+                        <li>Allowed formats: <strong>PDF, DOCX, XLSX</strong>. Max total file: <strong>20 MB</strong>.
+                        </li>
                         <li>Gunakan tombol <strong>Replace</strong> untuk mengganti file, dan <strong>Add File</strong>
                             untuk menambah file baru.</li>
                         </li>

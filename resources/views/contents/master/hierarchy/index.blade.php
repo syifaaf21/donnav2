@@ -152,10 +152,10 @@
                         <i class="bi bi-file-earmark-plus me-2 text-primary"></i> Create New Document
                     </h5>
                     <button type="button"
-                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                         data-bs-dismiss="modal" aria-label="Close"
                         style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
 

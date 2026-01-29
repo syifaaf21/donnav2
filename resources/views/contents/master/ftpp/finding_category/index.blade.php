@@ -110,11 +110,18 @@
     <div class="modal fade" id="modalAddCategory" tabindex="-1" aria-labelledby="modalAddCategoryLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-lg shadow-lg">
-                <div class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                    <h5 class="modal-title">
-                        <i class="bi bi-plus-circle me-2"></i> Add Finding Category
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i> Add Finding Category
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <form action="{{ route('master.ftpp.finding-category.store') }}" method="POST">
                     @csrf
@@ -128,26 +135,35 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="modal-footer border-t">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Submit</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">Submit</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-
-
     {{-- MODAL EDIT FINDING CATEGORY --}}
     <div class="modal fade" id="modalEditCategory" tabindex="-1" aria-labelledby="modalEditCategoryLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-lg shadow-lg">
-                <div class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
-                    <h5 class="modal-title">
-                        <i class="bi bi-pencil-square me-2"></i> Edit Finding Category
+                <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                    style="background-color: #f5f5f7;">
+                    <h5 class="modal-title fw-semibold text-dark"
+                        style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Finding Category
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
+                        data-bs-dismiss="modal" aria-label="Close"
+                        style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <form id="formEditCategory" method="POST">
                     @csrf
@@ -161,9 +177,13 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="modal-footer border-t">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary bg-gradient-to-r from-primaryLight to-primaryDark border-0">Save Changes</button>
+                    <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                            data-bs-dismiss="modal" style="text-decoration: none; transition: background-color 0.3s ease;">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="btn px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">Save Changes</button>
                     </div>
                 </form>
             </div>
