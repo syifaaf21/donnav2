@@ -101,8 +101,78 @@
                 </div>
             </div>
 
-            {{-- Control Documents per Department Chart --}}
+            {{-- Status Summary (new card placed to the right of the pie chart) --}}
             <div class="col-lg-8">
+                <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
+            hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
+                    style="border-radius: 10px;">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-semibold d-flex align-items-center gap-2"
+                                style="font-size: 1rem; color: #1f2937;">
+                                <span
+                                    style="display: inline-flex; align-items: center; justify-content: center;
+                                   width: 20px; height: 20px;
+                                   background-color: rgba(99,102,241,0.12); border-radius: 4px;">
+                                    <i data-feather="layers" style="width: 16px; height: 16px; color: rgba(99,102,241,0.8);"></i>
+                                </span>
+                                Status Summary
+                            </h6>
+                        </div>
+
+                        <div class="d-flex flex-wrap align-items-stretch gap-3 justify-content-between">
+                            @php
+                                // Only display these five statuses in this specific order
+                                $orderedStatuses = [
+                                    'active' => 'Active',
+                                    'uncomplete' => 'Uncomplete',
+                                    'obsolete' => 'Obsolete',
+                                    'rejected' => 'Rejected',
+                                    'need_review' => 'Need Review',
+                                ];
+
+                                // Color mapping (hex) aligned with the pie chart palette
+                                $colorMap = [
+                                    'active' => '#A8E6CF',     // green
+                                    'uncomplete' => '#F59E0B',  // amber (distinct)
+                                    'obsolete' => '#A8D8EA',    // light blue
+                                    'rejected' => '#FF6B6B',    // brighter red (distinct)
+                                    'need_review' => '#FFD3B6', // peach/yellow
+                                ];
+
+                                // Normalize statusBreakdown keys: accept both 'need review' and 'need_review'
+                                $normalized = [];
+                                foreach ($statusBreakdown as $k => $v) {
+                                    $norm = strtolower(str_replace([' ', '-'], '_', $k));
+                                    $normalized[$norm] = $v;
+                                }
+                            @endphp
+
+                            @foreach ($orderedStatuses as $sKey => $sLabel)
+                                @php
+                                    $count = $normalized[$sKey] ?? 0;
+                                    $hex = $colorMap[$sKey] ?? '#6b7280';
+                                    // determine readable text color (white for colored badges)
+                                    $textColor = '#ffffff';
+                                @endphp
+                                <div class="status-card d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="text-muted small mb-1">{{ $sLabel }}</div>
+                                    </div>
+                                    <div class="ms-2">
+                                        <span class="rounded-pill py-2 px-3" style="background: {{ $hex }}; color: {{ $textColor }}; display: inline-block; min-width:40px; text-align:center;">{{ $count }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Documents per Department (moved below) --}}
+        <div class="row g-3 mt-3">
+            <div class="col-12">
                 <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:shadow-black/60
             hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 h-100 p-2"
                     style="border-radius: 10px;">
@@ -197,7 +267,7 @@
         /* ===================== PIE CHART - STATUS DISTRIBUTION ===================== */
         const statusLabels = Object.keys(statusBreakdown);
         const statusData = Object.values(statusBreakdown);
-        const statusColors = ['#A8E6CF', '#FFD3B6', '#FFAAA5', '#FF8B94', '#A8D8EA', '#D4A5A5'];
+        const statusColors = ['#A8E6CF', '#FFD3B6', '#FF6B6B', '#F59E0B', '#A8D8EA', '#D4A5A5'];
 
         new Chart(document.getElementById('statusPie'), {
             type: 'pie',
@@ -221,12 +291,10 @@
             }
         });
 
-        /* ===================== BAR CHART - DOCUMENTS PER DEPARTMENT ===================== */
-        const pastelColors = [
-            '#7BA7FF', '#6EC6E2', '#8BD3C7', '#A3A0FB', '#F7C97F', '#FFB38A',
-            '#B7B5F1', '#9ED2B6', '#E5C7FF', '#C0E4FF', '#B4C4FF', '#FFD8A8',
-            '#9FC9E9', '#C5E8D1'
-        ];
+        /* ===================== BAR CHART - DOCUMENTS PER DEPARTMENT (two-color) ===================== */
+        // We'll render only two stacks: 'Other Status' (green) and 'Obsolete' (gray).
+        // Tooltip will list per-status counts using the same lookup helper.
+        const orderedStatusKeys = ['active','need_review','rejected','uncomplete','obsolete'];
 
         const controlLabels = Object.values(departments);
         const shortControlLabels = controlLabels.map(name => {
@@ -234,25 +302,78 @@
             return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
         });
 
-        const controlData = Object.keys(departments).map(id => controlDocuments[id] ?? 0);
+        const deptIds = Object.keys(departments);
+
+        // Helper: robust lookup for possible backend key naming (snake_case, camelCase, spaced, Count suffixes)
+        function lookupStatusCount(extra, key) {
+            if (!extra) return 0;
+            const camel = key.replace(/_([a-z])/g, (m, c) => c.toUpperCase());
+            const spaced = key.replace(/_/g, ' ');
+            const compact = key.replace(/_/g, '');
+            const candidates = [key, camel, spaced, compact, key + 'Count', camel + 'Count', compact + 'Count'];
+            for (let k of candidates) {
+                if (typeof extra[k] !== 'undefined' && extra[k] !== null) return extra[k];
+            }
+            return 0;
+        }
+
+        // Build two datasets: Other (sum of non-obsolete statuses) and Obsolete
+        const otherData = deptIds.map(id => {
+            const extra = controlExtraData[id] || {};
+            let sum = 0;
+            orderedStatusKeys.forEach(k => {
+                if (k === 'obsolete') return;
+                sum += Number(lookupStatusCount(extra, k) || 0);
+            });
+            return sum;
+        });
+
+        const obsoleteDataArr = deptIds.map(id => {
+            const extra = controlExtraData[id] || {};
+            return Number(lookupStatusCount(extra, 'obsolete') || 0);
+        });
+
+        // softer palette: soft green for Other, soft gray for Obsolete
+        const twoDatasets = [
+            {
+                label: 'Other Status',
+                data: otherData,
+                backgroundColor: '#A8E6CF',
+                borderRadius: 6,
+                barThickness: 20,
+                stack: 'statuses'
+            },
+            {
+                label: 'Obsolete',
+                data: obsoleteDataArr,
+                backgroundColor: '#CBD5E1',
+                borderRadius: 6,
+                barThickness: 20,
+                stack: 'statuses'
+            }
+        ];
+
+        // Map status key -> readable label for tooltip
+        const statusLabelMap = {
+            'active': 'Active',
+            'need_review': 'Need Review',
+            'rejected': 'Rejected',
+            'uncomplete': 'Uncomplete',
+            'obsolete': 'Obsolete'
+        };
 
         new Chart(document.getElementById('controlDocsChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: shortControlLabels,
-                datasets: [{
-                    label: 'Control Documents',
-                    data: controlData,
-                    backgroundColor: pastelColors,
-                    borderRadius: 6,
-                    barThickness: 20
-                }]
+                datasets: twoDatasets
             },
             options: {
                 responsive: true,
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top'
                     },
                     tooltip: {
                         enabled: true,
@@ -263,17 +384,31 @@
                                 return departments[deptId];
                             },
                             label: function(context) {
-                                const deptId = Object.keys(departments)[context.dataIndex];
-                                const mainValue = context.raw;
+                                const datasetLabel = context.dataset.label || '';
+                                const value = context.raw || 0;
+                                return `${datasetLabel}: ${value}`;
+                            },
+                            afterBody: function(context) {
+                                // show per-status breakdown depending on hovered dataset
+                                if (!context || !context[0]) return [];
+                                const item = context[0];
+                                const index = item.dataIndex;
+                                const datasetLabel = item.dataset.label || '';
+                                const deptId = Object.keys(departments)[index];
                                 const extra = controlExtraData[deptId] || {};
+                                const lines = [];
 
-                                let lines = [`Total: ${mainValue}`];
-                                if (extra.obsolete !== undefined) lines.push(`Obsolete: ${extra.obsolete}`);
-                                if (extra.active !== undefined) lines.push(`Active: ${extra.active}`);
-                                if (extra.needReview !== undefined) lines.push(`Need Review: ${extra.needReview}`);
-                                if (extra.uncomplete !== undefined) lines.push(`Uncomplete: ${extra.uncomplete}`);
-                                if (extra.rejected !== undefined) lines.push(`Rejected: ${extra.rejected}`);
+                                if (datasetLabel === 'Obsolete') {
+                                    const v = Number(lookupStatusCount(extra, 'obsolete') || 0);
+                                    lines.push(`Obsolete: ${v}`);
+                                    return lines;
+                                }
 
+                                // hovered on Other Status: show breakdown of non-obsolete statuses
+                                ['active', 'need_review', 'rejected', 'uncomplete'].forEach(k => {
+                                    const v = Number(lookupStatusCount(extra, k) || 0);
+                                    lines.push(`${statusLabelMap[k] ?? k}: ${v}`);
+                                });
                                 return lines;
                             }
                         }
@@ -288,7 +423,8 @@
                         },
                         grid: {
                             color: '#e9ecef'
-                        }
+                        },
+                        stacked: true
                     },
                     x: {
                         ticks: {
@@ -301,7 +437,8 @@
                         },
                         grid: {
                             display: false
-                        }
+                        },
+                        stacked: true
                     }
                 }
             }
@@ -407,6 +544,43 @@
 
 @push('styles')
     <style>
+        /* Compact status summary cards */
+        .status-card {
+            flex: 1 1 320px;
+            min-width: 280px;
+            max-width: 48%;
+            padding: 18px 20px;
+            border-radius: 12px;
+            background: #fff;
+            border: 1px solid #eef2ff;
+            box-shadow: none;
+            gap: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-card .small {
+            font-size: 0.95rem;
+            color: #374151;
+        }
+
+        .status-card .fw-bold { font-size: 1.3rem; }
+
+        .status-card .badge { font-size: 1rem; padding: 0.45rem 0.75rem; }
+
+        @media (max-width: 1200px) {
+            .status-card { max-width: 48%; }
+        }
+
+        @media (max-width: 768px) {
+            .status-card { min-width: 48%; max-width: 48%; }
+        }
+
+        @media (max-width: 480px) {
+            .status-card { min-width: 100%; max-width: 100%; }
+        }
+
         /* Small Toggle Switch */
         .toggle-switch {
             position: relative;
