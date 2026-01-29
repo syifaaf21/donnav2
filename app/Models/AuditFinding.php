@@ -22,6 +22,7 @@ class  AuditFinding extends Model
             'audit_type_id',
             'sub_audit_type_id',
             'finding_category_id',
+            'is_sent_to_auditee',
             'department_id',
             'process_id',
             'product_id',
@@ -135,7 +136,7 @@ class  AuditFinding extends Model
         }
         return '-';
     }
-    
+
     public function process()
     {
         return $this->belongsTo(Process::class);

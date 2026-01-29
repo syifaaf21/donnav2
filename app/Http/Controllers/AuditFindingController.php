@@ -18,6 +18,7 @@ use App\Models\Status;
 use App\Notifications\FindingCreatedNotification;
 use App\Notifications\FtppActionNotification;
 use App\Notifications\AuditeeNeedAssignNotification;
+use App\Notifications\BulkAuditeeNeedAssignNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
@@ -224,7 +225,7 @@ class AuditFindingController extends Controller
             $auditFinding->subKlausuls()->attach($validated['sub_klausul_id']);
         }
 
-        // send notification to auditees
+        // send notification to auditees (in-app only). Email sending removed — use bulkNotify for email dispatch.
         try {
             $recipients = $auditFinding->auditee()->get();
             $recipients = $recipients->unique('id')->filter()->values();
@@ -237,13 +238,6 @@ class AuditFindingController extends Controller
                         'created'
                     )
                 );
-                // Also send an email prompting auditees to fill Why-Cause, root cause,
-                // Corrective and Preventive actions.
-                try {
-                    Notification::send($recipients, new AuditeeNeedAssignNotification($auditFinding));
-                } catch (\Throwable $e) {
-                    \Log::warning('AuditeeNeedAssignNotification failed: ' . $e->getMessage());
-                }
             }
         } catch (\Throwable $e) {
             \Log::warning('Notify auditee (finding created) failed: ' . $e->getMessage());
@@ -718,7 +712,7 @@ class AuditFindingController extends Controller
             if ($isSubmit) {
                 $recipients = $auditFinding->auditee()->get()->unique('id')->filter()->values();
                 if ($recipients->isNotEmpty()) {
-                    // in-app / system notification
+                    // in-app / system notification only. Email sending removed — use bulkNotify for email dispatch.
                     Notification::send(
                         $recipients,
                         new FtppActionNotification(
@@ -726,16 +720,6 @@ class AuditFindingController extends Controller
                             'submitted'
                         )
                     );
-
-                    // Only send email when status is Need Assign (even if previously Draft)
-                    try {
-                        $needAssignStatus = Status::where('name', 'Need Assign')->first();
-                        if ($needAssignStatus && $statusId == $needAssignStatus->id) {
-                            Notification::send($recipients, new AuditeeNeedAssignNotification($auditFinding));
-                        }
-                    } catch (\Throwable $e) {
-                        \Log::warning('AuditeeNeedAssignNotification (update) failed: ' . $e->getMessage());
-                    }
                 }
             }
         } catch (\Throwable $e) {
@@ -747,6 +731,65 @@ class AuditFindingController extends Controller
         }
 
         return redirect('/ftpp')->with('success', $message);
+    }
+
+    /**
+     * Bulk notify auditees for selected findings.
+     * Expects `ids` => array of audit_finding ids.
+     */
+    public function bulkNotify(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:tt_audit_findings,id',
+        ]);
+
+        $ids = $data['ids'];
+
+        $findings = AuditFinding::with('auditee')->whereIn('id', $ids)->get();
+
+        if ($findings->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No findings found for given ids'], 404);
+        }
+
+        // Build per-auditee registration lists so each auditee only receives relevant items
+        $perUser = [];
+        foreach ($findings as $f) {
+            $reg = $f->registration_number ?? ('#' . $f->id);
+            $auditees = $f->auditee; // relation loaded via with('auditee')
+            foreach ($auditees as $u) {
+                if (empty($u) || empty($u->id)) continue;
+                $uid = $u->id;
+                if (!isset($perUser[$uid])) {
+                    $perUser[$uid] = [
+                        'user' => $u,
+                        'regs' => [],
+                    ];
+                }
+                $perUser[$uid]['regs'][] = $reg;
+            }
+        }
+
+        if (empty($perUser)) {
+            return response()->json(['success' => false, 'message' => 'No auditees found for selected findings'], 422);
+        }
+
+        // Send notification to each auditee with only their registration numbers
+        try {
+            foreach ($perUser as $entry) {
+                $user = $entry['user'];
+                $regs = array_values(array_unique($entry['regs']));
+                Notification::send([$user], new BulkAuditeeNeedAssignNotification($regs));
+            }
+
+            // Mark findings as sent to auditee
+            AuditFinding::whereIn('id', $ids)->update(['is_sent_to_auditee' => true]);
+        } catch (\Throwable $e) {
+            \Log::warning('Bulk notify failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to send notifications'], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Notifications dispatched']);
     }
 
     /**

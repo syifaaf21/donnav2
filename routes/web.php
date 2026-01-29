@@ -251,6 +251,8 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{id}/sub-klausul/{sub}', [AuditFindingController::class, 'destroySubKlausul'])->name('subklausul.destroy');
             // Attachment delete (AJAX)
             Route::delete('/attachment/{id}', [AuditFindingController::class, 'destroyAttachment'])->name('attachment.destroy');
+            // Bulk notify auditees for selected findings
+            Route::post('/bulk-notify', [AuditFindingController::class, 'bulkNotify'])->name('bulk-notify');
         });
 
         Route::prefix('auditee-action')->name('auditee-action.')->group(function () {

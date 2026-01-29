@@ -72,7 +72,7 @@
                                 {{ request('search')
                                     ? '-top-2 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-xs
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -197,8 +197,11 @@
                                     class="flex items-center justify-between px-3 py-2 text-sm transition no-underline hover:no-underline hover:bg-gray-50 {{ !request()->filled('audit_type') ? 'bg-primaryDark text-white' : 'text-gray-700' }}">
                                     <span class="truncate">All</span>
                                     @if (!request()->filled('audit_type'))
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.071 7.071a1 1 0 01-1.414 0L3.293 9.656a1 1 0 011.414-1.414L8 11.535l6.293-6.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20"
+                                            fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-7.071 7.071a1 1 0 01-1.414 0L3.293 9.656a1 1 0 011.414-1.414L8 11.535l6.293-6.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     @endif
                                 </a>
@@ -209,8 +212,11 @@
                                         class="flex items-center justify-between px-3 py-2 text-sm transition no-underline hover:no-underline hover:bg-gray-50 {{ $isActive ? 'bg-primaryDark text-white' : 'text-gray-700' }}">
                                         <span class="truncate">{{ $atype->name }}</span>
                                         @if ($isActive)
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.071 7.071a1 1 0 01-1.414 0L3.293 9.656a1 1 0 011.414-1.414L8 11.535l6.293-6.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20"
+                                                fill="currentColor">
+                                                <path fill-rule="evenodd"
+                                                    d="M16.707 5.293a1 1 0 010 1.414l-7.071 7.071a1 1 0 01-1.414 0L3.293 9.656a1 1 0 011.414-1.414L8 11.535l6.293-6.293a1 1 0 011.414 0z"
+                                                    clip-rule="evenodd" />
                                             </svg>
                                         @endif
                                     </a>
@@ -272,7 +278,8 @@
                             $badgeCount += \App\Models\AuditFinding::where('auditor_id', $user->id)
                                 ->whereHas('status', function ($q) {
                                     $q->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                                })->count();
+                                })
+                                ->count();
                         }
 
                         // Lead Auditor vs Admin: Admin/super admin see all 'need approval by lead auditor'.
@@ -287,7 +294,8 @@
                                 $badgeCount += \App\Models\AuditFinding::whereIn('audit_type_id', $userAuditTypeIds)
                                     ->whereHas('status', function ($q) {
                                         $q->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
-                                    })->count();
+                                    })
+                                    ->count();
                             }
                         }
                     @endphp
@@ -389,235 +397,256 @@
                                         @endif
                                         <td class="px-2 py-2 whitespace-nowrap border-r border-gray-200">
                                             <div class="flex flex-col gap-1">
-                                                <span
-                                                    class="text-xs font-semibold">{{ $finding->registration_number ?? '-' }}</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs font-semibold">{{ $finding->registration_number ?? '-' }}</span>
+                                                    @if(!empty($finding->is_sent_to_auditee) && $finding->is_sent_to_auditee)
+                                                        <span class="inline-block px-2 py-0.5 text-[10px] font-semibold text-green-800 bg-green-100 rounded-full">Notified</span>
+                                                    @endif
+                                                </div>
                                                 <span class="text-xs text-gray-500">
                                                     {{ $finding->department_name ?? 'Unknown' }}
                                                 </span>
                                             </div>
-                    </div>
-                    </td>
-                    <td class="px-2 py-2 whitespace-nowrap text-center text-xs border-r border-gray-200">
-                        @php
-                            $statusColors = [
-                                'draft finding' => 'bg-gray-100 text-gray-600',
-                                'need assign' => 'bg-red-100 text-red-600',
-                                'draft' => 'bg-gray-100 text-gray-600',
-                                'need check' => 'bg-yellow-100 text-yellow-700',
-                                'need approval by auditor' => 'bg-yellow-100 text-yellow-700',
-                                'need revision' => 'bg-yellow-100 text-yellow-700',
-                                'need approval by lead auditor' => 'bg-blue-100 text-blue-600',
-                                'close' => 'bg-green-100 text-green-600',
-                            ];
-                            $statusName = optional($finding->status)->name ?? '-';
-                            $statusClass = $statusColors[strtolower($statusName)] ?? '';
-                        @endphp
-                        <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
-                    </td>
-                    <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
-                        {{ $finding->auditor_name }}</td>
-                    <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
-                        @if ($finding->auditee && $finding->auditee->isNotEmpty()) title="{{ $finding->auditee->pluck('name')->join(', ') }}" @endif>
+                                        </td>
+                                        <td
+                                            class="px-2 py-2 whitespace-nowrap text-center text-xs border-r border-gray-200">
+                                            @php
+                                                $statusColors = [
+                                                    'draft finding' => 'bg-gray-100 text-gray-600',
+                                                    'need assign' => 'bg-red-100 text-red-600',
+                                                    'draft' => 'bg-gray-100 text-gray-600',
+                                                    'need check' => 'bg-yellow-100 text-yellow-700',
+                                                    'need approval by auditor' => 'bg-yellow-100 text-yellow-700',
+                                                    'need revision' => 'bg-yellow-100 text-yellow-700',
+                                                    'need approval by lead auditor' => 'bg-blue-100 text-blue-600',
+                                                    'close' => 'bg-green-100 text-green-600',
+                                                ];
+                                                $statusName = optional($finding->status)->name ?? '-';
+                                                $statusClass = $statusColors[strtolower($statusName)] ?? '';
+                                            @endphp
+                                            <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
+                                        </td>
+                                        <td
+                                            class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
+                                            {{ $finding->auditor_name }}</td>
+                                        <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
+                                            @if ($finding->auditee && $finding->auditee->isNotEmpty()) title="{{ $finding->auditee->pluck('name')->join(', ') }}" @endif>
 
-                        @if ($finding->auditee && $finding->auditee->isNotEmpty())
-                            {{ $finding->auditee->pluck('name')->join(', ') }}
-                        @else
-                            -
-                        @endif
-                    </td>
-                    <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
-                        {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
-                    </td>
-                    <td class="flex px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
-                        <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
-                            <!-- BUTTON -->
-                            <button type="button"
-                                @click.prevent="
+                                            @if ($finding->auditee && $finding->auditee->isNotEmpty())
+                                                {{ $finding->auditee->pluck('name')->join(', ') }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td
+                                            class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
+                                            {{ $finding->due_date ? \Carbon\Carbon::parse($finding->due_date)->format('Y/m/d') : '-' }}
+                                        </td>
+                                        <td
+                                            class="flex px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
+                                            <div x-data="{ open: false, x: 0, y: 0 }" class="relative">
+                                                <!-- BUTTON -->
+                                                <button type="button"
+                                                    @click.prevent="
                                                              open = true;
                                                              const rect = $event.target.getBoundingClientRect();
                                                              x = rect.right - 160;          // lebih presisi horizontal
                                                              y = rect.bottom + window.scrollY; // fix posisi vertical & scroll
                                                          "
-                                class="p-1.5 hover:bg-gray-100 rounded-full transition">
-                                <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
-                            </button>
-
-                            <!-- DROPDOWN -->
-                            <template x-teleport="body">
-                                <div x-show="open" @click.outside="open = false" x-transition.opacity.duration.150ms
-                                    class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
-                                    :style="`top:${y}px; left:${x}px; width:170px;`">
-
-                                    @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
-
-                                    <!-- Draft Finding: Only Show Edit and Delete -->
-                                    @if ($statusName === 'draft finding')
-                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                                            <!-- ITEM: Edit -->
-                                            <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
-                                                @click="open = false"
-                                                class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
-                                                <i data-feather="edit" class="w-4 h-4"></i>
-                                                Edit
-                                            </a>
-
-                                            <!-- ITEM: Delete -->
-                                            <form id="delete-form-{{ $finding->id }}" method="POST"
-                                                action="{{ route('ftpp.destroy', $finding->id) }}"
-                                                onsubmit="return false;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" @click="open = false"
-                                                    onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
-                                                    class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
-                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                    Delete
+                                                    class="p-1.5 hover:bg-gray-100 rounded-full transition">
+                                                    <i data-feather="more-vertical" class="w-5 h-5 text-gray-600"></i>
                                                 </button>
-                                            </form>
-                                        @endif
-                                        <!-- Non Draft Finding: Show other options -->
-                                    @else
-                                        @if (strtolower(optional($finding->status)->name ?? '') !== 'need assign')
-                                            <!-- ITEM: Show -->
-                                            <button type="button"
-                                                @click="
+
+                                                <!-- DROPDOWN -->
+                                                <template x-teleport="body">
+                                                    <div x-show="open" @click.outside="open = false"
+                                                        x-transition.opacity.duration.150ms
+                                                        class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
+                                                        :style="`top:${y}px; left:${x}px; width:170px;`">
+
+                                                        @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
+
+                                                        <!-- Draft Finding: Only Show Edit and Delete -->
+                                                        @if ($statusName === 'draft finding')
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                                <!-- ITEM: Edit -->
+                                                                <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                                    Edit
+                                                                </a>
+
+                                                                <!-- ITEM: Delete -->
+                                                                <form id="delete-form-{{ $finding->id }}" method="POST"
+                                                                    action="{{ route('ftpp.destroy', $finding->id) }}"
+                                                                    onsubmit="return false;">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="button" @click="open = false"
+                                                                        onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
+                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
+                                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                                        Delete
+                                                                    </button>
+                                                                </form>
+                                                            @endif
+                                                            <!-- Non Draft Finding: Show other options -->
+                                                        @else
+                                                            @if (strtolower(optional($finding->status)->name ?? '') !== 'need assign')
+                                                                <!-- ITEM: Show -->
+                                                                <button type="button"
+                                                                    @click="
                                                                      open = false;
                                                                      $dispatch('open-show-modal', {{ $finding->id }})"
-                                                class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
-                                                <i data-feather="eye" class="w-4 h-4"></i>
-                                                Show
-                                            </button>
-                                        @endif
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="eye" class="w-4 h-4"></i>
+                                                                    Show
+                                                                </button>
+                                                            @endif
 
-                                        <!-- ITEM: Download -->
-                                        @if ($statusName !== 'need assign')
-                                            <a href="{{ route('ftpp.download', $finding->id) }}" @click="open = false"
-                                                class="flex items-center gap-2 px-3 py-2.5 text-xs text-blue-600 hover:bg-gray-50 transition">
-                                                <i data-feather="download" class="w-4 h-4"></i>
-                                                Download
-                                            </a>
-                                        @endif
+                                                            <!-- ITEM: Download -->
+                                                            @if ($statusName !== 'need assign')
+                                                                <a href="{{ route('ftpp.download', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-blue-600 hover:bg-gray-50 transition">
+                                                                    <i data-feather="download" class="w-4 h-4"></i>
+                                                                    Download
+                                                                </a>
+                                                            @endif
 
-                                        {{-- Upload Evidence Button: Only for Admin and certain statuses --}}
-                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin']) &&
-                                                in_array($statusName, ['need check', 'need approval by auditor', 'need approval by lead auditor', 'close']))
-                                            <button type="button" onclick="openUploadEvidence({{ $finding->id }})"
-                                                class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-600 hover:bg-gray-50 transition">
-                                                <i data-feather="upload" class="w-4 h-4"></i>
-                                                Upload Evidence
-                                            </button>
-                                        @endif
+                                                            {{-- Upload Evidence Button: Only for Admin and certain statuses --}}
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin']) &&
+                                                                    in_array($statusName, ['need check', 'need approval by auditor', 'need approval by lead auditor', 'close']))
+                                                                <button type="button"
+                                                                    onclick="openUploadEvidence({{ $finding->id }})"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-600 hover:bg-gray-50 transition">
+                                                                    <i data-feather="upload" class="w-4 h-4"></i>
+                                                                    Upload Evidence
+                                                                </button>
+                                                            @endif
 
-                                        @if ($statusName === 'need assign')
-                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                                                <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
-                                                    @click="open = false"
-                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
-                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                    Edit
-                                                </a>
-                                            @endif
-                                        @endif
-                                        @if ($statusName === 'need revision')
-                                            <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
-                                                @click="open = false"
-                                                class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
-                                                <i data-feather="edit" class="w-4 h-4"></i>
-                                                Revise
-                                            </a>
-                                        @elseif ($statusName === 'need check')
-                                            @if (in_array(optional(auth()->user()->roles->first())->name, [
-                                                    'Super Admin',
-                                                    'Admin',
-                                                    'Auditor',
-                                                    'Supervisor',
-                                                    'Leader',
-                                                    'User',
-                                                ]))
-                                                <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
-                                                    @click="open = false"
-                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
-                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                    Edit
-                                                </a>
-                                            @endif
-                                        @else
-                                            @if (in_array($statusName, ['need assign', 'draft']) &&
-                                                    in_array(optional(auth()->user()->roles->first())->name, [
-                                                        'Super Admin',
-                                                        'Admin',
-                                                        'User',
-                                                        'Supervisor',
-                                                        'Leader',
-                                                    ]))
-                                                <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
-                                                    @click="open = false"
-                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
-                                                    <i data-feather="edit-2" class="w-4 h-4"></i>
-                                                    Assign
-                                                </a>
-                                            @endif
-                                        @endif
-                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Lead Auditor']))
-                                            <!-- ITEM: Delete (SweetAlert confirm) -->
-                                            <form id="delete-form-{{ $finding->id }}" method="POST"
-                                                action="{{ route('ftpp.destroy', $finding->id) }}"
-                                                onsubmit="return false;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" @click="open = false"
-                                                    onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
-                                                    class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
-                                                    <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        @endif
-                                    @endif
-                                </div>
-                            </template>
-                        </div>
-                    </td>
-                    </tr>
-                @empty
-                    <tr colspan="12">
-                        <td colspan="12">
-                            <div
-                                class="flex flex-col items-center justify-center py-8 text-gray-400 text-xs gap-2 min-h-[120px]">
-                                <i class="bi bi-inbox text-4xl"></i>
-                                <span>No Records found</span>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                    </tbody>
-                    </table>
-                </div>
-                <div class="mt-4">
-                    {{ $findings->links() }}
+                                                            @if ($statusName === 'need assign')
+                                                                @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
+                                                                    <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
+                                                                        @click="open = false"
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                                                        Edit
+                                                                    </a>
+                                                                @endif
+                                                            @endif
+                                                            @if ($statusName === 'need revision')
+                                                                <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                                    @click="open = false"
+                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i>
+                                                                    Revise
+                                                                </a>
+                                                            @elseif ($statusName === 'need check')
+                                                                @if (in_array(optional(auth()->user()->roles->first())->name, [
+                                                                        'Super Admin',
+                                                                        'Admin',
+                                                                        'Auditor',
+                                                                        'Supervisor',
+                                                                        'Leader',
+                                                                        'User',
+                                                                    ]))
+                                                                    <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
+                                                                        @click="open = false"
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                                                        Edit
+                                                                    </a>
+                                                                @endif
+                                                            @else
+                                                                @if (in_array($statusName, ['need assign', 'draft']) &&
+                                                                        in_array(optional(auth()->user()->roles->first())->name, [
+                                                                            'Super Admin',
+                                                                            'Admin',
+                                                                            'User',
+                                                                            'Supervisor',
+                                                                            'Leader',
+                                                                        ]))
+                                                                    <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
+                                                                        @click="open = false"
+                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                                                                        Assign
+                                                                    </a>
+                                                                @endif
+                                                            @endif
+                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Lead Auditor']))
+                                                                <!-- ITEM: Delete (SweetAlert confirm) -->
+                                                                <form id="delete-form-{{ $finding->id }}" method="POST"
+                                                                    action="{{ route('ftpp.destroy', $finding->id) }}"
+                                                                    onsubmit="return false;">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="button" @click="open = false"
+                                                                        onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
+                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
+                                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                                                        Delete
+                                                                    </button>
+                                                                </form>
+                                                            @endif
+                                                        @endif
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr colspan="12">
+                                        <td colspan="12">
+                                            <div
+                                                class="flex flex-col items-center justify-center py-8 text-gray-400 text-xs gap-2 min-h-[120px]">
+                                                <i class="bi bi-inbox text-4xl"></i>
+                                                <span>No Records found</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        {{ $findings->links() }}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    @include('contents.ftpp2.show')
+        @include('contents.ftpp2.show')
 
-    <!-- Floating Bulk Delete Button -->
-    <div x-data="{ selectedIds: [] }" @update-selected.window="selectedIds = $event.detail">
-        <div x-show="selectedIds.length > 0" x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
-            x-transition:leave-end="opacity-0 translate-y-4"
-            class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50" style="display: none;">
-            <button type="button" @click="confirmBulkDelete(selectedIds)"
-                class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-600 text-white font-medium
+        <!-- Floating Bulk Delete Button -->
+        <div x-data="{ selectedIds: [] }" @update-selected.window="selectedIds = $event.detail">
+            <div x-show="selectedIds.length > 0" x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-4"
+                class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50" style="display: none;">
+                <div class="flex flex-row">
+                    <button type="button" @click="confirmBulkDelete(selectedIds)"
+                        class="flex items-center mx-2 gap-2 px-4 py-3 rounded-full bg-red-600 text-white font-medium
                            shadow-2xl hover:bg-red-700 hover:shadow-red-500/50 transition-all duration-300
                            transform hover:scale-105 active:scale-95">
-                <i data-feather="trash-2" class="w-5 h-5"></i>
-                <span class="text-xs font-semibold">Delete <span x-text="selectedIds.length"></span> item(s)</span>
-            </button>
+                        <i data-feather="trash-2" class="w-5 h-5"></i>
+                        <span class="text-xs font-semibold">Delete <span x-text="selectedIds.length"></span>
+                            item(s)</span>
+                    </button>
+                    <button type="button" @click="confirmBulkNotify(selectedIds)"
+                        class="flex items-center mx-2 gap-2 px-4 py-3 rounded-full bg-blue-600 text-white font-medium
+                           shadow-2xl hover:bg-blue-700 hover:shadow-blue-500/50 transition-all duration-300
+                           transform hover:scale-105 active:scale-95">
+                        <i data-feather="bell" class="w-5 h-5"></i>
+                        <span class="text-xs font-semibold">Send Notification <span x-text="selectedIds.length"></span>
+                            item(s)</span>
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
     </div> {{-- end .p-6 --}}
 @endsection
 <div id="uploadEvidenceContainer"></div> <!-- optional -->
@@ -660,6 +689,75 @@
                     this.currentId = null;
                 },
             };
+        }
+    </script>
+    <script>
+        // Bulk Notify Function
+        function confirmBulkNotify(ids) {
+            if (!ids || ids.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No items selected',
+                    text: 'Please select at least one item to notify.'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Send notification to auditees for ' + ids.length + ' item(s)?',
+                text: 'This will send an email and in-app notification to related auditees.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, send'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Sending...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    fetch('{{ route('ftpp.audit-finding.bulk-notify') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ ids: ids })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sent',
+                                    text: data.message || 'Notifications dispatched',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => window.location.reload());
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Failed',
+                                    text: data.message || 'Failed to send notifications.'
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred while sending notifications.'
+                            });
+                        });
+                }
+            });
         }
     </script>
     <script>
