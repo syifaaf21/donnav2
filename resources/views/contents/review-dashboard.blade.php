@@ -199,7 +199,13 @@
         });
 
         /* ===================== STACKED BAR CHART - DOCUMENTS PER DEPARTMENT ===================== */
-        const reviewLabels = Object.values(departmentsReview);
+        // only include departments that actually have documents (non-zero counts)
+        const filteredDepartmentIds = Object.keys(departmentsReview).filter(deptId => {
+            const data = reviewStatusData[Number(deptId)] || {};
+            return Object.values(data).some(v => (Number(v) || 0) > 0);
+        });
+
+        const reviewLabels = filteredDepartmentIds.map(id => departmentsReview[id]);
         const shortReviewLabels = reviewLabels.map(name => {
             const words = name.split(' ');
             return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
@@ -208,7 +214,7 @@
         const reviewNormalData = [];
         const reviewNeedReviewData = [];
 
-        Object.keys(departmentsReview).forEach(deptId => {
+        filteredDepartmentIds.forEach(deptId => {
             const data = reviewStatusData[Number(deptId)] || {};
 
             const needReview = data.need_review ?? 0;
@@ -279,7 +285,7 @@
         });
 
         /* ===================== GROUPED BAR CHART - STATUS BREAKDOWN BY DEPARTMENT ===================== */
-        const deptLabelsBreakdown = Object.values(departmentsReview);
+        const deptLabelsBreakdown = filteredDepartmentIds.map(id => departmentsReview[id]);
         const shortDeptLabels = deptLabelsBreakdown.map(name => {
             const words = name.split(' ');
             return words.length > 2 ? words.slice(0, 2).join(' ') + '...' : name;
@@ -290,7 +296,7 @@
         const rejectedArray = [];
         const uncompleteArray = [];
 
-        Object.keys(departmentsReview).forEach(deptId => {
+        filteredDepartmentIds.forEach(deptId => {
             const data = reviewStatusData[Number(deptId)] || {};
             needReviewArray.push(data.need_review ?? 0);
             approvedArray.push(data.approved ?? 0);
