@@ -183,7 +183,7 @@
                 <form action="{{ route('logout') }}" method="POST" role="none" class="px-2 pb-1">
                     @csrf
                     <button type="submit"
-                        class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors">
+                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
                         <i data-feather="log-out" class="w-3 h-3"></i>
                         <span>Logout</span>
                     </button>
