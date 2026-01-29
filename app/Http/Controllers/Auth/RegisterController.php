@@ -51,6 +51,7 @@ class RegisterController extends Controller
             'password' => Hash::make($validated['password']),
             'role_id' => 3,
             'department_id' => $validated['department'],
+            'password_changed_at' => now(),
         ]);
 
         // ensure pivot table keeps the default user role (id 3)

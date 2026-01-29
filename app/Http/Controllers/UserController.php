@@ -121,6 +121,7 @@ class UserController extends Controller
             'npk' => $request->npk,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'password_changed_at' => now(),
         ]);
 
         if (!empty($roleIds)) {
@@ -180,7 +181,12 @@ class UserController extends Controller
         ];
 
         if ($request->filled('password')) {
-            $rules['password'] = 'required|min:6|confirmed';
+            $rules['password'] = [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ];
         }
 
         try {
@@ -217,6 +223,7 @@ class UserController extends Controller
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+            $data['password_changed_at'] = now();
         }
 
         $user->update($data);
@@ -250,11 +257,37 @@ class UserController extends Controller
         return view('contents.profile');
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        $user->save();
+
+        return back()->with('success', 'Profile updated successfully.');
+    }
+
     public function updatePassword(Request $request)
     {
         $request->validate([
             'current_password' => 'required',
-            'new_password' => 'required|min:8|confirmed',
+            'new_password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ],
+        ], [
+            'new_password.required' => 'New password is required.',
+            'new_password.min' => 'New password must be at least 8 characters.',
+            'new_password.confirmed' => 'New password confirmation does not match.',
+            'new_password.regex' => 'Password must contain uppercase, lowercase, number, and special character.',
         ]);
 
         $user = Auth::user();
@@ -264,6 +297,7 @@ class UserController extends Controller
         }
 
         $user->password = Hash::make($request->new_password);
+        $user->password_changed_at = now();
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');

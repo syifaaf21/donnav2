@@ -149,7 +149,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'password.expired'])->group(function () {
 
     // Dashboard & Profile
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -158,6 +158,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/ftpp', [DashboardController::class, 'ftppDashboard'])->name('dashboard.ftpp');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
+    Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

@@ -78,8 +78,7 @@
 
                             <!-- Content -->
                             <div class="min-w-0 flex-auto">
-                                <div
-                                    class="text-sm leading-snug {{ $isRedNotif ? 'text-red-500' : 'text-gray-800' }}">
+                                <div class="text-sm leading-snug {{ $isRedNotif ? 'text-red-500' : 'text-gray-800' }}">
                                     {{ Str::limit($notification->data['message'] ?? 'No message', 120) }}
                                 </div>
                                 <div class="text-xs text-gray-400 mt-1">
@@ -159,7 +158,6 @@
                                     <span class="block text-sm text-gray-600">{{ $role->name }}</span>
                                 @endforeach
                                 <p class="text-xs text-gray-400 font-semibold">Roles</p>
-
                             </div>
                         @else
                             <span class="block text-sm text-gray-500">No roles</span>
@@ -167,10 +165,25 @@
                     </div>
                 </div>
 
-                <form action="{{ route('logout') }}" method="POST" role="none">
+                {{-- Edit Profile --}}
+                <div class="px-2 pt-1">
+                    <a href="{{ route('profile.index') }}"
+                        class="w-full flex items-center gap-2 px-4 py-2.5
+                   text-sm text-gray-700 rounded-lg
+                   hover:bg-gray-50 transition
+                   no-underline">
+                        <i data-feather="user" class="w-4 h-4"></i>
+                        <span>Edit Profile</span>
+                    </a>
+                </div>
+
+                {{-- Logout --}}
+                <form action="{{ route('logout') }}" method="POST" role="none" class="px-2 pb-1">
                     @csrf
                     <button type="submit"
-                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        class="w-full flex items-center gap-2 px-4 py-2.5
+                   text-sm text-red-600 rounded-lg
+                   hover:bg-red-50 transition">
                         <i data-feather="log-out" class="w-4 h-4"></i>
                         <span>Logout</span>
                     </button>
