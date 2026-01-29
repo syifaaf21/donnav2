@@ -2,11 +2,9 @@
 @section('title', 'Edit Audit Finding')
 @section('subtitle',
     ' Edit finding for FTPP #' .
-    $finding->registration_number .
-    '. Please update the details below to edit
-    the FTPP finding.')
+    $finding->registration_number)
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">

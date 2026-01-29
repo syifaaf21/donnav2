@@ -11,7 +11,7 @@
     $approvalMode = $approvalMode ?? false;
 @endphp
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
 
             <li>
@@ -27,10 +27,6 @@
                     <i class="bi bi-calendar-range me-1"></i> Document Control
                 </a>
             </li>
-
-            <li>/</li>
-
-            <li class="text-gray-500 font-medium">Documents</li>
 
             <li>/</li>
 

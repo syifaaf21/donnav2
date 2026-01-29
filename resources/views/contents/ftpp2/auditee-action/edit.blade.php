@@ -74,7 +74,7 @@
     </style>
 
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -1220,7 +1220,7 @@
             // Create modal content
             const modal = document.createElement('div');
             modal.className = 'bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col';
-            
+
             // Modal header with close button
             const header = document.createElement('div');
             header.className = 'flex items-center justify-between p-4 border-b';
@@ -1236,7 +1236,7 @@
             // Modal body with content
             const body = document.createElement('div');
             body.className = 'flex-1 overflow-auto p-4';
-            
+
             if (isImage) {
                 body.innerHTML = `<img src="${fileUrl}" class="max-w-full h-auto mx-auto rounded" alt="${fileName}">`;
             } else {

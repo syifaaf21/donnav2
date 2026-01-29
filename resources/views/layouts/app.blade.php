@@ -41,14 +41,14 @@
     <!-- ✅ Main Content -->
     <div id="mainWrapper" class="flex flex-col min-h-screen transition-all duration-300 ml-64 my-2 px-2">
         {{-- @include('layouts.partials.navbar') --}}
-        <div class="my-3 mr-8 ml-8 pt-2 bg-gradient-to-r from-gray-400/30 to-gray-200/60 rounded-3xl">
+        <div class="my-3 mx-6 pt-2 bg-gradient-to-r from-gray-400/30 to-gray-200/60 rounded-3xl">
             @include('layouts.partials.navbar')
             <div class="flex items-center justify-between w-full px-8">
                 <div class="text-white flex flex-col justify-center">
-                    <h3 class="font-bold leading-tight">@yield('title', 'Dashboard')</h3>
-                    <p class="max-w-[550px] text-white/80 text-sm">@yield('subtitle', '')</p>
+                    <h5 class="text-md font-bold leading-tight">@yield('title', 'Dashboard')</h3>
+                    <p class="text-xs max-w-[550px] text-white/80">@yield('subtitle', '')</p>
                 </div>
-                <div class="flex items-center space-x-2 mr-48 mb-2">
+                <div class="flex items-center space-x-2 mr-36 mb-2">
                     @yield('breadcrumbs')
                 </div>
             </div>

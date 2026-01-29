@@ -1,5 +1,5 @@
 <header id="minimalNavbar"
-    class="fixed top-8 right-14 z-50 flex justify-between items-center px-3 py-2 bg-white/50 backdrop-blur-sm border border-white rounded-3xl shadow-md">
+    class="fixed top-8 right-14 z-50 flex justify-between items-center px-2 py-1 bg-white/50 backdrop-blur-sm border border-white rounded-2xl shadow-md">
     <!-- RIGHT: Notification + Profile (pojok kanan) -->
     <div class="flex items-center px-2 py-1">
         <!-- Notification -->
@@ -8,7 +8,7 @@
                 class="relative focus:outline-none focus:ring-2 focus:ring-blue-400 rounded" aria-haspopup="true"
                 aria-controls="notificationDropdown" aria-expanded="false" title="Notifications">
                 <span class="sr-only">Open notifications</span>
-                <i data-feather="bell" class="w-6 h-6 text-gray-700"></i>
+                <i data-feather="bell" class="w-5 h-5 text-gray-700"></i>
 
                 @php
                     $unreadCount = auth()->user()->unreadNotifications->count();
@@ -31,8 +31,8 @@
                 <!-- Header -->
                 <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50/80">
                     <div class="flex items-center gap-2">
-                        <i data-feather="bell" class="w-4 h-4 text-gray-700"></i>
-                        <span class="text-sm font-medium text-gray-700">Notifications</span>
+                        <i data-feather="bell" class="w-3 h-3 text-gray-700"></i>
+                        <span class="text-xs font-medium text-gray-700">Notifications</span>
                     </div>
                     @if (auth()->user()->unreadNotifications->count() > 0)
                         <form action="{{ route('notifications.markAllRead') }}" method="POST" class="m-0">
@@ -65,13 +65,13 @@
                             <!-- Status dot -->
                             <span class="flex-none mt-1">
                                 @if (is_null($notification->read_at))
-                                    <span class="w-3 h-3 rounded-full bg-blue-500 mt-2 flex-shrink-0"
+                                    <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0"
                                         aria-hidden="true"></span>
                                 @elseif ($isRedNotif)
-                                    <span class="w-3 h-3 rounded-full bg-red-500 mt-2 flex-shrink-0"
+                                    <span class="w-2 h-2 rounded-full bg-red-500 mt-2 flex-shrink-0"
                                         aria-hidden="true"></span>
                                 @else
-                                    <span class="w-3 h-3 rounded-full bg-gray-200 mt-2 flex-shrink-0"
+                                    <span class="w-2 h-2 rounded-full bg-gray-200 mt-2 flex-shrink-0"
                                         aria-hidden="true"></span>
                                 @endif
                             </span>
@@ -79,10 +79,10 @@
                             <!-- Content -->
                             <div class="min-w-0 flex-auto">
                                 <div
-                                    class="text-sm leading-snug {{ $isRedNotif ? 'text-red-500' : 'text-gray-800' }}">
+                                    class="text-xs leading-snug {{ $isRedNotif ? 'text-red-500' : 'text-gray-800' }}">
                                     {{ Str::limit($notification->data['message'] ?? 'No message', 120) }}
                                 </div>
-                                <div class="text-xs text-gray-400 mt-1">
+                                <div class="text-[11px] text-gray-400 mt-1">
                                     {{ $notification->created_at->diffForHumans() }}
                                 </div>
                             </div>
@@ -90,25 +90,25 @@
                             <!-- NEW Badge -->
                             @if (!$notification->read_at)
                                 <span
-                                    class="flex-shrink-0 ml-2 px-2 py-0.5 text-[10px] font-semibold
+                                    class="flex-shrink-0 ml-2 px-1 py-0.5 text-[9px] font-semibold
                                 text-blue-600 bg-blue-50 border border-blue-200 rounded-full">
                                     NEW
                                 </span>
                             @endif
                         </a>
                     @empty
-                        <div class="p-6 text-center text-sm text-gray-500">
-                            <i data-feather="inbox" class="w-6 h-6 mx-auto mb-2 text-gray-300"></i>
-                            No notifications
-                        </div>
+                        <div class="p-6 text-center text-xs text-gray-500">
+                                <i data-feather="inbox" class="w-5 h-5 mx-auto mb-2 text-gray-300"></i>
+                                No notifications
+                            </div>
                     @endforelse
                 </div>
 
                 <!-- Footer button -->
                 <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
                     <a href="{{ route('notifications.index') }}"
-                        class="block w-full text-center text-sm font-medium text-gray-700 bg-white
-                   border border-gray-200 rounded-lg py-2
+                        class="block w-full text-center text-xs font-medium text-gray-700 bg-white
+                   border border-gray-200 rounded-lg py-1.5
                    shadow-sm hover:bg-gray-100 hover:border-gray-300
                    transition-all duration-150 decoration-none">
                         View all notifications
@@ -120,16 +120,16 @@
 
         <!-- Profile -->
         <div class="relative">
-            <button id="profileDropdownBtn" type="button"
+                    <button id="profileDropdownBtn" type="button"
                 class="flex items-center gap-3 px-2 py-1 text-gray-700 transition-all duration-150" aria-haspopup="true"
                 aria-controls="profileDropdownMenu" aria-expanded="false" title="Profile">
-                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2">
                     <div
-                        class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-500 text-gray-700 flex items-center justify-center font-bold uppercase text-base shadow-inner">
+                        class="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-100 to-blue-500 text-gray-700 flex items-center justify-center font-bold uppercase text-sm shadow-inner">
                         {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                     </div>
                     <i data-feather="chevron-down"
-                        class="w-4 h-4 text-gray-500 transform transition-transform duration-200 flex-shrink-0"></i>
+                        class="w-3 h-3 text-gray-500 transform transition-transform duration-200 flex-shrink-0"></i>
                 </div>
             </button>
 
@@ -137,7 +137,7 @@
                 class="hidden absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50">
 
                 <div class="px-4 border-b border-gray-100 py-2">
-                    <p class="text-lg font-semibold text-gray-800 truncate">
+                    <p class="text-base font-semibold text-gray-800 truncate">
                         {{ Auth::user()->name ?? 'User' }}
                     </p>
 
@@ -145,24 +145,24 @@
                         @if (Auth::user()->departments->count() > 0)
                             <div>
                                 @foreach (Auth::user()->departments as $department)
-                                    <span class="block text-sm text-gray-600">{{ $department->name }}</span>
+                                    <span class="block text-xs text-gray-600">{{ $department->name }}</span>
                                 @endforeach
-                                <p class="text-xs text-gray-400 font-semibold">Departments</p>
+                                <p class="text-[11px] text-gray-400 font-semibold">Departments</p>
                             </div>
                         @else
-                            <span class="block text-sm text-gray-500">No departments</span>
+                            <span class="block text-xs text-gray-500">No departments</span>
                         @endif
 
                         @if (Auth::user()->roles->count() > 0)
                             <div>
                                 @foreach (Auth::user()->roles as $role)
-                                    <span class="block text-sm text-gray-600">{{ $role->name }}</span>
+                                    <span class="block text-xs text-gray-600">{{ $role->name }}</span>
                                 @endforeach
-                                <p class="text-xs text-gray-400 font-semibold">Roles</p>
+                                <p class="text-[11px] text-gray-400 font-semibold">Roles</p>
 
                             </div>
                         @else
-                            <span class="block text-sm text-gray-500">No roles</span>
+                            <span class="block text-xs text-gray-500">No roles</span>
                         @endif
                     </div>
                 </div>
@@ -170,8 +170,8 @@
                 <form action="{{ route('logout') }}" method="POST" role="none">
                     @csrf
                     <button type="submit"
-                        class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                        <i data-feather="log-out" class="w-4 h-4"></i>
+                        class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors">
+                        <i data-feather="log-out" class="w-3 h-3"></i>
                         <span>Logout</span>
                     </button>
                 </form>
