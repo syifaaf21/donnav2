@@ -975,7 +975,8 @@
 
                 // --- Render file lama aktif di bawah ---
                 if (files.length > 0) {
-                    const activeFiles = files.filter(f => f.is_active == 1);
+                    // Exclude files that have been replaced (replaced_by_id set)
+                    const activeFiles = files.filter(f => f.is_active == 1 && !f.replaced_by_id);
                     // Hitung total size file aktif
                     const totalSize = activeFiles.reduce((sum, f) => {
                         if (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(
@@ -993,7 +994,9 @@
             <div class="p-3 border rounded bg-gray-50 mb-2">
                 <div class="flex justify-between items-start mb-2">
                     <div>
-                        <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
+                        <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}
+                            ${f.replaced_by_id ? `<span class="inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">Replaced</span>` : ''}
+                        </p>
                         <p class="text-xs text-gray-500 mb-1">
                             Size: ${
                                 (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(Number(f.size)))
@@ -1009,11 +1012,13 @@
                                                                 ` : ''}
                 </div>
                 <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
+                ${!f.replaced_by_id ? `
                 <div class="mt-2 flex items-center gap-2">
                     <label class="text-xs text-gray-600"><strong>Replace:</strong></label>
                     <input type="file" name="revision_files[]" class="form-control border-gray-300 rounded p-1 text-sm">
-                    <input type="hidden" name="revision_file_ids[]" value="${f.id}">
                 </div>
+                ` : ''}
+                <input type="hidden" name="revision_file_ids[]" value="${f.id}">
             </div>
         `).join('');
 
@@ -1447,6 +1452,18 @@
 
             const form = document.getElementById('reviseFormDynamic');
             form.prepend(alertDiv);
+            // Jika sebelumnya tombol submit di-disable saat submit, kembalikan ke state awal
+            try {
+                const submitBtn = document.getElementById('reviseSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.pointerEvents = '';
+                    submitBtn.style.opacity = '';
+                    submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Submit';
+                }
+            } catch (e) {
+                console.warn('Failed to re-enable revise submit button', e);
+            }
             if (window.feather) {
                 feather.replace();
             }
