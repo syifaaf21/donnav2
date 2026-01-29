@@ -58,14 +58,16 @@
         </a>
     </li>
 
-    <li>
-        <a href="{{ route('document-review.index') }}" data-bs-title="Document Review"
-            class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
-        {{ Route::is('document-review*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
-            <i data-feather="check-square" class="menu-icon w-4 h-4"></i>
-            <span class="sidebar-text">Document Review</span>
-        </a>
-    </li>
+    @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['super admin', 'admin', 'supervisor', 'leader', 'dept head']))
+        <li>
+            <a href="{{ route('document-review.index') }}" data-bs-title="Document Review"
+                class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
+            {{ Route::is('document-review*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                <i data-feather="check-square" class="menu-icon w-4 h-4"></i>
+                <span class="sidebar-text">Document Review</span>
+            </a>
+        </li>
+    @endif
 
     <li>
         <a href="{{ route('ftpp.index') }}" data-bs-title="FTPP"
