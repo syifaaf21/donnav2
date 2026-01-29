@@ -3,17 +3,12 @@
     @method('PUT')
     <input type="hidden" name="_form" value="edit">
 
-    <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
-            style="background-color: #f5f5f7;">
-            <h5 class="modal-title fw-semibold text-dark" id="editUserModalLabel-{{ $user->id }}"
-                style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
-                <i class="bi bi-pencil-square me-2 text-primary"></i> Edit User
+    <div class="modal-content rounded-lg shadow-lg">
+        <div class="modal-header border-b bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded-t-lg">
+            <h5 class="modal-title fw-semibold text-white" id="editUserModalLabel-{{ $user->id }}">
+                <i class="bi bi-pencil-square me-2"></i> Edit User
             </h5>
-            <button type="button" class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
-                data-bs-dismiss="modal" aria-label="Close" style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
-            </button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <div class="modal-body p-4" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
@@ -41,8 +36,26 @@
                     @enderror
                 </div>
 
+                                <!-- Department -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Department<span class="text-danger">*</span></label>
+                    <select name="department_ids[]" id="department_select_edit_{{ $user->id }}"
+                        class="form-select border-0 shadow-sm rounded-3 @error('department_ids') is-invalid @enderror"
+                        multiple required>
+                        @foreach ($departments as $department)
+                            <option value="{{ $department->id }}"
+                                {{ $user->departments->contains('id', $department->id) ? 'selected' : '' }}>
+                                {{ $department->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('department_ids')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <!-- Email (shown only when Role = Dept Head, or validation error, or old input) -->
-                @php
+                {{-- @php
                     $showEmail = false;
                     // Show if validation error or old input exists
                     if (old('email') !== null || $errors->has('email')) {
@@ -57,34 +70,15 @@
                             }
                         }
                     }
-                @endphp
-                <div class="col-md-6" id="emailContainerEdit_{{ $user->id }}"
-                    style="display: {{ $showEmail ? 'block' : 'none' }};">
+                @endphp --}}
+                <div class="col-md-6" id="emailContainerEdit_{{ $user->id }}">
                     <label class="form-label fw-semibold">Email<span class="text-danger">*</span></label>
                     <input type="email" name="email"
                         class="form-control border-0 shadow-sm rounded-3 @error('email') is-invalid @enderror"
                         pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                         title="Please enter a valid email address (e.g. user@example.com)"
-                        value="{{ old('email', $user->email ?: '-') }}">
+                        value="{{ old('email', $user->email ?: '') }}" required>
                     @error('email')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <!-- Department -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Department<span class="text-danger">*</span></label>
-                    <select name="department_ids[]" id="department_select_edit_{{ $user->id }}"
-                        class="form-select border-0 shadow-sm rounded-3 @error('department_ids') is-invalid @enderror"
-                        multiple required>
-                        @foreach ($departments as $department)
-                            <option value="{{ $department->id }}"
-                                {{ $user->departments->contains('id', $department->id) ? 'selected' : '' }}>
-                                {{ $department->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('department_ids')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -341,15 +335,9 @@
                                 }
                             }
 
-                            // Email visibility
-                            if (hasDeptHead) {
-                                emailContainer.style.display = 'block';
-                            } else {
-                                emailContainer.style.display = 'none';
-                                if (emailInput) {
-                                    emailInput.value = '';
-                                }
-                            }
+                            // Email: always visible and required
+                            emailContainer.style.display = 'block';
+                            if (emailInput) emailInput.setAttribute('required', 'required');
                         }
 
                         // Listen to change event
@@ -378,7 +366,7 @@
                                         return option && (option.textContent || '').toLowerCase().includes('dept head');
                                     });
                                 }
-                                if (hasDeptHead && emailContainer && emailInput) {
+                                if (emailContainer && emailInput) {
                                     if (!emailInput.value.trim()) {
                                         e.preventDefault();
                                         emailInput.classList.add('is-invalid');
@@ -388,7 +376,7 @@
                                             feedback.className = 'invalid-feedback';
                                             emailInput.parentNode.appendChild(feedback);
                                         }
-                                        feedback.textContent = 'Email is required for Dept Head.';
+                                        feedback.textContent = 'Email is required.';
                                         emailInput.focus();
                                     }
                                 }
@@ -406,13 +394,11 @@
             </script>
         </div>
 
-        <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
-            <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal"
-                style="text-decoration: none; transition: background-color 0.3s ease;">
+        <div class="modal-footer border-t p-4 justify-content-between bg-white rounded-b-lg">
+            <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal">
                 Cancel
             </button>
-            <button type="submit"
-                class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+            <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded">
                 Save Changes
             </button>
         </div>
