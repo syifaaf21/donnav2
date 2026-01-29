@@ -55,9 +55,9 @@ class BulkAuditeeNeedAssignNotification extends Notification
             ->line('- Provide the root cause')
             ->line('- Fill in Corrective and Preventive Actions')
             ->action('Open your FTPP dashboard', url('/ftpp'))
-            ->salutation('Regards,')
-            ->line('Quality Management');
-
+            ->line('Please use a laptop and the AIIA network when completing this task.')
+            ->line('Thank you for your prompt attention to these assignments.')
+            ->salutation("Regards,\n\nManagement System Team");
         return $mail;
     }
 

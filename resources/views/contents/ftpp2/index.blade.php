@@ -621,7 +621,12 @@
         @include('contents.ftpp2.show')
 
         <!-- Floating Bulk Delete Button -->
-        <div x-data="{ selectedIds: [] }" @update-selected.window="selectedIds = $event.detail">
+        @php
+            $statusMap = $findings->mapWithKeys(function ($f) {
+                return [$f->id => strtolower(optional($f->status)->name ?? '')];
+            })->toArray();
+        @endphp
+        <div x-data="{ selectedIds: [], statusMap: {{ json_encode($statusMap) }}, allSelectedNeedAssign() { return this.selectedIds.length > 0 && this.selectedIds.every(id => (this.statusMap[id] || '').toLowerCase() === 'need assign'); } }" @update-selected.window="selectedIds = $event.detail">
             <div x-show="selectedIds.length > 0" x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
@@ -636,7 +641,9 @@
                         <span class="text-xs font-semibold">Delete <span x-text="selectedIds.length"></span>
                             item(s)</span>
                     </button>
-                    <button type="button" @click="confirmBulkNotify(selectedIds)"
+
+                    <!-- Send Notification: only visible when all selected items are 'need assign' -->
+                    <button type="button" x-show="allSelectedNeedAssign()" @click="confirmBulkNotify(selectedIds)"
                         class="flex items-center mx-2 gap-2 px-4 py-3 rounded-full bg-blue-600 text-white font-medium
                            shadow-2xl hover:bg-blue-700 hover:shadow-blue-500/50 transition-all duration-300
                            transform hover:scale-105 active:scale-95">

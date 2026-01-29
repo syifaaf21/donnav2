@@ -38,8 +38,10 @@ class DeptHeadNeedCheckNotification extends Notification
             ->subject("[FTPP] Need Check – Finding {$reg}")
             ->greeting('Hello ' . ($notifiable->name ?? 'Dept Head') . ',')
             ->line("Finding No: {$reg} requires your review.")
-            ->line('Please review the auditee action and respond accordingly.')
-            ->action('Open FTPP', $this->url);
+            ->line('Please review the FTPP and respond accordingly.')
+            ->action('Open FTPP', $this->url)
+            ->line('Please use a laptop and the AIIA network when completing this task.')
+            ->line('Thank you for your attention.');
 
         if (!empty($this->replyToEmail)) {
             $mail->replyTo($this->replyToEmail);
