@@ -1092,15 +1092,14 @@ class DocumentMappingController extends Controller
             'document_name' => 'required|string|max:255',
             'department' => 'required|array',
             'department.*' => 'exists:tm_departments,id',
-            'obsolete_date' => 'required|date|after_or_equal:today',
-            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'obsolete_date' => 'required|date',
+            'reminder_date' => 'required|date|before_or_equal:obsolete_date',
             'period_years' => 'required|integer|min:1',
             'notes' => 'required|string|max:500',
             'files' => 'nullable|array',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx, jpg,jpeg,png|max:20480',
         ], [
-            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
-            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
+            
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
         if ($validator->fails()) {

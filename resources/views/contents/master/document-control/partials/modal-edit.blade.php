@@ -68,7 +68,7 @@
                                     class="text-danger">*</span></label>
                             <input type="date" name="obsolete_date" class="form-control border-0 shadow-sm rounded-3"
                                 value="{{ session('editOldInputs.' . $mapping->id . '.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -80,7 +80,7 @@
                                     class="text-danger">*</span></label>
                             <input type="date" name="reminder_date" class="form-control border-0 shadow-sm rounded-3"
                                 value="{{ session('editOldInputs.' . $mapping->id . '.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
