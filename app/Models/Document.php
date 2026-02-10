@@ -54,7 +54,8 @@ class Document extends Model
 
     public function allMappingsCount()
     {
-        $count = $this->mapping()->count();
+        // Count only active mappings (not marked for deletion)
+        $count = $this->mapping()->whereNull('marked_for_deletion_at')->count();
         foreach ($this->childrenRecursive as $child) {
             $count += $child->allMappingsCount();
         }
@@ -64,12 +65,16 @@ class Document extends Model
     {
         $plantLower = strtolower($plant);
 
-        return $this->mapping->filter(function ($mapping) use ($plantLower) {
+        // Query only active mappings and include related partNumber/productModel to evaluate plant
+        return $this->mapping()
+            ->whereNull('marked_for_deletion_at')
+            ->with(['partNumber', 'productModel'])
+            ->get()
+            ->filter(function ($mapping) use ($plantLower) {
+                $hasPartPlant = $mapping->partNumber->contains(fn($pn) => strtolower($pn->plant) === $plantLower);
+                $hasModelPlant = $mapping->productModel->contains(fn($model) => strtolower($model->plant) === $plantLower);
 
-            $hasPartPlant = $mapping->partNumber->contains(fn($pn) => strtolower($pn->plant) === $plantLower);
-            $hasModelPlant = $mapping->productModel->contains(fn($model) => strtolower($model->plant) === $plantLower);
-
-            return $hasPartPlant || $hasModelPlant;
-        });
+                return $hasPartPlant || $hasModelPlant;
+            });
     }
 }

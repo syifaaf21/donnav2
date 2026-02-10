@@ -343,7 +343,9 @@ class DocumentReviewController extends Controller
             'user',
             'status',
             'department'
-        ])->whereHas('document', fn($q) => $q->where('type', 'review'))->get();
+        ])->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->whereNull('marked_for_deletion_at')
+            ->get();
 
         // Tambahkan URL file
         $documentMappings->each(function ($mapping) {
@@ -370,7 +372,7 @@ class DocumentReviewController extends Controller
         // Authorization check: hanya supervisor dari department pemilik dokumen yang bisa edit
         $user = Auth::user();
         $isAdmin = in_array(strtolower($user->roles->pluck('name')->first() ?? ''), ['admin', 'super admin']);
-        
+
         // Jika bukan admin, cek apakah supervisor dari department pemilik dokumen
         if (!$isAdmin && !$user->canEditDocument($mapping)) {
             abort(403, 'Unauthorized. Only supervisors from the document\'s department can edit.');
