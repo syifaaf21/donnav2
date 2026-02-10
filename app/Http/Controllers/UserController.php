@@ -53,7 +53,16 @@ class UserController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
 
-        $roles = Role::all();
+        // Jika current user adalah Admin (tetapi bukan Super Admin), sembunyikan role 'Super Admin'
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+        $isAdmin = $currentUser->roles->pluck('name')->contains('Admin');
+
+        if ($isAdmin && !$isSuperAdmin) {
+            $roles = Role::where('name', '<>', 'Super Admin')->get();
+        } else {
+            $roles = Role::all();
+        }
         $departments = Department::all();
 
         // AJAX → partial
@@ -95,12 +104,20 @@ class UserController extends Controller
         ]);
 
         // Resolve role ids (allow passing either existing ids or new names)
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+
         $rawRoles = (array) $request->input('role_ids', []);
         $roleIds = [];
         foreach ($rawRoles as $r) {
             if (is_numeric($r)) {
+                $roleObj = Role::find($r);
+                if (!$roleObj) continue;
+                // prevent Admin (non-super) from assigning Super Admin
+                if (!$isSuperAdmin && $roleObj->name === 'Super Admin') continue;
                 $roleIds[] = (int) $r;
             } elseif (!empty($r)) {
+                if (!$isSuperAdmin && strcasecmp($r, 'Super Admin') === 0) continue;
                 $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
             }
         }
@@ -145,7 +162,15 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $roles = Role::all();
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+        $isAdmin = $currentUser->roles->pluck('name')->contains('Admin');
+
+        if ($isAdmin && !$isSuperAdmin) {
+            $roles = Role::where('name', '<>', 'Super Admin')->get();
+        } else {
+            $roles = Role::all();
+        }
         $departments = Department::all();
         $auditTypes = Audit::all();
 
@@ -199,12 +224,19 @@ class UserController extends Controller
         }
 
         // Resolve multiple roles & departments (allow new names)
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+
         $rawRoles = (array) $request->input('role_ids', []);
         $roleIds = [];
         foreach ($rawRoles as $r) {
             if (is_numeric($r)) {
+                $roleObj = Role::find($r);
+                if (!$roleObj) continue;
+                if (!$isSuperAdmin && $roleObj->name === 'Super Admin') continue;
                 $roleIds[] = (int) $r;
             } elseif (!empty($r)) {
+                if (!$isSuperAdmin && strcasecmp($r, 'Super Admin') === 0) continue;
                 $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
             }
         }
