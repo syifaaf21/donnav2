@@ -51,7 +51,7 @@ class DocumentActionNotification extends Notification
         switch ($this->action) {
             case 'revised':
                 $message = $this->documentNumber
-                    ? "{$title} has been revised by {$byUserFormatted}."
+                    ? "{$title} has been revised by {$byUserFormatted} and need your review"
                     : "File for {$title} has been uploaded by {$byUserFormatted}"
                     . ($departmentFormatted ? " on department {$departmentFormatted}" : "")
                     . " and is pending review.";
@@ -59,7 +59,7 @@ class DocumentActionNotification extends Notification
 
             case 'approved':
                 $message = $this->documentNumber
-                    ? "{$title} has been approved by {$byUserFormatted}."
+                    ? "{$title} has been reviewed and approved by {$byUserFormatted}. Document is now active."
                     : "Document {$title} has been approved by {$byUserFormatted}"
                     . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
                     . " and document is active.";
@@ -67,7 +67,7 @@ class DocumentActionNotification extends Notification
 
             case 'rejected':
                 $message = $this->documentNumber
-                    ? "{$title} has been rejected by {$byUserFormatted}."
+                    ? "{$title} has been rejected by {$byUserFormatted}. Please revise and upload again."
                     : "Document {$title} has been rejected by {$byUserFormatted}"
                     . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
                     . ".";
