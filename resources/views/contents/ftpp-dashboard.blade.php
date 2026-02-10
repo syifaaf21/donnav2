@@ -163,6 +163,15 @@
                             <span>Department Status Details</span>
                         </div>
 
+                        <ul class="nav nav-tabs mb-2" role="tablist" id="deptViewTabs">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link active small" href="#" id="deptTabChart" role="tab" aria-selected="true" data-view="chart">Chart</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link small" href="#" id="deptTabTable" role="tab" aria-selected="false" data-view="table">Table</a>
+                            </li>
+                        </ul>
+
                         @php
                             // Expected format: [ 'Dept Name' => [ 'Status Name' => count, ... ], ... ]
                             $matrix = $deptStatusMatrix ?? [];
@@ -183,11 +192,11 @@
                             </div>
                         @else
                             {{-- Chart: Department status (stacked bar) --}}
-                            <div class="mb-3">
+                            <div class="mb-3" id="deptStatusWrapper">
                                 <canvas id="deptStatusChart" height="140"></canvas>
                             </div>
 
-                            <div class="table-responsive mt-2">
+                            <div class="table-responsive mt-2" id="deptStatusTableWrapper" style="display:none;">
                                 <table class="table table-sm table-hover mb-0 align-middle" style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
                                     <thead class="table-header-blue">
                                         <tr>
@@ -501,16 +510,34 @@
                 const statuses = Array.from(statusSet);
                 if (!statuses.length) return;
 
-                // color generator
+                // color generator - reuse colors from Status Distribution (pie) when possible
                 const preset = [
                     '#7BA7FF', '#A8E6CF', '#FFD3B6', '#FFAAA5', '#D4A5A5', '#FFE0AC', '#6EC6E2', '#8BD3C7', '#C0E4FF'
                 ];
-                const colorFor = i => preset[i % preset.length] || `hsl(${(i*47)%360} 70% 65%)`;
+
+                // build mapping from status labels used in the pie chart to colors
+                const statusColorMap = {};
+                (Object.keys(statusBreakdown || {})).forEach((lbl, idx) => {
+                    statusColorMap[lbl] = statusColors[idx % statusColors.length];
+                });
+
+                // ensure 'Need Approval by Auditor' uses the requested color (case-insensitive match)
+                Object.keys(statusColorMap).forEach(k => {
+                    if (/need approval by lead auditor/i.test(k)) statusColorMap[k] = '#D4C5F9';
+                });
+
+                const colorFor = (s, i) => {
+                    if (statusColorMap[s]) return statusColorMap[s];
+                    if (/need assign/i.test(s)) return '#FFD3B6'; // fallback soft peach
+                    if (/need approval by lead auditor/i.test(s)) return '#8BD3C7'; // fallback
+                    if (/need approval by auditor/i.test(s)) return '#D4C5F9'; // set to requested color
+                    return preset[i % preset.length] || `hsl(${(i*47)%360} 70% 65%)`;
+                };
 
                 const datasets = statuses.map((s, idx) => ({
                     label: s,
                     data: departments.map(d => (matrix[d] && matrix[d][s]) ? matrix[d][s] : 0),
-                    backgroundColor: colorFor(idx),
+                    backgroundColor: colorFor(s, idx),
                     borderWidth: 0,
                 }));
 
@@ -558,6 +585,42 @@
                 });
             });
 
+            // Dept Status: toggle between chart and table using tabs
+            const deptTabChart = document.getElementById('deptTabChart');
+            const deptTabTable = document.getElementById('deptTabTable');
+            const deptChartWrapper = document.getElementById('deptStatusWrapper');
+            const deptTableWrapper = document.getElementById('deptStatusTableWrapper');
+
+            function updateDeptView(selected) {
+                if (selected === 'table') {
+                    deptChartWrapper.style.display = 'none';
+                    deptTableWrapper.style.display = '';
+                } else {
+                    deptChartWrapper.style.display = '';
+                    deptTableWrapper.style.display = 'none';
+                }
+            }
+
+                if (deptTabChart && deptTabTable) {
+                deptTabChart.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    deptTabChart.classList.add('active');
+                    deptTabChart.setAttribute('aria-selected','true');
+                    deptTabTable.classList.remove('active');
+                    deptTabTable.setAttribute('aria-selected','false');
+                    updateDeptView('chart');
+                });
+                deptTabTable.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    deptTabTable.classList.add('active');
+                    deptTabTable.setAttribute('aria-selected','true');
+                    deptTabChart.classList.remove('active');
+                    deptTabChart.setAttribute('aria-selected','false');
+                    updateDeptView('table');
+                });
+                updateDeptView('chart');
+            }
+
             scrollBtn.classList.add('hidden');
         });
 
@@ -567,6 +630,54 @@
 
 @push('styles')
     <style>
+        /* Dept view tabs: pill-style, subtle border and shadow */
+        #deptViewTabs {
+            padding-left: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        #deptViewTabs .nav-item {
+            margin-right: 0;
+        }
+        #deptViewTabs .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: .35rem .75rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            color: #374151;
+            background: transparent;
+            transition: all .18s ease-in-out;
+            font-weight: 600;
+        }
+        #deptViewTabs .nav-link:hover {
+            transform: translateY(-1px);
+            text-decoration: none;
+            color: #111827;
+        }
+        #deptViewTabs .nav-link.active {
+            background: #EAF6FF; /* soft blue background for selected tab */
+            border-color: #CFE8FF;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+            color: #0f172a;
+            position: relative;
+        }
+        #deptViewTabs .nav-link.active::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2D9CDB; /* accent dot */
+            display: inline-block;
+            margin-right: 8px;
+            transform: translateY(1px);
+        }
+        /* Keep tabs visually inside the card and slightly elevated */
+        .card-body > #deptViewTabs { margin-bottom: .6rem; display:flex; justify-content:center; }
+
         .table-header-blue th {
             background-color: #dbeafe;
             color: #1f2937;
