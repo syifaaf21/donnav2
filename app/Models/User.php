@@ -66,6 +66,14 @@ class User extends Authenticatable
         return $this->hasMany(AuditFinding::class, 'auditor_id');
     }
 
+    /**
+     * Many-to-many relation for auditor assignments (pivot)
+     */
+    public function auditFindingsAsAuditorMany()
+    {
+        return $this->belongsToMany(AuditFinding::class, 'tt_audit_finding_auditors', 'auditor_id', 'audit_finding_id');
+    }
+
     // Many-to-many relation: users <-> audit types (pivot: tt_user_audit_type)
     public function auditTypes()
     {

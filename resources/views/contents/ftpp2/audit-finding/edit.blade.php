@@ -141,13 +141,18 @@
                                 <div>
                                     <label class="font-semibold block">Auditor / Inisiator: <span
                                             class="text-danger">*</span></label>
-                                    <select name="auditor_id" x-model="form.auditor_id"
-                                        class="border border-gray-300 rounded w-full p-2 focus:outline-none">
-                                        <option value="">-- Choose Auditor --</option>
+                                    <select name="auditor_ids[]" id="auditorSelect" multiple
+                                        class="tom-select border border-gray-300 rounded w-full p-2 focus:outline-none">
+                                        @php
+                                            $selected = isset($finding) && $finding->auditors ? $finding->auditors->pluck('id')->toArray() : [];
+                                        @endphp
                                         @foreach ($auditors as $auditor)
-                                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                                            <option value="{{ $auditor->id }}" {{ in_array($auditor->id, $selected) ? 'selected' : '' }}>
+                                                {{ $auditor->name }}
+                                            </option>
                                         @endforeach
                                     </select>
+                                    <input type="hidden" name="auditor_id" id="auditor_id_hidden" value="">
                                 </div>
 
                                 <div>
@@ -927,18 +932,59 @@
                                     '<small class="text-gray-500">There is no sub audit type</small>';
                             }
 
-                            // ✅ Filter Auditor berdasarkan audit type
-                            let auditorSelect = document.querySelector('select[name="auditor_id"]');
-                            auditorSelect.innerHTML = '<option value="">-- Choose Auditor --</option>';
-                            data.auditors.forEach(auditor => {
-                                auditorSelect.innerHTML += `
-                                        <option value="${auditor.id}">${auditor.name}</option>
-                                    `;
-                            });
+                            // ✅ Filter Auditor berdasarkan audit type — update TomSelect options
+                            let auditorSelect = document.querySelector('#auditorSelect');
+                            if (auditorSelect) {
+                                const ts = auditorSelect.tomselect;
+                                if (ts) {
+                                    ts.clearOptions();
+                                    data.auditors.forEach(auditor => {
+                                        ts.addOption({ value: auditor.id, text: auditor.name });
+                                    });
+                                } else {
+                                    auditorSelect.innerHTML = '';
+                                    data.auditors.forEach(auditor => {
+                                        auditorSelect.innerHTML += `<option value="${auditor.id}">${auditor.name}</option>`;
+                                    });
+                                }
+                            }
                         })
                         .catch(error => console.error("❌ Error:", error));
                 }
             });
+
+            // Initialize TomSelect for auditor multi-select and keep hidden sync
+            try {
+                const auditorEl = document.getElementById('auditorSelect');
+                if (auditorEl) {
+                    if (!auditorEl.tomselect) {
+                        var auditorTs = new TomSelect('#auditorSelect', {
+                            plugins: ['remove_button'],
+                            persist: false,
+                            create: false,
+                            maxItems: null,
+                            placeholder: 'Select or search auditors...',
+                        });
+                    } else {
+                        var auditorTs = auditorEl.tomselect;
+                    }
+
+                    function syncAuditorHidden(values) {
+                        const hid = document.getElementById('auditor_id_hidden');
+                        if (!hid) return;
+                        if (Array.isArray(values) && values.length) {
+                            hid.value = values[0];
+                        } else if (typeof values === 'string' && values) {
+                            hid.value = values.split(',')[0] || '';
+                        } else {
+                            hid.value = '';
+                        }
+                    }
+
+                    try { syncAuditorHidden(auditorTs.getValue()); } catch (e) { /* ignore */ }
+                    auditorTs.on('change', function(value) { syncAuditorHidden(value); });
+                }
+            } catch (e) { console.error('TomSelect auditor init error', e); }
 
             // --- Open/Close sidebar (tidak berubah) ---
             window.openSidebar = function() {

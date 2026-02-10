@@ -142,7 +142,10 @@ class AuditFindingController extends Controller
             'department_id' => [$isDraft ? 'nullable' : 'required', 'exists:tm_departments,id'],
             'process_id' => 'nullable|exists:tm_processes,id',
             'product_id' => 'nullable|exists:tm_products,id',
-            'auditor_id' => [$isDraft ? 'nullable' : 'required', 'exists:users,id'],
+            // accept multiple auditors from tom-select but keep compatibility with single auditor_id
+            'auditor_id' => [$isDraft ? 'nullable' : 'nullable', 'exists:users,id'],
+            'auditor_ids' => [$isDraft ? 'nullable' : 'required', 'array'],
+            'auditor_ids.*' => 'exists:users,id',
             'auditee_ids' => [$isDraft ? 'nullable' : 'required', 'array'],
             'auditee_ids.*' => 'exists:users,id',
             'registration_number' => 'nullable|string|max:100',
@@ -167,7 +170,7 @@ class AuditFindingController extends Controller
         $requiredWhenNotDraft = [
             'finding_category_id',
             'department_id',
-            'auditor_id',
+            'auditor_ids',
             'finding_description',
             'due_date',
         ];
@@ -208,6 +211,7 @@ class AuditFindingController extends Controller
             'department_id' => $validated['department_id'] ?? null,
             'process_id' => $validated['process_id'] ?? null,
             'product_id' => $validated['product_id'] ?? null,
+            // don't set auditor_id here; we'll sync pivot and keep first id for compatibility below
             'auditor_id' => $validated['auditor_id'] ?? null,
             'registration_number' => $validated['registration_number'] ?? null,
             'finding_description' => $validated['finding_description'] ?? null,
@@ -218,6 +222,20 @@ class AuditFindingController extends Controller
         // Store auditee relationship
         if (!empty($validated['auditee_ids'])) {
             $auditFinding->auditee()->attach($validated['auditee_ids']);
+        }
+
+        // Attach auditors (many-to-many). Accept either auditor_ids array (preferred) or single auditor_id.
+        $auditorIds = [];
+        if (!empty($validated['auditor_ids'])) {
+            $auditorIds = $validated['auditor_ids'];
+        } elseif (!empty($validated['auditor_id'])) {
+            $auditorIds = [$validated['auditor_id']];
+        }
+        if (!empty($auditorIds)) {
+            $auditFinding->auditors()->sync($auditorIds);
+            // keep first auditor in auditor_id for backward compatibility
+            $auditFinding->auditor_id = $auditorIds[0];
+            $auditFinding->saveQuietly();
         }
 
         // ✅ ATTACH SUB KLAUSUL
@@ -588,7 +606,10 @@ class AuditFindingController extends Controller
             'department_id' => [$isSubmit ? 'required' : 'nullable', 'exists:tm_departments,id'],
             'process_id' => 'nullable|exists:tm_processes,id',
             'product_id' => 'nullable|exists:tm_products,id',
+            // accept multiple auditors on update as well
             'auditor_id' => [$isSubmit ? 'required' : 'nullable', 'exists:users,id'],
+            'auditor_ids' => [$isSubmit ? 'required' : 'nullable', 'array'],
+            'auditor_ids.*' => 'exists:users,id',
             'auditee_ids' => [$isSubmit ? 'required' : 'nullable', 'array'],
             'auditee_ids.*' => 'exists:users,id',
             'registration_number' => 'nullable|string|max:100',
@@ -661,6 +682,20 @@ class AuditFindingController extends Controller
             'due_date' => $validated['due_date'] ?? null,
             'status_id' => $statusId,
         ]);
+
+        // sync auditors pivot if provided (prefer auditor_ids array)
+        $auditorIds = [];
+        if ($request->filled('auditor_ids')) {
+            $auditorIds = is_array($request->input('auditor_ids')) ? $request->input('auditor_ids') : explode(',', $request->input('auditor_ids'));
+        } elseif ($request->filled('auditor_id')) {
+            $auditorIds = [$request->input('auditor_id')];
+        }
+        if (!empty($auditorIds)) {
+            $auditFinding->auditors()->sync($auditorIds);
+            // keep first id in auditor_id for backward compatibility
+            $auditFinding->auditor_id = $auditorIds[0] ?? null;
+            $auditFinding->saveQuietly();
+        }
 
         // sync auditee relationship (only if provided)
         if (!empty($validated['auditee_ids'])) {

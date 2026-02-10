@@ -154,6 +154,14 @@ class  AuditFinding extends Model
         });
     }
 
+    /**
+     * Many-to-many auditors (pivot)
+     */
+    public function auditors()
+    {
+        return $this->belongsToMany(User::class, 'tt_audit_finding_auditors', 'audit_finding_id', 'auditor_id');
+    }
+
     public function status()
     {
         return $this->belongsTo(Status::class);
