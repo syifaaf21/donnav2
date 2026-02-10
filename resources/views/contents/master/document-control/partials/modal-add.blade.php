@@ -65,7 +65,7 @@
                             <input type="date"
                                 class="form-control border-0 shadow-sm rounded-3 @error('obsolete_date') is-invalid @enderror"
                                 id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -76,7 +76,7 @@
                             <input type="date"
                                 class="form-control border-0 shadow-sm rounded-3 @error('reminder_date') is-invalid @enderror"
                                 id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
