@@ -30,7 +30,8 @@ class FtppController extends Controller
     public function index(Request $request)
     {
         // Build base query with eager loads
-        $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee', 'audit']);
+        // Use `auditors` pivot relation (many-to-many) instead of single `auditor_id`
+        $query = AuditFinding::with(['status', 'department', 'auditors', 'auditee', 'audit']);
 
         $user = auth()->user();
 
@@ -76,10 +77,12 @@ class FtppController extends Controller
                 ->whereHas('status', function ($qs) {
                     $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
                 });
-            } else {
-                // Show FTPP where user is auditor (created by them)
-                $query->where('auditor_id', $user->id);
-            }
+                } else {
+                    // Show FTPP where user is auditor (via pivot table)
+                    $query->whereHas('auditors', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
+                }
         }
         // Default: only show FTTP where user is auditor OR listed as auditee
         else {
@@ -88,10 +91,11 @@ class FtppController extends Controller
                 $query->whereRaw('0 = 1');
             } else {
                 $query->where(function ($q) use ($user) {
-                    $q->where('auditor_id', $user->id)
-                        ->orWhereHas('auditee', function ($qa) use ($user) {
-                            $qa->where('users.id', $user->id);
-                        });
+                    $q->whereHas('auditors', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    })->orWhereHas('auditee', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
                 })
                 // for non-auditor users (auditee) do not show draft findings
                 ->whereHas('status', function ($qs) {
@@ -171,29 +175,35 @@ class FtppController extends Controller
                 })->count();
             } else {
                 $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
-                    $q->where('auditor_id', $user->id);
+                    $q->whereHas('auditors', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
                 }])->orderBy('name')->get();
 
-                $totalCount = AuditFinding::where('auditor_id', $user->id)->count();
+                $totalCount = AuditFinding::whereHas('auditors', function ($qa) use ($user) {
+                    $qa->where('users.id', $user->id);
+                })->count();
             }
         } else {
             // User lain: hitung dokumen yang terkait dengan mereka
             $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
                 if (!empty($user)) {
                     $q->where(function ($qa) use ($user) {
-                        $qa->where('auditor_id', $user->id)
-                            ->orWhereHas('auditee', function ($qb) use ($user) {
-                                $qb->where('users.id', $user->id);
-                            });
+                        $qa->whereHas('auditors', function ($qb) use ($user) {
+                            $qb->where('users.id', $user->id);
+                        })->orWhereHas('auditee', function ($qb) use ($user) {
+                            $qb->where('users.id', $user->id);
+                        });
                     });
                 }
             }])->orderBy('name')->get();
 
             $totalCount = !empty($user) ? AuditFinding::where(function ($q) use ($user) {
-                $q->where('auditor_id', $user->id)
-                    ->orWhereHas('auditee', function ($qa) use ($user) {
-                        $qa->where('users.id', $user->id);
-                    });
+                $q->whereHas('auditors', function ($qb) use ($user) {
+                    $qb->where('users.id', $user->id);
+                })->orWhereHas('auditee', function ($qa) use ($user) {
+                    $qa->where('users.id', $user->id);
+                });
             })->count() : 0;
         }
 
@@ -475,7 +485,7 @@ class FtppController extends Controller
             'audit',
             'subAudit',
             'findingCategory',
-            'auditor',
+            'auditors',
             'auditee',
             'department',
             'process',
@@ -834,7 +844,7 @@ class FtppController extends Controller
             'audit',
             'subAudit',
             'findingCategory',
-            'auditor',
+            'auditors',
             'auditee',
             'department',
             'process',

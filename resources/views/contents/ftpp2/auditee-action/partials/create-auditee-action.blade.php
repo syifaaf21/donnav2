@@ -1016,6 +1016,24 @@
                 err.push("Yokoten Area must be filled when Yokoten = Yes.");
             }
 
+            // Validate WHY and CAUSE fields: require between 3 and 5 filled entries
+            let whyFilled = 0;
+            let causeFilled = 0;
+            for (let i = 1; i <= 5; i++) {
+                const whyVal = document.querySelector(`textarea[name="why_${i}_mengapa"]`)?.value || '';
+                const causeVal = document.querySelector(`textarea[name="cause_${i}_karena"]`)?.value || '';
+                const whyClean = window.cleanHtmlContent(whyVal).trim();
+                const causeClean = window.cleanHtmlContent(causeVal).trim();
+                if (whyClean) whyFilled++;
+                if (causeClean) causeFilled++;
+            }
+            if (whyFilled < 3 || whyFilled > 5) {
+                err.push(`Please fill minimal 3 Why entries. Currently filled: ${whyFilled}`);
+            }
+            if (causeFilled < 3 || causeFilled > 5) {
+                err.push(`Please fill minimal 3 Cause entries. Currently filled: ${causeFilled}`);
+            }
+
             // ✅ 2.5 VALIDASI CORRECTIVE ACTION - jika Activity diisi, maka PIC, Planning harus diisi (Actual boleh kosong = default "-")
             const correctiveRows = document.querySelectorAll('.corrective-row');
             correctiveRows.forEach((row, index) => {

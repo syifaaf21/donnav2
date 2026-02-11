@@ -1437,6 +1437,24 @@
                     }
                 });
 
+                // Validasi 5 WHY / Cause: minimal 3 maksimal 5
+                let whyFilled = 0;
+                let causeFilled = 0;
+                for (let i = 1; i <= 5; i++) {
+                    const whyVal = document.querySelector(`textarea[name="why_${i}_mengapa"]`)?.value || '';
+                    const causeVal = document.querySelector(`textarea[name="cause_${i}_karena"]`)?.value || '';
+                    const whyClean = window.cleanHtmlContent(whyVal).trim();
+                    const causeClean = window.cleanHtmlContent(causeVal).trim();
+                    if (whyClean) whyFilled++;
+                    if (causeClean) causeFilled++;
+                }
+                if (whyFilled < 3 || whyFilled > 5) {
+                    validationErrors.push(`❌ Why fields must contain between 3 and 5 entries. Currently: ${whyFilled}`);
+                }
+                if (causeFilled < 3 || causeFilled > 5) {
+                    validationErrors.push(`❌ Cause fields must contain between 3 and 5 entries. Currently: ${causeFilled}`);
+                }
+
                 // Jika ada validation errors, tampilkan SweetAlert dan stop submit
                 if (validationErrors.length > 0) {
                     Swal.fire({

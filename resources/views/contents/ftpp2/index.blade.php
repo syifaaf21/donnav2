@@ -273,13 +273,13 @@
                             }
                         }
 
-                        // Auditor: count 'need approval by auditor' assigned to current user
+                        // Auditor: count 'need approval by auditor' assigned to current user (pivot)
                         if (in_array('Auditor', $userRoles)) {
-                            $badgeCount += \App\Models\AuditFinding::where('auditor_id', $user->id)
-                                ->whereHas('status', function ($q) {
+                            $badgeCount += \App\Models\AuditFinding::whereHas('auditors', function($qa) use ($user) {
+                                    $qa->where('users.id', $user->id);
+                                })->whereHas('status', function ($q) {
                                     $q->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                                })
-                                ->count();
+                                })->count();
                         }
 
                         // Lead Auditor vs Admin: Admin/super admin see all 'need approval by lead auditor'.
@@ -428,7 +428,7 @@
                                         </td>
                                         <td
                                             class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
-                                            {{ $finding->auditor_name }}</td>
+                                            {{ (!empty($finding->auditors) && $finding->auditors->isNotEmpty()) ? $finding->auditors->pluck('name')->join(', ') : (optional($finding->auditor)->name ?? $finding->auditor_name ?? '-') }}</td>
                                         <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty()) title="{{ $finding->auditee->pluck('name')->join(', ') }}" @endif>
 

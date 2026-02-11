@@ -58,7 +58,8 @@
                 <tr>
                     <td class="py-2 text-gray-700 font-semibold">Auditor / Inisiator:</td>
                     <td class="py-2">
-                        <div class="border-b border-gray-200 py-1 text-gray-700" x-text="form.auditor?.name || '-'">-</div>
+                            <div class="border-b border-gray-200 py-1 text-gray-700"
+                                x-text="(Array.isArray(form.auditors) && form.auditors.length) ? form.auditors.map(a => a.name).join(', ') : (Array.isArray(form.auditor) && form.auditor.length) ? form.auditor.map(a => a.name).join(', ') : (form.auditor && form.auditor.name) ? form.auditor.name : '-'">-</div>
                         <input type="hidden" name="auditor_id" x-model="form.auditor_id">
                     </td>
                 </tr>

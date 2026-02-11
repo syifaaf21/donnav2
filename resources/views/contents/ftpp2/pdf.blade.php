@@ -210,7 +210,15 @@
                     </tr>
                     <tr>
                         <td class="font-semibold">Auditor / Inisiator:</td>
-                        <td>{{ $finding->auditor->name ?? '-' }}</td>
+                        <td>
+                            @if (!empty($finding->auditors) && $finding->auditors->isNotEmpty())
+                                {{ $finding->auditors->pluck('name')->join(', ') }}
+                            @elseif(!empty($finding->auditor) && !empty($finding->auditor->name))
+                                {{ $finding->auditor->name }}
+                            @else
+                                -
+                            @endif
+                        </td>
                     </tr>
                     <tr>
                         <td class="font-semibold">Date:</td>
@@ -505,7 +513,7 @@
                 @endif
                 <div>
                     <div>Auditor</div>
-                    {{ $finding->auditeeAction->auditor->name ?? '-' }}
+                    {{ optional($finding->auditeeAction->auditor)->name ?? '-' }}
                 </div>
             </td>
         </tr>

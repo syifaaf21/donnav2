@@ -146,11 +146,18 @@ class  AuditFinding extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function auditor()
+    /**
+     * Backwards-compatible accessor for single `auditor`.
+     * The system now uses a pivot `auditors()` relation (many-to-many).
+     * This accessor returns the first auditor (if any) so existing code that
+     * expects `$finding->auditor` continues to work.
+     */
+    public function getAuditorAttribute()
     {
-        return $this->belongsTo(User::class, 'auditor_id')->whereHas('roles', function ($q) {
-            $q->where('name', 'auditor');
-        });
+        if ($this->relationLoaded('auditors')) {
+            return $this->auditors->first() ?? null;
+        }
+        return $this->auditors()->first();
     }
 
     /**
@@ -160,6 +167,17 @@ class  AuditFinding extends Model
     {
         return $this->belongsToMany(User::class, 'tt_audit_finding_auditors', 'audit_finding_id', 'auditor_id')
             ->withTimestamps();
+    }
+
+    /**
+     * Backwards-compatible relation alias for eager-loading code that
+     * references "auditor" (singular). Some controllers call ->with('auditor')
+     * even though the canonical relation is `auditors()`; this alias prevents
+     * RelationNotFoundException when eager-loading.
+     */
+    public function auditor()
+    {
+        return $this->auditors();
     }
 
     public function status()

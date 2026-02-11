@@ -38,11 +38,7 @@
                     <tr>
                         <th class="px-4 py-2 font-semibold bg-gray-50">Auditor / Inisiator</th>
                         <td class="px-4 py-2">
-                            @foreach ($auditors as $auditor)
-                                <template x-if="form.auditor_id == {{ $auditor->id }}">
-                                    <span>{{ $auditor->name }}</span>
-                                </template>
-                            @endforeach
+                            <div x-text="(Array.isArray(form.auditors) && form.auditors.length) ? form.auditors.map(a => a.name).join(', ') : (Array.isArray(form.auditor) && form.auditor.length) ? form.auditor.map(a => a.name).join(', ') : (form.auditor && form.auditor.name) ? form.auditor.name : (form.auditor_id ? (function(){ var m = []; @foreach($auditors as $aud) m.push({id: {{ $aud->id }}, name: '{{ addslashes($aud->name) }}'}); @endforeach return (m.filter(x=> x.id == form.auditor_id).map(x=>x.name).join(', ')); })() : '-')"></div>
                         </td>
                     </tr>
                     <tr>
@@ -91,8 +87,7 @@
 </div>
 
 <!-- Modal Preview File -->
-<div id="previewModal" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
-    style="z-index: 9999;">
+<div id="previewModal" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none; z-index: 9999;">
     <div id="previewModalContent"
          class="bg-white rounded-lg flex flex-col overflow-hidden shadow-2xl transition-all duration-300"
          style="z-index: 10000;">

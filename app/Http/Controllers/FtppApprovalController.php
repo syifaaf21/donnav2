@@ -69,7 +69,7 @@ class FtppApprovalController extends Controller
         $query = AuditFinding::with([
             'audit',
             'auditee',
-            'auditor',
+            'auditors',
             'findingCategory',
             'department',
             'status',
@@ -122,7 +122,9 @@ class FtppApprovalController extends Controller
                         $q->orWhere(function ($qa) use ($user, $userAuditTypeIds) {
                             $qa->whereHas('status', function ($qs) {
                                 $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                            })->where('auditor_id', $user->id)
+                            })->whereHas('auditors', function($q) use ($user) {
+                                $q->where('users.id', $user->id);
+                            })
                               ->whereIn('audit_type_id', $userAuditTypeIds);
                         });
                     } else {
@@ -205,7 +207,9 @@ class FtppApprovalController extends Controller
                         $q->orWhere(function ($qa) use ($user) {
                             $qa->whereHas('status', function ($qs) {
                                 $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                            })->where('auditor_id', $user->id);
+                            })->whereHas('auditors', function($q) use ($user) {
+                                $q->where('users.id', $user->id);
+                            });
                         });
                     }
 
