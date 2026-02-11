@@ -132,8 +132,13 @@ class FtppController extends Controller
             $query->where('audit_type_id', $request->input('audit_type'));
         }
 
+        // Determine per-page (allow user to choose: 10,25,50,100)
+        $allowedPerPage = [10, 25, 50, 100];
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, $allowedPerPage)) $perPage = 10;
+
         // order and paginate
-        $findings = $query->orderBy('updated_at', 'desc')->paginate(10);
+        $findings = $query->orderBy('updated_at', 'desc')->paginate($perPage);
         // preserve filters in pagination links
         $findings->appends($request->except('page'));
 
@@ -235,6 +240,7 @@ class FtppController extends Controller
             'filterType',
             'userRoles',
             'auditTypes'
+            ,'perPage'
         ));
     }
 

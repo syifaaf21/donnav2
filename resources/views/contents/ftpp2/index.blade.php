@@ -72,7 +72,7 @@
                                 {{ request('search')
                                     ? '-top-2 text-xs text-sky-600'
                                     : 'top-2.5 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-xs
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                             Type to search...
                         </label>
 
@@ -93,8 +93,19 @@
                             <i data-feather="search" class="w-5 h-5"></i>
                         </button>
                     </div>
-                </form>
 
+                    <!-- Per-page selector -->
+                    {{-- <div class="mt-1 w-full text-left">
+                        <label class="text-xs text-gray-500 mr-2">Rows per page:</label>
+                        <select name="per_page" onchange="this.form.submit()" class="text-xs rounded border px-2 py-1">
+                            @php $currentPerPage = request()->input('per_page', $perPage ?? 10); @endphp
+                            <option value="10" {{ $currentPerPage == 10 ? 'selected' : '' }}>10</option>
+                            <option value="25" {{ $currentPerPage == 25 ? 'selected' : '' }}>25</option>
+                            <option value="50" {{ $currentPerPage == 50 ? 'selected' : '' }}>50</option>
+                            <option value="100" {{ $currentPerPage == 100 ? 'selected' : '' }}>100</option>
+                        </select>
+                    </div> --}}
+                </form>
                 <!-- FILTER BUTTON -->
                 <div x-data="statusFilter()" x-init="init()" class="relative mb-2">
                     <button @click="toggle($event)"
@@ -117,7 +128,8 @@
                                 @foreach (request()->except(['page', 'status_id']) as $key => $val)
                                     @if (is_array($val))
                                         @foreach ($val as $v)
-                                            <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                                            <input type="hidden" name="{{ $key }}[]"
+                                                value="{{ $v }}">
                                         @endforeach
                                     @else
                                         <input type="hidden" name="{{ $key }}" value="{{ $val }}">
@@ -320,6 +332,29 @@
         </div>
 
         <div id="liveTableWrapper">
+            <!-- Per-page selector (as a GET form so change persists and filters are preserved) -->
+            <form method="GET" action="{{ route('ftpp.index') }}" class="mt-2 flex justify-end items-center">
+                {{-- preserve existing query params except per_page and page so filters/search stay applied --}}
+                @foreach (request()->except(['per_page', 'page']) as $key => $val)
+                    @if (is_array($val))
+                        @foreach ($val as $v)
+                            <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                        @endforeach
+                    @else
+                        <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                    @endif
+                @endforeach
+
+                <label class="text-xs text-gray-500 mr-2">Rows per page:</label>
+                <select name="per_page" onchange="this.form.submit()" class="text-xs rounded border px-2 py-1">
+                    @php $currentPerPage = request()->input('per_page', $perPage ?? 10); @endphp
+                    <option value="10" {{ $currentPerPage == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ $currentPerPage == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ $currentPerPage == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ $currentPerPage == 100 ? 'selected' : '' }}>100</option>
+                </select>
+            </form>
+
             <!-- Table -->
             <div class="flex-1">
                 <div class="overflow-hidden">
@@ -398,9 +433,11 @@
                                         <td class="px-2 py-2 whitespace-nowrap border-r border-gray-200">
                                             <div class="flex flex-col gap-1">
                                                 <div class="flex items-center gap-2">
-                                                    <span class="text-xs font-semibold">{{ $finding->registration_number ?? '-' }}</span>
-                                                    @if(!empty($finding->is_sent_to_auditee) && $finding->is_sent_to_auditee)
-                                                        <span class="inline-block px-2 py-0.5 text-[10px] font-semibold text-green-800 bg-green-100 rounded-full">Notified</span>
+                                                    <span
+                                                        class="text-xs font-semibold">{{ $finding->registration_number ?? '-' }}</span>
+                                                    @if (!empty($finding->is_sent_to_auditee) && $finding->is_sent_to_auditee)
+                                                        <span
+                                                            class="inline-block px-2 py-0.5 text-[10px] font-semibold text-green-800 bg-green-100 rounded-full">Notified</span>
                                                     @endif
                                                 </div>
                                                 <span class="text-xs text-gray-500">
@@ -612,7 +649,7 @@
                         </table>
                     </div>
                     <div class="mt-4">
-                        {{ $findings->links() }}
+                        {{ $findings->appends(request()->except('page'))->links() }}
                     </div>
                 </div>
             </div>
@@ -722,14 +759,16 @@
                     });
 
                     fetch('{{ route('ftpp.audit-finding.bulk-notify') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ ids: ids })
-                    })
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ids: ids
+                            })
+                        })
                         .then(res => res.json())
                         .then(data => {
                             if (data.success) {
