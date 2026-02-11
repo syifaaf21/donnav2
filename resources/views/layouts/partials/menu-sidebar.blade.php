@@ -53,12 +53,19 @@
             class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
         {{ Route::is('document-control*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
             {{-- <i data-feather="settings" class="menu-icon w-4 h-4"></i> --}}
-            <i class="bi bi-calendar-range {{ Route::is('document-control*') ? 'mb-2' : '' }}" style="width: 1rem; height: 1rem;"></i>
+            <i class="bi bi-calendar-range {{ Route::is('document-control*') ? 'mb-2' : '' }}"
+                style="width: 1rem; height: 1rem;"></i>
             <span class="sidebar-text">Document Control</span>
         </a>
     </li>
 
-    @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['super admin', 'admin', 'supervisor', 'leader', 'dept head']))
+    @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), [
+            'super admin',
+            'admin',
+            'supervisor',
+            'leader',
+            'dept head',
+        ]))
         <li>
             <a href="{{ route('document-review.index') }}" data-bs-title="Document Review"
                 class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
@@ -218,7 +225,8 @@
                         </li>
 
                         <li>
-                            <a href="{{ route('master.ftpp.finding-category.index') }}" data-bs-title="Finding Category"
+                            <a href="{{ route('master.ftpp.finding-category.index') }}"
+                                data-bs-title="Finding Category"
                                 class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
                                 {{ Route::is('master.ftpp.finding-category.*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
                                 <i data-feather="list" class="menu-icon w-4 h-4"></i>
@@ -245,7 +253,17 @@
                     </a>
                 </li>
             </ul>
+            @if (strtolower(auth()->user()->roles->pluck('name')->first() ?? '') === 'super admin')
+        <li>
+            <a href="{{ route('recycle.index') }}" data-bs-title="Recycle Bin"
+                class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200 text-sm
+                            {{ Route::is('recycle*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                <i data-feather="trash" class="menu-icon w-4 h-4"></i>
+                <span class="sidebar-text">Recycle Bin</span>
+            </a>
         </li>
+    @endif
+    </li>
     @endif
 
 </ul>
