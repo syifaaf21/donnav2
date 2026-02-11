@@ -211,8 +211,6 @@ class AuditFindingController extends Controller
             'department_id' => $validated['department_id'] ?? null,
             'process_id' => $validated['process_id'] ?? null,
             'product_id' => $validated['product_id'] ?? null,
-            // don't set auditor_id here; we'll sync pivot and keep first id for compatibility below
-            'auditor_id' => $validated['auditor_id'] ?? null,
             'registration_number' => $validated['registration_number'] ?? null,
             'finding_description' => $validated['finding_description'] ?? null,
             'status_id' => $statusId,
@@ -224,18 +222,15 @@ class AuditFindingController extends Controller
             $auditFinding->auditee()->attach($validated['auditee_ids']);
         }
 
-        // Attach auditors (many-to-many). Accept either auditor_ids array (preferred) or single auditor_id.
-        $auditorIds = [];
-        if (!empty($validated['auditor_ids'])) {
-            $auditorIds = $validated['auditor_ids'];
-        } elseif (!empty($validated['auditor_id'])) {
-            $auditorIds = [$validated['auditor_id']];
-        }
-        if (!empty($auditorIds)) {
+        // Attach auditors (many-to-many). Prefer request presence so empty array means "clear"
+        if ($request->has('auditor_ids')) {
+            $auditorIds = $request->input('auditor_ids') ?: [];
             $auditFinding->auditors()->sync($auditorIds);
-            // keep first auditor in auditor_id for backward compatibility
-            $auditFinding->auditor_id = $auditorIds[0];
-            $auditFinding->saveQuietly();
+        } else {
+            // fallback to single auditor_id if provided via legacy field
+            if (!empty($validated['auditor_id'])) {
+                $auditFinding->auditors()->sync([$validated['auditor_id']]);
+            }
         }
 
         // ✅ ATTACH SUB KLAUSUL
@@ -676,25 +671,18 @@ class AuditFindingController extends Controller
             'department_id' => $validated['department_id'] ?? $auditFinding->department_id,
             'process_id' => $validated['process_id'] ?? null,
             'product_id' => $validated['product_id'] ?? null,
-            'auditor_id' => $validated['auditor_id'] ?? $auditFinding->auditor_id,
             'registration_number' => $newRegistration,
             'finding_description' => $validated['finding_description'] ?? null,
             'due_date' => $validated['due_date'] ?? null,
             'status_id' => $statusId,
         ]);
 
-        // sync auditors pivot if provided (prefer auditor_ids array)
-        $auditorIds = [];
-        if ($request->filled('auditor_ids')) {
-            $auditorIds = is_array($request->input('auditor_ids')) ? $request->input('auditor_ids') : explode(',', $request->input('auditor_ids'));
-        } elseif ($request->filled('auditor_id')) {
-            $auditorIds = [$request->input('auditor_id')];
-        }
-        if (!empty($auditorIds)) {
-            $auditFinding->auditors()->sync($auditorIds);
-            // keep first id in auditor_id for backward compatibility
-            $auditFinding->auditor_id = $auditorIds[0] ?? null;
-            $auditFinding->saveQuietly();
+        // sync auditors pivot if provided (use has to allow empty array for clearing)
+        if ($request->has('auditor_ids')) {
+            $auditorIds = is_array($request->input('auditor_ids')) ? $request->input('auditor_ids') : ($request->input('auditor_ids') === null ? [] : explode(',', $request->input('auditor_ids')));
+            $auditFinding->auditors()->sync($auditorIds ?: []);
+        } elseif ($request->has('auditor_id')) {
+            $auditFinding->auditors()->sync([$request->input('auditor_id')]);
         }
 
         // sync auditee relationship (only if provided)

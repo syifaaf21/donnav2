@@ -26,7 +26,6 @@ class  AuditFinding extends Model
             'department_id',
             'process_id',
             'product_id',
-            'auditor_id',
             'registration_number',
             'finding_description',
             'status_id',
@@ -159,7 +158,8 @@ class  AuditFinding extends Model
      */
     public function auditors()
     {
-        return $this->belongsToMany(User::class, 'tt_audit_finding_auditors', 'audit_finding_id', 'auditor_id');
+        return $this->belongsToMany(User::class, 'tt_audit_finding_auditors', 'audit_finding_id', 'auditor_id')
+            ->withTimestamps();
     }
 
     public function status()
