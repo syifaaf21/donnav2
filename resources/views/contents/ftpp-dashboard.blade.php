@@ -4,6 +4,27 @@
 
 @section('content')
     <div class="px-4 mt-4">
+        {{-- Audit Type Tabs (filter) --}}
+        <div class="mb-3">
+            <div class="flex gap-3 items-center py-2 overflow-x-auto" role="tablist" aria-label="Audit Types">
+                <a href="{{ route('dashboard.ftpp') }}"
+                   class="no-underline inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ empty($selectedAuditTypeId) ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow' : 'bg-white/10 text-white hover:bg-white/20' }}"
+                   role="tab">
+                    <span class="truncate max-w-[200px]">All</span>
+                    <span class="ml-2 inline-flex items-center justify-center bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ array_sum($auditTypeCounts ?? []) }}</span>
+                </a>
+
+                @foreach($auditTypes as $atype)
+                    @php $count = $auditTypeCounts[$atype->id] ?? 0; @endphp
+                    <a href="{{ route('dashboard.ftpp', ['audit_type' => $atype->id]) }}"
+                       class="no-underline inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ ((string)$selectedAuditTypeId === (string)$atype->id) ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow' : 'bg-white/10 text-white hover:bg-white/20' }}"
+                       role="tab">
+                        <span class="truncate max-w-[200px]">{{ Str::limit($atype->name, 28) }}</span>
+                        <span class="ml-2 inline-flex items-center justify-center bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $count }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
         {{-- ===== SUMMARY CARDS ===== --}}
         <div class="row g-4 mb-5">
             @php
@@ -339,6 +360,7 @@
         const deptTotals = @json($deptTotals);
         const statusBreakdown = @json($statusBreakdown);
         const deptStatusMatrix = @json($deptStatusMatrix ?? []);
+        const deptAllStatuses = @json($allStatuses ?? []);
     </script>
 
     <script>
@@ -562,13 +584,16 @@
                 const departments = Object.keys(matrix);
                 if (!departments.length) return;
 
-                // collect unique statuses across departments (preserve order found)
-                const statusSet = new Set();
-                departments.forEach(d => {
-                    const map = matrix[d] || {};
-                    Object.keys(map).forEach(s => statusSet.add(s));
-                });
-                const statuses = Array.from(statusSet);
+                // Use provided full status list if available, otherwise collect from matrix
+                let statuses = Array.isArray(deptAllStatuses) && deptAllStatuses.length ? deptAllStatuses.slice() : [];
+                if (!statuses.length) {
+                    const statusSet = new Set();
+                    departments.forEach(d => {
+                        const map = matrix[d] || {};
+                        Object.keys(map).forEach(s => statusSet.add(s));
+                    });
+                    statuses = Array.from(statusSet);
+                }
                 if (!statuses.length) return;
 
                 // color generator - reuse colors from Status Distribution (pie) when possible
@@ -597,7 +622,7 @@
 
                 const datasets = statuses.map((s, idx) => ({
                     label: s,
-                    data: departments.map(d => (matrix[d] && matrix[d][s]) ? matrix[d][s] : 0),
+                    data: departments.map(d => (matrix[d] && typeof matrix[d][s] !== 'undefined') ? matrix[d][s] : 0),
                     backgroundColor: colorFor(s, idx),
                     borderWidth: 0,
                 }));
@@ -691,6 +716,8 @@
 
 @push('styles')
     <style>
+        /* Audit type tabs are implemented with Tailwind utility classes; no custom CSS required */
+
         /* Dept view tabs: pill-style, subtle border and shadow */
         #deptViewTabs {
             padding-left: 0;

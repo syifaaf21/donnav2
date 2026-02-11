@@ -159,7 +159,7 @@ class DashboardController extends Controller
     {
         // Data spesifik untuk Document Control
         $totalDocuments = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'control'))->count();
-        
+
         $activeDocuments = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'control'))
             ->whereHas('status', fn($q) => $q->where('name', 'Active'))
             ->count();
@@ -293,24 +293,35 @@ class DashboardController extends Controller
         ));
     }
 
-    public function ftppDashboard()
+    public function ftppDashboard(Request $request)
     {
         // Data spesifik untuk FTPP
-        $totalFtpp = AuditFinding::count();
+        $selectedAuditTypeId = $request->input('audit_type');
+
+        // base query possibly filtered by audit type
+        $baseQuery = AuditFinding::query();
+        if (!empty($selectedAuditTypeId)) {
+            $baseQuery->where('audit_type_id', $selectedAuditTypeId);
+        }
+
+        $totalFtpp = $baseQuery->count();
 
         // Chart data berdasarkan status
-        $chartData = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
+        $chartData = (clone $baseQuery)->selectRaw('tm_statuses.name as status, COUNT(*) as total')
             ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
             ->groupBy('tm_statuses.name')
             ->pluck('total', 'status');
 
         // Findings per department
-        $findingsPerDepartment = Department::withCount('auditFindings')->get();
+        // Findings per department (respecting audit type filter)
+        $findingsPerDepartment = Department::withCount(['auditFindings' => function ($q) use ($selectedAuditTypeId) {
+            if (!empty($selectedAuditTypeId)) $q->where('audit_type_id', $selectedAuditTypeId);
+        }])->get();
         $deptLabels = $findingsPerDepartment->pluck('name');
         $deptTotals = $findingsPerDepartment->pluck('audit_findings_count');
 
         // Recent findings (10 terbaru)
-        $recentFindings = AuditFinding::with(['department', 'status'])
+        $recentFindings = (clone $baseQuery)->with(['department', 'status'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -318,16 +329,27 @@ class DashboardController extends Controller
         // Status breakdown untuk distribusi
         $statusBreakdown = $chartData->toArray();
 
+        // Audit types list for tabs/filters
+        $auditTypes = \App\Models\Audit::orderBy('name')->get();
+        // Counts per audit type for displaying badges on tabs
+        $auditTypeCounts = AuditFinding::selectRaw('audit_type_id, COUNT(*) as total')
+            ->groupBy('audit_type_id')
+            ->pluck('total', 'audit_type_id')
+            ->toArray();
+
         // Departments list (id => name) - urut berdasarkan nama
         $departments = Department::orderBy('name')->pluck('name', 'id')->toArray();
 
         // Build per-department status matrix, excluding statuses that contain 'draft'
         $deptStatusMatrix = [];
         foreach ($departments as $deptId => $deptName) {
-            $rows = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
+            $query = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
                 ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
-                ->where('tt_audit_findings.department_id', $deptId)
-                ->groupBy('tm_statuses.name')
+                ->where('tt_audit_findings.department_id', $deptId);
+            if (!empty($selectedAuditTypeId)) {
+                $query->where('tt_audit_findings.audit_type_id', $selectedAuditTypeId);
+            }
+            $rows = $query->groupBy('tm_statuses.name')
                 ->pluck('total', 'status')
                 ->toArray();
 
@@ -344,6 +366,11 @@ class DashboardController extends Controller
             $deptStatusMatrix[$deptName] = $filtered;
         }
 
+        // Provide full status list (excluding drafts) so view/chart can show zero-values
+        $allStatuses = Status::orderBy('name')->pluck('name')->filter(function ($name) {
+            return stripos($name, 'draft') === false;
+        })->values()->toArray();
+
         return view('contents.ftpp-dashboard', compact(
             'totalFtpp',
             'chartData',
@@ -351,7 +378,10 @@ class DashboardController extends Controller
             'deptTotals',
             'recentFindings',
             'statusBreakdown',
-            'deptStatusMatrix'
+            'deptStatusMatrix',
+            'auditTypes',
+            'auditTypeCounts',
+            'selectedAuditTypeId'
         ));
     }
 }
