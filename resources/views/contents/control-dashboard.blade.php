@@ -7,24 +7,37 @@
         {{-- ===== SUMMARY CARDS ===== --}}
         <div class="row g-4 mb-5">
             @php
+                // determine Need Review count robustly (case / separator insensitive)
+                $needReviewCount = 0;
+                if (!empty($statusBreakdown) && is_array($statusBreakdown)) {
+                    foreach ($statusBreakdown as $k => $v) {
+                        $norm = strtolower(str_replace([' ', '-', '_'], '', $k));
+                        if ($norm === 'needreview') {
+                            $needReviewCount = $v;
+                            break;
+                        }
+                    }
+                }
+
                 $cards = [
                     [
                         'label' => 'Total Documents',
                         'value' => $totalDocuments,
                         'color' => 'primary',
                         'icon' => 'bi-collection',
+                        'route' => route('document-control.index'),
                     ],
-                    [
-                        'label' => 'Active Documents',
-                        'value' => $activeDocuments,
-                        'color' => 'success',
-                        'icon' => 'bi-check-circle',
-                    ],
+                    // [
+                    //     'label' => 'Active Documents',
+                    //     'value' => $activeDocuments,
+                    //     'color' => 'success',
+                    //     'icon' => 'bi-check-circle',
+                    // ],
                     [
                         'label' => 'Obsolete Documents',
                         'value' => $obsoleteDocuments->count(),
-                        'color' => 'danger',
-                        'icon' => 'bi-x-circle',
+                        'color' => 'secondary',
+                        'icon' => 'bi-slash-circle',
                     ],
                     [
                         'label' => 'Uncomplete Documents',
@@ -35,44 +48,86 @@
                     [
                         'label' => 'Rejected Documents',
                         'value' => $rejectedDocuments,
-                        'color' => 'secondary',
-                        'icon' => 'bi-slash-circle',
+                        'color' => 'danger',
+                        'icon' => 'bi-x-circle',
+                    ],
+                    [
+                        'label' => 'Need Review',
+                        'value' => $needReviewCount,
+                        'color' => 'info',
+                        'icon' => 'bi-search',
+                        'route' => route('document-control.approval'),
                     ],
                 ];
             @endphp
 
             @foreach ($cards as $c)
                 <div class="col-6 col-lg-2-4">
-                    <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
-                        transition-all duration-200 border-0 h-100 overflow-hidden"
-                        style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
+                    @if(!empty($c['route']))
+                        <a href="{{ $c['route'] }}" class="d-block text-decoration-none" style="color:inherit;">
+                            <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                                transition-all duration-200 border-0 h-100 overflow-hidden"
+                                style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
-                        <div class="card-body p-3 d-flex flex-column justify-content-between">
+                                <div class="card-body p-3 d-flex flex-column justify-content-between">
 
-                            {{-- Label --}}
-                            <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
-                                {{ $c['label'] }}
-                            </small>
+                                    {{-- Label --}}
+                                    <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
+                                        {{ $c['label'] }}
+                                    </small>
 
-                            {{-- Value --}}
-                            <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
-                                {{ $c['value'] }}
+                                    {{-- Value --}}
+                                    <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
+                                        {{ $c['value'] }}
+                                    </div>
+
+                                    {{-- Icon --}}
+                                    <div class="ms-auto mt-2"
+                                        style="
+                                    font-size: 1.7rem;
+                                    padding: 8px 12px;
+                                    border-radius: 12px;
+                                    background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
+                                    color: var(--bs-{{ $c['color'] }});
+                                ">
+                                        <i class="bi {{ $c['icon'] }}"></i>
+                                    </div>
+
+                                </div>
                             </div>
+                        </a>
+                    @else
+                        <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                            transition-all duration-200 border-0 h-100 overflow-hidden"
+                            style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
-                            {{-- Icon --}}
-                            <div class="ms-auto mt-2"
-                                style="
-                            font-size: 1.7rem;
-                            padding: 8px 12px;
-                            border-radius: 12px;
-                            background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
-                            color: var(--bs-{{ $c['color'] }});
-                        ">
-                                <i class="bi {{ $c['icon'] }}"></i>
+                            <div class="card-body p-3 d-flex flex-column justify-content-between">
+
+                                {{-- Label --}}
+                                <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
+                                    {{ $c['label'] }}
+                                </small>
+
+                                {{-- Value --}}
+                                <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
+                                    {{ $c['value'] }}
+                                </div>
+
+                                {{-- Icon --}}
+                                <div class="ms-auto mt-2"
+                                    style="
+                                font-size: 1.7rem;
+                                padding: 8px 12px;
+                                border-radius: 12px;
+                                background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
+                                color: var(--bs-{{ $c['color'] }});
+                            ">
+                                    <i class="bi {{ $c['icon'] }}"></i>
+                                </div>
+
                             </div>
-
                         </div>
-                    </div>
+                    @endif
                 </div>
             @endforeach
         </div>
@@ -291,9 +346,7 @@
             }
         });
 
-        /* ===================== BAR CHART - DOCUMENTS PER DEPARTMENT (two-color) ===================== */
-        // We'll render only two stacks: 'Other Status' (green) and 'Obsolete' (gray).
-        // Tooltip will list per-status counts using the same lookup helper.
+        /* ===================== BAR CHART - DOCUMENTS PER DEPARTMENT (per-status colors) ===================== */
         const orderedStatusKeys = ['active','need_review','rejected','uncomplete','obsolete'];
 
         const controlLabels = Object.values(departments);
@@ -317,44 +370,8 @@
             return 0;
         }
 
-        // Build two datasets: Other (sum of non-obsolete statuses) and Obsolete
-        const otherData = deptIds.map(id => {
-            const extra = controlExtraData[id] || {};
-            let sum = 0;
-            orderedStatusKeys.forEach(k => {
-                if (k === 'obsolete') return;
-                sum += Number(lookupStatusCount(extra, k) || 0);
-            });
-            return sum;
-        });
-
-        const obsoleteDataArr = deptIds.map(id => {
-            const extra = controlExtraData[id] || {};
-            return Number(lookupStatusCount(extra, 'obsolete') || 0);
-        });
-
-        // softer palette: soft green for Other, soft gray for Obsolete
-        const twoDatasets = [
-            {
-                label: 'Other Status',
-                data: otherData,
-                backgroundColor: '#A8E6CF',
-                borderRadius: 6,
-                barThickness: 20,
-                stack: 'statuses'
-            },
-            {
-                label: 'Obsolete',
-                data: obsoleteDataArr,
-                backgroundColor: '#CBD5E1',
-                borderRadius: 6,
-                barThickness: 20,
-                stack: 'statuses'
-            }
-        ];
-
-        // Map status key -> readable label for tooltip
-        const statusLabelMap = {
+        // readable labels & colors per status
+        const statusReadableMap = {
             'active': 'Active',
             'need_review': 'Need Review',
             'rejected': 'Rejected',
@@ -362,11 +379,31 @@
             'obsolete': 'Obsolete'
         };
 
+        const statusColorMap = {
+            'active': '#A8E6CF',
+            'need_review': '#FFD3B6',
+            'rejected': '#FF6B6B',
+            'uncomplete': '#F59E0B',
+            'obsolete': '#A8D8EA'
+        };
+
+        // Build datasets: one dataset per status key
+        const statusDatasets = orderedStatusKeys.map(k => {
+            return {
+                label: statusReadableMap[k] || k,
+                data: deptIds.map(id => Number(lookupStatusCount(controlExtraData[id] || {}, k) || 0)),
+                backgroundColor: statusColorMap[k] || '#CBD5E1',
+                borderRadius: 6,
+                barThickness: 18,
+                stack: 'statuses'
+            };
+        });
+
         new Chart(document.getElementById('controlDocsChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: shortControlLabels,
-                datasets: twoDatasets
+                datasets: statusDatasets
             },
             options: {
                 responsive: true,
@@ -377,6 +414,8 @@
                     },
                     tooltip: {
                         enabled: true,
+                        mode: 'index',
+                        intersect: false,
                         callbacks: {
                             title: function(context) {
                                 const index = context[0].dataIndex;
@@ -388,28 +427,14 @@
                                 const value = context.raw || 0;
                                 return `${datasetLabel}: ${value}`;
                             },
-                            afterBody: function(context) {
-                                // show per-status breakdown depending on hovered dataset
-                                if (!context || !context[0]) return [];
-                                const item = context[0];
-                                const index = item.dataIndex;
-                                const datasetLabel = item.dataset.label || '';
-                                const deptId = Object.keys(departments)[index];
-                                const extra = controlExtraData[deptId] || {};
-                                const lines = [];
-
-                                if (datasetLabel === 'Obsolete') {
-                                    const v = Number(lookupStatusCount(extra, 'obsolete') || 0);
-                                    lines.push(`Obsolete: ${v}`);
-                                    return lines;
-                                }
-
-                                // hovered on Other Status: show breakdown of non-obsolete statuses
-                                ['active', 'need_review', 'rejected', 'uncomplete'].forEach(k => {
-                                    const v = Number(lookupStatusCount(extra, k) || 0);
-                                    lines.push(`${statusLabelMap[k] ?? k}: ${v}`);
-                                });
-                                return lines;
+                            labelColor: function(context) {
+                                return {
+                                    backgroundColor: context.dataset.backgroundColor || '#000',
+                                    borderColor: context.dataset.backgroundColor || '#000',
+                                    borderWidth: 1,
+                                    width: 12,
+                                    height: 12
+                                };
                             }
                         }
                     }

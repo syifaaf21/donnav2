@@ -84,19 +84,33 @@ class DashboardController extends Controller
         // Data tambahan per department untuk tooltip
         $controlExtraData = [];
         foreach ($departments as $id => $name) {
+            $activeCount = DocumentMapping::where('department_id', $id)
+                ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                ->whereHas('status', fn($q) => $q->where('name', 'Active'))
+                ->count();
+
+            $rejectedCount = DocumentMapping::where('department_id', $id)
+                ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                ->count();
+
             $controlExtraData[$id] = [
+                'active' => $activeCount,
                 'obsolete' => DocumentMapping::where('department_id', $id)
+                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
                     ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
                     ->count(),
                 'needReview' => DocumentMapping::where('department_id', $id)
+                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
                     ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
                     ->count(),
                 'uncomplete' => DocumentMapping::where('department_id', $id)
+                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
                     ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
                     ->count(),
-                'reject' => DocumentMapping::where('department_id', $id)
-                    ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
-                    ->count(),
+                // keep both keys for backward compatibility
+                'rejected' => $rejectedCount,
+                'reject' => $rejectedCount,
             ];
         }
 
