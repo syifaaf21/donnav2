@@ -78,9 +78,16 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 border-r border-gray-200 align-top">
-                            @if ($user->roles->isNotEmpty())
+                            @php
+                                $viewerRoles = auth()->user()->roles->pluck('name')->toArray();
+                                $viewerIsAdminNotSuper = in_array('Admin', $viewerRoles) && !in_array('Super Admin', $viewerRoles);
+                                $displayRoles = $user->roles; // always show roles in table
+                                $userIsSuper = $user->roles->pluck('name')->contains('Super Admin');
+                            @endphp
+
+                            @if ($displayRoles->isNotEmpty())
                                 <div class="flex flex-wrap gap-1">
-                                    @foreach ($user->roles as $role)
+                                    @foreach ($displayRoles as $role)
                                         @php
                                             $name = $role->name;
                                             $colorMap = [
@@ -123,13 +130,18 @@
 
                         <td class="px-4 py-3 border-r border-gray-200 align-top whitespace-nowrap">
                             <div class="flex items-center gap-2">
-                                {{-- Edit Button --}}
-                                <button type="button"
-                                    class=" btn-edit-user flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors duration-200 flex-shrink-0"
-                                    data-id="{{ $user->id }}" data-bs-title="Edit User" title="Edit user"
-                                    aria-label="Edit user {{ $user->name }}">
-                                    <i data-feather="edit" class="w-4 h-4" aria-hidden="true"></i>
-                                </button>
+                                {{-- Edit Button: hide for Super Admin rows when viewer is Admin (not Super) --}}
+                                @php
+                                    $showEdit = !($viewerIsAdminNotSuper && $userIsSuper);
+                                @endphp
+                                @if ($showEdit)
+                                    <button type="button"
+                                        class=" btn-edit-user flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors duration-200 flex-shrink-0"
+                                        data-id="{{ $user->id }}" data-bs-title="Edit User" title="Edit user"
+                                        aria-label="Edit user {{ $user->name }}">
+                                        <i data-feather="edit" class="w-4 h-4" aria-hidden="true"></i>
+                                    </button>
+                                @endif
                                 {{-- Delete Button --}}
                                 @php
                                     $userRoles = $user->roles->pluck('name')->toArray();

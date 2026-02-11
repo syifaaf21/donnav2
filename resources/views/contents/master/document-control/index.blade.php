@@ -141,21 +141,21 @@
                                     style="color: #1e2b50; letter-spacing: 0.5px;">
                                     <input type="checkbox" id="selectAll" class="form-checkbox">
                                 </th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-3 py-2 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Name</th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Obsolete
                                 </th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Reminder
                                     Date</th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Period</th>
-                                <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
+                                <th class="px-4 py-3 border-r border-gray-200 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">
                                     Action</th>
                             </tr>
@@ -167,20 +167,20 @@
                                         <input type="checkbox" class="row-checkbox form-checkbox"
                                             value="{{ $mapping->id }}">
                                     </td>
-                                    <td class="px-4 py-3 border-r border-gray-200">
+                                    <td class="px-3 py-2 border-r border-gray-200">
                                         {{ $documentMappings->firstItem() + $loop->index }}</td>
-                                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold text-gray-800">
+                                    <td class="px-4 py-3 border-r border-gray-200 text-xs font-semibold text-gray-800">
                                         {{ $mapping->document->name ?? '-' }} <span
                                             class="text-xs text-gray-400 mt-1 block">
                                             {{ $mapping->department->name ?? 'Unknown' }}
                                         </span></td>
-                                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold">
+                                    <td class="px-4 py-3 border-r border-gray-200 text-xs font-semibold">
                                         {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d-m-Y') : '-' }}
                                     </td>
-                                    <td class="px-4 py-3 border-r border-gray-200">
+                                    <td class="px-4 py-3 border-r text-xs text-center border-gray-200">
                                         {{ $mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date)->format('d-m-Y') : '-' }}
                                     </td>
-                                    <td class="px-4 py-3 border-r border-gray-200">
+                                    <td class="px-4 py-3 border-r text-xs text-center border-gray-200">
                                         @if ($mapping->period_years)
                                             {{ $mapping->period_years }}
                                             {{ $mapping->period_years == 1 ? 'Year' : 'Years' }}

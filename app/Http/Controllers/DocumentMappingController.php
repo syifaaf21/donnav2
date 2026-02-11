@@ -531,19 +531,19 @@ class DocumentMappingController extends Controller
             }
         }
 
-        // Kirim notifikasi
+        // Kirim notifikasi ke semua user di departemen yang dipilih (kecuali Admin & Super Admin)
         $users = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $validated['department_id']))
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
-        // foreach ($users as $user) {
-        //     $user->notify(new DocumentCreatedNotification(
-        //         Auth::user()->name,
-        //         $mapping->document_number,
-        //         null,
-        //         route('document-review.index')
-        //     ));
-        // }
+        foreach ($users as $user) {
+            $user->notify(new DocumentCreatedNotification(
+                Auth::user()->name,
+                $mapping->document_number,
+                null,
+                route('document-review.index')
+            ));
+        }
 
         // Redirect dengan plant parameter agar tab otomatis pindah ke plant yang sesuai
         // Jika tidak ada part_number, arahkan ke tab "Other / Manual Entry"
