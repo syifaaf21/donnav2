@@ -375,7 +375,7 @@ class DocumentReviewController extends Controller
 
         // Jika bukan admin, cek apakah supervisor dari department pemilik dokumen
         if (!$isAdmin && !$user->canEditDocument($mapping)) {
-            abort(403, 'Unauthorized. Only supervisors from the document\'s department can edit.');
+            abort(403, 'Unauthorized. Only Leader from the document\'s department can edit.');
         }
 
         $request->validate([

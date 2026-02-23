@@ -507,15 +507,13 @@
 
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
-                                                // Check if user is supervisor of document's department
-$isSupervisorOfDocDept = auth()
-    ->user()
-    ->isSupervisorOfDepartment($doc->department_id);
-
-
-                                                // Only supervisor from document's department OR admin can edit
+                                                // Check if user is Leader of document's department
+                                                $isLeaderOfDocDept = auth()
+                                                    ->user()
+                                                    ->isLeaderOfDepartment($doc->department_id);
+                                                // Only Leader from document's department OR admin can edit
                                                 // But hide Edit when status is 'need review' (approval flow)
-                                                $showEdit = ($isAdmin || $isSupervisorOfDocDept) && $status !== 'need review';
+                                                $showEdit = ($isAdmin || $isLeaderOfDocDept) && $status !== 'need review';
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
