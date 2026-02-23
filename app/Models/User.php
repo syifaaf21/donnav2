@@ -123,8 +123,15 @@ class User extends Authenticatable
      */
     public function canEditDocument($mapping)
     {
-        // return $this->isSupervisorOfDepartment($mapping->department_id);
-        // Only department Leader can edit/upload document revisions
-        return $this->isLeaderOfDepartment($mapping->department_id);
+        // Allow department Leader or Supervisor to edit/upload document revisions
+        $isInDepartment = $this->departments()->where('tm_departments.id', $mapping->department_id)->exists();
+        if (! $isInDepartment) {
+            return false;
+        }
+
+        $isLeader = $this->roles()->where('name', 'Leader')->exists();
+        $isSupervisor = $this->roles()->where('name', 'Supervisor')->exists();
+
+        return $isLeader || $isSupervisor;
     }
 }

@@ -507,20 +507,15 @@
 
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
-                                                // Check if user is Leader of document's department
-                                                $isLeaderOfDocDept = auth()
-                                                    ->user()
-                                                    ->isLeaderOfDepartment($doc->department_id);
-                                                // Only Leader from document's department OR admin can edit
-                                                // But hide Edit when status is 'need review' (approval flow)
-                                                $showEdit = ($isAdmin || $isLeaderOfDocDept) && $status !== 'need review';
+                                                // Use canEditDocument to determine edit/upload permission
+                                                $canEdit = auth()->check() && auth()->user()->canEditDocument($doc);
+                                                // Only admin or users allowed by canEditDocument can edit
+                                                $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
                                                 $showMenu = $showEdit || $showApproveReject || $showDownloadReport;
                                             @endphp
-
-
                                             @if ($showMenu)
                                                 <div class="relative inline-block text-left">
                                                     <button type="button"
