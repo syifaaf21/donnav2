@@ -16,7 +16,7 @@ class DashboardController extends Controller
     {
         // Hitung total dokumen (exclude mappings marked for deletion)
         $totalDocuments = DocumentMapping::whereNull('marked_for_deletion_at')->count();
-        $totalFtpp = AuditFinding::count();
+        $totalFtpp = AuditFinding::whereNull('marked_for_deletion_at')->count();
 
         $ftpp = AuditFinding::count();
 
@@ -522,16 +522,20 @@ class DashboardController extends Controller
         // Chart data berdasarkan status
         $chartData = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
             ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
+            ->whereNull('tt_audit_findings.marked_for_deletion_at')
             ->groupBy('tm_statuses.name')
             ->pluck('total', 'status');
 
         // Findings per department
-        $findingsPerDepartment = Department::withCount('auditFindings')->get();
+        $findingsPerDepartment = Department::withCount(['auditFindings' => function ($q) {
+            $q->whereNull('marked_for_deletion_at');
+        }])->get();
         $deptLabels = $findingsPerDepartment->pluck('name');
         $deptTotals = $findingsPerDepartment->pluck('audit_findings_count');
 
         // Recent findings (10 terbaru)
         $recentFindings = AuditFinding::with(['department', 'status'])
+            ->whereNull('marked_for_deletion_at')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -548,6 +552,7 @@ class DashboardController extends Controller
             $rows = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
                 ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
                 ->where('tt_audit_findings.department_id', $deptId)
+                ->whereNull('tt_audit_findings.marked_for_deletion_at')
                 ->groupBy('tm_statuses.name')
                 ->pluck('total', 'status')
                 ->toArray();
