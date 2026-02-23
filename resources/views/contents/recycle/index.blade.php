@@ -35,21 +35,31 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2">
-                                <form method="POST" action="{{ route('recycle.restore', ['id' => $doc->id]) }}"
-                                    id="restore-form-{{ $doc->resource ?? 'mapping' }}-{{ $doc->id }}" class="inline">
-                                    @csrf
-                                    <input type="hidden" name="resource" value="{{ $doc->resource ?? 'mapping' }}">
-                                    <button type="button" onclick="confirmRestore('{{ $doc->resource ?? 'mapping' }}', {{ $doc->id }})"
-                                        class="px-3 py-1 bg-green-600 text-white rounded text-xs">Restore</button>
-                                </form>
+                                <div class="d-flex align-items-center" style="gap:8px;">
+                                    <form method="POST" action="{{ route('recycle.restore', ['id' => $doc->id]) }}"
+                                        id="restore-form-{{ $doc->resource ?? 'mapping' }}-{{ $doc->id }}" class="m-0">
+                                        @csrf
+                                        <input type="hidden" name="resource" value="{{ $doc->resource ?? 'mapping' }}">
+                                        <button type="button" onclick="confirmRestore('{{ $doc->resource ?? 'mapping' }}', {{ $doc->id }})"
+                                            class="d-inline-flex align-items-center justify-content-center" aria-label="Restore"
+                                            title="Restore"
+                                            style="width:36px;height:36px;border-radius:18px;color:#fff;border:none;display:inline-flex;align-items:center;justify-content:center;background-image:linear-gradient(90deg, rgba(147,51,234,0.16), rgba(124,58,237,0.26));box-shadow:0 6px 14px rgba(124,58,237,0.12);transition:transform .12s ease;">
+                                            <i class="bi bi-arrow-counterclockwise" style="font-size:1.05rem;line-height:1"></i>
+                                        </button>
+                                    </form>
 
-                                <form method="POST" action="{{ route('recycle.force-delete', ['id' => $doc->id]) }}"
-                                    id="delete-form-{{ $doc->resource ?? 'mapping' }}-{{ $doc->id }}" class="inline ml-2">
-                                    @csrf
-                                    <input type="hidden" name="resource" value="{{ $doc->resource ?? 'mapping' }}">
-                                    <button type="button" onclick="confirmForceDelete('{{ $doc->resource ?? 'mapping' }}', {{ $doc->id }})"
-                                        class="px-3 py-1 bg-red-600 text-white rounded text-xs">Delete</button>
-                                </form>
+                                    <form method="POST" action="{{ route('recycle.force-delete', ['id' => $doc->id]) }}"
+                                        id="delete-form-{{ $doc->resource ?? 'mapping' }}-{{ $doc->id }}" class="m-0">
+                                        @csrf
+                                        <input type="hidden" name="resource" value="{{ $doc->resource ?? 'mapping' }}">
+                                        <button type="button" onclick="confirmForceDelete('{{ $doc->resource ?? 'mapping' }}', {{ $doc->id }})"
+                                            class="d-inline-flex align-items-center justify-content-center" aria-label="Delete permanently"
+                                            title="Delete permanently"
+                                            style="width:34px;height:34px;border-radius:8px;color:#fff;border:none;display:inline-flex;align-items:center;justify-content:center;background-image:linear-gradient(90deg,#ef4444,#dc2626);box-shadow:0 4px 8px rgba(220,38,38,0.12);transition:transform .12s ease;">
+                                            <i class="bi bi-trash" style="font-size:0.92rem;line-height:1"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
