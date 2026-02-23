@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('title', 'FTPP Dashboard')
-@section('subtitle', 'Comprehensive overview of all FTPP (Finding, Target, Plan, Progress) activities and statuses.')
+@section('subtitle',
+    'Comprehensive overview of all FTPP (Form Tindakan Perbaikan dan Pencegahan Temuan Audit)
+    activities and statuses.')
 
 @section('content')
     <div class="px-4 mt-4">
@@ -8,19 +10,21 @@
         <div class="mb-3">
             <div class="flex gap-3 items-center py-2 overflow-x-auto" role="tablist" aria-label="Audit Types">
                 <a href="{{ route('dashboard.ftpp') }}"
-                   class="no-underline inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ empty($selectedAuditTypeId) ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow' : 'bg-white/10 text-white hover:bg-white/20' }}"
-                   role="tab">
+                    class="no-underline inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ empty($selectedAuditTypeId) ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow' : 'bg-white/10 text-white hover:bg-white/20' }}"
+                    role="tab">
                     <span class="truncate max-w-[200px]">All</span>
-                    <span class="ml-2 inline-flex items-center justify-center bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ array_sum($auditTypeCounts ?? []) }}</span>
+                    <span
+                        class="ml-2 inline-flex items-center justify-center bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ array_sum($auditTypeCounts ?? []) }}</span>
                 </a>
 
-                @foreach($auditTypes as $atype)
+                @foreach ($auditTypes as $atype)
                     @php $count = $auditTypeCounts[$atype->id] ?? 0; @endphp
                     <a href="{{ route('dashboard.ftpp', ['audit_type' => $atype->id]) }}"
-                       class="no-underline inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ ((string)$selectedAuditTypeId === (string)$atype->id) ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow' : 'bg-white/10 text-white hover:bg-white/20' }}"
-                       role="tab">
+                        class="no-underline inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ (string) $selectedAuditTypeId === (string) $atype->id ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow' : 'bg-white/10 text-white hover:bg-white/20' }}"
+                        role="tab">
                         <span class="truncate max-w-[200px]">{{ Str::limit($atype->name, 28) }}</span>
-                        <span class="ml-2 inline-flex items-center justify-center bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $count }}</span>
+                        <span
+                            class="ml-2 inline-flex items-center justify-center bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $count }}</span>
                     </a>
                 @endforeach
             </div>
@@ -70,7 +74,7 @@
                     'Need Approval by Lead Auditor' => '#7EA6D1',
                     'Need Revision' => '#F7C6B5',
                     'Close' => '#B7E4C7',
-                    'Checked by Dept Head' => '#BEEAEF'
+                    'Checked by Dept Head' => '#BEEAEF',
                 ];
             @endphp
 
@@ -187,22 +191,30 @@
             hover:transform hover:translate-y-[-4px] transition-transform duration-200 border-0 p-2"
                     style="border-radius: 10px;">
                     <div class="card-body p-2">
-                        <div class="fw-semibold mb-2 d-flex align-items-center gap-2"
+                        <div class="fw-semibold mb-2 d-flex justify-content-between align-items-center gap-2"
                             style="font-size: 0.95rem; color: #1f2937;">
-                            <div
-                                style="width: 28px; height: 28px; background-color: rgba(99,102,241,0.12); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                <i data-feather="layers"
-                                    style="width: 16px; height: 16px; color: rgba(99,102,241,0.85);"></i>
+                            <div class="flex gap-2">
+                                <div
+                                    style="width: 28px; height: 28px; background-color: rgba(99,102,241,0.12); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-feather="layers"
+                                        style="width: 16px; height: 16px; color: rgba(99,102,241,0.85);"></i>
+                                </div>
+                                <span>Department Status Details</span>
                             </div>
-                            <span>Department Status Details</span>
+                            <div class="items-end">
+                                <button id="exportDeptBtn" class="btn btn-sm btn-outline-primary"
+                                    onclick="exportDeptStatusTable()">Export</button>
+                            </div>
                         </div>
 
                         <ul class="nav nav-tabs mb-2" role="tablist" id="deptViewTabs">
                             <li class="nav-item" role="presentation">
-                                <a class="nav-link active small" href="#" id="deptTabChart" role="tab" aria-selected="true" data-view="chart">Chart</a>
+                                <a class="nav-link active small" href="#" id="deptTabChart" role="tab"
+                                    aria-selected="true" data-view="chart">Chart</a>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <a class="nav-link small" href="#" id="deptTabTable" role="tab" aria-selected="false" data-view="table">Table</a>
+                                <a class="nav-link small" href="#" id="deptTabTable" role="tab"
+                                    aria-selected="false" data-view="table">Table</a>
                             </li>
                         </ul>
 
@@ -211,18 +223,25 @@
                             $matrix = $deptStatusMatrix ?? [];
                             $statuses = [];
                             foreach ($matrix as $dept => $map) {
-                                if (!is_array($map)) continue;
+                                if (!is_array($map)) {
+                                    continue;
+                                }
                                 foreach ($map as $s => $v) {
                                     // exclude any status containing 'draft' (case-insensitive)
-                                    if (stripos($s, 'draft') !== false) continue;
-                                    if (!in_array($s, $statuses)) $statuses[] = $s;
+                                    if (stripos($s, 'draft') !== false) {
+                                        continue;
+                                    }
+                                    if (!in_array($s, $statuses)) {
+                                        $statuses[] = $s;
+                                    }
                                 }
                             }
                         @endphp
 
                         @if (empty($matrix))
                             <div class="alert alert-info small mb-0">
-                                Department status breakdown not available. Please provide <strong>$deptStatusMatrix</strong> from the controller in the format: <em>['Dept Name' => ['Status Name' => count]]</em>.
+                                Department status breakdown not available. Please provide <strong>$deptStatusMatrix</strong>
+                                from the controller in the format: <em>['Dept Name' => ['Status Name' => count]]</em>.
                             </div>
                         @else
                             {{-- Chart: Department status (stacked bar) --}}
@@ -231,23 +250,27 @@
                             </div>
 
                             <div class="table-responsive mt-2" id="deptStatusTableWrapper" style="display:none;">
-                                <table class="table table-sm table-hover mb-0 align-middle" style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
+                                <table class="table table-sm table-hover mb-0 align-middle"
+                                    style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
                                     <thead class="table-header-blue">
                                         <tr>
                                             <th class="small py-2">Department</th>
-                                            @foreach($statuses as $s)
+                                            @foreach ($statuses as $s)
                                                 <th class="small py-2 text-center">{{ $s }}</th>
                                             @endforeach
                                             <th class="small py-2 text-center">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($matrix as $dept => $map)
+                                        @foreach ($matrix as $dept => $map)
                                             <tr>
                                                 <td class="small py-2">{{ $dept }}</td>
                                                 @php $rowTotal = 0; @endphp
-                                                @foreach($statuses as $s)
-                                                    @php $val = isset($map[$s]) ? (int) $map[$s] : 0; $rowTotal += $val; @endphp
+                                                @foreach ($statuses as $s)
+                                                    @php
+                                                        $val = isset($map[$s]) ? (int) $map[$s] : 0;
+                                                        $rowTotal += $val;
+                                                    @endphp
                                                     <td class="small py-2 text-center">{{ $val }}</td>
                                                 @endforeach
                                                 <td class="small py-2 text-center fw-semibold">{{ $rowTotal }}</td>
@@ -310,7 +333,8 @@
                                     @forelse($recentFindings as $finding)
                                         <tr class="table-row-hover">
                                             <td class="small py-2 text-nowrap col-reg">
-                                                <span class="fw-semibold text-bold">{{ $finding->registration_number ?? '-' }}</span>
+                                                <span
+                                                    class="fw-semibold text-bold">{{ $finding->registration_number ?? '-' }}</span>
                                             </td>
                                             <td class="small py-2 col-dept">{{ $finding->department->name ?? '-' }}</td>
                                             <td class="small py-2 text-center col-status">
@@ -320,7 +344,7 @@
                                                     $badgeText = '#1f2937';
                                                 @endphp
                                                 <span class="badge status-badge px-3 py-1"
-                                                      style="background-color: {{ $badgeColor }}; color: {{ $badgeText }};">
+                                                    style="background-color: {{ $badgeColor }}; color: {{ $badgeText }};">
                                                     {{ $statusName }}
                                                 </span>
                                             </td>
@@ -344,9 +368,9 @@
         </div>
 
         {{-- Scroll to Top Button --}}
-        <button id="scrollUpBtn"
-            class="fixed text-white rounded-full shadow-lg transition-all duration-300"
-            title="Scroll to top" style="background: linear-gradient(135deg, #3b82f6, #0ea5e9); z-index: 50; border: none;">
+        <button id="scrollUpBtn" class="fixed text-white rounded-full shadow-lg transition-all duration-300"
+            title="Scroll to top"
+            style="background: linear-gradient(135deg, #3b82f6, #0ea5e9); z-index: 50; border: none;">
             <i class="bi bi-chevron-up text-lg"></i>
         </button>
     </div>
@@ -374,18 +398,18 @@
             '#6B8E6E', // moss green
             '#E6B89C', // soft amber/peach
             '#C57D7D', // muted rose
-            '#7E5A83'  // soft muted purple
+            '#7E5A83' // soft muted purple
         ];
 
         // Map important statuses to lighter soft/formal colors (used by charts)
         const statusColorMap = {
-            'Need Assign': '#F7A29A',               // light coral
-            'Need Check': '#FCE9B8',                // pale amber
-            'Need Approval by Auditor': '#9CC2E5',  // light sky
+            'Need Assign': '#F7A29A', // light coral
+            'Need Check': '#FCE9B8', // pale amber
+            'Need Approval by Auditor': '#9CC2E5', // light sky
             'Need Approval by Lead Auditor': '#7EA6D1', // muted blue
-            'Need Revision': '#F7C6B5',             // light peach
-            'Close': '#B7E4C7',                     // soft mint
-            'Checked by Dept Head': '#BEEAEF'       // pale teal
+            'Need Revision': '#F7C6B5', // light peach
+            'Close': '#B7E4C7', // soft mint
+            'Checked by Dept Head': '#BEEAEF' // pale teal
         };
 
         const fallbackColors = corporatePalette.slice();
@@ -402,7 +426,11 @@
         // Gradient helpers (from start -> end across N steps)
         function hexToRgb(hex) {
             const v = parseInt(hex.replace('#', ''), 16);
-            return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };
+            return {
+                r: (v >> 16) & 255,
+                g: (v >> 8) & 255,
+                b: v & 255
+            };
         }
 
         function rgbToHex(r, g, b) {
@@ -420,7 +448,9 @@
 
         function gradientColors(startHex, endHex, steps) {
             if (steps <= 1) return [startHex];
-            return Array.from({ length: steps }, (_, i) => interpolateHex(startHex, endHex, i / (steps - 1)));
+            return Array.from({
+                length: steps
+            }, (_, i) => interpolateHex(startHex, endHex, i / (steps - 1)));
         }
 
         // Build a soft red -> soft green gradient for status ordering (Need Assign -> Close)
@@ -598,7 +628,8 @@
 
                 // color generator - reuse colors from Status Distribution (pie) when possible
                 const preset = [
-                    '#7BA7FF', '#A8E6CF', '#FFD3B6', '#FFAAA5', '#D4A5A5', '#FFE0AC', '#6EC6E2', '#8BD3C7', '#C0E4FF'
+                    '#7BA7FF', '#A8E6CF', '#FFD3B6', '#FFAAA5', '#D4A5A5', '#FFE0AC', '#6EC6E2', '#8BD3C7',
+                    '#C0E4FF'
                 ];
 
                 // build mapping from status labels used in the pie chart to colors
@@ -622,7 +653,8 @@
 
                 const datasets = statuses.map((s, idx) => ({
                     label: s,
-                    data: departments.map(d => (matrix[d] && typeof matrix[d][s] !== 'undefined') ? matrix[d][s] : 0),
+                    data: departments.map(d => (matrix[d] && typeof matrix[d][s] !== 'undefined') ? matrix[
+                        d][s] : 0),
                     backgroundColor: colorFor(s, idx),
                     borderWidth: 0,
                 }));
@@ -637,13 +669,30 @@
                     options: {
                         responsive: true,
                         plugins: {
-                            legend: { position: 'bottom' },
-                            tooltip: { mode: 'index', intersect: false }
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
                         },
-                        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        },
                         scales: {
-                            x: { stacked: true, ticks: { autoSkip: false } },
-                            y: { stacked: true, beginAtZero: true }
+                            x: {
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: false
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true
+                            }
                         }
                     }
                 });
@@ -687,21 +736,21 @@
                 }
             }
 
-                if (deptTabChart && deptTabTable) {
-                deptTabChart.addEventListener('click', function (e) {
+            if (deptTabChart && deptTabTable) {
+                deptTabChart.addEventListener('click', function(e) {
                     e.preventDefault();
                     deptTabChart.classList.add('active');
-                    deptTabChart.setAttribute('aria-selected','true');
+                    deptTabChart.setAttribute('aria-selected', 'true');
                     deptTabTable.classList.remove('active');
-                    deptTabTable.setAttribute('aria-selected','false');
+                    deptTabTable.setAttribute('aria-selected', 'false');
                     updateDeptView('chart');
                 });
-                deptTabTable.addEventListener('click', function (e) {
+                deptTabTable.addEventListener('click', function(e) {
                     e.preventDefault();
                     deptTabTable.classList.add('active');
-                    deptTabTable.setAttribute('aria-selected','true');
+                    deptTabTable.setAttribute('aria-selected', 'true');
                     deptTabChart.classList.remove('active');
-                    deptTabChart.setAttribute('aria-selected','false');
+                    deptTabChart.setAttribute('aria-selected', 'false');
                     updateDeptView('table');
                 });
                 updateDeptView('chart');
@@ -711,6 +760,95 @@
         });
 
         feather.replace();
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        function showExportAlert(type, message) {
+            // remove existing
+            const old = document.getElementById('exportAlert');
+            if (old) old.remove();
+
+            const wrap = document.createElement('div');
+            wrap.id = 'exportAlert';
+            wrap.className = 'alert alert-' + (type === 'error' ? 'danger' : type) + ' position-fixed shadow-sm';
+            wrap.style.zIndex = 9999;
+            wrap.style.right = '18px';
+            wrap.style.top = '18px';
+            wrap.style.minWidth = '260px';
+            wrap.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">` +
+                `<div style="flex:1">${message}</div>` +
+                `<button type="button" class="btn-close" aria-label="Close" style="margin-left:8px"></button>` +
+                `</div>`;
+
+            document.body.appendChild(wrap);
+            wrap.querySelector('.btn-close').addEventListener('click', () => wrap.remove());
+            setTimeout(() => {
+                if (wrap.parentNode) wrap.remove();
+            }, 6000);
+        }
+
+        async function exportDeptStatusTable() {
+            const url = "{{ route('ftpp.export.summary') }}";
+            const btn = document.getElementById('exportDeptBtn');
+            if (!btn) return window.open(url, '_blank');
+
+            const originalHtml = btn.innerHTML;
+            try {
+                btn.disabled = true;
+                btn.innerHTML =
+                    `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Exporting...`;
+
+                const resp = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const contentType = resp.headers.get('content-type') || '';
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    showExportAlert('error', 'Export gagal: ' + (text || resp.statusText));
+                    return;
+                }
+
+                // Expect an Excel file
+                if (contentType.indexOf('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') === -1 &&
+                    contentType.indexOf('application/octet-stream') === -1) {
+                    const text = await resp.text();
+                    showExportAlert('error', 'Export gagal (server mengembalikan konten tidak dikenal).');
+                    console.error('Unexpected export response', text);
+                    return;
+                }
+
+                const blob = await resp.blob();
+                // try to get filename from header
+                let filename = 'FTPP_Summary.xlsx';
+                const cd = resp.headers.get('content-disposition');
+                if (cd) {
+                    const m = cd.match(/filename\*=UTF-8''(.+)|filename="?([^";]+)"?/i);
+                    if (m) filename = decodeURIComponent((m[1] || m[2]).replace(/\"/g, ''));
+                }
+
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(blobUrl);
+
+                showExportAlert('success', 'Export berhasil. File akan diunduh.');
+            } catch (err) {
+                console.error(err);
+                showExportAlert('error', 'Export gagal: ' + (err.message || err));
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
     </script>
 @endpush
 
@@ -726,9 +864,11 @@
             gap: 8px;
             width: 100%;
         }
+
         #deptViewTabs .nav-item {
             margin-right: 0;
         }
+
         #deptViewTabs .nav-link {
             display: inline-flex;
             align-items: center;
@@ -741,30 +881,40 @@
             transition: all .18s ease-in-out;
             font-weight: 600;
         }
+
         #deptViewTabs .nav-link:hover {
             transform: translateY(-1px);
             text-decoration: none;
             color: #111827;
         }
+
         #deptViewTabs .nav-link.active {
-            background: #EAF6FF; /* soft blue background for selected tab */
+            background: #EAF6FF;
+            /* soft blue background for selected tab */
             border-color: #CFE8FF;
-            box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
             color: #0f172a;
             position: relative;
         }
+
         #deptViewTabs .nav-link.active::before {
             content: '';
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #2D9CDB; /* accent dot */
+            background: #2D9CDB;
+            /* accent dot */
             display: inline-block;
             margin-right: 8px;
             transform: translateY(1px);
         }
+
         /* Keep tabs visually inside the card and slightly elevated */
-        .card-body > #deptViewTabs { margin-bottom: .6rem; display:flex; justify-content:center; }
+        .card-body>#deptViewTabs {
+            margin-bottom: .6rem;
+            display: flex;
+            justify-content: center;
+        }
 
         .table-header-blue th {
             background-color: #dbeafe;

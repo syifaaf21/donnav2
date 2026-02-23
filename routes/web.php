@@ -23,6 +23,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartNumberController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ExportSummaryController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -225,6 +226,9 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
+        // Export summary (Excel template-based)
+        Route::get('/export-summary', [ExportSummaryController::class, 'download'])->name('export.summary');
+
         Route::get('/{id}/preview-pdf', [FtppController::class, 'previewPdf'])->name('previewPdf');
         Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
         Route::get('/search', [FtppController::class, 'search'])->name('search');
