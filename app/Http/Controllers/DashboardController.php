@@ -36,13 +36,6 @@ class DashboardController extends Controller
         // Hitung user
         $totalUsers = User::count();
 
-        // Semua department untuk Control Documents
-        $departments = Department::pluck('name', 'id')->toArray();
-
-        // Hanya department dengan plant Body, Unit, Electric untuk Review Documents
-        $departmentsReview = Department::whereIn('plant', ['Body', 'Unit', 'Electric'])
-            ->pluck('name', 'id')->toArray();
-
         // Jumlah dokumen control per department keyed by department_id
         $controlDocuments = DocumentMapping::selectRaw('department_id, COUNT(*) as total')
             ->whereHas('document', fn($q) => $q->where('type', 'control'))
@@ -50,12 +43,46 @@ class DashboardController extends Controller
             ->pluck('total', 'department_id')
             ->toArray();
 
+        // Semua department untuk Control Documents (filtered to only those with control docs)
+        $allDepartments = Department::pluck('name', 'id')->toArray();
+
+        // Include documents without department as 'Unknown'
+        $unknownControlCount = DocumentMapping::whereNull('department_id')
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+            ->count();
+        if ($unknownControlCount > 0) {
+            $controlDocuments['unknown'] = $unknownControlCount;
+            $allDepartments['unknown'] = 'Unknown';
+        }
+        // Filter departments to only those that have control documents
+        $departments = array_filter($allDepartments, function ($name, $id) use ($controlDocuments) {
+            return isset($controlDocuments[$id]) && (int) $controlDocuments[$id] > 0;
+        }, ARRAY_FILTER_USE_BOTH);
+
+        // Hanya department dengan plant Body, Unit, Electric untuk Review Documents
+        $allDepartmentsReview = Department::whereIn('plant', ['Body', 'Unit', 'Electric'])
+            ->pluck('name', 'id')->toArray();
+
         // Jumlah dokumen review per department keyed by department_id
         $reviewDocuments = DocumentMapping::selectRaw('department_id, COUNT(*) as total')
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->groupBy('department_id')
             ->pluck('total', 'department_id')
             ->toArray();
+
+        // Include review docs without department as 'Unknown'
+        $unknownReviewCount = DocumentMapping::whereNull('department_id')
+            ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->count();
+        if ($unknownReviewCount > 0) {
+            $reviewDocuments['unknown'] = $unknownReviewCount;
+            $allDepartmentsReview['unknown'] = 'Unknown';
+        }
+
+        // Filter review departments to only those that have review documents
+        $departmentsReview = array_filter($allDepartmentsReview, function ($name, $id) use ($reviewDocuments) {
+            return isset($reviewDocuments[$id]) && (int) $reviewDocuments[$id] > 0;
+        }, ARRAY_FILTER_USE_BOTH);
 
 
         $statusObsoleteId = Status::where('name', 'Obsolete')->value('id');
@@ -84,60 +111,113 @@ class DashboardController extends Controller
         // Data tambahan per department untuk tooltip
         $controlExtraData = [];
         foreach ($departments as $id => $name) {
-            $activeCount = DocumentMapping::where('department_id', $id)
-                ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                ->whereHas('status', fn($q) => $q->where('name', 'Active'))
-                ->count();
+            if ($id === 'unknown') {
+                $activeCount = DocumentMapping::whereNull('department_id')
+                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                    ->whereHas('status', fn($q) => $q->where('name', 'Active'))
+                    ->count();
 
-            $rejectedCount = DocumentMapping::where('department_id', $id)
-                ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
-                ->count();
+                $rejectedCount = DocumentMapping::whereNull('department_id')
+                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                    ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                    ->count();
 
-            $controlExtraData[$id] = [
-                'active' => $activeCount,
-                'obsolete' => DocumentMapping::where('department_id', $id)
+                $controlExtraData[$id] = [
+                    'active' => $activeCount,
+                    'obsolete' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
+                        ->count(),
+                    'needReview' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                        ->count(),
+                    'uncomplete' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                        ->count(),
+                    'rejected' => $rejectedCount,
+                    'reject' => $rejectedCount,
+                ];
+            } else {
+                $activeCount = DocumentMapping::where('department_id', $id)
                     ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
-                    ->count(),
-                'needReview' => DocumentMapping::where('department_id', $id)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Active'))
+                    ->count();
+
+                $rejectedCount = DocumentMapping::where('department_id', $id)
                     ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
-                    ->count(),
-                'uncomplete' => DocumentMapping::where('department_id', $id)
-                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
-                    ->count(),
-                // keep both keys for backward compatibility
-                'rejected' => $rejectedCount,
-                'reject' => $rejectedCount,
-            ];
+                    ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                    ->count();
+
+                $controlExtraData[$id] = [
+                    'active' => $activeCount,
+                    'obsolete' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
+                        ->count(),
+                    'needReview' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                        ->count(),
+                    'uncomplete' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                        ->count(),
+                    'rejected' => $rejectedCount,
+                    'reject' => $rejectedCount,
+                ];
+            }
         }
 
         $reviewStatusData = [];
 
         foreach ($departmentsReview as $deptId => $deptName) {
-            $reviewStatusData[$deptId] = [
-                'need_review' => DocumentMapping::where('department_id', $deptId)
-                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
-                    ->count(),
+            if ($deptId === 'unknown') {
+                $reviewStatusData[$deptId] = [
+                    'need_review' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                        ->count(),
 
-                'approved' => DocumentMapping::where('department_id', $deptId)
-                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Approved'))
-                    ->count(),
+                    'approved' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Approved'))
+                        ->count(),
 
-                'rejected' => DocumentMapping::where('department_id', $deptId)
-                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
-                    ->count(),
+                    'rejected' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                        ->count(),
 
-                'uncomplete' => DocumentMapping::where('department_id', $deptId)
-                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
-                    ->count(),
-            ];
+                    'uncomplete' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                        ->count(),
+                ];
+            } else {
+                $reviewStatusData[$deptId] = [
+                    'need_review' => DocumentMapping::where('department_id', $deptId)
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                        ->count(),
+
+                    'approved' => DocumentMapping::where('department_id', $deptId)
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Approved'))
+                        ->count(),
+
+                    'rejected' => DocumentMapping::where('department_id', $deptId)
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                        ->count(),
+
+                    'uncomplete' => DocumentMapping::where('department_id', $deptId)
+                        ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                        ->count(),
+                ];
+            }
         }
 
 
@@ -172,7 +252,7 @@ class DashboardController extends Controller
     {
         // Data spesifik untuk Document Control
         $totalDocuments = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'control'))->count();
-        
+
         $activeDocuments = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'control'))
             ->whereHas('status', fn($q) => $q->where('name', 'Active'))
             ->count();
@@ -192,9 +272,6 @@ class DashboardController extends Controller
             ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
             ->count();
 
-        // Semua department untuk Control Documents
-        $departments = Department::pluck('name', 'id')->toArray();
-
         // Jumlah dokumen control per department
         $controlDocuments = DocumentMapping::selectRaw('department_id, COUNT(*) as total')
             ->whereHas('document', fn($q) => $q->where('type', 'control'))
@@ -202,31 +279,72 @@ class DashboardController extends Controller
             ->pluck('total', 'department_id')
             ->toArray();
 
-        // Data tambahan per department untuk tooltip
+        // Semua department untuk Control Documents (filter hanya yang punya dokumen)
+        $allDepartments = Department::pluck('name', 'id')->toArray();
+
+        // Include unknown (no department) if present
+        $unknownControlCount = DocumentMapping::whereNull('department_id')
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+            ->count();
+        if ($unknownControlCount > 0) {
+            $controlDocuments['unknown'] = $unknownControlCount;
+            $allDepartments['unknown'] = 'Unknown';
+        }
+
+        $departments = array_filter($allDepartments, function ($name, $id) use ($controlDocuments) {
+            return isset($controlDocuments[$id]) && (int) $controlDocuments[$id] > 0;
+        }, ARRAY_FILTER_USE_BOTH);
+
+        // Data tambahan per department untuk tooltip (hanya untuk departments yang dipakai)
         $controlExtraData = [];
         foreach ($departments as $id => $name) {
-            $controlExtraData[$id] = [
-                'obsolete' => DocumentMapping::where('department_id', $id)
-                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
-                    ->count(),
-                'active' => DocumentMapping::where('department_id', $id)
-                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Active'))
-                    ->count(),
-                'needReview' => DocumentMapping::where('department_id', $id)
-                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
-                    ->count(),
-                'uncomplete' => DocumentMapping::where('department_id', $id)
-                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
-                    ->count(),
-                'rejected' => DocumentMapping::where('department_id', $id)
-                    ->whereHas('document', fn($q) => $q->where('type', 'control'))
-                    ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
-                    ->count(),
-            ];
+            if ($id === 'unknown') {
+                $controlExtraData[$id] = [
+                    'obsolete' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
+                        ->count(),
+                    'active' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Active'))
+                        ->count(),
+                    'needReview' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                        ->count(),
+                    'uncomplete' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                        ->count(),
+                    'rejected' => DocumentMapping::whereNull('department_id')
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                        ->count(),
+                ];
+            } else {
+                $controlExtraData[$id] = [
+                    'obsolete' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Obsolete'))
+                        ->count(),
+                    'active' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Active'))
+                        ->count(),
+                    'needReview' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                        ->count(),
+                    'uncomplete' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                        ->count(),
+                    'rejected' => DocumentMapping::where('department_id', $id)
+                        ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                        ->count(),
+                ];
+            }
         }
 
         // Status breakdown untuk pie chart
