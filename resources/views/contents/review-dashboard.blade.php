@@ -201,8 +201,8 @@
         /* ===================== STACKED BAR CHART - DOCUMENTS PER DEPARTMENT ===================== */
         // only include departments that actually have documents (non-zero counts)
         const filteredDepartmentIds = Object.keys(departmentsReview).filter(deptId => {
-            const data = reviewStatusData[Number(deptId)] || {};
-            return Object.values(data).some(v => (Number(v) || 0) > 0);
+            const docsCount = Number(reviewDocuments[deptId] || 0);
+            return docsCount > 0;
         });
 
         const reviewLabels = filteredDepartmentIds.map(id => departmentsReview[id]);
@@ -215,13 +215,10 @@
         const reviewNeedReviewData = [];
 
         filteredDepartmentIds.forEach(deptId => {
-            const data = reviewStatusData[Number(deptId)] || {};
+            const data = reviewStatusData[deptId] || {};
 
             const needReview = data.need_review ?? 0;
-            const normal =
-                (data.approved ?? 0) +
-                (data.rejected ?? 0) +
-                (data.uncomplete ?? 0);
+            const normal = (data.approved ?? 0) + (data.rejected ?? 0) + (data.uncomplete ?? 0);
 
             reviewNormalData.push(normal);
             reviewNeedReviewData.push(needReview);
@@ -297,7 +294,7 @@
         const uncompleteArray = [];
 
         filteredDepartmentIds.forEach(deptId => {
-            const data = reviewStatusData[Number(deptId)] || {};
+            const data = reviewStatusData[deptId] || {};
             needReviewArray.push(data.need_review ?? 0);
             approvedArray.push(data.approved ?? 0);
             rejectedArray.push(data.rejected ?? 0);

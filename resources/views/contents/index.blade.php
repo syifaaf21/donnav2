@@ -528,7 +528,7 @@
             const reviewNeedReviewData = [];
 
             Object.keys(departmentsReview).forEach(deptId => {
-                const data = reviewStatusData[Number(deptId)] || {};
+                const data = reviewStatusData[deptId] || {};
 
                 const needReview = data.need_review ?? 0;
 

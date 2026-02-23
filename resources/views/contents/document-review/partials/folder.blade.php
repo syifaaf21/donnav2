@@ -329,7 +329,6 @@
                                     <td class="px-2 py-3 text-left text-xs font-medium text-gray-800 min-w-[210px]">
                                         <div class="flex flex-col gap-1">
                                             <div class="font-semibold">{{ $doc->document_number ?? '-' }}</div>
-
                                             @php
                                                 $statusName = strtolower($doc->status?->name ?? '');
                                                 $statusClass = match ($statusName) {
@@ -343,10 +342,10 @@
                                                         => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
                                                 };
                                             @endphp
-
                                             <span class="{{ $statusClass }} w-max inline-block">
                                                 {{ ucwords($statusName ?: '-') }}
                                             </span>
+                                             <div class="text-xs text-gray-500">{{ optional($doc->department)->name ?? 'Unknown' }}</div>
                                         </div>
                                     </td>
                                     <td class="px-2 py-3 text-center text-xs font-medium min-w-[100px]">
