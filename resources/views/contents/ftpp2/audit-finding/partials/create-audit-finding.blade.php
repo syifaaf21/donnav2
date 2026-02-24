@@ -1,5 +1,11 @@
 <form action="{{ route('ftpp.audit-finding.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
+    @php
+        $authUser = auth()->user();
+        $isAuditor = $authUser ? collect($authUser->roles)->pluck('name')->intersect(['Auditor', 'Lead Auditor'])->isNotEmpty() : false;
+        $userAuditTypeIds = $authUser ? $authUser->auditTypes->pluck('id')->toArray() : [];
+        $auditorDefaultAuditType = $isAuditor && !empty($userAuditTypeIds) ? $userAuditTypeIds[0] : null;
+    @endphp
     <!-- CARD WRAPPER -->
     <div class=" gap-4">
         <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
@@ -12,7 +18,11 @@
                     @foreach ($auditTypes as $type)
                         <label class="flex items-center gap-2">
                             <input type="radio" name="audit_type_id" value="{{ $type->id }}"
-                                x-model="form.audit_type_id">
+                                x-model="form.audit_type_id"
+                                @if($isAuditor)
+                                    @if($type->id == $auditorDefaultAuditType) checked @endif
+                                    @if($type->id != $auditorDefaultAuditType) disabled @endif
+                                @endif>
                             {{ $type->name }}
                         </label>
                     @endforeach
@@ -76,13 +86,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="font-semibold block">Auditor / Inisiator: <span class="text-danger">*</span></label>
-                    <select name="auditor_ids[]" id="auditorSelect" multiple
-                        class="tom-select border border-gray-300 rounded w-full p-2 focus:outline-none">
-                        @foreach ($auditors as $auditor)
-                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
-                        @endforeach
-                    </select>
-                    <input type="hidden" name="auditor_id" id="auditor_id_hidden" value="">
+                        {{-- reusing $authUser and $isAuditor declared above --}}
+
+                        <select name="auditor_ids[]" id="auditorSelect" multiple
+                            class="tom-select border border-gray-300 rounded w-full p-2 focus:outline-none">
+                            @foreach ($auditors as $auditor)
+                                <option value="{{ $auditor->id }}" @if($isAuditor && $authUser && $auditor->id === $authUser->id) selected @endif>
+                                    {{ $auditor->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="auditor_id" id="auditor_id_hidden" value="{{ $isAuditor && $authUser ? $authUser->id : '' }}">
                 </div>
 
                 <div>
@@ -384,6 +398,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log("✅ FTTP script ready");
 
+            
+
             // initialize selectedSubIds from any existing preview (if any)
             try {
                 const existing = Array.from(document.querySelectorAll('#selectedSubContainer [data-id]'))
@@ -414,8 +430,12 @@
                             document.getElementById('reg_number').value = data.reg_number;
 
                             const subContainer = document.getElementById('subAuditType');
+                            // clear current sub audit UI
                             subContainer.innerHTML = '';
-                            if (data.sub_audit?.length) {
+                            // disable any existing sub-audit radios (defensive)
+                            document.querySelectorAll('input[name="sub_audit_type_id"]').forEach(r => r.disabled = true);
+
+                            if (data.sub_audit && data.sub_audit.length) {
                                 data.sub_audit.forEach(s => {
                                     subContainer.insertAdjacentHTML('beforeend', `
                                             <label class="block">
@@ -423,13 +443,13 @@
                                                 ${s.name}
                                             </label>
                                         `);
-                                    const radio = document.querySelector(
-                                        `#subAuditType input[value="${s.id}"]`);
-                                    if (radio) radio.disabled = false;
                                 });
+                                // ensure newly added radios are enabled
+                                document.querySelectorAll('#subAuditType input[name="sub_audit_type_id"]').forEach(r => r.disabled = false);
                             } else {
-                                subContainer.innerHTML =
-                                    '<small class="text-gray-500">There is no sub audit type</small>';
+                                subContainer.innerHTML = '<small class="text-gray-500">There is no sub audit type</small>';
+                                // clear any previously selected sub audit value if Alpine form holds it
+                                try { if (window.Alpine && Alpine.store && Alpine.store.form) {} } catch(e) {}
                             }
 
                             // ✅ Filter Auditor berdasarkan audit type — update TomSelect options
@@ -493,6 +513,20 @@
                     });
                 }
             } catch (e) { console.error('TomSelect auditor init error', e); }
+
+            @if($isAuditor && $auditorDefaultAuditType)
+                // Auto-select auditor's default audit type after listeners initialized
+                setTimeout(function() {
+                    try {
+                        const defaultRadio = document.querySelector('input[name="audit_type_id"][value="{{ $auditorDefaultAuditType }}"]');
+                        if (defaultRadio) {
+                            document.querySelectorAll('input[name="audit_type_id"]').forEach(r => r.checked = false);
+                            defaultRadio.checked = true;
+                            defaultRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    } catch (e) { console.error('Auto-select audit type error', e); }
+                }, 0);
+            @endif
 
             // --- Open/Close sidebar (tidak berubah) ---
             window.openSidebar = function() {
