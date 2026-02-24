@@ -71,13 +71,10 @@
                                                 class="text-danger">*</span></label>
                                         <select name="plant"
                                             class="form-select border-0 shadow-sm rounded-3 tom-select" required>
-                                            <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>
-                                                Body</option>
-                                            <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>
-                                                Unit</option>
-                                            <option value="electric"
-                                                {{ $mapping->plant == 'electric' ? 'selected' : '' }}>
-                                                Electric</option>
+                                            <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>Body</option>
+                                            <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>Unit</option>
+                                            <option value="electric" {{ $mapping->plant == 'electric' ? 'selected' : '' }}>Electric</option>
+                                            <option value="all" {{ $mapping->plant == 'all' ? 'selected' : '' }}>ALL</option>
                                         </select>
                                     </div>
 
@@ -416,14 +413,32 @@
                         tsDept.disable();
                         return;
                     }
-                    const p = encodeURIComponent(plant);
-                    const [models, products, processes, departments, parts] = await Promise.all([
-                        fetchJson(`/api/models?plant=${p}`),
-                        fetchJson(`/api/products?plant=${p}`),
-                        fetchJson(`/api/processes?plant=${p}`),
-                        fetchJson(`/api/departments?plant=${p}`),
-                        fetchJson(`/api/part-numbers?plant=${p}`)
-                    ]);
+                        // If plant === 'all' we request unfiltered lists for
+                        // models/products/processes/parts, but departments should be
+                        // requested with plant=all so department filters apply.
+                        let modelsUrl, productsUrl, processesUrl, departmentsUrl, partsUrl;
+                        if (plant === 'all') {
+                            modelsUrl = `/api/models`;
+                            productsUrl = `/api/products`;
+                            processesUrl = `/api/processes`;
+                            partsUrl = `/api/part-numbers`;
+                            departmentsUrl = `/api/departments?plant=all`;
+                        } else {
+                            const p = encodeURIComponent(plant);
+                            modelsUrl = `/api/models?plant=${p}`;
+                            productsUrl = `/api/products?plant=${p}`;
+                            processesUrl = `/api/processes?plant=${p}`;
+                            partsUrl = `/api/part-numbers?plant=${p}`;
+                            departmentsUrl = `/api/departments?plant=${p}`;
+                        }
+
+                        const [models, products, processes, departments, parts] = await Promise.all([
+                            fetchJson(modelsUrl),
+                            fetchJson(productsUrl),
+                            fetchJson(processesUrl),
+                            fetchJson(departmentsUrl),
+                            fetchJson(partsUrl)
+                        ]);
                     setOptions(tsModel, models || []);
                     setOptions(tsProduct, products || []);
                     setOptions(tsProcess, processes || []);
