@@ -298,8 +298,10 @@ class DashboardController extends Controller
         // Data spesifik untuk FTPP
         $selectedAuditTypeId = $request->input('audit_type');
 
-        // base query possibly filtered by audit type
+        // base query possibly filtered by audit type (exclude marked-for-deletion)
         $baseQuery = AuditFinding::query();
+        // exclude records marked for deletion
+        $baseQuery->whereNull('marked_for_deletion_at');
         if (!empty($selectedAuditTypeId)) {
             $baseQuery->where('audit_type_id', $selectedAuditTypeId);
         }
@@ -315,8 +317,16 @@ class DashboardController extends Controller
         // Findings per department
         // Findings per department (respecting audit type filter)
         $findingsPerDepartment = Department::withCount(['auditFindings' => function ($q) use ($selectedAuditTypeId) {
+            // exclude audit findings marked for deletion
+            $q->whereNull('marked_for_deletion_at');
             if (!empty($selectedAuditTypeId)) $q->where('audit_type_id', $selectedAuditTypeId);
         }])->get();
+
+        // Only keep departments that actually have FTPP (count > 0)
+        $findingsPerDepartment = $findingsPerDepartment->filter(function ($d) {
+            return ($d->audit_findings_count ?? 0) > 0;
+        })->values();
+
         $deptLabels = $findingsPerDepartment->pluck('name');
         $deptTotals = $findingsPerDepartment->pluck('audit_findings_count');
 
@@ -331,21 +341,26 @@ class DashboardController extends Controller
 
         // Audit types list for tabs/filters
         $auditTypes = \App\Models\Audit::orderBy('name')->get();
-        // Counts per audit type for displaying badges on tabs
+        // Counts per audit type for displaying badges on tabs (exclude marked-for-deletion)
         $auditTypeCounts = AuditFinding::selectRaw('audit_type_id, COUNT(*) as total')
+            ->whereNull('marked_for_deletion_at')
             ->groupBy('audit_type_id')
             ->pluck('total', 'audit_type_id')
             ->toArray();
 
-        // Departments list (id => name) - urut berdasarkan nama
-        $departments = Department::orderBy('name')->pluck('name', 'id')->toArray();
+        // Departments list (id => name) - only departments that have FTPP
+        $departments = Department::whereHas('auditFindings', function ($q) use ($selectedAuditTypeId) {
+            $q->whereNull('marked_for_deletion_at');
+            if (!empty($selectedAuditTypeId)) $q->where('audit_type_id', $selectedAuditTypeId);
+        })->orderBy('name')->pluck('name', 'id')->toArray();
 
         // Build per-department status matrix, excluding statuses that contain 'draft'
         $deptStatusMatrix = [];
         foreach ($departments as $deptId => $deptName) {
             $query = AuditFinding::selectRaw('tm_statuses.name as status, COUNT(*) as total')
                 ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_audit_findings.status_id')
-                ->where('tt_audit_findings.department_id', $deptId);
+                ->where('tt_audit_findings.department_id', $deptId)
+                ->whereNull('tt_audit_findings.marked_for_deletion_at');
             if (!empty($selectedAuditTypeId)) {
                 $query->where('tt_audit_findings.audit_type_id', $selectedAuditTypeId);
             }
