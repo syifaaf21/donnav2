@@ -246,7 +246,7 @@
 
                                     <!-- Attachment button (paperclip) -->
                                     <div class="relative inline-block">
-                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin', 'Auditor']))
+                                        @if (collect(optional(auth()->user())->roles)->pluck('name')->intersect(['Admin', 'Auditor'])->isNotEmpty())
                                             <button id="attachBtn" type="button"
                                                 class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
                                                 aria-haspopup="true" aria-expanded="false" title="Attach files">
