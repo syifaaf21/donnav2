@@ -555,12 +555,19 @@ class DocumentMappingController extends Controller
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
+        // build a direct URL to the document folder so notification navigates there
+        // Build plant label compatible with DocumentReviewController tabs (e.g. 'Body','Unit','Electric','Others')
+        $plantForUrl = ($request->plant === 'all' || empty($request->part_number_id)) ? 'Others' : ucfirst(strtolower($request->plant ?? 'body'));
+        $docCode = $mapping->document?->code ?? null;
+        $directUrl = $docCode ? route('document-review.showFolder', [$plantForUrl, base64_encode($docCode)], false) : route('document-review.index', [], false);
+
         foreach ($users as $user) {
             $user->notify(new DocumentCreatedNotification(
                 Auth::user()->name,
                 $mapping->document_number,
                 null,
-                route('document-review.index')
+                $directUrl,
+                $mapping->document_id
             ));
         }
 
@@ -752,12 +759,17 @@ class DocumentMappingController extends Controller
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
+        $plantSlug = ($plantValue === 'all' || empty($validated['part_number_id'])) ? 'Others' : ucfirst(strtolower($plantValue ?? 'body'));
+        $docCode = $mapping->document?->code ?? null;
+        $directUrl = $docCode ? route('document-review.showFolder', [$plantSlug, base64_encode($docCode)], false) : route('document-review.index', [], false);
+
         foreach ($users as $user) {
             $user->notify(new DocumentCreatedNotification(
                 Auth::user()->name,
-                $mapping->document_number,   // documentNumber
-                null,                        // documentName bisa null karena ini review
-                route('document-review.index')
+                $mapping->document_number,
+                null,
+                $directUrl,
+                $mapping->document_id
             ));
         }
 
@@ -1187,7 +1199,8 @@ class DocumentMappingController extends Controller
                     Auth::user()->name,
                     null,
                     $newDocument->name,
-                    route('document-control.department', $mapping->department->name), // <-- pakai nama, bukan ID
+                    route('document-control.department', $mapping->department->name, false), // <-- pakai nama, bukan ID
+                    $newDocument->id
                 ));
             }
         }
@@ -1271,7 +1284,8 @@ class DocumentMappingController extends Controller
                     Auth::user()->name,
                     null,
                     $mapping->document->name,
-                    route('document-control.department', $mapping->department->name),
+                    route('document-control.department', $mapping->department->name, false),
+                    $mapping->document_id
                 ));
             }
         }
