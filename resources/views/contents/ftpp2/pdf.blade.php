@@ -271,6 +271,9 @@
                                 style="max-width: 64px; max-height: 64px; display:block; margin:auto;">
                             <div style="font-size:8px; text-align:center;">
                                 Lampiran Gambar: {{ $image->original_name ?? basename($image->file_path ?? '') }}
+                            <div>
+                                <div>Dept. Head</div>
+                                <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->deptHead ? e($auditeeAction->deptHead->name) : '&nbsp;' !!}</div>
                             </div>
                         </div>
                     @endif
@@ -526,10 +529,12 @@
                 @elseif ($auditeeAction && isset($auditeeAction->dept_head_signature) && $auditeeAction->dept_head_signature == 1)
                     <img src="{{ public_path('images/mgr-approve.png') }}" class="signature"
                         alt="Dept Head Approved">
+                @else
+                    <div style="height:60px; display:block;"></div>
                 @endif
                 <div>
                     <div>Dept. Head</div>
-                    {{ $auditeeAction && $auditeeAction->deptHead ? $auditeeAction->deptHead->name : '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->deptHead ? e($auditeeAction->deptHead->name) : '&nbsp;' !!}</div>
                 </div>
 
             </td>
@@ -539,10 +544,12 @@
                 @elseif ($auditeeAction && isset($auditeeAction->ldr_spv_signature) && $auditeeAction->ldr_spv_signature == 1)
                     <img src="{{ public_path('images/usr-approve.png') }}" class="signature"
                         alt="Leader/Spv Approved">
+                @else
+                    <div style="height:60px; display:block;"></div>
                 @endif
                 <div>
                     <div>Leader/Spv</div>
-                    {{ $auditeeAction && $auditeeAction->user ? $auditeeAction->user->name : '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->user ? e($auditeeAction->user->name) : '&nbsp;' !!}</div>
                 </div>
             </td>
         </tr>
@@ -556,7 +563,7 @@
             <td>Approve</td>
         </tr>
         <tr>
-            <td>{{ $auditeeAction->effectiveness_verification ?? '-' }}</td>
+            <td>{{ $auditeeAction->effectiveness_verification ?? '' }}</td>
             <td class="font-bold">
                 @switch($finding->status_id)
                     @case(7)
@@ -592,10 +599,12 @@
                     <img src="{{ $finding->acknowledge_by_lead_auditor_url }}" class="signature"><br>
                 @elseif ($auditeeAction && ($auditeeAction->lead_auditor_id ?? null) == 1)
                     <img src="/images/stamp-lead-auditor.png" class="signature"><br>
+                @else
+                    <div style="height:60px; display:block; margin:0 auto 6px auto;"></div>
                 @endif
                 <div>
                     <div>Lead Auditor</div>
-                    {{ $auditeeAction && $auditeeAction->leadAuditor ? $auditeeAction->leadAuditor->name : '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->leadAuditor ? e($auditeeAction->leadAuditor->name) : '&nbsp;' !!}</div>
                 </div>
             </td>
             <td>
@@ -603,10 +612,12 @@
                     <img src="{{ $finding->verified_by_auditor_url }}" class="signature"><br>
                 @elseif ($auditeeAction && ($auditeeAction->auditor_id ?? null) == 1)
                     <img src="/images/stamp-internal-auditor.png" class="signature"><br>
+                @else
+                    <div style="height:60px; display:block; margin:0 auto 6px auto;"></div>
                 @endif
                 <div>
                     <div>Auditor</div>
-                    {{ $auditeeAction && $auditeeAction->auditor ? $auditeeAction->auditor->name : '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->auditor ? e($auditeeAction->auditor->name) : '&nbsp;' !!}</div>
                 </div>
             </td>
         </tr>
