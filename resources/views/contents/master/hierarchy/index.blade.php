@@ -102,6 +102,8 @@
                             </th>
                             <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                 style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
+                            <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider text-center"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
                             <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
                                 style="color: #1e2b50; letter-spacing: 0.5px;">
                                 Actions</th>
@@ -109,7 +111,7 @@
                     </thead>
                     <tbody id="documentTableBody" class="divide-y divide-gray-200" @php $number = 1; @endphp
                         @if ($documents->count() === 0) <tr>
-                                <td colspan="3" class="text-center py-6 text-gray-500">
+                            <td colspan="4" class="text-center py-6 text-gray-500">
                                     <i class="bi bi-inbox text-2xl block mb-1"></i>
                                     No data found
                                 </td>
@@ -201,6 +203,18 @@
                         @error('code')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                    </div>
+
+                    {{-- Plants (multiselect) --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Plants <span class="text-danger">*</span></label>
+                        <select name="plants[]" multiple class="form-select tomselect">
+                            <option value="body">Body</option>
+                            <option value="unit">Unit</option>
+                            <option value="electric">Electric</option>
+                            <option value="all">ALL (Others)</option>
+                        </select>
+                        <small class="text-muted">Select one or more plants. Choose <strong>All</strong> to mark document as global (appears in Others tab).</small>
                     </div>
                 </div>
 

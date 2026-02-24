@@ -29,6 +29,22 @@
 
     <td class="px-4 py-3 border-r border-gray-200 text-gray-500">{{ ucwords($document->code) ?: '-' }}</td>
 
+    {{-- Plants column: show assigned plants or dash --}}
+    <td class="px-4 py-3 border-r border-gray-200 text-gray-700 text-sm">
+        @php
+            $plants = $document->plants->pluck('plant')->map(fn($p) => strtoupper(trim($p)))->filter()->values();
+        @endphp
+        @if ($plants->isEmpty())
+            <span class="text-gray-400">-</span>
+        @else
+            <span class="inline-flex gap-1 flex-wrap">
+                @foreach ($plants as $p)
+                    <span class="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">{{ $p === 'ALL' ? 'OTHERS' : ucfirst(strtolower($p)) }}</span>
+                @endforeach
+            </span>
+        @endif
+    </td>
+
     {{-- Actions --}}
     <td class="px-4 py-3 border-r border-gray-200 text-center">
         <div class="flex gap-2 justify-center">
@@ -120,6 +136,21 @@
                             @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        {{-- Plants (multi-select) --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Plants</label>
+                            <select name="plants[]" multiple class="form-select tomselect">
+                                @php
+                                    $selectedPlants = $document->plants->pluck('plant')->map(fn($p) => strtolower($p))->toArray();
+                                @endphp
+                                <option value="body" @if(in_array('body', $selectedPlants)) selected @endif>Body</option>
+                                <option value="unit" @if(in_array('unit', $selectedPlants)) selected @endif>Unit</option>
+                                <option value="electric" @if(in_array('electric', $selectedPlants)) selected @endif>Electric</option>
+                                <option value="all" @if(in_array('all', $selectedPlants)) selected @endif>ALL (Others)</option>
+                            </select>
+                            <small class="text-muted">Choose one or more plants for this document.</small>
                         </div>
                     </div>
                 </div>

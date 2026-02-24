@@ -329,7 +329,6 @@
                                     <td class="px-2 py-3 text-left text-xs font-medium text-gray-800 min-w-[210px]">
                                         <div class="flex flex-col gap-1">
                                             <div class="font-semibold">{{ $doc->document_number ?? '-' }}</div>
-
                                             @php
                                                 $statusName = strtolower($doc->status?->name ?? '');
                                                 $statusClass = match ($statusName) {
@@ -343,10 +342,10 @@
                                                         => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
                                                 };
                                             @endphp
-
                                             <span class="{{ $statusClass }} w-max inline-block">
                                                 {{ ucwords($statusName ?: '-') }}
                                             </span>
+                                             <div class="text-xs text-gray-500">{{ optional($doc->department)->name ?? 'Unknown' }}</div>
                                         </div>
                                     </td>
                                     <td class="px-2 py-3 text-center text-xs font-medium min-w-[100px]">
@@ -467,6 +466,8 @@
                                                                         class="flex-1 text-left view-file-btn truncate"
                                                                         data-file="{{ $file['url'] }}"
                                                                         data-doc-id="{{ $doc->id }}"
+                                                                        data-doc-status="{{ $status }}"
+                                                                        data-is-admin="{{ $isAdmin ? '1' : '0' }}"
                                                                         data-file-id="{{ $file['id'] }}"
                                                                         data-file-name="{{ $file['name'] }}"
                                                                         data-file-path="{{ $file['file_path'] }}">
@@ -496,6 +497,8 @@
                                                         class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn"
                                                         data-file="{{ $fileUrl }}"
                                                         data-doc-id="{{ $doc->id }}"
+                                                        data-doc-status="{{ $status }}"
+                                                        data-is-admin="{{ $isAdmin ? '1' : '0' }}"
                                                         data-file-id="{{ $files[0]['id'] ?? '' }}"
                                                         data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
@@ -507,22 +510,15 @@
 
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
-                                                // Check if user is supervisor of document's department
-$isSupervisorOfDocDept = auth()
-    ->user()
-    ->isSupervisorOfDepartment($doc->department_id);
-
-
-                                                // Only supervisor from document's department OR admin can edit
-                                                // But hide Edit when status is 'need review' (approval flow)
-                                                $showEdit = ($isAdmin || $isSupervisorOfDocDept) && $status !== 'need review';
+                                                // Use canEditDocument to determine edit/upload permission
+                                                $canEdit = auth()->check() && auth()->user()->canEditDocument($doc);
+                                                // Only admin or users allowed by canEditDocument can edit
+                                                $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
                                                 $showMenu = $showEdit || $showApproveReject || $showDownloadReport;
                                             @endphp
-
-
                                             @if ($showMenu)
                                                 <div class="relative inline-block text-left">
                                                     <button type="button"
@@ -858,17 +854,27 @@ $isSupervisorOfDocDept = auth()
                         currentFileType = getFileType(url);
                         console.log('File type detected:', currentFileType);
 
-                        // Toggle tombol Print, Download, dan View Full hanya untuk PDF
+                        // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
-                        if (currentFileType === 'pdf') {
+                        const docStatus = (btn.dataset.docStatus || '').toString().toLowerCase();
+                        const isAdminFlag = (btn.dataset.isAdmin || '') === '1';
+                        const isPdf = currentFileType === 'pdf';
+                        const canDownloadOrPrint = isPdf && (docStatus === 'approved' || isAdminFlag);
+
+                        if (canDownloadOrPrint) {
                             printBtnToggle.classList.remove('d-none');
                             downloadBtnToggle.classList.remove('d-none');
-                            viewFullBtnToggle.classList.remove('d-none');
                         } else {
                             printBtnToggle.classList.add('d-none');
                             downloadBtnToggle.classList.add('d-none');
+                        }
+
+                        // View Full: remain visible for PDF files (regardless of approval)
+                        if (isPdf) {
+                            viewFullBtnToggle.classList.remove('d-none');
+                        } else {
                             viewFullBtnToggle.classList.add('d-none');
                         }
 

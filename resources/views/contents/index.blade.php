@@ -392,68 +392,85 @@
             const controlData = Object.keys(departments).map(id => controlDocuments[id] ?? 0);
             const reviewData = Object.keys(departmentsReview).map(id => reviewDocuments[id] ?? 0);
 
-            // Render Control Documents Chart
-            // Pastel color set
-            const pastelColors = [
-                '#7BA7FF', // soft blue
-                '#6EC6E2', // muted sky blue
-                '#8BD3C7', // soft teal
-                '#A3A0FB', // soft indigo
-                '#F7C97F', // pastel warm yellow (low saturation)
-                '#FFB38A', // soft peach
-                '#B7B5F1', // muted lavender
-                '#9ED2B6', // desaturated mint green
-                '#E5C7FF', // soft purple
-                '#C0E4FF', // ice blue
-                '#B4C4FF', // steel light blue
-                '#FFD8A8', // soft orange
-                '#9FC9E9', // slightly greyish blue
-                '#C5E8D1' // pale green-blue
-            ];
+            // Render Control Documents Chart as per-status stacked bars
+            const orderedStatusKeys = ['active','need_review','rejected','uncomplete','obsolete'];
 
-            // Render Control Documents Chart (Pastel)
+            const deptIds = Object.keys(departments);
+
+            // Helper: robust lookup for possible backend key naming (snake_case, camelCase, spaced, Count suffixes)
+            function lookupStatusCount(extra, key) {
+                if (!extra) return 0;
+                const camel = key.replace(/_([a-z])/g, (m, c) => c.toUpperCase());
+                const spaced = key.replace(/_/g, ' ');
+                const compact = key.replace(/_/g, '');
+                const candidates = [key, camel, spaced, compact, key + 'Count', camel + 'Count', compact + 'Count'];
+                for (let k of candidates) {
+                    if (typeof extra[k] !== 'undefined' && extra[k] !== null) return extra[k];
+                }
+                return 0;
+            }
+
+            const statusReadableMap = {
+                'active': 'Active',
+                'need_review': 'Need Review',
+                'rejected': 'Rejected',
+                'uncomplete': 'Uncomplete',
+                'obsolete': 'Obsolete'
+            };
+
+            const statusColorMap = {
+                'active': '#A8E6CF',
+                'need_review': '#FFD3B6',
+                'rejected': '#FF6B6B',
+                'uncomplete': '#F59E0B',
+                'obsolete': '#A8D8EA'
+            };
+
+            const statusDatasets = orderedStatusKeys.map(k => ({
+                label: statusReadableMap[k] || k,
+                data: deptIds.map(id => Number(lookupStatusCount(controlExtraData[id] || {}, k) || 0)),
+                backgroundColor: statusColorMap[k] || '#CBD5E1',
+                borderRadius: 6,
+                barThickness: 18,
+                stack: 'statuses'
+            }));
+
             new Chart(document.getElementById('controlDocsChart').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: shortControlLabels,
-                    datasets: [{
-                        label: 'Control Documents',
-                        data: controlData,
-                        backgroundColor: pastelColors, // <--- pastel colors applied here
-                        borderRadius: 6,
-                        barThickness: 20
-                    }]
+                    datasets: statusDatasets
                 },
                 options: {
                     responsive: true,
                     plugins: {
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top'
                         },
                         tooltip: {
                             enabled: true,
+                            mode: 'index',
+                            intersect: false,
                             callbacks: {
                                 title: function(context) {
                                     const index = context[0].dataIndex;
                                     const deptId = Object.keys(departments)[index];
-
-                                    // TAMPILKAN NAMA PANJANG DEPARTMENT
                                     return departments[deptId];
                                 },
                                 label: function(context) {
-                                    const deptId = Object.keys(departments)[context.dataIndex];
-                                    const mainValue = context.raw;
-                                    const extra = controlExtraData[deptId] || {};
-
-                                    let lines = [`Total: ${mainValue}`];
-                                    if (extra.obsolete !== undefined) lines.push(`Obsolete: ${extra.obsolete}`);
-                                    if (extra.needReview !== undefined) lines.push(
-                                        `Need Review: ${extra.needReview}`);
-                                    if (extra.uncomplete !== undefined) lines.push(
-                                        `Uncomplete: ${extra.uncomplete}`);
-                                    if (extra.reject !== undefined) lines.push(`Rejected: ${extra.reject}`);
-
-                                    return lines;
+                                    const datasetLabel = context.dataset.label || '';
+                                    const value = context.raw || 0;
+                                    return `${datasetLabel}: ${value}`;
+                                },
+                                labelColor: function(context) {
+                                    return {
+                                        backgroundColor: context.dataset.backgroundColor || '#000',
+                                        borderColor: context.dataset.backgroundColor || '#000',
+                                        borderWidth: 1,
+                                        width: 12,
+                                        height: 12
+                                    };
                                 }
                             }
                         }
@@ -467,7 +484,8 @@
                             },
                             grid: {
                                 color: '#e9ecef'
-                            }
+                            },
+                            stacked: true
                         },
                         x: {
                             ticks: {
@@ -480,7 +498,8 @@
                             },
                             grid: {
                                 display: false
-                            }
+                            },
+                            stacked: true
                         }
                     }
                 }
@@ -509,7 +528,7 @@
             const reviewNeedReviewData = [];
 
             Object.keys(departmentsReview).forEach(deptId => {
-                const data = reviewStatusData[Number(deptId)] || {};
+                const data = reviewStatusData[deptId] || {};
 
                 const needReview = data.need_review ?? 0;
 

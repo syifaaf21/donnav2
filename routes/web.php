@@ -12,6 +12,7 @@ use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DocumentNumberController;
 use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\FtppApprovalController;
 use App\Http\Controllers\FtppController;
@@ -144,6 +145,13 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
     Route::resource('users', UserController::class);
 });
 
+// Recycle bin routes (Super Admin only)
+Route::middleware(['auth', 'role:Super Admin'])->group(function () {
+    Route::get('/recycle-bin', [\App\Http\Controllers\RecycleBinController::class, 'index'])->name('recycle.index');
+    Route::post('/recycle-bin/{id}/restore', [\App\Http\Controllers\RecycleBinController::class, 'restore'])->name('recycle.restore');
+    Route::post('/recycle-bin/{id}/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'forceDelete'])->name('recycle.force-delete');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
@@ -154,6 +162,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
 
     // Dashboard & Profile
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/document-number/generate', [DocumentNumberController::class, 'generate'])->name('document-number.generate');
     Route::get('/dashboard/control', [DashboardController::class, 'controlDashboard'])->name('dashboard.control');
     Route::get('/dashboard/review', [DashboardController::class, 'reviewDashboard'])->name('dashboard.review');
     Route::get('/dashboard/ftpp', [DashboardController::class, 'ftppDashboard'])->name('dashboard.ftpp');

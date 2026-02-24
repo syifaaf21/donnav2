@@ -93,19 +93,28 @@
                         $slug = \Illuminate\Support\Str::slug($plant);
                         $isActive = ($loop->first && !$lastTab) || ($lastTab && $lastTab === $slug);
 
+                        // Case-insensitive check: build lowercase keys for comparison
+                        $codeKeysLower = $documentsByCode->keys()->map(fn($k) => strtolower($k));
                         $plantRoots = $documents
                             ->where('parent_id', null)
-                            ->filter(fn($doc) => $documentsByCode->has($doc->code));
+                            ->filter(function($doc) use ($codeKeysLower) {
+                                return $codeKeysLower->contains(strtolower($doc->code));
+                            });
                     @endphp
                     <div id="tab-content-{{ $slug }}" role="tabpanel" aria-labelledby="tab-{{ $slug }}"
                         class="tab-pane fade {{ $isActive ? 'show active' : '' }}">
                         <ul class="space-y-2">
-                            @foreach ($plantRoots as $document)
-                                @include('contents.document-review.partials.tree-node', [
-                                    'document' => $document,
-                                    'plant' => $plant,
-                                ])
-                            @endforeach
+                                            @foreach ($plantRoots as $document)
+                                                @php
+                                                    $mappingsForCode = $documentsByCode->get($document->code, collect());
+                                                @endphp
+                                                @include('contents.document-review.partials.tree-node', [
+                                                    'document' => $document,
+                                                    'plant' => $plant,
+                                                    'documentsByCode' => $documentsByCode,
+                                                    'mappingsForCode' => $mappingsForCode,
+                                                ])
+                                            @endforeach
                         </ul>
                     </div>
                 @endforeach

@@ -92,17 +92,34 @@ class User extends Authenticatable
     /**
      * Check if user is supervisor
      */
-    public function isSupervisor()
+    // public function isSupervisor()
+    // {
+    //     return $this->roles()->where('name', 'Supervisor')->exists();
+    // }
+
+    /**
+     * Check if user is leader
+     */
+    public function isLeader()
     {
-        return $this->roles()->where('name', 'Supervisor')->exists();
+        return $this->roles()->where('name', 'Leader')->exists();
     }
 
     /**
      * Check if user is supervisor of specific department
      */
-    public function isSupervisorOfDepartment($departmentId)
+    // public function isSupervisorOfDepartment($departmentId)
+    // {
+    //     return $this->isSupervisor() &&
+    //            $this->departments()->where('tm_departments.id', $departmentId)->exists();
+    // }
+
+    /**
+     * Check if user is leader of specific department
+     */
+    public function isLeaderOfDepartment($departmentId)
     {
-        return $this->isSupervisor() &&
+        return $this->isLeader() &&
                $this->departments()->where('tm_departments.id', $departmentId)->exists();
     }
 
@@ -114,6 +131,15 @@ class User extends Authenticatable
      */
     public function canEditDocument($mapping)
     {
-        return $this->isSupervisorOfDepartment($mapping->department_id);
+        // Allow department Leader or Supervisor to edit/upload document revisions
+        $isInDepartment = $this->departments()->where('tm_departments.id', $mapping->department_id)->exists();
+        if (! $isInDepartment) {
+            return false;
+        }
+
+        $isLeader = $this->roles()->where('name', 'Leader')->exists();
+        $isSupervisor = $this->roles()->where('name', 'Supervisor')->exists();
+
+        return $isLeader || $isSupervisor;
     }
 }

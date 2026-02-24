@@ -300,7 +300,13 @@
                                                     {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->index + 1 }}
                                                 </td>
                                                 <td class="px-4 py-3 border-r border-gray-200 text-xs font-medium">
-                                                    {{ $doc->document_number }}</td>
+                                                    <div class="flex flex-col">
+                                                        <span class="font-medium">{{ $doc->document_number }}</span>
+                                                        <span class="text-[11px] text-gray-500">
+                                                            {{ optional($doc->department)->name ?? 'Unknown' }}
+                                                        </span>
+                                                    </div>
+                                                </td>
                                                 <td class="px-4 py-3 border-r border-gray-200 text-xs">
                                                     {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
                                                 </td>

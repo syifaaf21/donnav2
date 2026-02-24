@@ -71,13 +71,10 @@
                                                 class="text-danger">*</span></label>
                                         <select name="plant"
                                             class="form-select border-0 shadow-sm rounded-3 tom-select" required>
-                                            <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>
-                                                Body</option>
-                                            <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>
-                                                Unit</option>
-                                            <option value="electric"
-                                                {{ $mapping->plant == 'electric' ? 'selected' : '' }}>
-                                                Electric</option>
+                                            <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>Body</option>
+                                            <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>Unit</option>
+                                            <option value="electric" {{ $mapping->plant == 'electric' ? 'selected' : '' }}>Electric</option>
+                                            <option value="all" {{ $mapping->plant == 'all' ? 'selected' : '' }}>ALL</option>
                                         </select>
                                     </div>
 
@@ -287,13 +284,23 @@
             document.querySelectorAll('[id^="editForm-"]').forEach(form => {
                 // Tambahkan loading pada tombol submit saat form disubmit
                 form.addEventListener('submit', function() {
+                    // Sync TomSelect values to original selects before submit
+                    try {
+                        syncSelectFromTom(tsModel, modelEl);
+                        syncSelectFromTom(tsProduct, prodEl);
+                        syncSelectFromTom(tsProcess, procEl);
+                        syncSelectFromTom(tsPart, partEl);
+                        if (tsDept && deptEl) deptEl.value = tsDept.getValue() || '';
+                        if (tsDoc && docEl) docEl.value = tsDoc.getValue() || '';
+                    } catch (e) {
+                        console.error('Sync on submit failed', e);
+                    }
+
                     // Cari tombol submit di seluruh dokumen yang memiliki atribut form sesuai id form
-                    const submitBtn = document.querySelector('button[type="submit"][form="' + form
-                        .id + '"]');
+                    const submitBtn = document.querySelector('button[type="submit"][form="' + form.id + '"]');
                     if (submitBtn) {
                         submitBtn.dataset.originalText = submitBtn.innerHTML;
-                        submitBtn.innerHTML =
-                            '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
                         submitBtn.disabled = true;
                     }
                 });
@@ -322,6 +329,77 @@
                 const tsDept = createTS(deptEl);
                 const tsDoc = createTS(docEl);
 
+                // --- Helper: debounce ---
+                const debounce = (fn, wait = 200) => {
+                    let t;
+                    return (...args) => {
+                        clearTimeout(t);
+                        t = setTimeout(() => fn.apply(this, args), wait);
+                    };
+                };
+
+                // --- Helper: sync TomSelect -> original select element ---
+                // Marks auto-added options with data-generated so we can remove them if unselected
+                const syncSelectFromTom = (ts, orig) => {
+                    if (!ts || !orig) return;
+                    const vals = (Array.isArray(ts.getValue()) ? ts.getValue() : (ts.getValue() ? [ts.getValue()] : [])) || [];
+                    // Ensure options exist for selected values
+                    vals.forEach(v => {
+                        if (!orig.querySelector('option[value="' + v + '"]')) {
+                            const opt = document.createElement('option');
+                            opt.value = v;
+                            opt.text = (ts.options && ts.options[v] && (ts.options[v].text || ts.options[v].name)) || v;
+                            opt.setAttribute('data-generated', '1');
+                            orig.appendChild(opt);
+                        }
+                    });
+                    // Remove previously generated options that are no longer selected
+                    Array.from(orig.querySelectorAll('option[data-generated="1"]')).forEach(opt => {
+                        if (!vals.includes(opt.value)) opt.remove();
+                    });
+                    // Mark selected flags
+                    Array.from(orig.options).forEach(opt => {
+                        opt.selected = vals.includes(opt.value);
+                    });
+                };
+
+                // Track whether user manually modified a field to avoid auto-fill overwrites
+                const userModified = {
+                    model: false,
+                    product: false,
+                    process: false,
+                    part: false
+                };
+
+                // When user changes TomSelect values, sync immediately and mark as modified
+                if (tsModel) tsModel.on('change', val => {
+                    if (isInitializing || isAutoFillingFromPart) return;
+                    userModified.model = true;
+                    syncSelectFromTom(tsModel, modelEl);
+                    generateDocumentNumberEdit();
+                });
+
+                if (tsProduct) tsProduct.on('change', val => {
+                    if (isInitializing || isAutoFillingFromPart) return;
+                    userModified.product = true;
+                    syncSelectFromTom(tsProduct, prodEl);
+                    generateDocumentNumberEdit();
+                });
+
+                if (tsProcess) tsProcess.on('change', val => {
+                    if (isInitializing || isAutoFillingFromPart) return;
+                    userModified.process = true;
+                    syncSelectFromTom(tsProcess, procEl);
+                    generateDocumentNumberEdit();
+                });
+
+                if (tsPart) tsPart.on('change', val => {
+                    if (isInitializing) return;
+                    userModified.part = true;
+                    syncSelectFromTom(tsPart, partEl);
+                    // existing part handler below will run as well; keep behavior
+                });
+
                 // Flag to prevent triggering cascade during initialization
                 let isInitializing = false;
 
@@ -335,14 +413,32 @@
                         tsDept.disable();
                         return;
                     }
-                    const p = encodeURIComponent(plant);
-                    const [models, products, processes, departments, parts] = await Promise.all([
-                        fetchJson(`/api/models?plant=${p}`),
-                        fetchJson(`/api/products?plant=${p}`),
-                        fetchJson(`/api/processes?plant=${p}`),
-                        fetchJson(`/api/departments?plant=${p}`),
-                        fetchJson(`/api/part-numbers?plant=${p}`)
-                    ]);
+                        // If plant === 'all' we request unfiltered lists for
+                        // models/products/processes/parts, but departments should be
+                        // requested with plant=all so department filters apply.
+                        let modelsUrl, productsUrl, processesUrl, departmentsUrl, partsUrl;
+                        if (plant === 'all') {
+                            modelsUrl = `/api/models`;
+                            productsUrl = `/api/products`;
+                            processesUrl = `/api/processes`;
+                            partsUrl = `/api/part-numbers`;
+                            departmentsUrl = `/api/departments?plant=all`;
+                        } else {
+                            const p = encodeURIComponent(plant);
+                            modelsUrl = `/api/models?plant=${p}`;
+                            productsUrl = `/api/products?plant=${p}`;
+                            processesUrl = `/api/processes?plant=${p}`;
+                            partsUrl = `/api/part-numbers?plant=${p}`;
+                            departmentsUrl = `/api/departments?plant=${p}`;
+                        }
+
+                        const [models, products, processes, departments, parts] = await Promise.all([
+                            fetchJson(modelsUrl),
+                            fetchJson(productsUrl),
+                            fetchJson(processesUrl),
+                            fetchJson(departmentsUrl),
+                            fetchJson(partsUrl)
+                        ]);
                     setOptions(tsModel, models || []);
                     setOptions(tsProduct, products || []);
                     setOptions(tsProcess, processes || []);
@@ -369,7 +465,7 @@
                 });
 
                 tsPart.on("change", async val => {
-                    if (isInitializing) return; // Skip during init
+                    if (isInitializing) return;
 
                     if (!val || val.length === 0) {
                         const currentPlant = tsPlant.getValue();
@@ -381,11 +477,12 @@
 
                     if (!Array.isArray(val)) val = [val];
 
+                    isAutoFillingFromPart = true; // 🔥 start lock
+
                     let allProducts = [],
                         allModels = [],
                         allProcesses = [];
 
-                    // Batch fetch all part details
                     const detailPromises = val.map(partId =>
                         fetchJson(`/api/part-number-details/${encodeURIComponent(partId)}`)
                     );
@@ -404,27 +501,39 @@
                     const formatTS = arr => arr.map(i => ({
                         value: i.id,
                         text: i.text ?? i.name ?? i.part_number ?? String(i.id),
-                        name: i.text ?? i.name ?? i.part_number ?? String(i.id),
                     }));
 
-                    // Update dropdowns
-                    tsProduct.clear(true);
-                    tsProduct.clearOptions();
-                    tsProduct.addOptions(formatTS(uniqueById(allProducts)));
-                    tsProduct.setValue(uniqueById(allProducts).map(p => p.id));
-                    tsProduct.enable();
+                        // Only auto-fill fields that the user hasn't manually modified
+                        if (!userModified.product) {
+                            tsProduct.clear(true);
+                            tsProduct.clearOptions();
+                            tsProduct.addOptions(formatTS(uniqueById(allProducts)));
+                            tsProduct.setValue(uniqueById(allProducts).map(p => p.id), true);
+                            // sync to original select
+                            syncSelectFromTom(tsProduct, prodEl);
+                        }
 
-                    tsModel.clear(true);
-                    tsModel.clearOptions();
-                    tsModel.addOptions(formatTS(uniqueById(allModels)));
-                    tsModel.setValue(uniqueById(allModels).map(m => m.id));
-                    tsModel.enable();
+                        if (!userModified.model) {
+                            tsModel.clear(true);
+                            tsModel.clearOptions();
+                            tsModel.addOptions(formatTS(uniqueById(allModels)));
+                            tsModel.setValue(uniqueById(allModels).map(m => m.id), true);
+                            // sync to original select
+                            syncSelectFromTom(tsModel, modelEl);
+                        }
 
-                    tsProcess.clear(true);
-                    tsProcess.clearOptions();
-                    tsProcess.addOptions(formatTS(uniqueById(allProcesses)));
-                    tsProcess.setValue(uniqueById(allProcesses).map(p => p.id));
-                    tsProcess.enable();
+                        if (!userModified.process) {
+                            tsProcess.clear(true);
+                            tsProcess.clearOptions();
+                            tsProcess.addOptions(formatTS(uniqueById(allProcesses)));
+                            tsProcess.setValue(uniqueById(allProcesses).map(p => p.id), true);
+                            // sync to original select
+                            syncSelectFromTom(tsProcess, procEl);
+                        }
+
+                    isAutoFillingFromPart = false; // 🔥 release lock
+
+                    generateDocumentNumberEdit();
                 });
 
 
@@ -466,7 +575,76 @@
                     }, 100);
                 });
 
+                const documentNumberInput = form.querySelector('[name="document_number"]');
 
+                async function generateDocumentNumberEditImmediate() {
+                    if (isInitializing || isAutoFillingFromPart) return;
+
+                    const documentId = tsDoc.getValue();
+                    const departmentId = tsDept.getValue();
+                    const productIds = tsProduct.getValue() || [];
+                    const processIds = tsProcess.getValue() || [];
+                    const modelIds = tsModel.getValue() || [];
+
+                    // Minimal required
+                    if (!documentId || !departmentId) {
+                        if (documentNumberInput) documentNumberInput.value = '';
+                        return;
+                    }
+
+                    const payload = {
+                        document_id: Number(documentId),
+                        department_id: Number(departmentId),
+                        product_id: productIds.length ? Number(productIds[0]) : null,
+                        process_id: processIds.length ? Number(processIds[0]) : null,
+                        model_id: modelIds.length ? Number(modelIds[0]) : null,
+                        format: 3,
+                    };
+
+                    // Immediate feedback
+                    if (documentNumberInput) documentNumberInput.value = 'Generating...';
+
+                    try {
+                        const res = await fetch('{{ route('document-number.generate') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!res.ok) throw new Error('Failed to generate');
+                        const json = await res.json();
+
+                        if (json?.success && documentNumberInput) {
+                            documentNumberInput.value = json.document_number;
+                        }
+
+                    } catch (err) {
+                        console.error('Generate edit error:', err);
+                        if (documentNumberInput) documentNumberInput.value = '';
+                    }
+                }
+
+                const generateDocumentNumberEdit = debounce(generateDocumentNumberEditImmediate, 180);
+
+                tsDoc.on('change', () => generateDocumentNumberEdit());
+                tsDept.on('change', () => generateDocumentNumberEdit());
+                tsProduct.on('change', () => {
+                    syncSelectFromTom(tsProduct, prodEl);
+                    generateDocumentNumberEdit();
+                });
+                tsProcess.on('change', () => {
+                    syncSelectFromTom(tsProcess, procEl);
+                    generateDocumentNumberEdit();
+                });
+                tsModel.on('change', () => {
+                    syncSelectFromTom(tsModel, modelEl);
+                    generateDocumentNumberEdit();
+                });
+
+                let isAutoFillingFromPart = false;
             });
         });
     </script>

@@ -376,6 +376,7 @@
                                                             data-docid="{{ $mapping->id }}"
                                                             data-doc-title="{{ $mapping->document->name }}"
                                                             data-status="{{ $mapping->status->name }}"
+                                                            data-reminder="{{ $mapping->reminder_date ?? $mapping->reminder ?? '' }}"
                                                             data-files='@json($mapping->files_for_modal_all)'
                                                             onclick="openReviseModal(this)" title="Upload">
                                                             <i class="bi bi-upload"></i>
@@ -490,6 +491,8 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // current user admin flag (Admin or Super Admin)
+            const currentUserIsAdmin = @json(in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']));
             // Filter Status Dropdown
             const filterStatusBtn = document.getElementById('filterStatusBtn');
             const filterStatusDropdown = document.getElementById('filterStatusDropdown');
@@ -828,21 +831,45 @@
 
             function updateActionButtonsByStatus(container) {
                 container.querySelectorAll('.btn-revise, .btn-approve, .btn-reject').forEach(btn => {
-                    const status = btn.dataset.status?.trim();
+                    // Determine status (prefer button dataset, otherwise fallback to row)
+                    let status = btn.dataset.status?.trim();
+                    const row = btn.closest('tr');
+                    if ((!status || status === '') && row) {
+                        const dsEl = row.querySelector('[data-status]');
+                        if (dsEl && dsEl.dataset.status) {
+                            status = dsEl.dataset.status.trim();
+                        } else {
+                            const statusEl = row.querySelector('.self-start.inline-flex');
+                            if (statusEl) status = statusEl.textContent.trim();
+                        }
+                    }
+
                     const type = btn.classList.contains('btn-revise') ? 'revise' :
                         btn.classList.contains('btn-approve') ? 'approve' :
                         'reject';
 
                     let enabled = false;
 
-                    // Revise aktif untuk Active, Rejected, Obsolete, Uncomplete
-                    if (type === 'revise' && ['Active', 'Rejected', 'Obsolete', 'Uncomplete'].includes(
-                            status)) {
-                        enabled = true;
+                    // Revise: admins always see it; others see for Rejected/Obsolete/Uncomplete,
+                    // and for Active only if reminder is today
+                    if (type === 'revise') {
+                        if (currentUserIsAdmin) {
+                            enabled = true;
+                        } else if (['Rejected', 'Obsolete', 'Uncomplete'].includes(status)) {
+                            enabled = true;
+                        } else if (status === 'Active') {
+                            // check reminder date on button or row
+                            let reminderStr = btn.dataset.reminder;
+                            if (!reminderStr && row) {
+                                const remEl = row.querySelector('.reminder-date');
+                                reminderStr = remEl ? (remEl.dataset.reminder || remEl.textContent.trim()) : null;
+                            }
+                            if (isToday(reminderStr)) enabled = true;
+                        }
                     }
 
                     // Approve/Reject hanya aktif saat Need Review
-                    if (['approve', 'reject'].includes(type) && status === 'Need Review') {
+                    if ((type === 'approve' || type === 'reject') && status === 'Need Review') {
                         enabled = true;
                     }
 
@@ -853,6 +880,26 @@
                         btn.style.display = ''; // Tampilkan
                     }
                 });
+            }
+
+            // Helper: returns true when dateStr represents today's date (YYYY-MM-DD or other parseable)
+            function isToday(dateStr) {
+                if (!dateStr) return false;
+                const cleaned = dateStr.trim();
+                const dateOnly = cleaned.split(' ')[0];
+                // Normalize separators
+                const normalized = dateOnly.replace(/\//g, '-');
+                // If looks like YYYY-MM-DD or YYYY-M-D
+                const parts = normalized.split('-');
+                let d;
+                if (parts.length === 3 && parts[0].length === 4) {
+                    d = new Date(normalized + 'T00:00:00');
+                } else {
+                    d = new Date(cleaned);
+                }
+                if (isNaN(d.getTime())) return false;
+                const now = new Date();
+                return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
             }
 
 
