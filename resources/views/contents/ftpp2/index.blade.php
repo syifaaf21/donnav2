@@ -427,8 +427,14 @@
                                             <span class="{{ $statusClass }} p-1 rounded">{{ $statusName }}</span>
                                         </td>
                                         <td
-                                            class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">
-                                            {{ (!empty($finding->auditors) && $finding->auditors->isNotEmpty()) ? $finding->auditors->pluck('name')->join(', ') : (optional($finding->auditor)->name ?? $finding->auditor_name ?? '-') }}</td>
+                                            class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
+                                            @if((!empty($finding->auditors) && $finding->auditors->isNotEmpty()))
+                                                title="{{ $finding->auditors->pluck('name')->join(', ') }}"
+                                            @else
+                                                title="{{ optional($finding->auditor)->name ?? $finding->auditor_name ?? '-' }}"
+                                            @endif>
+                                            {{ (!empty($finding->auditors) && $finding->auditors->isNotEmpty()) ? $finding->auditors->pluck('name')->join(', ') : (optional($finding->auditor)->name ?? $finding->auditor_name ?? '-') }}
+                                        </td>
                                         <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200 truncate max-w-[150px]"
                                             @if ($finding->auditee && $finding->auditee->isNotEmpty()) title="{{ $finding->auditee->pluck('name')->join(', ') }}" @endif>
 
@@ -570,18 +576,18 @@
                                                             @endif
 
                                                             {{-- APPROVE (Auditor) --}}
-                                                            @if ($statusName === 'need approval by auditor' && ($canAuditor || $canDeptHead || $canAdmin || $isAuditee))
+                                                            {{-- @if ($statusName === 'need approval by auditor' && ($canAuditor || $canDeptHead || $canAdmin || $isAuditee))
                                                                 <button type="button" onclick="confirmApprove({{ $finding->id }}, 'auditor')" class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-700 hover:bg-gray-50 transition">
                                                                     <i data-feather="check-circle" class="w-4 h-4"></i> Approve
                                                                 </button>
-                                                            @endif
+                                                            @endif --}}
 
                                                             {{-- APPROVE (Lead Auditor) --}}
-                                                            @if ($statusName === 'need approval by lead auditor' && ($canLead || $canAdmin || $canAnyApprover))
+                                                            {{-- @if ($statusName === 'need approval by lead auditor' && ($canLead || $canAdmin || $canAnyApprover))
                                                                 <button type="button" onclick="confirmApprove({{ $finding->id }}, 'lead')" class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-700 hover:bg-gray-50 transition">
                                                                     <i data-feather="check-circle" class="w-4 h-4"></i> Approve
                                                                 </button>
-                                                            @endif
+                                                            @endif --}}
 
                                                             {{-- DELETE --}}
                                                             @php
