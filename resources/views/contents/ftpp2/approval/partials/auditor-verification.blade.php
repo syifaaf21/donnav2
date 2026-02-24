@@ -143,6 +143,9 @@
 </table>
 
 <script>
+    // Expose server-side role and auth id to JS
+    const isLeadAuditor = @json($userIsLead ?? false);
+    const authUserId = @json(auth()->id());
     // Ensure SweetAlert2 is loaded; if not, load it dynamically
     async function ensureSwal() {
         if (typeof Swal !== 'undefined') return Promise.resolve();
@@ -246,7 +249,12 @@
     async function verifyLeadAuditor() {
         await ensureSwal();
         const auditeeActionId = document.getElementById('auditee_action_id')?.value;
-        const leadAuditorId = document.getElementById('lead_auditor_select')?.value;
+        // Try to read selected lead auditor from DOM; if not present and current
+        // user is a Lead Auditor, fall back to authenticated user id.
+        let leadAuditorId = document.getElementById('lead_auditor_select')?.value;
+        if (!leadAuditorId && isLeadAuditor) {
+            leadAuditorId = authUserId;
+        }
 
         if (!auditeeActionId) {
             return Swal.fire({
@@ -257,6 +265,7 @@
         }
 
         if (!leadAuditorId) {
+            // Only show the missing-selection warning to admins/super-admins
             return Swal.fire({
                 icon: 'warning',
                 title: 'Missing',
