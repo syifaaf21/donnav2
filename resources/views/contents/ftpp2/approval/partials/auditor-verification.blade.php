@@ -66,18 +66,36 @@
             <!-- NAME FIELD -->
             <div>
                 <span class="text-sm font-semibold my-1">Lead Auditor</span>
-                <!-- SELECT LEAD AUDITOR DROPDOWN -->
-                <div class="mb-2">
-                    <label class="block text-xs font-semibold mb-1">Select Lead Auditor</label>
-                    <select id="lead_auditor_select" x-model="form.selected_lead_auditor_id"
-                        class="w-full border border-gray-400 rounded p-2 text-xs">
-                        <option value="">-- Choose Lead Auditor --</option>
-                        @foreach ($leadAuditors as $auditor)
-                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="text-center text-gray-700" x-text="form.auditeeAction?.leadAuditor?.name || '-'">-</div>
+                @php
+                    $userRoleNames = auth()->user()->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray();
+                    $userIsAdmin = in_array('admin', $userRoleNames) || in_array('super admin', $userRoleNames);
+                    $userIsLead = in_array('lead auditor', $userRoleNames);
+                @endphp
+
+                <!-- Select visible only to Admin / Super Admin -->
+                @if ($userIsAdmin)
+                    <div class="mb-2">
+                        <label class="block text-xs font-semibold mb-1">Select Lead Auditor</label>
+                        <select id="lead_auditor_select" x-model="form.selected_lead_auditor_id"
+                            class="w-full border border-gray-400 rounded p-2 text-xs">
+                            <option value="">-- Choose Lead Auditor --</option>
+                            @foreach ($leadAuditors as $auditor)
+                                <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="text-center text-gray-700" x-text="form.auditeeAction?.leadAuditor?.name || '-'">-</div>
+                @else
+                    @if ($userIsLead)
+                        <!-- If current user is Lead Auditor, auto-fill selection via hidden input -->
+                        <input type="hidden" id="lead_auditor_select" x-model="form.selected_lead_auditor_id"
+                            value="{{ auth()->id() }}">
+                        <div class="text-center text-gray-700">{{ auth()->user()->name }}</div>
+                    @else
+                        <!-- Non-admins see the chosen lead auditor name only -->
+                        <div class="text-center text-gray-700" x-text="form.auditeeAction?.leadAuditor?.name || '-'">-</div>
+                    @endif
+                @endif
             </div>
         </td>
 
