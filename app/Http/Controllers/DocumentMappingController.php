@@ -55,10 +55,12 @@ class DocumentMappingController extends Controller
                 ->whereHas('document', function ($q) {
                     $q->where('type', 'review');
                 })
+                ->whereNotNull('plant')
+                ->whereRaw('LOWER(plant) != ?', ['all'])
                 ->whereHas('partNumber', function ($q) use ($plant) {
-                    $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
-                })
-                                ->whereNull('marked_for_deletion_at');
+                        $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
+                    })
+                                    ->whereNull('marked_for_deletion_at');
 
             // Search by part number (tetap)
             $search = trim($request->search);
@@ -173,6 +175,8 @@ class DocumentMappingController extends Controller
                 'parent',
             ])
                 ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereNotNull('plant')
+                ->whereRaw('LOWER(plant) != ?', ['all'])
                 ->whereHas(
                     'partNumber',
                     fn($q2) =>
@@ -311,7 +315,13 @@ class DocumentMappingController extends Controller
             'parent',
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->whereDoesntHave('partNumber');
+            ->where(function($q) {
+                // Show mappings that are explicitly marked as 'all' (Other) or
+                // that don't have a part number attached.
+                $q->whereNull('plant')
+                  ->orWhereRaw('LOWER(plant) = ?', ['all'])
+                  ->orWhereDoesntHave('partNumber');
+            });
 
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
@@ -487,8 +497,12 @@ class DocumentMappingController extends Controller
             }
         }
 
+        // Normalize plant: when user selects 'all' we store 'all' in DB so
+        // it's visible in the DB enum. Views treat 'all' as Other/Manual Entry.
+        $plantValue = ($request->plant === 'all') ? 'all' : $request->plant;
+
         $mapping = DocumentMapping::create([
-            'plant' => $request->plant,
+            'plant' => $plantValue,
             'document_id' => $validated['document_id'],
             'document_number' => $validated['document_number'],
             'parent_id' => $validated['parent_id'] ?? null,
@@ -508,6 +522,11 @@ class DocumentMappingController extends Controller
         $products = $validated['product_id'] ?? [];
         $processes = $validated['process_id'] ?? [];
         $partNumbers = $validated['part_number_id'] ?? [];
+
+        // Note: we keep syncing selected part numbers even when UI plant === 'all',
+        // but we store `plant` as null so the mapping is considered "Other / Manual Entry".
+        // The index queries exclude mappings with null `plant`, so these will not
+        // appear under specific plant tabs even when part numbers are attached.
 
         $mapping->partNumber()->sync($partNumbers);
         $mapping->productModel()->sync($models);
@@ -546,8 +565,9 @@ class DocumentMappingController extends Controller
         }
 
         // Redirect dengan plant parameter agar tab otomatis pindah ke plant yang sesuai
-        // Jika tidak ada part_number, arahkan ke tab "Other / Manual Entry"
-        if (empty($request->part_number_id)) {
+        // Jika user memilih plant = 'all' (UI-only) maka simpan di tab "Other / Manual Entry",
+        // juga jika tidak ada part_number.
+        if ($request->plant === 'all' || empty($request->part_number_id)) {
             $plant = 'other-manual-entry';
         } else {
             $plant = strtolower($request->plant ?? 'body');
@@ -567,7 +587,7 @@ class DocumentMappingController extends Controller
 
         // Validasi
         $validated = $request->validate([
-            'plant' => 'required|in:body,unit,electric',
+            'plant' => 'required|in:body,unit,electric,all',
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
             'model_id' => 'nullable|array',

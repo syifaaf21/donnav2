@@ -67,10 +67,11 @@
                                 <select name="plant" id="plant_select"
                                     class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
                                     required>
-                                    <option value="">-- Select Plant --</option>
-                                    <option value="body">Body</option>
-                                    <option value="unit">Unit</option>
-                                    <option value="electric">Electric</option>
+                                        <option value="">-- Select Plant --</option>
+                                        <option value="all">ALL</option>
+                                        <option value="body">Body</option>
+                                        <option value="unit">Unit</option>
+                                        <option value="electric">Electric</option>
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -324,13 +325,31 @@
                 tsProcess.enable();
                 tsDept.enable();
 
-                // Fetch data filtered by plant
+                // Fetch data. If plant == 'all' we request unfiltered lists for model/product/process/part,
+                // but departments should be the full set (i.e. not filtered) when 'all' is chosen.
+                let partsUrl, productsUrl, modelsUrl, processesUrl, departmentsUrl;
+                if (plant === 'all') {
+                    partsUrl = `/api/part-numbers`;
+                    productsUrl = `/api/products`;
+                    modelsUrl = `/api/models`;
+                    processesUrl = `/api/processes`;
+                    // request departments for plant=all only
+                    departmentsUrl = `/api/departments?plant=all`;
+                } else {
+                    const p = encodeURIComponent(plant);
+                    partsUrl = `/api/part-numbers?plant=${p}`;
+                    productsUrl = `/api/products?plant=${p}`;
+                    modelsUrl = `/api/models?plant=${p}`;
+                    processesUrl = `/api/processes?plant=${p}`;
+                    departmentsUrl = `/api/departments?plant=${p}`;
+                }
+
                 const [parts, products, models, processes, departments] = await Promise.all([
-                    safeFetchJson(`/api/part-numbers?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/products?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/models?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/processes?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/departments?plant=${encodeURIComponent(plant)}`)
+                    safeFetchJson(partsUrl),
+                    safeFetchJson(productsUrl),
+                    safeFetchJson(modelsUrl),
+                    safeFetchJson(processesUrl),
+                    safeFetchJson(departmentsUrl)
                 ]);
 
                 // Clear and repopulate each dropdown
@@ -489,6 +508,9 @@
             form.addEventListener('submit', function() {
                 hiddenInput.value = quill.root.innerHTML;
 
+                // Do not clear plant 'all' here — allow server to receive 'all' so it can be
+                // handled (we treat 'all' as Other/Manual Entry tab).
+
                 // Temukan tombol submit
                 const submitBtn = form.querySelector('button[type="submit"]');
                 if (submitBtn) {
@@ -535,13 +557,29 @@
 
                     // Trigger change event untuk load data dari API
                     setTimeout(async () => {
-                        // Manually trigger the plant change to load filtered data
+                        // Manually trigger the plant change to load data. If oldPlant == 'all', fetch unfiltered lists.
+                        let partsUrl2, productsUrl2, modelsUrl2, processesUrl2, departmentsUrl2;
+                        if (oldPlant === 'all') {
+                            partsUrl2 = `/api/part-numbers`;
+                            productsUrl2 = `/api/products`;
+                            modelsUrl2 = `/api/models`;
+                            processesUrl2 = `/api/processes`;
+                            // request departments for plant=all only
+                            departmentsUrl2 = `/api/departments?plant=all`;
+                        } else {
+                            partsUrl2 = `/api/part-numbers?plant=${encodeURIComponent(oldPlant)}`;
+                            productsUrl2 = `/api/products?plant=${encodeURIComponent(oldPlant)}`;
+                            modelsUrl2 = `/api/models?plant=${encodeURIComponent(oldPlant)}`;
+                            processesUrl2 = `/api/processes?plant=${encodeURIComponent(oldPlant)}`;
+                            departmentsUrl2 = `/api/departments?plant=${encodeURIComponent(oldPlant)}`;
+                        }
+
                         const [parts, products, models, processes, departments] = await Promise.all([
-                            safeFetchJson(`/api/part-numbers?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/products?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/models?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/processes?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/departments?plant=${encodeURIComponent(oldPlant)}`)
+                            safeFetchJson(partsUrl2),
+                            safeFetchJson(productsUrl2),
+                            safeFetchJson(modelsUrl2),
+                            safeFetchJson(processesUrl2),
+                            safeFetchJson(departmentsUrl2)
                         ]);
 
                         // Enable fields
