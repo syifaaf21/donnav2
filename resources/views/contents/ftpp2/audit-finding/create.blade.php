@@ -28,7 +28,7 @@
 @section('content')
     <div class="px-6 space-y-4">
         {{-- Show create-audit-finding for: super admin, admin, auditor --}}
-        @if (count(array_intersect($roles, ['super admin', 'admin', 'auditor'])) > 0)
+        @if (count(array_intersect($roles, ['super admin', 'admin', 'lead auditor', 'auditor'])) > 0)
             @include('contents.ftpp2.audit-finding.partials.create-audit-finding')
         @endif
     </div>
