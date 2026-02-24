@@ -26,6 +26,7 @@ use App\Notifications\AuditeeAssignedNotification;
 use App\Notifications\DeptHeadCheckedNotification;
 use App\Notifications\LeadAuditorApprovedNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Log;
 
 class FtppApprovalController extends Controller
 {
@@ -79,61 +80,46 @@ class FtppApprovalController extends Controller
             'auditeeAction.leadAuditor',
         ])->orderByDesc('created_at');
 
-        // ADMIN / SUPER ADMIN
+        // ADMIN / SUPER ADMIN: show lead-auditor queue (unchanged)
         if ($isFullyPrivileged) {
-            // Only show status 'need approval by lead auditor' for admin/super admin
             $query->whereHas('status', function ($q) {
                 $q->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
             });
         } else {
-            // Support users with multiple roles (e.g., dept head + lead auditor)
-            // by allowing findings that match ANY of their role-based filters.
+            // Build an OR-based set of filters so users with multiple roles
+            // see the union of findings related to each role.
             $query->where(function ($q) use ($user, $userRoles, $userDeptIds, $userAuditTypeIds) {
-                $hasAnyRoleFilter = false;
-
-                // Lead Auditor → filter by assigned audit types
-                if (in_array('lead auditor', $userRoles)) {
-                    $hasAnyRoleFilter = true;
-                    if (!empty($userAuditTypeIds)) {
-                        $q->orWhereIn('audit_type_id', $userAuditTypeIds);
-                    } else {
-                        $q->orWhereRaw('0 = 1');
-                    }
+                // Lead Auditor: need approval by lead auditor + matching audit types
+                if (in_array('lead auditor', $userRoles) && !empty($userAuditTypeIds)) {
+                    $q->orWhere(function ($qq) use ($userAuditTypeIds) {
+                        $qq->whereHas('status', function ($qs) {
+                            $qs->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
+                        })->whereIn('audit_type_id', $userAuditTypeIds);
+                    });
                 }
 
-                // Dept Head → only show 'need check' for their department
-                if (in_array('dept head', $userRoles)) {
-                    $hasAnyRoleFilter = true;
-                    if (!empty($userDeptIds)) {
-                        $q->orWhere(function ($qa) use ($userDeptIds) {
-                            $qa->whereHas('status', function ($qs) {
-                                $qs->whereRaw('LOWER(name) = ?', ['need check']);
-                            })->whereIn('department_id', $userDeptIds);
-                        });
-                    } else {
-                        $q->orWhereRaw('0 = 1');
-                    }
+                // Dept Head: need check + matching department(s)
+                if (in_array('dept head', $userRoles) && !empty($userDeptIds)) {
+                    $q->orWhere(function ($qq) use ($userDeptIds) {
+                        $qq->whereHas('status', function ($qs) {
+                            $qs->whereRaw('LOWER(name) = ?', ['need check']);
+                        })->whereIn('department_id', $userDeptIds);
+                    });
                 }
 
-                // Auditor → only show 'need approval by auditor' for their audit type(s)
+                // Auditor: need approval by auditor + assigned as auditor
                 if (in_array('auditor', $userRoles)) {
-                    $hasAnyRoleFilter = true;
-                    if (!empty($userAuditTypeIds)) {
-                        $q->orWhere(function ($qa) use ($user, $userAuditTypeIds) {
-                            $qa->whereHas('status', function ($qs) {
-                                $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                            })->whereHas('auditors', function($q) use ($user) {
-                                $q->where('users.id', $user->id);
-                            })
-                              ->whereIn('audit_type_id', $userAuditTypeIds);
+                    $q->orWhere(function ($qq) use ($user) {
+                        $qq->whereHas('status', function ($qs) {
+                            $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
+                        })->whereHas('auditors', function ($qa) use ($user) {
+                            $qa->where('users.id', $user->id);
                         });
-                    } else {
-                        $q->orWhereRaw('0 = 1');
-                    }
+                    });
                 }
 
-                // Default → department based (applied only when no other role filters exist)
-                if (!$hasAnyRoleFilter) {
+                // Fallback: if the user has none of these roles (edge case), restrict to user's departments
+                if (!in_array('lead auditor', $userRoles) && !in_array('dept head', $userRoles) && !in_array('auditor', $userRoles)) {
                     if (!empty($userDeptIds)) {
                         $q->whereIn('department_id', $userDeptIds);
                     } else {
@@ -141,87 +127,6 @@ class FtppApprovalController extends Controller
                     }
                 }
             });
-        }
-
-        // --- Restrict visibility of some statuses for non-admin users ---
-        // Rules:
-        // 0) Always hide 'draft finding' for non-admin/super admin
-        // 1) 'need check' -> only visible to dept head of that department
-        // 2) 'need approval by auditor' -> only visible to the auditor assigned in auditor_id
-        // 3) 'need approval by lead auditor' -> only visible to lead auditor(s) who have the audit type
-        // Admin / Super Admin can see everything (no extra restriction)
-        if (!in_array('admin', $userRoles) && !in_array('super admin', $userRoles)) {
-            // Build allowed statuses based on user roles. When a user has multiple roles,
-            // show the union of statuses relevant to each role (e.g., dept head + lead auditor
-            // => show 'need check' and 'need approval by lead auditor'). Always hide 'Draft Finding'.
-            $allowedStatuses = [];
-            if (in_array('dept head', $userRoles)) {
-                $allowedStatuses[] = 'need check';
-            }
-            if (in_array('auditor', $userRoles)) {
-                $allowedStatuses[] = 'need approval by auditor';
-            }
-            if (in_array('lead auditor', $userRoles)) {
-                $allowedStatuses[] = 'need approval by lead auditor';
-            }
-
-            // Ensure uniqueness and lowercase for comparison
-            $allowedStatuses = array_values(array_unique(array_map('strtolower', $allowedStatuses)));
-
-            // If no specific role-based statuses computed, fallback to department-based visibility
-            if (!empty($allowedStatuses)) {
-                $query->whereHas('status', function ($qs) use ($allowedStatuses) {
-                    $placeholders = implode(',', array_fill(0, count($allowedStatuses), '?'));
-                    $qs->whereRaw("LOWER(name) IN ($placeholders)", $allowedStatuses);
-                });
-                // Always exclude draft finding
-                $query->whereHas('status', function ($qs) {
-                    $qs->whereRaw("LOWER(name) <> 'draft finding'");
-                });
-            } else {
-                // Keep previous behavior when no role-specific statuses are applicable
-                // (use department-based visibility as before)
-                $restrictedStatuses = ['need check', 'need approval by auditor', 'need approval by lead auditor'];
-                $alwaysHiddenStatuses = ['draft finding'];
-
-                $query->where(function ($q) use ($user, $userRoles, $userDeptIds, $userAuditTypeIds, $restrictedStatuses, $alwaysHiddenStatuses) {
-                    $q->whereHas('status', function ($qs) use ($alwaysHiddenStatuses) {
-                        $placeholders = implode(',', array_fill(0, count($alwaysHiddenStatuses), '?'));
-                        $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $alwaysHiddenStatuses);
-                    });
-
-                    $q->whereHas('status', function ($qs) use ($restrictedStatuses) {
-                        $placeholders = implode(',', array_fill(0, count($restrictedStatuses), '?'));
-                        $qs->whereRaw("LOWER(name) NOT IN ($placeholders)", $restrictedStatuses);
-                    });
-
-                    if (in_array('dept head', $userRoles) && !empty($userDeptIds)) {
-                        $q->orWhere(function ($qa) use ($userDeptIds) {
-                            $qa->whereHas('status', function ($qs) {
-                                $qs->whereRaw('LOWER(name) = ?', ['need check']);
-                            })->whereIn('department_id', $userDeptIds);
-                        });
-                    }
-
-                    if (in_array('auditor', $userRoles)) {
-                        $q->orWhere(function ($qa) use ($user) {
-                            $qa->whereHas('status', function ($qs) {
-                                $qs->whereRaw('LOWER(name) = ?', ['need approval by auditor']);
-                            })->whereHas('auditors', function($q) use ($user) {
-                                $q->where('users.id', $user->id);
-                            });
-                        });
-                    }
-
-                    if (in_array('lead auditor', $userRoles) && !empty($userAuditTypeIds)) {
-                        $q->orWhere(function ($qa) use ($userAuditTypeIds) {
-                            $qa->whereHas('status', function ($qs) {
-                                $qs->whereRaw('LOWER(name) = ?', ['need approval by lead auditor']);
-                            })->whereIn('audit_type_id', $userAuditTypeIds);
-                        });
-                    }
-                });
-            }
         }
 
         $findings = $query->get();
@@ -437,10 +342,10 @@ class FtppApprovalController extends Controller
                     }
                     $recipients = $recipients->unique('id')->filter()->values();
                     if ($recipients->isNotEmpty()) {
-                        Notification::send($recipients, new AuditeeAssignedNotification($auditFinding));
+                        $this->safeNotify($recipients, new AuditeeAssignedNotification($auditFinding));
                     }
                 } catch (\Throwable $e) {
-                    \Log::warning('Notify auditee assigned (approval controller) failed: ' . $e->getMessage());
+                    Log::warning('Notify auditee assigned (approval controller) failed: ' . $e->getMessage());
                 }
 
                 foreach ($validated['sub_klausul_id'] as $subId) {
@@ -689,26 +594,26 @@ class FtppApprovalController extends Controller
             $finding->update(['status_id' => 9]);
 
         // notify auditor and auditees that dept head checked
-        try {
-            $recipients = collect();
-            if ($finding->auditor)
-                $recipients->push($finding->auditor);
-            $recipients = $recipients->merge($finding->auditee()->get());
-            $recipients = $recipients->unique('id')->filter()->values();
+            try {
+                $recipients = collect();
+                if ($finding->auditor)
+                    $recipients->push($finding->auditor);
+                $recipients = $recipients->merge($finding->auditee()->get());
+                $recipients = $recipients->unique('id')->filter()->values();
 
-            if ($recipients->isNotEmpty()) {
-                Notification::send(
-                    $recipients,
-                    new FtppActionNotification(
-                        $finding,
-                        'dept_head_checked',   // action: assigned
-                        auth()->user()?->name
-                    )
-                );
+                if ($recipients->isNotEmpty()) {
+                    $this->safeNotify(
+                        $recipients,
+                        new FtppActionNotification(
+                            $finding,
+                            'dept_head_checked',   // action: assigned
+                            auth()->user()?->name
+                        )
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('FtppActionNotification (dept_head_checked) failed: ' . $e->getMessage());
             }
-        } catch (\Throwable $e) {
-            \Log::warning('FtppActionNotification (dept_head_checked) failed: ' . $e->getMessage());
-        }
 
         return response()->json([
             'success' => true,
@@ -835,7 +740,7 @@ class FtppApprovalController extends Controller
             $recipients = $recipients->unique('id')->filter()->values();
 
             if ($recipients->isNotEmpty()) {
-                Notification::send(
+                $this->safeNotify(
                     $recipients,
                     new FtppActionNotification(
                         $finding,
@@ -881,22 +786,22 @@ class FtppApprovalController extends Controller
             // Hanya kirim notifikasi ke auditee yang tertera di FTPP
             $recipients = $finding->auditee()->get()->unique('id')->filter()->values();
 
-            if ($recipients->isNotEmpty()) {
-                $by = auth()->user()?->name ?? 'Auditor';
-                $reg = $finding->registration_number ?? '-';
-                $reason = $auditeeAction->effectiveness_verification ?? $request->effectiveness_verification;
-                $customMessage = "{$by} has returned the finding (Registration No: {$reg}) for revision. Note: {$reason}";
+                if ($recipients->isNotEmpty()) {
+                    $by = auth()->user()?->name ?? 'Auditor';
+                    $reg = $finding->registration_number ?? '-';
+                    $reason = $auditeeAction->effectiveness_verification ?? $request->effectiveness_verification;
+                    $customMessage = "{$by} has returned the finding (Registration No: {$reg}) for revision. Note: {$reason}";
 
-                Notification::send(
-                    $recipients,
-                    new FtppActionNotification(
-                        $finding,
-                        'auditor_return',
-                        auth()->user()?->name,
-                        $customMessage
-                    )
-                );
-            }
+                    $this->safeNotify(
+                        $recipients,
+                        new FtppActionNotification(
+                            $finding,
+                            'auditor_return',
+                            auth()->user()?->name,
+                            $customMessage
+                        )
+                    );
+                }
         } catch (\Throwable $e) {
             \Log::warning('FtppActionNotification (auditor_return) failed: ' . $e->getMessage());
         }
@@ -938,7 +843,7 @@ class FtppApprovalController extends Controller
             }
             $recipients = $recipients->unique('id')->filter()->values();
             if ($recipients->isNotEmpty()) {
-                Notification::send(
+                $this->safeNotify(
                     $recipients,
                     new FtppActionNotification(
                         $finding,
@@ -952,5 +857,46 @@ class FtppApprovalController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Helper to safely send notifications: always send DB notification to all recipients,
+     * then attempt to send mail only to valid email addresses and catch SMTP errors.
+     */
+    private function safeNotify($recipients, $notification)
+    {
+        try {
+            $recipients = collect($recipients)->filter();
+            if ($recipients->isEmpty()) return;
+
+            // send database notification for all recipients
+            Notification::send($recipients, $notification);
+
+            // prepare mail recipients: users with valid emails and not reserved domains
+            $mailRecipients = $recipients->filter(fn($u) => !empty($u->email))->values();
+            $reserved = ['example.com', 'example.org', 'example.net'];
+            $validMailRecipients = $mailRecipients->filter(function ($u) use ($reserved) {
+                $email = trim(strtolower($u->email ?? ''));
+                if (empty($email)) return false;
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+                $parts = explode('@', $email);
+                if (count($parts) !== 2) return false;
+                $domain = $parts[1];
+                if (in_array($domain, $reserved)) return false;
+                return true;
+            })->values();
+
+            if ($validMailRecipients->isNotEmpty()) {
+                try {
+                    Notification::send($validMailRecipients, $notification);
+                } catch (\Throwable $e) {
+                    Log::warning('safeNotify mail send failed: ' . $e->getMessage());
+                }
+            } else {
+                Log::warning('safeNotify: no valid mail recipients after filtering');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('safeNotify failed: ' . $e->getMessage());
+        }
     }
 }

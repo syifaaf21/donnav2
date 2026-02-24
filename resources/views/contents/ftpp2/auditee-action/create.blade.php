@@ -22,7 +22,7 @@
 @endsection
 
 @php
-    $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
+    $userRoles = auth()->user()->roles->pluck('name')->map(fn($r) => strtolower($r));
 @endphp
 @section('content')
     <div class="mx-auto px-4">
@@ -66,7 +66,7 @@
                     ])
 
                     {{-- Show create-auditee-action for: super admin, admin, user --}}
-                    @if (in_array($role, ['super admin', 'admin', 'user', 'supervisor', 'leader']))
+                    @if ($userRoles->intersect(['super admin', 'admin', 'user', 'supervisor', 'leader', 'dept head'])->isNotEmpty())
                         @php
                             $statusNeedsReview =
                                 ($finding->status->need_review ?? null) === true ||

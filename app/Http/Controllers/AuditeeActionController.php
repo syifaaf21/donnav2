@@ -327,14 +327,38 @@ class AuditeeActionController extends Controller
 
                     // 1️⃣ Notify auditees + auditor that auditee action / assignment exists
                     if ($auditFinding->auditor) {
-                        Notification::send(
-                            $auditFinding->auditor,
-                            new FtppActionNotification(
-                                $auditFinding,
-                                'assigned',
-                                auth()->user()?->name
-                            )
-                        );
+                        try {
+                            $auditorRecipients = collect($auditFinding->auditor)->filter();
+                            if ($auditorRecipients->isNotEmpty()) {
+                                // send DB notification to auditor(s)
+                                Notification::send($auditorRecipients, new FtppActionNotification($auditFinding, 'assigned', auth()->user()?->name));
+
+                                // prepare mail recipients (valid emails only)
+                                $reserved = ['example.com', 'example.org', 'example.net'];
+                                $validAuditorRecipients = $auditorRecipients->filter(function ($u) use ($reserved) {
+                                    $email = trim(strtolower($u->email ?? ''));
+                                    if (empty($email)) return false;
+                                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+                                    $parts = explode('@', $email);
+                                    if (count($parts) !== 2) return false;
+                                    $domain = $parts[1];
+                                    if (in_array($domain, $reserved)) return false;
+                                    return true;
+                                })->values();
+
+                                if ($validAuditorRecipients->isNotEmpty()) {
+                                    try {
+                                        Notification::send($validAuditorRecipients, new FtppActionNotification($auditFinding, 'assigned', auth()->user()?->name));
+                                    } catch (\Throwable $e) {
+                                        \Log::warning('FtppActionNotification (auditor email) send failed: ' . $e->getMessage());
+                                    }
+                                } else {
+                                    \Log::warning('FtppActionNotification: no valid auditor email addresses after filtering');
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            \Log::warning('FtppActionNotification (auditor) failed: ' . $e->getMessage());
+                        }
                     }
 
                     // 2️⃣ Notify Dept Head(s) of the finding's department that review is required
@@ -384,15 +408,39 @@ class AuditeeActionController extends Controller
 
                             // 2) send email-only notification to users that have email addresses
                             if ($mailRecipients->isNotEmpty()) {
-                                Notification::send(
-                                    $mailRecipients,
-                                    new DeptHeadNeedCheckNotification(
-                                        $auditFinding,
-                                        $auditeeAction,
-                                        auth()->user()?->name,
-                                        auth()->user()?->email
-                                    )
-                                );
+                                try {
+                                    $reserved = ['example.com', 'example.org', 'example.net'];
+                                    $validMailRecipients = $mailRecipients->filter(function ($u) use ($reserved) {
+                                        $email = trim(strtolower($u->email ?? ''));
+                                        if (empty($email)) return false;
+                                        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+                                        $parts = explode('@', $email);
+                                        if (count($parts) !== 2) return false;
+                                        $domain = $parts[1];
+                                        if (in_array($domain, $reserved)) return false;
+                                        return true;
+                                    })->values();
+
+                                    if ($validMailRecipients->isNotEmpty()) {
+                                        try {
+                                            Notification::send(
+                                                $validMailRecipients,
+                                                new DeptHeadNeedCheckNotification(
+                                                    $auditFinding,
+                                                    $auditeeAction,
+                                                    auth()->user()?->name,
+                                                    auth()->user()?->email
+                                                )
+                                            );
+                                        } catch (\Throwable $e) {
+                                            \Log::warning('DeptHeadNeedCheckNotification send failed: ' . $e->getMessage());
+                                        }
+                                    } else {
+                                        \Log::warning('DeptHeadNeedCheckNotification: no valid dept head email addresses after filtering for department_id ' . ($deptId ?? 'N/A'));
+                                    }
+                                } catch (\Throwable $e) {
+                                    \Log::warning('DeptHeadNeedCheckNotification (filter) failed: ' . $e->getMessage());
+                                }
                             } else {
                                 \Log::warning('DeptHeadNeedCheckNotification: no dept head email addresses found for department_id ' . ($deptId ?? 'N/A'));
                             }
@@ -738,27 +786,55 @@ class AuditeeActionController extends Controller
                         }
 
                         // database notification for all dept heads
-                        Notification::send(
-                            $allDeptHeads,
-                            new FtppActionNotification(
-                                $auditFinding,
-                                'auditee_revised', // custom action type
-                                null,
-                                $customMessage
-                            )
-                        );
+                        try {
+                            Notification::send(
+                                $allDeptHeads,
+                                new FtppActionNotification(
+                                    $auditFinding,
+                                    'auditee_revised', // custom action type
+                                    null,
+                                    $customMessage
+                                )
+                            );
+                        } catch (\Throwable $e) {
+                            \Log::warning('FtppActionNotification (update DB notify) failed: ' . $e->getMessage());
+                        }
 
                         // send email-only notification to users that have email addresses
                         if ($mailRecipients->isNotEmpty()) {
-                            Notification::send(
-                                $mailRecipients,
-                                new DeptHeadNeedCheckNotification(
-                                    $auditFinding,
-                                    $auditeeAction,
-                                    auth()->user()?->name,
-                                    auth()->user()?->email
-                                )
-                            );
+                            try {
+                                $reserved = ['example.com', 'example.org', 'example.net'];
+                                $validMailRecipients = $mailRecipients->filter(function ($u) use ($reserved) {
+                                    $email = trim(strtolower($u->email ?? ''));
+                                    if (empty($email)) return false;
+                                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+                                    $parts = explode('@', $email);
+                                    if (count($parts) !== 2) return false;
+                                    $domain = $parts[1];
+                                    if (in_array($domain, $reserved)) return false;
+                                    return true;
+                                })->values();
+
+                                if ($validMailRecipients->isNotEmpty()) {
+                                    try {
+                                        Notification::send(
+                                            $validMailRecipients,
+                                            new DeptHeadNeedCheckNotification(
+                                                $auditFinding,
+                                                $auditeeAction,
+                                                auth()->user()?->name,
+                                                auth()->user()?->email
+                                            )
+                                        );
+                                    } catch (\Throwable $e) {
+                                        \Log::warning('DeptHeadNeedCheckNotification (update) send failed: ' . $e->getMessage());
+                                    }
+                                } else {
+                                    \Log::warning('DeptHeadNeedCheckNotification (update): no valid dept head email addresses after filtering for department_id ' . ($deptId ?? 'N/A'));
+                                }
+                            } catch (\Throwable $e) {
+                                \Log::warning('DeptHeadNeedCheckNotification (update filter) failed: ' . $e->getMessage());
+                            }
                         } else {
                             \Log::warning('DeptHeadNeedCheckNotification (update): no dept head email addresses found for department_id ' . ($deptId ?? 'N/A'));
                         }
