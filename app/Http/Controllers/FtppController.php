@@ -495,7 +495,10 @@ class FtppController extends Controller
             $evidenceFiles = $evidenceFiles->merge($finding->auditeeAction->file);
         }
 
-        return view('contents.ftpp2.partials.detail', compact('finding', 'evidenceFiles'));
+        // provide auditeeAction as explicit variable for views that reference it directly
+        $auditeeAction = $finding->auditeeAction ?? null;
+
+        return view('contents.ftpp2.partials.detail', compact('finding', 'evidenceFiles', 'auditeeAction'));
     }
 
     public function previewPdf($id)
@@ -598,13 +601,16 @@ class FtppController extends Controller
         }
         // --- end attach full_url block ---
 
+        // ensure views have direct access to auditeeAction variable
+        $auditeeAction = $finding->auditeeAction ?? null;
+
         // Generate main PDF
         // ensure DomPDF can access local files: enable remote and set chroot to project base
         $mainPdf = PDF::setOptions([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
             'chroot' => base_path(), // allow access to public/storage and storage paths
-        ])->loadView('contents.ftpp2.pdf', compact('finding'))->output();
+        ])->loadView('contents.ftpp2.pdf', compact('finding', 'auditeeAction'))->output();
 
         if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
             // FPDI not installed — return main PDF directly for preview
@@ -954,8 +960,11 @@ class FtppController extends Controller
             }
         }
 
+        // ensure views have direct access to auditeeAction variable
+        $auditeeAction = $finding->auditeeAction ?? null;
+
         // Generate main PDF content
-        $pdf = PDF::loadView('contents.ftpp2.pdf', compact('finding'))
+        $pdf = PDF::loadView('contents.ftpp2.pdf', compact('finding', 'auditeeAction'))
             ->setPaper('a4', 'portrait');
 
         $mainPdfContent = $pdf->output();
