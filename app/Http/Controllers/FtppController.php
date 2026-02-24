@@ -4,26 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Audit;
 use App\Models\AuditFinding;
-use App\Models\AuditeeAction;
 use App\Models\AuditFindingSubKlausul;
-use App\Models\CorrectiveAction;
 use App\Models\Department;
-use App\Models\DocumentFile;
-use App\Models\FindingCategory;
 use App\Models\HeadKlausul;
 use App\Models\Klausul;
-use App\Models\PreventiveAction;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\Status;
-use App\Models\SubAudit;
 use App\Models\SubKlausul;
 use App\Models\User;
-use App\Models\WhyCauses;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Storage;
 
 class FtppController extends Controller
 {
@@ -48,8 +39,31 @@ class FtppController extends Controller
         if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
             // no department/audience filter
         }
-        // Dept Head & Lead Auditor: can see all FTTP in their department(s), but exclude draft/draft finding
-        elseif (!empty($user) && (in_array('dept head', $userRolesLowercase) || in_array('lead auditor', $userRolesLowercase))) {
+        // Lead Auditor: prefer audit-type based view for "created" tab, and auditee-based for "assigned"
+        elseif (!empty($user) && in_array('lead auditor', $userRolesLowercase)) {
+            $userAuditTypeIds = $user->auditTypes->pluck('id')->toArray();
+
+            if ($filterType === 'assigned') {
+                // Assigned: show findings where user is listed as auditee (similar to Auditor assigned)
+                $query->whereHas('auditee', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                })
+                // auditee view should not see draft findings
+                ->whereHas('status', function ($qs) {
+                    $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
+                });
+            } else {
+                // Created: show findings that have audit_type matching user's audit types
+                if (!empty($userAuditTypeIds)) {
+                    $query->whereIn('audit_type_id', $userAuditTypeIds);
+                } else {
+                    // if user has no audit types assigned, show nothing
+                    $query->whereRaw('0 = 1');
+                }
+            }
+        }
+        // Dept Head: can see all FTTP in their department(s), but exclude draft/draft finding
+        elseif (!empty($user) && in_array('dept head', $userRolesLowercase)) {
             $userDeptIds = $user->departments->pluck('id')->toArray();
             if (empty($userDeptIds) && !empty($user->department_id)) {
                 $userDeptIds = [(int) $user->department_id];
@@ -61,7 +75,7 @@ class FtppController extends Controller
                         $qs->whereRaw('LOWER(name) NOT IN (?, ?)', ['draft', 'draft finding']);
                     });
             } else {
-                // if dept head/lead auditor has no department assigned, show nothing
+                // if dept head has no department assigned, show nothing
                 $query->whereRaw('0 = 1');
             }
         }

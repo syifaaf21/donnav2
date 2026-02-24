@@ -28,7 +28,7 @@
         {{-- TAB FILTER FOR AUDITOR --}}
         @php
             $currentUserRoles = auth()->user()->roles->pluck('name')->toArray();
-            $isAuditor = in_array('Auditor', $currentUserRoles);
+            $isAuditor = collect($currentUserRoles)->intersect(['Auditor', 'Lead Auditor'])->isNotEmpty();
         @endphp
 
         @if ($isAuditor)
@@ -233,7 +233,7 @@
                     $userRoles = auth()->user()->roles->pluck('name')->toArray();
                 @endphp
 
-                @if (in_array('Super Admin', $userRoles) || in_array('Admin', $userRoles) || in_array('Auditor', $userRoles))
+                @if (collect($userRoles)->intersect(['Super Admin','Admin','Auditor','Lead Auditor'])->isNotEmpty())
                     <a href="{{ route('ftpp.audit-finding.create') }}"
                         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primaryLight to-primaryDark text-white border border-blue-700 text-sm font-medium
                        shadow-sm hover:bg-blue-200 hover:shadow-md transition-all duration-150">
@@ -464,130 +464,144 @@
                                                         class="absolute bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden"
                                                         :style="`top:${y}px; left:${x}px; width:170px;`">
 
-                                                        @php $statusName = strtolower(optional($finding->status)->name ?? '') @endphp
+                                                        @php
+                                                            $statusName = strtolower(optional($finding->status)->name ?? '');
+                                                            $userRoleNames = collect(optional(auth()->user())->roles)->pluck('name');
+                                                            $isAuditee = collect($finding->auditee ?? [])->pluck('id')->contains(optional(auth()->user())->id);
 
-                                                        <!-- Draft Finding: Only Show Edit and Delete -->
+                                                            // user's audit types (ids) to detect conflicts
+                                                            $currentUser = optional(auth()->user());
+                                                            $userAuditTypeIds = $currentUser && method_exists($currentUser, 'auditTypes') ? $currentUser->auditTypes->pluck('id')->toArray() : [];
+
+                                                            // helpers
+                                                            $canAdmin = $userRoleNames->intersect(['Super Admin', 'Admin'])->isNotEmpty();
+                                                            $canLead = $userRoleNames->contains('Lead Auditor');
+                                                            $canAuditor = $userRoleNames->contains('Auditor');
+                                                            $canDeptHead = $userRoleNames->contains('Dept Head');
+                                                            $canAnyApprover = $userRoleNames->intersect(['Super Admin','Admin','Lead Auditor','Auditor','Dept Head'])->isNotEmpty();
+
+                                                            // viewing/downloading allowed roles (or auditee)
+                                                            $canViewRoles = ['Super Admin','Admin','Auditor','Lead Auditor','Dept Head','User','Leader','Supervisor'];
+                                                            $canView = $userRoleNames->intersect($canViewRoles)->isNotEmpty() || $isAuditee;
+                                                            $canAssignRoles = ['Super Admin','Admin','Auditor','Lead Auditor','Dept Head','User','Leader','Supervisor'];
+                                                            // Auditees should not be granted assign/edit permissions even if listed; remove $isAuditee from allowlist
+                                                            $canAssign = $userRoleNames->intersect($canAssignRoles)->isNotEmpty();
+
+                                                            // If current user is Auditor/Lead Auditor and they share the same audit type as the finding,
+                                                            // treat them as restricted from performing edit/delete to avoid conflict of interest.
+                                                            $hasSameAuditType = false;
+                                                            if (!empty($userAuditTypeIds) && !empty($finding->audit_type_id)) {
+                                                                $hasSameAuditType = in_array($finding->audit_type_id, $userAuditTypeIds);
+                                                            }
+                                                            $isConflictedAuditor = ($userRoleNames->intersect(['Auditor','Lead Auditor'])->isNotEmpty() && $hasSameAuditType);
+                                                        @endphp
+
+                                                        <!-- Draft Finding: Only Show Edit and Delete for admin/auditor/lead -->
                                                         @if ($statusName === 'draft finding')
-                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                                                                <!-- ITEM: Edit -->
-                                                                <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
-                                                                    @click="open = false"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
-                                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                                    Edit
+                                                            @php
+                                                                // allow edit/delete for admins; for auditors/lead auditors ensure no audit-type conflict
+                                                                $allowDraftActions = $userRoleNames->intersect(['Super Admin','Admin'])->isNotEmpty();
+                                                                $allowDraftActions = $allowDraftActions || ($userRoleNames->intersect(['Auditor','Lead Auditor'])->isNotEmpty() && !$isConflictedAuditor);
+                                                            @endphp
+                                                            @if ($allowDraftActions)
+                                                                <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}" @click="open = false" class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i> Edit
                                                                 </a>
 
-                                                                <!-- ITEM: Delete -->
-                                                                <form id="delete-form-{{ $finding->id }}" method="POST"
-                                                                    action="{{ route('ftpp.destroy', $finding->id) }}"
-                                                                    onsubmit="return false;">
+                                                                <form id="delete-form-{{ $finding->id }}" method="POST" action="{{ route('ftpp.destroy', $finding->id) }}" onsubmit="return false;">
                                                                     @csrf
                                                                     @method('DELETE')
-                                                                    <button type="button" @click="open = false"
-                                                                        onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
-                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
-                                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                                        Delete
+                                                                    <button type="button" @click="open = false" onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')" class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
+                                                                        <i data-feather="trash-2" class="w-4 h-4"></i> Delete
                                                                     </button>
                                                                 </form>
                                                             @endif
-                                                            <!-- Non Draft Finding: Show other options -->
                                                         @else
-                                                            @if (strtolower(optional($finding->status)->name ?? '') !== 'need assign')
-                                                                <!-- ITEM: Show -->
-                                                                <button type="button"
-                                                                    @click="
-                                                                     open = false;
-                                                                     $dispatch('open-show-modal', {{ $finding->id }})"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
-                                                                    <i data-feather="eye" class="w-4 h-4"></i>
-                                                                    Show
+                                                            {{-- SHOW --}}
+                                                            @if ($canView && $statusName !== 'draft finding')
+                                                                <button type="button" @click="open = false; $dispatch('open-show-modal', {{ $finding->id }})" class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="eye" class="w-4 h-4"></i> Show
                                                                 </button>
                                                             @endif
 
-                                                            <!-- ITEM: Download -->
-                                                            @if ($statusName !== 'need assign')
-                                                                <a href="{{ route('ftpp.download', $finding->id) }}"
-                                                                    @click="open = false"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-blue-600 hover:bg-gray-50 transition">
-                                                                    <i data-feather="download" class="w-4 h-4"></i>
-                                                                    Download
+                                                            {{-- DOWNLOAD --}}
+                                                            @if ($canView && $statusName !== 'draft finding')
+                                                                <a href="{{ route('ftpp.download', $finding->id) }}" @click="open = false" class="flex items-center gap-2 px-3 py-2.5 text-xs text-blue-600 hover:bg-gray-50 transition">
+                                                                    <i data-feather="download" class="w-4 h-4"></i> Download
                                                                 </a>
                                                             @endif
 
-                                                            {{-- Upload Evidence Button: Only for Admin and certain statuses --}}
-                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin']) &&
-                                                                    in_array($statusName, ['need check', 'need approval by auditor', 'need approval by lead auditor', 'close']))
-                                                                <button type="button"
-                                                                    onclick="openUploadEvidence({{ $finding->id }})"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-600 hover:bg-gray-50 transition">
-                                                                    <i data-feather="upload" class="w-4 h-4"></i>
-                                                                    Upload Evidence
+                                                            {{-- UPLOAD EVIDENCE: only Admin/Super Admin and specific statuses --}}
+                                                            @if ($canAdmin && in_array($statusName, ['need check','need approval by auditor','need approval by lead auditor','close']))
+                                                                <button type="button" onclick="openUploadEvidence({{ $finding->id }})" class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-600 hover:bg-gray-50 transition">
+                                                                    <i data-feather="upload" class="w-4 h-4"></i> Upload Evidence
                                                                 </button>
                                                             @endif
 
-                                                            @if ($statusName === 'need assign')
-                                                                @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                                                                    <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}"
-                                                                        @click="open = false"
-                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
-                                                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                                                        Edit
-                                                                    </a>
-                                                                @endif
+                                                            {{-- ASSIGN --}}
+                                                            @php
+                                                                // Auditees (regardless of other roles) must not be able to perform assign/edit on 'need assign'
+                                                                $canAssignExplicit = $canAssign && !$isAuditee && !$isConflictedAuditor;
+                                                            @endphp
+                                                            @if ($statusName === 'need assign' && $canAssignExplicit)
+                                                                <a href="{{ route('ftpp.audit-finding.edit', $finding->id) }}" @click="open = false" class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i> Edit
+                                                                </a>
                                                             @endif
+
+                                                            {{-- REVISION / WHY-CAUSE EDIT --}}
                                                             @if ($statusName === 'need revision')
-                                                                <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
-                                                                    @click="open = false"
-                                                                    class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
-                                                                    <i data-feather="edit" class="w-4 h-4"></i>
-                                                                    Revise
+                                                                <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}" @click="open = false" class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="edit" class="w-4 h-4"></i> Revise
                                                                 </a>
                                                             @elseif ($statusName === 'need check')
-                                                                @if (in_array(optional(auth()->user()->roles->first())->name, [
-                                                                        'Super Admin',
-                                                                        'Admin',
-                                                                        'Auditor',
-                                                                        'Supervisor',
-                                                                        'Leader',
-                                                                        'User',
-                                                                    ]))
-                                                                    <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}"
-                                                                        @click="open = false"
-                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
-                                                                        <i data-feather="edit" class="w-4 h-4"></i>
-                                                                        Edit
+                                                                @php $canEditWhy = $userRoleNames->intersect(['Super Admin','Admin','Auditor','Lead Auditor','Dept Head','Supervisor','Leader','User'])->isNotEmpty() || $isAuditee; @endphp
+                                                                @if ($canEditWhy)
+                                                                    <a href="{{ route('ftpp.auditee-action.edit', $finding->id) }}" @click="open = false" class="flex items-center gap-2 px-3 py-2.5 text-xs text-yellow-500 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit" class="w-4 h-4"></i> Edit
                                                                     </a>
                                                                 @endif
                                                             @else
-                                                                @if (in_array($statusName, ['need assign', 'draft']) &&
-                                                                        in_array(optional(auth()->user()->roles->first())->name, [
-                                                                            'Super Admin',
-                                                                            'Admin',
-                                                                            'User',
-                                                                            'Supervisor',
-                                                                            'Leader',
-                                                                        ]))
-                                                                    <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}"
-                                                                        @click="open = false"
-                                                                        class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
-                                                                        <i data-feather="edit-2" class="w-4 h-4"></i>
-                                                                        Assign
+                                                                @if (in_array($statusName, ['need assign','draft']) && $userRoleNames->intersect(['Super Admin','Admin','User','Supervisor','Leader','Auditor','Lead Auditor','Dept Head'])->isNotEmpty())
+                                                                    <a href="{{ route('ftpp.auditee-action.create', $finding->id) }}" @click="open = false" class="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                                                                        <i data-feather="edit-2" class="w-4 h-4"></i> Assign
                                                                     </a>
                                                                 @endif
                                                             @endif
-                                                            @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor', 'Lead Auditor']))
-                                                                <!-- ITEM: Delete (SweetAlert confirm) -->
-                                                                <form id="delete-form-{{ $finding->id }}" method="POST"
-                                                                    action="{{ route('ftpp.destroy', $finding->id) }}"
-                                                                    onsubmit="return false;">
+
+                                                            {{-- APPROVE (Auditor) --}}
+                                                            @if ($statusName === 'need approval by auditor' && ($canAuditor || $canDeptHead || $canAdmin || $isAuditee))
+                                                                <button type="button" onclick="confirmApprove({{ $finding->id }}, 'auditor')" class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="check-circle" class="w-4 h-4"></i> Approve
+                                                                </button>
+                                                            @endif
+
+                                                            {{-- APPROVE (Lead Auditor) --}}
+                                                            @if ($statusName === 'need approval by lead auditor' && ($canLead || $canAdmin || $canAnyApprover))
+                                                                <button type="button" onclick="confirmApprove({{ $finding->id }}, 'lead')" class="flex items-center gap-2 px-3 py-2.5 text-xs text-green-700 hover:bg-gray-50 transition">
+                                                                    <i data-feather="check-circle" class="w-4 h-4"></i> Approve
+                                                                </button>
+                                                            @endif
+
+                                                            {{-- DELETE --}}
+                                                            @php
+                                                                // Disallow delete for auditees (regardless of role). Admins always allowed.
+                                                                $canDelete = $userRoleNames->intersect(['Super Admin','Admin'])->isNotEmpty();
+                                                                // Auditors/Lead (non-conflicted) may delete
+                                                                if (!$canDelete && $userRoleNames->intersect(['Auditor','Lead Auditor'])->isNotEmpty() && !$isConflictedAuditor) {
+                                                                    $canDelete = true;
+                                                                }
+                                                                // If user is listed as auditee, deny delete regardless
+                                                                if ($isAuditee) {
+                                                                    $canDelete = false;
+                                                                }
+                                                            @endphp
+                                                            @if ($canDelete)
+                                                                <form id="delete-form-{{ $finding->id }}" method="POST" action="{{ route('ftpp.destroy', $finding->id) }}" onsubmit="return false;">
                                                                     @csrf
                                                                     @method('DELETE')
-                                                                    <button type="button" @click="open = false"
-                                                                        onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')"
-                                                                        class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
-                                                                        <i data-feather="trash-2" class="w-4 h-4"></i>
-                                                                        Delete
+                                                                    <button type="button" @click="open = false" onclick="confirmSweetDelete('delete-form-{{ $finding->id }}')" class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-600 hover:bg-gray-50 transition">
+                                                                        <i data-feather="trash-2" class="w-4 h-4"></i> Delete
                                                                     </button>
                                                                 </form>
                                                             @endif
@@ -866,6 +880,40 @@
                     }
                 });
             }
+        }
+
+        // Approve helper (auditor / lead)
+        function confirmApprove(id, type) {
+            const proceed = () => {
+                const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                fetch(`/ftpp/${id}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ type: type })
+                }).then(r => r.json()).then(json => {
+                    if (json.success) {
+                        location.reload();
+                    } else {
+                        alert(json.message || 'Approve failed');
+                    }
+                }).catch(err => { console.error(err); alert('Approve failed'); });
+            };
+
+            if (typeof Swal === 'undefined') {
+                if (confirm('Approve this finding?')) proceed();
+                return;
+            }
+
+            Swal.fire({
+                title: 'Approve this finding?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, approve'
+            }).then(res => { if (res.isConfirmed) proceed(); });
         }
 
         // Bulk Delete Function
