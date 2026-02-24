@@ -48,7 +48,8 @@ class DeptHeadNeedCheckNotification extends Notification
                 : (string) $this->dueDate;
             $mail->line("Due date: {$due}");
         }
-            ->action('Open FTPP', $this->url)
+
+        $mail->action('Open FTPP', $this->url)
             ->line('Please use a laptop and the AIIA network when completing this task.')
             ->line('Thank you for your attention.');
 
