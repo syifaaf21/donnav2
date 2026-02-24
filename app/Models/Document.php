@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\DocumentPlant;
 
 class Document extends Model
 {
@@ -37,6 +38,25 @@ class Document extends Model
     public function mapping()
     {
         return $this->hasMany(DocumentMapping::class);
+    }
+
+    /**
+     * Plants mapping for this document (pivot-like table `document_plant`).
+     */
+    public function plants()
+    {
+        return $this->hasMany(DocumentPlant::class, 'document_id');
+    }
+
+    /**
+     * Check whether this document is assigned to a given plant (case-insensitive).
+     * Accepts 'others' and maps it to 'all'.
+     */
+    public function hasPlant(string $plant): bool
+    {
+        $p = strtolower($plant);
+        if ($p === 'others') $p = 'all';
+        return $this->plants->contains(fn($row) => strtolower($row->plant) === $p);
     }
 
     public function department()

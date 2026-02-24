@@ -12,8 +12,16 @@ class DocumentReviewController extends Controller
 {
     public function index(Request $request)
     {
-        $plants = $this->getEnumValues('tm_part_numbers', 'plant');
-        $plants = array_filter($plants, fn($p) => in_array($p, ['Body', 'Unit', 'Electric']));
+        $rawPlants = $this->getEnumValues('tm_part_numbers', 'plant');
+        // Normalize values (trim + lowercase -> then ucfirst for display)
+        $plants = array_map(fn($p) => ucfirst(strtolower(trim($p))), $rawPlants);
+        // Ensure 'Others' tab exists even if not present in enum (we represent global docs with 'ALL')
+        if (!in_array('Others', $plants)) {
+            $plants[] = 'Others';
+        }
+        // Keep only allowed plants (case-insensitive)
+        $allowed = ['body', 'unit', 'electric', 'others'];
+        $plants = array_values(array_filter($plants, fn($p) => in_array(strtolower($p), $allowed)));
         // AMBIL SEMUA DOKUMEN DENGAN ANAK-CUCU
         $documents = Document::with('childrenRecursive')->where('type', 'review')->get();
 
@@ -298,24 +306,77 @@ class DocumentReviewController extends Controller
 
     private function groupDocumentsByPlantAndCode($plants, $documentsMaster, $documentMappings)
     {
-        return collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster) {
+        // Ambil deklarasi document->plant (pivot-like)
+        $docPlantRows = \DB::table('document_plant')->get();
+
+        return collect($plants)->mapWithKeys(function ($plant) use ($documentMappings, $documentsMaster, $docPlantRows) {
 
             $plantLower = strtolower($plant);
+            // Map tab 'Others' to stored plant value 'all'
+            $docPlantKey = $plantLower === 'others' ? 'all' : $plantLower;
 
-            // Filter mappings sesuai plant
+            // Filter mappings sesuai plant.
+            // Rules:
+            // - If current tab is 'others' (mapped to 'all'), include mappings where mapping->plant == 'all'
+            //   or mappings that don't have partNumber (manual entries).
+            // - For physical plants (body/unit/electric), exclude mappings explicitly set to 'all'
+            //   and only include mappings whose related partNumber/productModel belong to the plant.
             $mappingsByPlant = $documentMappings->filter(function ($item) use ($plantLower) {
+                $mappingPlant = strtolower(trim($item->plant ?? ''));
 
-                $hasPartPlant = $item->partNumber->contains(fn($pn) => strtolower($pn->plant) === $plantLower);
-                $hasModelPlant = $item->productModel->contains(fn($model) => strtolower($model->plant) === $plantLower);
+                $hasPartPlant = $item->partNumber->contains(fn($pn) => strtolower(trim($pn->plant ?? '')) === $plantLower);
+                $hasModelPlant = $item->productModel->contains(fn($model) => strtolower(trim($model->plant ?? '')) === $plantLower);
+
+                if ($plantLower === 'others') {
+                    // include mappings explicitly marked 'all'
+                    if ($mappingPlant === 'all') return true;
+
+                    // include manual mappings without part numbers
+                    if ($item->partNumber->isEmpty()) return true;
+
+                    // otherwise ignore mappings tied to specific plants
+                    return false;
+                }
+
+                // physical plant: ignore mappings explicitly set to 'all'
+                if ($mappingPlant === 'all') return false;
 
                 return $hasPartPlant || $hasModelPlant;
             });
 
-            // Ambil semua kode dokumen dari master + mapping (safe)
-            $codesFromMaster = $documentsMaster->pluck('code');
+            // Ambil dokumen yang eksplisit di-assign ke plant melalui document_plant
+            $docIdsFromDocPlant = $docPlantRows->filter(fn($r) => strtolower(trim($r->plant ?? '')) === $docPlantKey)->pluck('document_id')->unique();
+            $docsFromDocPlant = $documentsMaster->whereIn('id', $docIdsFromDocPlant->toArray());
+
+            // Ambil semua kode dokumen khusus untuk plant ini:
+            // - dari document_plant (dokumen yang secara eksplisit diset ke plant)
+            // - dari documentMappings yang relevan untuk plant (berdasarkan partNumber/productModel)
+            // Jangan memasukkan semua kode master karena itu menyebabkan semua dokumen
+            // muncul di semua tab.
+            $codesFromDocPlant = $docsFromDocPlant->pluck('code');
             $codesFromMapping = $mappingsByPlant->map(fn($m) => $m->document?->code)->filter();
 
-            $allCodes = $codesFromMaster->merge($codesFromMapping)->unique();
+            // Include master documents that have NO explicit plant assignment (legacy)
+            // so they appear under all physical plant tabs (Body/Unit/Electric).
+            $codesFromMaster = $documentsMaster->filter(function ($doc) use ($docPlantKey, $plantLower) {
+                // If document has explicit plants -> only include when matches current plant
+                $docPlants = $doc->plants->pluck('plant')->map(fn($p) => strtolower(trim($p ?? '')))->unique();
+
+                if ($docPlants->isEmpty()) {
+                    // legacy: no assignment => show on physical plants (not 'all'/Others)
+                    return $plantLower !== 'others';
+                }
+
+                // If document explicitly assigned to 'all' -> include only in Others
+                if ($docPlants->contains('all')) {
+                    return $docPlantKey === 'all';
+                }
+
+                // Otherwise include if docPlants contains this plant
+                return $docPlants->contains($plantLower);
+            })->pluck('code');
+
+            $allCodes = $codesFromDocPlant->merge($codesFromMapping)->merge($codesFromMaster)->unique();
 
             // Group mapping berdasarkan kode dokumen
             $groupedDocs = $mappingsByPlant->groupBy(fn($item) => $item->document?->code ?? 'No Code');
@@ -333,6 +394,9 @@ class DocumentReviewController extends Controller
     private function getDocumentsGroupedByPlantAndCode()
     {
         $plants = $this->getEnumValues('tm_part_numbers', 'plant');
+        if (!in_array('Others', $plants)) {
+            $plants[] = 'Others';
+        }
         $documentsMaster = Document::where('type', 'review')->get();
         $documentMappings = DocumentMapping::with([
             'document',
@@ -589,10 +653,22 @@ class DocumentReviewController extends Controller
 
     private function getPlantFromMapping($mapping)
     {
+        // Prioritize explicit mapping->plant. If it's 'all' treat as 'Others'.
+        $mappingPlant = strtolower(trim($mapping->plant ?? ''));
+        if ($mappingPlant === 'all') {
+            return 'Others';
+        }
+
         // Ambil plant dari partNumber pertama yang ada, kalau nggak ada ambil dari productModel
-        return $mapping->partNumber->first()?->plant
-            ?? $mapping->productModel->first()?->plant
-            ?? 'unknown'; // fallback kalau nggak ada
+        $pnPlant = $mapping->partNumber->first()?->plant;
+        $pmPlant = $mapping->productModel->first()?->plant;
+
+        $plant = $pnPlant ?? $pmPlant;
+
+        if (!$plant) return 'Others';
+
+        // Normalize to ucfirst format used in tabs (Body/Unit/Electric)
+        return ucfirst(strtolower(trim($plant)));
     }
 
     public function reject(Request $request, $id)
