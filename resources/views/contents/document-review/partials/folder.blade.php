@@ -485,6 +485,11 @@
                                                                             <i class="bi bi-bar-chart"></i>
                                                                         </button>
                                                                     @endif
+                                                                    <a href="{{ route('document-review.downloadWatermarkedFile', $file['id'], false) }}" target="_blank"
+                                                                        class="text-sky-600 hover:text-sky-800 whitespace-nowrap ms-2"
+                                                                        title="Download (watermarked)">
+                                                                        <i class="bi bi-download"></i>
+                                                                    </a>
                                                                 </div>
                                                             @endforeach
                                                         </div>
@@ -612,6 +617,10 @@
                             <a id="downloadFileBtn" href="#" download
                                 class="btn btn-outline-primary btn-sm d-none">
                                 <i class="bi bi-download"></i> Download PDF
+                            </a>
+
+                            <a id="downloadWatermarkedBtn" href="#" target="_blank" class="btn btn-outline-primary btn-sm d-none" title="Download (watermarked)">
+                                <i class="bi bi-download"></i> Watermarked
                             </a>
 
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
@@ -857,6 +866,7 @@
                         // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                        const downloadWatermarkedBtn = document.getElementById('downloadWatermarkedBtn');
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
                         const docStatus = (btn.dataset.docStatus || '').toString().toLowerCase();
                         const isAdminFlag = (btn.dataset.isAdmin || '') === '1';
@@ -866,9 +876,17 @@
                         if (canDownloadOrPrint) {
                             printBtnToggle.classList.remove('d-none');
                             downloadBtnToggle.classList.remove('d-none');
+                            if (downloadWatermarkedBtn) {
+                                downloadWatermarkedBtn.classList.remove('d-none');
+                                if (currentFileId) downloadWatermarkedBtn.href = `/document-review/file/${currentFileId}/download-watermarked`;
+                            }
                         } else {
                             printBtnToggle.classList.add('d-none');
                             downloadBtnToggle.classList.add('d-none');
+                            if (downloadWatermarkedBtn) {
+                                downloadWatermarkedBtn.classList.add('d-none');
+                                downloadWatermarkedBtn.href = '#';
+                            }
                         }
 
                         // View Full: remain visible for PDF files (regardless of approval)

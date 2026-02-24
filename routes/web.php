@@ -9,6 +9,7 @@ use App\Http\Controllers\DocumentControlController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
+use App\Http\Controllers\DocumentControlWatermarkController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
@@ -191,6 +192,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::get('/{id}/files', [DocumentReviewController::class, 'getFiles'])
             ->name('get-files');
+        Route::get('/file/{file}/download-watermarked', [DocumentControlWatermarkController::class, 'downloadWatermarkedFile'])->name('downloadWatermarkedFile');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
@@ -209,6 +211,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
+        Route::get('{mapping}/download-watermarked', [DocumentControlWatermarkController::class, 'downloadWatermarked'])->name('downloadWatermarked');
     });
 
     Route::prefix('archive')->name('archive.')->group(function () {
