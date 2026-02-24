@@ -12,6 +12,7 @@ use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DocumentNumberController;
 use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\FtppApprovalController;
 use App\Http\Controllers\FtppController;
@@ -160,6 +161,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
 
     // Dashboard & Profile
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/document-number/generate', [DocumentNumberController::class, 'generate'])->name('document-number.generate');
     Route::get('/dashboard/control', [DashboardController::class, 'controlDashboard'])->name('dashboard.control');
     Route::get('/dashboard/review', [DashboardController::class, 'reviewDashboard'])->name('dashboard.review');
     Route::get('/dashboard/ftpp', [DashboardController::class, 'ftppDashboard'])->name('dashboard.ftpp');

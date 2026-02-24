@@ -416,6 +416,55 @@
 
             });
 
+            // --- Auto-generate document number when key fields change ---
+            async function generateDocumentNumber() {
+                const documentId = tsDocument.getValue();
+                const departmentId = tsDept.getValue();
+                const productIds = tsProduct.getValue() || [];
+                const processIds = tsProcess.getValue() || [];
+                const modelIds = tsModel.getValue() || [];
+
+                // Use first selected if multiple
+                const payload = {
+                    document_id: documentId ? Number(documentId) : null,
+                    department_id: departmentId ? Number(departmentId) : null,
+                    product_id: productIds && productIds.length ? Number(productIds[0]) : null,
+                    process_id: processIds && processIds.length ? Number(processIds[0]) : null,
+                    model_id: modelIds && modelIds.length ? Number(modelIds[0]) : null,
+                    format: 3,
+                };
+
+                if (!payload.document_id || !payload.department_id) {
+                    return; // need minimum fields
+                }
+
+                try {
+                    const res = await fetch('{{ route('document-number.generate') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) throw new Error('Failed to generate');
+                    const json = await res.json();
+                    if (json?.success) {
+                        document.getElementById('document_number').value = json.document_number;
+                    }
+                } catch (err) {
+                    console.error('Generate error:', err);
+                }
+            }
+
+            // Trigger generation when relevant selects change
+            tsDocument.on('change', generateDocumentNumber);
+            tsDept.on('change', generateDocumentNumber);
+            tsProduct.on('change', generateDocumentNumber);
+            tsProcess.on('change', generateDocumentNumber);
+            tsModel.on('change', generateDocumentNumber);
+
 
             const quill = new Quill('#quill_editor', {
                 theme: 'snow',
