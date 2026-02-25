@@ -234,7 +234,7 @@
                     style="background-color: #f5f5f7;">
                     <h5 class="modal-title fw-semibold text-dark" id="addDepartmentModalLabel"
                         style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
-                        <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Audit Type
+                        <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Audit Type
                     </h5>
                     <button type="button"
                         class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
@@ -343,27 +343,35 @@
                                 document.getElementById('edit_registration_number_format').value =
                                     data.registration_number_format;
 
-                                // Parse format string
-                                const format = data.registration_number_format;
+                                // Parse format string into known tokens (PREFIX, YYYY, YY, MM, NNN, NNNN, REV)
+                                const format = data.registration_number_format || '';
+                                const TOKENS = ['PREFIX', 'YYYY', 'YY', 'MM', 'NNNN', 'NNN', 'REV'];
                                 let i = 0;
                                 while (i < format.length) {
-                                    const char = format[i];
-                                    // Check if separator
-                                    if (['-', '/', '.'].includes(char)) {
-                                        addEditFormatItem(char, true);
+                                    const ch = format[i];
+                                    // separators
+                                    if (['-', '/', '.'].includes(ch)) {
+                                        addEditFormatItem(ch, true);
                                         i++;
-                                    } else {
-                                        // Find continuous same characters
-                                        let component = char;
-                                        let j = i + 1;
-                                        while (j < format.length && format[j] === char && !['-',
-                                                '/', '.'
-                                            ].includes(format[j])) {
-                                            component += format[j];
-                                            j++;
+                                        continue;
+                                    }
+
+                                    // try to match known tokens (longest-first)
+                                    let matched = null;
+                                    for (const t of TOKENS) {
+                                        if (format.substr(i, t.length) === t) {
+                                            matched = t;
+                                            break;
                                         }
-                                        addEditFormatItem(component, false);
-                                        i = j;
+                                    }
+
+                                    if (matched) {
+                                        addEditFormatItem(matched, false);
+                                        i += matched.length;
+                                    } else {
+                                        // fallback: treat as single char token to avoid infinite loop
+                                        addEditFormatItem(ch, false);
+                                        i++;
                                     }
                                 }
                                 updateEditFormatPreview();
