@@ -20,12 +20,15 @@ use App\Models\SubKlausul;
 use App\Models\User;
 use App\Models\WhyCauses;
 use App\Notifications\FtppActionNotification;
+use App\Notifications\NeedApprovalByAuditorNotification;
+use App\Notifications\NeedApprovalByLeadAuditorNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\AuditeeAssignedNotification;
 use App\Notifications\DeptHeadCheckedNotification;
 use App\Notifications\LeadAuditorApprovedNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
 class FtppApprovalController extends Controller
@@ -593,26 +596,51 @@ class FtppApprovalController extends Controller
         if ($finding)
             $finding->update(['status_id' => 9]);
 
-        // notify auditor and auditees that dept head checked
+        // notify auditees that dept head checked (DB + mail)
             try {
-                $recipients = collect();
-                if ($finding->auditor)
-                    $recipients->push($finding->auditor);
-                $recipients = $recipients->merge($finding->auditee()->get());
-                $recipients = $recipients->unique('id')->filter()->values();
+                $auditeeRecipients = $finding?->auditee()?->get() ?? collect();
+                $auditeeRecipients = collect($auditeeRecipients)->unique('id')->filter()->values();
 
-                if ($recipients->isNotEmpty()) {
+                if ($auditeeRecipients->isNotEmpty()) {
                     $this->safeNotify(
-                        $recipients,
+                        $auditeeRecipients,
                         new FtppActionNotification(
                             $finding,
-                            'dept_head_checked',   // action: assigned
+                            'dept_head_checked',
                             auth()->user()?->name
                         )
                     );
                 }
             } catch (\Throwable $e) {
-                Log::warning('FtppActionNotification (dept_head_checked) failed: ' . $e->getMessage());
+                Log::warning('FtppActionNotification (dept_head_checked -> auditees) failed: ' . $e->getMessage());
+            }
+
+            // remind assigned auditor(s) to approve (after dept head approval)
+            try {
+                $auditorRecipients = collect();
+                if (!empty($finding)) {
+                    if (!empty($finding->auditor)) {
+                        $auditorRecipients->push($finding->auditor);
+                    }
+                    if (method_exists($finding, 'auditors')) {
+                        $auditorRecipients = $auditorRecipients->merge($finding->auditors()->get());
+                    }
+                    $auditorRecipients = $auditorRecipients->unique('id')->filter()->values();
+                }
+
+                if ($auditorRecipients->isNotEmpty()) {
+                    $this->safeNotify(
+                        $auditorRecipients,
+                        new NeedApprovalByAuditorNotification(
+                            $finding,
+                            null,
+                            auth()->user()?->name,
+                            auth()->user()?->email
+                        )
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('NeedApprovalByAuditorNotification send failed: ' . $e->getMessage());
             }
 
         return response()->json([
@@ -718,40 +746,53 @@ class FtppApprovalController extends Controller
         $finding->status_id = 10; // Approved by auditor
         $finding->save();
 
-        try {
-            $recipients = collect();
+            try {
+                $recipients = collect();
 
-            // auditees
-            $recipients = $recipients->merge($finding->auditee()->get());
+                // auditees
+                $recipients = $recipients->merge($finding->auditee()->get());
 
-            // dept head if present on auditee action
-            if (!empty($action->dept_head_id)) {
-                $dh = User::find($action->dept_head_id);
-                if ($dh)
-                    $recipients->push($dh);
+                // dept head if present on auditee action
+                if (!empty($action->dept_head_id)) {
+                    $dh = User::find($action->dept_head_id);
+                    if ($dh)
+                        $recipients->push($dh);
+                }
+
+                $recipients = $recipients->unique('id')->filter()->values();
+
+                // Notify auditees and dept head via FtppActionNotification
+                if ($recipients->isNotEmpty()) {
+                    $this->safeNotify(
+                        $recipients,
+                        new FtppActionNotification(
+                            $finding,
+                            'auditor_approved',
+                            auth()->user()?->name
+                        )
+                    );
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('FtppActionNotification (auditor_approved) failed: ' . $e->getMessage());
             }
 
-            // include lead auditors (role-based)
-            $leadAuditors = User::whereHas('roles', fn($q) => $q->where('name', 'admin'))->get();
-            if ($leadAuditors->isNotEmpty()) {
-                $recipients = $recipients->merge($leadAuditors);
+            // Remind lead auditors separately to review/acknowledge
+            try {
+                $leadAuditors = User::whereHas('roles', fn($q) => $q->whereIn('name', ['Lead Auditor', 'Admin', 'Super Admin']))->get();
+                if ($leadAuditors->isNotEmpty()) {
+                    $this->safeNotify(
+                        $leadAuditors,
+                        new NeedApprovalByLeadAuditorNotification(
+                            $finding,
+                            null,
+                            auth()->user()?->name,
+                            auth()->user()?->email
+                        )
+                    );
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('NeedApprovalByLeadAuditorNotification send failed: ' . $e->getMessage());
             }
-
-            $recipients = $recipients->unique('id')->filter()->values();
-
-            if ($recipients->isNotEmpty()) {
-                $this->safeNotify(
-                    $recipients,
-                    new FtppActionNotification(
-                        $finding,
-                        'auditor_approved',
-                        auth()->user()?->name
-                    )
-                );
-            }
-        } catch (\Throwable $e) {
-            \Log::warning('FtppActionNotification (auditor_approved) failed: ' . $e->getMessage());
-        }
 
         return response()->json(['success' => true]);
     }
