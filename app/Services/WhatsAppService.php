@@ -39,7 +39,7 @@ class WhatsAppService
         // Sesuaikan endpoint dan parameter sesuai dokumentasi FastWA.
         // Misalnya endpoint: /send_group atau /send_text_group
         $response = Http::asForm()->withOptions([
-            //  'verify' => 'C:/xampp/apache/bin/curl-ca-bundle.crt',
+            //  'verify' => 'D:/xampp2/apache/bin/curl-ca-bundle.crt',
             'verify' => false,
         ])->post($this->url, [
             'api_key'  => $this->token,

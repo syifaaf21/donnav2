@@ -88,45 +88,46 @@
                 finding_category: document.getElementById("section-finding-category"),
                 klausul: document.getElementById("section-klausul")
             };
+            const STORAGE_KEY = 'ftpp-active-tab';
 
-            // sembunyikan semua section dulu
+            function activateTab(target) {
+                // guard
+                if (!sections[target]) return;
+
+                // reset tabs
+                tabs.forEach(t => {
+                    t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
+                    t.classList.add("text-white");
+                });
+
+                // hide all sections
+                Object.values(sections).forEach(section => section.classList.add("hidden"));
+
+                // activate selected tab
+                const activeBtn = document.querySelector(`.btn-tab[data-section="${target}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.remove("text-white");
+                    activeBtn.classList.add("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
+                }
+                sections[target].classList.remove("hidden");
+
+                // persist
+                localStorage.setItem(STORAGE_KEY, target);
+            }
+
+            // default hide
             Object.values(sections).forEach(section => section.classList.add("hidden"));
 
-            // set all tabs to default (text-white, no active styles)
-            tabs.forEach(t => {
-                t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700",
-                    "shadow-top");
-                t.classList.add("text-white");
-            });
+            // initial tab (from storage or first)
+            const stored = localStorage.getItem(STORAGE_KEY);
+            const initial = (stored && sections[stored]) ? stored : tabs[0]?.getAttribute("data-section");
+            if (initial) activateTab(initial);
 
-            // aktifkan tab pertama secara default
-            const firstTab = tabs[0];
-            const firstTarget = firstTab.getAttribute("data-section");
-
-            firstTab.classList.remove("text-white");
-            firstTab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white", "text-gray-700", "shadow-top");
-            sections[firstTarget].classList.remove("hidden");
-
-            // event klik
+            // click handlers
             tabs.forEach(tab => {
                 tab.addEventListener("click", () => {
                     const target = tab.getAttribute("data-section");
-
-                    // hilangkan highlight tab lain -> set kembali ke default text-white
-                    tabs.forEach(t => {
-                        t.classList.remove("bg-gradient-to-b", "from-blue-200", "to-white",
-                            "text-gray-700", "shadow-top");
-                        t.classList.add("text-white");
-                    });
-
-                    // aktifkan tab ini (text-gray-700 + gradient)
-                    tab.classList.remove("text-white");
-                    tab.classList.add("bg-gradient-to-b", "from-blue-200", "to-white",
-                        "text-gray-700", "shadow-top");
-
-                    // sembunyikan semua, tampilkan target
-                    Object.values(sections).forEach(section => section.classList.add("hidden"));
-                    sections[target].classList.remove("hidden");
+                    activateTab(target);
                 });
             });
         });

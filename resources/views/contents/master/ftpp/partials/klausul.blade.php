@@ -12,12 +12,49 @@
     <div class="border-b border-gray-200 mb-3">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="klausulTabs">
             @foreach ($klausuls as $index => $klausul)
-                <li class="me-2">
+                <li class="me-2 flex items-center gap-2">
                     <button
                         class="inline-block p-2 border-b-2 {{ $index === 0 ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600' }}"
                         data-tab="tab-{{ $klausul->id }}">
                         {{ $klausul->name }}
                     </button>
+
+                    <div class="dropdown">
+                        <button class="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i data-feather="more-vertical" class="w-4 h-4"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <button class="dropdown-item text-warning fw-500 d-flex align-items-center gap-2 py-2"
+                                    data-klausul-id="{{ $klausul->id }}"
+                                    data-klausul-name="{{ $klausul->name }}"
+                                    data-audit-type-id="{{ $klausul->audit_type_id }}"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalEditMainKlausul"
+                                    style="color: #92400e; border: none; border-radius: 4px; transition: all 0.2s ease;">
+                                    <i data-feather="edit-2" class="w-4 h-4"></i>
+                                    <span>Edit</span>
+                                </button>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider my-2">
+                            </li>
+                            <li>
+                                <form action="{{ route('master.ftpp.klausul.destroy-main', $klausul->id) }}"
+                                    method="POST"
+                                    class="delete-klausul-form w-100">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2 py-2"
+                                        style="border: none; border-radius: 4px; transition: all 0.2s ease;">
+                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                        <span>Delete</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
             @endforeach
         </ul>
@@ -32,14 +69,17 @@
                     <table class="min-w-full text-sm text-gray-700">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">No
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">No
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Code
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Code
                                 </th>
-                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">Head Klausul
+                                <th class="px-4 py-3 text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Head Klausul
                                 </th>
-                                <th
-                                    class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200" style="color: #1e2b50; letter-spacing: 0.5px;">
+                                <th class="px-4 py-3 text-center text-sm font-bold uppercase tracking-wider border-r border-gray-200"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">
                                     Action</th>
                             </tr>
                         </thead>
@@ -53,12 +93,15 @@
                                                 class="w-4 h-4 rotate-icon transition-transform"></i>{{ $i + 1 }}
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3 border-r border-gray-200 text-sm text-gray-900">{{ $head->code }}</td>
-                                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold text-gray-900">{{ $head->name }}</td>
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm text-gray-900">
+                                        {{ $head->code }}</td>
+                                    <td class="px-4 py-3 border-r border-gray-200 text-sm font-semibold text-gray-900">
+                                        {{ $head->name }}</td>
                                     <td class="px-4 py-3 border-r border-gray-200 text-sm text-center">
                                         <div class="flex justify-center gap-2">
                                             <button data-head-id="{{ $head->id }}"
                                                 data-head-name="{{ $head->name }}"
+                                                data-audit-type-id="{{ $klausul->audit_type_id }}"
                                                 data-sub='@json($head->subKlausul)'
                                                 class="btn-edit-klausul w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-500 transition-colors p-2 duration-200">
                                                 <i data-feather="edit" class="w-4 h-4"></i>
@@ -119,11 +162,31 @@
 @endif
 
 @include('contents.master.ftpp.partials.modal_add_klausul')
+@include('contents.master.ftpp.partials.modal_edit_main_klausul')
 @include('contents.master.ftpp.partials.modal_edit_klausul')
 
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Edit Main Klausul Modal Handler ---
+            const modalEditMain = document.getElementById('modalEditMainKlausul');
+            const formEditMain = document.getElementById('form-edit-main-klausul');
+
+            if (modalEditMain && formEditMain) {
+                modalEditMain.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const klausulId = button.getAttribute('data-klausul-id');
+                    const klausulName = button.getAttribute('data-klausul-name');
+                    const auditTypeId = button.getAttribute('data-audit-type-id');
+
+                    // Set form action
+                    formEditMain.action = `/master/ftpp/klausul/update-main/${klausulId}`;
+
+                    // Populate fields
+                    document.getElementById('edit-name').value = klausulName;
+                    document.getElementById('edit-audit-type').value = auditTypeId;
+                });
+            }
             // --- Tab Switching ---
             document.querySelectorAll('#klausulTabs button').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -193,12 +256,47 @@
                 feather.replace();
             }
 
-            // --- DELETE HEAD & SUB (Confirm) ---
-            document.querySelectorAll('.delete-form').forEach(form => {
+            // --- DELETE HEAD & SUB dengan SweetAlert2 ---
+            document.querySelectorAll('#section-klausul .delete-form').forEach(form => {
                 form.addEventListener('submit', e => {
                     e.preventDefault();
-                    if (confirm('Are you sure you want to delete this data?')) form
-                        .submit();
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You want to delete this klausul data?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            // --- DELETE MAIN KLAUSUL dengan SweetAlert2 ---
+            document.querySelectorAll('#section-klausul .delete-klausul-form').forEach(form => {
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You want to delete this main klausul and all related data? This action cannot be undone!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
                 });
             });
         });

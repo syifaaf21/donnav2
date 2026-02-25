@@ -14,7 +14,7 @@
 </head>
 
 <body
-    class="min-h-screen bg-gradient-to-br from-primaryLight via-primaryDark to-gray-50 flex items-center justify-center">
+    class="min-h-screen bg-primaryLight flex items-center justify-center">
 
     <div class="container d-flex justify-content-center align-items-center py-5">
         <div class="col-12 col-sm-10 col-md-8 col-lg-5">

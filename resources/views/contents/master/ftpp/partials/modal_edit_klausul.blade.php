@@ -23,6 +23,7 @@
             {{-- Body --}}
             <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                 <div class="row g-4">
+
                     {{-- Head Klausul --}}
                     <div class="col-md-12">
                         <label for="edit-head-name" class="form-label fw-semibold">Head Klausul <span
@@ -74,6 +75,7 @@
             btn.addEventListener('click', () => {
                 const headId = btn.dataset.headId;
                 const headName = btn.dataset.headName;
+                const auditTypeId = btn.dataset.auditTypeId;
                 const subKlausuls = JSON.parse(btn.dataset.sub || '[]');
 
                 // Set form action

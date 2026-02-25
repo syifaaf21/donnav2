@@ -13,7 +13,7 @@
             <li>/</li>
             <li>
                 <a href="{{ route('document-review.index') }}" class="text-blue-600 hover:underline">
-                <i class="bi bi-check-square me-1"></i> Document Review
+                    <i class="bi bi-check-square me-1"></i> Document Review
                 </a>
             </li>
             <li>/</li>
@@ -108,15 +108,13 @@
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content rounded-2xl">
 
-                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
-                        method="GET">
+                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET">
                         <div class="modal-header">
                             <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
                         <div class="modal-body space-y-4">
-
                             <!-- Part Number -->
                             <div class="flex flex-col">
                                 <label class="form-label font-semibold text-gray-700 mb-1">Part Number</label>
@@ -206,8 +204,8 @@
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Process</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Notes</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
-                                    style="color: #1e2b50; letter-spacing: 0.5px;">Deadline</th>
+                                {{-- <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Deadline</th> --}}
                                 <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Updated By
                                 </th>
@@ -269,9 +267,9 @@
                                         </div>
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs">
+                                    {{-- <td class="px-4 py-3 text-xs">
                                         <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
-                                    </td>
+                                    </td> --}}
 
                                     <td class="px-4 py-3 text-xs">{{ $doc->user?->name ?? '-' }}</td>
 
@@ -296,6 +294,20 @@
 
                                     <td class="px-4 py-3 text-xs text-center">
                                         <div class="flex justify-center items-center gap-2 relative">
+                                            @php
+                                                $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
+                                                $isAdmin = in_array($role, ['admin', 'super admin']);
+                                                $isAdminOrSuper = $isAdmin;
+                                                $isUser = !$isAdmin;
+
+                                                $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
+                                                $docDeptId = $doc->department_id ?? ($doc->department->id ?? null);
+                                                $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
+
+                                                $status = strtolower($statusName);
+
+                                                $showDownloadReport = $isAdmin && $status === 'approved';
+                                            @endphp
                                             {{-- ================= FILE BUTTON ================= --}}
                                             <div class="relative inline-block overflow-visible">
                                                 @php
@@ -326,14 +338,29 @@
                                                         class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
                                                         <div class="py-1 text-xs max-h-80 overflow-y-auto">
                                                             @foreach ($files as $file)
-                                                                <button type="button" title="View File"
-                                                                    class="w-full text-left px-3 py-2 hover:bg-gray-50 view-file-btn truncate"
-                                                                    data-file="{{ $file['url'] }}"
-                                                                    data-doc-id="{{ $doc->id }}"
-                                                                    data-file-id="{{ $file['id'] }}"
-                                                                    data-file-path="{{ $file['file_path'] }}">
-                                                                    📄 {{ $file['name'] }}
-                                                                </button>
+                                                                <div class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
+                                                                    <button type="button" title="View File"
+                                                                        class="flex-1 text-left view-file-btn truncate"
+                                                                        data-file="{{ $file['url'] }}"
+                                                                        data-doc-id="{{ $doc->id }}"
+                                                                        data-file-id="{{ $file['id'] }}"
+                                                                        data-file-name="{{ $file['name'] }}"
+                                                                        data-file-path="{{ $file['file_path'] }}">
+                                                                        📄 {{ $file['name'] }}
+                                                                    </button>
+                                                                    @if ($showDownloadReport)
+                                                                        <button type="button"
+                                                                            class="file-download-report-btn text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#downloadReportModal"
+                                                                            data-doc-id="{{ $doc->id }}"
+                                                                            data-file-id="{{ $file['id'] }}"
+                                                                            data-file-name="{{ $file['name'] }}"
+                                                                            title="Download report for this file">
+                                                                            <i class="bi bi-bar-chart"></i>
+                                                                        </button>
+                                                                    @endif
+                                                                </div>
                                                             @endforeach
                                                         </div>
                                                     </div>
@@ -346,6 +373,7 @@
                                                         data-file="{{ $fileUrl }}"
                                                         data-doc-id="{{ $doc->id }}"
                                                         data-file-id="{{ $files[0]['id'] ?? '' }}"
+                                                        data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
@@ -355,18 +383,6 @@
 
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
-                                                $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
-                                                $isAdmin = in_array($role, ['admin', 'super admin']);
-                                                $isAdminOrSuper = $isAdmin;
-                                                $isUser = !$isAdmin;
-
-                                                // Ambil semua department user
-                                                $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
-                                                $docDeptId = $doc->department_id ?? ($doc->department->id ?? null);
-                                                $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
-
-                                                $status = strtolower($statusName);
-
                                                 $showEdit =
                                                     ($isUser && in_array($status, ['approve', 'reject'])) ||
                                                     ($isAdmin && $status === 'approve') ||
@@ -374,7 +390,7 @@
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
-                                                $showMenu = $showEdit || $showApproveReject;
+                                                $showMenu = $showEdit || $showApproveReject || $showDownloadReport;
                                             @endphp
 
 
@@ -394,6 +410,19 @@
                                                                 class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
                                                                 data-doc-id="{{ $doc->id }}" title="Edit Document">
                                                                 <i class="bi bi-pencil mr-2"></i> Edit
+                                                            </button>
+                                                        @endif
+
+                                                        {{-- Download Report (single file) --}}
+                                                        @if ($showDownloadReport && count($files) === 1)
+                                                            <button type="button"
+                                                                class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-blue-600 file-download-report-btn"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#downloadReportModal"
+                                                                data-doc-id="{{ $doc->id }}"
+                                                                data-file-id="{{ $files[0]['id'] ?? '' }}"
+                                                                data-file-name="{{ $files[0]['name'] ?? '' }}">
+                                                                <i class="bi bi-bar-chart mr-2"></i> Download Report
                                                             </button>
                                                         @endif
 
@@ -448,11 +477,14 @@
                     <div class="modal-header d-flex justify-content-between align-items-center">
                         <h5 class="modal-title" id="filePreviewLabel">File Preview</h5>
                         <div class="d-flex gap-2">
-                            <a id="viewFullBtn" href="#" target="_blank" class="btn btn-outline-info btn-sm">
+                            <a id="viewFullBtn" href="#" target="_blank" class="btn btn-outline-info btn-sm d-none">
                                 <i class="bi bi-arrows-fullscreen"></i> View Full
                             </a>
-                            <a id="printFileBtn" href="#" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-printer"></i> Print / Save as PDF
+                            <a id="printFileBtn" href="#" class="btn btn-outline-secondary btn-sm d-none">
+                                <i class="bi bi-printer"></i> Print
+                            </a>
+                            <a id="downloadFileBtn" href="#" download class="btn btn-outline-primary btn-sm d-none">
+                                <i class="bi bi-download"></i> Download PDF
                             </a>
 
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
@@ -470,6 +502,7 @@
     @include('contents.document-review.partials.modal-approve')
     @include('contents.document-review.partials.modal-edit')
     @include('contents.document-review.partials.modal-reject')
+    @include('contents.document-review.partials.modal-download-report')
     <style>
         /* --- Dropdown fix style --- */
         .dropdown-fixed {
@@ -613,9 +646,38 @@
                     const sep = url.includes('?') ? '&' : '?';
                     return `${url}${sep}_=${Date.now()}`;
                 };
+
+                let currentDocId = null; // Simpan docId yang sedang dibuka
+                let currentFileId = null; // Simpan fileId yang sedang dibuka
+                let currentFileType = null; // Simpan tipe file (pdf, excel, word, etc)
+
+                // Helper: Deteksi tipe file dari URL/path
+                function getFileType(url) {
+                    if (!url) return 'unknown';
+                    const ext = url.split('.').pop().toLowerCase().split('?')[0];
+
+                    if (ext === 'pdf') return 'pdf';
+                    if (['xls', 'xlsx', 'xlsm'].includes(ext)) return 'excel';
+                    if (['doc', 'docx'].includes(ext)) return 'word';
+                    if (['ppt', 'pptx'].includes(ext)) return 'powerpoint';
+                    if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) return 'image';
+
+                    return 'other';
+                }
+
+                // Helper: Tambahkan parameter viewer untuk menyembunyikan toolbar bawaan PDF di iframe (bila didukung)
+                function withPdfViewerParams(url) {
+                    if (!url) return url;
+                    // Hindari duplikasi jika sudah punya fragment
+                    if (url.includes('#')) return url;
+                    return `${url}#toolbar=0&navpanes=0&scrollbar=0`;
+                }
+
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const docId = btn.dataset.docId;
+                        currentDocId = docId; // Simpan untuk tracking
+
                         const clickedFileId = btn.dataset.fileId;
                         const clickedFilePath = btn.dataset.filePath;
                         let url = btn.dataset.file || '';
@@ -633,7 +695,6 @@
                                     list.find(f => String(f.id) === String(clickedFileId)) ||
                                     list.find(f => f.file_path === clickedFilePath);
 
-                                // Fallback: coba cocokkan dari URL asal
                                 if (!target && url) {
                                     const raw = url.replace(/^.*\/storage\//, '');
                                     target = list.find(f => f.file_path === raw);
@@ -646,20 +707,64 @@
                                 if (target?.file_path) {
                                     url = withCacheBuster(`/storage/${target.file_path}`);
                                 }
+                                currentFileId = target?.id || clickedFileId || null;
                             } catch (err) {
                                 console.error('Failed to load files', err);
+                                currentFileId = clickedFileId || null;
                             }
                         } else {
                             url = withCacheBuster(url);
+                            currentFileId = clickedFileId || null;
                         }
-                        // Simpan URL dulu, jangan langsung set ke iframe
-                        previewFrame.dataset.url = url;
-                        viewFullBtn.href = url;
 
-                        // Buka modal dulu
+                        // Deteksi tipe file
+                        currentFileType = getFileType(url);
+                        console.log('File type detected:', currentFileType);
+
+                        // Toggle tombol Print, Download, dan View Full hanya untuk PDF
+                        const printBtnToggle = document.getElementById('printFileBtn');
+                        const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                        const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                        if (currentFileType === 'pdf') {
+                            printBtnToggle.classList.remove('d-none');
+                            downloadBtnToggle.classList.remove('d-none');
+                            viewFullBtnToggle.classList.remove('d-none');
+                        } else {
+                            printBtnToggle.classList.add('d-none');
+                            downloadBtnToggle.classList.add('d-none');
+                            viewFullBtnToggle.classList.add('d-none');
+                        }
+
+                        // LOG DOWNLOAD untuk Excel/Word/PPT/Image saat button show diklik
+                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other'].includes(currentFileType)) {
+                            fetch(`/document-review/${currentDocId}/log-download`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    action: 'view_file',
+                                    file_type: currentFileType,
+                                    document_file_id: currentFileId
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                console.log('Download logged (non-PDF):', data);
+                            })
+                            .catch(err => console.error('Failed to log download:', err));
+                        }
+
+                        // Untuk iframe PDF, coba sembunyikan toolbar default dengan fragment params
+                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) : url;
+                        previewFrame.dataset.url = previewUrl;
+                        viewFullBtn.href = url;
                         previewModal.show();
                     });
                 });
+
+                // Untuk PDF: tidak log saat load iframe, hanya log ketika user klik tombol download/print
 
                 document.getElementById('filePreviewModal')
                     .addEventListener('shown.bs.modal', function() {
@@ -667,14 +772,26 @@
                             previewFrame.src = previewFrame.dataset.url;
                         }
                     });
+
                 document.getElementById('filePreviewModal')
                     .addEventListener('hidden.bs.modal', () => {
                         previewFrame.src = '';
                         previewFrame.dataset.url = '';
                         viewFullBtn.href = '#';
+                        currentDocId = null; // Reset docId
+                        currentFileId = null; // Reset file id
+                        currentFileType = null; // Reset file type
+
+                        // Sembunyikan tombol Print, Download, dan View Full saat modal ditutup
+                        const printBtnToggle = document.getElementById('printFileBtn');
+                        const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                        const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                        printBtnToggle.classList.add('d-none');
+                        downloadBtnToggle.classList.add('d-none');
+                        viewFullBtnToggle.classList.add('d-none');
                     });
 
-
+                // === PRINT BUTTON (tidak log download) ===
                 const printFileBtn = document.getElementById('printFileBtn');
 
                 printFileBtn.addEventListener('click', function(e) {
@@ -687,17 +804,62 @@
                         return;
                     }
 
-                    // Pastikan iframe sudah memuat file
+                    // Langsung print tanpa log
                     frame.focus();
-
-                    // Panggil print dari iframe tanpa membuka tab baru
                     try {
                         frame.contentWindow.print();
                     } catch (err) {
                         console.error('Unable to auto-print:', err);
-                        alert('Failed to print file.');
+                        window.print();
                     }
                 });
+
+                // === DOWNLOAD BUTTON (log download untuk PDF) ===
+                const downloadFileBtn = document.getElementById('downloadFileBtn');
+
+                downloadFileBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const frame = document.getElementById('filePreviewFrame');
+                    const fileUrl = frame.src;
+
+                    if (!fileUrl) {
+                        alert('No file loaded.');
+                        return;
+                    }
+
+                    // Log download untuk PDF
+                    if (currentDocId && currentFileType === 'pdf') {
+                        fetch(`/document-review/${currentDocId}/log-download`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                action: 'download_pdf',
+                                file_type: 'pdf',
+                                document_file_id: currentFileId
+                            })
+                        }).then(() => {
+                            console.log('PDF download logged');
+                        }).catch(err => console.error('Failed to log download:', err));
+                    }
+
+                    // Trigger download
+                    const link = document.createElement('a');
+                    link.href = fileUrl;
+                    link.download = currentFileType === 'pdf' ? 'document.pdf' : 'file';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+
+                // === VIEW FULL BUTTON (tidak dihitung download) ===
+                viewFullBtn.addEventListener('click', function() {
+                    // Tidak melog; hanya buka di tab baru
+                });
+
+                // Tidak lagi menghitung ctrl+P atau klik kanan sebagai download; hanya tombol print/save
 
 
                 // === MODAL REVISE (Document Review) ===
@@ -739,28 +901,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                    <div class="border rounded p-2 bg-gray-50">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-sm">📄 ${file.original_name}</span>
+                                                            <div class="border rounded p-2 bg-gray-50">
+                                                                <div class="flex items-center justify-between">
+                                                                    <span class="text-sm">📄 ${file.original_name}</span>
 
-                                            <div class="flex gap-2">
-                                                <a href="/storage/${file.file_path}"
-                                                   target="_blank"
-                                                   class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                   View
-                                                </a>
+                                                                    <div class="flex gap-2">
+                                                                        <a href="/storage/${file.file_path}"
+                                                                           target="_blank"
+                                                                           class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                           View
+                                                                        </a>
 
-                                                <button type="button"
-                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                    data-file-id="${file.id}">
-                                                    Replace
-                                                </button>
-                                            </div>
-                                        </div>
+                                                                        <button type="button"
+                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                            data-file-id="${file.id}">
+                                                                            Replace
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
 
-                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                    </div>
-                                `).join('')}
+                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                            </div>
+                                                        `).join('')}
 </div>`;
 
                             })
@@ -1051,6 +1213,94 @@ ${data.files.map(file => `
                     alertDiv.innerText = message;
                     reviseForm.prepend(alertDiv);
                 }
+
+                // === DOWNLOAD REPORT MODAL ===
+                const downloadReportModal = document.getElementById('downloadReportModal');
+
+                downloadReportModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const docId = button?.getAttribute('data-doc-id') || button?.getAttribute('data-id');
+                    const fileId = button?.getAttribute('data-file-id');
+                    const fileName = button?.getAttribute('data-file-name') || '-';
+
+                    document.getElementById('reportFileName').textContent = fileName;
+
+                    // Show loading
+                    document.getElementById('downloadReportLoading').classList.remove('hidden');
+                    document.getElementById('downloadReportContent').classList.add('hidden');
+
+                    // Fetch download history
+                    const reportUrl = fileId
+                        ? `/document-review/${docId}/download-report?file_id=${fileId}`
+                        : `/document-review/${docId}/download-report`;
+
+                    fetch(reportUrl)
+                        .then(res => res.json())
+                        .then(data => {
+                            document.getElementById('downloadReportLoading').classList.add('hidden');
+                            document.getElementById('downloadReportContent').classList.remove('hidden');
+
+                            if (!data.success) {
+                                document.getElementById('downloadReportContent').innerHTML = `
+                                                <div class="alert alert-danger">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    ${data.message || 'Failed to load download report.'}
+                                                </div>
+                                            `;
+                                return;
+                            }
+
+                            // Set document info
+                            document.getElementById('reportDocNumber').textContent = data.document_number ||
+                                '-';
+                            document.getElementById('reportFileName').textContent = data.file?.name ||
+                                fileName || '-';
+                            document.getElementById('reportTotalDownloads').textContent =
+                                data.total_downloads ?? (Array.isArray(data.downloads)
+                                    ? data.downloads.reduce((sum, d) => sum + d.download_count, 0)
+                                    : 0);
+
+                            const tbody = document.getElementById('downloadReportTableBody');
+                            const emptyState = document.getElementById('downloadReportEmpty');
+
+                            if (data.downloads.length === 0) {
+                                tbody.innerHTML = '';
+                                emptyState.classList.remove('hidden');
+                            } else {
+                                emptyState.classList.add('hidden');
+                                tbody.innerHTML = data.downloads.map((item, index) => `
+                                                    <tr class="hover:bg-gray-50">
+                                                        <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
+                                                        <td class="px-4 py-3 text-sm text-gray-900">
+                                                            <div class="flex items-center">
+                                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                                                                    <span class="text-blue-600 font-semibold text-xs">
+                                                                        ${item.user_name.charAt(0).toUpperCase()}
+                                                                    </span>
+                                                                </div>
+                                                                ${item.user_name}
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-center">
+                                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                                                ${item.download_count}x
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                `).join('');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Failed to load download report:', err);
+                            document.getElementById('downloadReportLoading').classList.add('hidden');
+                            document.getElementById('downloadReportContent').innerHTML = `
+                                                <div class="alert alert-danger">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    Failed to load download report. Please try again.
+                                                </div>
+                                            `;
+                        });
+                });
             });
         </script>
     @endpush

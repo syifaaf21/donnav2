@@ -26,9 +26,12 @@
                 <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
                 <div>
                     <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
-                    <p class="text-xs text-yellow-700 leading-relaxed">
-                        Gunakan tombol <strong>Replace</strong> untuk mengganti file.
-                    </p>
+                    <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
+                        <li>Allowed formats: <strong>PDF, DOCX, XLSX</strong>. Max per file: <strong>2 MB</strong>, total: <strong>20 MB</strong>.</li>
+                        <li>Gunakan tombol <strong>Replace</strong> untuk mengganti file, dan <strong>Add File</strong>
+                            untuk menambah file baru.</li>
+                        </li>
+                    </ul>
                 </div>
             </div>
             <!-- Existing Files -->
@@ -44,21 +47,25 @@
                 </button>
 
                 <p class="text-xs text-gray-500 mt-1">
-                    Allowed formats: PDF, DOCX, XLSX
+                    Allowed formats: PDF, DOCX, XLSX. Max per file: 2 MB. Total: 20 MB.
                 </p>
             </div>
 
-            <!-- Notes -->
+            <!-- Notes (optional) -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-3">Notes Revision <span
-                        class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Notes Revision
+                    <span class="text-gray-400 text-xs">(optional)</span>
+                </label>
+                <p class="text-xs text-gray-600 mb-3 italic">
+                    💡 Jika dokumen ini direvisi karena dokumen induk telah diperbarui, biarkan notes kosong.
+                </p>
 
                 <!-- Quill container -->
                 <div id="quillEditor" class="bg-white border border-gray-300 rounded p-2" style="height: 150px;">
                 </div>
 
                 <!-- Hidden input untuk submit -->
-                <input type="hidden" name="notes" id="notesInput" required>
+                <input type="hidden" name="notes" id="notesInput">
             </div>
 
 
@@ -87,7 +94,7 @@
             placeholder: "Write your revision notes...",
             modules: {
                 toolbar: [
-                    ['bold', 'italic', 'underline'],
+                    ['bold', 'italic', 'strike'],
                     ['link']
                 ]
             }
@@ -137,7 +144,7 @@
                 isValid = false;
             }
 
-            // 1.3) VALIDASI TOTAL SIZE MAKS 10MB
+            // 1.3) VALIDASI TOTAL SIZE MAKS 20MB
             let totalSize = 0;
             allFileInputs.forEach(input => {
                 if (input.files.length > 0) {
@@ -145,7 +152,7 @@
                 }
             });
 
-            const MAX_SIZE = 10 * 1024 * 1024;
+            const MAX_SIZE = 20 * 1024 * 1024;
 
             if (totalSize > MAX_SIZE) {
                 e.preventDefault();
@@ -156,7 +163,7 @@
         <div class="flex items-start">
             <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
             <div class="text-xs text-red-700">
-                <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
                 <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                 <p>
                     Please compress your PDF files and reupload it.
@@ -170,14 +177,11 @@
             }
 
 
-            // 2) VALIDASI: NOTES WAJIB ISI
+            // 2) Notes optional: set if provided, allow empty
             let plain = quillRevise.getText().trim();
             let html = quillRevise.root.innerHTML.trim();
-
             if (plain.length === 0 || html === "<p><br></p>") {
-                e.preventDefault();
-                showReviseError("Notes cannot be empty.");
-                isValid = false;
+                reviseNotesInput.value = '';
             } else {
                 reviseNotesInput.value = html;
             }

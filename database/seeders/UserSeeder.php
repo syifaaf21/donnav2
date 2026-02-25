@@ -90,7 +90,7 @@ class UserSeeder extends Seeder
             ['name' => 'Zaenuddin Hafidh Karyana', 'dept' => 'Quality Unit', 'npk' => 119],
             ['name' => 'Endi Ependi', 'dept' => 'Quality Electric', 'npk' => 601],
             ['name' => 'Reza Khaerudin', 'dept' => 'Engineering Body', 'npk' => 543],
-            ['name' => 'IKHSANUDIN', 'dept' => 'Engineering Unit', 'npk' => 1724],
+            ['name' => 'Ikhsanudin', 'dept' => 'Engineering Unit', 'npk' => 1724],
             ['name' => 'Yakobus Piere Aditya Putra', 'dept' => 'Engineering Electric', 'npk' => 552],
             ['name' => 'Wahyu Bagus Hartanto', 'dept' => 'Maintenance', 'npk' => 118],
             ['name' => 'Angga Saputra', 'dept' => 'Production Unit', 'npk' => 909],

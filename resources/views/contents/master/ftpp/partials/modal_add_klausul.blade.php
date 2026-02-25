@@ -23,6 +23,22 @@
             {{-- Body --}}
             <div class="modal-body p-5" style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                 <div class="row g-4">
+                    {{-- Audit Type --}}
+                    <div class="col-md-12">
+                        <label for="select-audit-type" class="form-label fw-semibold">Audit Type <span
+                                class="text-danger">*</span></label>
+                        <select id="select-audit-type" name="audit_type_id"
+                            class="form-select @error('audit_type_id') is-invalid @enderror" required>
+                            <option value="" disabled selected>-- Select Audit Type --</option>
+                            @foreach ($audits as $audit)
+                                <option value="{{ $audit->id }}">{{ $audit->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('audit_type_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     {{-- Klausul --}}
                     <div class="col-md-6">
                         <label for="select-klausul" class="form-label fw-semibold">Klausul <span

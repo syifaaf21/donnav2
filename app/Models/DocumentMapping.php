@@ -28,12 +28,16 @@ class DocumentMapping extends Model
         'notes',
         'user_id',
         'last_reminder_date',
+        'last_approved_at',
+        'review_notified_at',
         'plant',
     ];
 
     protected $casts = [
         'reminder_date' => 'date',
         'deadline' => 'date',
+        'last_approved_at' => 'datetime',
+        'review_notified_at' => 'datetime',
     ];
 
     protected $table = 'tt_document_mappings';

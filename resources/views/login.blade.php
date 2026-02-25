@@ -24,9 +24,9 @@
         <div class="flex flex-col items-center mb-4">
             <div class="p-3 bg-gradient-to-br from-primaryLight/10 to-primaryDark/10 rounded-full shadow-md">
                 <div class="relative w-48 h-16 group">
-                    <img src="{{ asset('images/madonna.png') }}" alt="Madonna logo"
+                    <img src="{{ asset('images/madonna-logo.png') }}" alt="Madonna logo"
                         class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-100 group-hover:opacity-0">
-                    <img src="{{ asset('images/madonna-logo.png') }}" alt="Madonna hover"
+                    <img src="{{ asset('images/madonna-icon.png') }}" alt="Madonna hover"
                         class="absolute inset-0 w-full h-full object-contain transition-opacity duration-200 opacity-0 group-hover:opacity-100">
                 </div>
             </div>

@@ -100,6 +100,33 @@ class DashboardController extends Controller
             ];
         }
 
+        $reviewStatusData = [];
+
+        foreach ($departmentsReview as $deptId => $deptName) {
+            $reviewStatusData[$deptId] = [
+                'need_review' => DocumentMapping::where('department_id', $deptId)
+                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                    ->count(),
+
+                'approved' => DocumentMapping::where('department_id', $deptId)
+                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                    ->whereHas('status', fn($q) => $q->where('name', 'Approved'))
+                    ->count(),
+
+                'rejected' => DocumentMapping::where('department_id', $deptId)
+                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                    ->whereHas('status', fn($q) => $q->where('name', 'Rejected'))
+                    ->count(),
+
+                'uncomplete' => DocumentMapping::where('department_id', $deptId)
+                    ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                    ->whereHas('status', fn($q) => $q->where('name', 'Uncomplete'))
+                    ->count(),
+            ];
+        }
+
+
         $findingsPerDepartment = Department::withCount('auditFindings')->get();
 
         $deptLabels = $findingsPerDepartment->pluck('name');
@@ -121,6 +148,7 @@ class DashboardController extends Controller
             'obsoleteDocuments',
             'chartData',
             'controlExtraData',
+            'reviewStatusData',
             'deptLabels',
             'deptTotals'
         ));

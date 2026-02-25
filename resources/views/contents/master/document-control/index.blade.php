@@ -323,7 +323,6 @@
 @endsection
 
 @push('scripts')
-<x-sweetalert-confirm />
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const globalDropdown = document.getElementById('globalFileDropdown');
@@ -673,6 +672,29 @@
             }
             updateRemoveButtons();
         }
+
+        /** =======================
+         * DELETE CONFIRMATION (match index2 wording)
+         * ======================= */
+        document.querySelectorAll('.delete-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Hapus dokumen ini?',
+                    text: 'Menghapus dokumen akan menghapus semua file terkait secara permanen. Tindakan ini tidak dapat dibatalkan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
 
         /** =======================
          * SEARCH & FILTER (FORM SUBMIT BIASA)

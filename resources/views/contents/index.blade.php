@@ -370,6 +370,7 @@
             const departments = @json($departments); // Semua department
             const departmentsReview = @json($departmentsReview); // Hanya Body, Unit, Electric
             const controlDocuments = @json($controlDocuments);
+            const reviewStatusData = @json($reviewStatusData);
             const reviewDocuments = @json($reviewDocuments);
             const controlExtraData = @json($controlExtraData);
 
@@ -504,31 +505,69 @@
                 '#C5E8D1' // pale green-blue
             ];
 
+            const reviewNormalData = [];
+            const reviewNeedReviewData = [];
+
+            Object.keys(departmentsReview).forEach(deptId => {
+                const data = reviewStatusData[Number(deptId)] || {};
+
+                const needReview = data.need_review ?? 0;
+
+                const normal =
+                    (data.approved ?? 0) +
+                    (data.rejected ?? 0) +
+                    (data.uncomplete ?? 0);
+
+                reviewNormalData.push(normal);
+                reviewNeedReviewData.push(needReview);
+            });
+
             // Render Review Documents Chart
             new Chart(document.getElementById('reviewDocsChart').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: shortReviewLabels,
                     datasets: [{
-                        label: 'Review Documents',
-                        data: reviewData,
-                        backgroundColor: pastelColorsReview,
-                        borderRadius: 6,
-                        barThickness: 20
-                    }]
+                            label: 'Other Status',
+                            data: reviewNormalData,
+                            backgroundColor: '#22c55e', // hijau
+                            borderRadius: {
+                                bottomLeft: 6,
+                                bottomRight: 6
+                            },
+                            barThickness: 22
+                        },
+                        {
+                            label: 'Need Review',
+                            data: reviewNeedReviewData,
+                            backgroundColor: '#ef4444', // 🔴 merah
+                            borderRadius: {
+                                topLeft: 6,
+                                topRight: 6
+                            },
+                            barThickness: 22
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     plugins: {
                         legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: true
+                            display: true,
+                            labels: {
+                                usePointStyle: true
+                            }
                         }
                     },
                     scales: {
+                        x: {
+                            stacked: true,
+                            grid: {
+                                display: false
+                            }
+                        },
                         y: {
+                            stacked: true,
                             beginAtZero: true,
                             ticks: {
                                 precision: 0
@@ -536,23 +575,11 @@
                             grid: {
                                 color: '#e9ecef'
                             }
-                        },
-                        x: {
-                            ticks: {
-                                autoSkip: false,
-                                maxRotation: 45,
-                                minRotation: 45,
-                                font: {
-                                    size: 12
-                                }
-                            },
-                            grid: {
-                                display: false
-                            }
                         }
                     }
                 }
             });
+
 
             /* ===================== FINDING PER DEPARTMENT — LINE CHART ===================== */
             const findingLabels = @json($deptLabels);

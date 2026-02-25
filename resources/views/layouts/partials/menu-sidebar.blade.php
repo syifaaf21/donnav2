@@ -15,7 +15,7 @@
             class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
         {{ Route::is('document-control*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
             {{-- <i data-feather="settings" class="menu-icon w-4 h-4"></i> --}}
-            <i class="bi bi-calendar-range" style="width: 1rem; height: 1rem;"></i>
+            <i class="bi bi-calendar-range {{ Route::is('document-control*') ? 'mb-2' : '' }}" style="width: 1rem; height: 1rem;"></i>
             <span class="sidebar-text">Document Control</span>
         </a>
     </li>

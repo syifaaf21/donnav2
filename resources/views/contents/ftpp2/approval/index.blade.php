@@ -134,14 +134,17 @@
 
     <!-- Attachment preview modal -->
     <div id="attachmentPreviewModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[9999]">
-        <div class="bg-white rounded-lg shadow-xl w-11/12 lg:w-4/5 h-[80vh] relative overflow-hidden">
-            <button type="button" id="closePreviewModal"
-                class="absolute top-2 right-2 p-2 rounded-full bg-gray-100 hover:bg-gray-200 border text-gray-600"
-                aria-label="Close preview">
-                &times;
-            </button>
+        <div class="bg-white rounded-lg shadow-xl w-11/12 lg:w-4/5 h-[80vh] relative overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-700">Attachment Preview</h3>
+                <button type="button" id="closePreviewModal"
+                    class="p-1 rounded-full bg-gray-100 hover:bg-red-200 text-gray-600 hover:text-red-800"
+                    aria-label="Close preview">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
             <iframe id="attachmentPreviewFrame" src="" title="Attachment preview"
-                class="w-full h-full border-none"></iframe>
+                class="w-full flex-1 border-none"></iframe>
         </div>
     </div>
 @endsection
