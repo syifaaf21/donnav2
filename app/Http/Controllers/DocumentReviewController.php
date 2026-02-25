@@ -68,7 +68,13 @@ class DocumentReviewController extends Controller
 
     public function showFolder($plant, $docCode, Request $request)
     {
-        $docCode = base64_decode($docCode);
+        // Accept both base64-encoded docCode (preferred) and raw docCode.
+        $decoded = @base64_decode($docCode, true);
+        if ($decoded === false || $decoded === '') {
+            $docCode = $docCode; // raw value
+        } else {
+            $docCode = $decoded;
+        }
 
         // Group documents
         $documentsByCode = $this->getDocumentsGroupedByPlantAndCode();

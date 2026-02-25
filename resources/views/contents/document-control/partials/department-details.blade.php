@@ -369,6 +369,13 @@
                                                         </button>
                                                     @endif
 
+                                                    {{-- DOWNLOAD WITH WATERMARK --}}
+                                                    {{-- <a href="{{ route('document-control.downloadWatermarked', $mapping->id, false) }}" target="_blank"
+                                                        class="action-btn inline-flex items-center justify-center w-8 h-8 rounded-full bg-sky-600 text-white hover:bg-sky-700 transition-colors"
+                                                        title="Download (watermarked)">
+                                                        <i class="bi bi-download"></i>
+                                                    </a> --}}
+
                                                     {{-- UPLOAD ALWAYS APPEARS LEFT WITH OTHER ACTIONS --}}
                                                     @if (!$approvalMode)
                                                         <button type="button"
