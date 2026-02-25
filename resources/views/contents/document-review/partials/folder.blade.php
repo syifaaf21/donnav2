@@ -485,11 +485,11 @@
                                                                             <i class="bi bi-bar-chart"></i>
                                                                         </button>
                                                                     @endif
-                                                                    <a href="{{ route('document-review.downloadWatermarkedFile', $file['id'], false) }}" target="_blank"
+                                                                    {{-- <a href="{{ route('document-review.downloadWatermarkedFile', $file['id'], false) }}" target="_blank"
                                                                         class="text-sky-600 hover:text-sky-800 whitespace-nowrap ms-2"
                                                                         title="Download (watermarked)">
                                                                         <i class="bi bi-download"></i>
-                                                                    </a>
+                                                                    </a> --}}
                                                                 </div>
                                                             @endforeach
                                                         </div>
@@ -619,9 +619,9 @@
                                 <i class="bi bi-download"></i> Download PDF
                             </a>
 
-                            <a id="downloadWatermarkedBtn" href="#" target="_blank" class="btn btn-outline-primary btn-sm d-none" title="Download (watermarked)">
+                            {{-- <a id="downloadWatermarkedBtn" href="#" target="_blank" class="btn btn-outline-primary btn-sm d-none" title="Download (watermarked)">
                                 <i class="bi bi-download"></i> Watermarked
-                            </a>
+                            </a> --}}
 
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
