@@ -108,6 +108,61 @@
             /* jika gambar banyak agar tidak keluar layar */
         }
 
+        .preserve-newlines {
+            white-space: pre-line;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            font-size: 11px !important;
+            line-height: 1.4;
+        }
+
+        .preserve-newlines * {
+            font-size: 11px !important;
+            line-height: 1.4;
+        }
+
+        td.preserve-newlines {
+            font-size: 11px !important;
+        }
+
+        .preserve-newlines div {
+            margin: 0;
+            font-size: 11px !important;
+        }
+
+        .preserve-newlines p {
+            margin: 0;
+            font-size: 11px !important;
+        }
+
+        .preserve-newlines b,
+        .preserve-newlines strong,
+        .preserve-newlines i,
+        .preserve-newlines em,
+        .preserve-newlines u {
+            font-size: 11px !important;
+        }
+
+        .preserve-newlines ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 4px 0;
+            font-size: 11px !important;
+        }
+
+        .preserve-newlines ol {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin: 4px 0;
+            font-size: 11px !important;
+        }
+
+        .preserve-newlines li {
+            margin: 2px 0;
+            font-size: 11px !important;
+        }
+
         .note {
             font-size: 10px;
             /* lebih kecil dari text-sm */
@@ -145,7 +200,7 @@
                     <tr>
                         <td class="font-semibold">Department / Process / Product:</td>
                         <td>
-                            {{ \Illuminate\Support\Str::title($finding->department->name ?? '-') .
+                            {{ \Illuminate\Support\Str::title($finding->department_name ?? 'Unknown') .
                                 ' / ' .
                                 \Illuminate\Support\Str::title($finding->process->name ?? '-') .
                                 ' / ' .
@@ -155,14 +210,24 @@
                     <tr>
                         <td class="font-semibold">Auditee:</td>
                         <td>
-                            @foreach ($finding->auditee ?? [] as $auditee)
-                                {{ $auditee->name }}{{ !$loop->last ? ', ' : '' }}
-                            @endforeach
+                            @if ($finding->auditee && $finding->auditee->isNotEmpty())
+                                {{ $finding->auditee->pluck('name')->join(', ') }}
+                            @else
+                                -
+                            @endif
                         </td>
                     </tr>
                     <tr>
                         <td class="font-semibold">Auditor / Inisiator:</td>
-                        <td>{{ $finding->auditor->name ?? '-' }}</td>
+                        <td>
+                            @if (!empty($finding->auditors) && $finding->auditors->isNotEmpty())
+                                {{ $finding->auditors->pluck('name')->join(', ') }}
+                            @elseif(!empty($finding->auditor) && !empty($finding->auditor->name))
+                                {{ $finding->auditor->name }}
+                            @else
+                                -
+                            @endif
+                        </td>
                     </tr>
                     <tr>
                         <td class="font-semibold">Date:</td>
@@ -190,7 +255,7 @@
         <tr>
             <td>
                 <b>Finding / Issue:</b><br>
-                {{ $finding->finding_description ?? '-' }}
+                <div class="preserve-newlines">{!! strip_tags($finding->finding_description ?? '-', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</div>
 
                 {{-- Tampilkan lampiran gambar yang terkait dengan finding ini --}}
                 @foreach ($finding->file ?? [] as $image)
@@ -206,6 +271,9 @@
                                 style="max-width: 64px; max-height: 64px; display:block; margin:auto;">
                             <div style="font-size:8px; text-align:center;">
                                 Lampiran Gambar: {{ $image->original_name ?? basename($image->file_path ?? '') }}
+                            <div>
+                                <div>Dept. Head</div>
+                                <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->deptHead ? e($auditeeAction->deptHead->name) : '&nbsp;' !!}</div>
                             </div>
                         </div>
                     @endif
@@ -223,6 +291,22 @@
     </table>
 
     {{-- ==================== AUDITEE INPUT ==================== --}}
+    @php
+        $auditeeAction = $finding->auditeeAction ?? null;
+        $whyCauses = $auditeeAction && $auditeeAction->whyCauses ? $auditeeAction->whyCauses : collect();
+        $correctiveActions =
+            $auditeeAction && $auditeeAction->correctiveActions ? $auditeeAction->correctiveActions : collect();
+        $preventiveActions =
+            $auditeeAction && $auditeeAction->preventiveActions ? $auditeeAction->preventiveActions : collect();
+        $auditeeImages =
+            $auditeeAction && $auditeeAction->file
+                ? collect($auditeeAction->file)->filter(function ($file) {
+                    $ext = strtolower(pathinfo($file->file_name ?? ($file->original_name ?? ''), PATHINFO_EXTENSION));
+                    return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']);
+                })
+                : collect();
+    @endphp
+
     <table class="w-full border text-sm mt-2">
         <tr class="bg-gray font-semibold">
             <td colspan="2">AUDITEE</td>
@@ -232,20 +316,80 @@
                 <b>5 Why Analysis:</b>
             </td>
         </tr>
-        @foreach ($finding->auditeeAction->whyCauses ?? [] as $index => $why)
-            <tr>
-                <td style="width: 25%;">Why {{ $index + 1 }} (Mengapa)</td>
-                <td>{{ $why->why_description ?? '-' }}</td>
-            </tr>
-            <tr>
-                <td>Cause (Karena)</td>
-                <td>{{ $why->cause_description ?? '-' }}</td>
-            </tr>
-        @endforeach
+
+        @if ($whyCauses->count())
+            @foreach ($whyCauses as $index => $why)
+                <tr>
+                    <td
+                        style="width: 15%; font-weight: bold; vertical-align: top; border-right: 1px solid #000; padding-right: 6px;">
+                        Why-{{ $index + 1 }}</td>
+                    <td style="padding-left: 6px;">
+                        <table style="width: 100%; border: none;">
+                            <tr>
+                                <td style="border: none; padding: 0; width: 55px; font-weight: bold;">Mengapa</td>
+                                <td style="border: none; padding: 0; width: 8px;">:</td>
+                                <td style="border: none; padding: 0;" class="preserve-newlines">{!! strip_tags($why->why_description ?? '', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 4px 0 0 0; width: 55px; font-weight: bold;">Karena
+                                </td>
+                                <td style="border: none; padding: 4px 0 0 0; width: 8px;">:</td>
+                                <td style="border: none; padding: 4px 0 0 0;" class="preserve-newlines">
+                                    {!! strip_tags($why->cause_description ?? '', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            @endforeach
+        @else
+            @for ($i = 0; $i < 5; $i++)
+                <tr>
+                    <td
+                        style="width: 15%; font-weight: bold; vertical-align: top; border-right: 1px solid #000; padding-right: 6px;">
+                        Why-{{ $i + 1 }}</td>
+                    <td style="padding-left: 6px;">
+                        <table style="width: 100%; border: none;">
+                            <tr>
+                                <td style="border: none; padding: 0; width: 55px; font-weight: bold;">Mengapa</td>
+                                <td style="border: none; padding: 0; width: 8px;">:</td>
+                                <td style="border: none; padding: 0;" class="preserve-newlines">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 4px 0 0 0; width: 55px; font-weight: bold;">Karena
+                                </td>
+                                <td style="border: none; padding: 4px 0 0 0; width: 8px;">:</td>
+                                <td style="border: none; padding: 4px 0 0 0;" class="preserve-newlines">&nbsp;</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            @endfor
+        @endif
+
         <tr>
             <td class="font-semibold">Root Cause</td>
-            <td>{{ $finding->auditeeAction->root_cause ?? '-' }}</td>
+            <td class="preserve-newlines">{!! $auditeeAction && $auditeeAction->root_cause
+                ? strip_tags($auditeeAction->root_cause, '<b><i><u><strong><em><br><div><p><ul><ol><li>')
+                : '' !!}</td>
         </tr>
+
+        @if ($auditeeImages->count())
+            <tr>
+                <td colspan="2">
+                    <b>Attachment Images (Auditee Action):</b>
+                    <ol style="margin: 0 0 0 18px; padding: 0;">
+                        @foreach ($auditeeImages as $img)
+                            <li style="margin-bottom: 6px;">
+                                {{ $img->file_name ?? ($img->original_name ?? basename($img->file_path ?? '')) }}<br>
+                                <span style="font-size:10px;color:#888;">Uploaded at:
+                                    {{ \Carbon\Carbon::parse($img->created_at)->format('d M Y H:i') }}</span>
+                            </li>
+                        @endforeach
+                    </ol>
+                </td>
+            </tr>
+        @endif
     </table>
 
     {{-- ==================== CORRECTIVE & PREVENTIVE ==================== --}}
@@ -262,75 +406,150 @@
         <tr>
             <td colspan="5" class="font-semibold">Corrective Action</td>
         </tr>
-        @foreach ($finding->auditeeAction->correctiveActions ?? [] as $index => $action)
-            <tr>
-                <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $action->activity ?? '-' }}</td>
-                <td class="text-center">{{ $action->pic ?? '-' }}</td>
-                <td class="text-center">
-                    {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
-                </td>
-                <td class="text-center">
-                    {{ $action->actual_date ? \Carbon\Carbon::parse($action->actual_date)->format('d/m/Y') : '-' }}
-                </td>
-            </tr>
-        @endforeach
+        @if ($correctiveActions->count())
+            @foreach ($correctiveActions as $index => $action)
+                <tr>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td class="preserve-newlines">{!! strip_tags($action->activity ?? '', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
+                    <td class="preserve-newlines">{!! strip_tags($action->pic ?? '', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
+                    <td class="text-center">
+                        {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '' }}
+                    </td>
+                    <td class="text-center">
+                        @php
+                            $actual = trim((string) ($action->actual_date ?? ''));
+                            $displayActual = '';
+                            if ($actual !== '' && $actual !== '-' && $actual !== '0000-00-00') {
+                                if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $actual)) {
+                                    $displayActual = $actual;
+                                } else {
+                                    try {
+                                        $displayActual = \Carbon\Carbon::parse($actual)->format('d/m/Y');
+                                    } catch (\Exception $e) {
+                                        $displayActual = $actual;
+                                    }
+                                }
+                            }
+                        @endphp
+                        {{ $displayActual }}
+                    </td>
+                </tr>
+            @endforeach
+        @else
+            @for ($i = 0; $i < 4; $i++)
+                <tr>
+                    <td class="text-center">{{ $i + 1 }}</td>
+                    <td class="preserve-newlines">&nbsp;</td>
+                    <td class="preserve-newlines">&nbsp;</td>
+                    <td class="text-center">&nbsp;</td>
+                    <td class="text-center">&nbsp;</td>
+                </tr>
+            @endfor
+        @endif
 
         {{-- Preventive --}}
         <tr>
             <td colspan="5" class="font-semibold">Preventive Action</td>
         </tr>
-        @foreach ($finding->auditeeAction->preventiveActions ?? [] as $index => $action)
-            <tr>
-                <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $action->activity ?? '-' }}</td>
-                <td class="text-center">{{ $action->pic ?? '-' }}</td>
-                <td class="text-center">
-                    {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '-' }}
-                </td>
-                <td class="text-center">
-                    {{ $action->actual_date ? \Carbon\Carbon::parse($action->actual_date)->format('d/m/Y') : '-' }}
-                </td>
-            </tr>
-        @endforeach
+        @if ($preventiveActions->count())
+            @foreach ($preventiveActions as $index => $action)
+                <tr>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td class="preserve-newlines">{!! strip_tags($action->activity ?? '', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
+                    <td class="preserve-newlines">{!! strip_tags($action->pic ?? '', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</td>
+                    <td class="text-center">
+                        {{ $action->planning_date ? \Carbon\Carbon::parse($action->planning_date)->format('d/m/Y') : '' }}
+                    </td>
+                    <td class="text-center">
+                        @php
+                            $actual = trim((string) ($action->actual_date ?? ''));
+                            $displayActual = '';
+                            if ($actual !== '' && $actual !== '-' && $actual !== '0000-00-00') {
+                                if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $actual)) {
+                                    $displayActual = $actual;
+                                } else {
+                                    try {
+                                        $displayActual = \Carbon\Carbon::parse($actual)->format('d/m/Y');
+                                    } catch (\Exception $e) {
+                                        $displayActual = $actual;
+                                    }
+                                }
+                            }
+                        @endphp
+                        {{ $displayActual }}
+                    </td>
+                </tr>
+            @endforeach
+        @else
+            @for ($i = 0; $i < 4; $i++)
+                <tr>
+                    <td class="text-center">{{ $i + 1 }}</td>
+                    <td class="preserve-newlines">&nbsp;</td>
+                    <td class="preserve-newlines">&nbsp;</td>
+                    <td class="text-center">&nbsp;</td>
+                    <td class="text-center">&nbsp;</td>
+                </tr>
+            @endfor
+        @endif
     </table>
 
     {{-- ==================== YOKOTEN ==================== --}}
     <table class="w-full border text-sm mt-2">
         <tr>
             <td class="w-2/3">
-                <b>Yokoten?</b> {{ $finding->auditeeAction->yokoten ? 'Yes' : 'No' }} <br>
+                <b>Yokoten?</b>
+
+                @php
+                    $square = 'display:inline-block;width:14px;height:14px;border:1px solid #000;vertical-align:middle;margin-right:6px;';
+                @endphp
+                @if (isset($auditeeAction) && !is_null($auditeeAction->yokoten))
+                    {{ $auditeeAction->yokoten ? 'Yes' : 'No' }}
+                @else
+                    <span>
+                        <span style="{{ $square }}"></span> Yes
+                    </span>
+                    <span style="margin-left: 10px;">
+                        <span style="{{ $square }}"></span> No
+                    </span>
+                @endif
             </td>
             <td class="text-center font-semibold">Checked</td>
             <td class="text-center font-semibold">Created</td>
         </tr>
         <tr>
             <td>
-                @if ($finding->auditeeAction->yokoten)
-                    <b>Area:</b> {{ $finding->auditeeAction->yokoten_area ?? '-' }}
+                @if ($auditeeAction && ($auditeeAction->yokoten ?? false))
+                    <b>Area:</b>
+                    <div class="preserve-newlines" style="display: inline-block;">{!! strip_tags($auditeeAction->yokoten_area ?? '', '<b><i><u><strong><em><br><div><p><ul><ol><li>') !!}</div>
                 @endif
             </td>
             <td class="text-center">
                 @if (!empty($finding->dept_head_signature_url))
                     <img src="{{ $finding->dept_head_signature_url }}" class="signature" alt="Dept Head Approved">
-                @elseif (isset($finding->auditeeAction->dept_head_signature) && $finding->auditeeAction->dept_head_signature == 1)
-                    <img src="{{ public_path('images/mgr-approve.png') }}" class="signature" alt="Dept Head Approved">
+                @elseif ($auditeeAction && isset($auditeeAction->dept_head_signature) && $auditeeAction->dept_head_signature == 1)
+                    <img src="{{ public_path('images/mgr-approve.png') }}" class="signature"
+                        alt="Dept Head Approved">
+                @else
+                    <div style="height:60px; display:block;"></div>
                 @endif
                 <div>
                     <div>Dept. Head</div>
-                    {{ $finding->auditeeAction->deptHead->name ?? '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->deptHead ? e($auditeeAction->deptHead->name) : '&nbsp;' !!}</div>
                 </div>
 
             </td>
             <td class="text-center">
                 @if (!empty($finding->ldr_spv_signature_url))
                     <img src="{{ $finding->ldr_spv_signature_url }}" class="signature" alt="Leader/Spv Approved">
-                @elseif (isset($finding->auditeeAction->ldr_spv_signature) && $finding->auditeeAction->ldr_spv_signature == 1)
-                    <img src="{{ public_path('images/usr-approve.png') }}" class="signature" alt="Leader/Spv Approved">
+                @elseif ($auditeeAction && isset($auditeeAction->ldr_spv_signature) && $auditeeAction->ldr_spv_signature == 1)
+                    <img src="{{ public_path('images/usr-approve.png') }}" class="signature"
+                        alt="Leader/Spv Approved">
+                @else
+                    <div style="height:60px; display:block;"></div>
                 @endif
                 <div>
                     <div>Leader/Spv</div>
-                    {{ $finding->auditeeAction->user->name ?? '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->user ? e($auditeeAction->user->name) : '&nbsp;' !!}</div>
                 </div>
             </td>
         </tr>
@@ -344,7 +563,7 @@
             <td>Approve</td>
         </tr>
         <tr>
-            <td>{{ $finding->auditeeAction->effectiveness_verification ?? '-' }}</td>
+            <td>{{ $auditeeAction->effectiveness_verification ?? '' }}</td>
             <td class="font-bold">
                 @switch($finding->status_id)
                     @case(7)
@@ -378,50 +597,60 @@
             <td>
                 @if (!empty($finding->acknowledge_by_lead_auditor_url))
                     <img src="{{ $finding->acknowledge_by_lead_auditor_url }}" class="signature"><br>
-                @elseif ($finding->auditeeAction->lead_auditor_id == 1)
+                @elseif ($auditeeAction && ($auditeeAction->lead_auditor_id ?? null) == 1)
                     <img src="/images/stamp-lead-auditor.png" class="signature"><br>
+                @else
+                    <div style="height:60px; display:block; margin:0 auto 6px auto;"></div>
                 @endif
                 <div>
                     <div>Lead Auditor</div>
-                    {{ $finding->auditeeAction->leadAuditor->name ?? '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->leadAuditor ? e($auditeeAction->leadAuditor->name) : '&nbsp;' !!}</div>
                 </div>
             </td>
             <td>
                 @if (!empty($finding->verified_by_auditor_url))
                     <img src="{{ $finding->verified_by_auditor_url }}" class="signature"><br>
-                @elseif ($finding->auditeeAction->auditor_id == 1)
+                @elseif ($auditeeAction && ($auditeeAction->auditor_id ?? null) == 1)
                     <img src="/images/stamp-internal-auditor.png" class="signature"><br>
+                @else
+                    <div style="height:60px; display:block; margin:0 auto 6px auto;"></div>
                 @endif
                 <div>
                     <div>Auditor</div>
-                    {{ $finding->auditeeAction->auditor->name ?? '-' }}
+                    <div style="min-height:18px;">{!! $auditeeAction && $auditeeAction->auditor ? e($auditeeAction->auditor->name) : '&nbsp;' !!}</div>
                 </div>
             </td>
         </tr>
     </table>
 
     <p class="note">Note : 1 Lembar form untuk satu temuan, tambahkan lampiran jika diperlukan</p>
-    <p class="note">No Form : FRM-MR-M4-001-05</p>
+    <p class="note">No Form : FRM-MR-M4-001-06</p>
 
     {{-- ==================== ATTACHMENTS ================== --}}
     {{-- LAMPIRAN FILE --}}
-    @if ($finding->auditeeAction && $finding->auditeeAction->file->count())
+    @if ($auditeeAction && !empty($auditeeAction->file) && count($auditeeAction->file))
         <div class="page-break">
             <div class="font-semibold text-md">Attachment and Evidence: </div>
 
             @foreach ($finding->file as $file)
                 @php
                     $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                    $uploadedAt = $file->created_at ? \Carbon\Carbon::parse($file->created_at)->format('d M Y') : '-';
                 @endphp
 
                 @if (in_array($ext, ['pdf']))
-                    <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
+                    <p class="text-sm">
+                        - {{ $file->original_name ?? basename($file->file_path) }}
+                        <br>
+                        <span style="font-size:10px; color:#888;">Uploaded: {{ $uploadedAt }}</span>
+                    </p>
                 @endif
             @endforeach
 
-            @foreach ($finding->auditeeAction->file as $file)
+            @foreach ($auditeeAction->file as $file)
                 @php
                     $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
+                    $uploadedAt = $file->created_at ? \Carbon\Carbon::parse($file->created_at)->format('d M Y') : '-';
                 @endphp
 
                 @if (in_array($ext, ['jpg', 'jpeg', 'png']))
@@ -429,10 +658,16 @@
                         <img src="{{ $file->full_url }}"
                             style="max-width:400px; max-height:250px; display:block; margin:auto;">
                         <div class="text-sm" style="font-size:10px; text-align:center;">
-                            {{ $file->original_name ?? basename($file->file_path) }}</div>
+                            {{ $file->original_name ?? basename($file->file_path) }}<br>
+                            <span style="font-size:10px; color:#888;">Uploaded: {{ $uploadedAt }}</span>
+                        </div>
                     </div>
                 @else
-                    <p class="text-sm">- {{ $file->original_name ?? basename($file->file_path) }}</p>
+                    <p class="text-sm">
+                        - {{ $file->original_name ?? basename($file->file_path) }}
+                        <br>
+                        <span style="font-size:10px; color:#888;">Uploaded: {{ $uploadedAt }}</span>
+                    </p>
                 @endif
             @endforeach
         </div>

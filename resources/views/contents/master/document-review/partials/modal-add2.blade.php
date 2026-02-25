@@ -1,10 +1,11 @@
 @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 900px;">
             <form action="{{ route('master.document-review.store2') }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
-                <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="max-width: 100%;">
+
 
                     {{-- Modal Header --}}
                     <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
@@ -16,10 +17,10 @@
 
                         {{-- Close button --}}
                         <button type="button"
-                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                            class="btn btn-light position-absolute top-0 end-0 m-3 p-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
                             data-bs-dismiss="modal" aria-label="Close"
                             style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                            <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
 
@@ -66,10 +67,11 @@
                                 <select name="plant" id="plant_select"
                                     class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
                                     required>
-                                    <option value="">-- Select Plant --</option>
-                                    <option value="body">Body</option>
-                                    <option value="unit">Unit</option>
-                                    <option value="electric">Electric</option>
+                                        <option value="">-- Select Plant --</option>
+                                        <option value="all">ALL</option>
+                                        <option value="body">Body</option>
+                                        <option value="unit">Unit</option>
+                                        <option value="electric">Electric</option>
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -146,7 +148,7 @@
                                 <input type="hidden" name="notes" id="notes_input_add"
                                     value="{{ old('notes') }}">
                                 <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
-                                    style="min-height: 120px; max-height: 160px; overflow-y: auto; border: 1px solid #e2e8f0;">
+                                    style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
                                 </div>
                                 <small class="text-muted">You can format your notes with bold, italic, underline,
                                     colors, and more.</small>
@@ -323,13 +325,31 @@
                 tsProcess.enable();
                 tsDept.enable();
 
-                // Fetch data filtered by plant
+                // Fetch data. If plant == 'all' we request unfiltered lists for model/product/process/part,
+                // but departments should be the full set (i.e. not filtered) when 'all' is chosen.
+                let partsUrl, productsUrl, modelsUrl, processesUrl, departmentsUrl;
+                if (plant === 'all') {
+                    partsUrl = `/api/part-numbers`;
+                    productsUrl = `/api/products`;
+                    modelsUrl = `/api/models`;
+                    processesUrl = `/api/processes`;
+                    // request departments for plant=all only
+                    departmentsUrl = `/api/departments?plant=all`;
+                } else {
+                    const p = encodeURIComponent(plant);
+                    partsUrl = `/api/part-numbers?plant=${p}`;
+                    productsUrl = `/api/products?plant=${p}`;
+                    modelsUrl = `/api/models?plant=${p}`;
+                    processesUrl = `/api/processes?plant=${p}`;
+                    departmentsUrl = `/api/departments?plant=${p}`;
+                }
+
                 const [parts, products, models, processes, departments] = await Promise.all([
-                    safeFetchJson(`/api/part-numbers?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/products?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/models?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/processes?plant=${encodeURIComponent(plant)}`),
-                    safeFetchJson(`/api/departments?plant=${encodeURIComponent(plant)}`)
+                    safeFetchJson(partsUrl),
+                    safeFetchJson(productsUrl),
+                    safeFetchJson(modelsUrl),
+                    safeFetchJson(processesUrl),
+                    safeFetchJson(departmentsUrl)
                 ]);
 
                 // Clear and repopulate each dropdown
@@ -415,6 +435,55 @@
 
             });
 
+            // --- Auto-generate document number when key fields change ---
+            async function generateDocumentNumber() {
+                const documentId = tsDocument.getValue();
+                const departmentId = tsDept.getValue();
+                const productIds = tsProduct.getValue() || [];
+                const processIds = tsProcess.getValue() || [];
+                const modelIds = tsModel.getValue() || [];
+
+                // Use first selected if multiple
+                const payload = {
+                    document_id: documentId ? Number(documentId) : null,
+                    department_id: departmentId ? Number(departmentId) : null,
+                    product_id: productIds && productIds.length ? Number(productIds[0]) : null,
+                    process_id: processIds && processIds.length ? Number(processIds[0]) : null,
+                    model_id: modelIds && modelIds.length ? Number(modelIds[0]) : null,
+                    format: 3,
+                };
+
+                if (!payload.document_id || !payload.department_id) {
+                    return; // need minimum fields
+                }
+
+                try {
+                    const res = await fetch('{{ route('document-number.generate') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) throw new Error('Failed to generate');
+                    const json = await res.json();
+                    if (json?.success) {
+                        document.getElementById('document_number').value = json.document_number;
+                    }
+                } catch (err) {
+                    console.error('Generate error:', err);
+                }
+            }
+
+            // Trigger generation when relevant selects change
+            tsDocument.on('change', generateDocumentNumber);
+            tsDept.on('change', generateDocumentNumber);
+            tsProduct.on('change', generateDocumentNumber);
+            tsProcess.on('change', generateDocumentNumber);
+            tsModel.on('change', generateDocumentNumber);
+
 
             const quill = new Quill('#quill_editor', {
                 theme: 'snow',
@@ -434,9 +503,23 @@
             // Set old value jika ada
             quill.root.innerHTML = hiddenInput.value || '';
 
-            // Saat submit form, isi hidden input dari Quill
+
+            // Saat submit form, isi hidden input dari Quill dan tampilkan loading pada tombol submit
             form.addEventListener('submit', function() {
                 hiddenInput.value = quill.root.innerHTML;
+
+                // Do not clear plant 'all' here — allow server to receive 'all' so it can be
+                // handled (we treat 'all' as Other/Manual Entry tab).
+
+                // Temukan tombol submit
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    // Simpan teks asli
+                    submitBtn.dataset.originalText = submitBtn.innerHTML;
+                    // Tampilkan spinner dan teks Loading
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+                    submitBtn.disabled = true;
+                }
             });
 
 
@@ -474,13 +557,29 @@
 
                     // Trigger change event untuk load data dari API
                     setTimeout(async () => {
-                        // Manually trigger the plant change to load filtered data
+                        // Manually trigger the plant change to load data. If oldPlant == 'all', fetch unfiltered lists.
+                        let partsUrl2, productsUrl2, modelsUrl2, processesUrl2, departmentsUrl2;
+                        if (oldPlant === 'all') {
+                            partsUrl2 = `/api/part-numbers`;
+                            productsUrl2 = `/api/products`;
+                            modelsUrl2 = `/api/models`;
+                            processesUrl2 = `/api/processes`;
+                            // request departments for plant=all only
+                            departmentsUrl2 = `/api/departments?plant=all`;
+                        } else {
+                            partsUrl2 = `/api/part-numbers?plant=${encodeURIComponent(oldPlant)}`;
+                            productsUrl2 = `/api/products?plant=${encodeURIComponent(oldPlant)}`;
+                            modelsUrl2 = `/api/models?plant=${encodeURIComponent(oldPlant)}`;
+                            processesUrl2 = `/api/processes?plant=${encodeURIComponent(oldPlant)}`;
+                            departmentsUrl2 = `/api/departments?plant=${encodeURIComponent(oldPlant)}`;
+                        }
+
                         const [parts, products, models, processes, departments] = await Promise.all([
-                            safeFetchJson(`/api/part-numbers?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/products?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/models?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/processes?plant=${encodeURIComponent(oldPlant)}`),
-                            safeFetchJson(`/api/departments?plant=${encodeURIComponent(oldPlant)}`)
+                            safeFetchJson(partsUrl2),
+                            safeFetchJson(productsUrl2),
+                            safeFetchJson(modelsUrl2),
+                            safeFetchJson(processesUrl2),
+                            safeFetchJson(departmentsUrl2)
                         ]);
 
                         // Enable fields

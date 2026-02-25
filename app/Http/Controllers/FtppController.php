@@ -4,56 +4,99 @@ namespace App\Http\Controllers;
 
 use App\Models\Audit;
 use App\Models\AuditFinding;
-use App\Models\AuditeeAction;
 use App\Models\AuditFindingSubKlausul;
-use App\Models\CorrectiveAction;
 use App\Models\Department;
-use App\Models\DocumentFile;
-use App\Models\FindingCategory;
 use App\Models\HeadKlausul;
 use App\Models\Klausul;
-use App\Models\PreventiveAction;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\Status;
-use App\Models\SubAudit;
 use App\Models\SubKlausul;
 use App\Models\User;
-use App\Models\WhyCauses;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Storage;
 
 class FtppController extends Controller
 {
     public function index(Request $request)
     {
         // Build base query with eager loads
-        $query = AuditFinding::with(['status', 'department', 'auditor', 'auditee']);
+        // Use `auditors` pivot relation (many-to-many) instead of single `auditor_id`
+        $query = AuditFinding::with(['status', 'department', 'auditors', 'auditee', 'audit']);
 
         $user = auth()->user();
 
         // Determine roles lowercased for checks
-        $userRoles = $user ? $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray() : [];
+        $userRolesLowercase = $user ? $user->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray() : [];
+
+        // Get original roles (non-lowercased) for blade
+        $userRoles = $user ? $user->roles->pluck('name')->toArray() : [];
+
+        // Determine filter type: 'created' (default), 'assigned'
+        $filterType = $request->input('filter_type', 'created');
 
         // Super Admin & Admin can see all records (no additional filter)
-        if (!empty($user) && (in_array('super admin', $userRoles) || in_array('admin', $userRoles))) {
+        if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
             // no department/audience filter
         }
-        // Dept Head: can see all FTTP in their department(s)
-        elseif (!empty($user) && in_array('dept head', $userRoles)) {
+        // Lead Auditor: prefer audit-type based view for "created" tab, and auditee-based for "assigned"
+        elseif (!empty($user) && in_array('lead auditor', $userRolesLowercase)) {
+            $userAuditTypeIds = $user->auditTypes->pluck('id')->toArray();
+
+            if ($filterType === 'assigned') {
+                // Assigned: show findings where user is listed as auditee (similar to Auditor assigned)
+                $query->whereHas('auditee', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                })
+                // auditee view should not see draft findings
+                ->whereHas('status', function ($qs) {
+                    $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
+                });
+            } else {
+                // Created: show findings that have audit_type matching user's audit types
+                if (!empty($userAuditTypeIds)) {
+                    $query->whereIn('audit_type_id', $userAuditTypeIds);
+                } else {
+                    // if user has no audit types assigned, show nothing
+                    $query->whereRaw('0 = 1');
+                }
+            }
+        }
+        // Dept Head: can see all FTTP in their department(s), but exclude draft/draft finding
+        elseif (!empty($user) && in_array('dept head', $userRolesLowercase)) {
             $userDeptIds = $user->departments->pluck('id')->toArray();
             if (empty($userDeptIds) && !empty($user->department_id)) {
                 $userDeptIds = [(int) $user->department_id];
             }
 
             if (!empty($userDeptIds)) {
-                $query->whereIn('department_id', $userDeptIds);
+                $query->whereIn('department_id', $userDeptIds)
+                    ->whereHas('status', function ($qs) {
+                        $qs->whereRaw('LOWER(name) NOT IN (?, ?)', ['draft', 'draft finding']);
+                    });
             } else {
                 // if dept head has no department assigned, show nothing
                 $query->whereRaw('0 = 1');
             }
+        }
+        // Auditor: apply filter based on filter_type
+        elseif (!empty($user) && in_array('auditor', $userRolesLowercase)) {
+            // Auditor tidak boleh melihat status draft, tapi boleh melihat draft finding
+            if ($filterType === 'assigned') {
+                // Show FTPP where user is in auditee (assigned to them)
+                $query->whereHas('auditee', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                })
+                // auditee view should not see draft findings
+                ->whereHas('status', function ($qs) {
+                    $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
+                });
+                } else {
+                    // Show FTPP where user is auditor (via pivot table)
+                    $query->whereHas('auditors', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
+                }
         }
         // Default: only show FTTP where user is auditor OR listed as auditee
         else {
@@ -62,10 +105,15 @@ class FtppController extends Controller
                 $query->whereRaw('0 = 1');
             } else {
                 $query->where(function ($q) use ($user) {
-                    $q->where('auditor_id', $user->id)
-                        ->orWhereHas('auditee', function ($qa) use ($user) {
-                            $qa->where('users.id', $user->id);
-                        });
+                    $q->whereHas('auditors', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    })->orWhereHas('auditee', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
+                })
+                // for non-auditor users (auditee) do not show draft findings
+                ->whereHas('status', function ($qs) {
+                    $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
                 });
             }
         }
@@ -97,15 +145,91 @@ class FtppController extends Controller
             });
         }
 
+        // Apply audit type filter if provided
+        if ($request->filled('audit_type')) {
+            $query->where('audit_type_id', $request->input('audit_type'));
+        }
+
+        // Determine per-page (allow user to choose: 10,25,50,100)
+        $allowedPerPage = [10, 25, 50, 100];
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, $allowedPerPage)) $perPage = 10;
+
         // order and paginate
-        $findings = $query->orderBy('updated_at', 'desc')->paginate(10);
+        $findings = $query->orderBy('updated_at', 'desc')->paginate($perPage);
         // preserve filters in pagination links
         $findings->appends($request->except('page'));
 
         // Lists for filters and sidebar (include counts)
-        $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
-        $totalCount = AuditFinding::count();
+        // Count berdasarkan department user jika bukan admin/super admin
+        if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
+            // Admin/Super Admin: hitung semua dokumen
+            $statuses = Status::withCount('auditFinding')->orderBy('name')->get();
+            $totalCount = AuditFinding::count();
+        } elseif (!empty($user) && (in_array('dept head', $userRolesLowercase) || in_array('lead auditor', $userRolesLowercase))) {
+            // Dept Head & Lead Auditor: hitung hanya dokumen dari department mereka
+            $userDeptIds = $user->departments->pluck('id')->toArray();
+            if (empty($userDeptIds) && !empty($user->department_id)) {
+                $userDeptIds = [(int) $user->department_id];
+            }
+
+            $statuses = Status::withCount(['auditFinding' => function ($q) use ($userDeptIds) {
+                if (!empty($userDeptIds)) {
+                    $q->whereIn('department_id', $userDeptIds);
+                }
+            }])->orderBy('name')->get();
+
+            $totalCount = !empty($userDeptIds) ? AuditFinding::whereIn('department_id', $userDeptIds)->count() : 0;
+        } elseif (!empty($user) && in_array('auditor', $userRolesLowercase)) {
+            // Auditor: hitung berdasarkan filter_type
+            if ($filterType === 'assigned') {
+                $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
+                    $q->whereHas('auditee', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
+                }])->orderBy('name')->get();
+
+                $totalCount = AuditFinding::whereHas('auditee', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                })->count();
+            } else {
+                $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
+                    $q->whereHas('auditors', function ($qa) use ($user) {
+                        $qa->where('users.id', $user->id);
+                    });
+                }])->orderBy('name')->get();
+
+                $totalCount = AuditFinding::whereHas('auditors', function ($qa) use ($user) {
+                    $qa->where('users.id', $user->id);
+                })->count();
+            }
+        } else {
+            // User lain: hitung dokumen yang terkait dengan mereka
+            $statuses = Status::withCount(['auditFinding' => function ($q) use ($user) {
+                if (!empty($user)) {
+                    $q->where(function ($qa) use ($user) {
+                        $qa->whereHas('auditors', function ($qb) use ($user) {
+                            $qb->where('users.id', $user->id);
+                        })->orWhereHas('auditee', function ($qb) use ($user) {
+                            $qb->where('users.id', $user->id);
+                        });
+                    });
+                }
+            }])->orderBy('name')->get();
+
+            $totalCount = !empty($user) ? AuditFinding::where(function ($q) use ($user) {
+                $q->whereHas('auditors', function ($qb) use ($user) {
+                    $qb->where('users.id', $user->id);
+                })->orWhereHas('auditee', function ($qa) use ($user) {
+                    $qa->where('users.id', $user->id);
+                });
+            })->count() : 0;
+        }
+
         $departments = Department::orderBy('name')->get();
+
+        // audit types for filter tabs
+        $auditTypes = \App\Models\Audit::orderBy('name')->get();
 
         // auditors: users with role 'auditor' (case-insensitive)
         $auditors = User::whereHas('roles', function ($q) {
@@ -136,7 +260,11 @@ class FtppController extends Controller
             'auditors',
             'totalCount',
             'nearDueFindings',
-            'overdueFindings'
+            'overdueFindings',
+            'filterType',
+            'userRoles',
+            'auditTypes'
+            ,'perPage'
         ));
     }
 
@@ -147,8 +275,9 @@ class FtppController extends Controller
         // Use the shared generator so numbering always takes the highest existing record
         $code = $this->generateRegistrationNumber($auditTypeId);
 
+        // Get auditors that have this audit type in their pivot table
         $auditors = User::whereHas('roles', fn($q) => $q->where('tm_roles.id', 4)) // Role auditor
-            ->where('audit_type_id', $auditTypeId)
+            ->whereHas('auditTypes', fn($q) => $q->where('tm_audit_types.id', $auditTypeId))
             ->get();
 
         return response()->json([
@@ -160,32 +289,129 @@ class FtppController extends Controller
 
     public function generateRegistrationNumber($auditTypeId)
     {
-        $year   = now()->year;
-        $prefix = ($auditTypeId == 1) ? 'MS' : 'MR';
+        // Get the audit type
+        $auditType = Audit::findOrFail($auditTypeId);
 
-        // Find the highest sequence for this prefix/year
-        $lastRecord = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
-            ->orderByRaw("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(registration_number, '/', 4), '/', -1) AS UNSIGNED) DESC")
-            ->first();
+        // If no custom format, fallback to old logic
+        if (empty($auditType->registration_number_format)) {
+            $year = now()->year;
+            $prefix = $auditType->prefix_code ?? (($auditTypeId == 1) ? 'MS' : 'MR');
 
-        $nextNumber = 1;
-        if ($lastRecord) {
-            preg_match("/{$prefix}\/FTPP\/{$year}\/(\d+)\/\d+/", $lastRecord->registration_number, $matches);
-            if (!empty($matches[1])) {
-                $nextNumber = (int) $matches[1] + 1;
+            $lastRecord = AuditFinding::where('registration_number', 'like', "{$prefix}/FTPP/{$year}/%")
+                ->orderByRaw("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(registration_number, '/', 4), '/', -1) AS UNSIGNED) DESC")
+                ->first();
+
+            $nextNumber = 1;
+            if ($lastRecord) {
+                preg_match("/{$prefix}\/FTPP\/{$year}\/(\d+)\/\d+/", $lastRecord->registration_number, $matches);
+                if (!empty($matches[1])) {
+                    $nextNumber = (int) $matches[1] + 1;
+                }
+            }
+
+            $findingNumber  = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $revisionNumber = str_pad(0, 2, '0', STR_PAD_LEFT);
+            return "{$prefix}/FTPP/{$year}/{$findingNumber}/{$revisionNumber}";
+        }
+
+        // Parse custom format
+        $format = $auditType->registration_number_format;
+        $result = '';
+        $counterPattern = ''; // pattern untuk cari last record
+        $counterDigits = 0;
+        $hasCounter = false;
+
+        // Parse format character by character
+        $i = 0;
+        $length = strlen($format);
+        while ($i < $length) {
+            $char = $format[$i];
+
+            // Check if it's a separator
+            if (in_array($char, ['-', '/', '.'])) {
+                $result .= $char;
+                $counterPattern .= preg_quote($char, '/');
+                $i++;
+                continue;
+            }
+
+            // Check for component patterns
+            if (substr($format, $i, 6) === 'PREFIX') {
+                $prefix = $auditType->prefix_code ?? 'FTPP';
+                $result .= $prefix;
+                $counterPattern .= preg_quote($prefix, '/');
+                $i += 6;
+            } elseif (substr($format, $i, 4) === 'YYYY') {
+                $year = now()->year;
+                $result .= $year;
+                $counterPattern .= $year;
+                $i += 4;
+            } elseif (substr($format, $i, 2) === 'YY') {
+                $year = now()->format('y');
+                $result .= $year;
+                $counterPattern .= $year;
+                $i += 2;
+            } elseif (substr($format, $i, 2) === 'MM') {
+                $month = now()->format('m');
+                $result .= $month;
+                $counterPattern .= $month;
+                $i += 2;
+            } elseif (substr($format, $i, 4) === 'NNNN') {
+                $hasCounter = true;
+                $counterDigits = 4;
+                $result .= '{COUNTER}';
+                $counterPattern .= '(\d+)';
+                $i += 4;
+            } elseif (substr($format, $i, 3) === 'NNN') {
+                $hasCounter = true;
+                $counterDigits = 3;
+                $result .= '{COUNTER}';
+                $counterPattern .= '(\d+)';
+                $i += 3;
+            } elseif (substr($format, $i, 3) === 'REV') {
+                $result .= '00'; // default revision
+                $counterPattern .= '\d+';
+                $i += 3;
+            } else {
+                // Unknown character, just append
+                $result .= $char;
+                $counterPattern .= preg_quote($char, '/');
+                $i++;
             }
         }
 
-        $findingNumber  = str_pad($nextNumber, 3, '0', STR_PAD_LEFT); // 3-digit highest+1
-        $revisionNumber = str_pad(0, 2, '0', STR_PAD_LEFT);          // 2-digit revision (default 00)
+        // If format has counter (NNN or NNNN), find the highest existing number
+        $nextNumber = 1;
+        if ($hasCounter) {
+            // Build pattern for searching - replace {COUNTER} with wildcard for LIKE
+            $searchPattern = str_replace('{COUNTER}', str_repeat('_', $counterDigits), $result);
 
-        return "{$prefix}/FTPP/{$year}/{$findingNumber}/{$revisionNumber}";
+            // Find last record matching the pattern (without counter)
+            $lastRecord = AuditFinding::where('registration_number', 'like', str_replace('{COUNTER}', '%', $result))
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastRecord) {
+                // Extract counter using regex
+                if (preg_match('/' . $counterPattern . '/', $lastRecord->registration_number, $matches)) {
+                    if (!empty($matches[1])) {
+                        $nextNumber = (int) $matches[1] + 1;
+                    }
+                }
+            }
+
+            // Replace {COUNTER} with padded number
+            $result = str_replace('{COUNTER}', str_pad($nextNumber, $counterDigits, '0', STR_PAD_LEFT), $result);
+        }
+
+        return $result;
     }
 
     public function filterKlausul($auditType)
     {
-        // Contoh mapping manual
+        // Get klausuls based on audit_type_id
         $klausuls = Klausul::where('audit_type_id', $auditType)->get();
+
         return response()->json($klausuls);
     }
 
@@ -263,7 +489,16 @@ class FtppController extends Controller
             'auditeeAction.file'
         ])->findOrFail($id);
 
-        return view('contents.ftpp2.partials.detail', compact('finding'));
+        // Merge all evidence from auditeeAction->file (auditee_action_id)
+        $evidenceFiles = collect();
+        if ($finding->auditeeAction && $finding->auditeeAction->file) {
+            $evidenceFiles = $evidenceFiles->merge($finding->auditeeAction->file);
+        }
+
+        // provide auditeeAction as explicit variable for views that reference it directly
+        $auditeeAction = $finding->auditeeAction ?? null;
+
+        return view('contents.ftpp2.partials.detail', compact('finding', 'evidenceFiles', 'auditeeAction'));
     }
 
     public function previewPdf($id)
@@ -273,7 +508,7 @@ class FtppController extends Controller
             'audit',
             'subAudit',
             'findingCategory',
-            'auditor',
+            'auditors',
             'auditee',
             'department',
             'process',
@@ -366,13 +601,16 @@ class FtppController extends Controller
         }
         // --- end attach full_url block ---
 
+        // ensure views have direct access to auditeeAction variable
+        $auditeeAction = $finding->auditeeAction ?? null;
+
         // Generate main PDF
         // ensure DomPDF can access local files: enable remote and set chroot to project base
         $mainPdf = PDF::setOptions([
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
             'chroot' => base_path(), // allow access to public/storage and storage paths
-        ])->loadView('contents.ftpp2.pdf', compact('finding'))->output();
+        ])->loadView('contents.ftpp2.pdf', compact('finding', 'auditeeAction'))->output();
 
         if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
             // FPDI not installed — return main PDF directly for preview
@@ -387,7 +625,7 @@ class FtppController extends Controller
         $tmpMain = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_main_' . uniqid() . '.pdf';
         file_put_contents($tmpMain, $mainPdf);
 
-        // import main PDF pages properly (importPage -> getTemplateSize -> AddPage -> useTemplate)
+        // Only merge once: main PDF, then covers+attachments
         $pageCount = $merger->setSourceFile($tmpMain);
         for ($i = 1; $i <= $pageCount; $i++) {
             $tplId = $merger->importPage($i);
@@ -397,45 +635,121 @@ class FtppController extends Controller
             $merger->useTemplate($tplId);
         }
 
-        // Collect attachment PDF paths from finding->file and auditeeAction->file
-        $pdfFilesToAppend = [];
+        // Helper to generate a cover PDF and return its temp path
+        $generateCoverPdf = function($coverTitle) {
+            $coverHtml = view('contents.ftpp2.pdf_cover', ['coverTitle' => $coverTitle])->render();
+            $coverPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'chroot' => base_path(),
+            ])->loadHTML($coverHtml)->output();
+            $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_cover_' . uniqid() . '.pdf';
+            file_put_contents($tmp, $coverPdf);
+            return $tmp;
+        };
 
+        // Separate auditor and auditee PDF files
+        $auditorPdfFiles = [];
         if (!empty($finding->file)) {
             foreach ($finding->file as $file) {
                 $path = storage_path('app/public/' . $file->file_path);
                 if (file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
-                    $pdfFilesToAppend[] = $path;
+                    $auditorPdfFiles[] = $path;
                 }
             }
         }
-
+        $auditeePdfFiles = [];
         if (!empty($finding->auditeeAction) && !empty($finding->auditeeAction->file)) {
             foreach ($finding->auditeeAction->file as $file) {
                 $path = storage_path('app/public/' . $file->file_path);
                 if (file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
-                    $pdfFilesToAppend[] = $path;
+                    $auditeePdfFiles[] = $path;
                 }
             }
         }
 
-        // Append each PDF file correctly
-        foreach ($pdfFilesToAppend as $pf) {
-            try {
-                $pc = $merger->setSourceFile($pf);
-                for ($p = 1; $p <= $pc; $p++) {
-                    $tplId = $merger->importPage($p);
-                    $size = $merger->getTemplateSize($tplId);
-                    $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
-                    $merger->AddPage($orientation, [$size['width'], $size['height']]);
-                    $merger->useTemplate($tplId);
-                }
-            } catch (\Throwable $e) {
-                \Log::warning("Failed to append PDF {$pf}: " . $e->getMessage());
-                // continue with other files
+        // Insert cover and files for auditor, then auditee
+        if (count($auditorPdfFiles)) {
+            $coverAuditor = $generateCoverPdf('ATTACHMENT: AUDITOR');
+            $pc = $merger->setSourceFile($coverAuditor);
+            for ($p = 1; $p <= $pc; $p++) {
+                $tplId = $merger->importPage($p);
+                $size = $merger->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                $merger->useTemplate($tplId);
             }
+            foreach ($auditorPdfFiles as $pf) {
+                try {
+                    $pc = $merger->setSourceFile($pf);
+                    for ($p = 1; $p <= $pc; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                        $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning("Failed to append PDF {$pf}: " . $e->getMessage());
+                }
+            }
+            @unlink($coverAuditor);
+        }
+        if (count($auditeePdfFiles)) {
+            $coverAuditee = $generateCoverPdf('ATTACHMENT: AUDITEE');
+            $pc = $merger->setSourceFile($coverAuditee);
+            for ($p = 1; $p <= $pc; $p++) {
+                $tplId = $merger->importPage($p);
+                $size = $merger->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                $merger->useTemplate($tplId);
+            }
+            foreach ($auditeePdfFiles as $pf) {
+                try {
+                    $pc = $merger->setSourceFile($pf);
+                    for ($p = 1; $p <= $pc; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                        $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning("Failed to append PDF {$pf}: " . $e->getMessage());
+                }
+            }
+            // Render image attachments from auditee action after auditee cover and PDFs
+            $auditeeImageFiles = [];
+            if (!empty($finding->auditeeAction) && !empty($finding->auditeeAction->file)) {
+                foreach ($finding->auditeeAction->file as $file) {
+                    $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'])) {
+                        $auditeeImageFiles[] = $file->full_url ?? $file->file_url ?? $file->file_path;
+                    }
+                }
+            }
+            if (count($auditeeImageFiles)) {
+                foreach ($auditeeImageFiles as $imgPath) {
+                    $imgPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                        'isHtml5ParserEnabled' => true,
+                        'isRemoteEnabled' => true,
+                        'chroot' => base_path(),
+                    ])->loadView('contents.ftpp2.pdf_image', ['imagePath' => $imgPath])->output();
+                    $tmpImgPdf = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_img_' . uniqid() . '.pdf';
+                    file_put_contents($tmpImgPdf, $imgPdf);
+                    $imgPageCount = $merger->setSourceFile($tmpImgPdf);
+                    for ($i = 1; $i <= $imgPageCount; $i++) {
+                        $tpl = $merger->importPage($i);
+                        $merger->AddPage();
+                        $merger->useTemplate($tpl);
+                    }
+                    @unlink($tmpImgPdf);
+                }
+            }
+            @unlink($coverAuditee);
         }
 
-        // Save merged to unique temp file and return for iframe preview
         $tmpMerged = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_merged_' . uniqid() . '.pdf';
         $merger->Output($tmpMerged, 'F');
 
@@ -450,7 +764,13 @@ class FtppController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        $finding = AuditFinding::find($id);
+        $finding = AuditFinding::with([
+            'auditeeAction.whyCauses',
+            'auditeeAction.correctiveActions',
+            'auditeeAction.preventiveActions',
+            'auditeeAction.file',
+            'file',
+        ])->find($id);
         if (!$finding) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Finding not found'], 404);
@@ -459,16 +779,84 @@ class FtppController extends Controller
         }
 
         try {
-            $finding->delete();
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['message' => 'Finding deleted successfully']);
+            $markedForDeletionAt = now()->addYear();
+            // Tandai finding utama
+            $finding->marked_for_deletion_at = $markedForDeletionAt;
+            $finding->save();
+
+            // Tandai auditee action dan relasi-relasinya jika ada
+            if ($finding->auditeeAction) {
+                $finding->auditeeAction->marked_for_deletion_at = $markedForDeletionAt;
+                $finding->auditeeAction->save();
+                // WhyCauses
+                foreach ($finding->auditeeAction->whyCauses as $why) {
+                    $why->marked_for_deletion_at = $markedForDeletionAt;
+                    $why->save();
+                }
+                // CorrectiveActions
+                foreach ($finding->auditeeAction->correctiveActions as $corr) {
+                    $corr->marked_for_deletion_at = $markedForDeletionAt;
+                    $corr->save();
+                }
+                // PreventiveActions
+                foreach ($finding->auditeeAction->preventiveActions as $prev) {
+                    $prev->marked_for_deletion_at = $markedForDeletionAt;
+                    $prev->save();
+                }
+                // Files (auditeeAction)
+                foreach ($finding->auditeeAction->file as $file) {
+                    $file->marked_for_deletion_at = $markedForDeletionAt;
+                    $file->save();
+                }
             }
-            return redirect('/ftpp')->with('success', 'Record deleted.');
+            // Files (finding)
+            foreach ($finding->file as $file) {
+                $file->marked_for_deletion_at = $markedForDeletionAt;
+                $file->save();
+            }
+
+            // Tandai AuditFindingAuditee (pivot auditee)
+            \App\Models\AuditFindingAuditee::where('audit_finding_id', $finding->id)
+                ->update(['marked_for_deletion_at' => $markedForDeletionAt]);
+
+            // Tandai AuditFindingSubKlausul (pivot sub klausul)
+            \App\Models\AuditFindingSubKlausul::where('audit_finding_id', $finding->id)
+                ->update(['marked_for_deletion_at' => $markedForDeletionAt]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['message' => 'Finding scheduled for deletion in 1 year']);
+            }
+            return redirect('/ftpp')->with('success', 'Finding scheduled for deletion in 1 year.');
         } catch (\Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['message' => 'Failed to delete'], 500);
+                return response()->json(['message' => 'Failed to schedule deletion'], 500);
             }
-            return redirect('/ftpp')->with('error', 'Failed to delete record.');
+            return redirect('/ftpp')->with('error', 'Failed to schedule deletion.');
+        }
+    }
+
+    /**
+     * Bulk Delete Findings
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:tt_audit_findings,id'
+        ]);
+
+        try {
+            $deleted = AuditFinding::whereIn('id', $request->ids)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$deleted} finding(s) deleted successfully."
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete findings: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -482,7 +870,7 @@ class FtppController extends Controller
             'audit',
             'subAudit',
             'findingCategory',
-            'auditor',
+            'auditors',
             'auditee',
             'department',
             'process',
@@ -572,8 +960,11 @@ class FtppController extends Controller
             }
         }
 
+        // ensure views have direct access to auditeeAction variable
+        $auditeeAction = $finding->auditeeAction ?? null;
+
         // Generate main PDF content
-        $pdf = PDF::loadView('contents.ftpp2.pdf', compact('finding'))
+        $pdf = PDF::loadView('contents.ftpp2.pdf', compact('finding', 'auditeeAction'))
             ->setPaper('a4', 'portrait');
 
         $mainPdfContent = $pdf->output();
@@ -583,36 +974,37 @@ class FtppController extends Controller
         $mainTempPath = $tempDir . DIRECTORY_SEPARATOR . 'ftpp_main_' . uniqid() . '.pdf';
         file_put_contents($mainTempPath, $mainPdfContent);
 
-        // Collect attachment PDF paths
-        $pdfFilesToMerge = [];
-
+        // Only merge once: main PDF, then covers+attachments
+        $auditorPdfFiles = [];
         if ($finding->file) {
             foreach ($finding->file as $file) {
                 $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
                 if ($ext === 'pdf') {
                     $diskPath = storage_path('app/public/' . $file->file_path);
                     if (file_exists($diskPath)) {
-                        $pdfFilesToMerge[] = $diskPath;
+                        $auditorPdfFiles[] = $diskPath;
                     }
                 }
             }
         }
-
+        $auditeePdfFiles = [];
         if ($finding->auditeeAction && $finding->auditeeAction->file) {
             foreach ($finding->auditeeAction->file as $file) {
                 $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
                 if ($ext === 'pdf') {
                     $diskPath = storage_path('app/public/' . $file->file_path);
                     if (file_exists($diskPath)) {
-                        $pdfFilesToMerge[] = $diskPath;
+                        $auditeePdfFiles[] = $diskPath;
                     }
                 }
             }
         }
 
-        $finalFilename = 'FTPP_Finding_' . preg_replace('/[\/\\\\]/', '_', $finding->registration_number) . '.pdf';
+        // Use only safe characters for filename (alphanumeric, dash, underscore)
+        $safeRegNum = preg_replace('/[^A-Za-z0-9\-_]/', '_', $finding->registration_number);
+        $finalFilename = 'FTPP_Finding_' . $safeRegNum . '.pdf';
 
-        if (empty($pdfFilesToMerge)) {
+        if (empty($auditorPdfFiles) && empty($auditeePdfFiles)) {
             // No other PDFs to merge — return main PDF
             // Clean up temp
             @unlink($mainTempPath);
@@ -622,32 +1014,50 @@ class FtppController extends Controller
             ]);
         }
 
-        // Merge using FPDI if available. If not installed, log a hint and return main PDF.
-        if (!empty($pdfFilesToMerge)) {
-            if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
-                \Log::warning('FPDI not available. Install it with: composer require setasign/fpdi-fpdf');
-                @unlink($mainTempPath);
-                return response($mainPdfContent, 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
-                ]);
+        if (!class_exists('\\setasign\\Fpdi\\Fpdi')) {
+            \Log::warning('FPDI not available. Install it with: composer require setasign/fpdi-fpdf');
+            @unlink($mainTempPath);
+            return response($mainPdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+            ]);
+        }
+
+        try {
+            $merger = new \setasign\Fpdi\Fpdi();
+            $pageCount = $merger->setSourceFile($mainTempPath);
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $tplId = $merger->importPage($pageNo);
+                $size = $merger->getTemplateSize($tplId);
+                $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                $merger->useTemplate($tplId);
             }
 
-            try {
-                $merger = new \setasign\Fpdi\Fpdi();
+            // Helper to generate a cover PDF and return its temp path
+            $generateCoverPdf = function($coverTitle) {
+                $coverHtml = view('contents.ftpp2.pdf_cover', ['coverTitle' => $coverTitle])->render();
+                $coverPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'chroot' => base_path(),
+                ])->loadHTML($coverHtml)->output();
+                $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_cover_' . uniqid() . '.pdf';
+                file_put_contents($tmp, $coverPdf);
+                return $tmp;
+            };
 
-                // import main PDF
-                $pageCount = $merger->setSourceFile($mainTempPath);
-                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                    $tplId = $merger->importPage($pageNo);
+            if (count($auditorPdfFiles)) {
+                $coverAuditor = $generateCoverPdf('ATTACHMENT: AUDITOR');
+                $pc = $merger->setSourceFile($coverAuditor);
+                for ($p = 1; $p <= $pc; $p++) {
+                    $tplId = $merger->importPage($p);
                     $size = $merger->getTemplateSize($tplId);
                     $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
                     $merger->AddPage($orientation, [$size['width'], $size['height']]);
                     $merger->useTemplate($tplId);
                 }
-
-                // append other pdfs
-                foreach ($pdfFilesToMerge as $pf) {
+                foreach ($auditorPdfFiles as $pf) {
                     $pc = $merger->setSourceFile($pf);
                     for ($p = 1; $p <= $pc; $p++) {
                         $tplId = $merger->importPage($p);
@@ -657,26 +1067,72 @@ class FtppController extends Controller
                         $merger->useTemplate($tplId);
                     }
                 }
-
-                // Output merged PDF as string
-                $mergedPdfString = $merger->Output('', 'S');
-
-                // cleanup temp
-                @unlink($mainTempPath);
-
-                return response($mergedPdfString, 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
-                ]);
-            } catch (\Throwable $e) {
-                // If merging fails, fall back to main PDF
-                \Log::error('PDF merge failed: ' . $e->getMessage());
-                @unlink($mainTempPath);
-                return response($mainPdfContent, 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
-                ]);
+                @unlink($coverAuditor);
             }
+            if (count($auditeePdfFiles)) {
+                $coverAuditee = $generateCoverPdf('ATTACHMENT: AUDITEE');
+                $pc = $merger->setSourceFile($coverAuditee);
+                for ($p = 1; $p <= $pc; $p++) {
+                    $tplId = $merger->importPage($p);
+                    $size = $merger->getTemplateSize($tplId);
+                    $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                    $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                    $merger->useTemplate($tplId);
+                }
+                foreach ($auditeePdfFiles as $pf) {
+                    $pc = $merger->setSourceFile($pf);
+                    for ($p = 1; $p <= $pc; $p++) {
+                        $tplId = $merger->importPage($p);
+                        $size = $merger->getTemplateSize($tplId);
+                        $orientation = ($size['width'] > $size['height']) ? 'L' : 'P';
+                        $merger->AddPage($orientation, [$size['width'], $size['height']]);
+                        $merger->useTemplate($tplId);
+                    }
+                }
+                // Render image attachments from auditee action after auditee cover and PDFs
+                $auditeeImageFiles = [];
+                if (!empty($finding->auditeeAction) && !empty($finding->auditeeAction->file)) {
+                    foreach ($finding->auditeeAction->file as $file) {
+                        $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'])) {
+                            $auditeeImageFiles[] = $file->full_url ?? $file->file_url ?? $file->file_path;
+                        }
+                    }
+                }
+                if (count($auditeeImageFiles)) {
+                    foreach ($auditeeImageFiles as $imgPath) {
+                        $imgPdf = \Barryvdh\DomPDF\Facade\Pdf::setOptions([
+                            'isHtml5ParserEnabled' => true,
+                            'isRemoteEnabled' => true,
+                            'chroot' => base_path(),
+                        ])->loadView('contents.ftpp2.pdf_image', ['imagePath' => $imgPath])->output();
+                        $tmpImgPdf = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ftpp_img_' . uniqid() . '.pdf';
+                        file_put_contents($tmpImgPdf, $imgPdf);
+                        $imgPageCount = $merger->setSourceFile($tmpImgPdf);
+                        for ($i = 1; $i <= $imgPageCount; $i++) {
+                            $tpl = $merger->importPage($i);
+                            $merger->AddPage();
+                            $merger->useTemplate($tpl);
+                        }
+                        @unlink($tmpImgPdf);
+                    }
+                }
+                @unlink($coverAuditee);
+            }
+
+            $mergedPdfString = $merger->Output('', 'S');
+            @unlink($mainTempPath);
+            return response($mergedPdfString, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('PDF merge failed: ' . $e->getMessage());
+            @unlink($mainTempPath);
+            return response($mainPdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $finalFilename . '"'
+            ]);
         }
     }
 }

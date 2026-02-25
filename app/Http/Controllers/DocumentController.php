@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\Document;
+use App\Models\DocumentPlant;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class DocumentController extends Controller
@@ -15,14 +17,14 @@ class DocumentController extends Controller
     {
         $search = $request->input('search');
 
-        $query = Document::with('childrenRecursive');
+        $query = Document::with(['childrenRecursive', 'plants']);
 
         if ($search) {
             $query->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%");
         }
 
-        $documents = Document::with('childrenRecursive')
+        $documents = Document::with(['childrenRecursive','plants'])
             ->when($request->search, function ($q, $search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('type', 'like', "%{$search}%")
@@ -38,7 +40,7 @@ class DocumentController extends Controller
             ->get();
 
         // Ambil semua dokumen bertipe review untuk jadi opsi parent
-        $parents = Document::where('type', 'review')->get();
+        $parents = Document::where('type', 'review')->with('plants')->get();
 
         return view('contents.master.hierarchy.index', compact('documents', 'parents'));
     }
@@ -69,11 +71,22 @@ class DocumentController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
             'parent_id' => 'nullable|exists:tm_documents,id',
+            'plants' => 'required|array|min:1',
+            'plants.*' => 'in:body,unit,electric,all',
         ]);
 
         $validated['type'] = 'review';
 
-        Document::create($validated);
+        $doc = Document::create($validated);
+
+        // Sync document_plant entries
+        if ($request->filled('plants')) {
+            // normalize to lowercase
+            $plants = collect($request->input('plants'))->map(fn($p) => strtolower($p))->unique();
+            foreach ($plants as $p) {
+                DocumentPlant::create(['document_id' => $doc->id, 'plant' => $p]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Document created successfully.');
     }
@@ -84,6 +97,8 @@ class DocumentController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
             'parent_id' => 'nullable|exists:tm_documents,id',
+            'plants' => 'nullable|array',
+            'plants.*' => 'in:body,unit,electric,all',
         ]);
 
         $validated['type'] = 'review';
@@ -93,6 +108,15 @@ class DocumentController extends Controller
             ->firstOrFail();
 
         $document->update($validated);
+
+        // Sync plants: delete existing relations and insert new
+        if ($request->has('plants')) {
+            DB::table('document_plant')->where('document_id', $document->id)->delete();
+            $plants = collect($request->input('plants'))->map(fn($p) => strtolower($p))->unique();
+            foreach ($plants as $p) {
+                DB::table('document_plant')->insert(['document_id' => $document->id, 'plant' => $p, 'created_at' => now(), 'updated_at' => now()]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Document updated successfully.');
     }

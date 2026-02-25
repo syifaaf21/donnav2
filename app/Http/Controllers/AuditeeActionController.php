@@ -15,16 +15,20 @@ use App\Models\PreventiveAction;
 use App\Models\Process;
 use App\Models\Product;
 use App\Models\SubAudit;
+use App\Models\Status;
 use App\Models\User;
 use App\Models\WhyCauses;
 use App\Notifications\AuditeeAssignedNotification;
 use App\Notifications\FtppActionNotification;
+use App\Notifications\DeptHeadNeedCheckNotification;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AuditeeActionController extends Controller
 {
@@ -83,47 +87,89 @@ class AuditeeActionController extends Controller
      */
     public function store(Request $request)
     {
-        // ✅ VALIDASI FILE SIZE
-        $validated = $request->validate([
-            'audit_finding_id' => 'required|exists:tt_audit_findings,id',
-            'root_cause' => 'required|string',
-            'pic' => 'nullable|string|max:100',
-            'yokoten' => 'required|boolean',
-            'yokoten_area' => 'nullable|string',
-            'ldr_spv_signature' => 'nullable|boolean',
+        $isDraft = $request->boolean('is_draft', false);
 
-            // Attachments: gabung semua file
-            'attachments' => 'nullable|array',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
-        ]);
+        try {
+            // ✅ VALIDASI FILE SIZE
+            $validated = $request->validate([
+                'audit_finding_id' => 'required|exists:tt_audit_findings,id',
+                'root_cause' => [$isDraft ? 'nullable' : 'required', 'string'],
+                'pic' => 'nullable|string|max:255',
+                'yokoten' => [$isDraft ? 'nullable' : 'required', Rule::in([0, 1, '0', '1'])],
+                'yokoten_area' => [
+                    'nullable',
+                    'string',
+                    Rule::requiredIf(function () use ($isDraft, $request) {
+                        return !$isDraft && (string) $request->input('yokoten') === '1';
+                    }),
+                ],
+                'ldr_spv_signature' => 'nullable|boolean',
+
+                // Why and Cause validation
+                'why_*_mengapa' => 'nullable|string',
+                'cause_*_karena' => 'nullable|string',
+
+                // Corrective and Preventive validation
+                'corrective_*_activity' => 'nullable|string',
+                'corrective_*_pic' => 'nullable|string',
+                'corrective_*_planning' => 'nullable|date',
+                'corrective_*_actual' => 'nullable|date',
+
+                'preventive_*_activity' => 'nullable|string',
+                'preventive_*_pic' => 'nullable|string',
+                'preventive_*_planning' => 'nullable|date',
+                'preventive_*_actual' => 'nullable|date',
+
+                // Attachments: gabung semua file
+                'attachments' => 'nullable|array',
+                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf',
+
+                'is_draft' => 'nullable|boolean',
+            ]);
+
+            $draftStatusId = Status::whereRaw('LOWER(name) = ?', ['draft'])->value('id');
+            $needCheckStatusId = Status::whereRaw('LOWER(name) = ?', ['need check'])->value('id') ?? 8;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in auditee action store: ' . json_encode($e->errors()));
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed: ' . implode(' ', array_map(fn($err) => implode(' ', $err), $e->errors())),
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            throw $e;
+        }
 
         // ✅ VALIDASI TOTAL FILE SIZE (SERVER-SIDE BACKUP)
         $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 10 * 1024 * 1024) { // 10MB
+        if ($totalSize > 20 * 1024 * 1024) { // 20MB
             \Log::warning('Total file size validation bypassed on client-side!');
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Total file size exceeds 10MB. Please compress your PDF files using <a href="https://smallpdf.com/compress-pdf" target="_blank">this tool</a>.'
+                    'message' => 'Total file size exceeds 20MB. Please compress your PDF files using <a href="https://smallpdf.com/compress-pdf" target="_blank">this tool</a>.'
                 ], 422);
             }
 
             return back()->withErrors([
-                'attachments' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+                'attachments' => 'Total file size exceeds 20MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
             ])->withInput();
         }
 
-        DB::beginTransaction();
 
+        DB::beginTransaction();
         try {
             // 1️⃣ Simpan tt_auditee_actions
             $auditeeAction = AuditeeAction::updateOrCreate(
                 ['audit_finding_id' => $validated['audit_finding_id']],
                 [
                     'pic' => $validated['pic'] ?? '-',
-                    'root_cause' => $validated['root_cause'],
-                    'yokoten' => $validated['yokoten'],
+                    'root_cause' => $validated['root_cause'] ?? '',
+                    'yokoten' => $validated['yokoten'] ?? ($isDraft ? null : 0),
                     'yokoten_area' => $validated['yokoten_area'] ?? null,
                     'ldr_spv_id' => auth()->user()->id,
                 ]
@@ -145,8 +191,53 @@ class AuditeeActionController extends Controller
                     PreventiveAction::where('auditee_action_id', $aid)->delete();
                 }
 
-                if (DocumentFile::where('auditee_action_id', $aid)->exists()) {
-                    DocumentFile::where('auditee_action_id', $aid)->delete();
+                // PATCH: Only delete DocumentFile not in existing_evidence_ids[]
+                $keepIds = $request->input('existing_evidence_ids', []);
+                $keepIds = array_map('intval', (array)$keepIds);
+                $allFiles = DocumentFile::where('auditee_action_id', $aid)->get();
+                foreach ($allFiles as $file) {
+                    if (!in_array($file->id, $keepIds)) {
+                        // Validasi: hanya hapus jika file milik auditee_action_id ini
+                        if ($file->auditee_action_id != $aid) {
+                            // Bisa log error atau return response error jika ajax
+                            if ($request->ajax() || $request->wantsJson()) {
+                                return response()->json([
+                                    'success' => false,
+                                    'message' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'
+                                ], 403);
+                            } else {
+                                return back()->withErrors(['attachments' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'])->withInput();
+                            }
+                        }
+                        try {
+                            $original = $file->file_path ?? '';
+                            $candidates = [];
+                            if ($original !== '') {
+                                $candidates[] = $original;
+                                $candidates[] = ltrim($original, '/');
+                                if (preg_match('#/storage/(.*)$#', $original, $m)) {
+                                    $candidates[] = $m[1];
+                                }
+                                $candidates[] = preg_replace('#^public/storage/#', '', $original);
+                                $candidates[] = basename($original);
+                            }
+                            foreach (array_filter(array_unique($candidates)) as $p) {
+                                if ($p === '') continue;
+                                if (Storage::disk('public')->exists($p)) {
+                                    Storage::disk('public')->delete($p);
+                                    break;
+                                }
+                                $fsPath = storage_path('app/public/' . $p);
+                                if (file_exists($fsPath)) {
+                                    @unlink($fsPath);
+                                    break;
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            \Log::warning("Failed to delete file for DocumentFile id={$file->id}: " . $e->getMessage());
+                        }
+                        $file->delete();
+                    }
                 }
             }
 
@@ -173,7 +264,7 @@ class AuditeeActionController extends Controller
                 if ($activity) {
                     CorrectiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'pic' => $pic ?: null,
+                        'pic' => $pic ?: '-',
                         'activity' => $activity,
                         'planning_date' => $plan ?: null,
                         'actual_date' => $actual ?: null,
@@ -191,7 +282,7 @@ class AuditeeActionController extends Controller
                 if ($activity) {
                     PreventiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
-                        'pic' => $pic ?: null,
+                        'pic' => $pic ?: '-',
                         'activity' => $activity,
                         'planning_date' => $plan ?: null,
                         'actual_date' => $actual ?: null,
@@ -214,10 +305,14 @@ class AuditeeActionController extends Controller
             // update status finding
             $auditFinding = AuditFinding::find($validated['audit_finding_id']);
             if ($auditFinding) {
-                $auditFinding->update(['status_id' => 8]);
+                if ($isDraft && $draftStatusId) {
+                    $auditFinding->update(['status_id' => $draftStatusId]);
+                } elseif (!$isDraft) {
+                    $auditFinding->update(['status_id' => $needCheckStatusId]);
+                }
             }
 
-            if ($request->has('approve_ldr_spv') && $request->approve_ldr_spv == 1) {
+            if (!$isDraft && $request->has('approve_ldr_spv') && $request->approve_ldr_spv == 1) {
                 $auditeeAction->update([
                     'ldr_spv_signature' => 1,
                     'ldr_spv_id' => auth()->user()->id
@@ -226,20 +321,44 @@ class AuditeeActionController extends Controller
 
             DB::commit();
 
-            // notify auditee(s) and auditor that auditee action / assignment exists
+            // notify auditee(s) and auditor that auditee action / assignment exists (skip draft)
             try {
-                if (!empty($auditFinding) && $auditFinding instanceof AuditFinding) {
+                if (!$isDraft && !empty($auditFinding) && $auditFinding instanceof AuditFinding) {
 
                     // 1️⃣ Notify auditees + auditor that auditee action / assignment exists
                     if ($auditFinding->auditor) {
-                        Notification::send(
-                            $auditFinding->auditor,
-                            new FtppActionNotification(
-                                $auditFinding,
-                                'assigned',
-                                auth()->user()?->name
-                            )
-                        );
+                        try {
+                            $auditorRecipients = collect($auditFinding->auditor)->filter();
+                            if ($auditorRecipients->isNotEmpty()) {
+                                // send DB notification to auditor(s)
+                                Notification::send($auditorRecipients, new FtppActionNotification($auditFinding, 'assigned', auth()->user()?->name));
+
+                                // prepare mail recipients (valid emails only)
+                                $reserved = ['example.com', 'example.org', 'example.net'];
+                                $validAuditorRecipients = $auditorRecipients->filter(function ($u) use ($reserved) {
+                                    $email = trim(strtolower($u->email ?? ''));
+                                    if (empty($email)) return false;
+                                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+                                    $parts = explode('@', $email);
+                                    if (count($parts) !== 2) return false;
+                                    $domain = $parts[1];
+                                    if (in_array($domain, $reserved)) return false;
+                                    return true;
+                                })->values();
+
+                                if ($validAuditorRecipients->isNotEmpty()) {
+                                    try {
+                                        Notification::send($validAuditorRecipients, new FtppActionNotification($auditFinding, 'assigned', auth()->user()?->name));
+                                    } catch (\Throwable $e) {
+                                        \Log::warning('FtppActionNotification (auditor email) send failed: ' . $e->getMessage());
+                                    }
+                                } else {
+                                    \Log::warning('FtppActionNotification: no valid auditor email addresses after filtering');
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            \Log::warning('FtppActionNotification (auditor) failed: ' . $e->getMessage());
+                        }
                     }
 
                     // 2️⃣ Notify Dept Head(s) of the finding's department that review is required
@@ -253,6 +372,10 @@ class AuditeeActionController extends Controller
                                         ->whereColumn('tt_user_department.user_id', 'users.id')
                                         ->where('tt_user_department.department_id', $deptId);
                                 });
+
+                                if (Schema::hasColumn('users', 'department_id')) {
+                                    $q->orWhere('department_id', $deptId);
+                                }
                             })
                             ->get();
 
@@ -260,15 +383,67 @@ class AuditeeActionController extends Controller
                             $regNum = $auditFinding?->registration_number ?? 'N/A';
                             $customMessage = "Finding (No: {$regNum}) needs your review.";
 
+                            // Separate mail recipients (have email) from all dept heads
+                            $allDeptHeads = $deptHeads->unique('id')->values();
+                            $mailRecipients = $allDeptHeads->filter(fn($u) => !empty($u->email))->values();
+
+                            try {
+                                $emailsAll = $allDeptHeads->pluck('email')->toArray();
+                                $emailsMail = $mailRecipients->pluck('email')->toArray();
+                                \Log::info('DeptHeadNeedCheckNotification: recipients', ['all' => $emailsAll, 'mail' => $emailsMail, 'reply_to' => auth()->user()?->email]);
+                            } catch (\Throwable $e) {
+                                \Log::warning('Failed to log dept head recipients: ' . $e->getMessage());
+                            }
+
+                            // 1) database notification for all dept heads (so they see it in-app)
                             Notification::send(
-                                $deptHeads->unique('id')->values(),
+                                $allDeptHeads,
                                 new FtppActionNotification(
                                     $auditFinding,
-                                    'assigned', // action type
-                                    null,                // byUser optional
-                                    $customMessage       // custom message
+                                    'assigned',
+                                    null,
+                                    $customMessage
                                 )
                             );
+
+                            // 2) send email-only notification to users that have email addresses
+                            if ($mailRecipients->isNotEmpty()) {
+                                try {
+                                    $reserved = ['example.com', 'example.org', 'example.net'];
+                                    $validMailRecipients = $mailRecipients->filter(function ($u) use ($reserved) {
+                                        $email = trim(strtolower($u->email ?? ''));
+                                        if (empty($email)) return false;
+                                        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+                                        $parts = explode('@', $email);
+                                        if (count($parts) !== 2) return false;
+                                        $domain = $parts[1];
+                                        if (in_array($domain, $reserved)) return false;
+                                        return true;
+                                    })->values();
+
+                                    if ($validMailRecipients->isNotEmpty()) {
+                                        try {
+                                            Notification::send(
+                                                $validMailRecipients,
+                                                new DeptHeadNeedCheckNotification(
+                                                    $auditFinding,
+                                                    $auditeeAction,
+                                                    auth()->user()?->name,
+                                                    auth()->user()?->email
+                                                )
+                                            );
+                                        } catch (\Throwable $e) {
+                                            \Log::warning('DeptHeadNeedCheckNotification send failed: ' . $e->getMessage());
+                                        }
+                                    } else {
+                                        \Log::warning('DeptHeadNeedCheckNotification: no valid dept head email addresses after filtering for department_id ' . ($deptId ?? 'N/A'));
+                                    }
+                                } catch (\Throwable $e) {
+                                    \Log::warning('DeptHeadNeedCheckNotification (filter) failed: ' . $e->getMessage());
+                                }
+                            } else {
+                                \Log::warning('DeptHeadNeedCheckNotification: no dept head email addresses found for department_id ' . ($deptId ?? 'N/A'));
+                            }
                         }
                     }
                 }
@@ -276,24 +451,45 @@ class AuditeeActionController extends Controller
                 \Log::warning('FindingActionNotification failed: ' . $e->getMessage());
             }
 
+            $successMessage = $isDraft ? 'Draft saved successfully.' : 'Auditee Action submitted successfully.';
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Auditee Action submitted successfully.',
+                    'message' => $successMessage,
                     'id' => $auditeeAction->id
                 ]);
             }
 
-            return back()->with('success', 'Auditee Action submitted successfully.');
+            return back()->with('success', $successMessage);
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            \Log::error('Database error in auditee action store: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'sql' => $e->getSql() ?? 'N/A',
+                'bindings' => $e->getBindings() ?? []
+            ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Database error occurred. Please try again or contact administrator.',
+                    'debug' => config('app.debug') ? $e->getMessage() : null
+                ], 500);
+            }
+
+            return back()
+                ->withErrors(['error' => 'Database error occurred. Please try again.'])
+                ->withInput();
         } catch (\Throwable $e) {
             DB::rollBack();
             // log error agar lebih mudah debug
             \Log::error('update_auditee_action error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => 'An error occurred: ' . $e->getMessage()
                 ], 500);
             }
 
@@ -365,35 +561,34 @@ class AuditeeActionController extends Controller
             'yokoten_area' => 'nullable|string',
             'ldr_spv_signature' => 'nullable|boolean',
 
-            // Image: max 3MB per file
-            'photos2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3072',
+            // Images: allow common image types (no individual size limit)
+            'photos2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
 
-            // Files: max 3MB per file (images)
-            'files2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:3072',
+            // Files: allow common image types (no individual size limit)
+            'files2.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
 
-            // Attachments: max 10MB per PDF file
-            // Attachments: allow images (jpg, jpeg, png) and PDF files
-            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            // Attachments: allow images and PDF (no individual size limit — total enforced separately)
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
 
             'remove_attachments.*' => 'nullable|numeric',
         ]);
 
         // ✅ VALIDASI TOTAL FILE SIZE
         $totalSize = $this->calculateTotalFileSize($request);
-        if ($totalSize > 10485760) { // 10MB
+        if ($totalSize > 20971520) { // 20MB
             return back()->withErrors([
-                'total_file_size' => 'Total file size exceeds 10MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
+                'total_file_size' => 'Total file size exceeds 20MB. Please compress your PDF files. <a href="https://smallpdf.com/compress-pdf" target="_blank" class="text-blue-600 underline">Use this tool to compress</a>'
             ])->withInput();
         }
 
-        DB::beginTransaction();
 
+        DB::beginTransaction();
         try {
             // Find or create AuditeeAction by audit_finding_id (route param is the finding id)
             $auditeeAction = AuditeeAction::updateOrCreate(
                 ['audit_finding_id' => $id],
                 [
-                    'pic' => $validated['pic'] ?? '-',
+                    'pic' => $request->input('pic', '-'),
                     'root_cause' => $validated['root_cause'],
                     'yokoten' => $validated['yokoten'],
                     'yokoten_area' => $validated['yokoten_area'] ?? null,
@@ -428,13 +623,17 @@ class AuditeeActionController extends Controller
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("corrective_{$i}_activity");
+                $pic = $request->input("corrective_{$i}_pic");
+                $plan = $request->input("corrective_{$i}_planning");
+                $actual = $request->input("corrective_{$i}_actual");
+
                 if ($activity) {
                     CorrectiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->corrective_pic[$i] ?? null,
-                        'planning_date' => $request->corrective_planning[$i] ?? null,
-                        'actual_date' => $request->corrective_actual[$i] ?? null,
+                        'pic' => $pic ?: '-',
+                        'planning_date' => $plan ?: null,
+                        'actual_date' => $actual ?: null,
                     ]);
                 }
             }
@@ -446,81 +645,68 @@ class AuditeeActionController extends Controller
 
             for ($i = 1; $i <= 4; $i++) {
                 $activity = $request->input("preventive_{$i}_activity");
+                $pic = $request->input("preventive_{$i}_pic");
+                $plan = $request->input("preventive_{$i}_planning");
+                $actual = $request->input("preventive_{$i}_actual");
+
                 if ($activity) {
                     PreventiveAction::create([
                         'auditee_action_id' => $auditeeAction->id,
                         'activity' => $activity,
-                        'pic' => $request->preventive_pic[$i] ?? null,
-                        'planning_date' => $request->preventive_planning[$i] ?? null,
-                        'actual_date' => $request->preventive_actual[$i] ?? null,
+                        'pic' => $pic ?: '-',
+                        'planning_date' => $plan ?: null,
+                        'actual_date' => $actual ?: null,
                     ]);
                 }
             }
 
             /* =====================================================
-             * 4️⃣ Handle removed attachments first (from edit UI)
+             * 4️⃣ PATCH: Only delete DocumentFile not in existing_evidence_ids[]
              * ===================================================== */
-            if ($request->has('remove_attachments')) {
-                $removeIds = (array) $request->input('remove_attachments');
-                foreach ($removeIds as $rid) {
-                    $df = DocumentFile::find($rid);
-                    if ($df && $df->auditee_action_id == $auditeeAction->id) {
-                        try {
-                            $original = $df->file_path ?? '';
-                            $candidates = [];
-
-                            if ($original !== '') {
-                                $candidates[] = $original;
-                                $candidates[] = ltrim($original, '/');
-                                // if stored as full URL like https://.../storage/..., extract path after '/storage/'
-                                if (preg_match('#/storage/(.*)$#', $original, $m)) {
-                                    $candidates[] = $m[1];
-                                }
-                                // if stored as public/storage/..., normalize
-                                $candidates[] = preg_replace('#^public/storage/#', '', $original);
-                                $candidates[] = basename($original);
-                            }
-
-                            $deleted = false;
-                            foreach (array_filter(array_unique($candidates)) as $p) {
-                                try {
-                                    if ($p === '')
-                                        continue;
-                                    if (Storage::disk('public')->exists($p)) {
-                                        Storage::disk('public')->delete($p);
-                                        $deleted = true;
-                                        break;
-                                    }
-                                    // try direct filesystem path: storage/app/public/{p}
-                                    $fsPath = storage_path('app/public/' . $p);
-                                    if (file_exists($fsPath)) {
-                                        @unlink($fsPath);
-                                        $deleted = true;
-                                        break;
-                                    }
-                                } catch (\Throwable $inner) {
-                                    \Log::debug("Attempt to delete file candidate failed for {$p}: " . $inner->getMessage());
-                                }
-                            }
-
-                            if (!$deleted && $original) {
-                                // final fallback: attempt delete using original value
-                                try {
-                                    Storage::disk('public')->delete($original);
-                                } catch (\Throwable $inner) {
-                                    \Log::warning("Final delete attempt failed for {$original}: " . $inner->getMessage());
-                                }
-                            }
-                        } catch (\Throwable $e) {
-                            \Log::warning("Failed to delete file for DocumentFile id={$rid}: " . $e->getMessage());
-                        }
-
-                        try {
-                            $df->delete();
-                        } catch (\Throwable $e) {
-                            \Log::warning("Failed to delete DocumentFile record id={$rid}: " . $e->getMessage());
+            $keepIds = $request->input('existing_evidence_ids', []);
+            $keepIds = array_map('intval', (array)$keepIds);
+            $allFiles = DocumentFile::where('auditee_action_id', $aid)->get();
+            foreach ($allFiles as $file) {
+                if (!in_array($file->id, $keepIds)) {
+                    // Validasi: hanya hapus jika file milik auditee_action_id ini
+                    if ($file->auditee_action_id != $aid) {
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'
+                            ], 403);
+                        } else {
+                            return back()->withErrors(['attachments' => 'Tidak dapat menghapus file yang bukan milik auditee action ini.'])->withInput();
                         }
                     }
+                    try {
+                        $original = $file->file_path ?? '';
+                        $candidates = [];
+                        if ($original !== '') {
+                            $candidates[] = $original;
+                            $candidates[] = ltrim($original, '/');
+                            if (preg_match('#/storage/(.*)$#', $original, $m)) {
+                                $candidates[] = $m[1];
+                            }
+                            $candidates[] = preg_replace('#^public/storage/#', '', $original);
+                            $candidates[] = basename($original);
+                        }
+                        foreach (array_filter(array_unique($candidates)) as $p) {
+                            if ($p === '') continue;
+                            if (Storage::disk('public')->exists($p)) {
+                                Storage::disk('public')->delete($p);
+                                break;
+                            }
+                            $fsPath = storage_path('app/public/' . $p);
+                            if (file_exists($fsPath)) {
+                                @unlink($fsPath);
+                                break;
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        \Log::warning("Failed to delete file for DocumentFile id={$file->id}: " . $e->getMessage());
+                    }
+                    $file->delete();
                 }
             }
 
@@ -566,29 +752,92 @@ class AuditeeActionController extends Controller
                     $deptId = (int) $auditFinding->department_id;
                     $regNum = (string) $auditFinding->registration_number;
 
-                    $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['dept head']))
-                        ->where(function ($q) use ($deptId) {
-                            // avoid ambiguous `id` by checking existence in pivot table explicitly
-                            $q->whereExists(function ($sub) use ($deptId) {
-                                $sub->select(\DB::raw(1))
-                                    ->from('tt_user_department')
-                                    ->whereColumn('tt_user_department.user_id', 'users.id')
-                                    ->where('tt_user_department.department_id', $deptId);
-                            });
-                        })
-                        ->get();
+                        $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) = ?', ['dept head']))
+                            ->where(function ($q) use ($deptId) {
+                                // avoid ambiguous `id` by checking existence in pivot table explicitly
+                                $q->whereExists(function ($sub) use ($deptId) {
+                                    $sub->select(\DB::raw(1))
+                                        ->from('tt_user_department')
+                                        ->whereColumn('tt_user_department.user_id', 'users.id')
+                                        ->where('tt_user_department.department_id', $deptId);
+                                });
+
+                                // also include users who have department_id set on users table,
+                                // but only if that column exists in the current schema
+                                if (Schema::hasColumn('users', 'department_id')) {
+                                    $q->orWhere('department_id', $deptId);
+                                }
+                            })
+                            ->get();
 
                     if ($deptHeads->isNotEmpty()) {
                         $customMessage = "Finding (No: {$regNum}) needs your review.";
-                        Notification::send(
-                            $deptHeads->unique('id')->values(),
-                            new FtppActionNotification(
-                                $auditFinding,
-                                'auditee_revised', // custom action type
-                                null,
-                                $customMessage
-                            )
-                        );
+
+                        // Separate mail recipients (have email) from all dept heads
+                        $allDeptHeads = $deptHeads->unique('id')->values();
+                        $mailRecipients = $allDeptHeads->filter(fn($u) => !empty($u->email))->values();
+
+                        try {
+                            $emailsAll = $allDeptHeads->pluck('email')->toArray();
+                            $emailsMail = $mailRecipients->pluck('email')->toArray();
+                            \Log::info('DeptHeadNeedCheckNotification (update): recipients', ['all' => $emailsAll, 'mail' => $emailsMail, 'reply_to' => auth()->user()?->email]);
+                        } catch (\Throwable $e) {
+                            \Log::warning('Failed to log dept head recipients (update): ' . $e->getMessage());
+                        }
+
+                        // database notification for all dept heads
+                        try {
+                            Notification::send(
+                                $allDeptHeads,
+                                new FtppActionNotification(
+                                    $auditFinding,
+                                    'auditee_revised', // custom action type
+                                    null,
+                                    $customMessage
+                                )
+                            );
+                        } catch (\Throwable $e) {
+                            \Log::warning('FtppActionNotification (update DB notify) failed: ' . $e->getMessage());
+                        }
+
+                        // send email-only notification to users that have email addresses
+                        if ($mailRecipients->isNotEmpty()) {
+                            try {
+                                $reserved = ['example.com', 'example.org', 'example.net'];
+                                $validMailRecipients = $mailRecipients->filter(function ($u) use ($reserved) {
+                                    $email = trim(strtolower($u->email ?? ''));
+                                    if (empty($email)) return false;
+                                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+                                    $parts = explode('@', $email);
+                                    if (count($parts) !== 2) return false;
+                                    $domain = $parts[1];
+                                    if (in_array($domain, $reserved)) return false;
+                                    return true;
+                                })->values();
+
+                                if ($validMailRecipients->isNotEmpty()) {
+                                    try {
+                                        Notification::send(
+                                            $validMailRecipients,
+                                            new DeptHeadNeedCheckNotification(
+                                                $auditFinding,
+                                                $auditeeAction,
+                                                auth()->user()?->name,
+                                                auth()->user()?->email
+                                            )
+                                        );
+                                    } catch (\Throwable $e) {
+                                        \Log::warning('DeptHeadNeedCheckNotification (update) send failed: ' . $e->getMessage());
+                                    }
+                                } else {
+                                    \Log::warning('DeptHeadNeedCheckNotification (update): no valid dept head email addresses after filtering for department_id ' . ($deptId ?? 'N/A'));
+                                }
+                            } catch (\Throwable $e) {
+                                \Log::warning('DeptHeadNeedCheckNotification (update filter) failed: ' . $e->getMessage());
+                            }
+                        } else {
+                            \Log::warning('DeptHeadNeedCheckNotification (update): no dept head email addresses found for department_id ' . ($deptId ?? 'N/A'));
+                        }
                     }
                 }
             } catch (\Throwable $e) {
@@ -688,60 +937,40 @@ class AuditeeActionController extends Controller
 
         $mime = $file->getMimeType() ?? '';
 
-        // Image handling (compress/resize with Imagick)
+        // Image handling: store then compress with Intervention Image
         if (str_starts_with($mime, 'image/')) {
             try {
-                // Store file temporarily first to get a real path
-                $tempPath = $file->storeAs('temp', $newFileName, 'public');
-                $fullPath = storage_path('app/public/' . $tempPath);
+                // store final file first
+                $path = $file->storeAs($directory, $newFileName, 'public');
+                $fullPath = storage_path('app/public/' . $path);
 
-                // Use Imagick for compression
-                $this->compressImageWithImagick($fullPath, $extension);
-
-                // Move to final destination
-                $path = $directory . '/' . $newFileName;
-                Storage::disk('public')->move($tempPath, $path);
+                // compress/resize using Intervention
+                try {
+                    $img = Image::make($fullPath);
+                    $maxWidth = 1920;
+                    if ($img->width() > $maxWidth) {
+                        $img->resize($maxWidth, null, function ($constraint) {
+                            $constraint->aspectRatio();
+                            $constraint->upsize();
+                        });
+                    }
+                    $img->save($fullPath, 75);
+                } catch (\Throwable $e) {
+                    \Log::warning('Intervention compress failed: ' . $e->getMessage());
+                }
 
                 return ['path' => $path, 'original' => $originalName];
-
             } catch (\Throwable $e) {
                 \Log::warning('Image compress/store failed: ' . $e->getMessage());
-                // fallback: simpan file langsung tanpa compress
                 $path = $file->storeAs($directory, $newFileName, 'public');
                 return ['path' => $path, 'original' => $originalName];
             }
         }
 
-        // PDF handling (try FPDI compression)
+        // PDF handling: compression disabled — store as-is
         if ($extension === 'pdf' || str_contains($mime, 'pdf')) {
-            try {
-                // Store file temporarily first
-                $tempPath = $file->storeAs('temp', $newFileName, 'public');
-                $fullPath = storage_path('app/public/' . $tempPath);
-
-                \Log::info("📄 PDF upload detected: {$originalName}");
-                \Log::info("   Temp path: {$tempPath}");
-                \Log::info("   Full path: {$fullPath}");
-                \Log::info("   Original size: " . number_format(filesize($fullPath)) . " bytes");
-
-                // ✅ COMPRESS FIRST (modifies file in place)
-                $this->compressPdf($fullPath);
-
-                // ✅ THEN MOVE to final destination
-                $path = $directory . '/' . $newFileName;
-                Storage::disk('public')->move($tempPath, $path);
-
-                \Log::info("   Final size: " . number_format(filesize(storage_path('app/public/' . $path))) . " bytes");
-                \Log::info("✅ PDF stored at: {$path}");
-
-                return ['path' => $path, 'original' => $originalName];
-
-            } catch (\Throwable $e) {
-                \Log::warning('PDF compress/store failed: ' . $e->getMessage());
-                // fallback: simpan file langsung tanpa compress
-                $path = $file->storeAs($directory, $newFileName, 'public');
-                return ['path' => $path, 'original' => $originalName];
-            }
+            $path = $file->storeAs($directory, $newFileName, 'public');
+            return ['path' => $path, 'original' => $originalName];
         }
 
         // non-image, non-pdf files: simpan apa adanya
@@ -768,108 +997,5 @@ class AuditeeActionController extends Controller
         return $totalSize;
     }
 
-    /**
-     * Compress PDF using FPDI (pure PHP, no Ghostscript needed)
-     * ✅ Modifies file in-place at $filePath
-     */
-    private function compressPdf($filePath)
-    {
-        try {
-            if (!file_exists($filePath)) {
-                \Log::warning("❌ PDF file not found: {$filePath}");
-                return;
-            }
-
-            $originalSize = filesize($filePath);
-            \Log::info("🔍 Checking PDF: " . basename($filePath) . " ({$originalSize} bytes / " . round($originalSize / 1024 / 1024, 2) . "MB)");
-
-            if ($originalSize < 100000) { // < 100KB
-                \Log::info("⏭️  PDF too small to compress ({$originalSize} bytes), skipping");
-                return;
-            }
-
-            $outputPath = $filePath . '.compressed';
-
-            try {
-                \Log::info("🔄 Starting FPDI compression...");
-
-                // Create FPDI instance
-                $pdf = new Fpdi();
-
-                // Get page count
-                $pageCount = $pdf->setSourceFile($filePath);
-                \Log::info("   Pages detected: {$pageCount}");
-
-                // Loop through pages and import them
-                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                    $templateId = $pdf->importPage($pageNo);
-                    $size = $pdf->getTemplateSize($templateId);
-
-                    // Add page dengan compressed settings
-                    $pdf->addPage(
-                        $size['orientation'] == 'L' ? 'L' : 'P',
-                        [$size['width'], $size['height']]
-                    );
-                    $pdf->useTemplate($templateId);
-                }
-
-                // Enable compression
-                $pdf->setCompression(true);
-
-                // Save compressed PDF
-                $pdf->Output($outputPath, 'F');
-                \Log::info("   Compressed file created: {$outputPath}");
-
-                // Verify result
-                if (file_exists($outputPath)) {
-                    $compressedSize = filesize($outputPath);
-
-                    if ($compressedSize === 0 || $compressedSize === false) {
-                        \Log::warning('❌ Compressed PDF is empty, keeping original');
-                        @unlink($outputPath);
-                        return;
-                    }
-
-                    // Verify PDF header
-                    $handle = fopen($outputPath, 'r');
-                    $header = fread($handle, 5);
-                    fclose($handle);
-
-                    if ($header !== '%PDF-') {
-                        \Log::warning('❌ Compressed PDF has invalid header (corrupted)');
-                        @unlink($outputPath);
-                        return;
-                    }
-
-                    $reduction = round((1 - $compressedSize / $originalSize) * 100, 1);
-
-                    \Log::info("✅ PDF Compression Success:");
-                    \Log::info("   Original: " . number_format($originalSize) . " bytes (" . round($originalSize / 1024 / 1024, 2) . "MB)");
-                    \Log::info("   Compressed: " . number_format($compressedSize) . " bytes (" . round($compressedSize / 1024 / 1024, 2) . "MB)");
-                    \Log::info("   Reduction: {$reduction}%");
-
-                    // ✅ REPLACE jika gain > 5%
-                    if ($compressedSize < $originalSize && $reduction > 5) {
-                        @unlink($filePath);  // Delete original
-                        rename($outputPath, $filePath);  // Rename compressed to original path
-                        \Log::info("✅ Original file replaced with compressed version (saved {$reduction}%)");
-                    } else {
-                        @unlink($outputPath);  // Delete compressed jika gain kecil
-                        \Log::info("⚠️  Compression gain < 5%, keeping original");
-                    }
-                } else {
-                    \Log::warning("❌ Failed to create compressed PDF");
-                }
-
-            } catch (\Exception $e) {
-                \Log::error("❌ FPDI PDF compression error: " . $e->getMessage());
-                if (isset($outputPath) && file_exists($outputPath)) {
-                    @unlink($outputPath);
-                }
-            }
-
-        } catch (\Exception $e) {
-            \Log::error("❌ PDF compression exception: " . $e->getMessage());
-        }
-    }
+    // PDF compression removed — files are stored as-is
 }

@@ -10,6 +10,26 @@ use Illuminate\Http\Request;
 
 class AuditTypeController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {   
+
+        $search = request('search');
+        $audits = Audit::with('subAudit')
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%$search%")
+                    ->orWhere('prefix_code', 'like', "%$search%")
+                    ->orWhere('registration_number_format', 'like', "%$search%")
+                    ->orWhereHas('subAudit', function ($q) use ($search) {
+                        $q->where('name', 'like', "%$search%") ;
+                    });
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
+        return view('contents.master.ftpp.audit.index', compact('audits', 'search'));
+    }
 
     public function show($id)
     {
@@ -18,6 +38,8 @@ class AuditTypeController extends Controller
         return response()->json([
             'id' => $audit->id,
             'name' => $audit->name,
+            'prefix_code' => $audit->prefix_code,
+            'registration_number_format' => $audit->registration_number_format,
             'sub_audit' => $audit->subAudit->map(function ($sub) {
                 return [
                     'id' => $sub->id,
@@ -32,7 +54,11 @@ class AuditTypeController extends Controller
      */
     public function store(Request $request)
     {
-        $audit = Audit::create(['name' => $request->name]);
+        $audit = Audit::create([
+            'name' => $request->name,
+            'prefix_code' => $request->prefix_code,
+            'registration_number_format' => $request->registration_number_format,
+        ]);
 
         if ($request->has('sub_audit')) {
             foreach ($request->sub_audit as $sub) {
@@ -51,7 +77,11 @@ class AuditTypeController extends Controller
     public function update(Request $request, string $id)
     {
         $audit = Audit::findOrFail($id);
-        $audit->update(['name' => $request->name]);
+        $audit->update([
+            'name' => $request->name,
+            'prefix_code' => $request->prefix_code,
+            'registration_number_format' => $request->registration_number_format,
+        ]);
 
         // 🔁 Hapus semua sub audit lama terlebih dahulu
         $audit->subAudit()->delete();

@@ -1,0 +1,121 @@
+@startuml FTPP_Module_Sequence_Diagram
+
+title FTPP Module - Approval Workflow
+
+actor User as user
+participant "Browser" as browser
+participant "Web Server" as web
+participant "FtppApprovalController" as approval_ctrl
+participant "FtppController" as ftpp_ctrl
+participant "AuditFinding\nModel" as finding_model
+participant "AuditeeAction\nModel" as action_model
+participant "Database" as db
+participant "Notification\nService" as notif
+
+== Initial Load ==
+user -> browser: Access FTPP Approval Page
+browser -> web: GET /approval
+web -> approval_ctrl: index()
+approval_ctrl -> db: Query AuditFindings with relations
+db -> approval_ctrl: Return findings data
+approval_ctrl -> browser: Return approval.index view
+browser -> user: Display FTPP Approval List
+
+== Select Audit Type ==
+user -> browser: Select Audit Type
+browser -> web: GET /approval/get-data/{auditTypeId}
+web -> approval_ctrl: getData($auditTypeId)
+approval_ctrl -> db: Query audit type with subAudits
+db -> approval_ctrl: Return audit data
+approval_ctrl -> browser: Return JSON response
+browser -> user: Display filtered klausuls/subAudits
+
+== Create Audit Finding ==
+user -> browser: Create New Finding
+browser -> web: GET /ftpp/audit-finding/create
+web -> ftpp_ctrl: create()
+ftpp_ctrl -> browser: Return creation form
+user -> browser: Fill finding details
+browser -> web: POST /ftpp/audit-finding/store
+web -> ftpp_ctrl: store(Request $request)
+ftpp_ctrl -> finding_model: Create AuditFinding
+finding_model -> db: Save finding record
+db -> finding_model: Return created record
+ftpp_ctrl -> notif: Send notifications
+notif -> db: Notify auditor/auditee
+browser -> user: Redirect to approval page
+
+== Auditee Action - Department Head Review ==
+user -> browser: Access finding details
+browser -> web: GET /approval/{id}
+web -> approval_ctrl: edit($id)
+approval_ctrl -> db: Query finding with auditeeAction
+db -> approval_ctrl: Return finding details
+approval_ctrl -> browser: Return edit view
+user -> browser: Enter root cause & corrective actions
+browser -> web: POST /approval/{id}
+web -> approval_ctrl: update(Request $request)
+approval_ctrl -> action_model: Update AuditeeAction
+action_model -> db: Save root cause, corrective actions
+db -> action_model: Confirm save
+approval_ctrl -> notif: Notify department head
+browser -> user: Show success message
+
+== Department Head Sign-off ==
+user -> browser: Review & Sign (Dept Head)
+browser -> web: POST /approval/dept-head-sign
+web -> approval_ctrl: deptheadSign(Request $request)
+approval_ctrl -> action_model: Update dept_head_id, dept_head_signature
+action_model -> db: Record signature & timestamp
+db -> action_model: Confirm
+approval_ctrl -> notif: Notify lead auditor
+notif -> browser: Redirect to approval page
+browser -> user: Show signing confirmation
+
+== Auditor Verification ==
+user -> browser: Verify findings (Auditor)
+browser -> web: POST /approval/auditor-verify
+web -> approval_ctrl: auditorVerify(Request $request)
+approval_ctrl -> action_model: Check corrective actions
+action_model -> db: Validate against standards
+db -> action_model: Return validation result
+approval_ctrl -> action_model: Update verified_by_auditor
+action_model -> db: Record verification
+db -> action_model: Confirm
+approval_ctrl -> notif: Notify if rejected or approved
+browser -> user: Display verification result
+
+== Auditor Return (if needed) ==
+user -> browser: Return for revision (Auditor)
+browser -> web: POST /approval/auditor-return
+web -> approval_ctrl: auditorReturn(Request $request)
+approval_ctrl -> action_model: Reset approval status
+action_model -> db: Update status to pending
+db -> action_model: Confirm
+approval_ctrl -> notif: Notify auditee for revision
+browser -> user: Show return reason
+
+== Lead Auditor Acknowledge ==
+user -> browser: Final Acknowledgment (Lead Auditor)
+browser -> web: POST /approval/lead-auditor-acknowledge
+web -> approval_ctrl: leadAuditorAcknowledge(Request $request)
+approval_ctrl -> action_model: Update acknowledge_by_lead_auditor
+action_model -> db: Record lead auditor signature
+db -> action_model: Confirm
+approval_ctrl -> finding_model: Update status to Closed/Approved
+finding_model -> db: Save final status
+db -> finding_model: Confirm
+approval_ctrl -> notif: Notify all stakeholders
+browser -> user: Show completion message
+
+== View/Download ==
+user -> browser: View/Download FTPP PDF
+browser -> web: GET /ftpp/{id}/preview-pdf
+web -> ftpp_ctrl: previewPdf($id)
+ftpp_ctrl -> finding_model: Query complete finding data
+finding_model -> db: Fetch all related records
+db -> finding_model: Return data
+ftpp_ctrl -> browser: Generate PDF (Barryvdh DomPDF)
+browser -> user: Display/Download PDF
+
+@enduml

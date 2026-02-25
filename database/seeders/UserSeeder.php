@@ -68,7 +68,6 @@ class UserSeeder extends Seeder
             'name' => 'Auditor LK3 User',
             'email' => 'auditor@example.com',
             'password' => Hash::make('audit123'),
-            'audit_type_id' => 1,
         ]);
         $user->roles()->sync([$auditorRoleId]);
         $user->departments()->sync([$defaultDept->id]);
@@ -79,7 +78,6 @@ class UserSeeder extends Seeder
             'name' => 'Auditor Mutu User',
             'email' => 'auditor@example.com',
             'password' => Hash::make('audit123'),
-            'audit_type_id' => 2,
         ]);
         $user->roles()->sync([$auditorRoleId]);
         $user->departments()->sync([$defaultDept->id]);
@@ -118,7 +116,6 @@ class UserSeeder extends Seeder
                 'name' => $sup['name'],
                 'email' => null,
                 'password' => Hash::make('aiia123'),
-                'audit_type_id' => null,
             ]);
 
             // attach role and department
@@ -133,7 +130,6 @@ class UserSeeder extends Seeder
             'name' => 'Leader User',
             'email' => 'leader@example.com',
             'password' => Hash::make('aiia123'),
-            'audit_type_id' => null,
         ]);
         $user->roles()->sync([$leaderRoleId]);
         $user->departments()->sync([$leaderDept ? $leaderDept->id : $defaultDept->id]);
@@ -200,7 +196,6 @@ class UserSeeder extends Seeder
                 'name' => $userData['name'],
                 'email' => null,
                 'password' => Hash::make('aiia123'),
-                'audit_type_id' => null,
             ]);
 
             // attach primary role and save all departments to pivot

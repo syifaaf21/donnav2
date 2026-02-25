@@ -34,7 +34,7 @@
             class="text-gray-800 no-underline hover:no-underline font-medium truncate flex-1">
             {{ $document->name }}
             <span class="text-xs text-gray-500 ml-2">
-                ({{ $document->allMappingsForPlant($plant)->count() }} docs)
+                ({{ isset($mappingsForCode) ? $mappingsForCode->count() : ($document->allMappingsForPlant($plant)->count()) }} docs)
             </span>
         </a>
     </div>
@@ -43,10 +43,15 @@
     @if ($document->childrenRecursive->count())
         <ul class="ml-6 mt-1 space-y-1">
             @foreach ($document->childrenRecursive as $child)
+                @php
+                    $childMappings = isset($documentsByCode) ? $documentsByCode->get($child->code, collect()) : null;
+                @endphp
                 @include('contents.document-review.partials.tree-node', [
                     'document' => $child,
                     'plant' => $plant,
                     'level' => ($level ?? 0) + 1,
+                    'documentsByCode' => $documentsByCode ?? null,
+                    'mappingsForCode' => $childMappings,
                 ])
             @endforeach
         </ul>

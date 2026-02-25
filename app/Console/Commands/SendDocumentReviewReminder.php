@@ -68,6 +68,7 @@ class SendDocumentReviewReminder extends Command
         $docs = DocumentMapping::with(['document', 'department', 'status', 'partNumber', 'productModel'])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
             ->whereHas('status', fn($q) => $q->where('name', 'Approved'))
+            ->whereNull('marked_for_deletion_at')
             ->whereNotNull('notes')
             ->where('notes', '!=', '')
             ->whereNotNull('last_approved_at')

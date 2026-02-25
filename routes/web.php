@@ -9,9 +9,11 @@ use App\Http\Controllers\DocumentControlController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
+use App\Http\Controllers\DocumentControlWatermarkController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DocumentNumberController;
 use App\Http\Controllers\FindingCategoryController;
 use App\Http\Controllers\FtppApprovalController;
 use App\Http\Controllers\FtppController;
@@ -23,6 +25,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartNumberController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ExportSummaryController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -108,6 +111,7 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 
         // Audit
         Route::prefix('audit')->name('audit.')->group(function () {
+            Route::get('/', [AuditTypeController::class, 'index'])->name('index');
             Route::get('/{id}', [AuditTypeController::class, 'show']);
             Route::post('/store', [AuditTypeController::class, 'store'])->name('store');
             Route::put('/update/{id}', [AuditTypeController::class, 'update'])->name('update');
@@ -116,23 +120,37 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 
         // Finding Category
         Route::prefix('finding-category')->name('finding-category.')->group(function () {
+            Route::get('/', [FindingCategoryController::class, 'index'])->name('index');
             Route::get('/{id}', [FindingCategoryController::class, 'show']);
             Route::post('/', [FindingCategoryController::class, 'store'])->name('store');
-            Route::put('/update/{id}', [FindingCategoryController::class, 'update'])->name('update');
+            Route::put('/{id}', [FindingCategoryController::class, 'update'])->name('update');
             Route::delete('/{id}', [FindingCategoryController::class, 'destroy'])->name('destroy');
         });
 
         // Klausul
         Route::prefix('klausul')->name('klausul.')->group(function () {
+            Route::get('/', [KlausulController::class, 'index'])->name('index');
             Route::get('/{id}', [KlausulController::class, 'show']);
             Route::post('/', [KlausulController::class, 'store'])->name('store');
             Route::put('/update/{id}', [KlausulController::class, 'update'])->name('update');
             Route::put('/update-main/{id}', [KlausulController::class, 'updateMain'])->name('update-main');
             Route::delete('/{id}', [KlausulController::class, 'destroy'])->name('destroy');
             Route::delete('/destroy-main/{id}', [KlausulController::class, 'destroyMain'])->name('destroy-main');
+
+            // Sub Klausul CRUD
+            Route::post('/sub', [KlausulController::class, 'storeSub'])->name('sub.store');
+            Route::put('/sub/{id}', [KlausulController::class, 'updateSub'])->name('sub.update');
+            Route::delete('/sub/{id}', [KlausulController::class, 'destroySub'])->name('sub.destroy');
         });
     });
     Route::resource('users', UserController::class);
+});
+
+// Recycle bin routes (Super Admin only)
+Route::middleware(['auth', 'role:Super Admin'])->group(function () {
+    Route::get('/recycle-bin', [\App\Http\Controllers\RecycleBinController::class, 'index'])->name('recycle.index');
+    Route::post('/recycle-bin/{id}/restore', [\App\Http\Controllers\RecycleBinController::class, 'restore'])->name('recycle.restore');
+    Route::post('/recycle-bin/{id}/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'forceDelete'])->name('recycle.force-delete');
 });
 
 /*
@@ -141,12 +159,17 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'password.expired'])->group(function () {
 
     // Dashboard & Profile
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/document-number/generate', [DocumentNumberController::class, 'generate'])->name('document-number.generate');
+    Route::get('/dashboard/control', [DashboardController::class, 'controlDashboard'])->name('dashboard.control');
+    Route::get('/dashboard/review', [DashboardController::class, 'reviewDashboard'])->name('dashboard.review');
+    Route::get('/dashboard/ftpp', [DashboardController::class, 'ftppDashboard'])->name('dashboard.ftpp');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
+    Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -170,6 +193,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::get('/{id}/files', [DocumentReviewController::class, 'getFiles'])
             ->name('get-files');
+        Route::get('/file/{file}/download-watermarked', [DocumentControlWatermarkController::class, 'downloadWatermarkedFile'])->name('downloadWatermarkedFile');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
         Route::get('/live-search', [DocumentReviewController::class, 'liveSearch'])->name('liveSearch');
@@ -183,9 +207,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('document-control')->name('document-control.')->group(function () {
         Route::get('/', [DocumentControlController::class, 'index'])->name('index');
         Route::get('/department/{department}', [DocumentControlController::class, 'showByDepartment'])->name('department');
+        Route::get('/approval', [DocumentControlController::class, 'approvalIndex'])
+        ->name('approval');
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
+        Route::get('{mapping}/download-watermarked', [DocumentControlWatermarkController::class, 'downloadWatermarked'])->name('downloadWatermarked');
     });
 
     Route::prefix('archive')->name('archive.')->group(function () {
@@ -211,20 +238,29 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('ftpp')->name('ftpp.')->group(function () {
+        // Export summary (Excel template-based)
+        Route::get('/export-summary', [ExportSummaryController::class, 'download'])->name('export.summary');
+
         Route::get('/{id}/preview-pdf', [FtppController::class, 'previewPdf'])->name('previewPdf');
         Route::get('/get-data/{auditTypeId}', [FtppController::class, 'getData']);
         Route::get('/search', [FtppController::class, 'search'])->name('search');
         Route::get('/', [FtppController::class, 'index'])->name('index');
         Route::get('/{id}', [FtppController::class, 'show'])->name('show');
         Route::delete('/{id}', [FtppController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-destroy', [FtppController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::get('/{id}/download', [FtppController::class, 'download'])->name('download');
         Route::put('/{id}', [FtppController::class, 'update'])->name('update');
+        // Upload Evidence
+        Route::get('/{id}/evidence/upload', [AuditFindingController::class, 'showUploadEvidenceForm'])->name('evidence.upload');
+        Route::post('/{id}/evidence/upload', [AuditFindingController::class, 'uploadEvidence'])->name('evidence.upload.post');
 
         Route::prefix('audit-finding')->name('audit-finding.')->group(function () {
             // Audit Finding routes
             Route::get('/create', [AuditFindingController::class, 'create'])->name('create');
             Route::post('/store', [AuditFindingController::class, 'store'])
                 ->name('store');
+            // Temp upload for client-side compression + preview
+            Route::post('/upload-temp', [AuditFindingController::class, 'uploadTemp'])->name('uploadTemp');
             Route::get('/{id}/edit', [AuditFindingController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AuditFindingController::class, 'update'])->name('update');
             // Immediate delete endpoints for UI remove buttons (AJAX)
@@ -232,6 +268,8 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{id}/sub-klausul/{sub}', [AuditFindingController::class, 'destroySubKlausul'])->name('subklausul.destroy');
             // Attachment delete (AJAX)
             Route::delete('/attachment/{id}', [AuditFindingController::class, 'destroyAttachment'])->name('attachment.destroy');
+            // Bulk notify auditees for selected findings
+            Route::post('/bulk-notify', [AuditFindingController::class, 'bulkNotify'])->name('bulk-notify');
         });
 
         Route::prefix('auditee-action')->name('auditee-action.')->group(function () {

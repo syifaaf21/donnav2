@@ -28,7 +28,10 @@ class DocumentMappingController extends Controller
     // ================= Document Review Index =================
     public function reviewIndex(Request $request)
     {
-        $documentsMaster = Document::with('childrenRecursive')->where('type', 'review')->get();
+        $documentsMaster = Document::with('childrenRecursive')
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->get();
         $partNumbers = PartNumber::all();
         $statuses = Status::all();
         $departments = Department::all();
@@ -39,7 +42,6 @@ class DocumentMappingController extends Controller
         $groupedByPlant = [];
 
         foreach ($plants as $plant) {
-            // di dalam foreach ($plants as $plant) { ... }
             $query = DocumentMapping::with([
                 'document.parent',
                 'document.children',
@@ -53,9 +55,12 @@ class DocumentMappingController extends Controller
                 ->whereHas('document', function ($q) {
                     $q->where('type', 'review');
                 })
+                ->whereNotNull('plant')
+                ->whereRaw('LOWER(plant) != ?', ['all'])
                 ->whereHas('partNumber', function ($q) use ($plant) {
-                    $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
-                });
+                        $q->whereRaw('LOWER(plant) = ?', [strtolower($plant)]);
+                    })
+                                    ->whereNull('marked_for_deletion_at');
 
             // Search by part number (tetap)
             $search = trim($request->search);
@@ -170,11 +175,14 @@ class DocumentMappingController extends Controller
                 'parent',
             ])
                 ->whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereNotNull('plant')
+                ->whereRaw('LOWER(plant) != ?', ['all'])
                 ->whereHas(
                     'partNumber',
                     fn($q2) =>
                     $q2->whereRaw('LOWER(plant) = ?', [strtolower($plant)])
-                );
+                                )
+                                ->whereNull('marked_for_deletion_at');
 
             // 🔹 Filter search global
             if (!empty($search)) {
@@ -307,7 +315,13 @@ class DocumentMappingController extends Controller
             'parent',
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
-            ->whereDoesntHave('partNumber');
+            ->where(function($q) {
+                // Show mappings that are explicitly marked as 'all' (Other) or
+                // that don't have a part number attached.
+                $q->whereNull('plant')
+                  ->orWhereRaw('LOWER(plant) = ?', ['all'])
+                  ->orWhereDoesntHave('partNumber');
+            });
 
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
@@ -483,8 +497,12 @@ class DocumentMappingController extends Controller
             }
         }
 
+        // Normalize plant: when user selects 'all' we store 'all' in DB so
+        // it's visible in the DB enum. Views treat 'all' as Other/Manual Entry.
+        $plantValue = ($request->plant === 'all') ? 'all' : $request->plant;
+
         $mapping = DocumentMapping::create([
-            'plant' => $request->plant,
+            'plant' => $plantValue,
             'document_id' => $validated['document_id'],
             'document_number' => $validated['document_number'],
             'parent_id' => $validated['parent_id'] ?? null,
@@ -504,6 +522,11 @@ class DocumentMappingController extends Controller
         $products = $validated['product_id'] ?? [];
         $processes = $validated['process_id'] ?? [];
         $partNumbers = $validated['part_number_id'] ?? [];
+
+        // Note: we keep syncing selected part numbers even when UI plant === 'all',
+        // but we store `plant` as null so the mapping is considered "Other / Manual Entry".
+        // The index queries exclude mappings with null `plant`, so these will not
+        // appear under specific plant tabs even when part numbers are attached.
 
         $mapping->partNumber()->sync($partNumbers);
         $mapping->productModel()->sync($models);
@@ -527,21 +550,38 @@ class DocumentMappingController extends Controller
             }
         }
 
-        // Kirim notifikasi
+        // Kirim notifikasi ke semua user di departemen yang dipilih (kecuali Admin & Super Admin)
         $users = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $validated['department_id']))
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
-        // foreach ($users as $user) {
-        //     $user->notify(new DocumentCreatedNotification(
-        //         Auth::user()->name,
-        //         $mapping->document_number,
-        //         null,
-        //         route('document-review.index')
-        //     ));
-        // }
+        // build a direct URL to the document folder so notification navigates there
+        // Build plant label compatible with DocumentReviewController tabs (e.g. 'Body','Unit','Electric','Others')
+        $plantForUrl = ($request->plant === 'all' || empty($request->part_number_id)) ? 'Others' : ucfirst(strtolower($request->plant ?? 'body'));
+        $docCode = $mapping->document?->code ?? null;
+        $directUrl = $docCode ? route('document-review.showFolder', [$plantForUrl, base64_encode($docCode)], false) : route('document-review.index', [], false);
 
-        return back()->with('success', 'Document review created successfully!');
+        foreach ($users as $user) {
+            $user->notify(new DocumentCreatedNotification(
+                Auth::user()->name,
+                $mapping->document_number,
+                null,
+                $directUrl,
+                $mapping->document_id
+            ));
+        }
+
+        // Redirect dengan plant parameter agar tab otomatis pindah ke plant yang sesuai
+        // Jika user memilih plant = 'all' (UI-only) maka simpan di tab "Other / Manual Entry",
+        // juga jika tidak ada part_number.
+        if ($request->plant === 'all' || empty($request->part_number_id)) {
+            $plant = 'other-manual-entry';
+        } else {
+            $plant = strtolower($request->plant ?? 'body');
+        }
+
+        return redirect()->route('master.document-review.index2', ['plant' => $plant])
+            ->with('success', 'Document review created successfully!');
     }
 
     public function updateReview2(Request $request, $id)
@@ -554,7 +594,7 @@ class DocumentMappingController extends Controller
 
         // Validasi
         $validated = $request->validate([
-            'plant' => 'required|in:body,unit,electric',
+            'plant' => 'required|in:body,unit,electric,all',
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
             'model_id' => 'nullable|array',
@@ -719,12 +759,17 @@ class DocumentMappingController extends Controller
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
+        $plantSlug = ($plantValue === 'all' || empty($validated['part_number_id'])) ? 'Others' : ucfirst(strtolower($plantValue ?? 'body'));
+        $docCode = $mapping->document?->code ?? null;
+        $directUrl = $docCode ? route('document-review.showFolder', [$plantSlug, base64_encode($docCode)], false) : route('document-review.index', [], false);
+
         foreach ($users as $user) {
             $user->notify(new DocumentCreatedNotification(
                 Auth::user()->name,
-                $mapping->document_number,   // documentNumber
-                null,                        // documentName bisa null karena ini review
-                route('document-review.index')
+                $mapping->document_number,
+                null,
+                $directUrl,
+                $mapping->document_id
             ));
         }
 
@@ -970,29 +1015,32 @@ class DocumentMappingController extends Controller
             abort(403);
         }
 
-        // Pastikan relasi 'files' dimuat
-        $mapping->load('files');
+        // Pastikan relasi 'files' dan 'document' dimuat
+        $mapping->load('files', 'document');
 
-        // === 1️⃣ Hapus semua file di tabel relasi (document_files) ===
+        // Jadwalkan penghapusan 1 tahun setelah hari ini
+        $markedForDeletionAt = now()->addYear();
+
+        // Tandai file-file relasi untuk dihapus 1 tahun kemudian
         foreach ($mapping->files as $file) {
-            if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
-                Storage::disk('public')->delete($file->file_path);
-            }
-            $file->delete(); // Hapus record dari tabel document_files
+            $file->marked_for_deletion_at = $markedForDeletionAt;
+            $file->save();
         }
 
-        // === 2️⃣ Hapus file utama jika disimpan di kolom 'file_path' DocumentMapping ===
-        if ($mapping->file_path && Storage::disk('public')->exists($mapping->file_path)) {
-            Storage::disk('public')->delete($mapping->file_path);
+        // Tandai Document utama untuk dihapus 1 tahun kemudian
+        if ($mapping->document) {
+            $mapping->document->marked_for_deletion_at = $markedForDeletionAt;
+            $mapping->document->save();
         }
 
-        // === 3️⃣ Hapus data DocumentMapping ===
-        $mapping->delete();
+        // Tandai DocumentMapping untuk dihapus 1 tahun kemudian
+        $mapping->marked_for_deletion_at = $markedForDeletionAt;
+        $mapping->save();
 
-        // === 4️⃣ (Opsional) Hapus anak-anak jika ini parent ===
+        // Hapus relasi anak-anak jika ini parent
         DocumentMapping::where('parent_id', $mapping->id)->update(['parent_id' => null]);
 
-        return redirect()->back()->with('success', 'Document and associated files deleted successfully!');
+        return redirect()->back()->with('success', 'Document scheduled for deletion in 1 year. Files will be deleted automatically after 1 year.');
     }
 
     public function reject(DocumentMapping $mapping)
@@ -1020,7 +1068,8 @@ class DocumentMappingController extends Controller
     public function controlIndex(Request $request)
     {
         $query = DocumentMapping::with(['document', 'department', 'status', 'files'])
-            ->whereHas('document', fn($q) => $q->where('type', 'control'));
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+                        ->whereNull('marked_for_deletion_at');
 
         // 🔍 Filter by search (document name, number, or department)
         if ($request->filled('search')) {
@@ -1031,7 +1080,7 @@ class DocumentMappingController extends Controller
             });
         }
         if ($request->filled('department')) {
-            $query->whereIn('department_id', $request->department);
+             $query->whereIn('department_id', $request->department);
         }
 
 
@@ -1075,15 +1124,14 @@ class DocumentMappingController extends Controller
             'document_name' => 'required|string|max:255',
             'department' => 'required|array',
             'department.*' => 'exists:tm_departments,id',
-            'obsolete_date' => 'required|date|after_or_equal:today',
-            'reminder_date' => 'required|date|after_or_equal:today|before_or_equal:obsolete_date',
+            'obsolete_date' => 'required|date',
+            'reminder_date' => 'required|date|before_or_equal:obsolete_date',
             'period_years' => 'required|integer|min:1',
             'notes' => 'required|string|max:500',
             'files' => 'nullable|array',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx, jpg,jpeg,png|max:20480',
         ], [
-            'obsolete_date.after_or_equal' => 'Obsolete Date cannot be earlier than today.',
-            'reminder_date.after_or_equal' => 'Reminder Date cannot be earlier than today.',
+            
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
         if ($validator->fails()) {
@@ -1151,7 +1199,8 @@ class DocumentMappingController extends Controller
                     Auth::user()->name,
                     null,
                     $newDocument->name,
-                    route('document-control.department', $mapping->department->name), // <-- pakai nama, bukan ID
+                    route('document-control.department', $mapping->department->name, false), // <-- pakai nama, bukan ID
+                    $newDocument->id
                 ));
             }
         }
@@ -1235,7 +1284,8 @@ class DocumentMappingController extends Controller
                     Auth::user()->name,
                     null,
                     $mapping->document->name,
-                    route('document-control.department', $mapping->department->name),
+                    route('document-control.department', $mapping->department->name, false),
+                    $mapping->document_id
                 ));
             }
         }

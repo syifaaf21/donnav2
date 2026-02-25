@@ -56,7 +56,9 @@
                                 </span>
                             </td>
                             <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">{{ $user->npk }}</td>
-                            <td class="px-4 py-2 border-r border-gray-200">{{ $user->auditType->name ?? '-' }}</td>
+                            <td class="px-4 py-2 border-r border-gray-200">
+                                {{ $user->auditTypes->pluck('name')->join(', ') ?: '-' }}
+                            </td>
                             <td class="px-4 py-2 border-r border-gray-200 flex gap-2">
                                 {{-- Edit Button --}}
                                 <button type="button" data-bs-toggle="modal" data-id="{{ $user->id }}"

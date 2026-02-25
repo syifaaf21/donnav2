@@ -1,5 +1,11 @@
 <form action="{{ route('ftpp.audit-finding.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
+    @php
+        $authUser = auth()->user();
+        $isAuditor = $authUser ? collect($authUser->roles)->pluck('name')->intersect(['Auditor', 'Lead Auditor'])->isNotEmpty() : false;
+        $userAuditTypeIds = $authUser ? $authUser->auditTypes->pluck('id')->toArray() : [];
+        $auditorDefaultAuditType = $isAuditor && !empty($userAuditTypeIds) ? $userAuditTypeIds[0] : null;
+    @endphp
     <!-- CARD WRAPPER -->
     <div class=" gap-4">
         <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
@@ -12,7 +18,11 @@
                     @foreach ($auditTypes as $type)
                         <label class="flex items-center gap-2">
                             <input type="radio" name="audit_type_id" value="{{ $type->id }}"
-                                x-model="form.audit_type_id">
+                                x-model="form.audit_type_id"
+                                @if($isAuditor)
+                                    @if($type->id == $auditorDefaultAuditType) checked @endif
+                                    @if($type->id != $auditorDefaultAuditType) disabled @endif
+                                @endif>
                             {{ $type->name }}
                         </label>
                     @endforeach
@@ -76,13 +86,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="font-semibold block">Auditor / Inisiator: <span class="text-danger">*</span></label>
-                    <select name="auditor_id" x-model="form.auditor_id"
-                        class="border border-gray-300 rounded w-full p-2 focus:outline-none">
-                        <option value="">-- Choose Auditor --</option>
-                        @foreach ($auditors as $auditor)
-                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
-                        @endforeach
-                    </select>
+                        {{-- reusing $authUser and $isAuditor declared above --}}
+
+                        <select name="auditor_ids[]" id="auditorSelect" multiple
+                            class="tom-select border border-gray-300 rounded w-full p-2 focus:outline-none">
+                            @foreach ($auditors as $auditor)
+                                <option value="{{ $auditor->id }}" @if($isAuditor && $authUser && $auditor->id === $authUser->id) selected @endif>
+                                    {{ $auditor->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="auditor_id" id="auditor_id_hidden" value="{{ $isAuditor && $authUser ? $authUser->id : '' }}">
                 </div>
 
                 <div>
@@ -95,7 +109,7 @@
                 <div>
                     <label class="font-semibold block">Registration Number: <span class="text-danger">*</span></label>
                     <input type="text" name="registration_number" id="reg_number" x-model="form.registration_number"
-                        class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
+                        class="border border-gray-300 rounded w-full p-2 bg-gray-100">
                 </div>
             </div>
             <!-- FINDING CATEGORY -->
@@ -137,7 +151,7 @@
                         <div class="flex flex-col items-end">
                             <button type="button" onclick="openSidebar()"
                                 class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                Select Clause/Categories
+                                Select Clause/Criteria
                             </button>
                             <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
                                 <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end"></div>
@@ -149,9 +163,7 @@
 
             {{-- ATTACHMENT --}}
             <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
-
                 <div class="font-semibold text-lg text-gray-700">Attachments</div>
-
                 {{-- Tips Alert --}}
                 <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
                     <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
@@ -159,27 +171,24 @@
                         <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                         <p class="text-xs text-yellow-700 leading-relaxed">
                             Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
-                            Maximum total file size is <strong>10 MB</strong>.
+                            Maximum total file size is <strong>20 MB</strong>.
                         </p>
                     </div>
                 </div>
-
                 <div>
                     <!-- Preview containers (sesuaikan posisi di form) -->
                     <div id="previewImageContainer" class="mt-2 flex flex-wrap gap-2"></div>
                     <div id="previewFileContainer" class="mt-2 flex flex-col gap-1"></div>
-
                     <!-- Attachment button (paperclip) -->
                     <div class="relative inline-block">
-                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Super Admin', 'Admin', 'Auditor']))
-                            <button id="attachBtn" type="button"
-                                class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
-                                aria-haspopup="true" aria-expanded="false" title="Attach files">
-                                <i data-feather="paperclip" class="w-4 h-4"></i>
-                                <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
-                            </button>
-                        @endif
-
+                        <button id="attachBtn" type="button"
+                            class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
+                            aria-haspopup="true" aria-expanded="false" title="Attach files">
+                            <i data-feather="paperclip" class="w-4 h-4"></i>
+                            <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                            <!-- added total size display (matches edit view) -->
+                            <div id="attachTotalSize" class="text-sm text-gray-600 ml-2">Total: 0.00 MB</div>
+                        </button>
                         <!-- Small menu seperti email (hidden, muncul saat klik) -->
                         <div id="attachMenu"
                             class="hidden absolute left-0 mt-2 w-40 bg-white border rounded shadow-lg z-20">
@@ -195,13 +204,9 @@
                             </button>
                         </div>
                     </div>
-
                     <!-- ✅ Hidden file inputs - Ubah ke 'attachments[]' -->
-                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple
-                        class="hidden">
-                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple
-                        class="hidden">
-
+                    <input type="file" id="photoInput" name="attachments[]" accept="image/*" multiple class="hidden">
+                    <input type="file" id="fileInput" name="attachments[]" accept=".pdf" multiple class="hidden">
                     <!-- ✅ Error message container for attachments -->
                     @error('attachments')
                         <div class="mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
@@ -214,11 +219,16 @@
                         </div>
                     @enderror
                 </div>
-
-                <button type="button" onclick="saveHeaderOnly()"
-                    class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
-                    Save Finding
-                </button>
+                <div class="ml-auto flex gap-2 mt-2">
+                    <button type="button" onclick="saveHeaderOnly('draft', this)"
+                        class="border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100 transition-colors">
+                        Save as Draft
+                    </button>
+                    <button type="button" onclick="saveHeaderOnly('save', this)"
+                        class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        Save Finding
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -347,12 +357,26 @@
 <x-flash-message />
 @push('scripts')
     <script>
+        // Small helper to show warnings via SweetAlert (fallback to native alert)
+        function showWarning(message) {
+            if (window.Swal && typeof Swal.fire === 'function') {
+                Swal.fire({ icon: 'warning', title: message, confirmButtonText: 'OK' });
+            } else if (window.swal && typeof window.swal === 'function') {
+                window.swal(message, { icon: 'warning' });
+            } else {
+                alert(message);
+            }
+        }
+
+        // global selectedSubIds used across functions
+        var selectedSubIds = [];
+
         // === SIDEBAR OPEN/CLOSE ===
         function openSidebar() {
-            document.getElementById('sidebarKlausul').classList.remove('hidden');
-
             let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-            if (!auditType) return alert('Please choose audit type first');
+            if (!auditType) { showWarning('Please choose audit type first'); return; }
+
+            document.getElementById('sidebarKlausul').classList.remove('hidden');
 
             // Ambil klausul berdasarkan audit type
             fetch(`/filter-klausul/${auditType}`)
@@ -374,6 +398,23 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log("✅ FTTP script ready");
 
+            
+
+            // initialize selectedSubIds from any existing preview (if any)
+            try {
+                const existing = Array.from(document.querySelectorAll('#selectedSubContainer [data-id]'))
+                    .map(el => String(el.getAttribute('data-id')));
+                if (existing.length) selectedSubIds = Array.from(new Set([...(selectedSubIds||[]), ...existing]));
+            } catch (e) { /* ignore */ }
+
+            // ensure placeholder shown when no sub klausul selected
+            try {
+                const container = document.getElementById('selectedSubContainer');
+                if (container && !container.querySelector('[data-id]')) {
+                    container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
+                }
+            } catch (e) { /* ignore */ }
+
             // --- Event delegation untuk audit type (tetap pakai karena sudah aman) ---
             document.addEventListener('change', function(e) {
                 if (e.target.matches('input[name="audit_type_id"]')) {
@@ -389,8 +430,12 @@
                             document.getElementById('reg_number').value = data.reg_number;
 
                             const subContainer = document.getElementById('subAuditType');
+                            // clear current sub audit UI
                             subContainer.innerHTML = '';
-                            if (data.sub_audit?.length) {
+                            // disable any existing sub-audit radios (defensive)
+                            document.querySelectorAll('input[name="sub_audit_type_id"]').forEach(r => r.disabled = true);
+
+                            if (data.sub_audit && data.sub_audit.length) {
                                 data.sub_audit.forEach(s => {
                                     subContainer.insertAdjacentHTML('beforeend', `
                                             <label class="block">
@@ -398,34 +443,97 @@
                                                 ${s.name}
                                             </label>
                                         `);
-                                    const radio = document.querySelector(
-                                        `#subAuditType input[value="${s.id}"]`);
-                                    if (radio) radio.disabled = false;
                                 });
+                                // ensure newly added radios are enabled
+                                document.querySelectorAll('#subAuditType input[name="sub_audit_type_id"]').forEach(r => r.disabled = false);
                             } else {
-                                subContainer.innerHTML =
-                                    '<small class="text-gray-500">There is no sub audit type</small>';
+                                subContainer.innerHTML = '<small class="text-gray-500">There is no sub audit type</small>';
+                                // clear any previously selected sub audit value if Alpine form holds it
+                                try { if (window.Alpine && Alpine.store && Alpine.store.form) {} } catch(e) {}
                             }
 
-                            // ✅ Filter Auditor berdasarkan audit type
-                            let auditorSelect = document.querySelector('select[name="auditor_id"]');
-                            auditorSelect.innerHTML = '<option value="">-- Choose Auditor --</option>';
-                            data.auditors.forEach(auditor => {
-                                auditorSelect.innerHTML += `
-                                        <option value="${auditor.id}">${auditor.name}</option>
-                                    `;
-                            });
+                            // ✅ Filter Auditor berdasarkan audit type — update TomSelect options
+                            let auditorSelect = document.querySelector('#auditorSelect');
+                            if (auditorSelect) {
+                                const ts = auditorSelect.tomselect;
+                                if (ts) {
+                                    ts.clearOptions();
+                                    data.auditors.forEach(auditor => {
+                                        ts.addOption({ value: auditor.id, text: auditor.name });
+                                    });
+                                } else {
+                                    // fallback: rebuild options
+                                    auditorSelect.innerHTML = '';
+                                    data.auditors.forEach(auditor => {
+                                        auditorSelect.innerHTML += `<option value="${auditor.id}">${auditor.name}</option>`;
+                                    });
+                                }
+                            }
                         })
                         .catch(error => console.error("❌ Error:", error));
                 }
             });
 
+            // Initialize TomSelect for auditor multi-select (like auditee)
+            try {
+                const auditorEl = document.getElementById('auditorSelect');
+                if (auditorEl) {
+                    // create TomSelect instance if not already
+                    if (!auditorEl.tomselect) {
+                        var auditorTs = new TomSelect('#auditorSelect', {
+                            plugins: ['remove_button'],
+                            persist: false,
+                            create: false,
+                            maxItems: null,
+                            placeholder: 'Select or search auditors...',
+                        });
+                    } else {
+                        var auditorTs = auditorEl.tomselect;
+                    }
+
+                    // sync first selected to hidden auditor_id for backward compatibility
+                    function syncAuditorHidden(values) {
+                        const hid = document.getElementById('auditor_id_hidden');
+                        if (!hid) return;
+                        if (Array.isArray(values) && values.length) {
+                            hid.value = values[0];
+                        } else if (typeof values === 'string' && values) {
+                            // TomSelect sometimes passes comma-separated string
+                            hid.value = values.split(',')[0] || '';
+                        } else {
+                            hid.value = '';
+                        }
+                    }
+
+                    // initial sync
+                    try { syncAuditorHidden(auditorTs.getValue()); } catch (e) { /* ignore */ }
+
+                    auditorTs.on('change', function(value) {
+                        syncAuditorHidden(value);
+                    });
+                }
+            } catch (e) { console.error('TomSelect auditor init error', e); }
+
+            @if($isAuditor && $auditorDefaultAuditType)
+                // Auto-select auditor's default audit type after listeners initialized
+                setTimeout(function() {
+                    try {
+                        const defaultRadio = document.querySelector('input[name="audit_type_id"][value="{{ $auditorDefaultAuditType }}"]');
+                        if (defaultRadio) {
+                            document.querySelectorAll('input[name="audit_type_id"]').forEach(r => r.checked = false);
+                            defaultRadio.checked = true;
+                            defaultRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    } catch (e) { console.error('Auto-select audit type error', e); }
+                }, 0);
+            @endif
+
             // --- Open/Close sidebar (tidak berubah) ---
             window.openSidebar = function() {
-                document.getElementById('sidebarKlausul').classList.remove('hidden');
-
                 let auditType = document.querySelector('input[name="audit_type_id"]:checked')?.value;
-                if (!auditType) return alert('Please choose audit type first');
+                if (!auditType) { showWarning('Please choose audit type first'); return; }
+
+                document.getElementById('sidebarKlausul').classList.remove('hidden');
 
                 fetch(`/filter-klausul/${auditType}`)
                     .then(r => r.json())
@@ -542,7 +650,8 @@
             window.pilihSubKlausul = function() {
                 const subSelect = document.getElementById('selectSub');
                 if (!subSelect || !subSelect.value) {
-                    return alert('Please choose a sub clause first');
+                    showWarning('Please choose a sub clause first');
+                    return;
                 }
                 const subId = subSelect.value;
                 const subText = subSelect.selectedOptions[0].text;
@@ -562,20 +671,36 @@
             closeSidebar();
         }
 
-        let selectedSubIds = []; // simpan id yang sudah dipilih
+
 
         function addSubKlausul() {
             const subSelect = document.getElementById('selectSub');
             const subId = subSelect.value;
             const subText = subSelect.selectedOptions[0]?.text;
 
-            if (!subId) return alert('Please choose a sub clause first');
-            if (selectedSubIds.includes(subId)) return alert('This sub clause is already added');
+            if (!subId) {
+                showWarning('Please choose a sub clause first');
+                return;
+            }
+            if ((selectedSubIds || []).includes(String(subId))) {
+                showWarning('This sub clause is already added');
+                return;
+            }
 
-            selectedSubIds.push(subId);
+            // mark as selected and remove option from select to prevent re-adding
+            selectedSubIds = Array.from(new Set([...(selectedSubIds||[]), String(subId)]));
+            if (subSelect) {
+                const opt = subSelect.querySelector(`option[value="${subId}"]`);
+                if (opt) opt.remove();
+            }
 
             // Render preview di form utama
             const container = document.getElementById('selectedSubContainer');
+
+            // remove placeholder if present
+            const placeholder = container.querySelector('small');
+            if (placeholder) placeholder.remove();
+
             const span = document.createElement('span');
             span.className = "flex items-end gap-1 bg-blue-100 text-gray-700 px-2 py-1 rounded";
             span.dataset.id = subId;
@@ -584,11 +709,23 @@
             container.appendChild(span);
             feather.replace(); // render ulang icon feather
 
-
-            // tombol hapus
+            // tombol hapus — restore option to select when removed
             span.querySelector('button').onclick = function() {
-                selectedSubIds = selectedSubIds.filter(id => id !== subId);
+                selectedSubIds = (selectedSubIds || []).filter(id => String(id) !== String(subId));
+                // re-insert option back to select if sidebar is open / select exists
+                const sel = document.getElementById('selectSub');
+                if (sel && !sel.querySelector(`option[value="${subId}"]`)) {
+                    const opt = document.createElement('option');
+                    opt.value = subId;
+                    opt.text = subText;
+                    sel.appendChild(opt);
+                }
                 span.remove();
+
+                // if container empty now, show placeholder
+                if (!container.querySelector('[data-id]')) {
+                    container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
+                }
             }
 
             container.appendChild(span);
@@ -708,12 +845,14 @@
             const prod = prodSelect.value;
 
             if (!plant) {
-                return alert("Please choose plant first");
+                showWarning("Please choose plant first");
+                return;
             }
 
             // ✅ harus pilih department
             if (!dept) {
-                return alert("Please select Department.");
+                showWarning("Please select Department.");
+                return;
             }
 
             // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
@@ -787,7 +926,7 @@
 
         function openAuditeeSidebar() {
             const dept = document.getElementById('selectedDepartment').value;
-            if (!dept) return alert("Please choose department/plant first!");
+            if (!dept) { showWarning("Please choose department/plant first!"); return; }
             loadAuditeeOptions(dept);
             document.getElementById('auditeeSidebar').classList.remove('hidden');
         }
@@ -841,36 +980,56 @@
         const attachImages = document.getElementById('attachImages');
         const attachDocs = document.getElementById('attachDocs');
         const attachCount = document.getElementById('attachCount');
+        const attachTotalSizeEl = document.getElementById('attachTotalSize');
 
         const photoInput = document.getElementById('photoInput');
         const fileInput = document.getElementById('fileInput');
 
-
         const previewImageContainer = document.getElementById('previewImageContainer');
         const previewFileContainer = document.getElementById('previewFileContainer');
 
-        // 🔹 Helper update file list setelah dihapus
+        // defensive: if required elements missing, skip
+        if (!photoInput || !fileInput || !previewImageContainer || !previewFileContainer) {
+            console.warn('Attachment elements missing - attachment features disabled.');
+            return;
+        }
+
+        // accumulate selected files across multiple selections
+        let accumulatedPhotoFiles = [];
+        let accumulatedFileFiles = [];
+
         function updateFileInput(input, filesArray) {
             const dt = new DataTransfer();
             filesArray.forEach(file => dt.items.add(file));
             input.files = dt.files;
+            updateTotalSize();
         }
 
-        // 🔹 Update badge total attachment
         function updateAttachCount() {
             const total = (photoInput.files?.length || 0) + (fileInput.files?.length || 0);
-            if (total > 0) {
-                attachCount.textContent = total;
-                attachCount.classList.remove('hidden');
-            } else {
-                attachCount.classList.add('hidden');
+            if (attachCount) {
+                if (total > 0) {
+                    attachCount.textContent = total;
+                    attachCount.classList.remove('hidden');
+                } else {
+                    attachCount.classList.add('hidden');
+                }
             }
+            updateTotalSize();
         }
 
-        // 🔹 Preview Image + tombol delete
+        // preview containers keep separate "new-files" blocks to avoid clobbering server-rendered previews
         function displayImages() {
-            previewImageContainer.innerHTML = '';
-            Array.from(photoInput.files).forEach((file, index) => {
+            let newFilesContainer = previewImageContainer.querySelector('.new-files-container');
+            if (!newFilesContainer) {
+                newFilesContainer = document.createElement('div');
+                newFilesContainer.className = 'new-files-container flex flex-wrap gap-2';
+                previewImageContainer.appendChild(newFilesContainer);
+            } else {
+                newFilesContainer.innerHTML = '';
+            }
+
+            accumulatedPhotoFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "relative";
 
@@ -882,25 +1041,33 @@
                 btn.type = 'button';
                 btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                 btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
-                btn.onclick = () => {
-                    const newFiles = Array.from(photoInput.files);
-                    newFiles.splice(index, 1);
-                    updateFileInput(photoInput, newFiles);
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    accumulatedPhotoFiles.splice(index, 1);
+                    updateFileInput(photoInput, accumulatedPhotoFiles);
                     displayImages();
                     updateAttachCount();
                 };
 
                 wrapper.appendChild(img);
                 wrapper.appendChild(btn);
-                previewImageContainer.appendChild(wrapper);
-                feather.replace();
+                newFilesContainer.appendChild(wrapper);
             });
+
+            if (typeof feather !== 'undefined' && feather.replace) feather.replace();
         }
 
-        // 🔹 Preview File + tombol delete
         function displayFiles() {
-            previewFileContainer.innerHTML = '';
-            Array.from(fileInput.files).forEach((file, index) => {
+            let newFilesContainer = previewFileContainer.querySelector('.new-files-container');
+            if (!newFilesContainer) {
+                newFilesContainer = document.createElement('div');
+                newFilesContainer.className = 'new-files-container flex flex-col gap-2';
+                previewFileContainer.appendChild(newFilesContainer);
+            } else {
+                newFilesContainer.innerHTML = '';
+            }
+
+            accumulatedFileFiles.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
 
@@ -914,49 +1081,125 @@
                 btn.type = 'button';
                 btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                 btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
-                btn.onclick = () => {
-                    const newFiles = Array.from(fileInput.files);
-                    newFiles.splice(index, 1);
-                    updateFileInput(fileInput, newFiles);
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    accumulatedFileFiles.splice(index, 1);
+                    updateFileInput(fileInput, accumulatedFileFiles);
                     displayFiles();
                     updateAttachCount();
                 };
 
                 wrapper.append(icon, name, btn);
-                previewFileContainer.appendChild(wrapper);
-                feather.replace();
+                newFilesContainer.appendChild(wrapper);
             });
+
+            if (typeof feather !== 'undefined' && feather.replace) feather.replace();
         }
 
-        // 🔹 Event Listener Input
-        photoInput.addEventListener('change', () => {
+        // total size helpers
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function updateTotalSize() {
+            if (!attachTotalSizeEl) return;
+            let total = 0;
+            accumulatedPhotoFiles.forEach(f => { total += f.size || 0; });
+            accumulatedFileFiles.forEach(f => { total += f.size || 0; });
+            // fallback to input.files if accumulators empty (defensive)
+            if (total === 0) {
+                if (photoInput.files) Array.from(photoInput.files).forEach(f => total += f.size || 0);
+                if (fileInput.files) Array.from(fileInput.files).forEach(f => total += f.size || 0);
+            }
+            const mb = (total / (1024 * 1024));
+            attachTotalSizeEl.textContent = `Total: ${mb.toFixed(2)} MB`;
+        }
+
+        // event listeners to accumulate files
+        photoInput.addEventListener('change', (e) => {
+            const newFiles = Array.from(photoInput.files);
+            newFiles.forEach(file => {
+                const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+                if (!isDuplicate) accumulatedPhotoFiles.push(file);
+            });
+            updateFileInput(photoInput, accumulatedPhotoFiles);
             displayImages();
             updateAttachCount();
         });
 
-        fileInput.addEventListener('change', () => {
+        fileInput.addEventListener('change', (e) => {
+            const newFiles = Array.from(fileInput.files);
+            newFiles.forEach(file => {
+                const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
+                if (!isDuplicate) accumulatedFileFiles.push(file);
+            });
+            updateFileInput(fileInput, accumulatedFileFiles);
             displayFiles();
             updateAttachCount();
         });
 
-        // 🔹 Toggle menu
-        attachBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            attachMenu.classList.toggle('hidden');
-        });
+        // toggle menu & triggers
+        if (attachBtn) {
+            attachBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (attachMenu) attachMenu.classList.toggle('hidden');
+            });
+        }
+        document.addEventListener('click', () => { if (attachMenu) attachMenu.classList.add('hidden'); });
+        if (attachImages) attachImages.addEventListener('click', () => photoInput.click());
+        if (attachDocs) attachDocs.addEventListener('click', () => fileInput.click());
 
-        document.addEventListener('click', () => attachMenu.classList.add('hidden'));
-
-        attachImages.addEventListener('click', () => photoInput.click());
-        attachDocs.addEventListener('click', () => fileInput.click());
+        // initialize display
+        updateTotalSize();
+        updateAttachCount();
     });
 </script>
 
 {{-- Store header data handler --}}
 <script>
-    async function saveHeaderOnly() {
+    async function saveHeaderOnly(mode = 'save', btn = null) {
         const form = document.querySelector('form[action="{{ route('ftpp.audit-finding.store') }}"]');
         if (!form) return alert('Form not found');
+
+        const isDraft = mode === 'draft';
+
+        // --- Loader: show spinner on clicked button and disable save buttons ---
+        const saveButtons = document.querySelectorAll('button[onclick*="saveHeaderOnly"]');
+        const clickedBtn = btn || document.activeElement;
+        // lightweight spinner SVG (uses Tailwind `animate-spin` if available)
+        const spinnerSVG = '<svg class="inline-block w-4 h-4 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+        let _originalHtml = null;
+        function setLoading() {
+            try {
+                saveButtons.forEach(b => b.disabled = true);
+                if (clickedBtn && clickedBtn.tagName === 'BUTTON') {
+                    _originalHtml = clickedBtn.innerHTML;
+                    clickedBtn.dataset._orig = _originalHtml;
+                    clickedBtn.innerHTML = spinnerSVG + (isDraft ? 'Saving...' : 'Saving...');
+                    clickedBtn.disabled = true;
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        }
+        function restoreButtons() {
+            try {
+                saveButtons.forEach(b => b.disabled = false);
+                if (clickedBtn && clickedBtn.tagName === 'BUTTON' && clickedBtn.dataset._orig) {
+                    clickedBtn.innerHTML = clickedBtn.dataset._orig;
+                    delete clickedBtn.dataset._orig;
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        }
+
+        setLoading();
 
         // ✅ 1. Hapus pesan error lama
         document.querySelectorAll('.validation-error').forEach(n => n.remove());
@@ -999,8 +1242,8 @@
         console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
         console.log('Files:', fileDetails);
 
-        // ✅ 3. CHECK jika melebihi 10MB - STOP DI SINI
-        if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+        // ✅ 3. CHECK jika melebihi 20MB - STOP DI SINI
+        if (totalSize > 20 * 1024 * 1024) { // 20MB in bytes
             // Tampilkan error di bawah attachment section
             const attachmentSection = document.querySelector('.bg-white.p-6.mt-6:has(#previewImageContainer)');
 
@@ -1010,7 +1253,7 @@
                 <div class="flex items-start">
                     <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
                     <div class="text-sm text-red-700">
-                        <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+                        <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
                         <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                         <p>
                             Please compress your PDF files and reupload it.
@@ -1036,37 +1279,13 @@
                 block: 'center'
             });
 
+            // restore buttons since we won't continue
+            try { restoreButtons(); } catch (e) {}
+
             return; // ❌ STOP - JANGAN LANJUT KE SERVER
         }
 
-        // ✅ 4. VALIDASI FILE INDIVIDUAL (opsional)
-        let hasIndividualError = false;
-
-        // Check individual image files (max 3MB)
-        if (photoInput && photoInput.files) {
-            Array.from(photoInput.files).forEach(file => {
-                if (file.size > 3 * 1024 * 1024) { // 3MB
-                    hasIndividualError = true;
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    showFileError(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
-                }
-            });
-        }
-
-        // Check individual PDF files (max 10MB)
-        if (fileInput && fileInput.files) {
-            Array.from(fileInput.files).forEach(file => {
-                if (file.size > 10 * 1024 * 1024) { // 10MB
-                    hasIndividualError = true;
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    showFileError(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
-                }
-            });
-        }
-
-        if (hasIndividualError) {
-            return; // ❌ STOP - JANGAN LANJUT KE SERVER
-        }
+        // ✅ 4. Individual file size checks removed — only total size is enforced.
 
         // ✅ 5. LANJUT KE SERVER (jika semua validasi OK)
 
@@ -1079,8 +1298,8 @@
         // Prepare FormData
         const formData = new FormData(form);
 
-        // Add action indicator
-        formData.set('action', 'save_header');
+        // Add action indicator (draft vs save)
+        formData.set('action', isDraft ? 'draft' : 'save');
 
         // Add selected auditees (deduplicated by id)
         if (typeof selectedAuditees !== 'undefined' && selectedAuditees.length) {
@@ -1104,7 +1323,7 @@
                 credentials: 'same-origin'
             });
 
-            if (res.status === 422) {
+                if (res.status === 422) {
                 const data = await res.json();
                 const errors = data.errors || {};
                 let firstErrorEl = null;
@@ -1152,12 +1371,18 @@
                         }
                     }
                 }
+
+                // restore buttons after validation errors
+                try { restoreButtons(); } catch (e) {}
+
                 return;
             }
 
             if (!res.ok) {
                 const text = await res.text();
                 console.error('Unexpected response', res.status, text);
+                // restore buttons on unexpected server error
+                try { restoreButtons(); } catch (e) {}
                 return alert('Server error. Check console.');
             }
 
@@ -1166,32 +1391,12 @@
             window.location.href = '/ftpp';
         } catch (err) {
             console.error('Save error', err);
+            try { restoreButtons(); } catch (e) {}
             alert('Error saat menyimpan. Lihat console untuk detail.');
         }
     }
 
-    // ✅ Helper function untuk show individual file error
-    function showFileError(message) {
-        const attachmentSection = document.querySelector('.bg-white.p-6.mt-6:has(#previewImageContainer)');
-
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'attachment-error mt-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded';
-        errorDiv.innerHTML = `
-            <div class="flex items-start gap-2">
-                <i data-feather="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
-                <span class="text-sm">${message}</span>
-            </div>
-        `;
-
-        const submitBtn = attachmentSection.querySelector('button[onclick="saveHeaderOnly()"]');
-        if (submitBtn) {
-            submitBtn.insertAdjacentElement('beforebegin', errorDiv);
-        } else {
-            attachmentSection.appendChild(errorDiv);
-        }
-
-        feather.replace();
-    }
+    // Individual file error helper removed because individual limits were removed.
 </script>
 
 {{-- icon feather init --}}

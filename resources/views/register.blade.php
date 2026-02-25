@@ -65,17 +65,17 @@
                         </div>
 
                         <!-- Email -->
-                        {{-- <div class="col-12">
+                        <div class="col-12">
                             <label for="email" class="form-label fw-semibold small">
                                 <i class="bi bi-envelope-fill me-1"></i>Email
                             </label>
                             <input type="email" name="email" id="email" value="{{ old('email') }}"
                                 placeholder="Enter your email"
-                                class="form-control form-control-sm @error('email') is-invalid @enderror" />
+                                class="form-control form-control-sm @error('email') is-invalid @enderror" required/>
                             @error('email')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
-                        </div> --}}
+                        </div>
 
                         <!-- Password Field -->
                         <div class="col-12">
@@ -94,9 +94,14 @@
                                 </button>
                             </div>
 
-                            <small id="passwordValidationMessage" class="text-muted d-block mt-2"
-                                style="font-size: 0.78rem;">
-                                At least 8 characters: uppercase, lowercase, number, and special character (e.g., @#$%).
+                            <small id="passwordValidationMessage" class="text-muted d-block mt-2" style="font-size: 0.78rem;">
+                                <ul id="passwordValidationList" style="list-style:none;padding-left:0;margin-bottom:0;">
+                                    <li id="pw-length" class="d-flex align-items-center mb-1"><span class="me-2"><i class="bi bi-x-circle text-danger"></i></span>At least 8 characters</li>
+                                    <li id="pw-lower" class="d-flex align-items-center mb-1"><span class="me-2"><i class="bi bi-x-circle text-danger"></i></span>Lowercase letter</li>
+                                    <li id="pw-upper" class="d-flex align-items-center mb-1"><span class="me-2"><i class="bi bi-x-circle text-danger"></i></span>Uppercase letter</li>
+                                    <li id="pw-number" class="d-flex align-items-center mb-1"><span class="me-2"><i class="bi bi-x-circle text-danger"></i></span>Number</li>
+                                    <li id="pw-special" class="d-flex align-items-center mb-1"><span class="me-2"><i class="bi bi-x-circle text-danger"></i></span>Special character (@#$%^&+=!)</li>
+                                </ul>
                             </small>
                             @error('password')
                                 <small class="text-danger d-block">{{ $message }}</small>
@@ -202,46 +207,53 @@
     <script>
         function validatePassword() {
             const password = document.getElementById('password').value;
-            const validationMessage = document.getElementById('passwordValidationMessage');
+            // Checklist elements
+            const lengthEl = document.getElementById('pw-length');
+            const lowerEl = document.getElementById('pw-lower');
+            const upperEl = document.getElementById('pw-upper');
+            const numberEl = document.getElementById('pw-number');
+            const specialEl = document.getElementById('pw-special');
 
-            if (password.length < 8) {
-                validationMessage.classList.remove('text-muted');
-                validationMessage.classList.add('text-danger');
-                validationMessage.textContent = "Password must be at least 8 characters long.";
-                return;
+            // At least 8 characters
+            if (password.length >= 8) {
+                lengthEl.querySelector('i').className = 'bi bi-check-circle-fill text-success';
+                lengthEl.classList.add('text-success');
+            } else {
+                lengthEl.querySelector('i').className = 'bi bi-x-circle text-danger';
+                lengthEl.classList.remove('text-success');
             }
-
-            if (!/[a-z]/.test(password)) {
-                validationMessage.classList.remove('text-muted');
-                validationMessage.classList.add('text-danger');
-                validationMessage.textContent = "Password must contain at least one lowercase letter.";
-                return;
+            // Lowercase
+            if (/[a-z]/.test(password)) {
+                lowerEl.querySelector('i').className = 'bi bi-check-circle-fill text-success';
+                lowerEl.classList.add('text-success');
+            } else {
+                lowerEl.querySelector('i').className = 'bi bi-x-circle text-danger';
+                lowerEl.classList.remove('text-success');
             }
-
-            if (!/[A-Z]/.test(password)) {
-                validationMessage.classList.remove('text-muted');
-                validationMessage.classList.add('text-danger');
-                validationMessage.textContent = "Password must contain at least one uppercase letter.";
-                return;
+            // Uppercase
+            if (/[A-Z]/.test(password)) {
+                upperEl.querySelector('i').className = 'bi bi-check-circle-fill text-success';
+                upperEl.classList.add('text-success');
+            } else {
+                upperEl.querySelector('i').className = 'bi bi-x-circle text-danger';
+                upperEl.classList.remove('text-success');
             }
-
-            if (!/\d/.test(password)) {
-                validationMessage.classList.remove('text-muted');
-                validationMessage.classList.add('text-danger');
-                validationMessage.textContent = "Password must contain at least one number.";
-                return;
+            // Number
+            if (/\d/.test(password)) {
+                numberEl.querySelector('i').className = 'bi bi-check-circle-fill text-success';
+                numberEl.classList.add('text-success');
+            } else {
+                numberEl.querySelector('i').className = 'bi bi-x-circle text-danger';
+                numberEl.classList.remove('text-success');
             }
-
-            if (!/[@#$%^&+=!]/.test(password)) {
-                validationMessage.classList.remove('text-muted');
-                validationMessage.classList.add('text-danger');
-                validationMessage.textContent = "Password must contain at least one special character (e.g., @#$%^&+=!).";
-                return;
+            // Special character
+            if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+                specialEl.querySelector('i').className = 'bi bi-check-circle-fill text-success';
+                specialEl.classList.add('text-success');
+            } else {
+                specialEl.querySelector('i').className = 'bi bi-x-circle text-danger';
+                specialEl.classList.remove('text-success');
             }
-
-            validationMessage.classList.remove('text-danger');
-            validationMessage.classList.add('text-muted');
-            validationMessage.textContent = "Password is valid.";
 
             validateConfirmPassword(); // Revalidate confirm password
         }

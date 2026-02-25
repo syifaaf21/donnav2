@@ -3,7 +3,7 @@
 @section('title', "Folder $docCode - " . ucwords($plant))
 @section('subtitle', 'Review and manage documents across different plants.')
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -68,23 +68,16 @@
             <!-- Search Input -->
             <div class="relative w-full md:w-96">
                 <input type="text" name="q" value="{{ request('q') }}" id="searchInput"
-                    class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700
-                 focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
+                    class="peer w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all duration-200 shadow-sm"
                     placeholder="Type to search...">
-
                 <label for="searchInput"
-                    class="absolute left-4 transition-all duration-150 bg-white px-1 rounded
-                            text-gray-400 text-sm
-                            {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
+                    class="absolute left-4 transition-all duration-150 bg-white px-1 rounded text-gray-400 text-sm {{ request('q') ? '-top-3 text-xs text-sky-600' : 'top-2.5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-sm peer-placeholder-shown:top-2.5 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-sky-600' }}">
                     Type to search...
                 </label>
-
                 <button type="submit"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                            rounded-lg text-gray-400 hover:text-blue-700 transition">
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-blue-700 transition">
                     <i data-feather="search" class="w-5 h-5"></i>
                 </button>
-
                 @if (request('q'))
                     <button type="button" id="clearSearch"
                         class="absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-400 hover:text-red-600 transition"
@@ -92,6 +85,87 @@
                         <i data-feather="x" class="w-5 h-5"></i>
                     </button>
                 @endif
+            </div>
+
+            <!-- Status Filter Dropdown -->
+            <div class="relative">
+                <button id="filterStatusBtn" type="button"
+                    class="flex items-center gap-2 px-4 h-10 rounded-xl bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors font-semibold text-gray-700 text-sm"
+                    title="Filter by Status">
+                    Status
+                    <svg class="w-4 h-4 ml-1 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <!-- Dropdown menu -->
+                <div id="filterStatusDropdown"
+                    class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
+                    <div class="py-2 text-sm">
+                        <div class="px-3 pb-2">
+                            <input type="text" id="statusSearchInput"
+                                class="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                                placeholder="Type to filter status...">
+                        </div>
+                        <ul id="statusList" class="flex flex-col gap-1 max-h-64 overflow-y-auto px-2">
+                            <li>
+                                <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                    <input type="checkbox" name="status[]" value="all" class="status-checkbox"
+                                        id="statusAllCheckbox"
+                                        {{ empty(request('status')) || (is_array(request('status')) && in_array('all', request('status'))) ? 'checked' : '' }}>
+                                    <i class="bi bi-list-check text-gray-700 text-lg"></i>
+                                    <span class="flex-1 text-sm">All</span>
+                                    <span class="text-xs text-gray-500 font-semibold">0</span>
+                                </label>
+                            </li>
+                            @php
+                                $statusOptions = [
+                                    [
+                                        'key' => 'approved',
+                                        'label' => 'Approved',
+                                        'icon' => 'bi bi-check-circle-fill',
+                                        'color' => 'text-green-700',
+                                    ],
+                                    [
+                                        'key' => 'need_review',
+                                        'label' => 'Need Review',
+                                        'icon' => 'bi bi-exclamation-circle-fill',
+                                        'color' => 'text-yellow-700',
+                                    ],
+                                    [
+                                        'key' => 'rejected',
+                                        'label' => 'Rejected',
+                                        'icon' => 'bi bi-x-circle-fill',
+                                        'color' => 'text-red-700',
+                                    ],
+                                    [
+                                        'key' => 'uncomplete',
+                                        'label' => 'Uncomplete',
+                                        'icon' => 'bi bi-slash-circle-fill',
+                                        'color' => 'text-orange-700',
+                                    ],
+                                ];
+                                $selectedStatuses = request('status', []);
+                                if (!is_array($selectedStatuses)) {
+                                    $selectedStatuses = [$selectedStatuses];
+                                }
+                            @endphp
+                            @foreach ($statusOptions as $opt)
+                                <li>
+                                    <label
+                                        class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                        <input type="checkbox" name="status[]" value="{{ $opt['key'] }}"
+                                            class="status-checkbox"
+                                            {{ in_array($opt['key'], $selectedStatuses) ? 'checked' : '' }}>
+                                        <i class="{{ $opt['icon'] }} {{ $opt['color'] }} text-lg"></i>
+                                        <span class="flex-1 text-sm">{{ $opt['label'] }}</span>
+                                        <span class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$opt['key']] ?? 0 }}</span>
+                                    </label>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <!-- Filter Button -->
@@ -104,73 +178,100 @@
 
 
         <!-- Modal Filter -->
-        <div class="modal fade " id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content rounded-2xl">
+        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 700px;">
+                <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
 
-                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}" method="GET">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="filterModalLabel">Filter Documents</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <form action="{{ route('document-review.showFolder', [$plant, base64_encode($docCode)]) }}"
+                        method="GET">
+                        {{-- Modal Header --}}
+                        <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                            style="background-color: #f5f5f7;">
+                            <h5 class="modal-title fw-semibold text-dark" id="filterModalLabel"
+                                style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                                <i class="bi bi-funnel me-2 text-primary"></i> Filter Documents
+                            </h5>
+
+                            {{-- Close button --}}
+                            <button type="button"
+                                class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                                data-bs-dismiss="modal" aria-label="Close"
+                                style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                                <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                            </button>
                         </div>
 
-                        <div class="modal-body space-y-4">
-                            <!-- Part Number -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Part Number</label>
-                                <select name="part_number" id="modalPart" class="form-select rounded-lg py-2">
-                                    <option value="">All Part Numbers</option>
-                                    @foreach ($partNumbers as $part)
-                                        <option value="{{ $part }}" @selected(request('part_number') == $part)>
-                                            {{ $part }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        {{-- Modal Body --}}
+                        <div class="modal-body p-5 bg-gray-50"
+                            style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                            <div class="row g-4">
 
-                            <!-- Model -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Model</label>
-                                <select name="model" id="modalModel" class="form-select rounded-lg py-2">
-                                    <option value="">All Models</option>
-                                    @foreach ($models as $model)
-                                        <option value="{{ $model }}" @selected(request('model') == $model)>
-                                            {{ $model }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                <!-- Part Number -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Part Number</label>
+                                    <select name="part_number" id="modalPart"
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Part Numbers</option>
+                                        @foreach ($partNumbers as $part)
+                                            <option value="{{ $part }}" @selected(request('part_number') == $part)>
+                                                {{ $part }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            <!-- Process -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Process</label>
-                                <select name="process" id="modalProcess" class="form-select rounded-lg py-2">
-                                    <option value="">All Processes</option>
-                                    @foreach ($processes as $process)
-                                        <option value="{{ $process }}" @selected(request('process') == $process)>
-                                            {{ ucwords($process) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <!-- Product -->
-                            <div class="flex flex-col">
-                                <label class="form-label font-semibold text-gray-700 mb-1">Product</label>
-                                <select name="product" id="modalProduct" class="form-select rounded-lg py-2">
-                                    <option value="">All Products</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product }}" @selected(request('product') == $product)>
-                                            {{ $product }}</option>
-                                    @endforeach
-                                </select>
+                                <!-- Model -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Model</label>
+                                    <select name="model" id="modalModel"
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Models</option>
+                                        @foreach ($models as $model)
+                                            <option value="{{ $model }}" @selected(request('model') == $model)>
+                                                {{ $model }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Process -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Process</label>
+                                    <select name="process" id="modalProcess"
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Processes</option>
+                                        @foreach ($processes as $process)
+                                            <option value="{{ $process }}" @selected(request('process') == $process)>
+                                                {{ ucwords($process) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Product -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Product</label>
+                                    <select name="product" id="modalProduct"
+                                        class="form-select border-0 shadow-sm rounded-3">
+                                        <option value="">All Products</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{ $product }}" @selected(request('product') == $product)>
+                                                {{ $product }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
                             </div>
                         </div>
-                        <div class="modal-footer flex justify-between">
+
+                        {{-- Modal Footer --}}
+                        <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
                             <button type="button" id="clearFilterBtn"
-                                class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                                style="text-decoration: none; transition: background-color 0.3s ease;">
                                 Clear
                             </button>
-
-                            <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 text-white hover:bg-sky-700">
+                            <button type="submit"
+                                class="btn px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                                 Apply Filter
                             </button>
                         </div>
@@ -187,34 +288,34 @@
                     <table class="min-w-full divide-y divide-gray-200 folder-table" style="solid #e5e7eb;">
                         <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">No</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Document
                                     Number
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Part Number
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Product</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Model</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Process</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Notes</th>
-                                {{-- <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                {{-- <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Deadline</th> --}}
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Updated By
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Last Update
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
-                                    style="color: #1e2b50; letter-spacing: 0.5px;">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                {{-- <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
+                                    style="color: #1e2b50; letter-spacing: 0.5px;">Status</th> --}}
+                                <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                     style="color: #1e2b50; letter-spacing: 0.5px;">Actions</th>
                             </tr>
                         </thead>
@@ -222,14 +323,32 @@
                         <tbody class="divide-y divide-x divide-gray-200">
                             @forelse ($documents as $doc)
                                 <tr>
-                                    <td class="px-4 py-3">
+                                    <td class="px-2 py-3 text-xs text-center">
                                         {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->iteration }}
                                     </td>
-                                    <td class="px-4 py-3 text-xs font-medium text-gray-800">
-                                        {{ $doc->document_number ?? '-' }}
+                                    <td class="px-2 py-3 text-left text-xs font-medium text-gray-800 min-w-[210px]">
+                                        <div class="flex flex-col gap-1">
+                                            <div class="font-semibold">{{ $doc->document_number ?? '-' }}</div>
+                                            @php
+                                                $statusName = strtolower($doc->status?->name ?? '');
+                                                $statusClass = match ($statusName) {
+                                                    'approved'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                                                    'rejected'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                                                    'need review'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
+                                                    default
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
+                                                };
+                                            @endphp
+                                            <span class="{{ $statusClass }} w-max inline-block">
+                                                {{ ucwords($statusName ?: '-') }}
+                                            </span>
+                                             <div class="text-xs text-gray-500">{{ optional($doc->department)->name ?? 'Unknown' }}</div>
+                                        </div>
                                     </td>
-
-                                    <td class="px-4 py-3 text-xs font-medium">
+                                    <td class="px-2 py-3 text-center text-xs font-medium min-w-[100px]">
                                         @if ($doc->partNumber->isNotEmpty())
                                             {{ $doc->partNumber->pluck('part_number')->join(', ') }}
                                         @else
@@ -237,15 +356,15 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs">
+                                    <td class="px-2 py-3 text-center text-xs">
                                         @if ($doc->product->isNotEmpty())
-                                            {{ $doc->product->pluck('name')->join(', ') }}
+                                            {{ $doc->product->pluck('code')->join(', ') }}
                                         @else
                                             -
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs">
+                                    <td class="px-2 py-3 text-center text-xs">
                                         @if ($doc->productModel->isNotEmpty())
                                             {{ $doc->productModel->pluck('name')->join(', ') }}
                                         @else
@@ -253,7 +372,7 @@
                                         @endif
                                     </td>
 
-                                    <td class="px-4 py-3 text-xs capitalize">
+                                    <td class="px-2 py-3 text-center text-xs capitalize">
                                         @if ($doc->process->isNotEmpty())
                                             {{ $doc->process->pluck('code')->join(', ') }}
                                         @else
@@ -262,7 +381,9 @@
                                     </td>
 
                                     <td class="px-4 py-3 text-xs max-w-[250px]">
-                                        <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug">
+                                        <div class="max-h-20 overflow-y-auto text-gray-600 leading-snug note-tooltip"
+                                            data-bs-toggle="tooltip" data-bs-placement="top"
+                                            title="{{ $doc->notes ? e(strip_tags($doc->notes)) : '-' }}">
                                             {!! $doc->notes ?? '-' !!}
                                         </div>
                                     </td>
@@ -271,11 +392,12 @@
                                         <span class="text-gray-800">{{ $doc->deadline?->format('Y-m-d') ?? '-' }}</span>
                                     </td> --}}
 
-                                    <td class="px-4 py-3 text-xs">{{ $doc->user?->name ?? '-' }}</td>
+                                    <td class="px-2 py-3 text-center text-xs">{{ $doc->user?->name ?? '-' }}</td>
 
-                                    <td class="px-4 py-3 text-xs">{{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
+                                    <td class="px-2 py-3 text-center text-xs">
+                                        {{ $doc->updated_at?->format('Y-m-d') ?? '-' }}</td>
 
-                                    @php
+                                    {{-- @php
                                         $statusName = strtolower($doc->status?->name ?? '');
                                         $statusClass = match ($statusName) {
                                             'approved'
@@ -290,9 +412,9 @@
                                     @endphp
                                     <td class="px-4 py-3 text-xs">
                                         <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
-                                    </td>
+                                    </td> --}}
 
-                                    <td class="px-4 py-3 text-xs text-center">
+                                    <td class="px-2 py-3 text-xs text-center">
                                         <div class="flex justify-center items-center gap-2 relative">
                                             @php
                                                 $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
@@ -338,11 +460,14 @@
                                                         class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
                                                         <div class="py-1 text-xs max-h-80 overflow-y-auto">
                                                             @foreach ($files as $file)
-                                                                <div class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
+                                                                <div
+                                                                    class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
                                                                     <button type="button" title="View File"
                                                                         class="flex-1 text-left view-file-btn truncate"
                                                                         data-file="{{ $file['url'] }}"
                                                                         data-doc-id="{{ $doc->id }}"
+                                                                        data-doc-status="{{ $status }}"
+                                                                        data-is-admin="{{ $isAdmin ? '1' : '0' }}"
                                                                         data-file-id="{{ $file['id'] }}"
                                                                         data-file-name="{{ $file['name'] }}"
                                                                         data-file-path="{{ $file['file_path'] }}">
@@ -360,6 +485,11 @@
                                                                             <i class="bi bi-bar-chart"></i>
                                                                         </button>
                                                                     @endif
+                                                                    {{-- <a href="{{ route('document-review.downloadWatermarkedFile', $file['id'], false) }}" target="_blank"
+                                                                        class="text-sky-600 hover:text-sky-800 whitespace-nowrap ms-2"
+                                                                        title="Download (watermarked)">
+                                                                        <i class="bi bi-download"></i>
+                                                                    </a> --}}
                                                                 </div>
                                                             @endforeach
                                                         </div>
@@ -372,6 +502,8 @@
                                                         class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn"
                                                         data-file="{{ $fileUrl }}"
                                                         data-doc-id="{{ $doc->id }}"
+                                                        data-doc-status="{{ $status }}"
+                                                        data-is-admin="{{ $isAdmin ? '1' : '0' }}"
                                                         data-file-id="{{ $files[0]['id'] ?? '' }}"
                                                         data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
@@ -383,17 +515,15 @@
 
                                             {{-- ==================  (ALL OTHER ACTIONS) ================== --}}
                                             @php
-                                                $showEdit =
-                                                    ($isUser && in_array($status, ['approve', 'reject'])) ||
-                                                    ($isAdmin && $status === 'approve') ||
-                                                    (($isAdminOrSuper || $sameDepartment) && $status !== 'need review');
+                                                // Use canEditDocument to determine edit/upload permission
+                                                $canEdit = auth()->check() && auth()->user()->canEditDocument($doc);
+                                                // Only admin or users allowed by canEditDocument can edit
+                                                $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
                                                 $showApproveReject = $isAdmin && $status === 'need review';
 
                                                 $showMenu = $showEdit || $showApproveReject || $showDownloadReport;
                                             @endphp
-
-
                                             @if ($showMenu)
                                                 <div class="relative inline-block text-left">
                                                     <button type="button"
@@ -477,15 +607,21 @@
                     <div class="modal-header d-flex justify-content-between align-items-center">
                         <h5 class="modal-title" id="filePreviewLabel">File Preview</h5>
                         <div class="d-flex gap-2">
-                            <a id="viewFullBtn" href="#" target="_blank" class="btn btn-outline-info btn-sm d-none">
+                            <a id="viewFullBtn" href="#" target="_blank"
+                                class="btn btn-outline-info btn-sm d-none">
                                 <i class="bi bi-arrows-fullscreen"></i> View Full
                             </a>
                             <a id="printFileBtn" href="#" class="btn btn-outline-secondary btn-sm d-none">
                                 <i class="bi bi-printer"></i> Print
                             </a>
-                            <a id="downloadFileBtn" href="#" download class="btn btn-outline-primary btn-sm d-none">
+                            <a id="downloadFileBtn" href="#" download
+                                class="btn btn-outline-primary btn-sm d-none">
                                 <i class="bi bi-download"></i> Download PDF
                             </a>
+
+                            {{-- <a id="downloadWatermarkedBtn" href="#" target="_blank" class="btn btn-outline-primary btn-sm d-none" title="Download (watermarked)">
+                                <i class="bi bi-download"></i> Watermarked
+                            </a> --}}
 
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
@@ -557,6 +693,12 @@
         <script>
             const currentPlant = "{{ $plant }}";
             document.addEventListener('DOMContentLoaded', function() {
+                // Init tooltips for notes column
+                const noteTooltips = Array.from(document.querySelectorAll('.note-tooltip[data-bs-toggle="tooltip"]'));
+                noteTooltips.forEach(el => new bootstrap.Tooltip(el, {
+                    boundary: 'window'
+                }));
+
                 const originalModelOptions = @json($models);
                 const originalProcessOptions = @json($processes);
                 const originalProductOptions = @json($products);
@@ -639,7 +781,6 @@
                     });
                 });
 
-
                 // === File preview modal ===
                 const withCacheBuster = (url) => {
                     if (!url) return url;
@@ -670,7 +811,8 @@
                     if (!url) return url;
                     // Hindari duplikasi jika sudah punya fragment
                     if (url.includes('#')) return url;
-                    return `${url}#toolbar=0&navpanes=0&scrollbar=0`;
+                    // Hide toolbar/print/download buttons in embedded PDF viewer
+                    return `${url}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&zoom=page-width`;
                 }
 
                 document.querySelectorAll('.view-file-btn').forEach(btn => {
@@ -721,45 +863,68 @@
                         currentFileType = getFileType(url);
                         console.log('File type detected:', currentFileType);
 
-                        // Toggle tombol Print, Download, dan View Full hanya untuk PDF
+                        // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                        const downloadWatermarkedBtn = document.getElementById('downloadWatermarkedBtn');
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
-                        if (currentFileType === 'pdf') {
+                        const docStatus = (btn.dataset.docStatus || '').toString().toLowerCase();
+                        const isAdminFlag = (btn.dataset.isAdmin || '') === '1';
+                        const isPdf = currentFileType === 'pdf';
+                        const canDownloadOrPrint = isPdf && (docStatus === 'approved' || isAdminFlag);
+
+                        if (canDownloadOrPrint) {
                             printBtnToggle.classList.remove('d-none');
                             downloadBtnToggle.classList.remove('d-none');
-                            viewFullBtnToggle.classList.remove('d-none');
+                            if (downloadWatermarkedBtn) {
+                                downloadWatermarkedBtn.classList.remove('d-none');
+                                if (currentFileId) downloadWatermarkedBtn.href = `/document-review/file/${currentFileId}/download-watermarked`;
+                            }
                         } else {
                             printBtnToggle.classList.add('d-none');
                             downloadBtnToggle.classList.add('d-none');
+                            if (downloadWatermarkedBtn) {
+                                downloadWatermarkedBtn.classList.add('d-none');
+                                downloadWatermarkedBtn.href = '#';
+                            }
+                        }
+
+                        // View Full: remain visible for PDF files (regardless of approval)
+                        if (isPdf) {
+                            viewFullBtnToggle.classList.remove('d-none');
+                        } else {
                             viewFullBtnToggle.classList.add('d-none');
                         }
 
                         // LOG DOWNLOAD untuk Excel/Word/PPT/Image saat button show diklik
-                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other'].includes(currentFileType)) {
+                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other']
+                            .includes(currentFileType)) {
                             fetch(`/document-review/${currentDocId}/log-download`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    action: 'view_file',
-                                    file_type: currentFileType,
-                                    document_file_id: currentFileId
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector(
+                                            'meta[name="csrf-token"]').content,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        action: 'view_file',
+                                        file_type: currentFileType,
+                                        document_file_id: currentFileId
+                                    })
                                 })
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                console.log('Download logged (non-PDF):', data);
-                            })
-                            .catch(err => console.error('Failed to log download:', err));
+                                .then(res => res.json())
+                                .then(data => {
+                                    console.log('Download logged (non-PDF):', data);
+                                })
+                                .catch(err => console.error('Failed to log download:', err));
                         }
 
                         // Untuk iframe PDF, coba sembunyikan toolbar default dengan fragment params
-                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) : url;
+                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) :
+                            url;
                         previewFrame.dataset.url = previewUrl;
-                        viewFullBtn.href = url;
+                        // Gunakan URL yang sudah disanitasi agar toolbar tetap tersembunyi saat "View Full"
+                        viewFullBtn.href = previewUrl;
                         previewModal.show();
                     });
                 });
@@ -832,7 +997,8 @@
                         fetch(`/document-review/${currentDocId}/log-download`, {
                             method: 'POST',
                             headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                    .content,
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -901,28 +1067,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                                            <div class="border rounded p-2 bg-gray-50">
-                                                                <div class="flex items-center justify-between">
-                                                                    <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                            <div class="border rounded p-2 bg-gray-50">
+                                                                                                <div class="flex items-center justify-between">
+                                                                                                    <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                    <div class="flex gap-2">
-                                                                        <a href="/storage/${file.file_path}"
-                                                                           target="_blank"
-                                                                           class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
-                                                                           View
-                                                                        </a>
+                                                                                                    <div class="flex gap-2">
+                                                                                                        {{-- <a href="/storage/${file.file_path}"
+                                                                                                    target="_blank"
+                                                                                                    class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                                                                                    View
+                                                                                                </a> --}}
 
-                                                                        <button type="button"
-                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                            data-file-id="${file.id}">
-                                                                            Replace
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                                                                                                        <button type="button"
+                                                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                            data-file-id="${file.id}">
+                                                                                                            Replace
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                </div>
 
-                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                                            </div>
-                                                        `).join('')}
+                                                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                                                            </div>
+                                                                                        `).join('')}
 </div>`;
 
                             })
@@ -1230,9 +1396,9 @@ ${data.files.map(file => `
                     document.getElementById('downloadReportContent').classList.add('hidden');
 
                     // Fetch download history
-                    const reportUrl = fileId
-                        ? `/document-review/${docId}/download-report?file_id=${fileId}`
-                        : `/document-review/${docId}/download-report`;
+                    const reportUrl = fileId ?
+                        `/document-review/${docId}/download-report?file_id=${fileId}` :
+                        `/document-review/${docId}/download-report`;
 
                     fetch(reportUrl)
                         .then(res => res.json())
@@ -1256,9 +1422,9 @@ ${data.files.map(file => `
                             document.getElementById('reportFileName').textContent = data.file?.name ||
                                 fileName || '-';
                             document.getElementById('reportTotalDownloads').textContent =
-                                data.total_downloads ?? (Array.isArray(data.downloads)
-                                    ? data.downloads.reduce((sum, d) => sum + d.download_count, 0)
-                                    : 0);
+                                data.total_downloads ?? (Array.isArray(data.downloads) ?
+                                    data.downloads.reduce((sum, d) => sum + d.download_count, 0) :
+                                    0);
 
                             const tbody = document.getElementById('downloadReportTableBody');
                             const emptyState = document.getElementById('downloadReportEmpty');
@@ -1300,6 +1466,66 @@ ${data.files.map(file => `
                                                 </div>
                                             `;
                         });
+                });
+                const filterStatusBtn = document.getElementById('filterStatusBtn');
+                const filterStatusDropdown = document.getElementById('filterStatusDropdown');
+                const statusSearchInput = document.getElementById('statusSearchInput');
+                if (filterStatusBtn && filterStatusDropdown) {
+                    filterStatusBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const isVisible = !filterStatusDropdown.classList.contains('hidden');
+                        document.querySelectorAll('#filterStatusDropdown').forEach(d => d.classList.add(
+                            'hidden'));
+                        if (isVisible) {
+                            filterStatusDropdown.classList.add('hidden');
+                            return;
+                        }
+                        // Position dropdown
+                        const rect = filterStatusBtn.getBoundingClientRect();
+                        filterStatusDropdown.style.position = 'fixed';
+                        filterStatusDropdown.style.top = `${rect.bottom + 6}px`;
+                        filterStatusDropdown.style.left = `${rect.left - 220}px`;
+                        filterStatusDropdown.classList.remove('hidden');
+                        filterStatusDropdown.classList.add('dropdown-fixed');
+                    });
+                    // Close dropdown on outside click
+                    document.addEventListener('click', function(e) {
+                        if (!filterStatusDropdown.contains(e.target) && !filterStatusBtn.contains(e.target)) {
+                            filterStatusDropdown.classList.add('hidden');
+                        }
+                    });
+                }
+                // Search status in dropdown
+                if (statusSearchInput) {
+                    statusSearchInput.addEventListener('input', function() {
+                        const filter = this.value.toLowerCase();
+                        document.querySelectorAll('#statusList li').forEach(li => {
+                            const label = li.querySelector('span.flex-1');
+                            if (label && label.textContent.toLowerCase().includes(filter)) {
+                                li.style.display = '';
+                            } else {
+                                li.style.display = 'none';
+                            }
+                        });
+                    });
+                }
+                // Checkbox logic (multi-select, all) + live submit
+                document.addEventListener('change', function(e) {
+                    if (e.target.classList.contains('status-checkbox')) {
+                        const allCheckbox = document.getElementById('statusAllCheckbox');
+                        const statusCheckboxes = Array.from(document.querySelectorAll('.status-checkbox'))
+                            .filter(cb => cb !== allCheckbox);
+                        if (e.target === allCheckbox) {
+                            // Jika 'all' dicentang, centang semua, jika uncheck, uncheck semua
+                            statusCheckboxes.forEach(cb => cb.checked = allCheckbox.checked);
+                        } else {
+                            // Jika status lain dicentang, uncheck 'all'
+                            if (allCheckbox) allCheckbox.checked = false;
+                        }
+                        setTimeout(function() {
+                            document.getElementById('searchForm').submit();
+                        }, 10);
+                    }
                 });
             });
         </script>

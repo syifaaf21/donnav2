@@ -14,9 +14,10 @@ class DeleteExpiredArchivedFiles extends Command
 
     public function handle()
     {
-        $expiredFiles = DocumentFile::whereNotNull('marked_for_deletion_at')
-                            ->where('marked_for_deletion_at', '<=', now())
-                            ->get();
+        $expiredFiles = DocumentFile::withTrashed()
+                    ->whereNotNull('marked_for_deletion_at')
+                    ->where('marked_for_deletion_at', '<=', now())
+                    ->get();
 
         $count = 0;
         foreach ($expiredFiles as $file) {
@@ -26,7 +27,7 @@ class DeleteExpiredArchivedFiles extends Command
             }
 
             // Hapus dari Database (PENTING: ini Hard Delete)
-            $file->delete();
+            $file->forceDelete();
             $count++;
         }
 

@@ -26,7 +26,9 @@ class SendDocumentControlReminder extends Command
         $this->info("Running WhatsApp reminder for documents. Date: {$now->toDateString()}");
 
         // Ambil semua dokumen sekaligus
-        $docs = DocumentMapping::with(['document', 'department', 'status'])->get();
+        $docs = DocumentMapping::with(['document', 'department', 'status'])
+            ->whereNull('marked_for_deletion_at')
+            ->get();
 
         if ($docs->isEmpty()) {
             $this->info("No documents to send reminders today.");
@@ -36,6 +38,8 @@ class SendDocumentControlReminder extends Command
         // Inisialisasi array kategori
         $categories = [
             'uncomplete' => [],
+            'rejected' => [],
+            'need_review' => [],
             'active' => [],
             'obsolete_today' => [],
             'overdue' => [],
@@ -46,26 +50,43 @@ class SendDocumentControlReminder extends Command
             $status = $doc->status->name ?? '';
             $obsoleteDate = Carbon::parse($doc->obsolete_date);
             $reminderDate = $doc->reminder_date ? Carbon::parse($doc->reminder_date) : null;
+            $deptName = $doc->department?->name ?? 'Unknown Department';
 
             // Uncomplete
             if ($status === 'Uncomplete') {
                 if (!$doc->last_reminder_date || Carbon::parse($doc->last_reminder_date)->lt($now)) {
-                    $categories['uncomplete'][$doc->department->name][] = $doc;
+                    $categories['uncomplete'][$deptName][] = $doc;
+                    $doc->last_reminder_date = $now;
+                    $doc->save();
+                }
+            }
+            // Rejected
+            elseif ($status === 'Rejected') {
+                if (!$doc->last_reminder_date || Carbon::parse($doc->last_reminder_date)->lt($now)) {
+                    $categories['rejected'][$deptName][] = $doc;
+                    $doc->last_reminder_date = $now;
+                    $doc->save();
+                }
+            }
+            // Need Review
+            elseif ($status === 'Need Review') {
+                if (!$doc->last_reminder_date || Carbon::parse($doc->last_reminder_date)->lt($now)) {
+                    $categories['need_review'][$deptName][] = $doc;
                     $doc->last_reminder_date = $now;
                     $doc->save();
                 }
             }
             // Active dengan reminder jatuh tempo
             elseif ($status === 'Active' && $obsoleteDate->gt($now) && $reminderDate && $reminderDate->lte($now)) {
-                $categories['active'][$doc->department->name][] = $doc;
+                $categories['active'][$deptName][] = $doc;
             }
             // Obsolete hari ini — HANYA jika statusnya bukan Uncomplete
             elseif ($status !== 'Uncomplete' && $obsoleteDate->eq($now)) {
-                $categories['obsolete_today'][$doc->department->name][] = $doc;
+                $categories['obsolete_today'][$deptName][] = $doc;
             }
             // Overdue — HANYA jika statusnya bukan Uncomplete
             elseif ($status !== 'Uncomplete' && $obsoleteDate->lt($now)) {
-                $categories['overdue'][$doc->department->name][] = $doc;
+                $categories['overdue'][$deptName][] = $doc;
             }
         }
 
@@ -121,6 +142,16 @@ class SendDocumentControlReminder extends Command
                 $doc->_message = "    - *{$doc->document->name}* → ⚠️ Please upload the file\n";
             }
         }
+        foreach ($categories['rejected'] as $dept => $docs) {
+            foreach ($docs as $doc) {
+                $doc->_message = "    - *{$doc->document->name}* → Please revise and resubmit\n";
+            }
+        }
+        foreach ($categories['need_review'] as $dept => $docs) {
+            foreach ($docs as $doc) {
+                $doc->_message = "    - *{$doc->document->name}* → Please check and respond\n";
+            }
+        }
         foreach ($categories['active'] as $dept => $docs) {
             foreach ($docs as $doc) {
                 $daysLeft = Carbon::parse($doc->obsolete_date)->diffInDays($now);
@@ -141,6 +172,8 @@ class SendDocumentControlReminder extends Command
 
         // Tambahkan kategori ke pesan
         $formatCategory("⏳ *UNCOMPLETE DOCUMENTS (File not Uploaded)*", $categories['uncomplete']);
+        $formatCategory("🛑 *REJECTED DOCUMENTS*", $categories['rejected']);
+        $formatCategory("📝 *DOCUMENTS NEED REVIEW*", $categories['need_review']);
         $formatCategory("🔔 *DOCUMENTS EXPIRED REMINDER*", $categories['active']);
         $formatCategory("⚠️ *DOCUMENTS EXPIRED TODAY*", $categories['obsolete_today']);
         $formatCategory("⏰ *EXPIRED DOCUMENTS*", $categories['overdue']);

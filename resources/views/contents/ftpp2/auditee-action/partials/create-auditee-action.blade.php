@@ -1,35 +1,163 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    .rte-toolbar {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .rte-toolbar button {
+        padding: 4px 8px;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 3px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .rte-toolbar button:hover {
+        background: #e5e7eb;
+    }
+
+    .rte-toolbar button.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #2563eb;
+    }
+
+    .rte-editor {
+        min-height: 60px;
+        padding: 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 0 0 4px 4px;
+        background: white;
+        outline: none;
+    }
+
+    .rte-editor:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .rte-editor ul {
+        list-style-type: disc;
+        padding-left: 24px;
+        margin: 8px 0;
+    }
+
+    .rte-editor ol {
+        list-style-type: decimal;
+        padding-left: 24px;
+        margin: 8px 0;
+    }
+
+    .rte-editor li {
+        margin: 4px 0;
+    }
+
+    .rte-container {
+        width: 100%;
+    }
+</style>
+
 <input type="hidden" name="audit_finding_id" x-model="selectedId">
 <input type="hidden" name="action" value="update_auditee_action">
 <input type="hidden" name="pic" value="{{ auth()->user()->id }}">
 <input type="hidden" id="auditee_action_id" name="auditee_action_id" x-model="form.auditee_action_id">
 <div @if ($readonly) class="opacity-70 pointer-events-none select-none" @endif>
-    <div class="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-4 my-2">
+    <div class="gap-4 my-2">
         <!-- LEFT: 5 WHY -->
         <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-4">
             <h5 class="font-semibold text-gray-700">AUDITEE</h5>
             <div>
-                <label class="font-semibold text-medium text-gray-700">Issue Causes (5 Why)</label>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="font-semibold text-medium text-gray-700">Issue Causes (5 Why)</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="whyCount > 1 && whyCount--"
+                            class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                            title="Remove Why Row">
+                            -
+                        </button>
+                        <button type="button" @click="whyCount < 5 && whyCount++"
+                            class="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                            title="Add Why Row">
+                            +
+                        </button>
+                    </div>
+                </div>
 
-                <template x-for="i in 5">
+                <template x-for="i in whyCount" :key="i">
                     <div class="mt-2 space-y-2">
-                        <div class="flex flex-col space-y-1">
-                            <label class="text-gray-700">Why-<span x-text="i"></span> (Mengapa):</label>
-                            <input type="text" name="why[]"
-                                class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['why_'+i+'_mengapa']">
+                        <div class="mt-4 p-4 border-l-4 border-blue-500 bg-blue-50 rounded">
+                            <h6 class="font-semibold text-blue-900 mb-3">WHY-<span x-text="i"></span></h6>
+                            <div class="flex flex-col space-y-1">
+                                <label class="text-gray-700">Why (Mengapa):</label>
+                                <div class="rte-container">
+                                    <div class="rte-toolbar">
+                                        <button type="button" onclick="formatText(this, 'bold')"
+                                            title="Bold"><b>B</b></button>
+                                        <button type="button" onclick="formatText(this, 'italic')"
+                                            title="Italic"><i>I</i></button>
+                                        <button type="button" onclick="formatText(this, 'underline')"
+                                            title="Underline"><u>U</u></button>
+                                        <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                            title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                        <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                            title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                                    </div>
+                                    <div class="rte-editor" contenteditable="true" :data-field="'why_' + i + '_mengapa'"
+                                        @input="updateHiddenField($event.target)"
+                                        x-html="form['why_'+i+'_mengapa'] || ''"></div>
+                                    <textarea :name="'why_' + i + '_mengapa'" class="hidden" x-model="form['why_'+i+'_mengapa']"></textarea>
+                                </div>
 
-                            <label class="text-gray-700">Cause (Karena):</label>
-                            <input type="text" name="cause[]"
-                                class="w-full border-b border-gray-400 p-2 focus:ring-2 focus:ring-blue-400"
-                                x-model="form['cause_'+i+'_karena']">
+                                <label class="text-gray-700 mt-2">Cause (Karena):</label>
+                                <div class="rte-container">
+                                    <div class="rte-toolbar">
+                                        <button type="button" onclick="formatText(this, 'bold')"
+                                            title="Bold"><b>B</b></button>
+                                        <button type="button" onclick="formatText(this, 'italic')"
+                                            title="Italic"><i>I</i></button>
+                                        <button type="button" onclick="formatText(this, 'underline')"
+                                            title="Underline"><u>U</u></button>
+                                        <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                            title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                        <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                            title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                                    </div>
+                                    <div class="rte-editor" contenteditable="true"
+                                        :data-field="'cause_' + i + '_karena'" @input="updateHiddenField($event.target)"
+                                        x-html="form['cause_'+i+'_karena'] || ''"></div>
+                                    <textarea :name="'cause_' + i + '_karena'" class="hidden" x-model="form['cause_'+i+'_karena']"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </template>
 
                 <div class="mt-4">
                     <label class="font-semibold text-gray-900">Root Cause <span class="text-red-500">*</span></label>
-                    <textarea name="root_cause" x-model="form.root_cause"
-                        class="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-blue-400" required></textarea>
+                    <div class="rte-container">
+                        <div class="rte-toolbar">
+                            <button type="button" onclick="formatText(this, 'bold')" title="Bold"><b>B</b></button>
+                            <button type="button" onclick="formatText(this, 'italic')" title="Italic"><i>I</i></button>
+                            <button type="button" onclick="formatText(this, 'underline')"
+                                title="Underline"><u>U</u></button>
+                            <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                            <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                        </div>
+                        <div class="rte-editor" contenteditable="true" data-field="root_cause"
+                            @input="updateHiddenField($event.target)" x-html="form.root_cause || ''"></div>
+                        <textarea name="root_cause" class="hidden" x-model="form.root_cause" required></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -37,73 +165,164 @@
         <div class="space-y-6">
 
             <!-- Corrective + Preventive -->
-            <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
+            <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6 mt-4">
                 <table class="w-full border border-gray-200 text-sm mt-2">
 
                     <tr class="bg-gray-100 font-semibold text-center">
                         <td class="border border-gray-200 p-1 w-8">No</td>
                         <td class="border border-gray-200 p-1">Activity</td>
-                        <td class="border border-gray-200 p-1 w-20">PIC</td>
+                        <td class="border border-gray-200 p-1 w-32">PIC</td>
                         <td class="border border-gray-200 p-1 w-20">Planning</td>
                         <td class="border border-gray-200 p-1 w-20">Actual</td>
                     </tr>
 
                     <!-- Corrective -->
                     <tr>
-                        <td colspan="5" class="border border-gray-200 p-1 font-semibold">Corrective Action</td>
+                        <td colspan="4" class="border border-gray-200 p-1 font-semibold">Corrective Action</td>
+                        <td class="border border-gray-200 p-1 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" @click="correctiveCount > 1 && correctiveCount--"
+                                    class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Remove Corrective Row">
+                                    -
+                                </button>
+                                <button type="button" @click="correctiveCount < 10 && correctiveCount++"
+                                    class="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Add Corrective Row">
+                                    +
+                                </button>
+                            </div>
+                        </td>
                     </tr>
 
-                    <template x-for="i in 4">
+                    <template x-for="i in correctiveCount" :key="i">
                         <tr class="corrective-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
-                            <td class="border border-gray-200">
-                                <input type="text" name="activity[]" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_activity']">
+                            <td class="border border-gray-200 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                        style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic"
+                                        style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline"
+                                        style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                        title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                        title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true"
+                                    style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'corrective_' + i + '_activity'"
+                                    @input="updateHiddenField($event.target)"
+                                    x-html="form['corrective_'+i+'_activity'] || ''"></div>
+                                <textarea :name="'corrective_' + i + '_activity'" class="hidden" x-model="form['corrective_'+i+'_activity']"></textarea>
+                            </td>
+                            <td class="border border-gray-200 w-32 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                        style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic"
+                                        style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline"
+                                        style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                        title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                        title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true"
+                                    style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'corrective_' + i + '_pic'" @input="updateHiddenField($event.target)"
+                                    x-html="form['corrective_'+i+'_pic'] || ''"></div>
+                                <textarea :name="'corrective_' + i + '_pic'" class="hidden" x-model="form['corrective_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
-                                <input type="text" name="pic[]" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_pic']">
+                                <input type="date" :name="'corrective_' + i + '_planning'"
+                                    class="w-full p-1 border-none" x-model="form['corrective_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" name="planning_date[]" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_planning']">
-                            </td>
-                            <td class="border border-gray-200">
-                                <input type="date" name="actual_date[]" class="w-full p-1 border-none"
-                                    x-model="form['corrective_'+i+'_actual']">
+                                <input type="date" :name="'corrective_' + i + '_actual'"
+                                    class="w-full p-1 border-none" x-model="form['corrective_'+i+'_actual']"
+                                    @change="form['corrective_'+i+'_actual'] = $el.value || '-'">
                             </td>
                         </tr>
                     </template>
 
                     <!-- Preventive -->
                     <tr>
-                        <td colspan="5" class="border border-gray-200 p-1 font-semibold">Preventive Action</td>
+                        <td colspan="4" class="border border-gray-200 p-1 font-semibold">Preventive Action</td>
+                        <td class="border border-gray-200 p-1 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" @click="preventiveCount > 1 && preventiveCount--"
+                                    class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Remove Preventive Row">
+                                    -
+                                </button>
+                                <button type="button" @click="preventiveCount < 10 && preventiveCount++"
+                                    class="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
+                                    title="Add Preventive Row">
+                                    +
+                                </button>
+                            </div>
+                        </td>
                     </tr>
 
-                    <template x-for="i in 4">
+                    <template x-for="i in preventiveCount" :key="i">
                         <tr class="preventive-row">
                             <td class="border border-gray-200 text-center" x-text="i"></td>
-                            <td class="border border-gray-200">
-                                <input type="text" name="activity[]" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_activity']">
+                            <td class="border border-gray-200 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                        style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic"
+                                        style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline"
+                                        style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                        title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                        title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true"
+                                    style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'preventive_' + i + '_activity'"
+                                    @input="updateHiddenField($event.target)"
+                                    x-html="form['preventive_'+i+'_activity'] || ''"></div>
+                                <textarea :name="'preventive_' + i + '_activity'" class="hidden" x-model="form['preventive_'+i+'_activity']"></textarea>
+                            </td>
+                            <td class="border border-gray-200 w-32 p-1">
+                                <div class="rte-toolbar" style="margin-bottom: 2px;">
+                                    <button type="button" onclick="formatText(this, 'bold')" title="Bold"
+                                        style="padding: 2px 6px; font-size: 12px;"><b>B</b></button>
+                                    <button type="button" onclick="formatText(this, 'italic')" title="Italic"
+                                        style="padding: 2px 6px; font-size: 12px;"><i>I</i></button>
+                                    <button type="button" onclick="formatText(this, 'underline')" title="Underline"
+                                        style="padding: 2px 6px; font-size: 12px;"><u>U</u></button>
+                                    <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                        title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                        title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                                </div>
+                                <div class="rte-editor" contenteditable="true"
+                                    style="min-height: 38px; border-radius: 4px;"
+                                    :data-field="'preventive_' + i + '_pic'" @input="updateHiddenField($event.target)"
+                                    x-html="form['preventive_'+i+'_pic'] || ''"></div>
+                                <textarea :name="'preventive_' + i + '_pic'" class="hidden" x-model="form['preventive_'+i+'_pic']"></textarea>
                             </td>
                             <td class="border border-gray-200">
-                                <input type="text" name="pic[]" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_pic']">
+                                <input type="date" :name="'preventive_' + i + '_planning'"
+                                    class="w-full p-1 border-none" x-model="form['preventive_'+i+'_planning']">
                             </td>
                             <td class="border border-gray-200">
-                                <input type="date" name="planning_date[]" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_planning']">
-                            </td>
-                            <td class="border border-gray-200">
-                                <input type="date" name="actual_date[]" class="w-full p-1 border-none"
-                                    x-model="form['preventive_'+i+'_actual']">
+                                <input type="date" :name="'preventive_' + i + '_actual'"
+                                    class="w-full p-1 border-none" x-model="form['preventive_'+i+'_actual']"
+                                    @change="form['preventive_'+i+'_actual'] = $el.value || '-'">
                             </td>
                         </tr>
                     </template>
                 </table>
             </div>
-
 
             <!-- Yokoten -->
             <div class="bg-white p-6 border border-gray-200 rounded-lg shadow space-y-6">
@@ -122,8 +341,26 @@
                 </div>
 
                 <div x-show="form.yokoten == 1">
-                    <label class="font-semibold text-gray-900">Please Specify: <span class="text-danger">*</span></label>
-                    <textarea name="yokoten_area" x-model="form.yokoten_area" class="w-full border border-gray-400 rounded p-2 h-24" :required="form.yokoten == 1"></textarea>
+                    <label class="font-semibold text-gray-900">Please Specify: <span
+                            class="text-danger">*</span></label>
+                    <div class="rte-container">
+                        <div class="rte-toolbar">
+                            <button type="button" onclick="formatText(this, 'bold')"
+                                title="Bold"><b>B</b></button>
+                            <button type="button" onclick="formatText(this, 'italic')"
+                                title="Italic"><i>I</i></button>
+                            <button type="button" onclick="formatText(this, 'underline')"
+                                title="Underline"><u>U</u></button>
+                            <button type="button" onclick="formatList(this, 'insertUnorderedList')"
+                                title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                            <button type="button" onclick="formatList(this, 'insertOrderedList')"
+                                title="Numbered List"><i class="bi bi-list-ol"></i></button>
+                        </div>
+                        <div class="rte-editor" contenteditable="true" style="min-height: 96px;"
+                            data-field="yokoten_area" @input="updateHiddenField($event.target)"
+                            x-html="form.yokoten_area || ''"></div>
+                        <textarea name="yokoten_area" class="hidden" x-model="form.yokoten_area" :required="form.yokoten == 1"></textarea>
+                    </div>
                 </div>
 
                 @php
@@ -134,7 +371,6 @@
                 {{-- ATTACHMENT SECTION --}}
                 <div class="bg-white p-6 mt-6 border border-gray-200 rounded-lg shadow space-y-6">
                     <div class="font-semibold text-lg text-gray-700">Attachments</div>
-
                     {{-- Tips Alert --}}
                     <div class="p-3 rounded-lg border border-yellow-300 bg-yellow-50 flex items-start gap-2">
                         <i class="bi bi-exclamation-circle-fill text-yellow-600 text-lg flex-shrink-0 mt-0.5"></i>
@@ -142,13 +378,41 @@
                             <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                             <p class="text-xs text-yellow-700 leading-relaxed">
                                 Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
-                                Maximum total file size is <strong>10 MB</strong>.
+                                Maximum total file size is <strong>20 MB</strong>.
                             </p>
                         </div>
                     </div>
+                    <div class="flex items-center gap-4">
+                        <div id="attachTotalSize2" class="text-sm text-gray-600">Total: 0.00 MB</div>
+                    </div>
+
+                    {{-- Gabungan preview evidence lama (DB) dan baru (input) --}}
+                    {{-- Preview evidence baru akan diinject JS di sini --}}
+
+                    <div id="evidencePreviewContainer" class="mt-2 flex flex-wrap gap-2"></div>
+
+                    {{-- List evidence lama (file lama) --}}
+                    @if(isset($action) && $action->file && count($action->file))
+                        <div class="mt-2 flex flex-col gap-2">
+                            @foreach($action->file as $file)
+                                <div class="flex items-center gap-2 evidence-item-db" data-file-id="{{ $file->id }}">
+                                    <a href="{{ asset('storage/'.$file->file_path) }}" target="_blank" class="text-blue-700 underline flex-1 truncate">
+                                        <i class="bi bi-file-earmark-pdf text-lg text-red-600 align-middle"></i>
+                                        {{ $file->original_name ?? basename($file->file_path) }}
+                                    </a>
+                                    <button type="button" class="delete-existing-evidence bg-transparent text-red-600 hover:text-red-800 p-1" data-file-id="{{ $file->id }}" title="Hapus Evidence Lama">
+                                        <i class="bi bi-x-circle-fill text-xl"></i>
+                                    </button>
+                                    <input type="hidden" name="existing_evidence_ids[]" value="{{ $file->id }}" class="existing-evidence-input">
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
 
                     <div>
-                        <!-- Preview containers -->
+
+                        <!-- Preview containers (hanya untuk file baru, evidence lama sudah di atas) -->
                         <div id="previewImageContainer2" class="mt-2 flex flex-wrap gap-2"></div>
                         <div id="previewFileContainer2" class="mt-2 flex flex-col gap-1"></div>
 
@@ -178,47 +442,240 @@
                         </div>
 
                         <!-- Hidden file inputs -->
-                        <input type="file" id="photoInput2" name="attachments[]" accept="image/*" multiple class="hidden">
-                        <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple class="hidden">
+                        <input type="file" id="photoInput2" name="attachments[]" accept="image/*" multiple
+                            class="hidden">
+                        <input type="file" id="fileInput2" name="attachments[]" accept=".pdf" multiple
+                            class="hidden">
 
                         <!-- ✅ Error message container for attachments -->
-                        <div id="attachmentErrorContainer" class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
+                        <div id="attachmentErrorContainer"
+                            class="hidden mt-3 bg-red-50 border-l-4 border-red-400 p-3 rounded-r">
                             <div class="flex items-start">
-                                <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
+                                <i data-feather="alert-circle"
+                                    class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
                                 <div id="attachmentErrorMessage" class="text-sm text-red-700"></div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {{-- Container for Save as Draft and Approve cards side by side --}}
+                <div class="flex gap-4 flex-wrap">
+                    {{-- Save as Draft Card - Show only when status is Need Assign or Draft --}}
+                    @if ($finding && $finding->status && in_array(strtolower($finding->status->name), ['need assign', 'draft']))
+                        <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center flex-1 min-w-[240px]">
+                            <div class="text-sm text-gray-600 mb-2">Save as Draft</div>
+                            <button type="button"
+                                class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                                onclick="window.updateAuditeeAction(false, true, this)">
+                                Save as Draft
+                            </button>
+                            <div class="mb-1 font-semibold text-gray-900 mt-3">Simpan sebagai Draft</div>
+                            <p class="text-xs text-gray-600">Perubahan disimpan tanpa kirim notifikasi</p>
+                        </div>
+                    @endif
+
+                    <!-- Leader/SPV Approve Card -->
+                    <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center flex-1 min-w-[240px]">
+                        <div class="text-sm text-gray-600 mb-2">Created</div>
+
+                        {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
+                        @if ($action && $action->ldr_spv_signature == 1)
+                            <img src="/images/usr-approve.png" class="mx-auto h-24">
+                        @else
+                            {{-- Jika belum approve, tombol tetap muncul --}}
+                            <button type="button"
+                                class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                                onclick="window.confirmApprove(this)">
+                                Submit
+                            </button>
+                        @endif
+
+                        <div class="mb-1 font-semibold text-gray-900 mt-3">Leader / SPV</div>
+
+                        <input type="text" value="{{ auth()->user()->name }}"
+                            class="w-full border border-gray-300 rounded text-center py-1" readonly>
+                    </div>
+                </div>
             </div>
-            <!-- Leader/SPV -->
-            <div class="p-4 bg-gray-50 border border-gray-300 rounded-md text-center max-w-xs">
-                <div>Created</div>
-
-                {{-- Tampilkan stamp jika ldr_spv_signature = 1 --}}
-                @if ($action && $action->ldr_spv_signature == 1)
-                    <img src="/images/usr-approve.png" class="mx-auto h-24">
-                @else
-                    {{-- Jika belum approve, tombol tetap muncul --}}
-                    <button type="button"
-                        class="px-3 py-1 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                        @click="confirmApprove()">
-                        Approve
-                    </button>
-                @endif
-
-                <div class="mb-1 font-semibold text-gray-900">Leader / SPV</div>
-
-                <input type="text" value="{{ auth()->user()->name }}"
-                    class="w-full border border-gray-300 rounded text-center py-1" readonly>
-            </div>
-
-
-
         </div>
-
     </div>
 </div>
+<!-- Rich Text Editor Script -->
+<script>
+    // Format text function for rich text editor
+    function formatText(button, command) {
+        // Prevent form submission
+        event.preventDefault();
+
+        // Get the editor div (next sibling after toolbar)
+        const toolbar = button.parentElement;
+        const editor = toolbar.nextElementSibling;
+
+        // Focus on editor
+        editor.focus();
+
+        // Execute formatting command
+        document.execCommand(command, false, null);
+
+        // Update button state
+        updateToolbarState(toolbar, editor);
+
+        // Trigger input event to sync with Alpine.js
+        editor.dispatchEvent(new Event('input', {
+            bubbles: true
+        }));
+    }
+
+    // Update toolbar button states based on current selection
+    function updateToolbarState(toolbar, editor) {
+        const buttons = toolbar.querySelectorAll('button');
+        buttons.forEach(button => {
+            const command = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+            if (document.queryCommandState(command)) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
+
+    // Format list function for bullet and numbered lists
+    function formatList(button, command) {
+        // Prevent form submission
+        event.preventDefault();
+
+        // Get the editor div (next sibling after toolbar)
+        const toolbar = button.parentElement;
+        const editor = toolbar.nextElementSibling;
+
+        // Focus on editor
+        editor.focus();
+
+        // Get current selection
+        const selection = window.getSelection();
+
+        // If there's no selection or editor is empty, create initial content
+        if (!selection.toString() || editor.textContent.trim() === '') {
+            // Create a new list with one item
+            if (command === 'insertUnorderedList') {
+                editor.innerHTML = '<ul><li></li></ul>';
+            } else if (command === 'insertOrderedList') {
+                editor.innerHTML = '<ol><li></li></ol>';
+            }
+
+            // Move cursor to the list item
+            const listItem = editor.querySelector('li');
+            if (listItem) {
+                const range = document.createRange();
+                range.setStart(listItem, 0);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        } else {
+            // If there's text selected, wrap it in a list
+            document.execCommand(command, false, null);
+        }
+
+        // Update button state
+        updateToolbarState(toolbar, editor);
+
+        // Trigger input event to sync with Alpine.js
+        editor.dispatchEvent(new Event('input', {
+            bubbles: true
+        }));
+    }
+
+    // Alpine.js global function to update hidden field
+    document.addEventListener('alpine:init', () => {
+        Alpine.magic('updateHiddenField', () => {
+            return (editor) => {
+                const fieldName = editor.getAttribute('data-field');
+                const value = editor.innerHTML;
+
+                // Update form object in Alpine
+                const component = Alpine.$data(editor.closest('[x-data]'));
+                if (component && component.form) {
+                    component.form[fieldName] = value;
+                }
+            };
+        });
+    });
+
+    // Update hidden field function (fallback)
+    window.updateHiddenField = function(editor) {
+        const fieldName = editor.getAttribute('data-field');
+        const value = editor.innerHTML;
+
+        // Find and update hidden textarea
+        const textarea = editor.parentElement.querySelector('textarea[name="' + fieldName + '"]');
+        if (textarea) {
+            textarea.value = value;
+        }
+
+        // Update Alpine.js form data
+        const component = editor.closest('[x-data]');
+        if (component && component.__x) {
+            const data = component.__x.$data;
+            if (data.form) {
+                data.form[fieldName] = value;
+            }
+        }
+    };
+
+    // Add event listener to all rte-editors for handling Enter key in lists
+    document.addEventListener('DOMContentLoaded', function() {
+        // Use event delegation for dynamically created editors
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('rte-editor') && e.key === 'Enter') {
+                const editor = e.target;
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const currentNode = range.startContainer;
+
+                // Check if we're inside a list item
+                let listItem = currentNode.nodeType === 3 ? currentNode.parentElement : currentNode;
+                while (listItem && listItem !== editor && listItem.tagName !== 'LI') {
+                    listItem = listItem.parentElement;
+                }
+
+                if (listItem && listItem.tagName === 'LI') {
+                    // Check if the current list item is empty
+                    if (listItem.textContent.trim() === '') {
+                        // Exit the list if the item is empty
+                        e.preventDefault();
+                        const list = listItem.parentElement;
+                        listItem.remove();
+
+                        // Add a paragraph after the list
+                        const p = document.createElement('p');
+                        p.innerHTML = '<br>';
+                        if (list.nextSibling) {
+                            list.parentElement.insertBefore(p, list.nextSibling);
+                        } else {
+                            list.parentElement.appendChild(p);
+                        }
+
+                        // Move cursor to the new paragraph
+                        const newRange = document.createRange();
+                        newRange.setStart(p, 0);
+                        newRange.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+
+                        // If the list is empty, remove it
+                        if (list.children.length === 0) {
+                            list.remove();
+                        }
+                    }
+                    // Let default behavior create new list item if not empty
+                }
+            }
+        });
+    });
+</script>
+
 <!-- Attachment Upload Handle Script: trigger inputs, preview, count, click-outside -->
 <script>
     const attachBtn2 = document.getElementById('attachBtn2');
@@ -232,6 +689,10 @@
 
     const previewImageContainer2 = document.getElementById('previewImageContainer2');
     const previewFileContainer2 = document.getElementById('previewFileContainer2');
+
+    // 🔹 Store files accumulated from multiple selections
+    let accumulatedPhotoFiles = [];
+    let accumulatedFileFiles = [];
 
     // 🔹 Helper update file list setelah dihapus
     function updatefileInput2(input, filesArray2) {
@@ -249,14 +710,51 @@
         } else {
             attachCount2.classList.add('hidden');
         }
+        // update total size display whenever count changes
+        updateTotalSize2();
     }
 
-    // 🔹 Preview Image + tombol delete
-    function displayImages2() {
-        previewImageContainer2.innerHTML = '';
-        Array.from(photoInput2.files).forEach((file, index) => {
+    // 🔹 Format bytes to human readable
+    function formatBytes(bytes, decimals = 2) {
+        if (!bytes) return '0.00 B';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    // 🔹 Update total size text based on accumulated files
+    function updateTotalSize2() {
+        const total = (accumulatedPhotoFiles || []).reduce((s, f) => s + (f.size || 0), 0) +
+            (accumulatedFileFiles || []).reduce((s, f) => s + (f.size || 0), 0);
+
+        const totalMB = (total / (1024 * 1024));
+        const el = document.getElementById('attachTotalSize2');
+        if (el) {
+            el.textContent = `Total: ${formatBytes(total, 2)}`;
+            if (total > 20 * 1024 * 1024) {
+                el.classList.remove('text-gray-600');
+                el.classList.add('text-red-600', 'font-semibold');
+            } else {
+                el.classList.remove('text-red-600', 'font-semibold');
+                el.classList.add('text-gray-600');
+            }
+        }
+    }
+
+    // Gabungan preview evidence lama (DB) dan baru (input)
+    function renderEvidencePreview() {
+        const container = document.getElementById('evidencePreviewContainer');
+        if (!container) return;
+
+        // Hapus preview evidence baru sebelumnya
+        container.querySelectorAll('.evidence-item-new').forEach(el => el.remove());
+
+        // Images
+        accumulatedPhotoFiles.forEach((file, index) => {
             const wrapper = document.createElement('div');
-            wrapper.className = "relative";
+            wrapper.className = "relative evidence-item-new";
 
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
@@ -265,60 +763,114 @@
             const btn = document.createElement('button');
             btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
             btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
-            btn.onclick = () => {
-                const newFiles2 = Array.from(photoInput2.files);
-                newFiles2.splice(index, 1);
-                updatefileInput2(photoInput2, newFiles2);
-                displayImages2();
+            btn.onclick = (e) => {
+                e.preventDefault();
+                accumulatedPhotoFiles.splice(index, 1);
+                updatefileInput2(photoInput2, accumulatedPhotoFiles);
+                renderEvidencePreview();
                 updateAttachCount2();
             };
 
             wrapper.appendChild(img);
             wrapper.appendChild(btn);
-            previewImageContainer2.appendChild(wrapper);
+            container.appendChild(wrapper);
             feather.replace();
         });
-    }
 
-    // 🔹 Preview File + tombol delete
-    function displayFiles2() {
-        previewFileContainer2.innerHTML = '';
-        Array.from(fileInput2.files).forEach((file, index) => {
+        // Files (PDF)
+        accumulatedFileFiles.forEach((file, index) => {
             const wrapper = document.createElement('div');
-            wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
+            wrapper.className = "relative evidence-item-new";
 
             const icon = document.createElement('i');
-            icon.setAttribute('data-feather', 'file-text');
-
-            const name = document.createElement('span');
-            name.textContent = file.name;
+            icon.className = 'bi bi-file-earmark-pdf text-4xl text-red-600';
+            const link = document.createElement('span');
+            link.textContent = file.name;
+            link.className = 'block text-xs mt-1 truncate w-24';
 
             const btn = document.createElement('button');
             btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
-            btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
-            btn.onclick = () => {
-                const newFiles = Array.from(fileInput2.files);
-                newFiles.splice(index, 1);
-                updatefileInput2(fileInput2, newFiles);
-                displayFiles2();
+            btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
+            btn.onclick = (e) => {
+                e.preventDefault();
+                accumulatedFileFiles.splice(index, 1);
+                updatefileInput2(fileInput2, accumulatedFileFiles);
+                renderEvidencePreview();
                 updateAttachCount2();
             };
 
-            wrapper.append(icon, name, btn);
-            previewFileContainer2.appendChild(wrapper);
+            const box = document.createElement('div');
+            box.className = 'w-24 h-24 border rounded flex items-center justify-center bg-gray-50 flex-col';
+            box.appendChild(icon);
+            box.appendChild(link);
+
+            wrapper.appendChild(box);
+            wrapper.appendChild(btn);
+            container.appendChild(wrapper);
             feather.replace();
         });
     }
 
-    // 🔹 Event Listener Input
-    photoInput2.addEventListener('change', () => {
-        displayImages2();
+    // 🔹 Hapus evidence lama dari UI
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-existing-evidence')) {
+            const btn = e.target.closest('.delete-existing-evidence');
+            (async () => {
+                const result = await Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'Are you sure you want to delete this file? The file will be deleted from storage.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                });
+                if (!result.isConfirmed) return;
+                const fileId = btn.getAttribute('data-file-id');
+                // Hapus input hidden evidence lama
+                const input = btn.parentElement.querySelector('input.existing-evidence-input');
+                if (input) input.remove();
+                // Sembunyikan preview
+                btn.parentElement.style.display = 'none';
+            })();
+        }
+    });
+
+    // Tidak perlu displayFiles2, sudah digabung di renderEvidencePreview
+
+    // 🔹 Event Listener Input - ACCUMULATE files (don't replace)
+    photoInput2.addEventListener('change', (e) => {
+        // Add new files to accumulated list
+        const newFiles = Array.from(photoInput2.files);
+        newFiles.forEach(file => {
+            // Check if file already exists to avoid duplicates
+            const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+            if (!isDuplicate) {
+                accumulatedPhotoFiles.push(file);
+            }
+        });
+
+        // Update input with accumulated files
+        updatefileInput2(photoInput2, accumulatedPhotoFiles);
+        renderEvidencePreview();
         updateAttachCount2();
     });
 
+    fileInput2.addEventListener('change', (e) => {
+        // Add new files to accumulated list
+        const newFiles = Array.from(fileInput2.files);
+        newFiles.forEach(file => {
+            // Check if file already exists to avoid duplicates
+            const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
+            if (!isDuplicate) {
+                accumulatedFileFiles.push(file);
+            }
+        });
 
-    fileInput2.addEventListener('change', () => {
-        displayFiles2();
+        // Update input with accumulated files
+        updatefileInput2(fileInput2, accumulatedFileFiles);
+        renderEvidencePreview();
         updateAttachCount2();
     });
 
@@ -332,11 +884,35 @@
 
     attachImages2.addEventListener('click', () => photoInput2.click());
     attachDocs2.addEventListener('click', () => fileInput2.click());
+
+    // Initialize display
+    renderEvidencePreview();
+    updateAttachCount2();
+    updateTotalSize2();
 </script>
 
 {{-- Store data auditee action handler --}}
 <script>
-    async function confirmApprove() {
+    // Clean HTML content by removing inline styles and unnecessary attributes
+    window.cleanHtmlContent = function(html) {
+        if (!html) return '';
+
+        // Create a temporary div to parse HTML
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // Remove all style attributes recursively
+        const removeStyles = (element) => {
+            element.removeAttribute('style');
+            Array.from(element.children).forEach(child => removeStyles(child));
+        };
+
+        removeStyles(temp);
+
+        return temp.innerHTML;
+    };
+
+    window.confirmApprove = async function(btn = null) {
         const result = await Swal.fire({
             title: 'Are you sure?',
             text: "Are you sure you want to save this data?",
@@ -348,11 +924,12 @@
         });
 
         if (result.isConfirmed) {
-            await updateAuditeeAction(true);
+            await window.updateAuditeeAction(true, false, btn);
         }
-    }
+    };
 
-    async function updateAuditeeAction(isApprove = false) {
+
+    window.updateAuditeeAction = async function(isApprove = false, isDraft = false, btn = null) {
 
         // ✅ 1. Hapus error messages lama
         const errorContainer = document.getElementById('attachmentErrorContainer');
@@ -374,122 +951,190 @@
                 feather.replace();
 
                 // Scroll to error
-                errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                errorContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
             }
         }
 
-        // -----------------------------
-        // VALIDATION (BLOCK SAVE)
-        // -----------------------------
-
-        const auditFindingId = document.querySelector('input[name="audit_finding_id"]')?.value;
-        const rootCause = document.querySelector('textarea[x-model="form.root_cause"]')?.value || '';
-        const yokotenChosen = document.querySelector('input[name="yokoten"]:checked');
-        const yokotenVal = yokotenChosen ? yokotenChosen.value : null;
-        const yokotenArea = document.querySelector('textarea[name="yokoten_area"]')?.value || '';
-
-        let err = [];
-
-        if (!auditFindingId) err.push("Audit Finding ID is required.");
-        if (!rootCause.trim()) err.push("Root Cause cannot be empty.");
-        if (yokotenVal === null) err.push("Yokoten selection is required.");
-        if (yokotenVal == "1" && !yokotenArea.trim()) {
-            err.push("Yokoten Area must be filled when Yokoten = Yes.");
+        // --- Loader: show spinner on clicked button and disable relevant action buttons ---
+        const actionButtonsSelector = 'button[onclick*="updateAuditeeAction"], button[onclick*="confirmApprove"], button[onclick*="updateAuditeeAction"]';
+        const allActionButtons = Array.from(document.querySelectorAll(actionButtonsSelector));
+        const formSubmitButtons = Array.from(document.querySelectorAll('form button[type="submit"], form input[type="submit"]'));
+        const clickedBtn = btn || null;
+        const spinnerSVG = '<svg class="inline-block w-4 h-4 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+        let _origHtml = null;
+        function setLoading() {
+            try {
+                allActionButtons.forEach(b => b.disabled = true);
+                formSubmitButtons.forEach(b => b.disabled = true);
+                if (clickedBtn && clickedBtn.tagName === 'BUTTON') {
+                    _origHtml = clickedBtn.innerHTML;
+                    clickedBtn.dataset._orig = _origHtml;
+                    clickedBtn.innerHTML = spinnerSVG + (isDraft ? 'Saving...' : (isApprove ? 'Submitting...' : 'Saving...'));
+                    clickedBtn.disabled = true;
+                }
+            } catch (e) { /* ignore */ }
+        }
+        function restoreButtons() {
+            try {
+                allActionButtons.forEach(b => b.disabled = false);
+                formSubmitButtons.forEach(b => b.disabled = false);
+                if (clickedBtn && clickedBtn.tagName === 'BUTTON' && clickedBtn.dataset._orig) {
+                    clickedBtn.innerHTML = clickedBtn.dataset._orig;
+                    delete clickedBtn.dataset._orig;
+                }
+            } catch (e) { /* ignore */ }
         }
 
-        // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
+        setLoading();
+
+        // Get file inputs and declare variables outside validation block
         const photoInput2 = document.getElementById('photoInput2');
         const fileInput2 = document.getElementById('fileInput2');
-
         let totalSize = 0;
         let fileDetails = [];
 
-        // Hitung total size dari photos (images)
-        if (photoInput2 && photoInput2.files) {
-            Array.from(photoInput2.files).forEach(file => {
-                totalSize += file.size;
-                fileDetails.push({
-                    name: file.name,
-                    size: file.size,
-                    type: 'image'
-                });
+        // -----------------------------
+        // VALIDATION (BLOCK SAVE) - Skip if Draft
+        // -----------------------------
+
+        if (!isDraft) {
+            const auditFindingId = document.querySelector('input[name="audit_finding_id"]')?.value;
+            const rootCause = document.querySelector('textarea[x-model="form.root_cause"]')?.value || '';
+            const yokotenChosen = document.querySelector('input[name="yokoten"]:checked');
+            const yokotenVal = yokotenChosen ? yokotenChosen.value : null;
+            const yokotenArea = document.querySelector('textarea[name="yokoten_area"]')?.value || '';
+
+            let err = [];
+
+            if (!auditFindingId) err.push("Audit Finding ID is required.");
+            if (!rootCause.trim()) err.push("Root Cause cannot be empty.");
+            if (yokotenVal === null) err.push("Yokoten selection is required.");
+            if (yokotenVal == "1" && !yokotenArea.trim()) {
+                err.push("Yokoten Area must be filled when Yokoten = Yes.");
+            }
+
+            // Validate WHY and CAUSE fields: require between 3 and 5 filled entries
+            let whyFilled = 0;
+            let causeFilled = 0;
+            for (let i = 1; i <= 5; i++) {
+                const whyVal = document.querySelector(`textarea[name="why_${i}_mengapa"]`)?.value || '';
+                const causeVal = document.querySelector(`textarea[name="cause_${i}_karena"]`)?.value || '';
+                const whyClean = window.cleanHtmlContent(whyVal).trim();
+                const causeClean = window.cleanHtmlContent(causeVal).trim();
+                if (whyClean) whyFilled++;
+                if (causeClean) causeFilled++;
+            }
+            if (whyFilled < 3 || whyFilled > 5) {
+                err.push(`Please fill minimal 3 Why entries. Currently filled: ${whyFilled}`);
+            }
+            if (causeFilled < 3 || causeFilled > 5) {
+                err.push(`Please fill minimal 3 Cause entries. Currently filled: ${causeFilled}`);
+            }
+
+            // ✅ 2.5 VALIDASI CORRECTIVE ACTION - jika Activity diisi, maka PIC, Planning harus diisi (Actual boleh kosong = default "-")
+            const correctiveRows = document.querySelectorAll('.corrective-row');
+            correctiveRows.forEach((row, index) => {
+                const i = index + 1;
+                const activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)
+                    ?.value?.trim() || '';
+                const pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value
+                ?.trim() || '';
+                const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value
+                    ?.trim() || '';
+
+                if (activity) {
+                    if (!pic) err.push(
+                        `❌ Corrective Action Row ${i}: If Activity is filled, PIC must also be filled.`
+                        );
+                    if (!planning) err.push(
+                        `❌ Corrective Action Row ${i}: If Activity is filled, Planning date must also be filled.`
+                        );
+                }
             });
-        }
 
-        // Hitung total size dari files (PDF)
-        if (fileInput2 && fileInput2.files) {
-            Array.from(fileInput2.files).forEach(file => {
-                totalSize += file.size;
-                fileDetails.push({
-                    name: file.name,
-                    size: file.size,
-                    type: 'pdf'
-                });
+            // ✅ 2.6 VALIDASI PREVENTIVE ACTION - jika Activity diisi, maka PIC, Planning harus diisi (Actual boleh kosong = default "-")
+            const preventiveRows = document.querySelectorAll('.preventive-row');
+            preventiveRows.forEach((row, index) => {
+                const i = index + 1;
+                const activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)
+                    ?.value?.trim() || '';
+                const pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value
+                ?.trim() || '';
+                const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value
+                    ?.trim() || '';
+
+                if (activity) {
+                    if (!pic) err.push(
+                        `❌ Preventive Action Row ${i}: If Activity is filled, PIC must also be filled.`
+                        );
+                    if (!planning) err.push(
+                        `❌ Preventive Action Row ${i}: If Activity is filled, Planning date must also be filled.`
+                        );
+                }
             });
-        }
 
-        // Convert ke MB untuk display
-        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+            // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
 
-        console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
-        console.log('Files:', fileDetails);
+            // Hitung total size dari photos (images)
+            if (photoInput2 && photoInput2.files) {
+                Array.from(photoInput2.files).forEach(file => {
+                    totalSize += file.size;
+                    fileDetails.push({
+                        name: file.name,
+                        size: file.size,
+                        type: 'image'
+                    });
+                });
+            }
 
-        // ✅ 4. CHECK jika melebihi 10MB - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
-        if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
-            const errorHtml = `
-                <p class="font-semibold mb-1">Total file size exceeds 10MB</p>
+            // Hitung total size dari files (PDF)
+            if (fileInput2 && fileInput2.files) {
+                Array.from(fileInput2.files).forEach(file => {
+                    totalSize += file.size;
+                    fileDetails.push({
+                        name: file.name,
+                        size: file.size,
+                        type: 'pdf'
+                    });
+                });
+            }
+
+            // Convert ke MB untuk display
+            const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
+            console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
+            console.log('Files:', fileDetails);
+
+            // ✅ 4. CHECK jika melebihi 20MB - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
+            if (totalSize > 20 * 1024 * 1024) { // 20MB in bytes
+                const errorHtml = `
+                <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
                 <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                 <p>
                     Please compress your PDF files and reupload it.
                 </p>
             `;
-            showAttachmentError(errorHtml);
-            return; // ⛔ STOP submit
-        }
+                showAttachmentError(errorHtml);
+                try { restoreButtons(); } catch (e) {}
+                return; // ⛔ STOP submit
+            }
 
-        // ✅ 5. CHECK individual file size - TAMPILKAN DI FIELD (BUKAN SWEETALERT)
-        let individualErrors = [];
+            // Individual file size checks removed — only total size (20MB) is enforced.
 
-        // Check individual image files (max 3MB)
-        if (photoInput2 && photoInput2.files) {
-            Array.from(photoInput2.files).forEach(file => {
-                if (file.size > 3 * 1024 * 1024) { // 3MB
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    individualErrors.push(`🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
-                }
-            });
-        }
-
-        // Check individual PDF files (max 10MB)
-        if (fileInput2 && fileInput2.files) {
-            Array.from(fileInput2.files).forEach(file => {
-                if (file.size > 10 * 1024 * 1024) { // 10MB
-                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    individualErrors.push(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
-                }
-            });
-        }
-
-        if (individualErrors.length > 0) {
-            const errorHtml = `
-                <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
-                <ul class="list-disc list-inside space-y-1">
-                    ${individualErrors.map(e => `<li>${e}</li>`).join('')}
-                </ul>
-            `;
-            showAttachmentError(errorHtml);
-            return; // ⛔ STOP submit
-        }
-
-        // ✅ 6. Check other validation errors (tetap di SweetAlert - bukan file attachment)
-        if (err.length > 0) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Validation Error',
-                html: err.join("<br>"),
-            });
-            return; // ⛔ STOP submit
-        }
+            // ✅ 6. Check other validation errors (tetap di SweetAlert - bukan file attachment)
+            if (err.length > 0) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    html: err.join("<br>"),
+                });
+                try { restoreButtons(); } catch (e) {}
+                return; // ⛔ STOP submit
+            }
+        } // End of !isDraft validation block
 
         // -----------------------------
         // PREPARE FORM DATA
@@ -500,6 +1145,7 @@
         formData.append('_token', token);
         formData.append('_method', 'POST');
         formData.append('action', 'update_auditee_action');
+        formData.append('is_draft', isDraft ? 1 : 0);
 
         if (isApprove) {
             formData.append('approve_ldr_spv', 1);
@@ -509,56 +1155,106 @@
         formData.append('audit_finding_id', findingId);
         formData.append('pic', document.querySelector('input[name="pic"]')?.value);
 
-        // 5 WHY
-        const whyInputs = document.querySelectorAll('input[name="why[]"]');
-        const causeInputs = document.querySelectorAll('input[name="cause[]"]');
+        // 5 WHY - ambil dari textarea dengan nama dinamis (dynamic count)
+        for (let i = 1; i <= 5; i++) {
+            const whyTextarea = document.querySelector(`textarea[name="why_${i}_mengapa"]`);
+            const causeTextarea = document.querySelector(`textarea[name="cause_${i}_karena"]`);
 
-        for (let i = 0; i < 5; i++) {
-            formData.append(`why_${i+1}_mengapa`, whyInputs[i]?.value || '');
-            formData.append(`cause_${i+1}_karena`, causeInputs[i]?.value || '');
+            // Only append if textarea exists (for dynamic rows)
+            if (whyTextarea || causeTextarea) {
+                let whyValue = whyTextarea?.value || '';
+                let causeValue = causeTextarea?.value || '';
+
+                // Clean HTML content
+                whyValue = window.cleanHtmlContent(whyValue);
+                causeValue = window.cleanHtmlContent(causeValue);
+
+                formData.append(`why_${i}_mengapa`, whyValue);
+                formData.append(`cause_${i}_karena`, causeValue);
+            }
         }
 
-        formData.append('root_cause', document.querySelector('textarea[x-model="form.root_cause"]')?.value || '');
+        let rootCause = document.querySelector('textarea[x-model="form.root_cause"]')?.value || '';
+        rootCause = window.cleanHtmlContent(rootCause);
+        formData.append('root_cause', rootCause);
 
-        // Corrective Action
-        document.querySelectorAll('tr.corrective-row').forEach((row, i) => {
-            const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
-            const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
-            const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
+        // Corrective Action - get all existing rows dynamically and clean HTML
+        let correctiveRowsSubmit = document.querySelectorAll('.corrective-row');
+        correctiveRowsSubmit.forEach((row, index) => {
+            const i = index + 1;
+            let activity = document.querySelector(`textarea[name="corrective_${i}_activity"]`)?.value ||
+                '';
+            let pic = document.querySelector(`textarea[name="corrective_${i}_pic"]`)?.value || '';
+            const planning = document.querySelector(`input[name="corrective_${i}_planning"]`)?.value ||
+                '';
+            const actual = document.querySelector(`input[name="corrective_${i}_actual"]`)?.value || '-';
 
-            formData.append(`corrective_${i+1}_activity`, activity);
-            formData.append(`corrective_${i+1}_pic`, pic);
-            formData.append(`corrective_${i+1}_planning`, planning);
-            formData.append(`corrective_${i+1}_actual`, actual);
+            // Clean HTML content
+            activity = window.cleanHtmlContent(activity);
+            pic = window.cleanHtmlContent(pic);
+
+            formData.append(`corrective_${i}_activity`, activity);
+            formData.append(`corrective_${i}_pic`, pic);
+            formData.append(`corrective_${i}_planning`, planning);
+            formData.append(`corrective_${i}_actual`, actual);
         });
 
-        // Preventive Action
-        document.querySelectorAll('tr.preventive-row').forEach((row, i) => {
-            const activity = row.querySelector('input[name="activity[]"]')?.value || '';
-            const pic = row.querySelector('input[name="pic[]"]')?.value || '';
-            const planning = row.querySelector('input[name="planning_date[]"]')?.value || '';
-            const actual = row.querySelector('input[name="actual_date[]"]')?.value || '';
+        // Preventive Action - get all existing rows dynamically and clean HTML
+        let preventiveRowsSubmit = document.querySelectorAll('.preventive-row');
+        preventiveRowsSubmit.forEach((row, index) => {
+            const i = index + 1;
+            let activity = document.querySelector(`textarea[name="preventive_${i}_activity"]`)?.value ||
+                '';
+            let pic = document.querySelector(`textarea[name="preventive_${i}_pic"]`)?.value || '';
+            const planning = document.querySelector(`input[name="preventive_${i}_planning"]`)?.value ||
+                '';
+            const actual = document.querySelector(`input[name="preventive_${i}_actual"]`)?.value || '-';
 
-            formData.append(`preventive_${i+1}_activity`, activity);
-            formData.append(`preventive_${i+1}_pic`, pic);
-            formData.append(`preventive_${i+1}_planning`, planning);
-            formData.append(`preventive_${i+1}_actual`, actual);
+            // Clean HTML content
+            activity = window.cleanHtmlContent(activity);
+            pic = window.cleanHtmlContent(pic);
+
+            formData.append(`preventive_${i}_activity`, activity);
+            formData.append(`preventive_${i}_pic`, pic);
+            formData.append(`preventive_${i}_planning`, planning);
+            formData.append(`preventive_${i}_actual`, actual);
         });
 
-        // Yokoten
+        // Yokoten - clean HTML content
         const yokoten = document.querySelector('input[name="yokoten"]:checked');
+        let yokotenArea = document.querySelector('textarea[name="yokoten_area"]')?.value || '';
+        yokotenArea = window.cleanHtmlContent(yokotenArea);
+
         formData.append('yokoten', yokoten ? yokoten.value : 0);
-        formData.append('yokoten_area', document.querySelector('textarea[name="yokoten_area"]')?.value || '');
+        formData.append('yokoten_area', yokotenArea);
 
         // Attachments
         Array.from(photoInput2?.files || []).forEach(file => formData.append('attachments[]', file));
         Array.from(fileInput2?.files || []).forEach(file => formData.append('attachments[]', file));
 
+        // Evidence lama yang masih dipertahankan
+        document.querySelectorAll('input.existing-evidence-input').forEach(input => {
+            formData.append('existing_evidence_ids[]', input.value);
+        });
+
+        // Log formData untuk debug
+        console.log('📋 FormData entries:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`);
+            } else {
+                console.log(`  ${key}: ${value}`);
+            }
+        }
+
         // -----------------------------
         // SUBMIT
         // -----------------------------
         try {
+            console.log('📤 Submitting auditee action...');
+            console.log('Finding ID:', findingId);
+            console.log('Files to upload:', fileDetails);
+
             const res = await fetch("{{ route('ftpp.auditee-action.store', ['id' => $finding->id]) }}", {
                 method: "POST",
                 headers: {
@@ -569,29 +1265,58 @@
                 body: formData
             });
 
+            console.log('📥 Response status:', res.status);
+            console.log('📥 Response headers:', res.headers.get('content-type'));
+
+            // ✅ Check if response is JSON
+            const contentType = res.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const textResponse = await res.text();
+                console.error('❌ Non-JSON response received:', textResponse.substring(0, 500));
+
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    html: 'Server returned an invalid response. Please check the console for details or contact administrator.<br><small>Response type: ' +
+                        (contentType || 'unknown') + '</small>'
+                });
+                return;
+            }
+
             const result = await res.json();
+            console.log('📦 Response data:', result);
+            console.log('📦 Full response:', JSON.stringify(result, null, 2));
 
             if (res.ok && result.success) {
-                console.log(result);
+                console.log('✅ Success:', result);
                 window.location.href = "{{ route('ftpp.index') }}";
             } else {
+                // ✅ Log errors lebih detail
+                if (result.errors) {
+                    console.error('❌ Validation errors:', result.errors);
+                }
+
                 // ✅ Jika ada error dari server tentang file size, tampilkan di field
+                // restore buttons before showing errors
+                try { restoreButtons(); } catch (e) {}
                 if (result.message && result.message.includes('file size')) {
                     showAttachmentError(result.message);
                 } else {
                     await Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: result.message || "Unknown error"
+                        title: 'Failed',
+                        html: result.message || "Unknown error"
                     });
                 }
             }
         } catch (err) {
-            console.error(err);
+            console.error('Network or parsing error:', err);
+            try { restoreButtons(); } catch (e) {}
             await Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: err.message
+                title: 'Connection Error',
+                html: 'Failed to submit data. Please check your connection and try again.<br><small>Error: ' +
+                    err.message + '</small>'
             });
         }
     }

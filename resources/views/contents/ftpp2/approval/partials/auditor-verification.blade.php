@@ -18,8 +18,8 @@
                 class="w-full h-40 border border-gray-400 rounded p-1"></textarea>
         </td>
         <td class="border border-black p-2">
-            <div class="text-lg font-bold">
-                Status:
+            <div class="flex flex-col text-md font-bold">
+                <span>Status:</span>
                 <span
                     :class="{
                         'text-red-500': form.status_id == 7,
@@ -32,7 +32,8 @@
         </td>
         <td class="border border-black p-2">
             <div class="my-4">
-                <template x-if="!form.lead_auditor_ack && userRoles.includes('admin') && form.status_id == 10">
+                <template
+                    x-if="!form.lead_auditor_ack && (userRoles.includes('admin') || userRoles.includes('super admin') || userRoles.includes('lead auditor')) && form.status_id == 10">
                     <div class="flex flex-col gap-3">
 
                         <!-- VERIFY BUTTON -->
@@ -42,7 +43,7 @@
                            transition-all shadow-sm hover:shadow">
 
                             <i data-feather="check-circle" class="w-4 h-4"></i>
-                            Verify
+                            <span class="text-sm">Verify</span>
                         </button>
 
                         <!-- RETURN BUTTON -->
@@ -52,7 +53,7 @@
                            transition-all shadow-sm hover:shadow">
 
                             <i data-feather="x-circle" class="w-4 h-4"></i>
-                            Return
+                            <span class="text-sm">Return</span>
                         </button>
                     </div>
                 </template>
@@ -64,9 +65,37 @@
 
             <!-- NAME FIELD -->
             <div>
-                <span class="font-semibold my-1">Lead Auditor</span>
-                <input type="text" class="text-center"
-                    value="{{ $finding->auditeeAction->leadAuditor->name ?? '-' }}" readonly>
+                <span class="text-sm font-semibold my-1">Lead Auditor</span>
+                @php
+                    $userRoleNames = auth()->user()->roles->pluck('name')->map(fn($r) => strtolower($r))->toArray();
+                    $userIsAdmin = in_array('admin', $userRoleNames) || in_array('super admin', $userRoleNames);
+                    $userIsLead = in_array('lead auditor', $userRoleNames);
+                @endphp
+
+                <!-- Select visible only to Admin / Super Admin -->
+                @if ($userIsAdmin)
+                    <div class="mb-2">
+                        <label class="block text-xs font-semibold mb-1">Select Lead Auditor</label>
+                        <select id="lead_auditor_select" x-model="form.selected_lead_auditor_id"
+                            class="w-full border border-gray-400 rounded p-2 text-xs">
+                            <option value="">-- Choose Lead Auditor --</option>
+                            @foreach ($leadAuditors as $auditor)
+                                <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="text-center text-gray-700" x-text="form.auditeeAction?.leadAuditor?.name || '-'">-</div>
+                @else
+                    @if ($userIsLead)
+                        <!-- If current user is Lead Auditor, auto-fill selection via hidden input -->
+                        <input type="hidden" id="lead_auditor_select" x-model="form.selected_lead_auditor_id"
+                            value="{{ auth()->id() }}">
+                        <div class="text-center text-gray-700">{{ auth()->user()->name }}</div>
+                    @else
+                        <!-- Non-admins see the chosen lead auditor name only -->
+                        <div class="text-center text-gray-700" x-text="form.auditeeAction?.leadAuditor?.name || '-'">-</div>
+                    @endif
+                @endif
             </div>
         </td>
 
@@ -106,8 +135,7 @@
             <!-- NAME FIELD -->
             <div>
                 <span class="font-semibold my-1">Auditor</span>
-                <input type="text" class="text-center" value="{{ $finding->auditeeAction->auditor->name ?? '-' }}"
-                    readonly>
+                <div class="text-center text-gray-700" x-text="form.auditeeAction?.auditor?.name || '-'">-</div>
             </div>
         </td>
 
@@ -115,6 +143,9 @@
 </table>
 
 <script>
+    // Expose server-side role and auth id to JS
+    const isLeadAuditor = @json($userIsLead ?? false);
+    const authUserId = @json(auth()->id());
     // Ensure SweetAlert2 is loaded; if not, load it dynamically
     async function ensureSwal() {
         if (typeof Swal !== 'undefined') return Promise.resolve();
@@ -218,11 +249,29 @@
     async function verifyLeadAuditor() {
         await ensureSwal();
         const auditeeActionId = document.getElementById('auditee_action_id')?.value;
-        if (!auditeeActionId) return Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No auditee action ID found'
-        });
+        // Try to read selected lead auditor from DOM; if not present and current
+        // user is a Lead Auditor, fall back to authenticated user id.
+        let leadAuditorId = document.getElementById('lead_auditor_select')?.value;
+        if (!leadAuditorId && isLeadAuditor) {
+            leadAuditorId = authUserId;
+        }
+
+        if (!auditeeActionId) {
+            return Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No auditee action ID found'
+            });
+        }
+
+        if (!leadAuditorId) {
+            // Only show the missing-selection warning to admins/super-admins
+            return Swal.fire({
+                icon: 'warning',
+                title: 'Missing',
+                text: 'Please select a Lead Auditor before verifying.'
+            });
+        }
 
         const confirm = await Swal.fire({
             title: 'Confirm Acknowledge',
@@ -243,7 +292,8 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    auditee_action_id: auditeeActionId
+                    auditee_action_id: auditeeActionId,
+                    lead_auditor_id: leadAuditorId
                 })
             });
 

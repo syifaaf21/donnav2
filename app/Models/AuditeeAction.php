@@ -4,11 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditeeAction extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    /**
+     * Use project-specific marked_for_deletion_at column for soft deletes.
+     */
+    const DELETED_AT = 'marked_for_deletion_at';
 
     protected $table = 'tt_auditee_actions';
 
@@ -74,9 +80,31 @@ class AuditeeAction extends Model
     {
         return $this->belongsTo(User::class, 'auditor_id');
     }
-    
+
     public function leadAuditor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'lead_auditor_id');
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($action) {
+            if ($action->isForceDeleting()) {
+                return;
+            }
+
+            // Soft-delete related why/causes, corrective, preventive and files
+            \App\Models\WhyCauses::where('auditee_action_id', $action->id)->delete();
+            \App\Models\CorrectiveAction::where('auditee_action_id', $action->id)->delete();
+            \App\Models\PreventiveAction::where('auditee_action_id', $action->id)->delete();
+            \App\Models\DocumentFile::where('auditee_action_id', $action->id)->delete();
+        });
+
+        static::restoring(function ($action) {
+            \App\Models\WhyCauses::withTrashed()->where('auditee_action_id', $action->id)->restore();
+            \App\Models\CorrectiveAction::withTrashed()->where('auditee_action_id', $action->id)->restore();
+            \App\Models\PreventiveAction::withTrashed()->where('auditee_action_id', $action->id)->restore();
+            \App\Models\DocumentFile::withTrashed()->where('auditee_action_id', $action->id)->restore();
+        });
     }
 }

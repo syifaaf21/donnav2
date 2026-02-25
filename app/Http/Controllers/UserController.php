@@ -18,7 +18,7 @@ class UserController extends Controller
         $tab = $request->input('tab', 'all');
         $perPage = $request->input('per_page', 10); // default 10 per page
 
-        $query = User::with(['roles', 'departments']);
+        $query = User::with(['roles', 'departments', 'auditTypes']);
 
         // Filter berdasarkan tab
         switch ($tab) {
@@ -45,16 +45,24 @@ class UserController extends Controller
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhereHas('roles', fn($r) => $r->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('departments', fn($d) => $d->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('auditType', fn($d) => $d->where('name', 'like', "%{$search}%"));
-                ;
+                    ->orWhereHas('auditTypes', fn($d) => $d->where('name', 'like', "%{$search}%"));
             });
         }
 
-        $users = $query->orderBy('created_at', 'asc')
+        $users = $query->orderBy('name', 'asc')
             ->paginate($perPage)
             ->appends($request->query());
 
-        $roles = Role::all();
+        // Jika current user adalah Admin (tetapi bukan Super Admin), sembunyikan role 'Super Admin'
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+        $isAdmin = $currentUser->roles->pluck('name')->contains('Admin');
+
+        if ($isAdmin && !$isSuperAdmin) {
+            $roles = Role::where('name', '<>', 'Super Admin')->get();
+        } else {
+            $roles = Role::all();
+        }
         $departments = Department::all();
 
         // AJAX → partial
@@ -86,7 +94,8 @@ class UserController extends Controller
             ],
             'role_ids' => 'required|array|min:1',
             'department_ids' => 'required|array|min:1',
-            'audit_type_id' => 'nullable',
+            'audit_type_ids' => 'nullable|array',
+            'audit_type_ids.*' => 'exists:tm_audit_types,id',
         ], [
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
@@ -95,12 +104,20 @@ class UserController extends Controller
         ]);
 
         // Resolve role ids (allow passing either existing ids or new names)
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+
         $rawRoles = (array) $request->input('role_ids', []);
         $roleIds = [];
         foreach ($rawRoles as $r) {
             if (is_numeric($r)) {
+                $roleObj = Role::find($r);
+                if (!$roleObj) continue;
+                // prevent Admin (non-super) from assigning Super Admin
+                if (!$isSuperAdmin && $roleObj->name === 'Super Admin') continue;
                 $roleIds[] = (int) $r;
             } elseif (!empty($r)) {
+                if (!$isSuperAdmin && strcasecmp($r, 'Super Admin') === 0) continue;
                 $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
             }
         }
@@ -121,7 +138,7 @@ class UserController extends Controller
             'npk' => $request->npk,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'audit_type_id' => is_numeric($request->audit_type_id) ? $request->audit_type_id : null,
+            'password_changed_at' => now(),
         ]);
 
         if (!empty($roleIds)) {
@@ -132,6 +149,11 @@ class UserController extends Controller
             $user->departments()->sync(array_values($departmentIds));
         }
 
+        // Sync audit types
+        if ($request->has('audit_type_ids') && is_array($request->audit_type_ids)) {
+            $user->auditTypes()->sync($request->audit_type_ids);
+        }
+
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
     }
 
@@ -140,7 +162,15 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $roles = Role::all();
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+        $isAdmin = $currentUser->roles->pluck('name')->contains('Admin');
+
+        if ($isAdmin && !$isSuperAdmin) {
+            $roles = Role::where('name', '<>', 'Super Admin')->get();
+        } else {
+            $roles = Role::all();
+        }
         $departments = Department::all();
         $auditTypes = Audit::all();
 
@@ -151,17 +181,37 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
 
+
+        // Cek apakah salah satu role yang dipilih adalah dept head
+        $rawRoles = (array) $request->input('role_ids', []);
+        $isDeptHead = false;
+        foreach ($rawRoles as $roleId) {
+            $roleObj = is_numeric($roleId)
+                ? Role::find($roleId)
+                : Role::where('name', $roleId)->first();
+            if ($roleObj && stripos($roleObj->name, 'dept head') !== false) {
+                $isDeptHead = true;
+                break;
+            }
+        }
+
         $rules = [
             'name' => 'required',
             'npk' => 'required|digits:6|numeric|unique:users,npk,' . $user->id,
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
+            'email' => ($isDeptHead ? 'required' : 'nullable') . '|email|unique:users,email,' . $user->id,
             'role_ids' => 'required|array|min:1',
             'department_ids' => 'required|array|min:1',
-            'audit_type_id' => 'nullable',
+            'audit_type_ids' => 'nullable|array',
+            'audit_type_ids.*' => 'exists:tm_audit_types,id',
         ];
 
         if ($request->filled('password')) {
-            $rules['password'] = 'required|min:6|confirmed';
+            $rules['password'] = [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ];
         }
 
         try {
@@ -174,12 +224,19 @@ class UserController extends Controller
         }
 
         // Resolve multiple roles & departments (allow new names)
+        $currentUser = Auth::user();
+        $isSuperAdmin = $currentUser->roles->pluck('name')->contains('Super Admin');
+
         $rawRoles = (array) $request->input('role_ids', []);
         $roleIds = [];
         foreach ($rawRoles as $r) {
             if (is_numeric($r)) {
+                $roleObj = Role::find($r);
+                if (!$roleObj) continue;
+                if (!$isSuperAdmin && $roleObj->name === 'Super Admin') continue;
                 $roleIds[] = (int) $r;
             } elseif (!empty($r)) {
+                if (!$isSuperAdmin && strcasecmp($r, 'Super Admin') === 0) continue;
                 $roleIds[] = Role::firstOrCreate(['name' => $r])->id;
             }
         }
@@ -194,10 +251,11 @@ class UserController extends Controller
             }
         }
 
-        $data = $request->only(['name', 'npk', 'email', 'audit_type_id']);
+        $data = $request->only(['name', 'npk', 'email']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+            $data['password_changed_at'] = now();
         }
 
         $user->update($data);
@@ -208,6 +266,13 @@ class UserController extends Controller
 
         if (!empty($roleIds)) {
             $user->roles()->sync(array_values($roleIds));
+        }
+
+        // Sync audit types
+        if ($request->has('audit_type_ids') && is_array($request->audit_type_ids)) {
+            $user->auditTypes()->sync($request->audit_type_ids);
+        } else {
+            $user->auditTypes()->detach();
         }
 
         return redirect()->route('master.users.index')->with('success', 'User updated successfully.');
@@ -224,11 +289,37 @@ class UserController extends Controller
         return view('contents.profile');
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        $user->save();
+
+        return back()->with('success', 'Profile updated successfully.');
+    }
+
     public function updatePassword(Request $request)
     {
         $request->validate([
             'current_password' => 'required',
-            'new_password' => 'required|min:8|confirmed',
+            'new_password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ],
+        ], [
+            'new_password.required' => 'New password is required.',
+            'new_password.min' => 'New password must be at least 8 characters.',
+            'new_password.confirmed' => 'New password confirmation does not match.',
+            'new_password.regex' => 'Password must contain uppercase, lowercase, number, and special character.',
         ]);
 
         $user = Auth::user();
@@ -238,6 +329,7 @@ class UserController extends Controller
         }
 
         $user->password = Hash::make($request->new_password);
+        $user->password_changed_at = now();
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');

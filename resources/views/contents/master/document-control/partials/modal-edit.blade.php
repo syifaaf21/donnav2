@@ -18,10 +18,10 @@
 
                     {{-- Close button: white background with subtle border, circle --}}
                     <button type="button"
-                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        class="btn btn-light position-absolute top-0 end-0 m-3 p-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
                         data-bs-dismiss="modal" aria-label="Close"
                         style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                            <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
 
@@ -68,7 +68,7 @@
                                     class="text-danger">*</span></label>
                             <input type="date" name="obsolete_date" class="form-control border-0 shadow-sm rounded-3"
                                 value="{{ session('editOldInputs.' . $mapping->id . '.obsolete_date', \Carbon\Carbon::parse($mapping->obsolete_date)->format('Y-m-d')) }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -80,7 +80,7 @@
                                     class="text-danger">*</span></label>
                             <input type="date" name="reminder_date" class="form-control border-0 shadow-sm rounded-3"
                                 value="{{ session('editOldInputs.' . $mapping->id . '.reminder_date', \Carbon\Carbon::parse($mapping->reminder_date)->format('Y-m-d')) }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -117,17 +117,41 @@
                 </div>
 
                 {{-- Modal Footer --}}
-                <div class="modal-footer border-0 p-4 justify-content-between bg-white">
+                <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
                     <button type="button"
                         class="btn btn-link text-secondary fw-semibold px-4 py-2"
                         data-bs-dismiss="modal"
                         style="text-decoration: none; transition: background-color 0.3s ease;">
                         Cancel
                     </button>
-                    <button type="submit"
-                        class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                        Save Changes
+                    <button type="submit" id="submit-edit-doc-btn-{{ $mapping->id }}"
+                        class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors d-flex align-items-center"
+                        style="min-width: 120px;">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" id="submit-edit-doc-spinner-{{ $mapping->id }}" role="status" aria-hidden="true"></span>
+                        <span id="submit-edit-doc-text-{{ $mapping->id }}">Save Changes</span>
                     </button>
+                @push('scripts')
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        // For each edit modal, add loading to submit
+                        document.querySelectorAll('[id^="editModal"]').forEach(function(modal) {
+                            const mappingId = modal.getAttribute('data-mapping-id');
+                            if (!mappingId) return;
+                            const form = modal.querySelector('form');
+                            const submitBtn = document.getElementById('submit-edit-doc-btn-' + mappingId);
+                            const spinner = document.getElementById('submit-edit-doc-spinner-' + mappingId);
+                            const btnText = document.getElementById('submit-edit-doc-text-' + mappingId);
+                            if (form && submitBtn && spinner && btnText) {
+                                form.addEventListener('submit', function () {
+                                    submitBtn.disabled = true;
+                                    spinner.classList.remove('d-none');
+                                    btnText.textContent = 'Loading...';
+                                });
+                            }
+                        });
+                    });
+                </script>
+                @endpush
                 </div>
             </div>
         </form>

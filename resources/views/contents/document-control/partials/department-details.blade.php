@@ -1,8 +1,17 @@
 @extends('layouts.app')
-@section('title', "Document Control – {$department->name}")
+@section('title')
+    {{ $department?->name ?? 'Unknown' }}
+@endsection
 @section('subtitle', 'Manage Obsolete Docuemnt Records')
+@php
+    /**
+     * approvalMode = false → halaman department biasa
+     * approvalMode = true  → halaman approval queue
+     */
+    $approvalMode = $approvalMode ?? false;
+@endphp
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
 
             <li>
@@ -15,17 +24,13 @@
 
             <li>
                 <a href="{{ route('document-control.index') }}" class="text-blue-600 hover:underline flex items-center">
-                    <i class="bi bi-calendar-range me-1" ></i> Document Control
+                    <i class="bi bi-calendar-range me-1"></i> Document Control
                 </a>
             </li>
 
             <li>/</li>
 
-            <li class="text-gray-500 font-medium">Documents</li>
-
-            <li>/</li>
-
-            <li class="text-gray-700 font-bold">{{ $department->name }}</li>
+            <li class="text-gray-700 font-bold">{{ $approvalMode ? 'Approval' : $department?->name ?? 'Unknown' }}</li>
         </ol>
     </nav>
 @endsection
@@ -76,9 +81,82 @@
             </nav>
         </div> --}}
 
-        <!-- Search Form -->
-        <div class="flex justify-end w-full mb-2">
-            <form id="filterForm" method="GET" action="{{ route('document-control.department', $department->name) }}"
+        <!-- Search & Filter Form -->
+        <div class="flex justify-end w-full mb-2 gap-2 items-start">
+            <!-- Filter Dropdown Button -->
+            @if (!$approvalMode)
+                <div class="relative">
+                    <button id="filterStatusBtn" type="button"
+                        class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors"
+                        title="Filter by Status">
+                        <i class="bi bi-funnel-fill text-xl text-sky-600"></i>
+                    </button>
+                    <!-- Dropdown menu -->
+                    <div id="filterStatusDropdown"
+                        class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
+                        <div class="py-2 text-sm">
+                            <div class="px-3 pb-2">
+                                <input type="text" id="statusSearchInput"
+                                    class="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                                    placeholder="Type to filter status...">
+                            </div>
+                            <form id="statusFilterForm" method="GET"
+                                action="{{ $approvalMode ? route('document-control.approval') : route('document-control.department', $department?->name ?? 'Unknown') }}">
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                                <ul id="statusList" class="flex flex-col gap-1 max-h-64 overflow-y-auto px-2">
+                                    <!-- Status list dari controller -->
+                                    <li>
+                                        <label
+                                            class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                            <input type="checkbox" name="status[]" value="all" class="status-checkbox"
+                                                id="statusAllCheckbox"
+                                                {{ empty($selectedStatuses) || in_array('all', $selectedStatuses) ? 'checked' : '' }}>
+                                            <i class="bi bi-list-check text-gray-700 text-lg"></i>
+                                            <span class="flex-1 text-sm">All</span>
+                                            <span
+                                                class="text-xs text-gray-500 font-semibold">{{ array_sum($statusCounts ?? []) }}</span>
+                                        </label>
+                                    </li>
+                                    @php
+                                        $icons = [
+                                            'active' => 'bi bi-check-circle-fill',
+                                            'need_review' => 'bi bi-exclamation-circle-fill',
+                                            'rejected' => 'bi bi-x-circle-fill',
+                                            'obsolete' => 'bi bi-archive-fill',
+                                            'uncomplete' => 'bi bi-slash-circle-fill',
+                                        ];
+                                        $colors = [
+                                            'active' => 'text-green-700',
+                                            'need_review' => 'text-yellow-700',
+                                            'rejected' => 'text-red-700',
+                                            'obsolete' => 'text-gray-700',
+                                            'uncomplete' => 'text-orange-700',
+                                        ];
+                                    @endphp
+                                    @foreach ($statuses as $key => $label)
+                                        <li>
+                                            <label
+                                                class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                                                <input type="checkbox" name="status[]" value="{{ $key }}"
+                                                    class="status-checkbox"
+                                                    {{ !empty($selectedStatuses) && in_array($key, $selectedStatuses) ? 'checked' : '' }}>
+                                                <i class="{{ $icons[$key] ?? '' }} {{ $colors[$key] ?? '' }} text-lg"></i>
+                                                <span class="flex-1 text-sm">{{ $label }}</span>
+                                                <span
+                                                    class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$key] ?? 0 }}</span>
+                                            </label>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <!-- Live filter: no apply button -->
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endif
+            <!-- Search Form -->
+            <form id="filterForm" method="GET"
+                action="{{ $approvalMode ? route('document-control.approval') : route('document-control.department', $department?->name ?? 'Unknown') }}"
                 class="flex flex-col items-end w-auto space-y-1">
                 <div class="relative w-96">
                     <input type="text" name="search" id="searchInput"
@@ -103,36 +181,42 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="sticky top-0 z-10" style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">No
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Document
                                         Name
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    {{-- <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Status
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    </th> --}}
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Obsolete
                                         Date
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    @if ($approvalMode)
+                                        <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                            style="color: #1e2b50; letter-spacing: 0.5px;">
+                                            Department
+                                        </th>
+                                    @endif
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Updated By
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    {{-- <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Last
                                         Update
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider border-r border-gray-200"
+                                    </th> --}}
+                                    <th class="px-2 py-3 text-center text-xs font-bold uppercase tracking-wider border-r border-gray-200"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Notes</th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                                    <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider"
                                         style="color: #1e2b50; letter-spacing: 0.5px;">
                                         Actions</th>
                                 </tr>
@@ -151,47 +235,64 @@
                                 @else
                                     @foreach ($mappings as $mapping)
                                         <tr class="hover:bg-gray-50 transition-all duration-150">
-                                            <td class="px-4 py-3 text-xs border-r border-gray-200">
+                                            <td class="px-1 py-3 text-center text-xs border-r border-gray-200"
+                                                style="width: 40px; min-width: 32px;">
                                                 {{ ($mappings->currentPage() - 1) * $mappings->perPage() + $loop->iteration }}
                                             </td>
-                                            <td class="px-4 py-2 text-xs font-semibold max-w-xs border-r border-gray-200"
-                                                title="{{ $mapping->document->name }}">
-                                                {{ $mapping->document->name }}
-                                            </td>
-                                            {{-- Status badge --}}
-                                            <td class="px-4 py-2 text-xs border-r border-gray-200">
-                                                @php
-                                                    $statusColor = match ($mapping->status->name) {
-                                                        'Active' => 'bg-green-100 text-green-800',
-                                                        'Need Review' => 'bg-yellow-100 text-yellow-800',
-                                                        'Rejected' => 'bg-red-100 text-red-800',
-                                                        'Obsolete' => 'bg-gray-200 text-gray-800',
-                                                        'Uncomplete' => 'bg-orange-100 text-orange-800',
-                                                        default => 'bg-blue-100 text-blue-800',
-                                                    };
-                                                @endphp
-                                                <span
-                                                    class="inline-block px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
-                                                    {{ $mapping->status->name }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 text-xs font-semibold border-r border-gray-200">
-                                                {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
-                                            </td>
-                                            <td class="px-4 py-3 text-xs truncate border-r border-gray-200">
-                                                {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
-                                            </td>
-                                            <td class="px-4 py-3 text-xs border-r border-gray-200">
-                                                {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
-                                            </td>
-                                            <td class="px-4 py-3 text-xs max-w-xs border-r border-gray-200">
-                                                <div class="overflow-y-auto max-h-16 text-xs">
-                                                    {!! $mapping->notes ?? '-' !!}
+                                            <td class="px-2 py-2 text-xs max-w-xs border-r border-gray-200">
+                                                <div class="flex flex-col gap-1">
+                                                    <div class="font-semibold truncate"
+                                                        title="{{ $mapping->document->name }}">
+                                                        {{ $mapping->document->name }}
+                                                    </div>
+
+                                                    @php
+                                                        $statusColor = match ($mapping->status->name) {
+                                                            'Active' => 'bg-green-100 text-green-800',
+                                                            'Need Review' => 'bg-yellow-100 text-yellow-800',
+                                                            'Rejected' => 'bg-red-100 text-red-800',
+                                                            'Obsolete' => 'bg-gray-200 text-gray-800',
+                                                            'Uncomplete' => 'bg-orange-100 text-orange-800',
+                                                            default => 'bg-blue-100 text-blue-800',
+                                                        };
+                                                    @endphp
+
+                                                    <!-- Tambahkan self-start supaya tidak stretch -->
+                                                    <span
+                                                        class="self-start inline-flex px-2 py-1 text-xs font-semibold rounded {{ $statusColor }}">
+                                                        {{ $mapping->status->name }}
+                                                    </span>
                                                 </div>
                                             </td>
+                                            <td class="px-1 py-3 text-center text-xs font-semibold border-r border-gray-200"
+                                                style="width: 90px; min-width: 70px;">
+                                                {{ $mapping->obsolete_date ? \Carbon\Carbon::parse($mapping->obsolete_date)->format('d M Y') : '-' }}
+                                            </td>
+                                            @if ($approvalMode)
+                                                <td
+                                                    class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
+                                                    {{ $mapping->department?->name ?? '-' }}
+                                                </td>
+                                            @endif
+                                            <td class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
+                                                {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
+                                            </td>
+                                            {{-- <td class="px-2 py-3 text-xs border-r border-gray-200">
+                                                {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
+                                            </td> --}}
+                                            <td class="px-4 py-3 text-left text-xs max-w-xs border-r border-gray-200">
+                                                <div class="overflow-y-auto max-h-16 text-xs note-tooltip"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    data-bs-container="body"
+                                                    title="{{ $mapping->notes ? e(strip_tags($mapping->notes)) : '-' }}">
+                                                    {!! $mapping->notes ?? '-' !!}
+                                                </div>
+
+                                            </td>
                                             {{-- Actions --}}
-                                            <td class="px-4 py-2 text-center">
-                                                <div class="flex justify-start items-center gap-2 flex-wrap">
+                                            <td class="px-1 py-2 text-center"
+                                                style="@if ($approvalMode) width:140px; min-width:120px; @else width:120px; min-width:90px; @endif">
+                                                <div class="flex justify-center items-center gap-1 flex-wrap">
 
                                                     {{-- VIEW FILES --}}
                                                     @php
@@ -205,7 +306,8 @@
                                                         <div class="relative">
                                                             <!-- Dropdown toggle button -->
                                                             <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
-                                                                class="text-gray-700 hover:text-blue-600 toggle-files-dropdown">
+                                                                class="text-gray-700 hover:text-blue-600 toggle-files-dropdown"
+                                                                data-files='@json($filesToShow->values()->all())'>
                                                                 <i class="bi bi-file-earmark-text text-2xl"></i>
                                                                 <span
                                                                     class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
@@ -213,7 +315,7 @@
                                                                 </span>
                                                             </button>
 
-                                                            <!-- Dropdown menu -->
+                                                            <!-- Dropdown menu (vertical list) -->
                                                             <div id="viewFilesDropdown-{{ $mapping->id }}"
                                                                 class="hidden absolute right-0 bottom-full mb-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
                                                                 <div class="py-1 text-sm max-h-80 overflow-y-auto">
@@ -224,21 +326,27 @@
                                                                             data-file="{{ $file['url'] }}"
                                                                             data-doc-title="{{ $file['name'] }}">
 
-                                                                            <span class="truncate pr-2"
-                                                                                style="flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                                                                📄 {{ $file['name'] }}
-                                                                            </span>
-                                                                            @if (($file['pending_approval'] ?? 0) == 2)
-                                                                                <span
-                                                                                    class="ml-2 inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
-                                                                                    Rejected
-                                                                                </span>
-                                                                            @elseif (!empty($file['replaced_by_id']))
-                                                                                <span
-                                                                                    class="ml-2 inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
-                                                                                    Replaced
-                                                                                </span>
-                                                                            @endif
+                                                                            <div class="flex items-center gap-2" style="min-width:0;">
+                                                                                <i class="bi bi-file-earmark-text text-lg text-gray-600"></i>
+                                                                                <span class="truncate" style="flex:1 1 auto;min-width:0;">{{ $file['name'] }}</span>
+                                                                            </div>
+                                                                            <div class="flex items-center gap-2">
+                                                                                @if (($file['pending_approval'] ?? 0) == 2)
+                                                                                    <span
+                                                                                        class="inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                        Rejected
+                                                                                    </span>
+                                                                                @elseif (!empty($file['replaced_by_id']))
+                                                                                    <span
+                                                                                        class="inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                        Replaced
+                                                                                    </span>
+                                                                                @else
+                                                                                    @if(!empty($file['size']))
+                                                                                        <span class="text-xs text-gray-500">{{ $file['size'] }}</span>
+                                                                                    @endif
+                                                                                @endif
+                                                                            </div>
                                                                         </button>
                                                                     @endforeach
                                                                 </div>
@@ -261,42 +369,52 @@
                                                         </button>
                                                     @endif
 
+                                                    {{-- DOWNLOAD WITH WATERMARK --}}
+                                                    {{-- <a href="{{ route('document-control.downloadWatermarked', $mapping->id, false) }}" target="_blank"
+                                                        class="action-btn inline-flex items-center justify-center w-8 h-8 rounded-full bg-sky-600 text-white hover:bg-sky-700 transition-colors"
+                                                        title="Download (watermarked)">
+                                                        <i class="bi bi-download"></i>
+                                                    </a> --}}
+
                                                     {{-- UPLOAD ALWAYS APPEARS LEFT WITH OTHER ACTIONS --}}
-                                                    <button type="button"
-                                                        class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
-                                                        data-docid="{{ $mapping->id }}"
-                                                        data-doc-title="{{ $mapping->document->name }}"
-                                                        data-status="{{ $mapping->status->name }}"
-                                                        data-files='@json($mapping->files_for_modal_all)'
-                                                        onclick="openReviseModal(this)" title="Upload">
-                                                        <i class="bi bi-upload"></i>
-                                                    </button>
+                                                    @if (!$approvalMode)
+                                                        <button type="button"
+                                                            class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
+                                                            data-docid="{{ $mapping->id }}"
+                                                            data-doc-title="{{ $mapping->document->name }}"
+                                                            data-status="{{ $mapping->status->name }}"
+                                                            data-reminder="{{ $mapping->reminder_date ?? $mapping->reminder ?? '' }}"
+                                                            data-files='@json($mapping->files_for_modal_all)'
+                                                            onclick="openReviseModal(this)" title="Upload">
+                                                            <i class="bi bi-upload"></i>
+                                                        </button>
+                                                    @endif
 
                                                     {{-- ADMIN ACTIONS --}}
-                                                    @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+                                                    @if ($approvalMode && in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
                                                         <form
                                                             action="{{ route('document-control.approve', ['mapping' => $mapping->id]) }}"
                                                             method="POST" class="inline-flex items-center m-0 p-0">
                                                             @csrf
                                                             <button type="button"
-                                                                class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors btn-approve"
+                                                                class="action-btn inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors btn-approve"
                                                                 data-status="{{ $mapping->status->name }}"
                                                                 data-obsolete="{{ $mapping->obsolete_date }}"
                                                                 data-period="{{ $mapping->period_years }}"
-                                                                onclick="confirmApprove(this)" title="Approve">
+                                                                onclick="confirmApprove(this)" title="Approve" aria-label="Approve document">
                                                                 <i class="bi bi-check2-circle"></i>
                                                             </button>
                                                         </form>
 
                                                         <button type="button"
-                                                            class="action-btn inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors btn-reject"
+                                                            class="action-btn inline-flex items-center justify-center w-9 h-9 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors btn-reject"
                                                             data-docid="{{ $mapping->id }}"
                                                             data-doc-title="{{ $mapping->document->name }}"
                                                             data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
                                                             data-status="{{ $mapping->status->name }}"
                                                             data-reject-url="{{ route('document-control.reject', $mapping) }}"
-                                                            title="Reject">
-                                                            <i class="bi bi-x-circle"></i>
+                                                            title="Reject" aria-label="Reject document">
+                                                            <i class="bi bi-x-circle-fill"></i>
                                                         </button>
                                                     @endif
                                                 </div>
@@ -364,28 +482,107 @@
 
     .action-btn {
         width: 34px;
-        /* fix width */
         height: 34px;
-        /* fix height */
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0 !important;
-        /* hilangkan perbedaan padding */
         border-radius: 6px;
-        /* biar rapi */
     }
 
     .action-btn i {
         font-size: 16px;
-        /* bikin semua icon seragam */
+        line-height: 1;
     }
 </style>
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // current user admin flag (Admin or Super Admin)
+            const currentUserIsAdmin = @json(in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']));
+            // Filter Status Dropdown
+            const filterStatusBtn = document.getElementById('filterStatusBtn');
+            const filterStatusDropdown = document.getElementById('filterStatusDropdown');
+            const statusListEl = document.getElementById('statusList');
+            const statusSearchInput = document.getElementById('statusSearchInput');
+            // Search status in dropdown (Blade only, no JS counting)
+            if (statusSearchInput) {
+                statusSearchInput.addEventListener('input', function() {
+                    const filter = this.value.toLowerCase();
+                    document.querySelectorAll('#statusList li').forEach(li => {
+                        const label = li.querySelector('span.flex-1');
+                        if (label && label.textContent.toLowerCase().includes(filter)) {
+                            li.style.display = '';
+                        } else {
+                            li.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Checkbox logic (multi-select, all) + live submit
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('status-checkbox')) {
+                    const allCheckbox = document.getElementById('statusAllCheckbox');
+                    const statusCheckboxes = Array.from(document.querySelectorAll('.status-checkbox'))
+                        .filter(cb => cb !== allCheckbox);
+                    if (e.target === allCheckbox) {
+                        // Jika 'all' dicentang, centang semua, jika uncheck, uncheck semua
+                        statusCheckboxes.forEach(cb => cb.checked = allCheckbox.checked);
+                    } else {
+                        // Jika status lain dicentang, uncheck 'all'
+                        if (allCheckbox) allCheckbox.checked = false;
+                    }
+                    setTimeout(function() {
+                        document.getElementById('statusFilterForm').submit();
+                    }, 10);
+                }
+            });
+
+            // Show/hide dropdown
+            if (filterStatusBtn && filterStatusDropdown) {
+                filterStatusBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isVisible = !filterStatusDropdown.classList.contains('hidden');
+                    document.querySelectorAll('#filterStatusDropdown').forEach(d => d.classList.add(
+                        'hidden'));
+                    if (isVisible) {
+                        filterStatusDropdown.classList.add('hidden');
+                        return;
+                    }
+                    // Position dropdown (clamped to viewport to avoid overflow)
+                    const rect = filterStatusBtn.getBoundingClientRect();
+                    filterStatusDropdown.style.position = 'fixed';
+                    filterStatusDropdown.style.top = `${rect.bottom + 6}px`;
+                    // Estimate dropdown width and clamp left to viewport
+                    const preferredLeft = rect.left - 220;
+                    const estimatedWidth = Math.max(240, Math.min(360, filterStatusDropdown.offsetWidth ||
+                        280));
+                    const maxLeft = window.innerWidth - estimatedWidth - 12;
+                    const clampedLeft = Math.min(Math.max(8, preferredLeft), maxLeft);
+                    filterStatusDropdown.style.left = `${clampedLeft}px`;
+                    filterStatusDropdown.classList.remove('hidden');
+                    filterStatusDropdown.classList.add('dropdown-fixed');
+                });
+                // Close dropdown on outside click
+                document.addEventListener('click', function(e) {
+                    if (!filterStatusDropdown.contains(e.target) && !filterStatusBtn.contains(e.target)) {
+                        filterStatusDropdown.classList.add('hidden');
+                    }
+                });
+            }
+            // ...existing code...
             let typingTimer = null;
             const searchInputEl = document.getElementById("searchInput");
+
+            // Init tooltips for notes column
+            function initNoteTooltips(container = document) {
+                const noteTooltips = Array.from(container.querySelectorAll(
+                    '.note-tooltip[data-bs-toggle="tooltip"]'));
+                noteTooltips.forEach(el => new bootstrap.Tooltip(el, {
+                    boundary: 'window'
+                }));
+            }
 
             searchInputEl.addEventListener("keyup", function() {
                 clearTimeout(typingTimer);
@@ -436,6 +633,7 @@
                             current.innerHTML = newTable.innerHTML;
                             document.dispatchEvent(new Event("ajaxSearchUpdate"));
                             rebindTableEvents();
+                            initNoteTooltips(current);
                         }
                     });
             }
@@ -461,29 +659,119 @@
                 });
 
                 // =========================
-                // Rebind dropdown file
+                // Rebind dropdown file (build popup from data-files)
                 // =========================
                 document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
                     btn.onclick = (e) => {
                         e.stopPropagation();
-                        const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
 
-                        const isVisible = !dropdown.classList.contains('hidden');
+                        // close any existing popup
+                        document.querySelectorAll('.file-popup').forEach(p => p.remove());
 
-                        document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                            .add('hidden'));
-
-                        if (isVisible) {
-                            dropdown.classList.add('hidden');
+                        // toggle state
+                        if (btn.dataset.popupOpen === '1') {
+                            btn.dataset.popupOpen = '0';
                             return;
                         }
 
+                        const files = JSON.parse(btn.dataset.files || '[]');
                         const rect = btn.getBoundingClientRect();
-                        dropdown.style.position = 'fixed';
-                        dropdown.style.top = `${rect.bottom + 6}px`;
-                        dropdown.style.left = `${rect.left - 120}px`;
-                        dropdown.classList.remove('hidden');
-                        dropdown.classList.add('dropdown-fixed');
+
+                        const popup = document.createElement('div');
+                        popup.className = 'file-popup dropdown-fixed';
+                        popup.style.position = 'fixed';
+                        popup.style.top = `${rect.bottom + 6}px`;
+                        popup.style.left = `${Math.min(Math.max(8, rect.left - 120), window.innerWidth - 260)}px`;
+                        popup.style.backgroundColor = '#fff';
+                        popup.style.opacity = '1';
+                        popup.style.visibility = 'visible';
+                        popup.style.zIndex = '999999';
+                        popup.style.border = '1px solid rgba(0,0,0,0.08)';
+                        popup.style.borderRadius = '8px';
+                        popup.style.boxShadow = '0 8px 24px rgba(16,24,40,0.12)';
+                        popup.style.padding = '6px';
+                        popup.style.maxHeight = '320px';
+                        popup.style.overflow = 'auto';
+                        popup.style.minWidth = '220px';
+
+                        // build list
+                        files.forEach(f => {
+                            const row = document.createElement('button');
+                            row.type = 'button';
+                            row.className = 'w-full flex justify-between items-center px-3 py-2 rounded-md text-sm text-left view-file-btn';
+                            row.style.background = 'transparent';
+                            row.style.border = 'none';
+                            row.style.display = 'flex';
+                            row.style.alignItems = 'center';
+                            row.style.gap = '8px';
+                            row.dataset.file = f.url || '';
+                            row.dataset.docTitle = f.name || '';
+
+                            const left = document.createElement('div');
+                            left.style.display = 'flex';
+                            left.style.alignItems = 'center';
+                            left.style.gap = '8px';
+                            const ico = document.createElement('i');
+                            ico.className = 'bi bi-file-earmark-text text-gray-600';
+                            ico.style.minWidth = '18px';
+                            left.appendChild(ico);
+                            const name = document.createElement('span');
+                            name.className = 'truncate';
+                            name.style.maxWidth = '160px';
+                            name.textContent = f.name || '—';
+                            left.appendChild(name);
+
+                            const right = document.createElement('div');
+                            right.style.display = 'flex';
+                            right.style.alignItems = 'center';
+                            right.style.gap = '6px';
+                            if ((f.pending_approval || 0) == 2) {
+                                const badge = document.createElement('span');
+                                badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
+                                badge.textContent = 'Rejected';
+                                right.appendChild(badge);
+                            } else if (f.replaced_by_id) {
+                                const badge = document.createElement('span');
+                                badge.className = 'inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full';
+                                badge.textContent = 'Replaced';
+                                right.appendChild(badge);
+                            } else if (f.size) {
+                                const size = document.createElement('span');
+                                size.className = 'text-xs text-gray-500';
+                                size.textContent = f.size;
+                                right.appendChild(size);
+                            }
+
+                            row.appendChild(left);
+                            row.appendChild(right);
+
+                            popup.appendChild(row);
+                        });
+
+                        document.body.appendChild(popup);
+                        btn.dataset.popupOpen = '1';
+
+                        // bind preview events
+                        popup.querySelectorAll('.view-file-btn').forEach(b => {
+                            b.addEventListener('click', function(ev) {
+                                ev.stopPropagation();
+                                document.getElementById('previewTitle').textContent = this.dataset.docTitle || 'File Preview';
+                                document.getElementById('previewIframe').src = this.dataset.file || '';
+                                new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                                popup.remove();
+                                btn.dataset.popupOpen = '0';
+                            });
+                        });
+
+                        // close on outside click
+                        const closeHandler = (ev) => {
+                            if (!popup.contains(ev.target) && ev.target !== btn) {
+                                popup.remove();
+                                btn.dataset.popupOpen = '0';
+                                document.removeEventListener('click', closeHandler);
+                            }
+                        };
+                        setTimeout(() => document.addEventListener('click', closeHandler), 10);
                     };
                 });
 
@@ -521,6 +809,7 @@
                 // Re-apply status button disable/enable
                 // =========================
                 updateActionButtonsByStatus(document);
+                initNoteTooltips(document);
             }
 
 
@@ -549,21 +838,45 @@
 
             function updateActionButtonsByStatus(container) {
                 container.querySelectorAll('.btn-revise, .btn-approve, .btn-reject').forEach(btn => {
-                    const status = btn.dataset.status?.trim();
+                    // Determine status (prefer button dataset, otherwise fallback to row)
+                    let status = btn.dataset.status?.trim();
+                    const row = btn.closest('tr');
+                    if ((!status || status === '') && row) {
+                        const dsEl = row.querySelector('[data-status]');
+                        if (dsEl && dsEl.dataset.status) {
+                            status = dsEl.dataset.status.trim();
+                        } else {
+                            const statusEl = row.querySelector('.self-start.inline-flex');
+                            if (statusEl) status = statusEl.textContent.trim();
+                        }
+                    }
+
                     const type = btn.classList.contains('btn-revise') ? 'revise' :
                         btn.classList.contains('btn-approve') ? 'approve' :
                         'reject';
 
                     let enabled = false;
 
-                    // Revise aktif untuk Active, Rejected, Obsolete, Uncomplete
-                    if (type === 'revise' && ['Active', 'Rejected', 'Obsolete', 'Uncomplete'].includes(
-                            status)) {
-                        enabled = true;
+                    // Revise: admins always see it; others see for Rejected/Obsolete/Uncomplete,
+                    // and for Active only if reminder is today
+                    if (type === 'revise') {
+                        if (currentUserIsAdmin) {
+                            enabled = true;
+                        } else if (['Rejected', 'Obsolete', 'Uncomplete'].includes(status)) {
+                            enabled = true;
+                        } else if (status === 'Active') {
+                            // check reminder date on button or row
+                            let reminderStr = btn.dataset.reminder;
+                            if (!reminderStr && row) {
+                                const remEl = row.querySelector('.reminder-date');
+                                reminderStr = remEl ? (remEl.dataset.reminder || remEl.textContent.trim()) : null;
+                            }
+                            if (isToday(reminderStr)) enabled = true;
+                        }
                     }
 
                     // Approve/Reject hanya aktif saat Need Review
-                    if (['approve', 'reject'].includes(type) && status === 'Need Review') {
+                    if ((type === 'approve' || type === 'reject') && status === 'Need Review') {
                         enabled = true;
                     }
 
@@ -574,6 +887,26 @@
                         btn.style.display = ''; // Tampilkan
                     }
                 });
+            }
+
+            // Helper: returns true when dateStr represents today's date (YYYY-MM-DD or other parseable)
+            function isToday(dateStr) {
+                if (!dateStr) return false;
+                const cleaned = dateStr.trim();
+                const dateOnly = cleaned.split(' ')[0];
+                // Normalize separators
+                const normalized = dateOnly.replace(/\//g, '-');
+                // If looks like YYYY-MM-DD or YYYY-M-D
+                const parts = normalized.split('-');
+                let d;
+                if (parts.length === 3 && parts[0].length === 4) {
+                    d = new Date(normalized + 'T00:00:00');
+                } else {
+                    d = new Date(cleaned);
+                }
+                if (isNaN(d.getTime())) return false;
+                const now = new Date();
+                return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
             }
 
 
@@ -652,26 +985,25 @@
                     });
 
                     // Convert bytes ke MB (2 decimal)
-                    let totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
 
+                    // Use float for comparison, allow up to and including 20.00 MB
+                    let totalSizeMBFloat = totalSize / (1024 * 1024);
                     const maxSize = 20; // dalam MB
 
-                    if (totalSizeMB > maxSize) {
+                    if (totalSizeMBFloat > maxSize) {
                         e.preventDefault();
                         showReviseError(`
     <div class="flex items-start">
         <i data-feather="alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"></i>
         <div class="text-xs text-red-700">
             <p class="font-semibold mb-1">Total file size exceeds 20MB</p>
-            <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
+            <p>Current total size: <strong>${totalSizeMBFloat.toFixed(2)} MB</strong></p>
             <p>
                 Please compress your PDF files and reupload it.
             </p>
         </div>
     </div>
 `);
-
-
                         return;
                     }
 
@@ -697,23 +1029,50 @@
 
                 // --- Render file lama aktif di bawah ---
                 if (files.length > 0) {
-                    const activeFiles = files.filter(f => f.is_active == 1);
-                    reviseFilesContainer.innerHTML = activeFiles.map((f, i) => `
+                    // Exclude files that have been replaced (replaced_by_id set)
+                    const activeFiles = files.filter(f => f.is_active == 1 && !f.replaced_by_id);
+                    // Hitung total size file aktif
+                    const totalSize = activeFiles.reduce((sum, f) => {
+                        if (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(
+                                Number(f.size))) {
+                            return sum + Number(f.size);
+                        }
+                        return sum;
+                    }, 0);
+                    // Tampilkan total size di atas daftar file
+                    let totalSizeHtml =
+                        `<div class="mb-2 text-xs text-gray-700 font-semibold">Total size: <span class="${totalSize > 20*1024*1024 ? 'text-red-600' : ''}">${window.formatFileSize(totalSize)} / 20 MB</span></div>`;
+                    // Debug: cek isi file lama
+                    console.log('Active files for modal:', activeFiles);
+                    reviseFilesContainer.innerHTML = totalSizeHtml + activeFiles.map((f, i) => `
             <div class="p-3 border rounded bg-gray-50 mb-2">
                 <div class="flex justify-between items-start mb-2">
-                    <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}</p>
-                    ${status === 'Active' ? `
-                    <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    ` : ''}
+                    <div>
+                        <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}
+                            ${f.replaced_by_id ? `<span class="inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">Replaced</span>` : ''}
+                        </p>
+                        <p class="text-xs text-gray-500 mb-1">
+                            Size: ${
+                                (typeof f.size !== 'undefined' && f.size !== null && f.size !== '' && !isNaN(Number(f.size)))
+                                    ? window.formatFileSize(Number(f.size))
+                                    : 'Unknown'
+                            }
+                        </p>
+                    </div>
+                    ${status === 'Active' && activeFiles.length > 1 ? `
+                                                                <button type="button" class="text-red-600 hover:text-red-800 hover:bg-red-100 p-1 rounded transition-colors btn-delete-file" data-file-id="${f.id}" title="Delete file">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                                ` : ''}
                 </div>
                 <a href="${f.url}" target="_blank" class="text-blue-600 text-xs hover:underline">View File</a>
+                ${!f.replaced_by_id ? `
                 <div class="mt-2 flex items-center gap-2">
                     <label class="text-xs text-gray-600"><strong>Replace:</strong></label>
                     <input type="file" name="revision_files[]" class="form-control border-gray-300 rounded p-1 text-sm">
-                    <input type="hidden" name="revision_file_ids[]" value="${f.id}">
                 </div>
+                ` : ''}
+                <input type="hidden" name="revision_file_ids[]" value="${f.id}">
             </div>
         `).join('');
 
@@ -921,28 +1280,105 @@
             document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
 
-                    const isVisible = !dropdown.classList.contains('hidden');
+                    // close existing popups
+                    document.querySelectorAll('.file-popup').forEach(p => p.remove());
 
-                    // Tutup semua dropdown lain
-                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList
-                        .add('hidden'));
+                    if (btn.dataset.popupOpen === '1') { btn.dataset.popupOpen = '0'; return; }
 
-                    // Kalau yang diklik sedang terbuka → tutup saja
-                    if (isVisible) {
-                        dropdown.classList.add('hidden');
-                        return;
-                    }
-
-                    // Hitung posisi
+                    const files = JSON.parse(btn.dataset.files || '[]');
                     const rect = btn.getBoundingClientRect();
-                    const offsetX = -120;
-                    dropdown.style.position = 'fixed';
-                    dropdown.style.top = `${rect.bottom + 6}px`;
-                    dropdown.style.left = `${rect.left + offsetX}px`;
-                    dropdown.classList.remove('hidden');
-                    dropdown.classList.add('dropdown-fixed');
+                    const popup = document.createElement('div');
+                    popup.className = 'file-popup dropdown-fixed';
+                    popup.style.position = 'fixed';
+                    popup.style.top = `${rect.bottom + 6}px`;
+                    popup.style.left = `${Math.min(Math.max(8, rect.left - 120), window.innerWidth - 260)}px`;
+                    popup.style.backgroundColor = '#fff';
+                    popup.style.opacity = '1';
+                    popup.style.visibility = 'visible';
+                    popup.style.zIndex = '999999';
+                    popup.style.border = '1px solid rgba(0,0,0,0.08)';
+                    popup.style.borderRadius = '8px';
+                    popup.style.boxShadow = '0 8px 24px rgba(16,24,40,0.12)';
+                    popup.style.padding = '6px';
+                    popup.style.maxHeight = '320px';
+                    popup.style.overflow = 'auto';
+                    popup.style.minWidth = '220px';
+
+                    files.forEach(f => {
+                        const row = document.createElement('button');
+                        row.type = 'button';
+                        row.className = 'w-full flex justify-between items-center px-3 py-2 rounded-md text-sm text-left view-file-btn';
+                        row.style.background = 'transparent';
+                        row.style.border = 'none';
+                        row.style.display = 'flex';
+                        row.style.alignItems = 'center';
+                        row.style.gap = '8px';
+                        row.dataset.file = f.url || '';
+                        row.dataset.docTitle = f.name || '';
+
+                        const left = document.createElement('div');
+                        left.style.display = 'flex';
+                        left.style.alignItems = 'center';
+                        left.style.gap = '8px';
+                        const ico = document.createElement('i');
+                        ico.className = 'bi bi-file-earmark-text text-gray-600';
+                        ico.style.minWidth = '18px';
+                        left.appendChild(ico);
+                        const name = document.createElement('span');
+                        name.className = 'truncate';
+                        name.style.maxWidth = '160px';
+                        name.textContent = f.name || '—';
+                        left.appendChild(name);
+
+                        const right = document.createElement('div');
+                        right.style.display = 'flex';
+                        right.style.alignItems = 'center';
+                        right.style.gap = '6px';
+                        if ((f.pending_approval || 0) == 2) {
+                            const badge = document.createElement('span');
+                            badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
+                            badge.textContent = 'Rejected';
+                            right.appendChild(badge);
+                        } else if (f.replaced_by_id) {
+                            const badge = document.createElement('span');
+                            badge.className = 'inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full';
+                            badge.textContent = 'Replaced';
+                            right.appendChild(badge);
+                        } else if (f.size) {
+                            const size = document.createElement('span');
+                            size.className = 'text-xs text-gray-500';
+                            size.textContent = f.size;
+                            right.appendChild(size);
+                        }
+
+                        row.appendChild(left);
+                        row.appendChild(right);
+                        popup.appendChild(row);
+                    });
+
+                    document.body.appendChild(popup);
+                    btn.dataset.popupOpen = '1';
+
+                    popup.querySelectorAll('.view-file-btn').forEach(b => {
+                        b.addEventListener('click', function(ev) {
+                            ev.stopPropagation();
+                            document.getElementById('previewTitle').textContent = this.dataset.docTitle || 'File Preview';
+                            document.getElementById('previewIframe').src = this.dataset.file || '';
+                            new bootstrap.Modal(document.getElementById('viewFileModal')).show();
+                            popup.remove();
+                            btn.dataset.popupOpen = '0';
+                        });
+                    });
+
+                    const closeHandler = (ev) => {
+                        if (!popup.contains(ev.target) && ev.target !== btn) {
+                            popup.remove();
+                            btn.dataset.popupOpen = '0';
+                            document.removeEventListener('click', closeHandler);
+                        }
+                    };
+                    setTimeout(() => document.addEventListener('click', closeHandler), 10);
                 });
             });
 
@@ -950,6 +1386,8 @@
             window.addEventListener('scroll', () => {
                 document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add(
                     'hidden'));
+                // also remove dynamic file popups
+                document.querySelectorAll('.file-popup').forEach(p => p.remove());
             });
 
             // Tutup dropdown saat klik di luar
@@ -989,6 +1427,9 @@
                 document.body.classList.remove('modal-open');
                 document.body.style.removeProperty('padding-right');
             });
+
+            // initial tooltip binding
+            initNoteTooltips(document);
 
         });
 
@@ -1065,9 +1506,31 @@
 
             const form = document.getElementById('reviseFormDynamic');
             form.prepend(alertDiv);
+            // Jika sebelumnya tombol submit di-disable saat submit, kembalikan ke state awal
+            try {
+                const submitBtn = document.getElementById('reviseSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.pointerEvents = '';
+                    submitBtn.style.opacity = '';
+                    submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Submit';
+                }
+            } catch (e) {
+                console.warn('Failed to re-enable revise submit button', e);
+            }
             if (window.feather) {
                 feather.replace();
             }
+        }
+
+        window.formatFileSize = function(bytes) {
+            if (typeof bytes !== 'number' || isNaN(bytes)) return 'Unknown';
+            if (bytes >= 1024 * 1024) {
+                return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            } else if (bytes >= 1024) {
+                return (bytes / 1024).toFixed(2) + ' KB';
+            }
+            return bytes + ' bytes';
         }
     </script>
 @endpush

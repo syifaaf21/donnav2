@@ -14,10 +14,10 @@
                 </h5>
                 {{-- Close button (optional if needed) --}}
                 <button type="button"
-                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                    class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                     data-bs-dismiss="modal" aria-label="Close"
                     style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                    <i class="bi bi-x-lg"></i>
                 </button>
             </div>
 
@@ -65,7 +65,7 @@
                             <input type="date"
                                 class="form-control border-0 shadow-sm rounded-3 @error('obsolete_date') is-invalid @enderror"
                                 id="obsolete_date" name="obsolete_date" value="{{ old('obsolete_date') }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('obsolete_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -76,7 +76,7 @@
                             <input type="date"
                                 class="form-control border-0 shadow-sm rounded-3 @error('reminder_date') is-invalid @enderror"
                                 id="reminder_date" name="reminder_date" value="{{ old('reminder_date') }}"
-                                min="{{ $today }}" required>
+                                required>
                             @error('reminder_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -135,10 +135,30 @@
                             style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit"
-                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                            Submit
+                        <button type="submit" id="submit-add-doc-btn"
+                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors d-flex align-items-center"
+                            style="min-width: 100px;">
+                            <span class="spinner-border spinner-border-sm me-2 d-none" id="submit-add-doc-spinner"
+                                role="status" aria-hidden="true"></span>
+                            <span id="submit-add-doc-text">Submit</span>
                         </button>
+                        @push('scripts')
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const form = document.querySelector('#addDocumentControlModal form');
+                                    const submitBtn = document.getElementById('submit-add-doc-btn');
+                                    const spinner = document.getElementById('submit-add-doc-spinner');
+                                    const btnText = document.getElementById('submit-add-doc-text');
+                                    if (form && submitBtn && spinner && btnText) {
+                                        form.addEventListener('submit', function() {
+                                            submitBtn.disabled = true;
+                                            spinner.classList.remove('d-none');
+                                            btnText.textContent = 'Loading...';
+                                        });
+                                    }
+                                });
+                            </script>
+                        @endpush
                     </div>
                 </form>
             </div>

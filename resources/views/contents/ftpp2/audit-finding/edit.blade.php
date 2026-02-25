@@ -2,11 +2,9 @@
 @section('title', 'Edit Audit Finding')
 @section('subtitle',
     ' Edit finding for FTPP #' .
-    $finding->registration_number .
-    '. Please update the details below to edit
-    the FTPP finding.')
+    $finding->registration_number)
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-8 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -143,13 +141,18 @@
                                 <div>
                                     <label class="font-semibold block">Auditor / Inisiator: <span
                                             class="text-danger">*</span></label>
-                                    <select name="auditor_id" x-model="form.auditor_id"
-                                        class="border border-gray-300 rounded w-full p-2 focus:outline-none">
-                                        <option value="">-- Choose Auditor --</option>
+                                    <select name="auditor_ids[]" id="auditorSelect" multiple
+                                        class="tom-select border border-gray-300 rounded w-full p-2 focus:outline-none">
+                                        @php
+                                            $selected = isset($finding) && $finding->auditors ? $finding->auditors->pluck('id')->toArray() : [];
+                                        @endphp
                                         @foreach ($auditors as $auditor)
-                                            <option value="{{ $auditor->id }}">{{ $auditor->name }}</option>
+                                            <option value="{{ $auditor->id }}" {{ in_array($auditor->id, $selected) ? 'selected' : '' }}>
+                                                {{ $auditor->name }}
+                                            </option>
                                         @endforeach
                                     </select>
+                                    <input type="hidden" name="auditor_id" id="auditor_id_hidden" value="">
                                 </div>
 
                                 <div>
@@ -164,7 +167,7 @@
                                             class="text-danger">*</span></label>
                                     <input type="text" name="registration_number" id="reg_number"
                                         x-model="form.registration_number"
-                                        class="border border-gray-300 rounded w-full p-2 bg-gray-100" readonly>
+                                        class="border border-gray-300 rounded w-full p-2 bg-gray-100">
                                 </div>
                             </div>
                             <!-- FINDING CATEGORY -->
@@ -208,7 +211,7 @@
                                         <div class="flex flex-col items-end">
                                             <button type="button" onclick="openSidebar()"
                                                 class="px-3 py-1  bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                                Select Clause
+                                                Select Clause/Criteria
                                             </button>
                                             <div class="border border-gray-600 rounded w-[500px] h-auto mt-2 px-2 py-1">
                                                 <div id="selectedSubContainer" class="flex flex-wrap gap-2 justify-end">
@@ -231,7 +234,7 @@
                                         <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
                                         <p class="text-xs text-yellow-700 leading-relaxed">
                                             Only <strong>PDF, PNG, JPG, and JPEG</strong> files are allowed.
-                                            Maximum total file size is <strong>10 MB</strong>.
+                                            Maximum total file size is <strong>20 MB</strong>.
                                         </p>
                                     </div>
                                 </div>
@@ -243,12 +246,13 @@
 
                                     <!-- Attachment button (paperclip) -->
                                     <div class="relative inline-block">
-                                        @if (in_array(optional(auth()->user()->roles->first())->name, ['Admin', 'Auditor']))
+                                        @if (collect(optional(auth()->user())->roles)->pluck('name')->intersect(['Admin', 'Auditor'])->isNotEmpty())
                                             <button id="attachBtn" type="button"
                                                 class="flex items-center gap-2 px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none"
                                                 aria-haspopup="true" aria-expanded="false" title="Attach files">
                                                 <i data-feather="paperclip" class="w-4 h-4"></i>
                                                 <span id="attachCount" class="text-xs text-gray-600 hidden">0</span>
+                                                <div id="attachTotalSize" class="text-sm text-gray-600 ml-2">Total: 0.00 MB</div>
                                             </button>
                                         @endif
 
@@ -285,10 +289,25 @@
                                     </div>
                                 </div>
 
-                                <button type="button" onclick="saveChangesFinding()"
-                                    class="ml-auto mt-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
-                                    Save Changes
-                                </button>
+                                <div class="ml-auto mt-2 flex gap-2">
+                                    @php
+                                        $currentStatus = strtolower(optional($finding->status)->name ?? '');
+                                        $isDraftStatus = $currentStatus === 'draft finding';
+                                        $isNeedAssignStatus = $currentStatus === 'need assign';
+                                    @endphp
+
+                                    @if ($isDraftStatus)
+                                        <button type="button" onclick="saveChangesFinding('submit', this)"
+                                            class="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-md hover:from-green-600 hover:to-green-700 transition-colors">
+                                            Submit
+                                        </button>
+                                    @endif
+
+                                    <button type="button" onclick="saveChangesFinding('save', this)"
+                                        class="bg-gradient-to-r from-primaryLight to-primaryDark text-white px-3 py-1 rounded-md hover:from-primaryDark hover:to-primaryLight transition-colors">
+                                        Save Changes
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -533,10 +552,18 @@
                                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
 
                                     btn.addEventListener('click', async (e) => {
-                                        if (!fid) return alert('Cannot remove unsaved file');
-                                        if (!confirm(
-                                                'Remove this attachment? This will delete the file from storage.'
-                                            )) return;
+                                        if (!fid) {
+                                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Cannot remove unsaved file' });
+                                            return;
+                                        }
+
+                                        if (typeof Swal !== 'undefined') {
+                                            const c = await Swal.fire({ title: 'Confirm remove', text: 'Remove this attachment? This will delete the file from storage.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, remove', cancelButtonText: 'Cancel' });
+                                            if (!c.isConfirmed) return;
+                                        } else {
+                                            if (!confirm('Remove this attachment? This will delete the file from storage.')) return;
+                                        }
+
                                         try {
                                             const token = document.querySelector(
                                                 'meta[name="csrf-token"]')?.getAttribute(
@@ -552,8 +579,11 @@
                                                 });
                                             const data = await res.json().catch(() => ({}));
                                             if (!res.ok) {
-                                                alert(data.message ||
-                                                    'Failed to remove attachment');
+                                                if (typeof Swal !== 'undefined') {
+                                                    Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Failed to remove attachment' });
+                                                } else {
+                                                    alert(data.message || 'Failed to remove attachment');
+                                                }
                                                 return;
                                             }
 
@@ -566,7 +596,11 @@
                                                 String(x.id) !== String(fid));
                                         } catch (err) {
                                             console.error(err);
-                                            alert('Error removing attachment');
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({ icon: 'error', title: 'Error', text: 'Error removing attachment' });
+                                            } else {
+                                                alert('Error removing attachment');
+                                            }
                                         }
                                     });
 
@@ -592,10 +626,17 @@
                                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
 
                                     btn.addEventListener('click', async () => {
-                                        if (!fid) return alert('Cannot remove unsaved file');
-                                        if (!confirm(
-                                                'Remove this attachment? This will delete the file from storage.'
-                                            )) return;
+                                        if (!fid) {
+                                            Swal.fire({ icon: 'warning', title: 'Missing', text: 'Cannot remove unsaved file' });
+                                            return;
+                                        }
+
+                                        if (typeof Swal !== 'undefined') {
+                                            const c = await Swal.fire({ title: 'Confirm remove', text: 'Remove this attachment? This will delete the file from storage.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, remove', cancelButtonText: 'Cancel' });
+                                            if (!c.isConfirmed) return;
+                                        } else {
+                                            if (!confirm('Remove this attachment? This will delete the file from storage.')) return;
+                                        }
                                         try {
                                             const token = document.querySelector(
                                                 'meta[name="csrf-token"]')?.getAttribute(
@@ -611,8 +652,11 @@
                                                 });
                                             const data = await res.json().catch(() => ({}));
                                             if (!res.ok) {
-                                                alert(data.message ||
-                                                    'Failed to remove attachment');
+                                                if (typeof Swal !== 'undefined') {
+                                                    Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Failed to remove attachment' });
+                                                } else {
+                                                    alert(data.message || 'Failed to remove attachment');
+                                                }
                                                 return;
                                             }
 
@@ -623,7 +667,11 @@
                                                 String(x.id) !== String(fid));
                                         } catch (err) {
                                             console.error(err);
-                                            alert('Error removing attachment');
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({ icon: 'error', title: 'Error', text: 'Error removing attachment' });
+                                            } else {
+                                                alert('Error removing attachment');
+                                            }
                                         }
                                     });
 
@@ -642,9 +690,12 @@
                                 auditeeContainer.querySelectorAll('.remove-auditee').forEach(btn => {
                                     btn.addEventListener('click', async (ev) => {
                                         const id = btn.getAttribute('data-id');
-                                        if (!confirm(
-                                                'Remove this auditee from finding? This will remove it immediately.'
-                                            )) return;
+                                        if (typeof Swal !== 'undefined') {
+                                            const c = await Swal.fire({ title: 'Confirm remove', text: 'Remove this auditee from finding? This will remove it immediately.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, remove', cancelButtonText: 'Cancel' });
+                                            if (!c.isConfirmed) return;
+                                        } else {
+                                            if (!confirm('Remove this auditee from finding? This will remove it immediately.')) return;
+                                        }
 
                                         try {
                                             const token = document.querySelector(
@@ -661,8 +712,11 @@
                                                 });
                                             const data = await res.json().catch(() => ({}));
                                             if (!res.ok) {
-                                                alert(data.message ||
-                                                    'Failed to remove auditee');
+                                                if (typeof Swal !== 'undefined') {
+                                                    Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Failed to remove auditee' });
+                                                } else {
+                                                    alert(data.message || 'Failed to remove auditee');
+                                                }
                                                 return;
                                             }
 
@@ -694,7 +748,11 @@
                                             });
                                         } catch (err) {
                                             console.error(err);
-                                            alert('Error removing auditee');
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({ icon: 'error', title: 'Error', text: 'Error removing auditee' });
+                                            } else {
+                                                alert('Error removing auditee');
+                                            }
                                         }
                                     });
                                 });
@@ -740,7 +798,7 @@
                         container.innerHTML = "";
 
                         if (!list.length) {
-                            container.innerHTML = `<small class="text-gray-500">No Sub Klausul</small>`;
+                            container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
                             return;
                         }
 
@@ -833,6 +891,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log("✅ FTTP script ready");
 
+            // initialize selectedSubIds from any server-rendered sub-klausul preview
+            if (typeof window.selectedSubIds === 'undefined') window.selectedSubIds = [];
+            try {
+                const existing = Array.from(document.querySelectorAll('#selectedSubContainer [data-id]'))
+                    .map(el => String(el.getAttribute('data-id')));
+                if (existing.length) window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), ...existing]));
+            } catch (e) { /* ignore */ }
+
             // --- Event delegation untuk audit type (tetap pakai karena sudah aman) ---
             document.addEventListener('change', function(e) {
                 if (e.target.matches('input[name="audit_type_id"]')) {
@@ -866,18 +932,59 @@
                                     '<small class="text-gray-500">There is no sub audit type</small>';
                             }
 
-                            // ✅ Filter Auditor berdasarkan audit type
-                            let auditorSelect = document.querySelector('select[name="auditor_id"]');
-                            auditorSelect.innerHTML = '<option value="">-- Choose Auditor --</option>';
-                            data.auditors.forEach(auditor => {
-                                auditorSelect.innerHTML += `
-                                        <option value="${auditor.id}">${auditor.name}</option>
-                                    `;
-                            });
+                            // ✅ Filter Auditor berdasarkan audit type — update TomSelect options
+                            let auditorSelect = document.querySelector('#auditorSelect');
+                            if (auditorSelect) {
+                                const ts = auditorSelect.tomselect;
+                                if (ts) {
+                                    ts.clearOptions();
+                                    data.auditors.forEach(auditor => {
+                                        ts.addOption({ value: auditor.id, text: auditor.name });
+                                    });
+                                } else {
+                                    auditorSelect.innerHTML = '';
+                                    data.auditors.forEach(auditor => {
+                                        auditorSelect.innerHTML += `<option value="${auditor.id}">${auditor.name}</option>`;
+                                    });
+                                }
+                            }
                         })
                         .catch(error => console.error("❌ Error:", error));
                 }
             });
+
+            // Initialize TomSelect for auditor multi-select and keep hidden sync
+            try {
+                const auditorEl = document.getElementById('auditorSelect');
+                if (auditorEl) {
+                    if (!auditorEl.tomselect) {
+                        var auditorTs = new TomSelect('#auditorSelect', {
+                            plugins: ['remove_button'],
+                            persist: false,
+                            create: false,
+                            maxItems: null,
+                            placeholder: 'Select or search auditors...',
+                        });
+                    } else {
+                        var auditorTs = auditorEl.tomselect;
+                    }
+
+                    function syncAuditorHidden(values) {
+                        const hid = document.getElementById('auditor_id_hidden');
+                        if (!hid) return;
+                        if (Array.isArray(values) && values.length) {
+                            hid.value = values[0];
+                        } else if (typeof values === 'string' && values) {
+                            hid.value = values.split(',')[0] || '';
+                        } else {
+                            hid.value = '';
+                        }
+                    }
+
+                    try { syncAuditorHidden(auditorTs.getValue()); } catch (e) { /* ignore */ }
+                    auditorTs.on('change', function(value) { syncAuditorHidden(value); });
+                }
+            } catch (e) { console.error('TomSelect auditor init error', e); }
 
             // --- Open/Close sidebar (tidak berubah) ---
             window.openSidebar = function() {
@@ -1001,11 +1108,18 @@
             window.pilihSubKlausul = function() {
                 const subSelect = document.getElementById('selectSub');
                 if (!subSelect || !subSelect.value) {
-                    return alert('Please choose a sub clause first');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
+                    } else {
+                        alert('Please choose a sub clause first');
+                    }
+                    return;
                 }
                 const subId = subSelect.value;
-                const subText = subSelect.selectedOptions[0].text;
+                const subText = subSelect.selectedOptions[0]?.text;
+
                 document.getElementById('selectedSub').value = subId;
+
                 closeSidebar();
             };
 
@@ -1028,13 +1142,37 @@
             const subId = subSelect.value;
             const subText = subSelect.selectedOptions[0]?.text;
 
-            if (!subId) return alert('Please choose a sub clause first');
-            if (selectedSubIds.includes(subId)) return alert('This sub clause is already added');
+            if (!subId) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose a sub clause first' });
+                } else {
+                    alert('Please choose a sub clause first');
+                }
+                return;
+            }
+            if ((window.selectedSubIds || []).includes(String(subId))) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'info', title: 'Already added', text: 'This sub clause is already added' });
+                } else {
+                    alert('This sub clause is already added');
+                }
+                return;
+            }
 
-            selectedSubIds.push(subId);
+            // mark as selected and remove option from select to prevent re-adding
+            window.selectedSubIds = Array.from(new Set([...(window.selectedSubIds||[]), String(subId)]));
+            if (subSelect) {
+                const opt = subSelect.querySelector(`option[value="${subId}"]`);
+                if (opt) opt.remove();
+            }
 
             // Render preview di form utama
             const container = document.getElementById('selectedSubContainer');
+
+            // remove placeholder if present
+            const placeholder = container.querySelector('small');
+            if (placeholder) placeholder.remove();
+
             const span = document.createElement('span');
             span.className = "flex items-end gap-1 bg-blue-100 text-gray-700 px-2 py-1 rounded";
             span.dataset.id = subId;
@@ -1043,11 +1181,23 @@
             container.appendChild(span);
             feather.replace(); // render ulang icon feather
 
-
-            // tombol hapus
+            // tombol hapus — restore option to select when removed
             span.querySelector('button').onclick = function() {
-                selectedSubIds = selectedSubIds.filter(id => id !== subId);
+                window.selectedSubIds = (window.selectedSubIds || []).filter(id => String(id) !== String(subId));
+                // re-insert option back to select if sidebar is open / select exists
+                const sel = document.getElementById('selectSub');
+                if (sel && !sel.querySelector(`option[value="${subId}"]`)) {
+                    const opt = document.createElement('option');
+                    opt.value = subId;
+                    opt.text = subText;
+                    sel.appendChild(opt);
+                }
                 span.remove();
+
+                // if container empty now, show placeholder
+                if (!container.querySelector('[data-id]')) {
+                    container.innerHTML = `<small class="text-gray-500">No Sub Clause/Criteria</small>`;
+                }
             }
 
             container.appendChild(span);
@@ -1167,12 +1317,22 @@
             const prod = prodSelect.value;
 
             if (!plant) {
-                return alert("Please choose plant first");
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose plant first' });
+                } else {
+                    alert("Please choose plant first");
+                }
+                return;
             }
 
             // ✅ harus pilih department
             if (!dept) {
-                return alert("Please select Department.");
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please select Department.' });
+                } else {
+                    alert("Please select Department.");
+                }
+                return;
             }
 
             // Simpan ke input hidden (kalau kosong, biarkan kosong/null)
@@ -1246,7 +1406,14 @@
 
         function openAuditeeSidebar() {
             const dept = document.getElementById('selectedDepartment').value;
-            if (!dept) return alert("Please choose department/plant first!");
+            if (!dept) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'warning', title: 'Missing', text: 'Please choose department/plant first!' });
+                } else {
+                    alert("Please choose department/plant first!");
+                }
+                return;
+            }
             loadAuditeeOptions(dept);
             document.getElementById('auditeeSidebar').classList.remove('hidden');
         }
@@ -1306,11 +1473,17 @@
             const previewImageContainer = document.getElementById('previewImageContainer');
             const previewFileContainer = document.getElementById('previewFileContainer');
 
+            // 🔹 Store files accumulated from multiple selections
+            let accumulatedPhotoFiles = [];
+            let accumulatedFileFiles = [];
+
             // 🔹 Helper update file list setelah dihapus
             function updateFileInput(input, filesArray) {
                 const dt = new DataTransfer();
                 filesArray.forEach(file => dt.items.add(file));
                 input.files = dt.files;
+                // update total size UI after changing input files
+                updateTotalSize();
             }
 
             // 🔹 Update badge total attachment
@@ -1322,12 +1495,25 @@
                 } else {
                     attachCount.classList.add('hidden');
                 }
+                // update total size
+                updateTotalSize();
             }
 
             // 🔹 Preview Image + tombol delete
             function displayImages() {
-                previewImageContainer.innerHTML = '';
-                Array.from(photoInput.files).forEach((file, index) => {
+                // ⚠️ JANGAN hapus semua - hanya update bagian new files
+                // Cari atau buat container khusus untuk new files
+                let newFilesContainer = previewImageContainer.querySelector('.new-files-container');
+
+                if (!newFilesContainer) {
+                    newFilesContainer = document.createElement('div');
+                    newFilesContainer.className = 'new-files-container flex flex-wrap gap-2';
+                    previewImageContainer.appendChild(newFilesContainer);
+                } else {
+                    newFilesContainer.innerHTML = ''; // Hanya clear new files
+                }
+
+                accumulatedPhotoFiles.forEach((file, index) => {
                     const wrapper = document.createElement('div');
                     wrapper.className = "relative";
 
@@ -1339,25 +1525,37 @@
                     btn.type = 'button';
                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                     btn.className = "absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs";
-                    btn.onclick = () => {
-                        const newFiles = Array.from(photoInput.files);
-                        newFiles.splice(index, 1);
-                        updateFileInput(photoInput, newFiles);
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        accumulatedPhotoFiles.splice(index, 1);
+                        updateFileInput(photoInput, accumulatedPhotoFiles);
                         displayImages();
                         updateAttachCount();
+                        updateTotalSize();
                     };
 
                     wrapper.appendChild(img);
                     wrapper.appendChild(btn);
-                    previewImageContainer.appendChild(wrapper);
+                    newFilesContainer.appendChild(wrapper);
                     feather.replace();
                 });
             }
 
             // 🔹 Preview File + tombol delete
             function displayFiles() {
-                previewFileContainer.innerHTML = '';
-                Array.from(fileInput.files).forEach((file, index) => {
+                // ⚠️ JANGAN hapus semua - hanya update bagian new files
+                // Cari atau buat container khusus untuk new files
+                let newFilesContainer = previewFileContainer.querySelector('.new-files-container');
+
+                if (!newFilesContainer) {
+                    newFilesContainer = document.createElement('div');
+                    newFilesContainer.className = 'new-files-container flex flex-col gap-2';
+                    previewFileContainer.appendChild(newFilesContainer);
+                } else {
+                    newFilesContainer.innerHTML = ''; // Hanya clear new files
+                }
+
+                accumulatedFileFiles.forEach((file, index) => {
                     const wrapper = document.createElement('div');
                     wrapper.className = "flex items-center gap-2 text-sm border p-2 rounded";
 
@@ -1371,30 +1569,81 @@
                     btn.type = 'button';
                     btn.innerHTML = '<i data-feather="x" class="w-3 h-3"></i>';
                     btn.className = "ml-auto bg-red-600 text-white rounded-full p-1 text-xs";
-                    btn.onclick = () => {
-                        const newFiles = Array.from(fileInput.files);
-                        newFiles.splice(index, 1);
-                        updateFileInput(fileInput, newFiles);
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        accumulatedFileFiles.splice(index, 1);
+                        updateFileInput(fileInput, accumulatedFileFiles);
                         displayFiles();
                         updateAttachCount();
+                        updateTotalSize();
                     };
 
                     wrapper.append(icon, name, btn);
-                    previewFileContainer.appendChild(wrapper);
+                    newFilesContainer.appendChild(wrapper);
                     feather.replace();
                 });
             }
 
-            // 🔹 Event Listener Input
-            photoInput.addEventListener('change', () => {
+            // 🔹 Event Listener Input - ACCUMULATE files (don't replace)
+            photoInput.addEventListener('change', (e) => {
+                // Add new files to accumulated list
+                const newFiles = Array.from(photoInput.files);
+                newFiles.forEach(file => {
+                    // Check if file already exists to avoid duplicates
+                    const isDuplicate = accumulatedPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!isDuplicate) {
+                        accumulatedPhotoFiles.push(file);
+                    }
+                });
+
+                // Update input with accumulated files
+                updateFileInput(photoInput, accumulatedPhotoFiles);
                 displayImages();
                 updateAttachCount();
+                updateTotalSize();
             });
 
-            fileInput.addEventListener('change', () => {
+            fileInput.addEventListener('change', (e) => {
+                // Add new files to accumulated list
+                const newFiles = Array.from(fileInput.files);
+                newFiles.forEach(file => {
+                    // Check if file already exists to avoid duplicates
+                    const isDuplicate = accumulatedFileFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!isDuplicate) {
+                        accumulatedFileFiles.push(file);
+                    }
+                });
+
+                // Update input with accumulated files
+                updateFileInput(fileInput, accumulatedFileFiles);
                 displayFiles();
                 updateAttachCount();
+                updateTotalSize();
             });
+
+            // === Total size helpers ===
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+
+            function updateTotalSize() {
+                const el = document.getElementById('attachTotalSize');
+                if (!el) return;
+                let total = 0;
+                accumulatedPhotoFiles.forEach(f => { total += f.size || 0; });
+                accumulatedFileFiles.forEach(f => { total += f.size || 0; });
+                if (total === 0) {
+                    if (photoInput.files) Array.from(photoInput.files).forEach(f => total += f.size || 0);
+                    if (fileInput.files) Array.from(fileInput.files).forEach(f => total += f.size || 0);
+                }
+                const mb = (total / (1024 * 1024));
+                el.textContent = `Total: ${mb.toFixed(2)} MB`;
+            }
 
             // 🔹 Toggle menu
             attachBtn.addEventListener('click', (e) => {
@@ -1406,14 +1655,18 @@
 
             attachImages.addEventListener('click', () => photoInput.click());
             attachDocs.addEventListener('click', () => fileInput.click());
+            // initialize total size display
+            updateTotalSize();
         });
     </script>
     {{-- Store header data handler --}}
     <script>
-        async function saveChangesFinding() {
+        async function saveChangesFinding(mode = 'save', btn) {
             const form = document.querySelector(
                 'form[action="{{ route('ftpp.audit-finding.update', $finding->id) }}"]');
             if (!form) return alert('Form not found');
+
+            const isDraft = mode === 'draft';
 
             // ✅ 1. Hapus error lama
             const errorContainer = document.getElementById('attachmentErrorContainer');
@@ -1451,9 +1704,13 @@
                 console.log('✅ Error displayed in container');
             }
 
-            // ✅ 3. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE)
-            const photoInput = document.getElementById('photoInput');
-            const fileInput = document.getElementById('fileInput');
+            // ✅ 3. Skip validation if saving as draft (relaxed validation)
+            if (isDraft) {
+                console.log('📝 Saving as draft - skipping file size validation');
+            } else {
+                // ✅ 3b. VALIDASI TOTAL FILE SIZE (CLIENT-SIDE) - only for regular save
+                const photoInput = document.getElementById('photoInput');
+                const fileInput = document.getElementById('fileInput');
 
             let totalSize = 0;
             let fileDetails = [];
@@ -1488,10 +1745,10 @@
             console.log(`📊 Total file size: ${totalSize} bytes (${totalSizeMB} MB)`);
             console.log('Files:', fileDetails);
 
-            // ✅ 4. CHECK jika melebihi 10MB - TAMPILKAN DI FIELD (BUKAN ALERT)
-            if (totalSize > 10 * 1024 * 1024) { // 10MB in bytes
+            // ✅ 4. CHECK jika melebihi 20MB - TAMPILKAN DI FIELD (BUKAN ALERT)
+            if (totalSize > 20 * 1024 * 1024) { // 20MB in bytes
                 const errorHtml = `
-                    <p class="font-semibold mb-1">❌ Total file size exceeds 10MB</p>
+                    <p class="font-semibold mb-1">❌ Total file size exceeds 20MB</p>
                     <p>Current total size: <strong>${totalSizeMB} MB</strong></p>
                     <p>
                         Please compress your PDF files and reupload it.
@@ -1501,39 +1758,7 @@
                 return; // ⛔ STOP submit
             }
 
-            // ✅ 5. CHECK individual file size - TAMPILKAN DI FIELD (BUKAN ALERT)
-            let individualErrors = [];
-
-            // Check individual image files (max 3MB)
-            if (photoInput && photoInput.files) {
-                Array.from(photoInput.files).forEach(file => {
-                    if (file.size > 3 * 1024 * 1024) { // 3MB
-                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                        individualErrors.push(
-                            `🖼️ Image "${file.name}" is ${sizeMB}MB. Maximum is 3MB per image.`);
-                    }
-                });
-            }
-
-            // Check individual PDF files (max 10MB)
-            if (fileInput && fileInput.files) {
-                Array.from(fileInput.files).forEach(file => {
-                    if (file.size > 10 * 1024 * 1024) { // 10MB
-                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                        individualErrors.push(`📄 PDF "${file.name}" is ${sizeMB}MB. Maximum is 10MB per PDF.`);
-                    }
-                });
-            }
-
-            if (individualErrors.length > 0) {
-                const errorHtml = `
-                    <p class="font-semibold mb-2">❌ Individual file size limit exceeded</p>
-                    <ul class="list-disc list-inside space-y-1">
-                        ${individualErrors.map(e => `<li>${e}</li>`).join('')}
-                    </ul>
-                `;
-                showAttachmentError(errorHtml);
-                return; // ⛔ STOP submit
+            // ✅ 5. Skip individual per-file size validation — only total size (20MB) is enforced
             }
 
             // ✅ 6. Jika lolos validasi, lanjutkan submit form
@@ -1550,9 +1775,12 @@
             const actionInput = document.createElement('input');
             actionInput.type = 'hidden';
             actionInput.name = 'action';
-            actionInput.value = 'save_header';
+            actionInput.value = mode === 'submit' ? 'submit' : (mode === 'draft' ? 'draft' : 'save_header');
             actionInput.setAttribute('data-dyn-input', '1');
             form.appendChild(actionInput);
+
+            // Log mode for debugging
+            console.log(`✅ Mode: ${mode} - Action value: ${actionInput.value}`);
 
             // Collect auditee ids
             let auditeeIds = [];
@@ -1607,6 +1835,23 @@
             });
 
             // Submit the form
+            // Show loader and disable action buttons to prevent double submit
+            function setLoading() {
+                try {
+                    // disable any action buttons in the actions container
+                    document.querySelectorAll('.ml-auto button').forEach(b => b.disabled = true);
+                    if (btn) {
+                        // store original HTML to allow restoration if needed
+                        btn.__origInner = btn.innerHTML;
+                        btn.innerHTML = '<svg class="animate-spin inline-block w-4 h-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>' + (btn.__origInner.replace(/<[^>]*>/g, ''));
+                    }
+                } catch (e) {
+                    console.error('Failed to set loading state', e);
+                }
+            }
+
+            setLoading();
+
             form.submit();
         }
     </script>

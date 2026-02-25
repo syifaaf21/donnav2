@@ -23,7 +23,6 @@ class User extends Authenticatable
         'npk',
         'email',
         'password',
-        'audit_type_id',
     ];
 
     /**
@@ -67,8 +66,80 @@ class User extends Authenticatable
         return $this->hasMany(AuditFinding::class, 'auditor_id');
     }
 
-    public function auditType()
+    /**
+     * Many-to-many relation for auditor assignments (pivot)
+     */
+    public function auditFindingsAsAuditorMany()
     {
-        return $this->belongsTo(Audit::class, 'audit_type_id');
+        return $this->belongsToMany(AuditFinding::class, 'tt_audit_finding_auditors', 'auditor_id', 'audit_finding_id');
+    }
+
+    // Many-to-many relation: users <-> audit types (pivot: tt_user_audit_type)
+    public function auditTypes()
+    {
+        return $this->belongsToMany(Audit::class, 'tt_user_audit_type', 'user_id', 'audit_id');
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($user) {
+            if ($user->isDirty('password')) {
+                $user->password_changed_at = now();
+            }
+        });
+    }
+
+    /**
+     * Check if user is supervisor
+     */
+    // public function isSupervisor()
+    // {
+    //     return $this->roles()->where('name', 'Supervisor')->exists();
+    // }
+
+    /**
+     * Check if user is leader
+     */
+    public function isLeader()
+    {
+        return $this->roles()->where('name', 'Leader')->exists();
+    }
+
+    /**
+     * Check if user is supervisor of specific department
+     */
+    // public function isSupervisorOfDepartment($departmentId)
+    // {
+    //     return $this->isSupervisor() &&
+    //            $this->departments()->where('tm_departments.id', $departmentId)->exists();
+    // }
+
+    /**
+     * Check if user is leader of specific department
+     */
+    public function isLeaderOfDepartment($departmentId)
+    {
+        return $this->isLeader() &&
+               $this->departments()->where('tm_departments.id', $departmentId)->exists();
+    }
+
+    /**
+     * Check if user can edit document mapping (supervisor dari dept pemilik dokumen)
+     *
+     * @param \App\Models\DocumentMapping $mapping
+     * @return bool
+     */
+    public function canEditDocument($mapping)
+    {
+        // Allow department Leader or Supervisor to edit/upload document revisions
+        $isInDepartment = $this->departments()->where('tm_departments.id', $mapping->department_id)->exists();
+        if (! $isInDepartment) {
+            return false;
+        }
+
+        $isLeader = $this->roles()->where('name', 'Leader')->exists();
+        $isSupervisor = $this->roles()->where('name', 'Supervisor')->exists();
+
+        return $isLeader || $isSupervisor;
     }
 }

@@ -12,7 +12,8 @@
 
         <!-- PDF PREVIEW -->
         <iframe x-show="pdfUrl" :src="pdfUrl" id="previewFrame"
-            class="w-full h-full rounded-lg shadow-xl bg-white" frameborder="0"></iframe>
+            class="w-full h-full rounded-lg shadow-xl bg-white" frameborder="0">
+        </iframe>
 
         <!-- Loading -->
         <div x-show="loading" class="absolute inset-0 flex items-center justify-center">

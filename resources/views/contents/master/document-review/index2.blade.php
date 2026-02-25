@@ -2,7 +2,7 @@
 @section('title', 'Master Document Review')
 @section('subtitle', 'Manage document reviews')
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -110,103 +110,119 @@
 
             {{-- Filter Modal --}}
             <div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content rounded-xl shadow-xl border-0 overflow-hidden">
+                <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 760px;">
+                    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
                         <form id="filterFormModal" method="GET" class="bg-white">
-                            <div class="modal-header border-b px-6 py-4">
-                                <h5 class="text-lg font-semibold text-gray-800">
-                                    <i class="bi bi-funnel-fill text-blue-600 me-2"></i> Filter Documents
+
+                            {{-- Modal Header --}}
+                            <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
+                                style="background-color: #f5f5f7;">
+                                <h5 class="modal-title fw-semibold text-dark" id="filterModalLabel"
+                                    style="font-family: 'Inter', sans-serif; font-size: 1.15rem;">
+                                    <i class="bi bi-funnel me-2 text-primary"></i> Filter Documents
                                 </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+
+                                {{-- Close button --}}
+                                <button type="button"
+                                    class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                                    data-bs-dismiss="modal" aria-label="Close"
+                                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                                    <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                                </button>
                             </div>
 
-                            <div class="modal-body px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {{-- Document Name --}}
-                                <div class="flex flex-col">
-                                    <label for="filterDocumentName" class="text-sm font-medium text-gray-700 mb-1">Document
-                                        Name</label>
-                                    <select name="document_name" id="filterDocumentName"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Document Names</option>
-                                        @foreach ($documentsMaster as $doc)
-                                            <option value="{{ $doc->name }}"
-                                                {{ request('document_name') == $doc->name ? 'selected' : '' }}>
-                                                {{ $doc->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            {{-- Modal Body --}}
+                            <div class="modal-body p-5 bg-gray-50"
+                                style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                                <div class="row g-4">
+                                    {{-- Document Name --}}
+                                    <div class="col-md-6">
+                                        <label for="filterDocumentName" class="form-label fw-semibold">Document Name</label>
+                                        <select name="document_name" id="filterDocumentName"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Document Names</option>
+                                            @foreach ($documentsMaster as $doc)
+                                                <option value="{{ $doc->name }}"
+                                                    {{ request('document_name') == $doc->name ? 'selected' : '' }}>
+                                                    {{ $doc->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Part Number --}}
-                                <div class="flex flex-col">
-                                    <label for="filterPartNumber" class="text-sm font-medium text-gray-700 mb-1">Part
-                                        Number</label>
-                                    <select name="part_number_id" id="filterPartNumber"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Part Numbers</option>
-                                        @foreach ($partNumbers as $pn)
-                                            <option value="{{ $pn->id }}"
-                                                {{ request('part_number_id') == $pn->id ? 'selected' : '' }}>
-                                                {{ $pn->part_number }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    {{-- Part Number --}}
+                                    <div class="col-md-6">
+                                        <label for="filterPartNumber" class="form-label fw-semibold">Part Number</label>
+                                        <select name="part_number_id" id="filterPartNumber"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Part Numbers</option>
+                                            @foreach ($partNumbers as $pn)
+                                                <option value="{{ $pn->id }}"
+                                                    {{ request('part_number_id') == $pn->id ? 'selected' : '' }}>
+                                                    {{ $pn->part_number }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Model --}}
-                                <div class="flex flex-col">
-                                    <label for="filterModel" class="text-sm font-medium text-gray-700 mb-1">Model</label>
-                                    <select name="model_id" id="filterModel"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Models</option>
-                                        @foreach ($models as $model)
-                                            <option value="{{ $model->id }}"
-                                                {{ request('model_id') == $model->id ? 'selected' : '' }}>
-                                                {{ $model->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    {{-- Model --}}
+                                    <div class="col-md-6">
+                                        <label for="filterModel" class="form-label fw-semibold">Model</label>
+                                        <select name="model_id" id="filterModel"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Models</option>
+                                            @foreach ($models as $model)
+                                                <option value="{{ $model->id }}"
+                                                    {{ request('model_id') == $model->id ? 'selected' : '' }}>
+                                                    {{ $model->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Product --}}
-                                <div class="flex flex-col">
-                                    <label for="filterProduct"
-                                        class="text-sm font-medium text-gray-700 mb-1">Product</label>
-                                    <select name="product_id" id="filterProduct"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Products</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}"
-                                                {{ request('product_id') == $product->id ? 'selected' : '' }}>
-                                                {{ $product->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    {{-- Product --}}
+                                    <div class="col-md-6">
+                                        <label for="filterProduct" class="form-label fw-semibold">Product</label>
+                                        <select name="product_id" id="filterProduct"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Products</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}"
+                                                    {{ request('product_id') == $product->id ? 'selected' : '' }}>
+                                                    {{ $product->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                {{-- Process --}}
-                                <div class="flex flex-col">
-                                    <label for="filterProcess"
-                                        class="text-sm font-medium text-gray-700 mb-1">Process</label>
-                                    <select name="process_id" id="filterProcess"
-                                        class="tom-select w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">All Processes</option>
-                                        @foreach ($processes as $process)
-                                            <option value="{{ $process->id }}"
-                                                {{ request('process_id') == $process->id ? 'selected' : '' }}>
-                                                {{ $process->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    {{-- Process --}}
+                                    <div class="col-md-6">
+                                        <label for="filterProcess" class="form-label fw-semibold">Process</label>
+                                        <select name="process_id" id="filterProcess"
+                                            class="tom-select form-select border-0 shadow-sm rounded-3 px-3 py-2 text-sm">
+                                            <option value="">All Processes</option>
+                                            @foreach ($processes as $process)
+                                                <option value="{{ $process->id }}"
+                                                    {{ request('process_id') == $process->id ? 'selected' : '' }}>
+                                                    {{ $process->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="modal-footer flex justify-end gap-3 px-6 py-4 border-t">
+                            {{-- Modal Footer --}}
+                            <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
                                 <button type="button" id="clearFilterModal"
-                                    class="px-4 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 transition">Clear</button>
+                                    class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                                    style="text-decoration: none; transition: background-color 0.3s ease;">
+                                    Clear
+                                </button>
                                 <button type="submit"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Apply</button>
+                                    class="btn px-4 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                                    Apply
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -218,9 +234,7 @@
                 @foreach ($groupedByPlant as $plant => $documents)
                     @php $slug = \Illuminate\Support\Str::slug($plant); @endphp
                     <div x-show="activeTab === '{{ $slug }}'" x-transition class="flex flex-col">
-                        <div class="mb-4 flex items-center justify-between">
-                            <h2 class="text-lg font-bold text-gray-800">{{ ucwords(strtolower($plant)) }}</h2>
-
+                        <div class="mb-4 flex items-center justify-end">
                             {{-- Add Document Button --}}
                             <div class="flex items-center gap-2">
                                 <button
@@ -239,34 +253,34 @@
                                 <thead class="sticky top-0 z-10"
                                     style="background: #f3f6ff; border-bottom: 2px solid #e0e7ff;">
                                     <tr>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             No
                                         </th>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Document Number</th>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Part
                                             Number</th>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Product</th>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Model
                                         </th>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Process</th>
-                                        {{-- <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        {{-- <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Reminder Date</th>
-                                        <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Deadline</th> --}}
-                                        <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
+                                        <th class="px-4 py-3 border-r border-gray-200 text-center text-xs font-bold uppercase tracking-wider"
                                             style="color: #1e2b50; letter-spacing: 0.5px;">
                                             Actions</th>
                                     </tr>
@@ -282,33 +296,39 @@
                                     @else
                                         @foreach ($documents as $index => $doc)
                                             <tr class="hover:bg-gray-50 transition-all duration-150">
-                                                <td class="px-4 py-3 border-r border-gray-200">
+                                                <td class="px-4 py-3 border-r border-gray-200 text-xs">
                                                     {{ ($documents->currentPage() - 1) * $documents->perPage() + $loop->index + 1 }}
                                                 </td>
-                                                <td class="px-4 py-3 border-r border-gray-200 font-medium">
-                                                    {{ $doc->document_number }}</td>
-                                                <td class="px-4 py-3 border-r border-gray-200">
+                                                <td class="px-4 py-3 border-r border-gray-200 text-xs font-medium">
+                                                    <div class="flex flex-col">
+                                                        <span class="font-medium">{{ $doc->document_number }}</span>
+                                                        <span class="text-[11px] text-gray-500">
+                                                            {{ optional($doc->department)->name ?? 'Unknown' }}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3 border-r border-gray-200 text-xs">
                                                     {{ $doc->partNumber->pluck('part_number')->join(', ') ?: '-' }}
                                                 </td>
 
-                                                <td class="px-4 py-3 border-r border-gray-200">
+                                                <td class="px-4 py-3 border-r border-gray-200 text-xs">
                                                     {{ $doc->product->pluck('name')->join(', ') ?: '-' }}
                                                 </td>
 
-                                                <td class="px-4 py-3 border-r border-gray-200">
+                                                <td class="px-4 py-3 border-r border-gray-200 text-xs">
                                                     {{ $doc->productModel->pluck('name')->join(', ') ?: '-' }}</td>
 
-                                                <td class="px-4 py-3 border-r border-gray-200 capitalize">
+                                                <td class="px-4 py-3 border-r border-gray-200 text-xs capitalize">
                                                     {{ $doc->process->pluck('name')->join(', ') ?: '-' }}
                                                 </td>
-                                                {{-- <td class="px-4 py-3 border-r border-gray-200">
+                                                {{-- <td class="px-4 py-3 border-r border-gray-200 text-xs">
                                                     {{ $doc->reminder_date?->format('d M Y') ?? '-' }}
                                                 </td>
-                                                <td class="px-4 py-3 border-r border-gray-200">
+                                                <td class="px-4 py-3 border-r border-gray-200 text-xs">
                                                     {{ $doc->deadline?->format('d M Y') ?? '-' }}
                                                 </td> --}}
                                                 <td
-                                                    class="px-4 py-3 border-r border-gray-200 flex space-x-2 whitespace-nowrap action-column">
+                                                    class="px-4 py-3 border-r border-gray-200 text-xs flex space-x-2 whitespace-nowrap action-column">
                                                     {{-- FILE BUTTON AREA — fixed width --}}
                                                     {{-- <div
                                                         class="relative inline-block w-8 h-8 flex items-center justify-center">
@@ -446,9 +466,29 @@
         window.filterDataByPlant = @json($filterDataByPlant);
 
         // Tab manager
-        function documentReviewTabs() {
+        function documentReviewTabs(defaultTab = 'body') {
+            // Cek query parameter 'plant' dari URL TERLEBIH DAHULU
+            const urlParams = new URLSearchParams(window.location.search);
+            const plantParam = urlParams.get('plant');
+
+            // Prioritas: plant dari URL > localStorage > parameter default > fallback 'body'
+            const initialTab = plantParam || localStorage.getItem('activeTab') || defaultTab || 'body';
+
+            // Simpan ke localStorage juga jika dari URL
+            if (plantParam) {
+                localStorage.setItem('activeTab', plantParam);
+            }
+
+            // Clean URL dari query parameter setelah membaca plant
+            setTimeout(() => {
+                if (urlParams.get('plant')) {
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            }, 100);
+
             return {
-                activeTab: localStorage.getItem('activeTab') || 'body',
+                activeTab: initialTab,
                 setActiveTab(tab) {
                     this.activeTab = tab;
                     localStorage.setItem('activeTab', tab);

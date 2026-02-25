@@ -3,7 +3,7 @@
 @section('subtitle', 'Manage Hierarchy Document records.')
 @section('breadcrumbs')
 
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -102,6 +102,8 @@
                             </th>
                             <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider"
                                 style="color: #1e2b50; letter-spacing: 0.5px;">Code</th>
+                            <th class="px-4 py-3 border-r border-gray-200 text-sm font-bold uppercase tracking-wider text-center"
+                                style="color: #1e2b50; letter-spacing: 0.5px;">Plant</th>
                             <th class="px-4 py-3 border-r border-gray-200 text-center text-sm font-bold uppercase tracking-wider"
                                 style="color: #1e2b50; letter-spacing: 0.5px;">
                                 Actions</th>
@@ -109,7 +111,7 @@
                     </thead>
                     <tbody id="documentTableBody" class="divide-y divide-gray-200" @php $number = 1; @endphp
                         @if ($documents->count() === 0) <tr>
-                                <td colspan="3" class="text-center py-6 text-gray-500">
+                            <td colspan="4" class="text-center py-6 text-gray-500">
                                     <i class="bi bi-inbox text-2xl block mb-1"></i>
                                     No data found
                                 </td>
@@ -152,10 +154,10 @@
                         <i class="bi bi-file-earmark-plus me-2 text-primary"></i> Create New Document
                     </h5>
                     <button type="button"
-                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                         data-bs-dismiss="modal" aria-label="Close"
                         style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
 
@@ -201,6 +203,18 @@
                         @error('code')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                    </div>
+
+                    {{-- Plants (multiselect) --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Plants <span class="text-danger">*</span></label>
+                        <select name="plants[]" multiple class="form-select tomselect">
+                            <option value="body">Body</option>
+                            <option value="unit">Unit</option>
+                            <option value="electric">Electric</option>
+                            <option value="all">ALL (Others)</option>
+                        </select>
+                        <small class="text-muted">Select one or more plants. Choose <strong>All</strong> to mark document as global (appears in Others tab).</small>
                     </div>
                 </div>
 

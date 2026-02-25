@@ -2,7 +2,7 @@
 @section('title', 'Master Process')
 @section('subtitle', 'Manage Process records.')
 @section('breadcrumbs')
-    <nav class="text-sm text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
+    <nav class="text-xs text-gray-500 bg-white rounded-full pt-3 pb-1 pr-6 shadow w-fit mb-1" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
             <li>
                 <a href="{{ route('dashboard') }}" class="text-blue-600 hover:underline flex items-center">
@@ -160,10 +160,10 @@
                             <i class="bi bi-pencil-square me-2 text-primary"></i>Edit Process
                         </h5>
                         <button type="button"
-                            class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                             data-bs-dismiss="modal" aria-label="Close"
                             style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                            <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                            <i class="bi bi-x-lg text-dark fw-bold"></i>
                         </button>
                     </div>
 
@@ -243,10 +243,10 @@
                         <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Process
                     </h5>
                     <button type="button"
-                        class="btn btn-light position-absolute top-0 end-0 m-3 p-2 rounded-circle shadow-sm"
+                        class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
                         data-bs-dismiss="modal" aria-label="Close"
                         style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                        <span aria-hidden="true" class="text-dark fw-bold">&times;</span>
+                        <i class="bi bi-x-lg text-dark fw-bold"></i>
                     </button>
                 </div>
 

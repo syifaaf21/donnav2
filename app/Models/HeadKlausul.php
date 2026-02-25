@@ -27,4 +27,9 @@ class HeadKlausul extends Model
     {
         return $this->hasMany(SubKlausul::class, 'head_klausul_id', 'id');
     }
+
+    public function subKlausuls()
+    {
+        return $this->hasMany(SubKlausul::class, 'head_klausul_id', 'id');
+    }
 }

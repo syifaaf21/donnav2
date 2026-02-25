@@ -21,7 +21,7 @@ class RegisterController extends Controller
         $validated = $request->validate([
             'npk' => 'required|numeric|digits:6|unique:users,npk',
             'name' => 'required|string|max:255',
-            // 'email' => 'nullable|email|unique:users,email',
+            'email' => 'required|email|unique:users,email',
             'password' => [
                 'required',
                 'string',
@@ -47,11 +47,17 @@ class RegisterController extends Controller
         $user = User::create([
             'npk' => $validated['npk'],
             'name' => $validated['name'],
-            // 'email' => $validated['email'],
+            'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role_id' => 3,
             'department_id' => $validated['department'],
+            'password_changed_at' => now(),
         ]);
+
+        // ensure pivot table keeps the default user role (id 3)
+        if (method_exists($user, 'roles')) {
+            $user->roles()->syncWithoutDetaching([3]);
+        }
 
         // attach departments if you have a relationship
         if (method_exists($user, 'departments')) {

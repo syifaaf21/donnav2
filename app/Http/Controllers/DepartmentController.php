@@ -63,6 +63,11 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        // Set department_id to null pada tt_document_mappings yang terkait
+        foreach ($department->mapping as $mapping) {
+            $mapping->department_id = null;
+            $mapping->save();
+        }
         $department->delete();
 
         return redirect()->back()->with('success', 'Department deleted successfully.');

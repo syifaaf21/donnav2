@@ -88,6 +88,17 @@ Route::middleware('auth')->get('/roles', function (Request $request) {
 
     return response()->json($roles);
 });
+
+Route::middleware('auth')->get('/audit-types', function (Request $request) {
+    $search = $request->query('q', '');
+    $auditTypes = \App\Models\Audit::where('name', 'like', "%{$search}%")
+        ->select('id', 'name as text')
+        ->limit(20)
+        ->get();
+
+    return response()->json($auditTypes);
+});
+
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/departments', function (Request $request) {
         $search = $request->input('q');
