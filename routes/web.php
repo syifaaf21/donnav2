@@ -26,6 +26,7 @@ use App\Http\Controllers\PartNumberController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExportSummaryController;
+use App\Http\Controllers\EditorController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -171,7 +172,20 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     Route::put('/profile/update-password', [UserController::class, 'updatePassword'])->name('profile.updatePassword');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
-    // Notifications
+    // Editor (OnlyOffice) - menu untuk mengedit dokumen
+    // Route::get('/editor', [EditorController::class, 'index'])->name('editor.index');
+    // Route::get('/editor/files', [EditorController::class, 'files'])->name('editor.files');
+
+    // routes/web.php — ganti grup editor dengan ini:
+
+    Route::prefix('editor')->name('editor.')->group(function () {
+        Route::get('/', [EditorController::class, 'index'])->name('index');
+        Route::get('/auth-token', [EditorController::class, 'authToken'])->name('token');  // ← HARUS sebelum /{file}
+        Route::get('/{file}', [EditorController::class, 'editor'])->name('show');
+        Route::post('/{file}/sync', [EditorController::class, 'sync'])->name('sync');
+        Route::post('/{file}/reupload', [EditorController::class, 'reupload'])->name('reupload');
+    });
+        // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notification/{id}/read', [NotificationController::class, 'redirectAndMarkRead'])
         ->name('notifications.read');
@@ -208,7 +222,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::get('/', [DocumentControlController::class, 'index'])->name('index');
         Route::get('/department/{department}', [DocumentControlController::class, 'showByDepartment'])->name('department');
         Route::get('/approval', [DocumentControlController::class, 'approvalIndex'])
-        ->name('approval');
+            ->name('approval');
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
@@ -311,4 +325,5 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     //     return view('contents.ftpp2.pdf', compact('finding'));
     // });
 
+    // Route::redirect('/test-editor');
 });

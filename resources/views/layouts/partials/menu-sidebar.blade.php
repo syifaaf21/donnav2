@@ -86,6 +86,16 @@
         </a>
     </li>
 
+    <!-- Edit Document -->
+    <li>
+        <a href="{{ route('editor.index') }}" data-bs-title="Edit Document"
+            class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
+            {{ Route::is('editor*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+            <i data-feather="edit" class="menu-icon w-4 h-4"></i>
+            <span class="sidebar-text">Edit Document</span>
+        </a>
+    </li>
+
     @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), ['super admin', 'admin']))
         <li>
             <a href="{{ route('archive.index') }}" data-bs-title="Archive"

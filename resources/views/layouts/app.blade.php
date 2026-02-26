@@ -12,6 +12,8 @@
 
     {{-- ✅ Include Tailwind via Vite --}}
     @vite('resources/css/app.css')
+    {{-- @vite('resources/js/app.js') --}}
+    @vite('resources/js/docspace.js')
 
     <!-- ✅ Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
