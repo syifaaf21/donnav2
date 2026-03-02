@@ -1031,9 +1031,13 @@ class DocumentMappingController extends Controller
         }
 
         // Tandai Document utama untuk dihapus 1 tahun kemudian
+        // BUT: do NOT mark the parent tm_documents when the document is of type 'review'
         if ($mapping->document) {
-            $mapping->document->marked_for_deletion_at = $markedForDeletionAt;
-            $mapping->document->save();
+            $docType = strtolower($mapping->document->type ?? '');
+            if ($docType !== 'review') {
+                $mapping->document->marked_for_deletion_at = $markedForDeletionAt;
+                $mapping->document->save();
+            }
         }
 
         // Tandai DocumentMapping untuk dihapus 1 tahun kemudian

@@ -206,11 +206,15 @@ class RecycleBinController extends Controller
         // delete mapping
         $mapping->delete();
 
-        // optionally delete parent document if no mappings remain and it was marked
+        // If the parent document has no mappings left and was marked for deletion,
+        // do NOT remove the master `Document` record automatically. Removing the
+        // Document here causes master hierarchy entries to disappear unexpectedly
+        // (e.g. when a mapping scheduled the document for deletion). Instead,
+        // clear the deletion flag so the master document remains available.
         if ($mapping->document) {
             $remaining = DocumentMapping::where('document_id', $mapping->document->id)->exists();
             if (!$remaining && $mapping->document->marked_for_deletion_at) {
-                $mapping->document->delete();
+                $mapping->document->update(['marked_for_deletion_at' => null]);
             }
         }
 
