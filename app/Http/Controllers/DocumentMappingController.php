@@ -323,6 +323,9 @@ class DocumentMappingController extends Controller
                   ->orWhereDoesntHave('partNumber');
             });
 
+        // Exclude mappings that are scheduled for deletion (recycle bin)
+        $queryManual->whereNull('marked_for_deletion_at');
+
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
