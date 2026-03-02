@@ -46,6 +46,7 @@ class DocumentReviewController extends Controller
             'department'
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->whereNull('marked_for_deletion_at')
             ->get();
 
         // Tambahkan URL file dengan aman
