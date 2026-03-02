@@ -24,7 +24,7 @@ class DocumentReviewController extends Controller
         $plants = array_values(array_filter($plants, fn($p) => in_array(strtolower($p), $allowed)));
         // AMBIL SEMUA DOKUMEN DENGAN ANAK-CUCU
         // Exclude documents scheduled for deletion (recycle bin)
-        $documents = Document::with('childrenRecursive')
+        $documents = Document::with(['childrenRecursive', 'plants'])
             ->where('type', 'review')
             ->whereNull('marked_for_deletion_at')
             ->get();
@@ -338,14 +338,10 @@ class DocumentReviewController extends Controller
                 $hasModelPlant = $item->productModel->contains(fn($model) => strtolower(trim($model->plant ?? '')) === $plantLower);
 
                 if ($plantLower === 'others') {
-                    // include mappings explicitly marked 'all'
-                    if ($mappingPlant === 'all') return true;
-
-                    // include manual mappings without part numbers
-                    if ($item->partNumber->isEmpty()) return true;
-
-                    // otherwise ignore mappings tied to specific plants
-                    return false;
+                    // Only include mappings explicitly marked 'all' for Others tab.
+                    // Do NOT include manual mappings without part numbers here —
+                    // those belong to the Document Mapping (manual) list only.
+                    return $mappingPlant === 'all';
                 }
 
                 // physical plant: ignore mappings explicitly set to 'all'
@@ -366,25 +362,33 @@ class DocumentReviewController extends Controller
             $codesFromDocPlant = $docsFromDocPlant->pluck('code');
             $codesFromMapping = $mappingsByPlant->map(fn($m) => $m->document?->code)->filter();
 
-            // Include master documents that have NO explicit plant assignment (legacy)
-            // so they appear under all physical plant tabs (Body/Unit/Electric).
-            $codesFromMaster = $documentsMaster->filter(function ($doc) use ($docPlantKey, $plantLower) {
-                // If document has explicit plants -> only include when matches current plant
-                $docPlants = $doc->plants->pluck('plant')->map(fn($p) => strtolower(trim($p ?? '')))->unique();
+            // Include master documents depending on plant:
+            // - For 'Others' tab include only documents explicitly assigned to 'all'.
+            // - For physical plants include legacy unassigned docs and those assigned to this plant.
+            if ($plantLower === 'others') {
+                $codesFromMaster = $documentsMaster->filter(function ($doc) {
+                    $docPlants = $doc->plants->pluck('plant')->map(fn($p) => strtolower(trim($p ?? '')))->unique();
+                    return $docPlants->contains('all');
+                })->pluck('code');
+            } else {
+                $codesFromMaster = $documentsMaster->filter(function ($doc) use ($docPlantKey, $plantLower) {
+                    // If document has explicit plants -> only include when matches current plant
+                    $docPlants = $doc->plants->pluck('plant')->map(fn($p) => strtolower(trim($p ?? '')))->unique();
 
-                if ($docPlants->isEmpty()) {
-                    // legacy: no assignment => show on physical plants (not 'all'/Others)
-                    return $plantLower !== 'others';
-                }
+                    if ($docPlants->isEmpty()) {
+                        // legacy: no assignment => show on physical plants (not 'all'/Others)
+                        return $plantLower !== 'others';
+                    }
 
-                // If document explicitly assigned to 'all' -> include only in Others
-                if ($docPlants->contains('all')) {
-                    return $docPlantKey === 'all';
-                }
+                    // If document explicitly assigned to 'all' -> include only in Others
+                    if ($docPlants->contains('all')) {
+                        return $docPlantKey === 'all';
+                    }
 
-                // Otherwise include if docPlants contains this plant
-                return $docPlants->contains($plantLower);
-            })->pluck('code');
+                    // Otherwise include if docPlants contains this plant
+                    return $docPlants->contains($plantLower);
+                })->pluck('code');
+            }
 
             $allCodes = $codesFromDocPlant->merge($codesFromMapping)->merge($codesFromMaster)->unique();
 
@@ -408,7 +412,9 @@ class DocumentReviewController extends Controller
             $plants[] = 'Others';
         }
         // Exclude documents scheduled for deletion so tree counts are correct
-        $documentsMaster = Document::where('type', 'review')
+        // eager-load plants to avoid N+1 when inspecting assigned plants
+        $documentsMaster = Document::with('plants')
+            ->where('type', 'review')
             ->whereNull('marked_for_deletion_at')
             ->get();
         $documentMappings = DocumentMapping::with([
