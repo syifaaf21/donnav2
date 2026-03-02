@@ -101,20 +101,71 @@ class EditorController extends Controller
         }
     }
 
-    public function reupload(DocumentFile $file)
+    public function reupload(\Illuminate\Http\Request $request, DocumentFile $file)
     {
         abort_if(!$file->is_active, 404);
 
         try {
-            if ($file->docspace_file_id) {
-                $this->docSpace->deleteFile($file->docspace_file_id);
+            // If a replacement file is provided, store it and use it for upload.
+            if (! $request->hasFile('replacement_file')) {
+                return response()->json(['success' => false, 'message' => 'No replacement file provided'], 422);
             }
-            $result = $this->docSpace->uploadFile($file->file_path, $file->display_name);
-            $file->update([
-                'docspace_file_id'   => $result['file_id'],
-                'docspace_folder_id' => $result['folder_id'],
+
+            $uploaded = $request->file('replacement_file');
+
+            $request->validate([
+                'replacement_file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
             ]);
-            return response()->json(['success' => true, 'file_id' => $result['file_id']]);
+
+            $folder = 'document-reviews';
+            $baseName = pathinfo($uploaded->getClientOriginalName(), PATHINFO_FILENAME);
+            $ext = $uploaded->getClientOriginalExtension();
+            $ts = now()->format('Ymd_His');
+            $filename = "{$baseName}_reupload_{$ts}.{$ext}";
+
+            $localPath = $uploaded->storeAs($folder, $filename, 'public');
+
+            // Create new DB record for the newly uploaded replacement
+            // NOTE: new replacement should NOT be marked as pending approval
+            // so that approveWithDates() will only archive the old pending file(s).
+            $newFile = DocumentFile::create([
+                'document_mapping_id' => $file->document_mapping_id,
+                'file_path' => $localPath,
+                'original_name' => $uploaded->getClientOriginalName(),
+                'is_active' => true,
+                'pending_approval' => false,
+            ]);
+
+            // Upload stored file to DocSpace
+            $result = $this->docSpace->uploadFile($localPath, $uploaded->getClientOriginalName());
+
+            // Persist DocSpace ids on the new file
+            $newFile->update([
+                'docspace_file_id' => $result['file_id'],
+                'docspace_folder_id' => $result['folder_id'] ?? $newFile->docspace_folder_id,
+            ]);
+
+            // Update old file to reference this new pending replacement
+            $file->update([
+                'replaced_by_id' => $newFile->id,
+                'pending_approval' => true,
+            ]);
+
+            // Jika file terkait mapping, set status mapping ke "Need Review"
+            if ($file->document_mapping_id) {
+                $mapping = $file->mapping()->first();
+                if ($mapping) {
+                    $needReview = Status::where('name', 'Need Review')->first();
+                    if ($needReview && $mapping->status_id !== $needReview->id) {
+                        $mapping->update([
+                            'status_id' => $needReview->id,
+                            'review_notified_at' => null,
+                        ]);
+                    }
+                }
+            }
+
+            return response()->json(['success' => true, 'file_id' => $result['file_id'], 'new_file_id' => $newFile->id]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

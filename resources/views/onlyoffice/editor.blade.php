@@ -247,7 +247,7 @@
 
             @if($file->docspace_file_id)
                 {{-- Buka editor: login dulu via popup, lalu buka doceditor --}}
-                <button class="btn btn--primary" id="btnOpen" onclick="openEditor()">
+                <button type="button" class="btn btn--primary" id="btnOpen" onclick="openEditor()">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                         <polyline points="15 3 21 3 21 9"/>
@@ -257,7 +257,7 @@
                 </button>
 
                 {{-- Sync ke Laravel --}}
-                <button class="btn btn--secondary" id="btnSync" onclick="syncFile()">
+                <button type="button" class="btn btn--secondary" id="btnSync" onclick="syncFile()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <polyline points="23 4 23 10 17 10"/>
                         <polyline points="1 20 1 14 7 14"/>
@@ -272,7 +272,7 @@
                     $mappingStatus = strtolower($mapping?->status?->name ?? '');
                 @endphp
                 @if($mappingStatus !== 'need review')
-                    <button class="btn btn--ghost" id="btnReupload" onclick="reuploadFile()">
+                    <button type="button" class="btn btn--ghost" id="btnReupload" onclick="reuploadFile()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <polyline points="16 16 12 12 8 16"/>
                             <line x1="12" y1="12" x2="12" y2="21"/>
@@ -284,7 +284,7 @@
 
             @else
                 {{-- Belum ada di DocSpace: upload dulu --}}
-                <button class="btn btn--primary" id="btnUpload" onclick="uploadAndOpen()">
+                <button type="button" class="btn btn--primary" id="btnUpload" onclick="uploadAndOpen()">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <polyline points="16 16 12 12 8 16"/>
                         <line x1="12" y1="12" x2="12" y2="21"/>
@@ -410,32 +410,54 @@
     }
 
     async function reuploadFile() {
-        if (!confirm('Re-upload akan menghapus file lama di DocSpace dan mengupload ulang. Lanjutkan?')) return;
+        if (!confirm('Pilih file pengganti untuk diupload. Lanjutkan?')) return;
 
-        const btn = document.getElementById('btnReupload');
-        btn.disabled = true;
-        btn.classList.add('loading');
-        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Mengupload...`;
+        // create invisible file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pdf,.doc,.docx,.xls,.xlsx';
+        input.style.display = 'none';
 
-        try {
-            const res  = await fetch('{{ route("editor.reupload", $file->id) }}', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
-            });
-            const data = await res.json();
-            if (data.success) {
-                showToast('success', 'Re-upload berhasil! Halaman akan direfresh...');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast('error', data.message);
+        input.addEventListener('change', async function () {
+            const file = input.files[0];
+            if (!file) return;
+
+            const btn = document.getElementById('btnReupload');
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Mengupload...`;
+
+            try {
+                const form = new FormData();
+                form.append('replacement_file', file);
+                form.append('_token', '{{ csrf_token() }}');
+
+                const res = await fetch('{{ route("editor.reupload", $file->id) }}', {
+                    method: 'POST',
+                    body: form,
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showToast('success', 'Re-upload berhasil! Halaman akan direfresh...');
+                    setTimeout(() => location.reload(), 1400);
+                } else {
+                    showToast('error', data.message || 'Re-upload gagal');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('error', 'Gagal menghubungi server');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Re-upload`;
+                input.remove();
             }
-        } catch {
-            showToast('error', 'Gagal menghubungi server');
-        } finally {
-            btn.disabled = false;
-            btn.classList.remove('loading');
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Re-upload`;
-        }
+        });
+
+        document.body.appendChild(input);
+        input.click();
     }
 
     async function uploadAndOpen() {

@@ -54,7 +54,7 @@
             </div>
 
             <!-- Notes (optional) -->
-            <div class="mb-4">
+            {{-- <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Notes Revision
                     <span class="text-gray-400 text-xs">(optional)</span>
                 </label>
@@ -68,7 +68,7 @@
 
                 <!-- Hidden input untuk submit -->
                 <input type="hidden" name="notes" id="notesInput">
-            </div>
+            </div> --}}
 
 
             <!-- Footer -->
