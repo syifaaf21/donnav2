@@ -88,8 +88,25 @@ class DocumentReviewController extends Controller
         $normalizedDocCode = trim(strtolower($docCode));
         $matchedCode = $plantGroup->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
 
-        if (!$matchedCode)
+        if (!$matchedCode) {
+            // Fallback: jika kode dokumen tidak ditemukan pada plant yang diminta,
+            // coba cari di plant lain (berguna ketika master document baru saja diubah plant).
+            $found = null;
+            foreach ($documentsByCode as $p => $group) {
+                $foundKey = $group->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
+                if ($foundKey) {
+                    $found = $p;
+                    break;
+                }
+            }
+
+            if ($found) {
+                // redirect ke plant yang benar supaya user tidak melihat 404
+                return redirect()->route('document-review.showFolder', [$found, $docCode]);
+            }
+
             abort(404);
+        }
 
         $documents = $plantGroup->get($matchedCode, collect());
 
