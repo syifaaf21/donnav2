@@ -536,13 +536,13 @@
                                                         class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
                                                         {{-- Edit --}}
                                                         @if ($showEdit)
-                                                            @php $firstFile = $doc->files->first(); @endphp
-                                                            @if($firstFile)
-                                                                <a href="{{ route('editor.show', $firstFile->id) }}"
-                                                                   class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                   title="Edit Document in editor">
+                                                            @if($doc->files->isNotEmpty())
+                                                                <button type="button"
+                                                                    class="open-select-file-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
+                                                                    data-mapping-id="{{ $doc->id }}"
+                                                                    title="Select file to edit">
                                                                     <i class="bi bi-pencil mr-2"></i> Edit
-                                                                </a>
+                                                                </button>
                                                             @else
                                                                 <button type="button"
                                                                     class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
@@ -648,6 +648,24 @@
     @include('contents.document-review.partials.modal-edit')
     @include('contents.document-review.partials.modal-reject')
     @include('contents.document-review.partials.modal-download-report')
+    <!-- Modal: Select File to Edit -->
+    <div id="selectFileToEditModal" class="hidden fixed inset-0 flex items-center justify-center z-[9999]">
+        <div class="bg-white rounded-4 shadow-lg w-full max-w-md relative p-4 select-file-dialog">
+            <div class="flex justify-between items-center mb-3">
+                <h5 class="fw-semibold">Pilih File untuk Diedit</h5>
+                <button type="button" id="selectFileCloseBtn" class="btn-close">&times;</button>
+            </div>
+
+            <div id="selectFileList" class="max-h-60 overflow-y-auto mb-3">
+                <p class="text-sm text-gray-500">Loading files...</p>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" id="selectFileCancel" class="px-4 py-1.5 border border-gray-300 rounded text-gray-700">Batal</button>
+                <button id="selectFileConfirm" type="button" class="px-4 py-1.5 bg-sky-600 text-white rounded" disabled>Edit</button>
+            </div>
+        </div>
+    </div>
     <style>
         /* --- Dropdown fix style --- */
         .dropdown-fixed {
@@ -697,6 +715,14 @@
         .folder-table tbody tr td {
             border-bottom: 1px solid #f3f4f6;
         }
+
+        /* Select File Modal: ensure light card style and lighter backdrop */
+        #selectFileToEditModal { background: rgba(10,12,20,0.20); }
+        #selectFileToEditModal .select-file-dialog { background: #ffffff !important; color: #0f172a !important; border: 1px solid rgba(15,23,42,0.06); border-radius: 12px; box-shadow: 0 12px 30px rgba(16,24,40,0.12); }
+        #selectFileToEditModal .select-file-dialog h5 { color: #0f172a; }
+        #selectFileToEditModal .select-file-dialog .btn-close { background: #f8fafc; border: 1px solid rgba(2,6,23,0.04); color: #475569; border-radius: 999px; padding: 6px 8px; }
+        #selectFileToEditModal .select-file-dialog .px-4 { border-radius: 8px; }
+        #selectFileToEditModal .select-file-dialog .bg-sky-600 { background: linear-gradient(180deg,#1e90ff,#0f62ff); }
     </style>
     @push('scripts')
         <script>
@@ -1370,6 +1396,92 @@ ${data.files.map(file => `
                         menu.style.left = `${rect.left - 140}px`; // offset sedikit ke kiri
                         menu.style.zIndex = 999999;
                         menu.classList.remove('hidden');
+                    });
+                });
+
+                // === SELECT FILE TO EDIT MODAL LOGIC ===
+                const selectFileModal = document.getElementById('selectFileToEditModal');
+                const selectFileList = document.getElementById('selectFileList');
+                const selectFileConfirm = document.getElementById('selectFileConfirm');
+                let selectedFileId = null;
+
+                function closeSelectFileModal() {
+                    selectFileModal.classList.add('hidden');
+                    selectFileList.innerHTML = '';
+                    selectedFileId = null;
+                    selectFileConfirm.disabled = true;
+                }
+
+                // expose to global so inline onclick calls (if any) work
+                window.closeSelectFileModal = closeSelectFileModal;
+
+                // wire modal close buttons by ID to avoid brittle selectors
+                const selectFileCloseBtn = document.getElementById('selectFileCloseBtn');
+                const selectFileCancelBtn = document.getElementById('selectFileCancel');
+                if (selectFileCloseBtn) selectFileCloseBtn.addEventListener('click', (e) => { e.stopPropagation(); closeSelectFileModal(); });
+                if (selectFileCancelBtn) selectFileCancelBtn.addEventListener('click', (e) => { e.stopPropagation(); closeSelectFileModal(); });
+
+                document.querySelectorAll('.open-select-file-modal').forEach(btn => {
+                    btn.addEventListener('click', async function(e) {
+                        e.stopPropagation();
+                        const mappingId = this.getAttribute('data-mapping-id');
+                        if (!mappingId) return;
+
+                        selectFileModal.classList.remove('hidden');
+                        selectFileList.innerHTML = '<p class="text-sm text-gray-500">Loading files...</p>';
+                        selectFileConfirm.disabled = true;
+
+                        try {
+                            const res = await fetch(`/document-review/${mappingId}/files`);
+                            const json = await res.json();
+                            if (!json.success) {
+                                selectFileList.innerHTML = '<p class="text-sm text-red-500">Failed to load files.</p>';
+                                return;
+                            }
+
+                            const files = json.files || [];
+                            if (files.length === 0) {
+                                selectFileList.innerHTML = '<p class="text-sm text-gray-500">No files available.</p>';
+                                return;
+                            }
+
+                            // store options for fallback
+                            window._selectFileOptions = files;
+
+                            selectFileList.innerHTML = files.map(f => `
+                                <label class="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="radio" name="selectFileEdit" value="${f.id ?? ''}" class="select-file-radio">
+                                    <span class="text-sm flex-1">${f.original_name || f.file_path}</span>
+                                </label>
+                            `).join('');
+
+                            document.querySelectorAll('.select-file-radio').forEach(r => r.addEventListener('change', function() {
+                                selectedFileId = this.value || null;
+                                selectFileConfirm.disabled = !selectedFileId;
+                            }));
+
+                            // default select first (and ensure selectedFileId set)
+                            const first = document.querySelector('.select-file-radio');
+                            if (first) {
+                                first.checked = true;
+                                first.dispatchEvent(new Event('change'));
+                            }
+
+                            selectFileConfirm.onclick = function() {
+                                // fallback to first file id if selection failed
+                                let targetId = selectedFileId;
+                                if (!targetId && Array.isArray(window._selectFileOptions) && window._selectFileOptions.length) {
+                                    targetId = window._selectFileOptions[0].id;
+                                }
+                                if (!targetId) return;
+                                closeSelectFileModal();
+                                // redirect to editor show (encode to be safe)
+                                window.location.href = '/editor/' + encodeURIComponent(targetId);
+                            };
+
+                        } catch (err) {
+                            selectFileList.innerHTML = '<p class="text-sm text-red-500">Failed to load files.</p>';
+                        }
                     });
                 });
 

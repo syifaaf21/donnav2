@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
-@section('title', $file->display_name)
+{{-- @section('title', $file->display_name) --}}
+@section('title','Edit File Online')
+@section('subtitle', 'Review and manage documents hierarchy.')
 
 @push('styles')
 <style>
@@ -27,40 +29,47 @@
     .page { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
 
     .back-link {
-        display: inline-flex; align-items: center; gap: 6px;
-        color: var(--muted); font-size: 13px; font-weight: 500;
+        display: inline-flex; align-items: center; gap: 8px;
+        color: var(--text); font-size: 13px; font-weight: 600;
         text-decoration: none; margin-bottom: 32px;
-        transition: color .15s;
+        transition: color .15s, background .15s, transform .08s;
+        background: rgba(255,255,255,0.04);
+        padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(15,23,42,0.04);
+        box-shadow: 0 6px 18px rgba(2,6,23,0.02);
+        z-index: 5;
     }
-    .back-link:hover { color: var(--text); }
+    .back-link:hover { color: var(--text); transform: translateY(-1px); background: rgba(255,255,255,0.06); }
 
     /* ── FILE CARD ── */
     .file-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
+        background: #ffffff;
+        border: 1px solid #e6e9ef;
         border-radius: 16px;
         overflow: hidden;
+        color: #0f172a;
+        max-width: 820px;
+        margin: 0 auto;
     }
     .file-card__hero {
-        background: linear-gradient(135deg, #1a2035 0%, #1e2d50 100%);
-        border-bottom: 1px solid var(--border);
-        padding: 32px 28px;
-        display: flex; align-items: center; gap: 18px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e6e9ef;
+        padding: 28px 24px;
+        display: flex; align-items: center; gap: 16px;
     }
     .file-icon {
         width: 52px; height: 52px; border-radius: 12px;
         display: flex; align-items: center; justify-content: center;
-        font-size: 13px; font-family: 'DM Mono', monospace; font-weight: 500;
+        font-size: 13px; font-family: 'DM Mono', monospace; font-weight: 600;
         flex-shrink: 0;
-        background: rgba(79,142,247,.2); color: var(--accent);
-        border: 1px solid rgba(79,142,247,.3);
+        background: #eef4ff; color: #1e3a8a;
+        border: 1px solid rgba(30,58,138,.08);
     }
     .file-name {
-        font-size: 18px; font-weight: 600; margin-bottom: 5px;
+        font-size: 18px; font-weight: 700; margin-bottom: 4px; color: #0f172a;
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .file-path {
-        font-size: 12px; color: var(--muted);
+        font-size: 12px; color: #64748b;
         font-family: 'DM Mono', monospace;
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -68,18 +77,19 @@
     /* ── META ── */
     .file-meta {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
         gap: 0;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid #eef2f6;
+        align-items: start;
     }
     .meta-item {
-        padding: 18px 28px;
-        border-right: 1px solid var(--border);
+        padding: 16px 20px;
+        border-right: 1px solid #f1f5f9;
     }
     .meta-item:last-child { border-right: none; }
     .meta-label {
-        font-size: 11px; font-weight: 600; text-transform: uppercase;
-        letter-spacing: .08em; color: var(--muted); margin-bottom: 6px;
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .08em; color: #64748b; margin-bottom: 6px;
     }
     .meta-value { font-size: 14px; font-weight: 500; }
     .meta-value.mono { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
@@ -96,13 +106,13 @@
 
     /* ── NOTICE ── */
     .notice {
-        margin: 20px 28px 0;
-        padding: 12px 16px; border-radius: 10px;
+        margin: 18px 24px 0;
+        padding: 12px 14px; border-radius: 8px;
         font-size: 13px; line-height: 1.6;
         display: flex; gap: 10px; align-items: flex-start;
-        background: rgba(79,142,247,.08);
-        border: 1px solid rgba(79,142,247,.18);
-        color: #94b8f7;
+        background: #eef6ff;
+        border: 1px solid #e6f0ff;
+        color: #0f172a;
     }
 
     /* ── ACTIONS ── */
@@ -150,13 +160,35 @@
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast--success { background: rgba(39,174,96,.95); color: #fff; }
     .toast--error   { background: rgba(224,82,82,.95); color: #fff; }
+
+    /* Notes modal: light card style matching other app modals */
+    .notes-modal { display: none; position: fixed; inset: 0; z-index: 9998; align-items: center; justify-content: center; }
+    .notes-modal.show { display: flex; }
+    .notes-modal__backdrop { position: absolute; inset: 0; background: rgba(10,12,20,0.25); backdrop-filter: blur(2px); }
+    .notes-modal__dialog { position: relative; width: 760px; max-width: calc(100% - 56px); background: #ffffff; color: #1f2937; border: 1px solid rgba(15,23,42,0.06); border-radius: 12px; padding: 18px; box-shadow: 0 12px 30px rgba(16,24,40,0.12); transform: translateY(-6px) scale(.995); opacity: 0; transition: transform .18s ease, opacity .18s ease; }
+    .notes-modal.show .notes-modal__dialog { transform: translateY(0) scale(1); opacity: 1; }
+    .notes-modal__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .notes-modal__header h3 { margin:0; font-size:18px; color:#0f172a; font-weight:700; }
+    .notes-modal__meta { font-size:13px; color:#64748b; margin-top:6px }
+    .notes-modal__body { margin-top:12px; }
+    .notes-modal__footer { margin-top: 14px; display:flex; justify-content:flex-end; gap:10px; }
+    .notes-modal .btn--ghost { background: #f8fafc; border:1px solid rgba(2,6,23,0.04); color: #475569; }
+    .notes-modal textarea { width:100%; min-height:140px; resize:vertical; padding:14px; border-radius:8px; border:1px solid #e6e9ef; background: #fbfdff; color:#0f172a; font-size:14px; }
+    .notes-modal textarea::placeholder { color: #94a3b8; }
+    .notes-close { background:#f1f5f9; border:0; color:#475569; cursor:pointer; padding:6px; border-radius:999px; box-shadow: 0 2px 6px rgba(2,6,23,0.04); }
+    .notes-close:hover { background: #eef2f6; color:#0f172a; }
 </style>
 @endpush
 
 @section('content')
 <div class="page">
 
-    <a href="{{ route('editor.index') }}" class="back-link">
+    @php
+        $currentUser = auth()->user();
+        $roles = $currentUser?->roles?->pluck('name')->map(fn($v) => strtolower($v))->toArray() ?? [];
+        $isAdmin = in_array('admin', $roles, true) || in_array('super admin', $roles, true);
+    @endphp
+    <a href="{{ $isAdmin ? route('editor.index') : route('document-review.index') }}" class="back-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6"/>
         </svg>
@@ -179,32 +211,25 @@
             <div class="meta-item">
                 <div class="meta-label">Status</div>
                 <div class="meta-value">
-                    @if($file->is_active && !$file->marked_for_deletion_at)
-                        <span class="badge badge--active"><span class="badge__dot"></span> Aktif</span>
-                    @else
-                        <span class="badge" style="background:rgba(93,107,138,.15);color:#8a96b3"><span class="badge__dot"></span> Nonaktif</span>
-                    @endif
+                    @php
+                        $mapping = $file->mapping;
+                        $statusName = strtolower($mapping?->status?->name ?? '');
+                        $statusClass = match ($statusName) {
+                            'approved' => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                            'need review' => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
+                            'rejected' => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                            default => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
+                        };
+                    @endphp
+                    <span class="{{ $statusClass }}">{{ ucwords($statusName ?: '-') }}</span>
                 </div>
             </div>
-            <div class="meta-item">
-                <div class="meta-label">Approval</div>
-                <div class="meta-value">
-                    @if($file->pending_approval)
-                        <span class="badge badge--pending"><span class="badge__dot"></span> Pending</span>
-                    @else
-                        <span class="badge badge--active"><span class="badge__dot"></span> Approved</span>
-                    @endif
-                </div>
-            </div>
+            {{-- Approval column hidden as requested --}}
             <div class="meta-item">
                 <div class="meta-label">Dibuat</div>
                 <div class="meta-value" style="font-size:13px">
-                    {{ $file->created_at?->format('d M Y') ?? '—' }}
+                    {{ $file->updated_at?->format('d M Y') ?? '—' }}
                 </div>
-            </div>
-            <div class="meta-item">
-                <div class="meta-label">DocSpace ID</div>
-                <div class="meta-value mono">{{ $file->docspace_file_id ?? 'Belum diupload' }}</div>
             </div>
         </div>
 
@@ -212,7 +237,7 @@
         <div class="notice">
             <span style="flex-shrink:0">ℹ️</span>
             <span>
-                Editor akan terbuka di <strong>tab baru</strong>. Setelah selesai mengedit dan menyimpan di DocSpace,
+                Editor akan terbuka di <strong>tab baru</strong> ketika Anda klik tombol <strong>Buka Editor</strong>. Setelah selesai mengedit dan menyimpan di DocSpace,
                 kembali ke halaman ini lalu klik <strong>Simpan ke Laravel</strong> untuk menyinkronkan perubahan ke server.
             </span>
         </div>
@@ -241,15 +266,21 @@
                     Simpan ke Laravel
                 </button>
 
-                {{-- Re-upload --}}
-                <button class="btn btn--ghost" id="btnReupload" onclick="reuploadFile()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <polyline points="16 16 12 12 8 16"/>
-                        <line x1="12" y1="12" x2="12" y2="21"/>
-                        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-                    </svg>
-                    Re-upload
-                </button>
+                {{-- Re-upload (only when mapping status != 'need review') --}}
+                @php
+                    $mapping = $file->mapping;
+                    $mappingStatus = strtolower($mapping?->status?->name ?? '');
+                @endphp
+                @if($mappingStatus !== 'need review')
+                    <button class="btn btn--ghost" id="btnReupload" onclick="reuploadFile()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="16 16 12 12 8 16"/>
+                            <line x1="12" y1="12" x2="12" y2="21"/>
+                            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                        </svg>
+                        Re-upload
+                    </button>
+                @endif
 
             @else
                 {{-- Belum ada di DocSpace: upload dulu --}}
@@ -268,6 +299,39 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Notes modal -->
+<div id="notesModal" class="notes-modal" aria-hidden="true">
+    <div class="notes-modal__backdrop"></div>
+    <div class="notes-modal__dialog" role="dialog" aria-modal="true">
+            <div class="notes-modal__header">
+                <div>
+                    <h3>Revision Notes</h3>
+                    <div>
+                    <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
+                    <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
+                        <li>Pengisian notes dilakukan khusus untuk perubahan yang terjadi pada file tersebut secara internal, bukan akibat referensi atau relasi dengan dokumen lain.
+                        </li>
+                        <li>Jika tidak ada perubahan internal pada file, biarkan notes kosong dan klik tombol "Simpan & Sinkron".</li>
+                    </ul>
+                </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button id="notesClose" class="notes-close" aria-label="Tutup">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="notes-modal__body">
+                <textarea id="notesTextarea" rows="6" placeholder="Tuliskan catatan revisi..."></textarea>
+            </div>
+            <span class="notes-modal__meta">Catatan revisi (opsional) — boleh dikosongkan</span>
+            <div class="notes-modal__footer">
+                <button class="btn btn--ghost" id="notesCancel">Batal</button>
+                <button class="btn btn--primary" id="notesSubmit">Simpan & Sinkron</button>
+            </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -309,15 +373,34 @@
         btn.disabled = true;
         btn.classList.add('loading');
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Menyimpan...`;
+        // minta revision notes via modal (wajib)
+        const notes = await openNotesModal();
+        if (notes === null) {
+            // user batal
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Simpan ke Laravel`;
+            return;
+        }
 
         try {
             const res  = await fetch('{{ route("editor.sync", $file->id) }}', {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ notes })
             });
             const data = await res.json();
             showToast(data.success ? 'success' : 'error', data.message);
-        } catch {
+            if (data.success) {
+                // refresh to show updated data after successful sync
+                setTimeout(() => location.reload(), 900);
+            }
+        } catch (err) {
+            console.error(err);
             showToast('error', 'Gagal menghubungi server');
         } finally {
             btn.disabled = false;
@@ -387,6 +470,45 @@
         t.className = `toast toast--${type} show`;
         t.textContent = msg;
         setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    function openNotesModal() {
+            return new Promise(resolve => {
+                const modal = document.getElementById('notesModal');
+                const textarea = document.getElementById('notesTextarea');
+                const btnCancel = document.getElementById('notesCancel');
+                const btnSubmit = document.getElementById('notesSubmit');
+                const btnClose = document.getElementById('notesClose');
+                const backdrop = modal.querySelector('.notes-modal__backdrop');
+
+                const cleanup = (value) => {
+                    modal.classList.remove('show');
+                    btnCancel.removeEventListener('click', onCancel);
+                    btnSubmit.removeEventListener('click', onSubmit);
+                    btnClose.removeEventListener('click', onCancel);
+                    backdrop.removeEventListener('click', onCancel);
+                    document.removeEventListener('keydown', onKey);
+                    resolve(value);
+                };
+
+                const onCancel = () => cleanup(null);
+                const onSubmit = () => {
+                    const v = textarea.value.trim();
+                    // notes are optional; allow empty string
+                    cleanup(v);
+                };
+                const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
+
+                textarea.value = '';
+                modal.classList.add('show');
+                setTimeout(() => textarea.focus(), 80);
+
+                btnCancel.addEventListener('click', onCancel);
+                btnSubmit.addEventListener('click', onSubmit);
+                btnClose.addEventListener('click', onCancel);
+                backdrop.addEventListener('click', onCancel);
+                document.addEventListener('keydown', onKey);
+            });
     }
 </script>
 @endpush
