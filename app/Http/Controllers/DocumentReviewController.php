@@ -23,7 +23,11 @@ class DocumentReviewController extends Controller
         $allowed = ['body', 'unit', 'electric', 'others'];
         $plants = array_values(array_filter($plants, fn($p) => in_array(strtolower($p), $allowed)));
         // AMBIL SEMUA DOKUMEN DENGAN ANAK-CUCU
-        $documents = Document::with('childrenRecursive')->where('type', 'review')->get();
+        // Exclude documents scheduled for deletion (recycle bin)
+        $documents = Document::with('childrenRecursive')
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->get();
 
         // ROOT = dokumen yang parent_id nya NULL
         $roots = $documents->where('parent_id', null);
@@ -403,7 +407,10 @@ class DocumentReviewController extends Controller
         if (!in_array('Others', $plants)) {
             $plants[] = 'Others';
         }
-        $documentsMaster = Document::where('type', 'review')->get();
+        // Exclude documents scheduled for deletion so tree counts are correct
+        $documentsMaster = Document::where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->get();
         $documentMappings = DocumentMapping::with([
             'document',
             'files',
