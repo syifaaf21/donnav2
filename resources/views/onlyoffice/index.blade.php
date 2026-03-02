@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Dokumen')
+@section('title', 'Dokumen File')
+@section('subtitle', 'Manage and View Document Manufacture')
 
 @push('styles')
 <style>
@@ -22,20 +23,74 @@
     .btn-open-loading svg { animation: spin .8s linear infinite; }
 
     tr:hover td { background-color: rgba(79,142,247,0.06); }
+
+    /* Card style to match other menus */
+    .content-card {
+        background: #ffffff;
+        border: 1px solid #e6e9ef;
+        border-radius: 14px;
+        padding: 22px;
+        color: #0f172a;
+        box-shadow: 0 12px 30px rgba(15,23,42,0.06);
+    }
+
+    .content-card h1 { color: #0f172a; }
+    .content-card p { color: #64748b; }
+
+    /* light search input inside card */
+    .content-card .search-input {
+        background: #ffffff;
+        border: 1px solid #e6e9ef;
+        color: #0f172a;
+        padding-left: 38px;
+    }
+
+    /* table on light card */
+    .content-card .table-container {
+        background: #ffffff;
+        border: 1px solid #eef2f6;
+        border-radius: 10px;
+        padding: 12px;
+    }
+    .content-card table { background: transparent; }
+    .content-card table thead th { color: #64748b; background: transparent; border-bottom: 1px solid #eef2f6; }
+    .content-card table tbody tr { background: #ffffff; }
+    .content-card table tbody tr td { color: #0f172a; border-bottom: 1px solid #f1f5f9; }
+
+    /* Action buttons inside card (use primary blue, not black) */
+    .content-card .action-btn {
+        background: #1e67c7; /* primary blue */
+        color: #ffffff !important;
+        border: none !important;
+        padding: .5rem .9rem;
+        border-radius: 8px;
+        display: inline-flex; align-items: center; gap: .5rem;
+    }
+    .content-card .action-btn:hover { background: #1457a8; }
+
+    /* Pagination to match other menus */
+    .content-card .pagination a,
+    .content-card .pagination span {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border-radius: 8px; margin-left: 6px;
+        font-size: 13px; text-decoration: none;
+        border: 1px solid #e6e9ef; color: #64748b; background: #ffffff;
+    }
+    .content-card .pagination span.active,
+    .content-card .pagination a.active {
+        background: #4f8ef7; color: #fff; border-color: #4f8ef7;
+    }
+    .content-card .badge-approved { background: rgba(39,174,96,0.15); color: #4ccc80; }
 </style>
 @endpush
 
 @section('content')
 <div class="max-w-[1200px] mx-auto px-6 pt-10 pb-20">
 
+    <div class="content-card">
+
     {{-- Header --}}
     <div class="flex items-end justify-between gap-4 mb-9 flex-wrap">
-        <div>
-            <h1 class="text-[28px] font-semibold tracking-tight leading-tight">
-                Dokumen <span class="text-[#4f8ef7]">Files</span>
-            </h1>
-            <p class="text-[13px] text-[#6b7490] mt-1">Kelola dan buka dokumen dari database</p>
-        </div>
         <form method="GET" action="{{ route('editor.index') }}" class="flex gap-2.5 items-center w-80">
             <input
                 type="text"
@@ -50,8 +105,8 @@
 
     {{-- Stats Strip --}}
     <div class="flex gap-3 mb-6 flex-wrap">
-        <div class="bg-[#181c27] border border-[#272d3d] rounded-lg px-3.5 py-2 text-[13px] text-[#6b7490] flex items-center gap-1.5">
-            Total &nbsp;<strong class="text-[#e8eaf0] font-semibold">{{ $files->total() }}</strong>&nbsp; file
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] text-[#64748b] bg-white border border-[#eef2f6]">
+            Total&nbsp;<strong class="text-[#0f172a] font-semibold">{{ $files->total() }}</strong>&nbsp;file
         </div>
         @if($search)
         <div class="bg-[#181c27] border border-[#272d3d] rounded-lg px-3.5 py-2 text-[13px] text-[#6b7490] flex items-center gap-1.5">
@@ -61,7 +116,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="bg-[#181c27] border border-[#272d3d] rounded-[14px] overflow-hidden">
+    <div class="table-container">
         @if($files->count() > 0)
         <table class="w-full border-collapse">
             <thead>
@@ -97,44 +152,71 @@
                                 {{ strtoupper($file->extension ?: '—') }}
                             </div>
                             <div class="min-w-0">
-                                <div class="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-[360px] text-[#e8eaf0]">{{ $file->display_name }}</div>
-                                <div class="text-[11.5px] text-[#6b7490] font-mono-dm mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[360px]">{{ $file->file_path }}</div>
+                                <div class="font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-[360px] text-[#0f172a]">{{ $file->display_name }}</div>
+                                <div class="text-[11.5px] text-[#64748b] font-mono-dm mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[360px]">{{ $file->file_path }}</div>
                             </div>
                         </div>
                     </td>
+                    @php
+                        $mapping = $file->mapping;
+                        $mStatusRaw = $mapping?->status?->name ?? null;
+                        $mStatus = strtolower(str_replace(' ', '_', $mStatusRaw ?? ''));
+                    @endphp
+                    {{-- Status: file-level (Aktif / Dihapus / Nonaktif) --}}
                     <td class="px-[18px] py-3.5 text-sm align-middle">
                         @if($file->is_active && !$file->marked_for_deletion_at)
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium bg-[rgba(39,174,96,0.15)] text-[#4ccc80]">
-                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Aktif
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(39,174,96,0.15); color: #4ccc80;">
+                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Active
                             </span>
                         @elseif($file->marked_for_deletion_at)
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium bg-[rgba(93,107,138,0.15)] text-[#8a96b3]">
-                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Dihapus
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(93,107,138,0.15); color: #8a96b3;">
+                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Deleted
                             </span>
                         @else
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium bg-[rgba(93,107,138,0.15)] text-[#8a96b3]">
-                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Nonaktif
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(93,107,138,0.15); color: #8a96b3;">
+                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Inactive
                             </span>
                         @endif
                     </td>
+                    {{-- Approval: reflect mapping status (Approved / Need Review / Rejected / Uncomplete) --}}
                     <td class="px-[18px] py-3.5 text-sm align-middle">
-                        @if($file->pending_approval)
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium bg-[rgba(245,166,35,0.15)] text-[#f5c842]">
-                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Pending
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium bg-[rgba(39,174,96,0.15)] text-[#4ccc80]">
+                        @if($mStatus === 'approved')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(39,174,96,0.15); color: #4ccc80;">
                                 <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Approved
                             </span>
+                        @elseif($mStatus === 'need_review' || $mStatus === 'need review' || $mStatus === 'need-review')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(245,166,35,0.15); color: #f5c842;">
+                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Need Review
+                            </span>
+                        @elseif($mStatus === 'rejected')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(224,82,82,0.12); color: #e05353;">
+                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Rejected
+                            </span>
+                        @elseif($mStatus === 'uncomplete')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(93,107,138,0.12); color: #8a96b3;">
+                                <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Uncomplete
+                            </span>
+                        @else
+                            {{-- Fallback: show file approval state if mapping status not available --}}
+                            @if($file->pending_approval)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(245,166,35,0.15); color: #f5c842;">
+                                    <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Pending
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-medium" style="background: rgba(39,174,96,0.15); color: #4ccc80;">
+                                    <span class="w-[5px] h-[5px] rounded-full bg-current"></span> Approved
+                                </span>
+                            @endif
                         @endif
                     </td>
                     <td class="px-[18px] py-3.5 align-middle text-[#6b7490] text-[13px] whitespace-nowrap">
-                        {{ $file->created_at ? $file->created_at->format('d M Y') : '—' }}
+                        {{ $file->updated_at ? $file->updated_at->format('d M Y') : '—' }}
                     </td>
                     <td class="px-[18px] py-3.5 align-middle">
                         @if($file->docspace_file_id)
                             <button
-                                class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[#1e3a6e] text-[#4f8ef7] border border-[rgba(79,142,247,0.3)] rounded-lg text-[13px] font-medium cursor-pointer whitespace-nowrap transition-all duration-200 hover:bg-[rgba(79,142,247,0.3)] hover:border-[#4f8ef7] hover:text-white"
+                                type="button"
+                                class="action-btn"
                                 onclick="openEditor(this, '{{ $file->docspace_file_id }}')"
                             >
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -147,7 +229,7 @@
                         @else
                             <a
                                 href="{{ route('editor.show', $file->id) }}"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[#1e3a6e] text-[#4f8ef7] border border-[rgba(79,142,247,0.3)] rounded-lg text-[13px] font-medium whitespace-nowrap transition-all duration-200 hover:bg-[rgba(79,142,247,0.3)] hover:border-[#4f8ef7] hover:text-white no-underline"
+                                class="action-btn"
                             >
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <polyline points="16 16 12 12 8 16"/>
@@ -181,7 +263,7 @@
         <div class="text-[13px] text-[#6b7490]">
             Menampilkan {{ $files->firstItem() }}–{{ $files->lastItem() }} dari {{ $files->total() }} file
         </div>
-        <div class="flex gap-1.5">
+        <div class="flex gap-1.5 pagination">
             @if($files->onFirstPage())
                 <span class="inline-flex items-center justify-center w-[34px] h-[34px] rounded-lg text-[13px] font-medium border border-[#272d3d] bg-[#181c27] text-[#272d3d] opacity-50">‹</span>
             @else
@@ -190,9 +272,9 @@
 
             @foreach($files->getUrlRange(max(1, $files->currentPage()-2), min($files->lastPage(), $files->currentPage()+2)) as $page => $url)
                 @if($page == $files->currentPage())
-                    <span class="inline-flex items-center justify-center w-[34px] h-[34px] rounded-lg text-[13px] font-medium bg-[#4f8ef7] text-white border border-[#4f8ef7]">{{ $page }}</span>
+                    <span class="active">{{ $page }}</span>
                 @else
-                    <a href="{{ $url }}" class="inline-flex items-center justify-center w-[34px] h-[34px] rounded-lg text-[13px] font-medium no-underline border border-[#272d3d] bg-[#181c27] text-[#6b7490] transition-all duration-150 hover:bg-[#1e3a6e] hover:text-[#4f8ef7] hover:border-[#4f8ef7]">{{ $page }}</a>
+                    <a href="{{ $url }}">{{ $page }}</a>
                 @endif
             @endforeach
 
@@ -205,6 +287,7 @@
     </div>
     @endif
 
+    </div>
 </div>
 
 {{-- Loading Overlay --}}
