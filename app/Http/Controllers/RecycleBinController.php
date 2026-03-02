@@ -121,6 +121,12 @@ class RecycleBinController extends Controller
 
         // restore files (they may be soft-deleted). Prefer using model restore() if available.
         foreach ($mapping->files as $file) {
+            // If the file is archived (is_active == 0) and not pending approval (pending_approval == 0),
+            // keep its `marked_for_deletion_at` unchanged (do not restore the archived file).
+            if (!$file->is_active && !$file->pending_approval) {
+                continue;
+            }
+
             if (method_exists($file, 'restore')) {
                 $file->restore();
             } else {
