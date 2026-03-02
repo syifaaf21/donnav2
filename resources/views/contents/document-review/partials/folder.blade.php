@@ -536,11 +536,20 @@
                                                         class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
                                                         {{-- Edit --}}
                                                         @if ($showEdit)
-                                                            <button type="button"
-                                                                class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                data-doc-id="{{ $doc->id }}" title="Edit Document">
-                                                                <i class="bi bi-pencil mr-2"></i> Edit
-                                                            </button>
+                                                            @php $firstFile = $doc->files->first(); @endphp
+                                                            @if($firstFile)
+                                                                <a href="{{ route('editor.show', $firstFile->id) }}"
+                                                                   class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
+                                                                   title="Edit Document in editor">
+                                                                    <i class="bi bi-pencil mr-2"></i> Edit
+                                                                </a>
+                                                            @else
+                                                                <button type="button"
+                                                                    class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
+                                                                    data-doc-id="{{ $doc->id }}" title="Edit Document">
+                                                                    <i class="bi bi-pencil mr-2"></i> Edit
+                                                                </button>
+                                                            @endif
                                                         @endif
 
                                                         {{-- Download Report (single file) --}}

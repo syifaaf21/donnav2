@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentFile;
+use App\Models\Status;
 use App\Services\DocSpaceService;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,10 @@ class EditorController extends Controller
         $search = $request->input('search');
 
         $files = DocumentFile::active()
+            // Hanya ambil file yang terhubung ke mapping yang belum ditandai untuk dihapus
+            // dan terkait ke document dengan type = 'review'
+            ->whereHas('mapping', fn($q) => $q->whereNull('marked_for_deletion_at')
+                ->whereHas('document', fn($q) => $q->where('type', 'review')))
             ->when($search, fn($q) => $q->where(function ($q) use ($search) {
                 $q->where('original_name', 'like', "%{$search}%")
                     ->orWhere('file_path', 'like', "%{$search}%");
@@ -76,6 +81,20 @@ class EditorController extends Controller
         try {
             $this->docSpace->downloadAndSave($file->docspace_file_id, $file->file_path);
             $file->touch();
+            // Jika file terkait ke sebuah mapping, set status mapping menjadi "Need Review"
+            if ($file->document_mapping_id) {
+                $mapping = $file->mapping()->first();
+                if ($mapping) {
+                    $needReview = Status::where('name', 'Need Review')->first();
+                    if ($needReview && $mapping->status_id !== $needReview->id) {
+                        $mapping->update([
+                            'status_id' => $needReview->id,
+                            'review_notified_at' => null,
+                        ]);
+                    }
+                }
+            }
+
             return response()->json(['success' => true, 'message' => 'File berhasil disinkronkan ke Laravel']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

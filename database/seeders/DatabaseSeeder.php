@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
         // PartNumberSeeder::class,
         // StatusSeeder::class,
         // DocumentSeeder::class,
-        // DocumentMappingSeeder::class,
+        // DocumentMappingSeeder::class, tidak terpakai karena sudah ada di DocumentSeeder
         // SubAuditSeeder::class,
         // FindingCategoriesSeeder::class,
         // KlausulsSeeder::class,
