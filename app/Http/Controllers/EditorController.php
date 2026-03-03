@@ -74,7 +74,7 @@ class EditorController extends Controller
         }
     }
 
-    public function sync(DocumentFile $file)
+    public function sync(\Illuminate\Http\Request $request, DocumentFile $file)
     {
         abort_if(!$file->docspace_file_id, 404, 'File belum di-upload ke DocSpace');
 
@@ -85,6 +85,12 @@ class EditorController extends Controller
             if ($file->document_mapping_id) {
                 $mapping = $file->mapping()->first();
                 if ($mapping) {
+                    // Simpan catatan revisi (jika dikirim)
+                    $notes = $request->input('notes');
+                    if (!is_null($notes)) {
+                        $mapping->update(['notes' => $notes]);
+                    }
+
                     $needReview = Status::where('name', 'Need Review')->first();
                     if ($needReview && $mapping->status_id !== $needReview->id) {
                         $mapping->update([
