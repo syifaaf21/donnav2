@@ -804,39 +804,87 @@ class DocumentMappingController extends Controller
         $request->validate([
             'document_id' => 'required|exists:tm_documents,id',
             'department_id' => 'required|exists:tm_departments,id',
-            'part_number_id' => 'required|exists:tm_part_numbers,id',
+            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
+            'model_id' => 'nullable|exists:tm_models,id',
+            'product_id' => 'nullable|exists:tm_products,id',
+            'process_id' => 'nullable|exists:tm_processes,id',
         ]);
 
         $document = Document::findOrFail($request->document_id);
         $department = Department::findOrFail($request->department_id);
-        $partNumber = PartNumber::with(['product', 'productModel', 'process'])->findOrFail($request->part_number_id);
 
         $docCode = $document->code;
         $deptCode = $department->code;
-        $productCode = $partNumber->product->code ?? '';
-        $processCode = $partNumber->process->code ?? '';
-        $modelName = $partNumber->productModel->name ?? '';
 
-        // ========================
-        // Nomor urut berdasarkan kombinasi
-        // ========================
-        $existingCount = DocumentMapping::where('document_id', $document->id)
-            ->where('department_id', $department->id)
-            ->whereHas('partNumber', function ($q) use ($partNumber) {
-                $q->where('product_id', $partNumber->product_id)
-                    ->where('process_id', $partNumber->process_id)
-                    ->where('model_id', $partNumber->model_id);
-            })
-            ->count();
+        // Prefer part_number when provided (existing UI path). Otherwise use explicit model/product/process ids.
+        if ($request->filled('part_number_id')) {
+            $partNumber = PartNumber::with(['product', 'productModel', 'process'])->findOrFail($request->part_number_id);
+
+            $productCode = $partNumber->product->code ?? '';
+            $processCode = $partNumber->process->code ?? '';
+            $modelName = $partNumber->productModel->name ?? '';
+
+            // Count mappings that are linked to the same partNumber combination
+            $existingCount = DocumentMapping::where('document_id', $document->id)
+                ->where('department_id', $department->id)
+                ->whereHas('partNumber', function ($q) use ($partNumber) {
+                    $q->where('product_id', $partNumber->product_id)
+                        ->where('process_id', $partNumber->process_id)
+                        ->where('model_id', $partNumber->model_id);
+                })
+                ->count();
+        } else {
+            // Use explicit selections (model/product/process) — these are stored on mapping via pivots
+            $modelId = $request->input('model_id');
+            $productId = $request->input('product_id');
+            $processId = $request->input('process_id');
+
+            $productCode = '';
+            $processCode = '';
+            $modelName = '';
+
+            if ($productId) {
+                $product = Product::find($productId);
+                $productCode = $product->code ?? '';
+            }
+            if ($processId) {
+                $process = Process::find($processId);
+                $processCode = $process->code ?? '';
+            }
+            if ($modelId) {
+                $model = ProductModel::find($modelId);
+                $modelName = $model->name ?? '';
+            }
+
+            // Count mappings that match the combination via pivot relations
+            $existingCountQuery = DocumentMapping::where('document_id', $document->id)
+                ->where('department_id', $department->id);
+
+            if ($modelId) {
+                $existingCountQuery->whereHas('productModel', function ($q) use ($modelId) {
+                    $q->where('tm_models.id', $modelId);
+                });
+            }
+            if ($productId) {
+                $existingCountQuery->whereHas('product', function ($q) use ($productId) {
+                    $q->where('tm_products.id', $productId);
+                });
+            }
+            if ($processId) {
+                $existingCountQuery->whereHas('process', function ($q) use ($processId) {
+                    $q->where('tm_processes.id', $processId);
+                });
+            }
+
+            $existingCount = $existingCountQuery->count();
+        }
 
         $noUrut = str_pad($existingCount + 1, 3, '0', STR_PAD_LEFT);
         $noRevisi = '01';
 
         $generatedNumber = "{$docCode}-{$deptCode}-{$productCode}_{$processCode}_{$modelName}-{$noUrut}-{$noRevisi}";
 
-        return response()->json([
-            'document_number' => $generatedNumber
-        ]);
+        return response()->json(['document_number' => $generatedNumber]);
     }
 
     public function generateChildDocumentNumber(Request $request)
