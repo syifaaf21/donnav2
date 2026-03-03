@@ -97,11 +97,16 @@ class EditorController extends Controller
             if ($file->document_mapping_id) {
                 $mapping = $file->mapping()->first();
                 if ($mapping) {
-                    // Simpan catatan revisi (jika dikirim)
-                    $notes = $request->input('notes');
-                    if (!is_null($notes)) {
-                        $mapping->update(['notes' => $notes]);
-                    }
+                        // Simpan catatan revisi: if the frontend submitted the `notes` field
+                        // (even if empty) update the mapping. Normalize empty HTML/blank to null
+                        // so old notes are cleared when user removes them in the modal.
+                        if ($request->exists('notes')) {
+                            $notes = trim($request->input('notes'));
+                            if ($notes === '' || $notes === '<p><br></p>') {
+                                $notes = null;
+                            }
+                            $mapping->update(['notes' => $notes]);
+                        }
 
                     $needReview = Status::where('name', 'Need Review')->first();
                     if ($needReview && $mapping->status_id !== $needReview->id) {
