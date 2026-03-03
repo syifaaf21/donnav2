@@ -479,8 +479,16 @@ class DocumentReviewController extends Controller
             abort(403, 'Unauthorized. Only Leader from the document\'s department can edit.');
         }
 
+        // Accept common office MIME types — Some downloads from OnlyOffice may
+        // report different MIME types (e.g. application/zip). Allow a sensible
+        // set of mimetypes to reduce false negatives when users re-upload.
         $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'revision_files.*' => [
+                'required',
+                'file',
+                'max:20480', // in KB (20 MB)
+                'mimetypes:application/pdf,application/msword,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,application/octet-stream'
+            ],
             'revision_file_ids.*' => 'nullable|integer',
             'notes' => 'nullable|string|max:500',
         ]);

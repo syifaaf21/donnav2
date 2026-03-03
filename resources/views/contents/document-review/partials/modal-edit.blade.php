@@ -49,7 +49,7 @@
                 </button>
 
                 <p class="text-xs text-gray-500 mt-1">
-                    Allowed formats: PDF, DOCX, XLSX. Max per file: 2 MB. Total: 20 MB.
+                    Allowed formats: PDF, DOCX, XLSX. Max total file uplaod: 20 MB.
                 </p>
             </div>
 
