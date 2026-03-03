@@ -20,10 +20,22 @@ class EditorController extends Controller
             // dan terkait ke document dengan type = 'review'
             ->whereHas('mapping', fn($q) => $q->whereNull('marked_for_deletion_at')
                 ->whereHas('document', fn($q) => $q->where('type', 'review')))
-            ->when($search, fn($q) => $q->where(function ($q) use ($search) {
-                $q->where('original_name', 'like', "%{$search}%")
-                    ->orWhere('file_path', 'like', "%{$search}%");
-            }))
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($q) use ($search) {
+                        $q->where('original_name', 'like', "%{$search}%")
+                        ->orWhere('file_path', 'like', "%{$search}%");
+                })
+                ->orWhereHas('mapping', function ($m) use ($search) {
+                    $m->where(function ($m) use ($search) {
+                        $m->where('document_number', 'like', "%{$search}%")
+                          ->orWhere('notes', 'like', "%{$search}%");
+                    })->orWhereHas('document', function ($d) use ($search) {
+                        $d->where('name', 'like', "%{$search}%");
+                    })->orWhereHas('department', function ($dep) use ($search) {
+                        $dep->where('name', 'like', "%{$search}%");
+                    });
+                });
+            })
             ->orderByDesc('created_at')
             ->paginate(15)
             ->withQueryString();

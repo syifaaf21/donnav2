@@ -91,15 +91,32 @@
 
     {{-- Header --}}
     <div class="flex items-end justify-between gap-4 mb-9 flex-wrap">
-        <form method="GET" action="{{ route('editor.index') }}" class="flex gap-2.5 items-center w-80">
+        <form method="GET" action="{{ route('editor.index') }}" class="flex items-center w-80 relative">
             <input
+                id="editorSearchInput"
                 type="text"
                 name="search"
-                class="search-input flex-1 bg-[#181c27] border border-[#272d3d] rounded-[10px] py-2.5 pr-3.5 text-[#e8eaf0] font-[DM_Sans,sans-serif] text-sm outline-none transition-colors duration-200 placeholder-[#6b7490] focus:border-[#4f8ef7]"
+                class="search-input flex-1 bg-[#181c27] border border-[#272d3d] rounded-[10px] py-2.5 pr-10 pl-10 text-[#e8eaf0] font-[DM_Sans,sans-serif] text-sm outline-none transition-colors duration-200 placeholder-[#6b7490] focus:border-[#4f8ef7]"
                 placeholder="Cari nama file..."
                 value="{{ $search ?? '' }}"
                 autocomplete="off"
             >
+
+            <!-- Icon-only submit button -->
+            <button type="submit" class="absolute right-8 top-1/2 -translate-y-1/2 text-[#6b7490] hover:text-white" aria-label="Search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pointer-events-none">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+
+            <!-- Icon-only clear button -->
+            <button type="button" id="clearSearchBtn" class="absolute right-2 top-1/2 -translate-y-1/2 text-[#6b7490] hover:text-white" aria-label="Clear search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </form>
     </div>
 
@@ -109,8 +126,13 @@
             Total&nbsp;<strong class="text-[#0f172a] font-semibold">{{ $files->total() }}</strong>&nbsp;file
         </div>
         @if($search)
-        <div class="bg-[#181c27] border border-[#272d3d] rounded-lg px-3.5 py-2 text-[13px] text-[#6b7490] flex items-center gap-1.5">
-            Hasil pencarian: &nbsp;<strong class="text-[#e8eaf0] font-semibold">"{{ $search }}"</strong>
+        <div class="inline-flex items-center gap-3 px-3.5 py-2 rounded-full bg-white border border-[#eef2f6]">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" stroke-width="2" class="flex-shrink-0">
+                <circle cx="11" cy="11" r="6"></circle>
+                <line x1="20" y1="20" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span class="text-sm text-[#64748b]">Hasil pencarian</span>
+            <span class="inline-flex items-center px-3 py-1 rounded bg-[#eef6ff] text-[#1e3a8a] font-semibold text-sm">"{{ $search }}"</span>
         </div>
         @endif
     </div>
@@ -350,5 +372,21 @@
             setTimeout(() => frame.remove(), 4500);
         });
     }
+
+    // Clear search button logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const input = document.getElementById('editorSearchInput');
+        if (clearBtn && input) {
+            clearBtn.addEventListener('click', function() {
+                if (!input.value || input.value.trim() === '') {
+                    window.location.href = '{{ route("editor.index") }}';
+                    return;
+                }
+                input.value = '';
+                input.form.submit();
+            });
+        }
+    });
 </script>
 @endpush
