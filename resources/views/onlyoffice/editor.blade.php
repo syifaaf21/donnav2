@@ -238,7 +238,7 @@
             <span style="flex-shrink:0">ℹ️</span>
             <span>
                 Editor akan terbuka di <strong>tab baru</strong> ketika Anda klik tombol <strong>Buka Editor</strong>. Setelah selesai mengedit dan menyimpan di DocSpace,
-                kembali ke halaman ini lalu klik <strong>Simpan ke Laravel</strong> untuk menyinkronkan perubahan ke server.
+                kembali ke halaman ini lalu klik <strong>Save and Sync</strong> untuk menyinkronkan perubahan ke server.
             </span>
         </div>
 
@@ -263,7 +263,7 @@
                         <polyline points="1 20 1 14 7 14"/>
                         <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                     </svg>
-                    Simpan ke Laravel
+                    Save and Sync
                 </button>
 
                 {{-- Re-upload (only when mapping status != 'need review') --}}
@@ -312,7 +312,7 @@
                     <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
                         <li>Pengisian notes dilakukan khusus untuk perubahan yang terjadi pada file tersebut secara internal, bukan akibat referensi atau relasi dengan dokumen lain.
                         </li>
-                        <li>Jika tidak ada perubahan internal pada file, biarkan notes kosong dan klik tombol "Simpan & Sinkron".</li>
+                        <li>Jika perubahan terjadi karena adanya relasi file yang berubah dan tidak ada perubahan internal pada file, biarkan notes kosong dan klik tombol "Save & Sync".</li>
                     </ul>
                 </div>
                 </div>
@@ -328,7 +328,7 @@
             <span class="notes-modal__meta">Catatan revisi (opsional) — boleh dikosongkan</span>
             <div class="notes-modal__footer">
                 <button class="btn btn--ghost" id="notesCancel">Batal</button>
-                <button class="btn btn--primary" id="notesSubmit">Simpan & Sinkron</button>
+                <button class="btn btn--primary" id="notesSubmit">Save & Sync</button>
             </div>
     </div>
 </div>
@@ -379,7 +379,7 @@
             // user batal
             btn.disabled = false;
             btn.classList.remove('loading');
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Simpan ke Laravel`;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Save and Sync`;
             return;
         }
 
@@ -405,7 +405,7 @@
         } finally {
             btn.disabled = false;
             btn.classList.remove('loading');
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Simpan ke Laravel`;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Save and Sync`;
         }
     }
 
