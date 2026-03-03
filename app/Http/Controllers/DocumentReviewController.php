@@ -160,10 +160,10 @@ class DocumentReviewController extends Controller
 
                 // Helper function untuk cek collection
                 $containsInCollection = fn($collection, $property) =>
-                    $collection->contains(
-                        fn($item) =>
-                        str_contains(strtolower($item?->$property ?? ''), $search)
-                    );
+                $collection->contains(
+                    fn($item) =>
+                    str_contains(strtolower($item?->$property ?? ''), $search)
+                );
 
                 return
                     // Dokumen langsung
@@ -249,10 +249,10 @@ class DocumentReviewController extends Controller
             $doc->setRelation(
                 'files',
                 $doc->files
-                ? $doc->files
+                    ? $doc->files
                     ->where('is_active', 1)
                     ->where('pending_approval', 0)
-                : collect()
+                    : collect()
             );
             return $doc;
         });
@@ -505,7 +505,7 @@ class DocumentReviewController extends Controller
         // Maksimal total 20 MB = 20 * 1024 * 1024
         if ($totalSize > 20 * 1024 * 1024) {
             return back()
-            ->withErrors(['revision_files' => 'Total file upload tidak boleh lebih dari 20 MB'])
+                ->withErrors(['revision_files' => 'Total file upload tidak boleh lebih dari 20 MB'])
                 ->withInput();
         }
 
@@ -671,10 +671,10 @@ class DocumentReviewController extends Controller
             fn($q) =>
             $q->where('tm_departments.id', $mapping->department_id)
         )->whereDoesntHave(
-                'roles',
-                fn($q) =>
-                $q->whereIn('name', ['Admin', 'Super Admin'])
-            )->get();
+            'roles',
+            fn($q) =>
+            $q->whereIn('name', ['Admin', 'Super Admin'])
+        )->get();
 
         $plant = $this->getPlantFromMapping($mapping);
 
@@ -844,7 +844,6 @@ class DocumentReviewController extends Controller
                 'downloads' => $downloads,
                 'total_downloads' => $downloads->sum('download_count'),
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

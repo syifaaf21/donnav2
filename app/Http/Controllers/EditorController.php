@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentFile;
 use App\Models\Status;
+use App\Models\User;
+use App\Notifications\DocumentActionNotification;
 use App\Services\DocSpaceService;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 class EditorController extends Controller
 {
     public function __construct(protected DocSpaceService $docSpace) {}
@@ -41,6 +43,26 @@ class EditorController extends Controller
             ->withQueryString();
 
         return view('onlyoffice.index', compact('files', 'search'));
+    }
+
+    private function getPlantFromMapping($mapping)
+    {
+        // Prioritize explicit mapping->plant. If it's 'all' treat as 'Others'.
+        $mappingPlant = strtolower(trim($mapping->plant ?? ''));
+        if ($mappingPlant === 'all') {
+            return 'Others';
+        }
+
+        // Ambil plant dari partNumber pertama yang ada, kalau nggak ada ambil dari productModel
+        $pnPlant = $mapping->partNumber->first()?->plant;
+        $pmPlant = $mapping->productModel->first()?->plant;
+
+        $plant = $pnPlant ?? $pmPlant;
+
+        if (!$plant) return 'Others';
+
+        // Normalize to ucfirst format used in tabs (Body/Unit/Electric)
+        return ucfirst(strtolower(trim($plant)));
     }
 
     public function editor(DocumentFile $file)
@@ -115,6 +137,35 @@ class EditorController extends Controller
                             'review_notified_at' => null,
                         ]);
                     }
+
+                     // --- SEND NOTIFICATION TO ADMINS ---
+        $uploader = Auth::user();
+        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
+
+        if (!in_array($userRole, ['admin', 'super admin'])) {
+
+            $admins = User::whereHas(
+                'roles',
+                fn($q) =>
+                $q->whereIn('name', ['Admin', 'Super Admin'])
+            )->get();
+
+            foreach ($admins as $admin) {
+
+                $admin->notify(new DocumentActionNotification(
+                    action: 'revised',
+                    byUser: $uploader->name,
+                    documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
+                    documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
+                    url: route('document-review.showFolder', [
+                        'plant' => $this->getPlantFromMapping($mapping),
+                        'docCode' => base64_encode($mapping->document->code ?? ''),
+                    ]),
+                    departmentName: $mapping->department?->name
+                ));
+            }
+        }
+
                 }
             }
 
@@ -185,6 +236,34 @@ class EditorController extends Controller
                             'review_notified_at' => null,
                         ]);
                     }
+                     // --- SEND NOTIFICATION TO ADMINS ---
+        $uploader = Auth::user();
+        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
+
+        if (!in_array($userRole, ['admin', 'super admin'])) {
+
+            $admins = User::whereHas(
+                'roles',
+                fn($q) =>
+                $q->whereIn('name', ['Admin', 'Super Admin'])
+            )->get();
+
+            foreach ($admins as $admin) {
+
+                $admin->notify(new DocumentActionNotification(
+                    action: 'revised',
+                    byUser: $uploader->name,
+                    documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
+                    documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
+                    url: route('document-review.showFolder', [
+                        'plant' => $this->getPlantFromMapping($mapping),
+                        'docCode' => base64_encode($mapping->document->code ?? ''),
+                    ]),
+                    departmentName: $mapping->department?->name
+                ));
+            }
+        }
+
                 }
             }
 
