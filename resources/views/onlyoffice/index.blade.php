@@ -143,12 +143,12 @@
         <table class="w-full border-collapse">
             <thead>
                 <tr>
-                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">#</th>
-                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">Nama File</th>
+                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">No.</th>
+                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">File Name</th>
                     <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">Status</th>
                     <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">Approval</th>
-                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">Dibuat</th>
-                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">Aksi</th>
+                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">Updated At</th>
+                    <th class="px-[18px] py-3.5 text-left text-[11px] font-semibold uppercase tracking-[.08em] text-[#6b7490] border-b border-[#272d3d] bg-white/[.02] whitespace-nowrap">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -246,7 +246,7 @@
                                     <polyline points="15 3 21 3 21 9"/>
                                     <line x1="10" y1="14" x2="21" y2="3"/>
                                 </svg>
-                                Buka
+                                Open
                             </button>
                         @else
                             <a
