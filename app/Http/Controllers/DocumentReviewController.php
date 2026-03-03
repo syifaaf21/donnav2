@@ -691,6 +691,39 @@ class DocumentReviewController extends Controller
             departmentName: $mapping->department?->name,
         ));
 
+        // ===== Increment revision on approve =====
+        $docNumber = $mapping->document_number;
+        if (preg_match('/-(\d+)-(\d+)$/', $docNumber, $parts)) {
+            $rev = $parts[2];
+            $width = strlen($rev);
+            $newRev = str_pad(((int)$rev) + 1, $width, '0', STR_PAD_LEFT);
+            $newDocNumber = preg_replace('/-(\d+)-(\d+)$/', '-$1-' . $newRev, $docNumber);
+            $mapping->updateQuietly([
+                'document_number' => $newDocNumber,
+                'revision' => $newRev,
+                'last_approved_at' => now(),
+            ]);
+        } elseif (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $docNumber, $parts2)) {
+            $rev = $parts2[2];
+            if (preg_match('/(.*?)(\d+)$/', $rev, $m)) {
+                $prefix = $m[1];
+                $digits = $m[2];
+                $width = strlen($digits);
+                $newDigits = str_pad(((int)$digits) + 1, $width, '0', STR_PAD_LEFT);
+                $newRev = $prefix . $newDigits;
+            } else {
+                $newRev = $rev . '1';
+            }
+            $newDocNumber = preg_replace('/-(\d+)-([0-9A-Za-z]+)$/', '-$1-' . $newRev, $docNumber);
+            $mapping->updateQuietly([
+                'document_number' => $newDocNumber,
+                'revision' => $newRev,
+                'last_approved_at' => now(),
+            ]);
+        } else {
+            $mapping->updateQuietly(['last_approved_at' => now()]);
+        }
+
         return redirect($url)
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
     }
