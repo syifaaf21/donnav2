@@ -534,20 +534,41 @@
 
                                                     <div id="actionMenu-{{ $doc->id }}"
                                                         class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
-                                                        {{-- Edit --}}
+                                                        {{-- Edit actions: separate "Edit Online" (OnlyOffice) and "Edit" (upload/revise) --}}
                                                         @if ($showEdit)
                                                             @if($doc->files->isNotEmpty())
-                                                                <button type="button"
-                                                                    class="open-select-file-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                    data-mapping-id="{{ $doc->id }}"
-                                                                    title="Select file to edit">
-                                                                    <i class="bi bi-pencil mr-2"></i> Edit
-                                                                </button>
-                                                            @else
+                                                                @php
+                                                                    // Prefer the most recent file for direct online edit when single
+                                                                    $latestFile = $doc->files->last();
+                                                                @endphp
+
+                                                                {{-- Edit Online: if single file, link directly to editor; if multiple, open select-file modal --}}
+                                                                @if($doc->files->count() === 1 && $latestFile)
+                                                                    <a href="{{ route('editor.show', $latestFile->id) }}" target="_blank"
+                                                                        class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600">
+                                                                        <i class="bi bi-pencil mr-2"></i> Edit Online
+                                                                    </a>
+                                                                @else
+                                                                    <button type="button"
+                                                                        class="open-select-file-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
+                                                                        data-mapping-id="{{ $doc->id }}"
+                                                                        title="Select file to edit online">
+                                                                        <i class="bi bi-pencil mr-2"></i> Edit Online
+                                                                    </button>
+                                                                @endif
+
+                                                                {{-- Keep existing Edit (upload/replace) button available --}}
                                                                 <button type="button"
                                                                     class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                    data-doc-id="{{ $doc->id }}" title="Edit Document">
-                                                                    <i class="bi bi-pencil mr-2"></i> Edit
+                                                                    data-doc-id="{{ $doc->id }}" title="Upload File">
+                                                                    <i class="bi bi-box-arrow-up-right mr-2"></i> Upload
+                                                                </button>
+                                                            @else
+                                                                {{-- No files yet: keep Edit (upload) button only --}}
+                                                                <button type="button"
+                                                                    class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
+                                                                    data-doc-id="{{ $doc->id }}" title="Upload fILE">
+                                                                    <i class="bi bi-box-arrow-up-right mr-2"></i> Upload
                                                                 </button>
                                                             @endif
                                                         @endif
