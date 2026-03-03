@@ -313,7 +313,7 @@ class DocumentControlController extends Controller
                 } else {
                     $fileToDelete->update([
                         'is_active'              => 0,
-                        'marked_for_deletion_at' => now(),
+                        'marked_for_deletion_at' => now()->addYear(),
                     ]);
                 }
             }
@@ -355,14 +355,6 @@ class DocumentControlController extends Controller
             if ($oldFileId) {
                 $oldFile = $mapping->files()->find($oldFileId);
                 if (!$oldFile) continue;
-
-                // Jika file lama rejected (pending_approval = 2): hard delete
-                if ($oldFile->pending_approval == 2) {
-                    Storage::disk('public')->delete($oldFile->file_path);
-                    $oldFile->delete();
-                    continue;
-                }
-
                 // Cari file yang diganti oleh oldFile (file asli sebelum oldFile)
                 $originalFile = $mapping->files()
                     ->where('replaced_by_id', $oldFileId)
@@ -378,20 +370,33 @@ class DocumentControlController extends Controller
                     ]);
                 }
 
+                // Jika file lama rejected (pending_approval = 2): archive the rejected file immediately
+                if ($oldFile->pending_approval == 2) {
+                    // Previously rejected file being replaced: archive it immediately
+                    $oldFile->update([
+                        'replaced_by_id' => $newFile->id,
+                        'pending_approval' => 0,
+                        'is_active' => 0,
+                        'marked_for_deletion_at' => now(),
+                    ]);
+                    continue;
+                }
+
                 if ($currentStatus === 'Rejected') {
-                    Storage::disk('public')->delete($oldFile->file_path);
-                    $oldFile->delete();
-                } elseif ($currentStatus === 'Active') {
+                    // When mapping is Rejected, replace old file by archiving it (1 year)
+                    $oldFile->update([
+                        'replaced_by_id'         => $newFile->id,
+                        'pending_approval'       => 0,
+                        'is_active'              => 0,
+                        'marked_for_deletion_at' => now()->addYear(),
+                    ]);
+                } else {
+                    // For Active and other statuses: keep old file visible but mark pending
+                    // so it will be archived when the replacement is approved
                     $oldFile->update([
                         'replaced_by_id'         => $newFile->id,
                         'pending_approval'       => 1,
                         'is_active'              => 1,
-                        'marked_for_deletion_at' => null,
-                    ]);
-                } else {
-                    $oldFile->update([
-                        'replaced_by_id'         => $newFile->id,
-                        'pending_approval'       => 1,
                         'marked_for_deletion_at' => null,
                     ]);
                 }
@@ -476,7 +481,7 @@ class DocumentControlController extends Controller
         $markedFilesToArchive = $mapping->files()
             ->where('is_active', 0)
             ->whereNotNull('marked_for_deletion_at')
-            ->whereNull('pending_approval')
+            ->where('pending_approval', 0)
             ->where('marked_for_deletion_at', '<=', now())
             ->get();
 
@@ -510,6 +515,8 @@ class DocumentControlController extends Controller
 
         $request->validate([
             'notes' => 'required|string',
+            'reject_file_ids' => 'nullable|array',
+            'reject_file_ids.*' => 'integer|exists:tt_document_files,id',
         ]);
 
         $statusRejected = Status::firstOrCreate(
@@ -517,11 +524,42 @@ class DocumentControlController extends Controller
             ['description' => 'Document has been rejected']
         );
 
+        // If admin selected specific files to reject, mark them as rejected (pending_approval = 2)
+        $selectedIds = $request->input('reject_file_ids', []);
+        if (!empty($selectedIds)) {
+            foreach ($selectedIds as $fileId) {
+                $file = $mapping->files()->where('id', $fileId)->first();
+                if (!$file) continue;
+                // Mark as rejected: keep visible (is_active = 1), set pending_approval = 2
+                $file->update([
+                    'pending_approval' => 2,
+                    'is_active' => 1,
+                    'marked_for_deletion_at' => null,
+                ]);
+            }
+        }
+
+        // Ensure originals (files replaced by the rejected ones) remain shown as
+        // 'Replaced' (pending) so users can still see and act on them.
+        if (!empty($selectedIds)) {
+            $originals = $mapping->files()
+                ->whereIn('replaced_by_id', $selectedIds)
+                ->get();
+
+            foreach ($originals as $orig) {
+                $orig->update([
+                    'pending_approval' => 1,
+                    'is_active' => 1,
+                    'marked_for_deletion_at' => null,
+                ]);
+            }
+        }
+
         // Hard delete file yang di-mark (non-pending)
         $markedFiles = $mapping->files()
             ->where('is_active', 0)
             ->whereNotNull('marked_for_deletion_at')
-            ->whereNull('pending_approval')
+            ->where('pending_approval', 0)
             ->whereDate('marked_for_deletion_at', '<=', now()->today())
             ->get();
 

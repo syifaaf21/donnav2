@@ -47,6 +47,17 @@ class DocumentNumberController extends Controller
             return $s;
         };
 
+        // special normalizer for document code: preserve slashes and spaces (user requested)
+        $normalizeDoc = function ($s) {
+            $s = (string) $s;
+            $s = trim($s);
+            // collapse multiple spaces into one
+            $s = preg_replace('/\s+/', ' ', $s);
+            // remove unwanted characters but KEEP slash, space, underscore and dash
+            $s = preg_replace('/[^A-Za-z0-9\/ _\-]/', '', $s);
+            return $s;
+        };
+
         // build parts but keep each component intact (preserve internal underscores/dashes)
         $parts = array_values(array_filter([
             $normalize($docCode),
@@ -64,7 +75,8 @@ class DocumentNumberController extends Controller
         if ($format === 3) {
 
             // Normalize each part separately
-            $docPart = $normalize($docCode);
+            // Keep slashes and spaces in document code as requested (e.g. "C/S PRD")
+            $docPart = $normalizeDoc($docCode);
             $deptPart = $normalize($deptCode);
             $productPart = $normalize($productCode);
             $processPart = $normalize($processCode);
