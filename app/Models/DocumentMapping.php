@@ -14,6 +14,7 @@ class DocumentMapping extends Model
     protected $fillable = [
         'document_id',
         'document_number',
+        'revision',
         'model_id',
         'product_id',
         'process_id',

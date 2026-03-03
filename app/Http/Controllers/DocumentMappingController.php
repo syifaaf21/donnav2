@@ -521,6 +521,11 @@ class DocumentMappingController extends Controller
             'notes' => $cleanNotes,
         ]);
 
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        }
+
         $models = $validated['model_id'] ?? [];
         $products = $validated['product_id'] ?? [];
         $processes = $validated['process_id'] ?? [];
@@ -676,6 +681,14 @@ class DocumentMappingController extends Controller
         $mapping->process()->sync($validated['process_id'] ?? []);
         $mapping->partNumber()->sync($validated['part_number_id'] ?? []);
 
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        } else {
+            // Clear revision when document_number no longer contains revision suffix
+            $mapping->update(['revision' => null]);
+        }
+
         return back()->with('success', 'Document review updated successfully!');
     }
 
@@ -738,6 +751,11 @@ class DocumentMappingController extends Controller
             'status_id' => Status::where('name', 'Need Review')->first()->id,
             'notes' => $cleanNotes,
         ]);
+
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        }
 
         // 6️⃣ Upload file & simpan ke tabel relasi files
         if ($request->hasFile('files')) {
@@ -990,6 +1008,13 @@ class DocumentMappingController extends Controller
                 : $mapping->deadline,
         ]);
         $mapping->timestamps = true;
+
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        } else {
+            $mapping->update(['revision' => null]);
+        }
 
         // Upload files baru jika ada
         if ($request->hasFile('files')) {
