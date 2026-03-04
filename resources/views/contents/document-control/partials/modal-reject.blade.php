@@ -24,10 +24,11 @@
                 <input type="hidden" name="doc_id" id="rejectDocumentId">
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Select file(s) to reject</label>
+                    <label class="form-label fw-semibold">Select file(s) to reject <span class="text-danger">*</span></label>
                     <div id="rejectFilesContainer" class="border rounded p-2 max-h-40 overflow-y-auto text-sm">
                         {{-- Filled by JS: list of files matching is_active=1, pending_approval=0, marked_for_deletion_at=null --}}
                     </div>
+                    <small id="rejectFileError" class="text-danger d-none">Please select at least one file to reject</small>
                 </div>
 
                 <div class="mb-3">

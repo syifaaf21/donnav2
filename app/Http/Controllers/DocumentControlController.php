@@ -519,8 +519,11 @@ class DocumentControlController extends Controller
 
         $request->validate([
             'notes' => 'required|string',
-            'reject_file_ids' => 'nullable|array',
+            'reject_file_ids' => 'required|array|min:1',
             'reject_file_ids.*' => 'integer|exists:tt_document_files,id',
+        ], [
+            'reject_file_ids.required' => 'Please select at least one file to reject.',
+            'reject_file_ids.min' => 'Please select at least one file to reject.',
         ]);
 
         $statusRejected = Status::firstOrCreate(

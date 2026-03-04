@@ -1280,12 +1280,23 @@
                             row.className = 'flex items-center justify-between gap-2 p-2 border-b';
                             row.innerHTML = `
                                 <label class="flex items-center gap-2 flex-1">
-                                    <input type="checkbox" name="reject_file_ids[]" value="${id}" class="form-check-input">
+                                    <input type="checkbox" name="reject_file_ids[]" value="${id}" class="form-check-input reject-file-checkbox">
                                     <span class="text-sm">${name}</span>
                                 </label>
                                 <span class="text-xs text-gray-500">${size}</span>
                             `;
                             container.appendChild(row);
+                        });
+
+                        // Add event listener to hide error when checkbox is checked
+                        container.querySelectorAll('.reject-file-checkbox').forEach(checkbox => {
+                            checkbox.addEventListener('change', function() {
+                                const anyChecked = container.querySelectorAll('input[name="reject_file_ids[]"]:checked').length > 0;
+                                const fileError = document.getElementById('rejectFileError');
+                                if (anyChecked && fileError) {
+                                    fileError.classList.add('d-none');
+                                }
+                            });
                         });
                     }
 
@@ -1315,6 +1326,27 @@
                             text: 'Please write rejection notes before submitting.'
                         });
                         return;
+                    }
+
+                    // Cek apakah minimal 1 file dipilih
+                    const checkedFiles = rejectForm.querySelectorAll('input[name="reject_file_ids[]"]:checked');
+                    const fileError = document.getElementById('rejectFileError');
+                    
+                    if (checkedFiles.length === 0) {
+                        e.preventDefault();
+                        if (fileError) {
+                            fileError.classList.remove('d-none');
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'File Selection Required',
+                            text: 'Please select at least one file to reject.'
+                        });
+                        return;
+                    } else {
+                        if (fileError) {
+                            fileError.classList.add('d-none');
+                        }
                     }
 
                     // Simpan isi Quill
