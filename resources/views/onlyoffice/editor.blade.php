@@ -192,7 +192,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6"/>
         </svg>
-        Kembali ke Daftar File
+        Back to the file list
     </a>
 
     <div class="file-card">
@@ -237,7 +237,7 @@
         <div class="notice">
             <span style="flex-shrink:0">ℹ️</span>
             <span>
-                Editor akan terbuka di <strong>tab baru</strong> ketika Anda klik tombol <strong>Buka Editor</strong>. Setelah selesai mengedit dan menyimpan di DocSpace,
+                Editor akan terbuka di <strong>tab baru</strong> ketika Anda klik tombol <strong>Open Editor</strong>. Setelah selesai mengedit dan menyimpan di DocSpace,
                 kembali ke halaman ini lalu klik <strong>Save and Sync</strong> untuk menyinkronkan perubahan ke server.
             </span>
         </div>
@@ -253,7 +253,7 @@
                         <polyline points="15 3 21 3 21 9"/>
                         <line x1="10" y1="14" x2="21" y2="3"/>
                     </svg>
-                    Buka Editor
+                    Open Editor
                 </button>
 
                 {{-- Sync ke Laravel --}}
@@ -290,7 +290,7 @@
                         <line x1="12" y1="12" x2="12" y2="21"/>
                         <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
                     </svg>
-                    Upload & Buka Editor
+                    Upload & Open Editor
                 </button>
             @endif
 
@@ -366,7 +366,7 @@
         // Reset tombol
         btn.disabled = false;
         btn.classList.remove('loading');
-        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Buka Editor`;
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Open Editor`;
     }
     async function syncFile() {
         const btn = document.getElementById('btnSync');
