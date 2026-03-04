@@ -377,12 +377,52 @@
             // --- When Part Number selected ---
             tsPart.on('change', async function(partIds) {
                 if (!partIds || partIds.length === 0) {
+                    // Clear values dan reload fresh options berdasarkan plant saat ini
                     tsProduct.clear(true);
                     tsModel.clear(true);
                     tsProcess.clear(true);
-                    tsProduct.disable();
-                    tsModel.disable();
-                    tsProcess.disable();
+                    document.getElementById('document_number').value = '';
+                    
+                    // Reload options berdasarkan plant yang dipilih saat ini
+                    const currentPlant = tsPlant.getValue();
+                    if (currentPlant) {
+                        let partsUrl, productsUrl, modelsUrl, processesUrl;
+                        if (currentPlant === 'all') {
+                            partsUrl = `/api/part-numbers`;
+                            productsUrl = `/api/products`;
+                            modelsUrl = `/api/models`;
+                            processesUrl = `/api/processes`;
+                        } else {
+                            const p = encodeURIComponent(currentPlant);
+                            partsUrl = `/api/part-numbers?plant=${p}`;
+                            productsUrl = `/api/products?plant=${p}`;
+                            modelsUrl = `/api/models?plant=${p}`;
+                            processesUrl = `/api/processes?plant=${p}`;
+                        }
+
+                        const [parts, products, models, processes] = await Promise.all([
+                            safeFetchJson(partsUrl),
+                            safeFetchJson(productsUrl),
+                            safeFetchJson(modelsUrl),
+                            safeFetchJson(processesUrl)
+                        ]);
+
+                        tsPart.clearOptions();
+                        tsPart.addOptions(parts || []);
+                        tsPart.refreshOptions(false);
+
+                        tsProduct.clearOptions();
+                        tsProduct.addOptions(products || []);
+                        tsProduct.refreshOptions(false);
+
+                        tsModel.clearOptions();
+                        tsModel.addOptions(models || []);
+                        tsModel.refreshOptions(false);
+
+                        tsProcess.clearOptions();
+                        tsProcess.addOptions(processes || []);
+                        tsProcess.refreshOptions(false);
+                    }
                     return;
                 }
 
@@ -431,8 +471,8 @@
                 tsProcess.setValue(uniqueById(allProcesses).map(p => p.id));
                 tsProcess.enable();
 
-
-
+                // Trigger document number generation setelah autofill selesai
+                generateDocumentNumber();
             });
 
             // --- Auto-generate document number when key fields change ---

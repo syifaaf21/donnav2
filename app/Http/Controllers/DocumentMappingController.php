@@ -447,8 +447,8 @@ class DocumentMappingController extends Controller
         $validated = $request->validate([
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
-            'model_id.*' => 'nullable|exists:tm_models,id',
-            'model_id' => 'nullable|array',
+            'model_id' => 'required|array|min:1',
+            'model_id.*' => 'required|exists:tm_models,id',
             'product_id.*' => 'nullable|exists:tm_products,id',
             'product_id' => 'nullable|array',
             'process_id.*' => 'nullable|exists:tm_processes,id',
@@ -467,13 +467,6 @@ class DocumentMappingController extends Controller
         $cleanNotes = trim($validated['notes'] ?? '');
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '')
             $cleanNotes = null;
-
-        // **Validasi: minimal part number atau model/product/process harus diisi**
-        if (empty($validated['part_number_id']) && empty($validated['model_id']) && empty($validated['product_id']) && empty($validated['process_id'])) {
-            return back()->withErrors([
-                'part_number_id' => 'Please select a Part Number or fill at least one of Model, Product, or Process manually.'
-            ])->withInput();
-        }
 
 
         // **Validasi parent jika diisi**
@@ -605,8 +598,8 @@ class DocumentMappingController extends Controller
             'plant' => 'required|in:body,unit,electric,all',
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
-            'model_id' => 'nullable|array',
-            'model_id.*' => 'exists:tm_models,id',
+            'model_id' => 'required|array|min:1',
+            'model_id.*' => 'required|exists:tm_models,id',
             'product_id' => 'nullable|array',
             'product_id.*' => 'exists:tm_products,id',
             'process_id' => 'nullable|array',
@@ -622,19 +615,6 @@ class DocumentMappingController extends Controller
         $cleanNotes = trim($validated['notes'] ?? '');
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '') {
             $cleanNotes = null;
-        }
-
-        // Validasi minimal input
-        if (
-            empty($validated['part_number_id']) &&
-            empty($validated['model_id']) &&
-            empty($validated['product_id']) &&
-            empty($validated['process_id'])
-        ) {
-            return back()->withErrors([
-                'part_number_id' =>
-                'Please select a Part Number or fill at least one of Model, Product, or Process.'
-            ])->withInput();
         }
 
         // Validasi parent document (jika ada)

@@ -98,7 +98,7 @@
                                         <label class="form-label fw-semibold">Model <span
                                                 class="text-danger">*</span></label>
                                         <select name="model_id[]" multiple
-                                            class="form-select border-0 shadow-sm rounded-3 tom-select">
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select" required>
                                             @foreach ($models as $model)
                                                 <option value="{{ $model->id }}"
                                                     {{ in_array($model->id, $model_ids) ? 'selected' : '' }}>
