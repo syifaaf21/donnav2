@@ -448,10 +448,14 @@ class DocumentControlController extends Controller
         $newObsolete    = \Carbon\Carbon::parse($lastObsolete)->addYears($periodYears);
         $newReminder    = $newObsolete->copy()->subMonth();
 
+        // Restore notes from initial_notes when approving
+        $notesToRestore = $mapping->initial_notes ?? $mapping->notes;
+        
         $mapping->update([
             'status_id'     => $statusActive->id,
             'obsolete_date' => $newObsolete,
             'reminder_date' => $newReminder,
+            'notes'         => $notesToRestore,  // Restore from initial_notes
         ]);
 
         // ===== ARCHIVE FILE YANG PENDING (pending_approval = 1) =====

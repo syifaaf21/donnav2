@@ -1249,6 +1249,7 @@ class DocumentMappingController extends Controller
                 'department_id' => $deptId,
                 'version' => 0,
                 'notes' => $cleanNotes,
+                'initial_notes' => $cleanNotes,  // Backup initial notes
                 'period_years' => $validated['period_years'],
             ]);
 
@@ -1342,6 +1343,7 @@ class DocumentMappingController extends Controller
             'obsolete_date' => $validated['obsolete_date'],
             'reminder_date' => $validated['reminder_date'],
             'notes' => $cleanNotes,
+            'initial_notes' => $cleanNotes,  // Update backup when admin edits notes
         ];
 
         // Jika bukan Active → period_years boleh diupdate

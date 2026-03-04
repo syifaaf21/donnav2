@@ -27,6 +27,7 @@ class DocumentMapping extends Model
         'period_years',
         'status_id',
         'notes',
+        'initial_notes',
         'user_id',
         'last_reminder_date',
         'last_approved_at',
