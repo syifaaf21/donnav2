@@ -545,7 +545,8 @@
                                                                 {{-- Edit Online: if single file, link directly to editor; if multiple, open select-file modal --}}
                                                                 @if($doc->files->count() === 1 && $latestFile)
                                                                     <a href="{{ route('editor.show', $latestFile->id) }}" target="_blank"
-                                                                        class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600">
+                                                                        class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
+                                                                        title="Edit File">
                                                                         <i class="bi bi-pencil mr-2"></i> Edit Online
                                                                     </a>
                                                                 @else
@@ -581,10 +582,20 @@
                                                                 data-bs-target="#downloadReportModal"
                                                                 data-doc-id="{{ $doc->id }}"
                                                                 data-file-id="{{ $files[0]['id'] ?? '' }}"
-                                                                data-file-name="{{ $files[0]['name'] ?? '' }}">
+                                                                data-file-name="{{ $files[0]['name'] ?? '' }}"
+                                                                title="Download Report for Each File">
                                                                 <i class="bi bi-bar-chart mr-2"></i> Download Report
                                                             </button>
                                                         @endif
+
+                                                        {{-- Download as PDF (with watermark) --}}
+                                                        <button type="button"
+                                                            class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-purple-600 download-pdf-btn"
+                                                            data-doc-id="{{ $doc->id }}"
+                                                            data-doc-name="{{ $doc->document_number ?? 'document' }}"
+                                                            title="Download document as PDF (with watermark)">
+                                                            <i class="bi bi-file-pdf mr-2"></i> Download as PDF
+                                                        </button>
 
                                                         {{-- Approve --}}
                                                         @if ($showApproveReject)
@@ -1155,6 +1166,105 @@ ${data.files.map(file => `
 
                         // Show modal
                         reviseModal.classList.remove('hidden');
+                    });
+                });
+
+                /**
+                 * DOWNLOAD AS PDF BUTTON
+                 */
+                document.querySelectorAll('.download-pdf-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const docId = this.getAttribute('data-doc-id');
+                        const docName = this.getAttribute('data-doc-name') || 'document';
+
+                        // Show loading state
+                        const originalText = this.innerHTML;
+                        const originalDisabled = this.disabled;
+                        this.innerHTML = '<i class="bi bi-hourglass-split mr-2"></i> Converting...';
+                        this.disabled = true;
+
+                        // Call the download endpoint
+                        fetch(`/document-review/${docId}/download-as-pdf`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/pdf, application/json'
+                            }
+                        })
+                        .then(async (response) => {
+                            // Check if response is JSON (error) or PDF (success)
+                            const contentType = response.headers.get('content-type');
+
+                            if (!response.ok) {
+                                // Handle error response
+                                if (contentType && contentType.includes('application/json')) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.message || errorData.error || `HTTP ${response.status}`);
+                                } else {
+                                    throw new Error(`HTTP ${response.status}: Failed to convert document`);
+                                }
+                            }
+
+                            // Check if response is valid PDF
+                            if (!contentType || !contentType.includes('application/pdf')) {
+                                const text = await response.text();
+                                console.error('Invalid content type:', contentType, 'Body:', text.substring(0, 200));
+                                throw new Error('Invalid response type: expected PDF, got ' + contentType);
+                            }
+
+                            // Get filename from Content-Disposition header
+                            const contentDisposition = response.headers.get('content-disposition');
+                            let filename = `${docName}_${new Date().toISOString().slice(0,10)}.pdf`;
+                            if (contentDisposition) {
+                                const matches = /filename="([^"]+)"/.exec(contentDisposition);
+                                if (matches) filename = matches[1];
+                            }
+
+                            return response.blob().then(blob => {
+                                // Verify blob is not empty
+                                if (blob.size === 0) {
+                                    throw new Error('Received empty PDF file');
+                                }
+                                return { blob, filename };
+                            });
+                        })
+                        .then(({ blob, filename }) => {
+                            // Verify it's a valid PDF by checking magic bytes
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const arr = new Uint8Array(reader.result).subarray(0, 4);
+                                const header = String.fromCharCode.apply(null, arr);
+
+                                if (header !== '%PDF') {
+                                    console.error('Invalid PDF header:', header);
+                                    alert('Error: Downloaded file is not a valid PDF. Please check the server logs.');
+                                    return;
+                                }
+
+                                // Create a download link
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = filename;
+                                document.body.appendChild(link);
+                                link.click();
+                                window.URL.revokeObjectURL(url);
+                                link.remove();
+
+                                // Show success message
+                                console.log(`PDF downloaded successfully: ${filename}`);
+                            };
+                            reader.readAsArrayBuffer(blob.slice(0, 4));
+                        })
+                        .catch((error) => {
+                            console.error('PDF download failed:', error);
+                            alert(`Failed to download PDF:\n\n${error.message}`);
+                        })
+                        .finally(() => {
+                            // Restore button state
+                            this.innerHTML = originalText;
+                            this.disabled = originalDisabled;
+                        });
                     });
                 });
 

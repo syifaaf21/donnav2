@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{Department, Document, DocumentFile, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
 use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
-use App\Services\WhatsAppService;
+use App\Services\{WhatsAppService, DocumentConverterService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB, Notification, Storage};
 
@@ -626,6 +626,256 @@ class DocumentReviewController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Download dokumen sebagai PDF dengan watermark
+     * Support untuk dokumen DOCX, XLSX, dan format lain yang bisa dikonversi
+     *
+     * GET /document-review/{id}/download-as-pdf?watermark_text=REVIEWED
+     */
+    public function downloadAsPdf($id, Request $request, DocumentConverterService $converter)
+    {
+        try {
+            $mapping = DocumentMapping::with(['files', 'document', 'user'])
+                ->findOrFail($id);
+
+            // Ambil file pertama (paling aktual)
+            $file = $mapping->files()
+                ->where('is_active', 1)
+                ->where('pending_approval', 0)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            \Log::info('ALL files tanpa filter', [
+                'all_files' => $mapping->files()->withTrashed()->get()->map(fn($f) => [
+                    'id'                  => $f->id,
+                    'file_path'           => $f->file_path,
+                    'is_active'           => $f->is_active,
+                    'pending_approval'    => $f->pending_approval,
+                    'replaced_by_id'      => $f->replaced_by_id,
+                    'marked_for_deletion' => $f->marked_for_deletion_at,
+                    'created_at'          => $f->created_at,
+                ])
+            ]);
+
+            \Log::info('Files in mapping', [
+                'all_files' => $mapping->files()->get()->map(fn($f) => [
+                    'id'               => $f->id,
+                    'file_path'        => $f->file_path,
+                    'is_active'        => $f->is_active,
+                    'pending_approval' => $f->pending_approval,
+                    'created_at'       => $f->created_at,
+                ])
+            ]);
+
+            if (!$file) {
+                return response()->json([
+                    'error' => 'Dokumen tidak ditemukan atau belum diupload.'
+                ], 400);
+            }
+
+            // Tentukan watermark text
+            $watermarkText = $request->input('watermark_text');
+
+            // Jika tidak ada custom watermark, gunakan default
+            if (!$watermarkText) {
+                $watermarkText = "Reviewed by " . auth()->user()->name . " • " . now()->format('Y-m-d H:i');
+            }
+
+            $filePath = $file->file_path;
+            $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+            // ✅ TARUH DI SINI
+            \Log::info('Download attempt', [
+                'file_path'          => $filePath,
+                'disk_local_exists'  => Storage::exists($filePath),
+                'disk_public_exists' => Storage::disk('public')->exists($filePath),
+                'full_path'          => storage_path('app/public/' . $filePath),
+                'file_exists_php'    => file_exists(storage_path('app/public/' . $filePath)),
+            ]);
+
+            // Beberapa data lama bisa tersimpan di disk local (storage/app)
+            // sementara data baru ada di disk public (storage/app/public).
+            $storageDisk = Storage::disk('public')->exists($filePath) ? 'public' : (Storage::disk('local')->exists($filePath) ? 'local' : null);
+
+            // Verify file exists di storage
+            if (!$storageDisk) {
+                \Log::error("File not found in storage: {$filePath}");
+                return response()->json([
+                    'error' => 'File tidak ditemukan di storage'
+                ], 404);
+            }
+
+            $pdfContent = null;
+
+            // Jika sudah PDF, langsung watermark. Jika DOCX/XLSX, convert dulu
+            if ($extension === 'pdf') {
+                // File sudah PDF, tinggal watermark
+                \Log::info("Processing PDF file: {$filePath}");
+
+                try {
+                    $pdfContent = Storage::disk($storageDisk)->get($filePath);
+
+                    if (empty($pdfContent)) {
+                        throw new \Exception('PDF file is empty');
+                    }
+
+                    $pdfWatermarker = app(\App\Services\PdfWatermarker::class);
+
+                    // Create temp file dengan full path
+                    $tempDir = sys_get_temp_dir();
+                    $tempPath = tempnam($tempDir, 'doc_review_');
+
+                    if ($tempPath === false) {
+                        throw new \Exception('Failed to create temporary file');
+                    }
+
+                    $bytesWritten = file_put_contents($tempPath, $pdfContent);
+                    if ($bytesWritten === false) {
+                        @unlink($tempPath);
+                        throw new \Exception('Failed to write PDF to temporary file');
+                    }
+
+                    try {
+                        $pdfContent = $pdfWatermarker->stampText($tempPath, $watermarkText);
+
+                        if (empty($pdfContent)) {
+                            throw new \Exception('Watermarked PDF is empty');
+                        }
+                    } catch (\Throwable $e) {
+                        $message = strtolower($e->getMessage());
+                        $isUnsupportedCompression = str_contains($message, 'fpdi-pdf-parser')
+                            || str_contains($message, 'compression technique which is not supported');
+
+                        if ($isUnsupportedCompression) {
+                            \Log::warning('Watermark skipped for existing PDF: unsupported FPDI compression', [
+                                'file_path' => $filePath,
+                                'error' => $e->getMessage(),
+                            ]);
+
+                            // Fallback: return original PDF without watermark
+                        } else {
+                            throw $e;
+                        }
+                    } finally {
+                        if (file_exists($tempPath)) {
+                            @unlink($tempPath);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("PDF watermark error: " . $e->getMessage(), [
+                        'file_path' => $filePath,
+                        'exception' => $e
+                    ]);
+                    throw $e;
+                }
+            } elseif (in_array($extension, ['docx', 'xlsx', 'doc', 'xls', 'xlsm', 'pptx', 'ppt', 'odt', 'ods', 'odp'])) {
+                // File butuh konversi dari DOCX/XLSX ke PDF
+                \Log::info("Converting {$extension} to PDF: {$filePath}");
+
+                try {
+                    // Upload file temporary ke OnlyOffice untuk di-convert
+                    $fileName = $file->original_name ?? "document_{$file->id}";
+
+                    $docSpaceService = app(\App\Services\DocSpaceService::class);
+                    $uploadedFileInfo = $docSpaceService->uploadFile($filePath, $fileName);
+
+                    $docspaceFileId = $uploadedFileInfo['file_id'];
+
+                    // ✅ Tambahkan ini
+                    \Log::info('File uploaded to OnlyOffice', [
+                        'docspace_file_id' => $docspaceFileId,
+                        'upload_info'      => $uploadedFileInfo,
+                    ]);
+
+                    try {
+                        // Convert menggunakan DocumentConverterService
+                        $pdfContent = $converter->convertToPdf(
+                            $docspaceFileId,
+                            addWatermark: true,
+                            watermarkText: $watermarkText
+                        );
+
+                        if (empty($pdfContent)) {
+                            throw new \Exception('Converted PDF is empty');
+                        }
+                    } finally {
+                        // Cleanup file temporary di OnlyOffice
+                        try {
+                            $docSpaceService->deleteFile($docspaceFileId);
+                            \Log::info("Temporary OnlyOffice file deleted: {$docspaceFileId}");
+                        } catch (\Exception $e) {
+                            \Log::warning("Failed to delete temporary OnlyOffice file: " . $e->getMessage());
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Document conversion error: " . $e->getMessage(), [
+                        'file_path' => $filePath,
+                        'extension' => $extension,
+                        'exception' => $e
+                    ]);
+                    throw $e;
+                }
+            } else {
+                return response()->json([
+                    'error' => "Format file {$extension} tidak didukung untuk konversi. " .
+                        "Format yang didukung: PDF, DOCX, XLSX, DOC, XLS, PPTX, ODP"
+                ], 400);
+            }
+
+            // Verify PDF content before returning
+            if (empty($pdfContent)) {
+                \Log::error("PDF content is empty after processing", [
+                    'file_id' => $file->id,
+                    'file_path' => $filePath
+                ]);
+                return response()->json([
+                    'error' => 'PDF generation failed: empty content'
+                ], 500);
+            }
+
+            // Verify it's a valid PDF
+            if (strpos($pdfContent, '%PDF') !== 0) {
+                \Log::error("Invalid PDF header detected", [
+                    'file_id' => $file->id,
+                    'file_path' => $filePath,
+                    'header' => substr($pdfContent, 0, 10)
+                ]);
+                return response()->json([
+                    'error' => 'PDF generation failed: invalid format'
+                ], 500);
+            }
+
+            // Generate nama file output
+            $originalName = pathinfo($file->original_name ?? $file->file_path, PATHINFO_FILENAME);
+            $outputFileName = $originalName . '_' . now()->format('Ymd_Hi') . '.pdf';
+
+            // Log download
+            try {
+                $this->logDownload(new Request(['mapping_id' => $id]), $id);
+            } catch (\Exception $e) {
+                \Log::warning("Failed to log download: " . $e->getMessage());
+            }
+
+            // Return PDF untuk di-download
+            return response($pdfContent, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Length', strlen($pdfContent))
+                ->header('Content-Disposition', "attachment; filename=\"{$outputFileName}\"")
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
+        } catch (\Exception $e) {
+            \Log::error("PDF download error: " . $e->getMessage(), [
+                'mapping_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Gagal mengkonversi dokumen ke PDF',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 
