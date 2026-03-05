@@ -238,48 +238,41 @@
                             }
                         @endphp
 
-                        @if (empty($matrix))
-                            <div class="alert alert-info small mb-0">
-                                Department status breakdown not available. Please provide <strong>$deptStatusMatrix</strong>
-                                from the controller in the format: <em>['Dept Name' => ['Status Name' => count]]</em>.
-                            </div>
-                        @else
-                            {{-- Chart: Department status (stacked bar) --}}
-                            <div class="mb-3" id="deptStatusWrapper">
-                                <canvas id="deptStatusChart" height="140"></canvas>
-                            </div>
+                        {{-- Chart: Department status (stacked bar) --}}
+                        <div class="mb-3" id="deptStatusWrapper">
+                            <canvas id="deptStatusChart" height="140"></canvas>
+                        </div>
 
-                            <div class="table-responsive mt-2" id="deptStatusTableWrapper" style="display:none;">
-                                <table class="table table-sm table-hover mb-0 align-middle"
-                                    style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
-                                    <thead class="table-header-blue">
-                                        <tr>
-                                            <th class="small py-2">Department</th>
-                                            @foreach ($statuses as $s)
-                                                <th class="small py-2 text-center">{{ $s }}</th>
-                                            @endforeach
-                                            <th class="small py-2 text-center">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($matrix as $dept => $map)
-                                            <tr>
-                                                <td class="small py-2">{{ $dept }}</td>
-                                                @php $rowTotal = 0; @endphp
-                                                @foreach ($statuses as $s)
-                                                    @php
-                                                        $val = isset($map[$s]) ? (int) $map[$s] : 0;
-                                                        $rowTotal += $val;
-                                                    @endphp
-                                                    <td class="small py-2 text-center">{{ $val }}</td>
-                                                @endforeach
-                                                <td class="small py-2 text-center fw-semibold">{{ $rowTotal }}</td>
-                                            </tr>
+                        <div class="table-responsive mt-2" id="deptStatusTableWrapper" style="display:none;">
+                            <table class="table table-sm table-hover mb-0 align-middle"
+                                style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
+                                <thead class="table-header-blue">
+                                    <tr>
+                                        <th class="small py-2">Department</th>
+                                        @foreach ($statuses as $s)
+                                            <th class="small py-2 text-center">{{ $s }}</th>
                                         @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
+                                        <th class="small py-2 text-center">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($matrix as $dept => $map)
+                                        <tr>
+                                            <td class="small py-2">{{ $dept }}</td>
+                                            @php $rowTotal = 0; @endphp
+                                            @foreach ($statuses as $s)
+                                                @php
+                                                    $val = isset($map[$s]) ? (int) $map[$s] : 0;
+                                                    $rowTotal += $val;
+                                                @endphp
+                                                <td class="small py-2 text-center">{{ $val }}</td>
+                                            @endforeach
+                                            <td class="small py-2 text-center fw-semibold">{{ $rowTotal }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

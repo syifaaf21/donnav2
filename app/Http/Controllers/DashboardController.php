@@ -553,15 +553,28 @@ class DashboardController extends Controller
         $deptLabels = $findingsPerDepartment->pluck('name');
         $deptTotals = $findingsPerDepartment->pluck('audit_findings_count');
 
-        // Recent findings (10 terbaru)
+        // Recent findings (10 terbaru) - respecting audit type filter
         $recentFindings = AuditFinding::with(['department', 'status'])
             ->whereNull('marked_for_deletion_at')
-            ->orderBy('created_at', 'desc')
+            ->whereHas('status', function ($q) {
+                $q->whereRaw("LOWER(name) NOT LIKE '%draft%'");
+            });
+        
+        if (!empty($selectedAuditTypeId)) {
+            $recentFindings->where('audit_type_id', $selectedAuditTypeId);
+        }
+        
+        $recentFindings = $recentFindings->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
-        // Status breakdown untuk distribusi
-        $statusBreakdown = $chartData->toArray();
+        // Status breakdown untuk distribusi - filter out draft statuses
+        $statusBreakdown = [];
+        foreach ($chartData as $status => $count) {
+            if (stripos($status, 'draft') === false) {
+                $statusBreakdown[$status] = $count;
+            }
+        }
 
         // Audit types list for tabs/filters
         $auditTypes = \App\Models\Audit::orderBy('name')->get();
