@@ -159,7 +159,8 @@
                                             {{ in_array($opt['key'], $selectedStatuses) ? 'checked' : '' }}>
                                         <i class="{{ $opt['icon'] }} {{ $opt['color'] }} text-lg"></i>
                                         <span class="flex-1 text-sm">{{ $opt['label'] }}</span>
-                                        <span class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$opt['key']] ?? 0 }}</span>
+                                        <span
+                                            class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$opt['key']] ?? 0 }}</span>
                                     </label>
                                 </li>
                             @endforeach
@@ -345,7 +346,8 @@
                                             <span class="{{ $statusClass }} w-max inline-block">
                                                 {{ ucwords($statusName ?: '-') }}
                                             </span>
-                                             <div class="text-xs text-gray-500">{{ optional($doc->department)->name ?? 'Unknown' }}</div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ optional($doc->department)->name ?? 'Unknown' }}</div>
                                         </div>
                                     </td>
                                     <td class="px-2 py-3 text-center text-xs font-medium min-w-[100px]">
@@ -536,15 +538,16 @@
                                                         class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
                                                         {{-- Edit actions: separate "Edit Online" (OnlyOffice) and "Edit" (upload/revise) --}}
                                                         @if ($showEdit)
-                                                            @if($doc->files->isNotEmpty())
+                                                            @if ($doc->files->isNotEmpty())
                                                                 @php
                                                                     // Prefer the most recent file for direct online edit when single
                                                                     $latestFile = $doc->files->last();
                                                                 @endphp
 
                                                                 {{-- Edit Online: if single file, link directly to editor; if multiple, open select-file modal --}}
-                                                                @if($doc->files->count() === 1 && $latestFile)
-                                                                    <a href="{{ route('editor.show', $latestFile->id) }}" target="_blank"
+                                                                @if ($doc->files->count() === 1 && $latestFile)
+                                                                    <a href="{{ route('editor.show', $latestFile->id) }}"
+                                                                        target="_blank"
                                                                         class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
                                                                         title="Edit File">
                                                                         <i class="bi bi-pencil mr-2"></i> Edit Online
@@ -561,14 +564,16 @@
                                                                 {{-- Keep existing Edit (upload/replace) button available --}}
                                                                 <button type="button"
                                                                     class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                    data-doc-id="{{ $doc->id }}" title="Upload File">
+                                                                    data-doc-id="{{ $doc->id }}"
+                                                                    title="Upload File">
                                                                     <i class="bi bi-box-arrow-up-right mr-2"></i> Upload
                                                                 </button>
                                                             @else
                                                                 {{-- No files yet: keep Edit (upload) button only --}}
                                                                 <button type="button"
                                                                     class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                    data-doc-id="{{ $doc->id }}" title="Upload fILE">
+                                                                    data-doc-id="{{ $doc->id }}"
+                                                                    title="Upload fILE">
                                                                     <i class="bi bi-box-arrow-up-right mr-2"></i> Upload
                                                                 </button>
                                                             @endif
@@ -588,14 +593,16 @@
                                                             </button>
                                                         @endif
 
-                                                        {{-- Download as PDF (with watermark) --}}
-                                                        <button type="button"
-                                                            class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-purple-600 download-pdf-btn"
-                                                            data-doc-id="{{ $doc->id }}"
-                                                            data-doc-name="{{ $doc->document_number ?? 'document' }}"
-                                                            title="Download document as PDF (with watermark)">
-                                                            <i class="bi bi-file-pdf mr-2"></i> Download as PDF
-                                                        </button>
+                                                        {{-- Download as PDF (with watermark) - only when approved --}}
+                                                        @if ($status === 'approved')
+                                                            <button type="button"
+                                                                class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-purple-600 download-pdf-btn"
+                                                                data-doc-id="{{ $doc->id }}"
+                                                                data-doc-name="{{ $doc->document_number ?? 'document' }}"
+                                                                title="Download document as PDF (with watermark)">
+                                                                <i class="bi bi-file-pdf mr-2"></i> Download as PDF
+                                                            </button>
+                                                        @endif
 
                                                         {{-- Approve --}}
                                                         @if ($showApproveReject)
@@ -693,8 +700,10 @@
             </div>
 
             <div class="flex justify-end gap-2">
-                <button type="button" id="selectFileCancel" class="px-4 py-1.5 border border-gray-300 rounded text-gray-700">Batal</button>
-                <button id="selectFileConfirm" type="button" class="px-4 py-1.5 bg-sky-600 text-white rounded" disabled>Edit</button>
+                <button type="button" id="selectFileCancel"
+                    class="px-4 py-1.5 border border-gray-300 rounded text-gray-700">Batal</button>
+                <button id="selectFileConfirm" type="button" class="px-4 py-1.5 bg-sky-600 text-white rounded"
+                    disabled>Edit</button>
             </div>
         </div>
     </div>
@@ -749,12 +758,37 @@
         }
 
         /* Select File Modal: ensure light card style and lighter backdrop */
-        #selectFileToEditModal { background: rgba(10,12,20,0.20); }
-        #selectFileToEditModal .select-file-dialog { background: #ffffff !important; color: #0f172a !important; border: 1px solid rgba(15,23,42,0.06); border-radius: 12px; box-shadow: 0 12px 30px rgba(16,24,40,0.12); }
-        #selectFileToEditModal .select-file-dialog h5 { color: #0f172a; }
-        #selectFileToEditModal .select-file-dialog .btn-close { background: #f8fafc; border: 1px solid rgba(2,6,23,0.04); color: #475569; border-radius: 999px; padding: 6px 8px; }
-        #selectFileToEditModal .select-file-dialog .px-4 { border-radius: 8px; }
-        #selectFileToEditModal .select-file-dialog .bg-sky-600 { background: linear-gradient(180deg,#1e90ff,#0f62ff); }
+        #selectFileToEditModal {
+            background: rgba(10, 12, 20, 0.20);
+        }
+
+        #selectFileToEditModal .select-file-dialog {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.12);
+        }
+
+        #selectFileToEditModal .select-file-dialog h5 {
+            color: #0f172a;
+        }
+
+        #selectFileToEditModal .select-file-dialog .btn-close {
+            background: #f8fafc;
+            border: 1px solid rgba(2, 6, 23, 0.04);
+            color: #475569;
+            border-radius: 999px;
+            padding: 6px 8px;
+        }
+
+        #selectFileToEditModal .select-file-dialog .px-4 {
+            border-radius: 8px;
+        }
+
+        #selectFileToEditModal .select-file-dialog .bg-sky-600 {
+            background: linear-gradient(180deg, #1e90ff, #0f62ff);
+        }
     </style>
     @push('scripts')
         <script>
@@ -858,6 +892,7 @@
                 let currentDocId = null; // Simpan docId yang sedang dibuka
                 let currentFileId = null; // Simpan fileId yang sedang dibuka
                 let currentFileType = null; // Simpan tipe file (pdf, excel, word, etc)
+                let currentPreviewObjectUrl = null; // Blob URL for converted preview
 
                 // Helper: Deteksi tipe file dari URL/path
                 function getFileType(url) {
@@ -926,26 +961,122 @@
                             currentFileId = clickedFileId || null;
                         }
 
-                        // Deteksi tipe file
-                        currentFileType = getFileType(url);
-                        console.log('File type detected:', currentFileType);
+                        // Deteksi tipe file asli
+                        const sourceFileType = getFileType(url);
+                        currentFileType = sourceFileType;
+                        console.log('File type detected:', sourceFileType);
 
                         // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
-                        const downloadWatermarkedBtn = document.getElementById('downloadWatermarkedBtn');
+                        const downloadWatermarkedBtn = document.getElementById(
+                            'downloadWatermarkedBtn');
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
                         const docStatus = (btn.dataset.docStatus || '').toString().toLowerCase();
                         const isAdminFlag = (btn.dataset.isAdmin || '') === '1';
+                        // LOG DOWNLOAD untuk file non-PDF saat user membuka preview
+                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other']
+                            .includes(sourceFileType)) {
+                            fetch(`/document-review/${currentDocId}/log-download`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector(
+                                            'meta[name="csrf-token"]').content,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        action: 'view_file',
+                                        file_type: sourceFileType,
+                                        document_file_id: currentFileId
+                                    })
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    console.log('Preview logged (non-PDF):', data);
+                                })
+                                .catch(err => console.error('Failed to log preview:', err));
+                        }
+
+                        let previewUrl = url;
+
+                        // For non-PDF sources, request server-side conversion and preview inline as PDF.
+                        if (sourceFileType !== 'pdf' && currentDocId) {
+                            const convertUrl = new URL(`/document-review/${currentDocId}/download-as-pdf`,
+                                window.location.origin);
+                            convertUrl.searchParams.set('inline', '1');
+                            if (currentFileId) {
+                                convertUrl.searchParams.set('file_id', String(currentFileId));
+                            }
+
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Converting file...',
+                                    text: 'Please wait while we prepare PDF preview.',
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    didOpen: () => Swal.showLoading()
+                                });
+                            }
+
+                            try {
+                                const convertRes = await fetch(convertUrl.toString(), {
+                                    method: 'GET',
+                                    headers: {
+                                        'Accept': 'application/pdf, application/json'
+                                    }
+                                });
+
+                                const contentType = convertRes.headers.get('content-type') || '';
+                                if (!convertRes.ok || !contentType.includes('application/pdf')) {
+                                    let errMessage = 'Failed to convert file for preview.';
+                                    try {
+                                        const errJson = await convertRes.json();
+                                        errMessage = errJson.error || errJson.message || errMessage;
+                                    } catch (_) {
+                                        // Keep default message if body is not JSON.
+                                    }
+                                    throw new Error(errMessage);
+                                }
+
+                                const pdfBlob = await convertRes.blob();
+                                if (currentPreviewObjectUrl) {
+                                    URL.revokeObjectURL(currentPreviewObjectUrl);
+                                }
+                                currentPreviewObjectUrl = URL.createObjectURL(pdfBlob);
+                                previewUrl = currentPreviewObjectUrl;
+                                currentFileType = 'pdf';
+                            } catch (convertError) {
+                                console.error('Preview conversion failed:', convertError);
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Conversion failed',
+                                        text: convertError.message ||
+                                            'Unable to convert file to PDF preview.'
+                                    });
+                                } else {
+                                    alert(convertError.message ||
+                                        'Unable to convert file to PDF preview.');
+                                }
+                                return;
+                            } finally {
+                                if (typeof Swal !== 'undefined' && Swal.isLoading()) {
+                                    Swal.close();
+                                }
+                            }
+                        }
+
                         const isPdf = currentFileType === 'pdf';
-                        const canDownloadOrPrint = isPdf && (docStatus === 'approved' || isAdminFlag);
+                        const canDownloadOrPrint = isPdf && (docStatus === 'approved' ||
+                            isAdminFlag);
 
                         if (canDownloadOrPrint) {
                             printBtnToggle.classList.remove('d-none');
                             downloadBtnToggle.classList.remove('d-none');
                             if (downloadWatermarkedBtn) {
                                 downloadWatermarkedBtn.classList.remove('d-none');
-                                if (currentFileId) downloadWatermarkedBtn.href = `/document-review/file/${currentFileId}/download-watermarked`;
+                                if (currentFileId) downloadWatermarkedBtn.href =
+                                    `/document-review/file/${currentFileId}/download-watermarked`;
                             }
                         } else {
                             printBtnToggle.classList.add('d-none');
@@ -963,35 +1094,13 @@
                             viewFullBtnToggle.classList.add('d-none');
                         }
 
-                        // LOG DOWNLOAD untuk Excel/Word/PPT/Image saat button show diklik
-                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other']
-                            .includes(currentFileType)) {
-                            fetch(`/document-review/${currentDocId}/log-download`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]').content,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        action: 'view_file',
-                                        file_type: currentFileType,
-                                        document_file_id: currentFileId
-                                    })
-                                })
-                                .then(res => res.json())
-                                .then(data => {
-                                    console.log('Download logged (non-PDF):', data);
-                                })
-                                .catch(err => console.error('Failed to log download:', err));
-                        }
-
                         // Untuk iframe PDF, coba sembunyikan toolbar default dengan fragment params
-                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) :
-                            url;
-                        previewFrame.dataset.url = previewUrl;
+                        const finalPreviewUrl = currentFileType === 'pdf'
+                            ? withPdfViewerParams(previewUrl)
+                            : previewUrl;
+                        previewFrame.dataset.url = finalPreviewUrl;
                         // Gunakan URL yang sudah disanitasi agar toolbar tetap tersembunyi saat "View Full"
-                        viewFullBtn.href = previewUrl;
+                        viewFullBtn.href = finalPreviewUrl;
                         previewModal.show();
                     });
                 });
@@ -1010,6 +1119,10 @@
                         previewFrame.src = '';
                         previewFrame.dataset.url = '';
                         viewFullBtn.href = '#';
+                        if (currentPreviewObjectUrl) {
+                            URL.revokeObjectURL(currentPreviewObjectUrl);
+                            currentPreviewObjectUrl = null;
+                        }
                         currentDocId = null; // Reset docId
                         currentFileId = null; // Reset file id
                         currentFileType = null; // Reset file type
@@ -1134,28 +1247,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                                                                            <div class="border rounded p-2 bg-gray-50">
-                                                                                                <div class="flex items-center justify-between">
-                                                                                                    <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                    <div class="border rounded p-2 bg-gray-50">
+                                                                                                        <div class="flex items-center justify-between">
+                                                                                                            <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                    <div class="flex gap-2">
-                                                                                                        {{-- <a href="/storage/${file.file_path}"
+                                                                                                            <div class="flex gap-2">
+                                                                                                                {{-- <a href="/storage/${file.file_path}"
                                                                                                     target="_blank"
                                                                                                     class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
                                                                                                     View
                                                                                                 </a> --}}
 
-                                                                                                        <button type="button"
-                                                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                            data-file-id="${file.id}">
-                                                                                                            Replace
-                                                                                                        </button>
-                                                                                                    </div>
-                                                                                                </div>
+                                                                                                                <button type="button"
+                                                                                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                    data-file-id="${file.id}">
+                                                                                                                    Replace
+                                                                                                                </button>
+                                                                                                            </div>
+                                                                                                        </div>
 
-                                                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                                                                            </div>
-                                                                                        `).join('')}
+                                                                                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                                                                    </div>
+                                                                                                `).join('')}
 </div>`;
 
                             })
@@ -1178,93 +1291,135 @@ ${data.files.map(file => `
                         const docId = this.getAttribute('data-doc-id');
                         const docName = this.getAttribute('data-doc-name') || 'document';
 
-                        // Show loading state
-                        const originalText = this.innerHTML;
-                        const originalDisabled = this.disabled;
-                        this.innerHTML = '<i class="bi bi-hourglass-split mr-2"></i> Converting...';
-                        this.disabled = true;
+                        // Show modal loading so user still sees progress when action dropdown auto-closes.
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Converting document...',
+                                text: 'Please wait while PDF is being generated.',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+                        }
 
                         // Call the download endpoint
                         fetch(`/document-review/${docId}/download-as-pdf`, {
-                            method: 'GET',
-                            headers: {
-                                'Accept': 'application/pdf, application/json'
-                            }
-                        })
-                        .then(async (response) => {
-                            // Check if response is JSON (error) or PDF (success)
-                            const contentType = response.headers.get('content-type');
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/pdf, application/json'
+                                }
+                            })
+                            .then(async (response) => {
+                                // Check if response is JSON (error) or PDF (success)
+                                const contentType = response.headers.get('content-type');
 
-                            if (!response.ok) {
-                                // Handle error response
-                                if (contentType && contentType.includes('application/json')) {
-                                    const errorData = await response.json();
-                                    throw new Error(errorData.message || errorData.error || `HTTP ${response.status}`);
+                                if (!response.ok) {
+                                    // Handle error response
+                                    if (contentType && contentType.includes(
+                                        'application/json')) {
+                                        const errorData = await response.json();
+                                        throw new Error(errorData.message || errorData.error ||
+                                            `HTTP ${response.status}`);
+                                    } else {
+                                        throw new Error(
+                                            `HTTP ${response.status}: Failed to convert document`
+                                            );
+                                    }
+                                }
+
+                                // Check if response is valid PDF
+                                if (!contentType || !contentType.includes('application/pdf')) {
+                                    const text = await response.text();
+                                    console.error('Invalid content type:', contentType, 'Body:',
+                                        text.substring(0, 200));
+                                    throw new Error(
+                                        'Invalid response type: expected PDF, got ' +
+                                        contentType);
+                                }
+
+                                // Get filename from Content-Disposition header
+                                const contentDisposition = response.headers.get(
+                                    'content-disposition');
+                                let filename =
+                                    `${docName}_${new Date().toISOString().slice(0,10)}.pdf`;
+                                if (contentDisposition) {
+                                    const matches = /filename="([^"]+)"/.exec(
+                                        contentDisposition);
+                                    if (matches) filename = matches[1];
+                                }
+
+                                return response.blob().then(blob => {
+                                    // Verify blob is not empty
+                                    if (blob.size === 0) {
+                                        throw new Error('Received empty PDF file');
+                                    }
+                                    return {
+                                        blob,
+                                        filename
+                                    };
+                                });
+                            })
+                            .then(({
+                                blob,
+                                filename
+                            }) => {
+                                // Verify it's a valid PDF by checking magic bytes
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    const arr = new Uint8Array(reader.result).subarray(0, 4);
+                                    const header = String.fromCharCode.apply(null, arr);
+
+                                    if (header !== '%PDF') {
+                                        console.error('Invalid PDF header:', header);
+                                        alert(
+                                            'Error: Downloaded file is not a valid PDF. Please check the server logs.');
+                                        return;
+                                    }
+
+                                    // Create a download link
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = filename;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    window.URL.revokeObjectURL(url);
+                                    link.remove();
+
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Done',
+                                            text: 'PDF is ready and has been downloaded.',
+                                            timer: 1400,
+                                            showConfirmButton: false
+                                        });
+                                    }
+
+                                    // Show success message
+                                    console.log(`PDF downloaded successfully: ${filename}`);
+                                };
+                                reader.readAsArrayBuffer(blob.slice(0, 4));
+                            })
+                            .catch((error) => {
+                                console.error('PDF download failed:', error);
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Failed',
+                                        text: `Failed to download PDF. ${error.message}`
+                                    });
                                 } else {
-                                    throw new Error(`HTTP ${response.status}: Failed to convert document`);
+                                    alert(`Failed to download PDF:\n\n${error.message}`);
                                 }
-                            }
-
-                            // Check if response is valid PDF
-                            if (!contentType || !contentType.includes('application/pdf')) {
-                                const text = await response.text();
-                                console.error('Invalid content type:', contentType, 'Body:', text.substring(0, 200));
-                                throw new Error('Invalid response type: expected PDF, got ' + contentType);
-                            }
-
-                            // Get filename from Content-Disposition header
-                            const contentDisposition = response.headers.get('content-disposition');
-                            let filename = `${docName}_${new Date().toISOString().slice(0,10)}.pdf`;
-                            if (contentDisposition) {
-                                const matches = /filename="([^"]+)"/.exec(contentDisposition);
-                                if (matches) filename = matches[1];
-                            }
-
-                            return response.blob().then(blob => {
-                                // Verify blob is not empty
-                                if (blob.size === 0) {
-                                    throw new Error('Received empty PDF file');
+                            })
+                            .finally(() => {
+                                if (typeof Swal !== 'undefined' && Swal.isLoading()) {
+                                    Swal.close();
                                 }
-                                return { blob, filename };
                             });
-                        })
-                        .then(({ blob, filename }) => {
-                            // Verify it's a valid PDF by checking magic bytes
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                const arr = new Uint8Array(reader.result).subarray(0, 4);
-                                const header = String.fromCharCode.apply(null, arr);
-
-                                if (header !== '%PDF') {
-                                    console.error('Invalid PDF header:', header);
-                                    alert('Error: Downloaded file is not a valid PDF. Please check the server logs.');
-                                    return;
-                                }
-
-                                // Create a download link
-                                const url = window.URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = filename;
-                                document.body.appendChild(link);
-                                link.click();
-                                window.URL.revokeObjectURL(url);
-                                link.remove();
-
-                                // Show success message
-                                console.log(`PDF downloaded successfully: ${filename}`);
-                            };
-                            reader.readAsArrayBuffer(blob.slice(0, 4));
-                        })
-                        .catch((error) => {
-                            console.error('PDF download failed:', error);
-                            alert(`Failed to download PDF:\n\n${error.message}`);
-                        })
-                        .finally(() => {
-                            // Restore button state
-                            this.innerHTML = originalText;
-                            this.disabled = originalDisabled;
-                        });
                     });
                 });
 
@@ -1549,8 +1704,14 @@ ${data.files.map(file => `
                 // wire modal close buttons by ID to avoid brittle selectors
                 const selectFileCloseBtn = document.getElementById('selectFileCloseBtn');
                 const selectFileCancelBtn = document.getElementById('selectFileCancel');
-                if (selectFileCloseBtn) selectFileCloseBtn.addEventListener('click', (e) => { e.stopPropagation(); closeSelectFileModal(); });
-                if (selectFileCancelBtn) selectFileCancelBtn.addEventListener('click', (e) => { e.stopPropagation(); closeSelectFileModal(); });
+                if (selectFileCloseBtn) selectFileCloseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeSelectFileModal();
+                });
+                if (selectFileCancelBtn) selectFileCancelBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeSelectFileModal();
+                });
 
                 document.querySelectorAll('.open-select-file-modal').forEach(btn => {
                     btn.addEventListener('click', async function(e) {
@@ -1559,20 +1720,23 @@ ${data.files.map(file => `
                         if (!mappingId) return;
 
                         selectFileModal.classList.remove('hidden');
-                        selectFileList.innerHTML = '<p class="text-sm text-gray-500">Loading files...</p>';
+                        selectFileList.innerHTML =
+                            '<p class="text-sm text-gray-500">Loading files...</p>';
                         selectFileConfirm.disabled = true;
 
                         try {
                             const res = await fetch(`/document-review/${mappingId}/files`);
                             const json = await res.json();
                             if (!json.success) {
-                                selectFileList.innerHTML = '<p class="text-sm text-red-500">Failed to load files.</p>';
+                                selectFileList.innerHTML =
+                                    '<p class="text-sm text-red-500">Failed to load files.</p>';
                                 return;
                             }
 
                             const files = json.files || [];
                             if (files.length === 0) {
-                                selectFileList.innerHTML = '<p class="text-sm text-gray-500">No files available.</p>';
+                                selectFileList.innerHTML =
+                                    '<p class="text-sm text-gray-500">No files available.</p>';
                                 return;
                             }
 
@@ -1586,10 +1750,11 @@ ${data.files.map(file => `
                                 </label>
                             `).join('');
 
-                            document.querySelectorAll('.select-file-radio').forEach(r => r.addEventListener('change', function() {
-                                selectedFileId = this.value || null;
-                                selectFileConfirm.disabled = !selectedFileId;
-                            }));
+                            document.querySelectorAll('.select-file-radio').forEach(r => r
+                                .addEventListener('change', function() {
+                                    selectedFileId = this.value || null;
+                                    selectFileConfirm.disabled = !selectedFileId;
+                                }));
 
                             // default select first (and ensure selectedFileId set)
                             const first = document.querySelector('.select-file-radio');
@@ -1601,17 +1766,20 @@ ${data.files.map(file => `
                             selectFileConfirm.onclick = function() {
                                 // fallback to first file id if selection failed
                                 let targetId = selectedFileId;
-                                if (!targetId && Array.isArray(window._selectFileOptions) && window._selectFileOptions.length) {
+                                if (!targetId && Array.isArray(window._selectFileOptions) &&
+                                    window._selectFileOptions.length) {
                                     targetId = window._selectFileOptions[0].id;
                                 }
                                 if (!targetId) return;
                                 closeSelectFileModal();
                                 // redirect to editor show (encode to be safe)
-                                window.location.href = '/editor/' + encodeURIComponent(targetId);
+                                window.location.href = '/editor/' + encodeURIComponent(
+                                targetId);
                             };
 
                         } catch (err) {
-                            selectFileList.innerHTML = '<p class="text-sm text-red-500">Failed to load files.</p>';
+                            selectFileList.innerHTML =
+                                '<p class="text-sm text-red-500">Failed to load files.</p>';
                         }
                     });
                 });

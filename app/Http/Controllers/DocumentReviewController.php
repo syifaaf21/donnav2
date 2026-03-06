@@ -640,12 +640,19 @@ class DocumentReviewController extends Controller
             $mapping = DocumentMapping::with(['files', 'document', 'user'])
                 ->findOrFail($id);
 
-            // Ambil file pertama (paling aktual)
-            $file = $mapping->files()
-                ->where('is_active', 1)
-                ->where('pending_approval', 0)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            $requestedFileId = (int) $request->input('file_id', 0);
+
+            // If file_id is provided (multi-file dropdown), use that specific file.
+            if ($requestedFileId > 0) {
+                $file = $mapping->files()->where('id', $requestedFileId)->first();
+            } else {
+                // Ambil file pertama (paling aktual)
+                $file = $mapping->files()
+                    ->where('is_active', 1)
+                    ->where('pending_approval', 0)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
 
             \Log::info('ALL files tanpa filter', [
                 'all_files' => $mapping->files()->withTrashed()->get()->map(fn($f) => [
@@ -851,18 +858,27 @@ class DocumentReviewController extends Controller
             $originalName = pathinfo($file->original_name ?? $file->file_path, PATHINFO_FILENAME);
             $outputFileName = $originalName . '_' . now()->format('Ymd_Hi') . '.pdf';
 
-            // Log download
-            try {
-                $this->logDownload(new Request(['mapping_id' => $id]), $id);
-            } catch (\Exception $e) {
-                \Log::warning("Failed to log download: " . $e->getMessage());
+            $inlinePreview = $request->boolean('inline') || $request->boolean('preview');
+
+            // Log only in attachment mode (not iframe inline preview).
+            if (!$inlinePreview) {
+                try {
+                    $this->logDownload(new Request([
+                        'mapping_id' => $id,
+                        'document_file_id' => $file->id,
+                        'action' => 'download_pdf',
+                        'file_type' => 'pdf',
+                    ]), $id);
+                } catch (\Exception $e) {
+                    \Log::warning("Failed to log download: " . $e->getMessage());
+                }
             }
 
             // Return PDF untuk di-download
             return response($pdfContent, 200)
                 ->header('Content-Type', 'application/pdf')
                 ->header('Content-Length', strlen($pdfContent))
-                ->header('Content-Disposition', "attachment; filename=\"{$outputFileName}\"")
+                ->header('Content-Disposition', ($inlinePreview ? 'inline' : 'attachment') . "; filename=\"{$outputFileName}\"")
                 ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
                 ->header('Pragma', 'no-cache');
         } catch (\Exception $e) {
