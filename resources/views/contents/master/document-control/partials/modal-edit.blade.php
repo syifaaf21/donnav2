@@ -93,7 +93,7 @@
                             <input type="number" name="period_years" min="1"
                                 class="form-control border-0 shadow-sm rounded-3"
                                 value="{{ session('editOldInputs.' . $mapping->id . '.period_years', $mapping->period_years) }}"
-                                @if (strtolower($mapping->status->name) === 'active') readonly @endif required>
+                                required>
                             @error('period_years')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

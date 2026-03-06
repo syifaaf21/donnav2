@@ -1314,9 +1314,6 @@ class DocumentMappingController extends Controller
             $cleanNotes = null;
         }
 
-        // Cek status Active
-        $isActive = $mapping->status && strtolower($mapping->status->name) === 'active';
-
         // Data yang boleh diupdate
         $updateData = [
             'department_id' => $validated['department_id'],
@@ -1326,8 +1323,8 @@ class DocumentMappingController extends Controller
             'initial_notes' => $cleanNotes,  // Update backup when admin edits notes
         ];
 
-        // Jika bukan Active → period_years boleh diupdate
-        if (!$isActive && array_key_exists('period_years', $validated)) {
+        // Period can be updated for any status.
+        if (array_key_exists('period_years', $validated)) {
             $updateData['period_years'] = $validated['period_years'];
         }
 
