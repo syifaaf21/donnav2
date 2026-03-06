@@ -140,7 +140,7 @@ GS_BIN='C:/Program Files/gs/gs10.06.0/bin/gswin64c.exe'
 ## 8. Checklist Deploy
 
 1. Deploy code terbaru.
-2. Install Ghostscript di server.
+2. Install Ghostscript di server. melalui link https://www.ghostscript.com/releases/gsdnld.html
 3. Set `.env` (`GS_BIN` bila perlu).
 4. Pastikan file watermark ada:
    - `public/images/ORIGINAL.png`
