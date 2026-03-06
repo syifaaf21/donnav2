@@ -1,7 +1,28 @@
-@if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+@php
+    $canShowAddDocumentModal = ($allowAllUsers ?? false)
+        || in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']);
+    $isAdminOrSuper = in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']);
+    $addDocumentFormAction = $formAction ?? route('master.document-review.store2');
+    $plantLabels = [
+        'all' => 'ALL',
+        'body' => 'Body',
+        'unit' => 'Unit',
+        'electric' => 'Electric',
+    ];
+    $allowedPlantValues = collect($allowedPlants ?? array_keys($plantLabels))
+        ->map(fn($p) => strtolower(trim((string) $p)))
+        ->filter(fn($p) => array_key_exists($p, $plantLabels))
+        ->unique()
+        ->values();
+    if ($allowedPlantValues->isEmpty()) {
+        $allowedPlantValues = collect(array_keys($plantLabels));
+    }
+@endphp
+
+@if ($canShowAddDocumentModal)
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 900px;">
-            <form action="{{ route('master.document-review.store2') }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ $addDocumentFormAction }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
                 <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="max-width: 100%;">
@@ -68,10 +89,11 @@
                                     class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
                                     required>
                                         <option value="">-- Select Plant --</option>
-                                        <option value="all">ALL</option>
-                                        <option value="body">Body</option>
-                                        <option value="unit">Unit</option>
-                                        <option value="electric">Electric</option>
+                                        @foreach ($allowedPlantValues as $plantValue)
+                                            <option value="{{ $plantValue }}" {{ old('plant') === $plantValue ? 'selected' : '' }}>
+                                                {{ $plantLabels[$plantValue] }}
+                                            </option>
+                                        @endforeach
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -142,20 +164,22 @@
                                 </select>
                             </div>
 
-                            {{-- Notes --}}
-                            <div class="col-12 mb-4">
-                                <label class="form-label fw-semibold">Notes</label>
-                                <input type="hidden" name="notes" id="notes_input_add"
-                                    value="{{ old('notes') }}">
-                                <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
-                                    style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
+                            @if ($isAdminOrSuper)
+                                {{-- Notes --}}
+                                <div class="col-12 mb-4">
+                                    <label class="form-label fw-semibold">Notes</label>
+                                    <input type="hidden" name="notes" id="notes_input_add"
+                                        value="{{ old('notes') }}">
+                                    <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
+                                        style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
+                                    </div>
+                                    <small class="text-muted">You can format your notes with bold, italic, underline,
+                                        colors, and more.</small>
+                                    @error('notes')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <small class="text-muted">You can format your notes with bold, italic, underline,
-                                    colors, and more.</small>
-                                @error('notes')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
+                            @endif
 
                             {{-- File Upload --}}
                             {{-- <div class="col-12 mt-10">
@@ -382,7 +406,7 @@
                     tsModel.clear(true);
                     tsProcess.clear(true);
                     document.getElementById('document_number').value = '';
-                    
+
                     // Reload options berdasarkan plant yang dipilih saat ini
                     const currentPlant = tsPlant.getValue();
                     if (currentPlant) {
@@ -525,28 +549,34 @@
             tsModel.on('change', generateDocumentNumber);
 
 
-            const quill = new Quill('#quill_editor', {
-                theme: 'snow',
-                placeholder: 'Write your notes here...',
-                modules: {
-                    toolbar: [
-                        ['bold', 'italic', 'strike',],[
-                        ['clean']]
-                    ]
-                }
-            });
-
             // Pilih form dan hidden input
             const form = document.querySelector('#addDocumentModal form');
             const hiddenInput = document.querySelector('#notes_input_add');
+            const quillEditorEl = document.querySelector('#quill_editor');
+            let quill = null;
 
-            // Set old value jika ada
-            quill.root.innerHTML = hiddenInput.value || '';
+            if (quillEditorEl && hiddenInput) {
+                quill = new Quill('#quill_editor', {
+                    theme: 'snow',
+                    placeholder: 'Write your notes here...',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'strike'],
+                            ['clean']
+                        ]
+                    }
+                });
+
+                // Set old value jika ada
+                quill.root.innerHTML = hiddenInput.value || '';
+            }
 
 
             // Saat submit form, isi hidden input dari Quill dan tampilkan loading pada tombol submit
             form.addEventListener('submit', function() {
-                hiddenInput.value = quill.root.innerHTML;
+                if (quill && hiddenInput) {
+                    hiddenInput.value = quill.root.innerHTML;
+                }
 
                 // Do not clear plant 'all' here — allow server to receive 'all' so it can be
                 // handled (we treat 'all' as Other/Manual Entry tab).

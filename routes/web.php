@@ -239,6 +239,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::get('/{id}/files', [DocumentReviewController::class, 'getFiles'])
             ->name('get-files');
+        Route::post('/store-metadata', [DocumentReviewController::class, 'storeMetadata'])->name('store-metadata');
         Route::get('/{id}/download-as-pdf', [DocumentReviewController::class, 'downloadAsPdf'])->name('downloadAsPdf');
         Route::get('/file/{file}/download-watermarked', [DocumentControlWatermarkController::class, 'downloadWatermarkedFile'])->name('downloadWatermarkedFile');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');

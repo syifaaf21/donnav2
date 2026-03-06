@@ -63,12 +63,140 @@ class DocumentReviewController extends Controller
 
         $groupedByPlant = $this->groupDocumentsByPlantAndCode($plants, $documents, $documentMappings);
 
+        $roleNames = auth()->check()
+            ? auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))
+            : collect();
+        $allowedAddPlants = collect();
+        if (auth()->check()) {
+            $allowedAddPlants = auth()->user()->departments()
+                ->pluck('tm_departments.plant')
+                ->map(function ($plant) {
+                    $normalized = strtolower(trim((string) $plant));
+                    return $normalized === 'all' ? 'all' : $normalized;
+                })
+                ->filter(fn($plant) => in_array($plant, ['body', 'unit', 'electric', 'all']))
+                ->unique()
+                ->values();
+        }
+
+        $canAddDocumentReview = $roleNames->contains('leader') && $allowedAddPlants->isNotEmpty();
+
+        // Data for Add Document modal on main Document Review page.
+        $documentsMaster = Document::where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->orderBy('name')
+            ->get();
+        $partNumbers = PartNumber::orderBy('part_number')->get();
+        $departments = Department::orderBy('name')->get();
+        $models = ProductModel::orderBy('name')->get();
+        $products = Product::orderBy('name')->get();
+        $processes = Process::orderBy('name')->get();
+
         return view('contents.document-review.index', compact(
             'plants',
             'documents',
             'groupedByPlant',
             'roots',
+            'canAddDocumentReview',
+            'allowedAddPlants',
+            'documentsMaster',
+            'partNumbers',
+            'departments',
+            'models',
+            'products',
+            'processes',
         ));
+    }
+
+    public function storeMetadata(Request $request)
+    {
+        $roleNames = Auth::user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)));
+        if (!$roleNames->contains('leader')) {
+            abort(403, 'Only Leader can add document review metadata.');
+        }
+
+        $allowedPlants = Auth::user()->departments()
+            ->pluck('tm_departments.plant')
+            ->map(function ($plant) {
+                $normalized = strtolower(trim((string) $plant));
+                return $normalized === 'all' ? 'all' : $normalized;
+            })
+            ->filter(fn($plant) => in_array($plant, ['body', 'unit', 'electric', 'all']))
+            ->unique()
+            ->values();
+
+        if ($allowedPlants->isEmpty()) {
+            abort(403, 'You are not assigned to any department plant.');
+        }
+
+        $validated = $request->validate([
+            'document_id' => 'required|exists:tm_documents,id',
+            'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
+            'plant' => 'required|in:body,unit,electric,all',
+            'model_id' => 'required|array|min:1',
+            'model_id.*' => 'required|exists:tm_models,id',
+            'product_id' => 'nullable|array',
+            'product_id.*' => 'nullable|exists:tm_products,id',
+            'process_id' => 'nullable|array',
+            'process_id.*' => 'nullable|exists:tm_processes,id',
+            'part_number_id' => 'nullable|array',
+            'part_number_id.*' => 'nullable|exists:tm_part_numbers,id',
+            'department_id' => 'required|exists:tm_departments,id',
+            'notes' => 'nullable|string|max:500',
+            'parent_id' => 'nullable|exists:tt_document_mappings,id',
+        ]);
+
+        if (!$allowedPlants->contains($validated['plant'])) {
+            abort(403, 'Selected plant is not allowed for your departments.');
+        }
+
+        $userDepartment = Auth::user()->departments()
+            ->where('tm_departments.id', $validated['department_id'])
+            ->first();
+
+        if (!$userDepartment) {
+            abort(403, 'Selected department is not assigned to your account.');
+        }
+
+        $departmentPlant = strtolower(trim((string) ($userDepartment->plant ?? '')));
+        if ($departmentPlant !== $validated['plant']) {
+            abort(403, 'Selected department does not match selected plant.');
+        }
+
+        $cleanNotes = trim((string) ($validated['notes'] ?? ''));
+        if ($cleanNotes === '' || $cleanNotes === '<p><br></p>') {
+            $cleanNotes = null;
+        }
+
+        $plantValue = ($validated['plant'] === 'all') ? 'all' : $validated['plant'];
+
+        $uncompleteStatus = Status::where('name', 'Uncomplete')->firstOrFail();
+
+        $mapping = DocumentMapping::create([
+            'plant' => $plantValue,
+            'document_id' => $validated['document_id'],
+            'document_number' => $validated['document_number'],
+            'parent_id' => $validated['parent_id'] ?? null,
+            'department_id' => $validated['department_id'],
+            'status_id' => $uncompleteStatus->id,
+            'notes' => $cleanNotes,
+            'user_id' => Auth::id(),
+            'reminder_date' => null,
+            'deadline' => null,
+            'obsolete_date' => null,
+        ]);
+
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', (string) $mapping->document_number, $matches)) {
+            $mapping->update(['revision' => $matches[2]]);
+        }
+
+        $mapping->partNumber()->sync($validated['part_number_id'] ?? []);
+        $mapping->productModel()->sync($validated['model_id'] ?? []);
+        $mapping->product()->sync($validated['product_id'] ?? []);
+        $mapping->process()->sync($validated['process_id'] ?? []);
+
+        return redirect()->route('document-review.index')
+            ->with('success', 'Document metadata registered successfully.');
     }
 
     public function showFolder($plant, $docCode, Request $request)

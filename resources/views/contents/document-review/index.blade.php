@@ -20,6 +20,23 @@
     <div class="p-6 space-y-6 bg-white rounded-lg shadow-md">
         {{-- Flash Message --}}
         <x-flash-message />
+
+        @if ($canAddDocumentReview ?? false)
+            <div class="flex justify-end">
+                <button class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                    data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Add Document</span>
+                </button>
+            </div>
+
+            @include('contents.master.document-review.partials.modal-add2', [
+                'allowAllUsers' => true,
+                'formAction' => route('document-review.store-metadata'),
+                'allowedPlants' => ($allowedAddPlants ?? collect())->toArray(),
+            ])
+        @endif
+
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -107,7 +124,7 @@
                             {{-- Empty state --}}
                             <div class="flex flex-col items-center justify-center py-16 text-center">
                                 <svg class="w-24 h-24 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 <h3 class="text-lg font-semibold text-gray-700 mb-2">No Documents Found</h3>
