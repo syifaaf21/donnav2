@@ -234,13 +234,18 @@ class EditorController extends Controller
             if ($file->document_mapping_id) {
                 $mapping = $file->mapping()->first();
                 if ($mapping) {
+                    $mappingPayload = [
+                        // Keep Updated By consistent across editor actions (sync + reupload).
+                        'user_id' => Auth::id(),
+                        'review_notified_at' => null,
+                    ];
+
                     $needReview = Status::where('name', 'Need Review')->first();
                     if ($needReview && $mapping->status_id !== $needReview->id) {
-                        $mapping->update([
-                            'status_id' => $needReview->id,
-                            'review_notified_at' => null,
-                        ]);
+                        $mappingPayload['status_id'] = $needReview->id;
                     }
+
+                    $mapping->update($mappingPayload);
                      // --- SEND NOTIFICATION TO ADMINS ---
         $uploader = Auth::user();
         $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
