@@ -245,32 +245,35 @@
         {{-- ACTIONS --}}
         <div class="file-actions">
 
-            @if($file->docspace_file_id)
-                {{-- Buka editor: login dulu via popup, lalu buka doceditor --}}
-                <button type="button" class="btn btn--primary" id="btnOpen" onclick="openEditor()">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                        <polyline points="15 3 21 3 21 9"/>
-                        <line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                    Open Editor
-                </button>
+            @php
+                $mapping = $file->mapping;
+                $mappingStatus = strtolower($mapping?->status?->name ?? '');
+            @endphp
 
-                {{-- Sync ke Laravel --}}
-                <button type="button" class="btn btn--secondary" id="btnSync" onclick="syncFile()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <polyline points="23 4 23 10 17 10"/>
-                        <polyline points="1 20 1 14 7 14"/>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                    </svg>
-                    Save and Sync
-                </button>
+            @if($file->docspace_file_id)
+                @if($mappingStatus !== 'need review')
+                    {{-- Buka editor: login dulu via popup, lalu buka doceditor --}}
+                    <button type="button" class="btn btn--primary" id="btnOpen" onclick="openEditor()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/>
+                            <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        Open Editor
+                    </button>
+
+                    {{-- Sync ke Laravel --}}
+                    <button type="button" class="btn btn--secondary" id="btnSync" onclick="syncFile()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <polyline points="1 20 1 14 7 14"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        Save and Sync
+                    </button>
+                @endif
 
                 {{-- Re-upload (only when mapping status != 'need review') --}}
-                @php
-                    $mapping = $file->mapping;
-                    $mappingStatus = strtolower($mapping?->status?->name ?? '');
-                @endphp
                 @if($mappingStatus !== 'need review')
                     <button type="button" class="btn btn--ghost" id="btnReupload" onclick="reuploadFile()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

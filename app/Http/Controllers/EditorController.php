@@ -119,24 +119,29 @@ class EditorController extends Controller
             if ($file->document_mapping_id) {
                 $mapping = $file->mapping()->first();
                 if ($mapping) {
-                        // Simpan catatan revisi: if the frontend submitted the `notes` field
-                        // (even if empty) update the mapping. Normalize empty HTML/blank to null
-                        // so old notes are cleared when user removes them in the modal.
-                        if ($request->exists('notes')) {
-                            $notes = trim($request->input('notes'));
-                            if ($notes === '' || $notes === '<p><br></p>') {
-                                $notes = null;
-                            }
-                            $mapping->update(['notes' => $notes]);
+                    $mappingPayload = [
+                        // Important: keep Updated By in main Document Review in sync with online edits.
+                        'user_id' => Auth::id(),
+                        'review_notified_at' => null,
+                    ];
+
+                    // Simpan catatan revisi: if the frontend submitted the `notes` field
+                    // (even if empty) update the mapping. Normalize empty HTML/blank to null
+                    // so old notes are cleared when user removes them in the modal.
+                    if ($request->exists('notes')) {
+                        $notes = trim($request->input('notes'));
+                        if ($notes === '' || $notes === '<p><br></p>') {
+                            $notes = null;
                         }
+                        $mappingPayload['notes'] = $notes;
+                    }
 
                     $needReview = Status::where('name', 'Need Review')->first();
                     if ($needReview && $mapping->status_id !== $needReview->id) {
-                        $mapping->update([
-                            'status_id' => $needReview->id,
-                            'review_notified_at' => null,
-                        ]);
+                        $mappingPayload['status_id'] = $needReview->id;
                     }
+
+                    $mapping->update($mappingPayload);
 
                      // --- SEND NOTIFICATION TO ADMINS ---
         $uploader = Auth::user();

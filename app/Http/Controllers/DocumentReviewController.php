@@ -1072,6 +1072,7 @@ class DocumentReviewController extends Controller
 
         $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
         $approvedStatus = Status::where('name', 'Approved')->firstOrFail();
+        $previousApprovedAt = $mapping->last_approved_at;
 
         // === Update Mapping (Status + Dates) ===
         $mapping->timestamps = false;
@@ -1079,7 +1080,6 @@ class DocumentReviewController extends Controller
             'status_id' => $approvedStatus->id,
             'reminder_date' => null,
             'deadline' => null,
-            'last_approved_at' => now(),
             'review_notified_at' => null,
         ]);
         $mapping->timestamps = true;
@@ -1124,9 +1124,28 @@ class DocumentReviewController extends Controller
             departmentName: $mapping->department?->name,
         ));
 
-        // ===== Increment revision on approve =====
+        // ===== Increment revision only for online edit approvals (not file upload approvals) =====
+        // Online edit (OnlyOffice sync) updates existing file's `updated_at` without creating new file rows.
+        // Upload revision creates new file rows in the same review cycle, so revision must not auto-increment.
+        $referenceTime = $previousApprovedAt ?? $mapping->created_at;
+
+        $hasNewUploadedFileSinceReference = $mapping->files()
+            ->when(
+                $mapping->last_approved_at,
+                fn($q) => $q->where('created_at', '>', $referenceTime),
+                fn($q) => $q->where('created_at', '>=', $referenceTime)
+            )
+            ->exists();
+
+        $hasOnlineEditTouchSinceReference = $mapping->files()
+            ->where('updated_at', '>', $referenceTime)
+            ->whereColumn('updated_at', '!=', 'created_at')
+            ->exists();
+
+        $shouldIncrementRevision = $hasOnlineEditTouchSinceReference && !$hasNewUploadedFileSinceReference;
+
         $docNumber = $mapping->document_number;
-        if (preg_match('/-(\d+)-(\d+)$/', $docNumber, $parts)) {
+        if ($shouldIncrementRevision && preg_match('/-(\d+)-(\d+)$/', $docNumber, $parts)) {
             $rev = $parts[2];
             $width = strlen($rev);
             $newRev = str_pad(((int)$rev) + 1, $width, '0', STR_PAD_LEFT);
@@ -1136,7 +1155,7 @@ class DocumentReviewController extends Controller
                 'revision' => $newRev,
                 'last_approved_at' => now(),
             ]);
-        } elseif (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $docNumber, $parts2)) {
+        } elseif ($shouldIncrementRevision && preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $docNumber, $parts2)) {
             $rev = $parts2[2];
             if (preg_match('/(.*?)(\d+)$/', $rev, $m)) {
                 $prefix = $m[1];
