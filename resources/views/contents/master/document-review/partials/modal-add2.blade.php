@@ -182,20 +182,25 @@
                             @endif
 
                             {{-- File Upload --}}
-                            {{-- <div class="col-12 mt-10">
-                                <label class="form-label fw-medium">Upload File</label>
-                                <div id="file-upload-container">
-                                    <div class="input-group mb-2">
-                                        <input type="file" name="files[]" class="form-control border-1 shadow-sm"
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx">
+                            <div class="col-12 mt-2">
+                                <label class="form-label fw-semibold">Upload File</label>
+                                    <div id="file-upload-container" class="d-flex flex-column gap-2">
+                                        <div class="input-group file-input-group">
+                                            <input type="file" name="files[]"
+                                                class="form-control border-0 shadow-sm rounded-3 @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror"
+                                                accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                            <button class="btn btn-outline-danger remove-file-btn" type="button" style="display:none;">Remove</button>
+                                        </div>
                                     </div>
-                                    <button class="btn btn-outline-success btn-sm mt-2 add-file-btn" type="button">+
-                                        Add
-                                        File</button>
-                                </div>
-                                <small class="text-muted d-block mt-1">Allowed Format: PDF, DOCX, EXCEL</small>
-                                <div class="invalid-feedback">At least one file is required.</div>
-                            </div> --}}
+                                    <button class="btn btn-outline-success btn-sm mt-2" type="button" id="add-file-btn">+ Add File</button>
+                                    <small class="text-muted d-block mt-1">Allowed format: PDF, DOC, DOCX, XLS, XLSX. Max Total File Size: 20MB</small>
+                                    @error('files')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    @error('files.*')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                            </div>
                         </div>
                     </div>
                     {{-- Modal Footer --}}
@@ -612,6 +617,44 @@
             //         e.target.parentElement.remove();
             //     }
             // });
+                const fileContainer = document.getElementById('file-upload-container');
+                const addFileBtn = document.getElementById('add-file-btn');
+
+                function refreshRemoveButtons() {
+                    if (!fileContainer) return;
+                    const groups = fileContainer.querySelectorAll('.file-input-group');
+                    groups.forEach((group, index) => {
+                        const removeBtn = group.querySelector('.remove-file-btn');
+                        if (!removeBtn) return;
+                        removeBtn.style.display = groups.length > 1 ? 'inline-block' : 'none';
+                        removeBtn.disabled = groups.length <= 1 && index === 0;
+                    });
+                }
+
+                if (fileContainer && addFileBtn) {
+                    addFileBtn.addEventListener('click', function() {
+                        const newInputGroup = document.createElement('div');
+                        newInputGroup.className = 'input-group file-input-group';
+                        newInputGroup.innerHTML = `
+                            <input type="file" name="files[]" class="form-control border-0 shadow-sm rounded-3" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                            <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
+                        `;
+                        fileContainer.appendChild(newInputGroup);
+                        refreshRemoveButtons();
+                    });
+
+                    fileContainer.addEventListener('click', function(e) {
+                        if (e.target && e.target.classList.contains('remove-file-btn')) {
+                            const group = e.target.closest('.file-input-group');
+                            if (group) {
+                                group.remove();
+                                refreshRemoveButtons();
+                            }
+                        }
+                    });
+
+                    refreshRemoveButtons();
+                }
 
             /* -------------------------------------------------------------------
              * SHOW MODAL IF VALIDATION ERRORS

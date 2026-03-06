@@ -144,6 +144,8 @@ class DocumentReviewController extends Controller
             'department_id' => 'required|exists:tm_departments,id',
             'notes' => 'nullable|string|max:500',
             'parent_id' => 'nullable|exists:tt_document_mappings,id',
+            'files' => 'nullable|array',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
         ]);
 
         if (!$allowedPlants->contains($validated['plant'])) {
@@ -171,6 +173,11 @@ class DocumentReviewController extends Controller
         $plantValue = ($validated['plant'] === 'all') ? 'all' : $validated['plant'];
 
         $uncompleteStatus = Status::where('name', 'Uncomplete')->firstOrFail();
+        $needReviewStatus = Status::where('name', 'Need Review')->first();
+        $hasUploadedFiles = $request->hasFile('files') && count($request->file('files')) > 0;
+        $statusId = ($hasUploadedFiles && $needReviewStatus)
+            ? $needReviewStatus->id
+            : $uncompleteStatus->id;
 
         $mapping = DocumentMapping::create([
             'plant' => $plantValue,
@@ -178,7 +185,7 @@ class DocumentReviewController extends Controller
             'document_number' => $validated['document_number'],
             'parent_id' => $validated['parent_id'] ?? null,
             'department_id' => $validated['department_id'],
-            'status_id' => $uncompleteStatus->id,
+            'status_id' => $statusId,
             'notes' => $cleanNotes,
             'user_id' => Auth::id(),
             'reminder_date' => null,
@@ -195,8 +202,33 @@ class DocumentReviewController extends Controller
         $mapping->product()->sync($validated['product_id'] ?? []);
         $mapping->process()->sync($validated['process_id'] ?? []);
 
+        if ($hasUploadedFiles) {
+            foreach ($request->file('files') as $index => $file) {
+                $extension = $file->getClientOriginalExtension();
+                $filename = sprintf(
+                    '%s_rev1_%s_%s.%s',
+                    preg_replace('/[^A-Za-z0-9_\-]/', '_', (string) $mapping->document_number),
+                    now()->format('Ymd_His'),
+                    $index,
+                    $extension
+                );
+
+                $path = $file->storeAs('document-reviews', $filename, 'public');
+
+                $mapping->files()->create([
+                    'document_mapping_id' => $mapping->id,
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'is_active' => 1,
+                    'pending_approval' => 0,
+                ]);
+            }
+        }
+
         return redirect()->route('document-review.index')
-            ->with('success', 'Document metadata registered successfully.');
+            ->with('success', $hasUploadedFiles
+                ? 'Document metadata and file uploaded successfully.'
+                : 'Document metadata registered successfully.');
     }
 
     public function showFolder($plant, $docCode, Request $request)
