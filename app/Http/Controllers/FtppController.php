@@ -846,16 +846,70 @@ class FtppController extends Controller
         ]);
 
         try {
-            $deleted = AuditFinding::whereIn('id', $request->ids)->delete();
+            $markedForDeletionAt = now()->addYear();
+
+            $findings = AuditFinding::with([
+                'auditeeAction.whyCauses',
+                'auditeeAction.correctiveActions',
+                'auditeeAction.preventiveActions',
+                'auditeeAction.file',
+                'file',
+            ])->whereIn('id', $request->ids)->get();
+
+            foreach ($findings as $finding) {
+                // Mark finding
+                $finding->marked_for_deletion_at = $markedForDeletionAt;
+                $finding->save();
+
+                // Mark auditee action + children
+                if ($finding->auditeeAction) {
+                    $finding->auditeeAction->marked_for_deletion_at = $markedForDeletionAt;
+                    $finding->auditeeAction->save();
+
+                    foreach ($finding->auditeeAction->whyCauses as $why) {
+                        $why->marked_for_deletion_at = $markedForDeletionAt;
+                        $why->save();
+                    }
+
+                    foreach ($finding->auditeeAction->correctiveActions as $corr) {
+                        $corr->marked_for_deletion_at = $markedForDeletionAt;
+                        $corr->save();
+                    }
+
+                    foreach ($finding->auditeeAction->preventiveActions as $prev) {
+                        $prev->marked_for_deletion_at = $markedForDeletionAt;
+                        $prev->save();
+                    }
+
+                    foreach ($finding->auditeeAction->file as $file) {
+                        $file->marked_for_deletion_at = $markedForDeletionAt;
+                        $file->save();
+                    }
+                }
+
+                // Mark finding files
+                foreach ($finding->file as $file) {
+                    $file->marked_for_deletion_at = $markedForDeletionAt;
+                    $file->save();
+                }
+
+                // Mark pivots
+                AuditFindingSubKlausul::where('audit_finding_id', $finding->id)
+                    ->update(['marked_for_deletion_at' => $markedForDeletionAt]);
+                \App\Models\AuditFindingAuditee::where('audit_finding_id', $finding->id)
+                    ->update(['marked_for_deletion_at' => $markedForDeletionAt]);
+            }
+
+            $deleted = $findings->count();
 
             return response()->json([
                 'success' => true,
-                'message' => "{$deleted} finding(s) deleted successfully."
+                'message' => "{$deleted} finding(s) scheduled for deletion in 1 year."
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete findings: ' . $e->getMessage()
+                'message' => 'Failed to schedule deletion: ' . $e->getMessage()
             ], 500);
         }
     }

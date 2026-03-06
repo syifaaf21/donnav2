@@ -180,8 +180,10 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 // Recycle bin routes (Super Admin only)
 Route::middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::get('/recycle-bin', [\App\Http\Controllers\RecycleBinController::class, 'index'])->name('recycle.index');
-    Route::post('/recycle-bin/{id}/restore', [\App\Http\Controllers\RecycleBinController::class, 'restore'])->name('recycle.restore');
-    Route::post('/recycle-bin/{id}/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'forceDelete'])->name('recycle.force-delete');
+    Route::post('/recycle-bin/bulk/restore', [\App\Http\Controllers\RecycleBinController::class, 'bulkRestore'])->name('recycle.bulk-restore');
+    Route::post('/recycle-bin/bulk/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'bulkForceDelete'])->name('recycle.bulk-force-delete');
+    Route::post('/recycle-bin/{id}/restore', [\App\Http\Controllers\RecycleBinController::class, 'restore'])->whereNumber('id')->name('recycle.restore');
+    Route::post('/recycle-bin/{id}/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'forceDelete'])->whereNumber('id')->name('recycle.force-delete');
 });
 
 /*

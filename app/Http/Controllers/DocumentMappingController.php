@@ -1367,31 +1367,37 @@ class DocumentMappingController extends Controller
 
         $ids = $data['ids'];
 
+        // Jadwalkan penghapusan 1 tahun dari sekarang (sama seperti delete per item)
+        $markedForDeletionAt = now()->addYear();
+
         // Ambil semua dokumen sekaligus dengan relasi files
-        $docs = DocumentMapping::with('files')->whereIn('id', $ids)->get();
+        $docs = DocumentMapping::with(['files', 'document'])->whereIn('id', $ids)->get();
 
         foreach ($docs as $doc) {
-            // 1️⃣ Hapus semua file di relasi 'files'
+            // 1️⃣ Tandai semua file relasi agar masuk recycle bin
             foreach ($doc->files as $file) {
-                if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
-                    Storage::disk('public')->delete($file->file_path);
+                $file->marked_for_deletion_at = $markedForDeletionAt;
+                $file->save();
+            }
+
+            // 2️⃣ Tandai dokumen master juga (khusus non-review, konsisten dengan delete single)
+            if ($doc->document) {
+                $docType = strtolower($doc->document->type ?? '');
+                if ($docType !== 'review') {
+                    $doc->document->marked_for_deletion_at = $markedForDeletionAt;
+                    $doc->document->save();
                 }
-                $file->delete();
             }
 
-            // 2️⃣ Hapus file utama DocumentMapping
-            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
-                Storage::disk('public')->delete($doc->file_path);
-            }
-
-            // 3️⃣ Hapus data DocumentMapping
-            $doc->delete();
+            // 3️⃣ Tandai data DocumentMapping agar masuk recycle bin
+            $doc->marked_for_deletion_at = $markedForDeletionAt;
+            $doc->save();
 
             // 4️⃣ Opsional: hapus relasi anak-anak jika ini parent
             DocumentMapping::where('parent_id', $doc->id)->update(['parent_id' => null]);
         }
 
         return redirect()->route('master.document-control.index')
-            ->with('success', count($ids) . ' document(s) and related files deleted successfully.');
+            ->with('success', count($ids) . ' document(s) scheduled for deletion in 1 year.');
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class RecycleBinController extends Controller
 {
@@ -96,6 +97,56 @@ class RecycleBinController extends Controller
 
         $resource = $request->input('resource', 'mapping');
 
+        $this->restoreItem($resource, (int) $id);
+
+        return redirect()->back()->with('success', $resource === 'ftpp'
+            ? 'FTPP finding restored successfully.'
+            : 'Item restored successfully.');
+    }
+
+    public function bulkRestore(Request $request)
+    {
+        $this->authorizeSuper();
+
+        $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['required', 'string'],
+        ]);
+
+        $items = $this->normalizeBulkItems($request->input('items', []), $request->input('resource', 'mapping'));
+        $restored = 0;
+        $failed = 0;
+
+        foreach ($items as $item) {
+            try {
+                $this->restoreItem($item['resource'], $item['id']);
+                $restored++;
+            } catch (Throwable $e) {
+                $failed++;
+            }
+        }
+
+        if ($restored === 0) {
+            return redirect()->back()->with('error', 'No selected items could be restored.');
+        }
+
+        $message = $restored . ' item restored successfully.';
+        if ($restored > 1) {
+            $message = $restored . ' items restored successfully.';
+        }
+
+        if ($failed > 0) {
+            $message .= ' ' . $failed . ' item failed to restore.';
+            if ($failed > 1) {
+                $message = rtrim($message, '.') . 's failed to restore.';
+            }
+        }
+
+        return redirect()->back()->with($failed > 0 ? 'warning' : 'success', $message);
+    }
+
+    protected function restoreItem(string $resource, int $id): void
+    {
         if ($resource === 'ftpp') {
             $finding = \App\Models\AuditFinding::withTrashed()->where('id', $id)->firstOrFail();
 
@@ -107,7 +158,7 @@ class RecycleBinController extends Controller
                 $finding->save();
             }
 
-            return redirect()->back()->with('success', 'FTPP finding restored successfully.');
+            return;
         }
 
         // mapping (document control)
@@ -138,8 +189,6 @@ class RecycleBinController extends Controller
         if ($mapping->document && $mapping->document->marked_for_deletion_at) {
             $mapping->document->update(['marked_for_deletion_at' => null]);
         }
-
-        return redirect()->back()->with('success', 'Item restored successfully.');
     }
 
     public function forceDelete(Request $request, $id)
@@ -148,6 +197,56 @@ class RecycleBinController extends Controller
 
         $resource = $request->input('resource', 'mapping');
 
+        $this->forceDeleteItem($resource, (int) $id);
+
+        return redirect()->back()->with('success', $resource === 'ftpp'
+            ? 'FTPP finding permanently deleted.'
+            : 'Item permanently deleted.');
+    }
+
+    public function bulkForceDelete(Request $request)
+    {
+        $this->authorizeSuper();
+
+        $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['required', 'string'],
+        ]);
+
+        $items = $this->normalizeBulkItems($request->input('items', []), $request->input('resource', 'mapping'));
+        $deleted = 0;
+        $failed = 0;
+
+        foreach ($items as $item) {
+            try {
+                $this->forceDeleteItem($item['resource'], $item['id']);
+                $deleted++;
+            } catch (Throwable $e) {
+                $failed++;
+            }
+        }
+
+        if ($deleted === 0) {
+            return redirect()->back()->with('error', 'No selected items could be deleted.');
+        }
+
+        $message = $deleted . ' item permanently deleted.';
+        if ($deleted > 1) {
+            $message = $deleted . ' items permanently deleted.';
+        }
+
+        if ($failed > 0) {
+            $message .= ' ' . $failed . ' item failed to delete.';
+            if ($failed > 1) {
+                $message = rtrim($message, '.') . 's failed to delete.';
+            }
+        }
+
+        return redirect()->back()->with($failed > 0 ? 'warning' : 'success', $message);
+    }
+
+    protected function forceDeleteItem(string $resource, int $id): void
+    {
         if ($resource === 'ftpp') {
             $finding = \App\Models\AuditFinding::withTrashed()->where('id', $id)->firstOrFail();
 
@@ -181,11 +280,13 @@ class RecycleBinController extends Controller
             // finally force delete the finding
             $finding->forceDelete();
 
-            return redirect()->back()->with('success', 'FTPP finding permanently deleted.');
+            return;
         }
 
         // mapping (document control)
-        $mapping = DocumentMapping::with(['files' => function ($q) { $q->withTrashed(); }, 'partNumber', 'productModel', 'product', 'process', 'document'])->where('id', $id)->firstOrFail();
+        $mapping = DocumentMapping::with(['files' => function ($q) {
+            $q->withTrashed();
+        }, 'partNumber', 'productModel', 'product', 'process', 'document'])->where('id', $id)->firstOrFail();
 
         // mark immediate deletion timestamp
         $mapping->update(['marked_for_deletion_at' => now()]);
@@ -223,7 +324,38 @@ class RecycleBinController extends Controller
                 $mapping->document->update(['marked_for_deletion_at' => null]);
             }
         }
+    }
 
-        return redirect()->back()->with('success', 'Item permanently deleted.');
+    protected function normalizeBulkItems(array $items, string $defaultResource = 'mapping'): array
+    {
+        $normalized = [];
+
+        foreach ($items as $rawItem) {
+            $parts = explode(':', (string) $rawItem, 2);
+            if (count($parts) === 2) {
+                $resource = $parts[0] ?: $defaultResource;
+                $id = (int) $parts[1];
+            } else {
+                $resource = $defaultResource;
+                $id = (int) $parts[0];
+            }
+
+            if ($id <= 0) {
+                continue;
+            }
+
+            $resource = strtolower($resource) === 'ftpp' ? 'ftpp' : 'mapping';
+            $normalized[] = [
+                'resource' => $resource,
+                'id' => $id,
+            ];
+        }
+
+        return collect($normalized)
+            ->unique(function ($item) {
+                return $item['resource'] . ':' . $item['id'];
+            })
+            ->values()
+            ->all();
     }
 }
