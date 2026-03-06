@@ -1286,10 +1286,94 @@ ${data.files.map(file => `
                  * DOWNLOAD AS PDF BUTTON
                  */
                 document.querySelectorAll('.download-pdf-btn').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
+                    btn.addEventListener('click', async function(e) {
                         e.preventDefault();
                         const docId = this.getAttribute('data-doc-id');
                         const docName = this.getAttribute('data-doc-name') || 'document';
+
+                        // If document has multiple active files, ask user which one to convert/download.
+                        let selectedFileId = null;
+                        try {
+                            const filesRes = await fetch(`/document-review/${docId}/files`, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            if (filesRes.ok) {
+                                const filesJson = await filesRes.json();
+                                const files = Array.isArray(filesJson?.files) ? filesJson.files : [];
+
+                                if (files.length === 1) {
+                                    selectedFileId = files[0]?.id || null;
+                                } else if (files.length > 1) {
+                                    if (typeof Swal !== 'undefined') {
+                                        const escapeHtml = (value) => String(value ?? '')
+                                            .replace(/&/g, '&amp;')
+                                            .replace(/</g, '&lt;')
+                                            .replace(/>/g, '&gt;')
+                                            .replace(/"/g, '&quot;')
+                                            .replace(/'/g, '&#039;');
+
+                                        const radioHtml = files.map((f, idx) => {
+                                            const id = String(f?.id ?? '');
+                                            const label = f?.original_name || f?.file_path || `File ${idx + 1}`;
+                                            const checked = idx === 0 ? 'checked' : '';
+
+                                            return `
+                                                <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                                                    <input type="radio" name="download_pdf_file_choice" value="${escapeHtml(id)}" ${checked} style="margin:0;">
+                                                    <span style="font-size:14px;line-height:1.3;word-break:break-word;">${escapeHtml(label)}</span>
+                                                </label>
+                                            `;
+                                        }).join('');
+
+                                        const pick = await Swal.fire({
+                                            title: 'Pilih File',
+                                            html: `
+                                                <div style="text-align:left;font-size:14px;color:#4b5563;margin-bottom:12px;">
+                                                    Dokumen ini punya beberapa file aktif. Pilih satu untuk Download as PDF.
+                                                </div>
+                                                <div style="max-height:260px;overflow:auto;padding-right:4px;">
+                                                    ${radioHtml}
+                                                </div>
+                                            `,
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Lanjutkan',
+                                            cancelButtonText: 'Batal',
+                                            width: 640,
+                                            focusConfirm: false,
+                                            preConfirm: () => {
+                                                const selected = document.querySelector('input[name="download_pdf_file_choice"]:checked');
+                                                if (!selected) {
+                                                    Swal.showValidationMessage('Pilih salah satu file terlebih dahulu.');
+                                                    return false;
+                                                }
+
+                                                return selected.value;
+                                            }
+                                        });
+
+                                        if (!pick.isConfirmed) {
+                                            return;
+                                        }
+
+                                        selectedFileId = pick.value || null;
+                                    } else {
+                                        // Fallback without Swal: default to latest item.
+                                        selectedFileId = files[files.length - 1]?.id || null;
+                                    }
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Failed to load active files for download selection:', err);
+                        }
+
+                        const downloadUrl = new URL(`/document-review/${docId}/download-as-pdf`, window.location.origin);
+                        if (selectedFileId) {
+                            downloadUrl.searchParams.set('file_id', String(selectedFileId));
+                        }
 
                         // Show modal loading so user still sees progress when action dropdown auto-closes.
                         if (typeof Swal !== 'undefined') {
@@ -1305,7 +1389,7 @@ ${data.files.map(file => `
                         }
 
                         // Call the download endpoint
-                        fetch(`/document-review/${docId}/download-as-pdf`, {
+                        fetch(downloadUrl.toString(), {
                                 method: 'GET',
                                 headers: {
                                     'Accept': 'application/pdf, application/json'

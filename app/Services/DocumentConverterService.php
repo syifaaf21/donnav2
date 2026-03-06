@@ -265,9 +265,24 @@ class DocumentConverterService
         file_put_contents($tempPath, $pdfContent);
 
         try {
-            if ($watermarkImagePath && Storage::exists($watermarkImagePath)) {
-                $imagePath = Storage::path($watermarkImagePath);
-                return $this->pdfWatermarker->stampImage($tempPath, $imagePath);
+            if ($watermarkImagePath) {
+                $imagePath = null;
+
+                // Accept absolute filesystem path (e.g. public_path('images/ORIGINAL.png')).
+                if (is_file($watermarkImagePath)) {
+                    $imagePath = $watermarkImagePath;
+                } elseif (Storage::exists($watermarkImagePath)) {
+                    $imagePath = Storage::path($watermarkImagePath);
+                } else {
+                    $publicCandidate = public_path(ltrim($watermarkImagePath, '/\\'));
+                    if (is_file($publicCandidate)) {
+                        $imagePath = $publicCandidate;
+                    }
+                }
+
+                if ($imagePath !== null) {
+                    return $this->pdfWatermarker->stampImage($tempPath, $imagePath, 30.0, 10.0, 100);
+                }
             }
 
             if ($watermarkText) {

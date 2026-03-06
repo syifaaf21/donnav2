@@ -2,6 +2,7 @@
 namespace App\Services;
 
 use setasign\Fpdi\Fpdi;
+use Throwable;
 
 class PdfWatermarker
 {
@@ -10,6 +11,28 @@ class PdfWatermarker
      * $watermark can contain placeholders already interpolated by caller.
      */
     public function stampText(string $sourcePath, string $watermarkText): string
+    {
+        try {
+            return $this->stampTextWithFpdi($sourcePath, $watermarkText);
+        } catch (Throwable $e) {
+            if (!$this->isLikelyFpdiCompressionError($e)) {
+                throw $e;
+            }
+
+            $normalized = $this->normalizePdfWithGhostscript($sourcePath);
+            if ($normalized === null) {
+                throw $e;
+            }
+
+            try {
+                return $this->stampTextWithFpdi($normalized, $watermarkText);
+            } finally {
+                @unlink($normalized);
+            }
+        }
+    }
+
+    private function stampTextWithFpdi(string $sourcePath, string $watermarkText): string
     {
         $pdf = new Fpdi();
 
@@ -43,6 +66,28 @@ class PdfWatermarker
      */
     public function stampImage(string $sourcePath, string $imagePath, float $widthMm = 30.0, float $marginMm = 10.0, int $opacityPercent = 40): string
     {
+        try {
+            return $this->stampImageWithFpdi($sourcePath, $imagePath, $widthMm, $marginMm, $opacityPercent);
+        } catch (Throwable $e) {
+            if (!$this->isLikelyFpdiCompressionError($e)) {
+                throw $e;
+            }
+
+            $normalized = $this->normalizePdfWithGhostscript($sourcePath);
+            if ($normalized === null) {
+                throw $e;
+            }
+
+            try {
+                return $this->stampImageWithFpdi($normalized, $imagePath, $widthMm, $marginMm, $opacityPercent);
+            } finally {
+                @unlink($normalized);
+            }
+        }
+    }
+
+    private function stampImageWithFpdi(string $sourcePath, string $imagePath, float $widthMm = 30.0, float $marginMm = 10.0, int $opacityPercent = 40): string
+    {
         $pdf = new Fpdi();
 
         $pageCount = $pdf->setSourceFile($sourcePath);
@@ -62,6 +107,14 @@ class PdfWatermarker
             // load source
             $srcImg = null;
             $mime = $imgSize['mime'] ?? '';
+
+            // Important: for PNG with transparency, keep original image.
+            // GD + imagecopymerge can flatten alpha and introduce black background.
+            if (stripos($mime, 'png') !== false) {
+                $tmpFile = null;
+                $opacity = 100;
+            }
+
             if (stripos($mime, 'png') !== false) {
                 $srcImg = @imagecreatefrompng($imagePath);
             } elseif (stripos($mime, 'jpeg') !== false || stripos($mime, 'jpg') !== false) {
@@ -70,7 +123,7 @@ class PdfWatermarker
                 $srcImg = @imagecreatefromgif($imagePath);
             }
 
-            if ($srcImg) {
+            if ($srcImg && $opacity < 100 && $tmpFile) {
                 $w = imagesx($srcImg);
                 $h = imagesy($srcImg);
                 // keep original image colors (do not alter brightness)
@@ -94,6 +147,9 @@ class PdfWatermarker
                 $imgH = $imgSize[1] ?? $imgH;
                 $aspect = ($imgW > 0 && $imgH > 0) ? ($imgH / $imgW) : $aspect;
             } else {
+                if ($srcImg) {
+                    imagedestroy($srcImg);
+                }
                 // if GD load failed, fall back to original image
                 if (file_exists($tmpFile)) @unlink($tmpFile);
                 $tmpFile = null;
@@ -127,5 +183,70 @@ class PdfWatermarker
         }
 
         return $out;
+    }
+
+    private function isLikelyFpdiCompressionError(Throwable $e): bool
+    {
+        $message = strtolower($e->getMessage());
+
+        $hasUnsupportedKeyword = str_contains($message, 'unsupported')
+            || str_contains($message, 'not supported')
+            || str_contains($message, 'fpdi-pdf-parser');
+
+        $hasCompressionHint = str_contains($message, 'compression')
+            || str_contains($message, 'filter')
+            || str_contains($message, 'parser');
+
+        return $hasUnsupportedKeyword && $hasCompressionHint;
+    }
+
+    private function normalizePdfWithGhostscript(string $sourcePath): ?string
+    {
+        $outputPath = tempnam(sys_get_temp_dir(), 'gs_norm_') . '.pdf';
+        $escapedOutput = escapeshellarg($outputPath);
+        $escapedInput = escapeshellarg($sourcePath);
+
+        foreach ($this->ghostscriptCandidates() as $binary) {
+            $escapedBinary = escapeshellarg($binary);
+            $command = $escapedBinary
+                . ' -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite -dCompatibilityLevel=1.4'
+                . ' -dDetectDuplicateImages=true -dCompressFonts=true'
+                . ' -sOutputFile=' . $escapedOutput
+                . ' ' . $escapedInput
+                . ' 2>&1';
+
+            $out = [];
+            $exitCode = 1;
+            @exec($command, $out, $exitCode);
+
+            if ($exitCode === 0 && is_file($outputPath) && filesize($outputPath) > 0) {
+                return $outputPath;
+            }
+        }
+
+        if (is_file($outputPath)) {
+            @unlink($outputPath);
+        }
+
+        return null;
+    }
+
+    private function ghostscriptCandidates(): array
+    {
+        $configured = trim((string) env('GS_BIN', ''));
+        $candidates = [];
+
+        if ($configured !== '') {
+            $candidates[] = $configured;
+        }
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $candidates[] = 'gswin64c';
+            $candidates[] = 'gswin32c';
+        }
+
+        $candidates[] = 'gs';
+
+        return array_values(array_unique($candidates));
     }
 }

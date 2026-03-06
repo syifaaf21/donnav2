@@ -684,10 +684,12 @@ class DocumentReviewController extends Controller
 
             // Tentukan watermark text
             $watermarkText = $request->input('watermark_text');
+            $watermarkImagePath = public_path('images/ORIGINAL.png');
+            $hasWatermarkImage = is_file($watermarkImagePath);
 
             // Jika tidak ada custom watermark, gunakan default
             if (!$watermarkText) {
-                $watermarkText = "Reviewed by " . auth()->user()->name . " • " . now()->format('Y-m-d H:i');
+                $watermarkText = "Reviewed by " . auth()->user()->name . " - " . now()->format('Y-m-d H:i');
             }
 
             $filePath = $file->file_path;
@@ -745,7 +747,11 @@ class DocumentReviewController extends Controller
                     }
 
                     try {
-                        $pdfContent = $pdfWatermarker->stampText($tempPath, $watermarkText);
+                        if ($hasWatermarkImage) {
+                            $pdfContent = $pdfWatermarker->stampImage($tempPath, $watermarkImagePath, 28.0, 8.0, 100);
+                        } else {
+                            $pdfContent = $pdfWatermarker->stampText($tempPath, $watermarkText);
+                        }
 
                         if (empty($pdfContent)) {
                             throw new \Exception('Watermarked PDF is empty');
@@ -801,7 +807,8 @@ class DocumentReviewController extends Controller
                         $pdfContent = $converter->convertToPdf(
                             $docspaceFileId,
                             addWatermark: true,
-                            watermarkText: $watermarkText
+                            watermarkText: $watermarkText,
+                            watermarkImagePath: ($hasWatermarkImage ? $watermarkImagePath : null)
                         );
 
                         if (empty($pdfContent)) {
