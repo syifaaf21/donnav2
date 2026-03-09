@@ -2,7 +2,7 @@
 @section('title')
     {{ $department?->name ?? 'Unknown' }}
 @endsection
-@section('subtitle', 'Manage Obsolete Docuemnt Records')
+@section('subtitle', 'Manage Obsolete Document Records')
 @php
     /**
      * approvalMode = false → halaman department biasa
@@ -1355,7 +1355,7 @@
                     // Cek apakah minimal 1 file dipilih
                     const checkedFiles = rejectForm.querySelectorAll('input[name="reject_file_ids[]"]:checked');
                     const fileError = document.getElementById('rejectFileError');
-                    
+
                     if (checkedFiles.length === 0) {
                         e.preventDefault();
                         if (fileError) {
