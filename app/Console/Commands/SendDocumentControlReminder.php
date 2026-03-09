@@ -57,7 +57,7 @@ class SendDocumentControlReminder extends Command
 
             // Uncomplete
             if ($status === 'Uncomplete') {
-                if (!$doc->last_reminder_date || Carbon::parse($doc->last_reminder_date)->lt($now)) {
+                if ($reminderDate && $reminderDate->lte($now) && (!$doc->last_reminder_date || Carbon::parse($doc->last_reminder_date)->lt($now))) {
                     $categories['uncomplete'][$deptName][] = $doc;
                     $doc->last_reminder_date = $now;
                     $doc->save();
