@@ -130,7 +130,7 @@
 
                     {{-- Modal Footer --}}
                     <div class="modal-footer border-0 justify-content-between mt-4 rounded-bottom-4">
-                        <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2"
+                        <button type="button" id="add-doc-cancel-btn" class="btn btn-link text-secondary fw-semibold px-4 py-2"
                             data-bs-dismiss="modal"
                             style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
