@@ -78,6 +78,7 @@
                                 <input type="text" name="document_number" id="document_number"
                                     class="form-control border-0 shadow-sm rounded-3 @error('document_number') is-invalid @enderror"
                                     placeholder="Enter document number manually" required>
+                                <small id="document_number_hint" class="text-muted d-block mt-1"></small>
                                 <div class="invalid-feedback">Document Number is required.</div>
                             </div>
 
@@ -182,7 +183,7 @@
                             @endif
 
                             {{-- File Upload --}}
-                            <div class="col-12 mt-2">
+                            <div class="col-12 mt-4">
                                 <label class="form-label fw-semibold">Upload File</label>
                                     <div id="file-upload-container" class="d-flex flex-column gap-2">
                                         <div class="input-group file-input-group">
@@ -505,7 +506,46 @@
             });
 
             // --- Auto-generate document number when key fields change ---
+            const documentNumberInput = document.getElementById('document_number');
+            const documentNumberHint = document.getElementById('document_number_hint');
+            let isGeneratingDocumentNumber = false;
+            let generateDocumentNumberRequestId = 0;
+
+            function setDocumentNumberHint(message, isError = false) {
+                if (!documentNumberHint) return;
+
+                if (message === 'Generating document number...') {
+                    documentNumberHint.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="width:0.8rem;height:0.8rem;"></span>Generating document number...';
+                } else {
+                    documentNumberHint.textContent = message || '';
+                }
+
+                documentNumberHint.classList.toggle('text-danger', Boolean(isError));
+                documentNumberHint.classList.toggle('text-muted', !isError);
+            }
+
+            function setDocumentNumberGeneratingState(isGenerating) {
+                isGeneratingDocumentNumber = isGenerating;
+                const submitBtn = document.querySelector('#addDocumentModal form button[type="submit"]');
+
+                if (documentNumberInput) {
+                    documentNumberInput.readOnly = isGenerating;
+                }
+
+                if (submitBtn && submitBtn.dataset.isSubmitting !== '1') {
+                    submitBtn.disabled = isGenerating;
+                }
+
+                if (isGenerating) {
+                    setDocumentNumberHint('Generating document number...');
+                } else if (!documentNumberHint?.classList.contains('text-danger')) {
+                    setDocumentNumberHint('');
+                }
+            }
+
             async function generateDocumentNumber() {
+                const requestId = ++generateDocumentNumberRequestId;
                 const documentId = tsDocument.getValue();
                 const departmentId = tsDept.getValue();
                 const productIds = tsProduct.getValue() || [];
@@ -523,10 +563,15 @@
                 };
 
                 if (!payload.document_id || !payload.department_id) {
+                    if (requestId === generateDocumentNumberRequestId) {
+                        setDocumentNumberGeneratingState(false);
+                    }
                     return; // need minimum fields
                 }
 
                 try {
+                    setDocumentNumberGeneratingState(true);
+
                     const res = await fetch('{{ route('document-number.generate') }}', {
                         method: 'POST',
                         headers: {
@@ -538,11 +583,28 @@
 
                     if (!res.ok) throw new Error('Failed to generate');
                     const json = await res.json();
-                    if (json?.success) {
-                        document.getElementById('document_number').value = json.document_number;
+                    if (requestId !== generateDocumentNumberRequestId) {
+                        return;
+                    }
+
+                    if (json?.success && json.document_number) {
+                        if (documentNumberInput) {
+                            documentNumberInput.value = json.document_number;
+                        }
+                        setDocumentNumberHint('');
+                    } else {
+                        setDocumentNumberHint('Failed to generate document number. Please try again.', true);
                     }
                 } catch (err) {
+                    if (requestId !== generateDocumentNumberRequestId) {
+                        return;
+                    }
                     console.error('Generate error:', err);
+                    setDocumentNumberHint('Failed to generate document number. Please try again.', true);
+                } finally {
+                    if (requestId === generateDocumentNumberRequestId) {
+                        setDocumentNumberGeneratingState(false);
+                    }
                 }
             }
 
@@ -578,7 +640,13 @@
 
 
             // Saat submit form, isi hidden input dari Quill dan tampilkan loading pada tombol submit
-            form.addEventListener('submit', function() {
+            form.addEventListener('submit', function(event) {
+                if (isGeneratingDocumentNumber) {
+                    event.preventDefault();
+                    setDocumentNumberHint('Please wait until document number generation is complete.', true);
+                    return;
+                }
+
                 if (quill && hiddenInput) {
                     hiddenInput.value = quill.root.innerHTML;
                 }
@@ -591,6 +659,7 @@
                 if (submitBtn) {
                     // Simpan teks asli
                     submitBtn.dataset.originalText = submitBtn.innerHTML;
+                    submitBtn.dataset.isSubmitting = '1';
                     // Tampilkan spinner dan teks Loading
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
                     submitBtn.disabled = true;
