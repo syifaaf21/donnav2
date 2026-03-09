@@ -299,37 +299,82 @@
 
             /* ===================== BAR CHART ===================== */
             const ctx = document.getElementById('ftppStatusChart').getContext('2d');
+            const ftppStatusData = @json($chartData);
+            const ftppStatusColorMap = {
+                'Need Assign': '#F7A29A',
+                'Need Check': '#FCE9B8',
+                'Need Approval by Auditor': '#9CC2E5',
+                'Need Approval by Lead Auditor': '#7EA6D1',
+                'Need Revision': '#F7C6B5',
+                'Close': '#B7E4C7',
+                'Checked by Dept Head': '#BEEAEF'
+            };
+
+            function ftppHexToRgb(hex) {
+                const v = parseInt(hex.replace('#', ''), 16);
+                return {
+                    r: (v >> 16) & 255,
+                    g: (v >> 8) & 255,
+                    b: v & 255
+                };
+            }
+
+            function ftppRgbToHex(r, g, b) {
+                return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+            }
+
+            function ftppInterpolateHex(a, b, t) {
+                const A = ftppHexToRgb(a);
+                const B = ftppHexToRgb(b);
+                const r = Math.round(A.r + (B.r - A.r) * t);
+                const g = Math.round(A.g + (B.g - A.g) * t);
+                const bl = Math.round(A.b + (B.b - A.b) * t);
+                return ftppRgbToHex(r, g, bl);
+            }
+
+            function ftppGradientColors(startHex, endHex, steps) {
+                if (steps <= 1) return [startHex];
+                return Array.from({
+                    length: steps
+                }, (_, i) => ftppInterpolateHex(startHex, endHex, i / (steps - 1)));
+            }
+
+            const ftppLabels = [
+                'Need Assign',
+                'Need Check',
+                'Need Approve by Auditor',
+                'Need Approve by Lead Auditor',
+                'Need Revision',
+                'Close'
+            ];
+            const ftppBg = ftppGradientColors(ftppStatusColorMap['Need Assign'], ftppStatusColorMap['Close'],
+                ftppLabels.length);
+
+            function getFtppStatusCount(...keys) {
+                for (const key of keys) {
+                    if (typeof ftppStatusData[key] !== 'undefined' && ftppStatusData[key] !== null) {
+                        return Number(ftppStatusData[key]) || 0;
+                    }
+                }
+                return 0;
+            }
 
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: [
-                        'Need Assign',
-                        'Need Check',
-                        'Need Approve by Auditor',
-                        'Need Approve by Lead Auditor',
-                        'Need Revision',
-                        'Close'
-                    ],
+                    labels: ftppLabels,
                     datasets: [{
                         label: 'Total Findings',
                         data: [
-                            {{ $chartData['Need Assign'] ?? 0 }},
-                            {{ $chartData['Need Check'] ?? 0 }},
-                            {{ $chartData['Checked by Dept Head'] ?? 0 }},
-                            {{ $chartData['Need Approve by Lead Auditor'] ?? 0 }},
-                            {{ $chartData['Need Revision'] ?? 0 }},
-                            {{ $chartData['Close'] ?? 0 }},
+                            getFtppStatusCount('Need Assign'),
+                            getFtppStatusCount('Need Check', 'Checked by Dept Head'),
+                            getFtppStatusCount('Need Approval by Auditor', 'Need Approve by Auditor'),
+                            getFtppStatusCount('Need Approval by Lead Auditor', 'Need Approve by Lead Auditor'),
+                            getFtppStatusCount('Need Revision'),
+                            getFtppStatusCount('Close'),
                         ],
 
-                        backgroundColor: [
-                            '#dc3545', // Need Assign
-                            '#fd7e14', // Need Check
-                            '#0d6efd', // Checked
-                            '#198754', // Approved
-                            '#6c757d', // Need Revision
-                            '#6c757d' // Close
-                        ],
+                        backgroundColor: ftppBg,
                         borderWidth: 0,
                         borderRadius: 6,
                         barThickness: 28 // biar lebih rapih

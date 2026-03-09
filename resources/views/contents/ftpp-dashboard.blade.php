@@ -74,7 +74,7 @@
                     'Need Approval by Lead Auditor' => '#7EA6D1',
                     'Need Revision' => '#F7C6B5',
                     'Close' => '#B7E4C7',
-                    'Checked by Dept Head' => '#BEEAEF',
+                    // 'Checked by Dept Head' => '#BEEAEF',
                 ];
             @endphp
 
@@ -402,7 +402,7 @@
             'Need Approval by Lead Auditor': '#7EA6D1', // muted blue
             'Need Revision': '#F7C6B5', // light peach
             'Close': '#B7E4C7', // soft mint
-            'Checked by Dept Head': '#BEEAEF' // pale teal
+            // 'Checked by Dept Head': '#BEEAEF' // pale teal
         };
 
         const fallbackColors = corporatePalette.slice();
@@ -410,7 +410,7 @@
         const ftppLabels = [
             'Need Assign',
             'Need Check',
-            'Checked by Dept Head',
+            'Need Approval by Auditor',
             'Need Approval by Lead Auditor',
             'Need Revision',
             'Close'
@@ -462,7 +462,7 @@
                     data: [
                         chartData['Need Assign'] ?? 0,
                         chartData['Need Check'] ?? 0,
-                        chartData['Checked by Dept Head'] ?? 0,
+                        chartData['Need Approval by Auditor'] ?? 0,
                         chartData['Need Approval by Lead Auditor'] ?? 0,
                         chartData['Need Revision'] ?? 0,
                         chartData['Close'] ?? 0,
