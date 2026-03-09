@@ -342,6 +342,7 @@ class DocumentControlController extends Controller
                 'file_type'     => $uploadedFile->getClientMimeType(),
                 'uploaded_by'   => Auth::id(),
                 'is_active'     => 1,
+                'pending_approval' => 1,
             ]);
 
             // ==================== AUTO-COMPRESS ====================
@@ -378,6 +379,18 @@ class DocumentControlController extends Controller
                         'pending_approval' => 0,
                         'is_active' => 0,
                         'marked_for_deletion_at' => now(),
+                    ]);
+                    continue;
+                }
+
+                if ($currentStatus === 'Need Review') {
+                    // Correction while still in review: do not archive replaced file.
+                    // Keep it hidden from preview and outside archive queries.
+                    $oldFile->update([
+                        'replaced_by_id'         => $newFile->id,
+                        'pending_approval'       => 0,
+                        'is_active'              => 0,
+                        'marked_for_deletion_at' => null,
                     ]);
                     continue;
                 }
@@ -445,8 +458,29 @@ class DocumentControlController extends Controller
 
         $periodYears    = $mapping->period_years ?? 1;
         $lastObsolete   = $mapping->obsolete_date ?? now();
-        $newObsolete    = \Carbon\Carbon::parse($lastObsolete)->addYears($periodYears);
-        $newReminder    = $newObsolete->copy()->subMonth();
+
+        // Snapshot pending files before they are finalized, to determine approval scenario.
+        $pendingFiles = $mapping->files()
+            ->where('pending_approval', 1)
+            ->get();
+
+        $hasPendingUploadedFile = $pendingFiles->contains(function ($f) {
+            return (int) $f->is_active === 1 && empty($f->replaced_by_id);
+        });
+
+        $hasPendingDeletedFile = $pendingFiles->contains(function ($f) {
+            return (int) $f->is_active === 0 && empty($f->replaced_by_id);
+        });
+
+        $isDeleteOnlyApproval = $hasPendingDeletedFile && !$hasPendingUploadedFile;
+
+        $newObsolete = $isDeleteOnlyApproval
+            ? \Carbon\Carbon::parse($lastObsolete)
+            : \Carbon\Carbon::parse($lastObsolete)->addYears($periodYears);
+
+        $newReminder = $isDeleteOnlyApproval
+            ? ($mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date) : $newObsolete->copy()->subMonth())
+            : $newObsolete->copy()->subMonth();
 
         // Restore notes from initial_notes when approving
         $notesToRestore = $mapping->initial_notes ?? $mapping->notes;
@@ -458,17 +492,53 @@ class DocumentControlController extends Controller
             'notes'         => $notesToRestore,  // Restore from initial_notes
         ]);
 
-        // ===== ARCHIVE FILE YANG PENDING (pending_approval = 1) =====
-        $pendingFiles = $mapping->files()
-            ->where('pending_approval', 1)
-            ->get();
+        // ===== FINALIZE PENDING FILES =====
+        // Rule:
+        // - pending file WITH replaced_by_id => superseded old version, move to archive window
+        // - pending file WITHOUT replaced_by_id => approved latest version, keep active
+        $approvedFileIds = [];
 
         foreach ($pendingFiles as $pendingFile) {
+            if (!empty($pendingFile->replaced_by_id)) {
+                $pendingFile->update([
+                    'pending_approval'       => 0,
+                    'is_active'              => 0,
+                    'marked_for_deletion_at' => now()->addYear(),
+                ]);
+                continue;
+            }
+
+            // Active-file deletion request from Active status.
+            // Keep hidden and archive it instead of re-activating.
+            if ((int) $pendingFile->is_active === 0) {
+                $pendingFile->update([
+                    'pending_approval'       => 0,
+                    'is_active'              => 0,
+                    'marked_for_deletion_at' => now()->addYear(),
+                ]);
+                continue;
+            }
+
             $pendingFile->update([
                 'pending_approval'       => 0,
-                'is_active'              => 0,
-                'marked_for_deletion_at' => now()->addYear(),
+                'is_active'              => 1,
+                'marked_for_deletion_at' => null,
             ]);
+
+            $approvedFileIds[] = $pendingFile->id;
+        }
+
+        // If there are hidden files replaced during Need Review correction,
+        // mark them for immediate archive timestamp (not archive window).
+        if (!empty($approvedFileIds)) {
+            $mapping->files()
+                ->whereIn('replaced_by_id', $approvedFileIds)
+                ->where('is_active', 0)
+                ->where('pending_approval', 0)
+                ->whereNull('marked_for_deletion_at')
+                ->update([
+                    'marked_for_deletion_at' => now(),
+                ]);
         }
 
         // ===== HAPUS FILE REJECTED (pending_approval = 2) =====
@@ -591,9 +661,10 @@ class DocumentControlController extends Controller
             ]);
         }
 
-        // ===== UBAH FILE PENDING LAIN MENJADI REJECTED (pending_approval = 2) =====
-        // Hanya file pending yang masih aktif yang ditampilkan sebagai "Rejected" badge.
+        // ===== UBAH HANYA FILE TERPILIH MENJADI REJECTED (pending_approval = 2) =====
+        // Jangan reject semua file pending; hanya yang dipilih admin di modal reject.
         $pendingFiles = $mapping->files()
+            ->whereIn('id', $selectedIds)
             ->where('pending_approval', 1)
             ->where('is_active', 1)
             ->get();

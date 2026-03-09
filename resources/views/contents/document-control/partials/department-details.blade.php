@@ -376,17 +376,25 @@
                                                         <i class="bi bi-download"></i>
                                                     </a> --}}
 
-                                                    {{-- UPLOAD/REVISE: hide for Admins when status is Need Review --}}
+                                                    {{-- UPLOAD/REVISE hybrid flow: allow Need Review only when pending file exists --}}
                                                     @php
                                                         $currentRole = auth()->user()->roles->pluck('name')->first();
                                                         $isAdminRole = in_array($currentRole, ['Admin', 'Super Admin']);
+                                                        $hasPendingApprovalFile = collect($mapping->files_for_modal_all)->contains(function ($file) {
+                                                            return (int) ($file['pending_approval'] ?? 0) === 1 &&
+                                                                (int) ($file['is_active'] ?? 0) === 1;
+                                                        });
+                                                        $canShowReviseButton =
+                                                            $mapping->status->name !== 'Need Review' ||
+                                                            $hasPendingApprovalFile;
                                                     @endphp
-                                                    @if (!$approvalMode && !($isAdminRole && $mapping->status->name === 'Need Review'))
+                                                    @if (!$approvalMode && $canShowReviseButton)
                                                         <button type="button"
                                                             class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
                                                             data-docid="{{ $mapping->id }}"
                                                             data-doc-title="{{ $mapping->document->name }}"
                                                             data-status="{{ $mapping->status->name }}"
+                                                            data-has-pending-approval="{{ $hasPendingApprovalFile ? '1' : '0' }}"
                                                             data-reminder="{{ $mapping->reminder_date ?? $mapping->reminder ?? '' }}"
                                                             data-files='@json($mapping->files_for_modal_all)'
                                                             onclick="openReviseModal(this)" title="Upload">
@@ -862,13 +870,26 @@
 
                     let enabled = false;
 
+                    const hasPendingApprovalFiles = (() => {
+                        if (btn.dataset.hasPendingApproval === '1') return true;
+                        try {
+                            const files = JSON.parse(btn.dataset.files || '[]');
+                            return files.some(f => Number(f.pending_approval || 0) === 1 && Number(f.is_active || 0) === 1);
+                        } catch (e) {
+                            return false;
+                        }
+                    })();
+
                     // Revise: admins always see it; others see for Rejected/Obsolete/Uncomplete,
+                    // for Need Review only if there is at least one pending approval file,
                     // and for Active only if reminder is today
                     if (type === 'revise') {
                         if (currentUserIsAdmin) {
                             enabled = true;
                         } else if (['Rejected', 'Obsolete', 'Uncomplete'].includes(status)) {
                             enabled = true;
+                        } else if (status === 'Need Review') {
+                            enabled = hasPendingApprovalFiles;
                         } else if (status === 'Active') {
                             // check reminder date on button or row
                             let reminderStr = btn.dataset.reminder;
@@ -1251,17 +1272,20 @@
                     const container = document.getElementById('rejectFilesContainer');
                     container.innerHTML = '';
 
-                    // Filter eligible files: is_active == 1, pending_approval == 0, marked_for_deletion_at == null
+                    // Filter eligible files for reject action:
+                    // is_active == 1, pending_approval == 1, replaced_by_id == null, marked_for_deletion_at == null
                     const eligible = files.filter(f => {
                         // require is_active === 1
                         if (Number(f.is_active) !== 1) return false;
-                        // must not have been replaced
+                        // must be root file (not an old file already replaced)
                         if (f.replaced_by_id !== null && f.replaced_by_id !== undefined && f.replaced_by_id !== 0 && f.replaced_by_id !== '') return false;
                         // must not be scheduled for deletion
                         if (f.marked_for_deletion_at && f.marked_for_deletion_at !== null && f.marked_for_deletion_at !== '') return false;
-                        // must not be pending approval (0 or null allowed)
+                        // must be pending approval
                         if (typeof f.pending_approval !== 'undefined' && f.pending_approval !== null) {
-                            if (Number(f.pending_approval) !== 0) return false;
+                            if (Number(f.pending_approval) !== 1) return false;
+                        } else {
+                            return false;
                         }
                         return true;
                     });
