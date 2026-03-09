@@ -275,7 +275,9 @@ class DashboardController extends Controller
     public function controlDashboard()
     {
         // Data spesifik untuk Document Control
-        $totalDocuments = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'control'))->count();
+        $totalDocuments = DocumentMapping::whereNull('marked_for_deletion_at')
+            ->whereHas('document', fn($q) => $q->where('type', 'control'))
+            ->count();
 
         $activeDocuments = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'control'))
             ->whereHas('status', fn($q) => $q->where('name', 'Active'))
