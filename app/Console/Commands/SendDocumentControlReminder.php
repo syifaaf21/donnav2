@@ -28,6 +28,9 @@ class SendDocumentControlReminder extends Command
         // Ambil semua dokumen sekaligus
         $docs = DocumentMapping::with(['document', 'department', 'status'])
             ->whereNull('marked_for_deletion_at')
+            ->whereHas('document', function ($q) {
+                $q->where('type', 'control');
+            })
             ->get();
 
         if ($docs->isEmpty()) {
