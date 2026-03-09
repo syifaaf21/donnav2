@@ -392,6 +392,7 @@ class DashboardController extends Controller
         // Status breakdown untuk pie chart
         $statusBreakdown = DocumentMapping::selectRaw('tm_statuses.name as status, COUNT(*) as total')
             ->join('tm_statuses', 'tm_statuses.id', '=', 'tt_document_mappings.status_id')
+            ->whereNull('tt_document_mappings.marked_for_deletion_at')
             ->whereHas('document', fn($q) => $q->where('type', 'control'))
             ->groupBy('tm_statuses.name')
             ->pluck('total', 'status')
