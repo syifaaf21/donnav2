@@ -19,7 +19,7 @@ class FindingDueNotification extends Notification
     {
         $this->finding = $finding;
         $this->message = $message;
-        $this->url = $url ?? route('ftpp.index');
+        $this->url = $url ?? route('ftpp.index', [], false);
 
     }
 
