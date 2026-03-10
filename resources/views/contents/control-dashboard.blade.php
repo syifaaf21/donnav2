@@ -5,10 +5,12 @@
 @section('content')
     <div class="px-4 mt-4">
         {{-- ===== SUMMARY CARDS ===== --}}
-        <div class="row g-4 mb-5">
+        <div class="row g-3 mb-4 summary-cards-row">
             @php
                 // determine Need Review count robustly (case / separator insensitive)
                 $needReviewCount = 0;
+                $roleName = strtolower(trim((string) (auth()->user()->roles->pluck('name')->first() ?? '')));
+                $canOpenNeedReviewApproval = in_array($roleName, ['admin', 'super admin']);
                 if (!empty($statusBreakdown) && is_array($statusBreakdown)) {
                     foreach ($statusBreakdown as $k => $v) {
                         $norm = strtolower(str_replace([' ', '-', '_'], '', $k));
@@ -56,40 +58,32 @@
                         'value' => $needReviewCount,
                         'color' => 'info',
                         'icon' => 'bi-search',
-                        'route' => route('document-control.approval'),
+                        'route' => $canOpenNeedReviewApproval ? route('document-control.approval') : null,
                     ],
                 ];
             @endphp
 
             @foreach ($cards as $c)
-                <div class="col-6 col-lg-2-4">
+                <div class="col-6 col-md-4 col-lg-2-4">
                     @if(!empty($c['route']))
                         <a href="{{ $c['route'] }}" class="d-block text-decoration-none" style="color:inherit;">
-                            <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                            <div class="card summary-card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
                                 transition-all duration-200 border-0 h-100 overflow-hidden"
                                 style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
-                                <div class="card-body p-3 d-flex flex-column justify-content-between">
+                                <div class="card-body summary-card-body">
 
-                                    {{-- Label --}}
-                                    <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
-                                        {{ $c['label'] }}
-                                    </small>
-
-                                    {{-- Value --}}
-                                    <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
-                                        {{ $c['value'] }}
+                                    <div class="summary-card-content">
+                                        <small class="text-muted fw-semibold summary-card-label">
+                                            {{ $c['label'] }}
+                                        </small>
+                                        <div class="fw-bold text-{{ $c['color'] }} summary-card-value">
+                                            {{ $c['value'] }}
+                                        </div>
                                     </div>
 
-                                    {{-- Icon --}}
-                                    <div class="ms-auto mt-2"
-                                        style="
-                                    font-size: 1.7rem;
-                                    padding: 8px 12px;
-                                    border-radius: 12px;
-                                    background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
-                                    color: var(--bs-{{ $c['color'] }});
-                                ">
+                                    <div class="summary-card-icon"
+                                        style="background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12); color: var(--bs-{{ $c['color'] }});">
                                         <i class="bi {{ $c['icon'] }}"></i>
                                     </div>
 
@@ -97,31 +91,23 @@
                             </div>
                         </a>
                     @else
-                        <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                        <div class="card summary-card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
                             transition-all duration-200 border-0 h-100 overflow-hidden"
                             style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
-                            <div class="card-body p-3 d-flex flex-column justify-content-between">
+                            <div class="card-body summary-card-body">
 
-                                {{-- Label --}}
-                                <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
-                                    {{ $c['label'] }}
-                                </small>
-
-                                {{-- Value --}}
-                                <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
-                                    {{ $c['value'] }}
+                                <div class="summary-card-content">
+                                    <small class="text-muted fw-semibold summary-card-label">
+                                        {{ $c['label'] }}
+                                    </small>
+                                    <div class="fw-bold text-{{ $c['color'] }} summary-card-value">
+                                        {{ $c['value'] }}
+                                    </div>
                                 </div>
 
-                                {{-- Icon --}}
-                                <div class="ms-auto mt-2"
-                                    style="
-                                font-size: 1.7rem;
-                                padding: 8px 12px;
-                                border-radius: 12px;
-                                background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
-                                color: var(--bs-{{ $c['color'] }});
-                            ">
+                                <div class="summary-card-icon"
+                                    style="background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12); color: var(--bs-{{ $c['color'] }});">
                                     <i class="bi {{ $c['icon'] }}"></i>
                                 </div>
 
@@ -569,6 +555,39 @@
 
 @push('styles')
     <style>
+        .summary-card-body {
+            padding: 0.95rem 0.95rem;
+            min-height: 104px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .summary-card-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.2px;
+            display: block;
+            line-height: 1.2;
+            margin-bottom: 0.35rem;
+        }
+
+        .summary-card-value {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .summary-card-icon {
+            font-size: 1.35rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+
         /* Compact status summary cards */
         .status-card {
             flex: 1 1 320px;
@@ -663,6 +682,23 @@
             .col-lg-2-4 {
                 flex: 0 0 20%;
                 max-width: 20%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .summary-card-body {
+                min-height: 94px;
+                padding: 0.8rem 0.8rem;
+            }
+
+            .summary-card-value {
+                font-size: 1.5rem;
+            }
+
+            .summary-card-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 1.1rem;
             }
         }
     </style>

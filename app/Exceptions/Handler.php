@@ -2,7 +2,10 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -43,6 +46,23 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (Throwable $e, Request $request) {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
+            $isForbidden = $e instanceof AuthorizationException
+                || ($e instanceof HttpExceptionInterface && $e->getStatusCode() === 403);
+
+            if ($isForbidden) {
+                return response()->view('errors.403', [
+                    'message' => $e->getMessage(),
+                ], 403);
+            }
+
+            return null;
         });
     }
 }
