@@ -90,7 +90,7 @@
             <!-- Status Filter Dropdown -->
             <div class="relative">
                 <button id="filterStatusBtn" type="button"
-                    class="flex items-center gap-2 px-4 h-10 rounded-xl bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors font-semibold text-gray-700 text-sm"
+                    class="modern-pill-btn flex items-center gap-2 px-4 h-10 rounded-xl bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors font-semibold text-gray-700 text-sm"
                     title="Filter by Status">
                     Status
                     <svg class="w-4 h-4 ml-1 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
@@ -171,7 +171,7 @@
 
             <!-- Filter Button -->
             <button type="button"
-                class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition"
+                class="modern-square-btn bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition"
                 data-bs-toggle="modal" data-bs-target="#filterModal">
                 <i data-feather="filter" class="w-5 h-5"></i>
             </button>
@@ -531,7 +531,7 @@
                                                 <div class="relative inline-block text-left">
                                                     <button type="button"
                                                         onclick="document.getElementById('actionMenu-{{ $doc->id }}').classList.toggle('hidden')"
-                                                        class="w-8 h-8 flex justify-center items-center rounded-full hover:bg-gray-200">
+                                                        class="modern-action-trigger w-8 h-8 flex justify-center items-center rounded-full hover:bg-gray-200">
                                                         <i class="bi bi-three-dots-vertical text-lg"></i>
                                                     </button>
 
@@ -709,6 +709,134 @@
         </div>
     </div>
     <style>
+        :root {
+            --btn-ink: #0f172a;
+            --btn-border: #dbe4ef;
+            --btn-primary: #2563eb;
+            --btn-primary-dark: #1d4ed8;
+        }
+
+        .modern-pill-btn {
+            height: 42px !important;
+            border-radius: 999px !important;
+            padding: 0 16px !important;
+            background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+            border: 1px solid var(--btn-border) !important;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .modern-pill-btn:hover {
+            border-color: #93c5fd !important;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2) !important;
+            transform: translateY(-1px);
+        }
+
+        .modern-square-btn {
+            width: 42px;
+            height: 42px;
+            padding: 0 !important;
+            border-radius: 14px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+            border: 1px solid var(--btn-border) !important;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .modern-square-btn:hover {
+            border-color: #93c5fd !important;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2) !important;
+            transform: translateY(-1px);
+        }
+
+        .modern-action-trigger {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 12px !important;
+            border: 1px solid #e2e8f0 !important;
+            background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+            transition: all 0.18s ease;
+        }
+
+        .modern-action-trigger:hover {
+            border-color: #bfdbfe !important;
+            background: #eff6ff !important;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .toggle-files-dropdown {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+            transition: all 0.18s ease;
+        }
+
+        .toggle-files-dropdown:hover {
+            border-color: #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        [id^="actionMenu-"] {
+            border-radius: 12px !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12) !important;
+            overflow: hidden;
+        }
+
+        [id^="actionMenu-"] a,
+        [id^="actionMenu-"] button {
+            font-weight: 600;
+            transition: background-color 0.16s ease;
+        }
+
+        [id^="actionMenu-"] a:hover,
+        [id^="actionMenu-"] button:hover {
+            background: #f8fafc !important;
+        }
+
+        #filterModal .modal-footer #clearFilterBtn {
+            border: 1px solid var(--btn-border);
+            border-radius: 10px;
+            background: #fff;
+            color: #64748b !important;
+        }
+
+        #filterModal .modal-footer button[type="submit"] {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--btn-primary), var(--btn-primary-dark)) !important;
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.28);
+        }
+
+        #selectFileCancel,
+        #selectFileConfirm {
+            border-radius: 10px !important;
+            font-weight: 600;
+        }
+
+        #selectFileConfirm {
+            border: none;
+            background: linear-gradient(135deg, var(--btn-primary), var(--btn-primary-dark)) !important;
+            box-shadow: 0 10px 18px rgba(37, 99, 235, 0.28);
+        }
+
+        #selectFileCancel:hover,
+        #selectFileConfirm:hover {
+            transform: translateY(-1px);
+        }
+
         /* --- Dropdown fix style --- */
         .dropdown-fixed {
             position: fixed !important;
