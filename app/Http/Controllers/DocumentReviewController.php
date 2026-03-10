@@ -91,7 +91,8 @@ class DocumentReviewController extends Controller
         }
 
         // Data for Add Document modal on main Document Review page.
-        $documentsMaster = Document::where('type', 'review')
+        $documentsMaster = Document::with('plants')
+            ->where('type', 'review')
             ->whereNull('marked_for_deletion_at')
             ->orderBy('name')
             ->get();
@@ -214,6 +215,15 @@ class DocumentReviewController extends Controller
             abort(403, 'Selected plant is not allowed for your departments.');
         }
 
+        $selectedDocument = Document::with('plants')
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->find($validated['document_id']);
+
+        if (!$selectedDocument || !$this->isDocumentAllowedForPlant($selectedDocument, $validated['plant'])) {
+            abort(403, 'Selected document is not available for the chosen plant.');
+        }
+
         $userDepartment = Auth::user()->departments()
             ->where('tm_departments.id', $validated['department_id'])
             ->first();
@@ -291,6 +301,32 @@ class DocumentReviewController extends Controller
             ->with('success', $hasUploadedFiles
                 ? 'Document metadata and file uploaded successfully.'
                 : 'Document metadata registered successfully.');
+    }
+
+    private function isDocumentAllowedForPlant(Document $document, string $selectedPlant): bool
+    {
+        $selectedPlant = strtolower(trim($selectedPlant));
+        $docPlants = $document->plants
+            ->pluck('plant')
+            ->map(fn($plant) => strtolower(trim((string) $plant)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($selectedPlant === 'all') {
+            return $docPlants->contains('all');
+        }
+
+        if ($docPlants->isEmpty()) {
+            // Legacy documents without explicit assignment remain available on physical plants.
+            return in_array($selectedPlant, ['body', 'unit', 'electric']);
+        }
+
+        if ($docPlants->contains('all')) {
+            return false;
+        }
+
+        return $docPlants->contains($selectedPlant);
     }
 
     public function showFolder($plant, $docCode, Request $request)

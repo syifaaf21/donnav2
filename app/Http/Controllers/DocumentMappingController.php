@@ -140,7 +140,7 @@ class DocumentMappingController extends Controller
     public function reviewIndex2(Request $request)
     {
         // Master data
-        $documentsMaster = Document::with('childrenRecursive')
+        $documentsMaster = Document::with(['childrenRecursive', 'plants'])
             ->where('type', 'review')
             ->get();
 
@@ -468,6 +468,14 @@ class DocumentMappingController extends Controller
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '')
             $cleanNotes = null;
 
+        $selectedDocument = Document::with('plants')
+            ->where('type', 'review')
+            ->find($validated['document_id']);
+
+        if (!$selectedDocument || !$this->isDocumentAllowedForPlant($selectedDocument, $validated['plant'])) {
+            return back()->withErrors(['document_id' => 'Selected document is not available for the chosen plant.'])->withInput();
+        }
+
 
         // **Validasi parent jika diisi**
         if (!empty($validated['parent_id'])) {
@@ -617,6 +625,14 @@ class DocumentMappingController extends Controller
             $cleanNotes = null;
         }
 
+        $selectedDocument = Document::with('plants')
+            ->where('type', 'review')
+            ->find($validated['document_id']);
+
+        if (!$selectedDocument || !$this->isDocumentAllowedForPlant($selectedDocument, $validated['plant'])) {
+            return back()->withErrors(['document_id' => 'Selected document is not available for the chosen plant.'])->withInput();
+        }
+
         // Validasi parent document (jika ada)
         if (!empty($validated['parent_id'])) {
             $parent = DocumentMapping::find($validated['parent_id']);
@@ -760,7 +776,8 @@ class DocumentMappingController extends Controller
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
-        $plantSlug = ($plantValue === 'all' || empty($validated['part_number_id'])) ? 'Others' : ucfirst(strtolower($plantValue ?? 'body'));
+        $mappingPlant = strtolower(trim((string) ($mapping->plant ?? '')));
+        $plantSlug = ($mappingPlant === 'all' || empty($validated['part_number_id'])) ? 'Others' : ucfirst($mappingPlant ?: 'body');
         $docCode = $mapping->document?->code ?? null;
         $directUrl = $docCode ? route('document-review.showFolder', [$plantSlug, base64_encode($docCode)], false) : route('document-review.index', [], false);
 
@@ -776,6 +793,32 @@ class DocumentMappingController extends Controller
 
         // 8️⃣ Redirect dengan pesan sukses
         return back()->with('success', 'Document review created successfully!');
+    }
+
+    private function isDocumentAllowedForPlant(Document $document, string $selectedPlant): bool
+    {
+        $selectedPlant = strtolower(trim($selectedPlant));
+        $docPlants = $document->plants
+            ->pluck('plant')
+            ->map(fn($plant) => strtolower(trim((string) $plant)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($selectedPlant === 'all') {
+            return $docPlants->contains('all');
+        }
+
+        if ($docPlants->isEmpty()) {
+            // Legacy documents without explicit assignment remain available on physical plants.
+            return in_array($selectedPlant, ['body', 'unit', 'electric']);
+        }
+
+        if ($docPlants->contains('all')) {
+            return false;
+        }
+
+        return $docPlants->contains($selectedPlant);
     }
 
 

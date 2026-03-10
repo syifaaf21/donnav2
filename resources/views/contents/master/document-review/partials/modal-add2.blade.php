@@ -17,6 +17,23 @@
     if ($allowedPlantValues->isEmpty()) {
         $allowedPlantValues = collect(array_keys($plantLabels));
     }
+
+    $reviewDocumentOptions = collect($documentsMaster ?? [])
+        ->map(function ($doc) {
+            return [
+                'value' => $doc->id,
+                'text' => $doc->name,
+                'code' => strtoupper((string) $doc->code),
+                'plants' => collect($doc->plants ?? [])
+                    ->pluck('plant')
+                    ->map(fn($plant) => strtolower(trim((string) $plant)))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ];
+        })
+        ->values()
+        ->all();
 @endphp
 
 @if ($canShowAddDocumentModal)
@@ -50,38 +67,6 @@
                         style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                         <div class="row g-4">
 
-                            {{-- Document Name --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Document Name <span
-                                        class="text-danger">*</span></label>
-                                <select id="document_select" name="document_id"
-                                    class="form-select border-0 shadow-sm rounded-3 @error('document_id') is-invalid @enderror"
-                                    required>
-                                    <option value="">-- Select Document --</option>
-                                    @foreach ($documentsMaster as $doc)
-                                        <option value="{{ $doc->id }}" data-code="{{ strtoupper($doc->code) }}">
-                                            {{ $doc->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('document_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @else
-                                    <div class="invalid-feedback">Document Name is required.</div>
-                                @enderror
-                            </div>
-
-                            {{-- Document Number --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Document Number <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" name="document_number" id="document_number"
-                                    class="form-control border-0 shadow-sm rounded-3 @error('document_number') is-invalid @enderror"
-                                    placeholder="Enter document number manually" required>
-                                <small id="document_number_hint" class="text-muted d-block mt-1"></small>
-                                <div class="invalid-feedback">Document Number is required.</div>
-                            </div>
-
                             {{-- Plant --}}
                             <div class="col-md-4">
                                 <label for="plant_select" class="form-label fw-semibold">Plant <span
@@ -100,6 +85,22 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @else
                                     <div class="invalid-feedback">Plant is required.</div>
+                                @enderror
+                            </div>
+
+                            {{-- Document Name --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Document Name <span
+                                        class="text-danger">*</span></label>
+                                <select id="document_select" name="document_id"
+                                    class="form-select border-0 shadow-sm rounded-3 @error('document_id') is-invalid @enderror"
+                                    required>
+                                    <option value="">-- Select Plant First --</option>
+                                </select>
+                                @error('document_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @else
+                                    <div class="invalid-feedback">Document Name is required.</div>
                                 @enderror
                             </div>
                             {{-- Department --}}
@@ -165,6 +166,19 @@
                                 </select>
                             </div>
 
+
+                            {{-- Document Number --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Document Number <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" name="document_number" id="document_number"
+                                    class="form-control border-0 shadow-sm rounded-3 @error('document_number') is-invalid @enderror"
+                                    placeholder="Automatically generated" required>
+                                <small id="document_number_hint" class="text-muted d-block mt-1"></small>
+                                <small class="text-muted">Document number will be automatically generated and editable.</small>
+                                <div class="invalid-feedback">Document Number is required.</div>
+                            </div>
+
                             @if ($isAdminOrSuper)
                                 {{-- Notes --}}
                                 <div class="col-12 mb-4">
@@ -174,8 +188,7 @@
                                     <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
                                         style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
                                     </div>
-                                    <small class="text-muted">You can format your notes with bold, italic, underline,
-                                        colors, and more.</small>
+                                    <small class="text-muted">You can format your notes with bold, italic and underline.</small>
                                     @error('notes')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -249,9 +262,39 @@
                 }
             }
 
+            const allReviewDocuments = @json($reviewDocumentOptions);
+
+            function normalizePlant(plant) {
+                return String(plant || '').trim().toLowerCase();
+            }
+
+            function getDocumentsByPlant(plant) {
+                const normalizedPlant = normalizePlant(plant);
+                if (!normalizedPlant) return [];
+
+                return allReviewDocuments.filter((doc) => {
+                    const docPlants = Array.isArray(doc.plants) ? doc.plants.map(normalizePlant) : [];
+
+                    if (normalizedPlant === 'all') {
+                        return docPlants.includes('all');
+                    }
+
+                    if (docPlants.length === 0) {
+                        return ['body', 'unit', 'electric'].includes(normalizedPlant);
+                    }
+
+                    if (docPlants.includes('all')) {
+                        return false;
+                    }
+
+                    return docPlants.includes(normalizedPlant);
+                });
+            }
+
             // --- Initialize TomSelects ---
             const tsDocument = new TomSelect('#document_select', {
                 create: false,
+                placeholder: 'Select Plant First',
                 sortField: {
                     field: 'text',
                     direction: 'asc'
@@ -317,13 +360,45 @@
             });
 
 
-            tsDocument.setValue(@json(old('document_id')));
+            const oldDocumentId = @json(old('document_id'));
             tsPlant.setValue(@json(old('plant')));
             tsPart.setValue(@json(old('part_number_id')));
             tsProduct.setValue(@json(old('product_id')));
             tsModel.setValue(@json(old('model_id')));
             tsProcess.setValue(@json(old('process_id')));
             tsDept.setValue(@json(old('department_id')));
+
+            function updateDocumentOptionsByPlant(plant, selectedDocumentId = null) {
+                const docs = getDocumentsByPlant(plant);
+
+                tsDocument.clear(true);
+                tsDocument.clearOptions();
+                tsDocument.addOptions(docs);
+                tsDocument.refreshOptions(false);
+
+                if (!plant) {
+                    tsDocument.settings.placeholder = 'Select Plant First';
+                    tsDocument.disable();
+                    return;
+                }
+
+                tsDocument.settings.placeholder = docs.length > 0
+                    ? '-- Select Document --'
+                    : 'No document available for selected plant';
+
+                if (docs.length === 0) {
+                    tsDocument.disable();
+                    return;
+                }
+
+                tsDocument.enable();
+
+                if (selectedDocumentId && docs.some((doc) => String(doc.value) === String(selectedDocumentId))) {
+                    tsDocument.setValue(String(selectedDocumentId), false);
+                }
+            }
+
+            updateDocumentOptionsByPlant(null);
 
             // --- Function: disable all controls initially ---
             function disableAllDetailControls() {
@@ -339,14 +414,20 @@
             tsPlant.on('change', async function(plant) {
                 if (!plant) {
                     // If plant cleared: disable all and clear values
+                    updateDocumentOptionsByPlant(null);
                     disableAllDetailControls();
                     tsPart.clear();
                     tsProduct.clear();
                     tsModel.clear();
                     tsProcess.clear();
                     tsDept.clear();
+                    if (documentNumberInput) {
+                        documentNumberInput.value = '';
+                    }
                     return;
                 }
+
+                updateDocumentOptionsByPlant(plant);
 
                 // Enable all fields once a plant is chosen
                 tsPart.enable();
@@ -736,6 +817,7 @@
                 if (oldPlant) {
                     // Set plant value first
                     tsPlant.setValue(oldPlant, false); // false = don't trigger change yet
+                    updateDocumentOptionsByPlant(oldPlant, oldDocumentId);
 
                     // Trigger change event untuk load data dari API
                     setTimeout(async () => {
