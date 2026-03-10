@@ -21,20 +21,38 @@
         {{-- Flash Message --}}
         <x-flash-message />
 
-        @if ($canAddDocumentReview ?? false)
-            <div class="flex justify-end">
-                <button class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
-                    data-bs-toggle="modal" data-bs-target="#addDocumentModal">
-                    <i class="bi bi-plus-circle"></i>
-                    <span>Add Document</span>
-                </button>
+        @if (($canAddDocumentReview ?? false) || ($canAccessApprovalQueue ?? false))
+            <div class="flex justify-end items-center gap-2">
+                @if ($canAccessApprovalQueue ?? false)
+                    <div class="relative inline-block">
+                        <a href="{{ route('document-review.approval') }}"
+                            class="px-3 py-2 inline-flex items-center gap-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                            <i class="bi bi-check2-square"></i>
+                            <span>Approval</span>
+                        </a>
+                        <span
+                            class="absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-semibold bg-red-500 text-white rounded-full">
+                            {{ $approvalCount ?? 0 }}
+                        </span>
+                    </div>
+                @endif
+
+                @if ($canAddDocumentReview ?? false)
+                    <button class="px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors"
+                        data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Add Document</span>
+                    </button>
+                @endif
             </div>
 
-            @include('contents.master.document-review.partials.modal-add2', [
-                'allowAllUsers' => true,
-                'formAction' => route('document-review.store-metadata'),
-                'allowedPlants' => ($allowedAddPlants ?? collect())->toArray(),
-            ])
+            @if ($canAddDocumentReview ?? false)
+                @include('contents.master.document-review.partials.modal-add2', [
+                    'allowAllUsers' => true,
+                    'formAction' => route('document-review.store-metadata'),
+                    'allowedPlants' => ($allowedAddPlants ?? collect())->toArray(),
+                ])
+            @endif
         @endif
 
         {{-- Header --}}

@@ -522,9 +522,10 @@
                                                 // Only admin or users allowed by canEditDocument can edit
                                                 $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
-                                                $showApproveReject = $isAdmin && $status === 'need review';
+                                                // Approval actions are handled in dedicated approval queue page.
+                                                $showApproveReject = false;
 
-                                                $showMenu = $showEdit || $showApproveReject || $showDownloadReport;
+                                                $showMenu = $showEdit || $showDownloadReport;
                                             @endphp
                                             @if ($showMenu)
                                                 <div class="relative inline-block text-left">

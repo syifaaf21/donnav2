@@ -232,6 +232,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     */
     Route::prefix('document-review')->name('document-review.')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
+        Route::get('/approval', [DocumentReviewController::class, 'approvalIndex'])->name('approval');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
         Route::get('/folder/{plant}/{docCode}', [DocumentReviewController::class, 'showFolder'])
             ->name('showFolder');

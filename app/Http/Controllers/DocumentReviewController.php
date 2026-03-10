@@ -80,6 +80,15 @@ class DocumentReviewController extends Controller
         }
 
         $canAddDocumentReview = $roleNames->contains('leader') && $allowedAddPlants->isNotEmpty();
+        $canAccessApprovalQueue = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+
+        $approvalCount = 0;
+        if ($canAccessApprovalQueue) {
+            $approvalCount = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                ->whereNull('marked_for_deletion_at')
+                ->count();
+        }
 
         // Data for Add Document modal on main Document Review page.
         $documentsMaster = Document::where('type', 'review')
@@ -98,6 +107,8 @@ class DocumentReviewController extends Controller
             'groupedByPlant',
             'roots',
             'canAddDocumentReview',
+            'canAccessApprovalQueue',
+            'approvalCount',
             'allowedAddPlants',
             'documentsMaster',
             'partNumbers',
@@ -106,6 +117,57 @@ class DocumentReviewController extends Controller
             'products',
             'processes',
         ));
+    }
+
+    public function approvalIndex(Request $request)
+    {
+        $isAdmin = Auth::user()->roles
+            ->pluck('name')
+            ->map(fn($role) => strtolower(trim((string) $role)))
+            ->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+
+        if (!$isAdmin) {
+            abort(403);
+        }
+
+        $query = DocumentMapping::with([
+            'document',
+            'department',
+            'user',
+            'status',
+            'partNumber.product',
+            'partNumber.productModel',
+            'partNumber.process',
+            'product',
+            'productModel',
+            'process',
+        ])
+            ->whereNull('marked_for_deletion_at')
+            ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+            ->whereHas('document', fn($q) => $q->where('type', 'review'));
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('document_number', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('document', fn($dq) => $dq->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('department', fn($dq) => $dq->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('user', fn($dq) => $dq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $mappings = $query->latest('updated_at')->paginate(10)->appends($request->query());
+
+        $mappings->getCollection()->transform(function ($mapping) {
+            $mapping->approval_plant = $this->getPlantFromMapping($mapping);
+            $mapping->approval_doc_code = base64_encode($mapping->document->code ?? '');
+            return $mapping;
+        });
+
+        return view('contents.document-review.approval.index', [
+            'mappings' => $mappings,
+        ]);
     }
 
     public function storeMetadata(Request $request)

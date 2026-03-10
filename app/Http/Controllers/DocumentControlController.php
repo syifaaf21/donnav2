@@ -9,11 +9,14 @@ use App\Models\User;
 use App\Notifications\DocumentActionNotification;
 use App\Notifications\DocumentStatusNotification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process;
 
 
 class DocumentControlController extends Controller
@@ -721,22 +724,294 @@ class DocumentControlController extends Controller
     {
         $fullPath = storage_path("app/public/" . $filePath);
         $tempPath = $fullPath . "_compressed.pdf";
+        $gsTempDir = storage_path('app/gs-temp');
+        $originalSize = is_file($fullPath) ? filesize($fullPath) : 0;
+        $profile = trim((string) env('PDF_GS_PROFILE', '/ebook'));
+        $dpi = (int) env('PDF_GS_IMAGE_DPI', 150);
 
-        // Pastikan Ghostscript tersedia di server
-        $gs = trim(shell_exec("which gs"));
-        if (!$gs) return false;
+        if ($profile === '' || $profile[0] !== '/') {
+            $profile = '/ebook';
+        }
 
-        $cmd = "$gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook "
-            . "-dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"$tempPath\" \"$fullPath\"";
+        if ($dpi < 72 || $dpi > 300) {
+            $dpi = 150;
+        }
 
-        shell_exec($cmd);
+        if (!is_file($fullPath)) {
+            return false;
+        }
+
+        if (!is_dir($gsTempDir) && !@mkdir($gsTempDir, 0775, true) && !is_dir($gsTempDir)) {
+            Log::warning('PDF compression skipped: unable to create Ghostscript temp directory.', [
+                'file_path' => $filePath,
+                'temp_dir' => $gsTempDir,
+            ]);
+            return false;
+        }
+
+        $gs = $this->findGhostscriptBinary();
+        if (!$gs) {
+            Log::warning('PDF compression skipped: Ghostscript binary not found.', [
+                'file_path' => $filePath,
+            ]);
+            return false;
+        }
+
+        $firstPass = $this->runGhostscriptCompressionPass(
+            $gs,
+            $fullPath,
+            $tempPath,
+            $gsTempDir,
+            $profile,
+            $dpi,
+            false,
+            0
+        );
+
+        if (!$firstPass['success']) {
+            Log::warning('PDF compression process failed.', [
+                'file_path' => $filePath,
+                'binary' => $gs,
+                'error_output' => $firstPass['error_output'] ?? '',
+                'output' => $firstPass['output'] ?? '',
+                'message' => $firstPass['message'] ?? null,
+            ]);
+            return false;
+        }
 
         // Jika compress sukses → ganti file asli
         if (file_exists($tempPath)) {
-            rename($tempPath, $fullPath);
+            $compressedSize = filesize($tempPath);
+
+            if ($compressedSize !== false && $originalSize > 0 && $compressedSize >= $originalSize) {
+                @unlink($tempPath);
+
+                // Second pass: more aggressive settings for scanned/image-heavy PDFs.
+                $fallbackDpi = min($dpi, 110);
+                $fallbackQuality = (int) env('PDF_GS_JPEG_QUALITY', 55);
+                if ($fallbackQuality < 20 || $fallbackQuality > 95) {
+                    $fallbackQuality = 55;
+                }
+
+                $tempPathFallback = $fullPath . "_compressed_fallback.pdf";
+                $secondPass = $this->runGhostscriptCompressionPass(
+                    $gs,
+                    $fullPath,
+                    $tempPathFallback,
+                    $gsTempDir,
+                    '/screen',
+                    $fallbackDpi,
+                    true,
+                    $fallbackQuality
+                );
+
+                if ($secondPass['success'] && file_exists($tempPathFallback)) {
+                    $fallbackSize = filesize($tempPathFallback);
+
+                    if ($fallbackSize !== false && $fallbackSize > 0 && $fallbackSize < $originalSize) {
+                        @rename($tempPathFallback, $fullPath);
+
+                        $finalSize = is_file($fullPath) ? filesize($fullPath) : null;
+                        Log::info('PDF compression success (fallback pass).', [
+                            'file_path' => $filePath,
+                            'binary' => $gs,
+                            'profile' => '/screen',
+                            'dpi' => $fallbackDpi,
+                            'jpeg_quality' => $fallbackQuality,
+                            'original_size' => $originalSize,
+                            'final_size' => $finalSize,
+                        ]);
+
+                        return true;
+                    }
+
+                    @unlink($tempPathFallback);
+                }
+
+                Log::info('PDF compression skipped replacement: output is not smaller.', [
+                    'file_path' => $filePath,
+                    'binary' => $gs,
+                    'profile' => $profile,
+                    'dpi' => $dpi,
+                    'original_size' => $originalSize,
+                    'compressed_size' => $compressedSize,
+                    'fallback_attempted' => true,
+                    'fallback_success' => $secondPass['success'] ?? false,
+                ]);
+                return false;
+            }
+
+            @rename($tempPath, $fullPath);
+
+            $finalSize = is_file($fullPath) ? filesize($fullPath) : null;
+            Log::info('PDF compression success.', [
+                'file_path' => $filePath,
+                'binary' => $gs,
+                'profile' => $profile,
+                'dpi' => $dpi,
+                'original_size' => $originalSize,
+                'final_size' => $finalSize,
+            ]);
+
+            return true;
         }
 
-        return true;
+        Log::warning('PDF compression finished without temp file output.', [
+            'file_path' => $filePath,
+            'binary' => $gs,
+        ]);
+
+        return false;
+    }
+
+    private function runGhostscriptCompressionPass(
+        string $gs,
+        string $inputPath,
+        string $outputPath,
+        string $tempDir,
+        string $profile,
+        int $dpi,
+        bool $forceJpeg,
+        int $jpegQuality
+    ): array {
+        $args = [
+            $gs,
+            '-sDEVICE=pdfwrite',
+            '-dCompatibilityLevel=1.4',
+            '-dSAFER',
+            '-dPDFSETTINGS=' . $profile,
+            '-dDetectDuplicateImages=true',
+            '-dCompressFonts=true',
+            '-dSubsetFonts=true',
+            '-dDownsampleColorImages=true',
+            '-dDownsampleGrayImages=true',
+            '-dDownsampleMonoImages=true',
+            '-dColorImageResolution=' . $dpi,
+            '-dGrayImageResolution=' . $dpi,
+            '-dMonoImageResolution=' . $dpi,
+            '-dNOPAUSE',
+            '-dQUIET',
+            '-dBATCH',
+            '-sTMPDIR=' . $tempDir,
+        ];
+
+        if ($forceJpeg) {
+            $args[] = '-dAutoFilterColorImages=false';
+            $args[] = '-dAutoFilterGrayImages=false';
+            $args[] = '-dColorImageFilter=/DCTEncode';
+            $args[] = '-dGrayImageFilter=/DCTEncode';
+            $args[] = '-dJPEGQ=' . $jpegQuality;
+        }
+
+        $args[] = '-sOutputFile=' . $outputPath;
+        $args[] = $inputPath;
+
+        $process = new Process($args);
+        $process->setTimeout(45);
+        $process->setIdleTimeout(45);
+        $process->setEnv([
+            'TMP' => $tempDir,
+            'TEMP' => $tempDir,
+            'TMPDIR' => $tempDir,
+        ]);
+
+        try {
+            $process->run();
+        } catch (ProcessTimedOutException $e) {
+            if (file_exists($outputPath)) {
+                @unlink($outputPath);
+            }
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_output' => '',
+                'output' => '',
+            ];
+        } catch (\Throwable $e) {
+            if (file_exists($outputPath)) {
+                @unlink($outputPath);
+            }
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_output' => '',
+                'output' => '',
+            ];
+        }
+
+        if (!$process->isSuccessful()) {
+            if (file_exists($outputPath)) {
+                @unlink($outputPath);
+            }
+            return [
+                'success' => false,
+                'message' => null,
+                'error_output' => trim($process->getErrorOutput()),
+                'output' => trim($process->getOutput()),
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => null,
+            'error_output' => '',
+            'output' => '',
+        ];
+    }
+
+    private function findGhostscriptBinary(): ?string
+    {
+        $configuredBinary = trim((string) env('GHOSTSCRIPT_BINARY', ''));
+        if ($configuredBinary !== '' && is_file($configuredBinary)) {
+            return $configuredBinary;
+        }
+
+        $commands = PHP_OS_FAMILY === 'Windows'
+            ? [
+                ['where', 'gswin64c'],
+                ['where', 'gswin32c'],
+                ['where', 'gs'],
+            ]
+            : [
+                ['which', 'gs'],
+            ];
+
+        foreach ($commands as $command) {
+            $process = new Process($command);
+            $process->setTimeout(3);
+
+            try {
+                $process->run();
+            } catch (ProcessTimedOutException $e) {
+                continue;
+            }
+
+            if (!$process->isSuccessful()) {
+                continue;
+            }
+
+            $firstLine = trim((string) strtok($process->getOutput(), PHP_EOL));
+            if ($firstLine !== '' && is_file($firstLine)) {
+                return $firstLine;
+            }
+        }
+
+        if (PHP_OS_FAMILY === 'Windows') {
+            $candidates = array_merge(
+                glob('C:\\Program Files\\gs\\gs*\\bin\\gswin64c.exe') ?: [],
+                glob('C:\\Program Files\\gs\\gs*\\bin\\gswin32c.exe') ?: [],
+                glob('C:\\Program Files (x86)\\gs\\gs*\\bin\\gswin32c.exe') ?: []
+            );
+
+            rsort($candidates);
+            foreach ($candidates as $candidate) {
+                if (is_file($candidate)) {
+                    return $candidate;
+                }
+            }
+        }
+
+        return null;
     }
 
 
