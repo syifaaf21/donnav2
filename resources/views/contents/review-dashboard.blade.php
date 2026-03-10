@@ -161,7 +161,7 @@
                                 <div id="plant-switch-group" class="d-flex flex-wrap gap-2 review-plant-switch"></div>
                             </div>
                         </div>
-                        <div class="small text-muted mb-3 review-plant-subtitle">Default view focuses on <span class="fw-semibold text-danger">Need Review</span>. Switch to All Status to view complete records.</div>
+                        <div class="small text-muted mb-3 review-plant-subtitle">Default view focuses on <span class="fw-semibold text-danger">Need Review</span>. Switch to All Status to show <span class="fw-semibold">10 most recently updated</span> documents.</div>
 
                         <div class="table-responsive review-table-wrap">
                             <table class="table table-sm align-middle mb-0 review-plant-table">
@@ -378,17 +378,17 @@
 
         function renderPlantTable(plant) {
             const rawRows = plantDocumentsTable[plant] || [];
-            const rows = rawRows
-                .filter((row) => {
-                    if (activeStatusFilter === 'all') return true;
-                    return normalizeStatus(row.status) === 'need review';
-                })
-                .sort((a, b) => {
-                    const aNeed = normalizeStatus(a.status) === 'need review' ? 0 : 1;
-                    const bNeed = normalizeStatus(b.status) === 'need review' ? 0 : 1;
-                    if (aNeed !== bNeed) return aNeed - bNeed;
-                    return String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
-                });
+            let rows = [];
+
+            if (activeStatusFilter === 'all') {
+                rows = [...rawRows]
+                    .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+                    .slice(0, 10);
+            } else {
+                rows = rawRows
+                    .filter((row) => normalizeStatus(row.status) === 'need review')
+                    .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
+            }
 
             if (!rows.length) {
                 plantDocTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No documents found</td></tr>';

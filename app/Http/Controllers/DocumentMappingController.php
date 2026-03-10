@@ -445,6 +445,7 @@ class DocumentMappingController extends Controller
         }
 
         $validated = $request->validate([
+            'plant' => 'required|in:body,unit,electric,all',
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
             'model_id' => 'required|array|min:1',
@@ -503,7 +504,7 @@ class DocumentMappingController extends Controller
 
         // Normalize plant: when user selects 'all' we store 'all' in DB so
         // it's visible in the DB enum. Views treat 'all' as Other/Manual Entry.
-        $plantValue = ($request->plant === 'all') ? 'all' : $request->plant;
+        $plantValue = ($validated['plant'] === 'all') ? 'all' : $validated['plant'];
 
         $mapping = DocumentMapping::create([
             'plant' => $plantValue,
@@ -1234,7 +1235,7 @@ class DocumentMappingController extends Controller
             'files' => 'nullable|array',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx, jpg,jpeg,png|max:20480',
         ], [
-            
+
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
         if ($validator->fails()) {
