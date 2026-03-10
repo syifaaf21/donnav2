@@ -619,11 +619,12 @@ class DocumentControlController extends Controller
             }
         }
 
-        // Ensure originals (files replaced by the rejected ones) remain shown as
-        // 'Replaced' (pending) so users can still see and act on them.
+        // Restore only originals that are still pending review.
+        // Files that were already superseded during Need Review corrections must stay hidden.
         if (!empty($selectedIds)) {
             $originals = $mapping->files()
                 ->whereIn('replaced_by_id', $selectedIds)
+            ->where('pending_approval', 1)
                 ->get();
 
             foreach ($originals as $orig) {
@@ -631,6 +632,22 @@ class DocumentControlController extends Controller
                     'pending_approval' => 1,
                     'is_active' => 1,
                     'marked_for_deletion_at' => null,
+                ]);
+            }
+
+            // Keep superseded intermediary files hidden and mark immediate deletion timestamp.
+            $supersededOriginals = $mapping->files()
+                ->whereIn('replaced_by_id', $selectedIds)
+                ->where('pending_approval', 0)
+                ->where('is_active', 0)
+                ->whereNull('marked_for_deletion_at')
+                ->get();
+
+            foreach ($supersededOriginals as $file) {
+                $file->update([
+                    'pending_approval'       => 0,
+                    'is_active'              => 0,
+                    'marked_for_deletion_at' => now(),
                 ]);
             }
         }
@@ -685,6 +702,7 @@ class DocumentControlController extends Controller
         // Agar badge "Replaced" muncul dan nanti masuk archive saat approve
         $replacedFiles = $mapping->files()
             ->whereIn('replaced_by_id', $pendingFiles->pluck('id'))
+            ->where('pending_approval', 1)
             ->get();
 
         foreach ($replacedFiles as $file) {
