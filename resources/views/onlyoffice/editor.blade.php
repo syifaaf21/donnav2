@@ -147,10 +147,11 @@
     .btn:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
     .btn.loading svg { animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden-sync { display: none !important; }
 
     /* ── TOAST ── */
     .toast {
-        position: fixed; bottom: 24px; right: 24px; z-index: 999;
+        position: fixed; top: 24px; right: 24px; z-index: 999;
         padding: 12px 18px; border-radius: 10px;
         font-size: 13px; font-weight: 500;
         display: flex; align-items: center; gap: 8px;
@@ -263,7 +264,7 @@
                     </button>
 
                     {{-- Sync ke Laravel --}}
-                    <button type="button" class="btn btn--secondary" id="btnSync" onclick="syncFile()">
+                    <button type="button" class="btn btn--secondary hidden-sync" id="btnSync" onclick="syncFile()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <polyline points="23 4 23 10 17 10"/>
                             <polyline points="1 20 1 14 7 14"/>
@@ -341,6 +342,29 @@
 <script>
     const LOGIN_URL    = @json($loginUrl);
     const EDITOR_URL   = @json($docEditorUrl);
+    const SYNC_STATUS_URL = @json(route('editor.sync-status', $file->id));
+
+    async function refreshSyncButtonVisibility() {
+        const btn = document.getElementById('btnSync');
+        if (!btn) return;
+
+        try {
+            const res = await fetch(SYNC_STATUS_URL, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+
+            if (data.success && data.hasChanges) {
+                btn.classList.remove('hidden-sync');
+            } else {
+                btn.classList.add('hidden-sync');
+            }
+        } catch (err) {
+            console.error('Gagal cek status sinkronisasi', err);
+            // Keep hidden on error to avoid false-positive sync action.
+            btn.classList.add('hidden-sync');
+        }
+    }
 
     // Login via iframe tersembunyi, lalu buka doceditor di tab baru
     async function openEditor() {
@@ -496,6 +520,17 @@
         t.textContent = msg;
         setTimeout(() => t.classList.remove('show'), 3500);
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshSyncButtonVisibility();
+
+        window.addEventListener('focus', refreshSyncButtonVisibility);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshSyncButtonVisibility();
+        });
+
+        setInterval(refreshSyncButtonVisibility, 15000);
+    });
 
     function openNotesModal() {
             return new Promise(resolve => {

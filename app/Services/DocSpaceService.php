@@ -313,6 +313,23 @@ class DocSpaceService
     }
 
     /**
+     * Get raw file metadata from DocSpace.
+     */
+    public function getFileInfo(string $docspaceFileId): array
+    {
+        $token = $this->getToken();
+
+        $infoResponse = $this->apiClient($token)
+            ->get("{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}");
+
+        if (!$infoResponse->successful()) {
+            throw new \Exception('Gagal ambil metadata file dari DocSpace');
+        }
+
+        return (array) ($infoResponse->json('response') ?? []);
+    }
+
+    /**
      * Hapus file dari DocSpace
      */
     public function deleteFile(string $docspaceFileId): bool

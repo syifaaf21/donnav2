@@ -108,6 +108,53 @@ class EditorController extends Controller
         }
     }
 
+    public function syncStatus(DocumentFile $file)
+    {
+        abort_if(!$file->docspace_file_id, 404, 'File belum di-upload ke DocSpace');
+
+        try {
+            $info = $this->docSpace->getFileInfo($file->docspace_file_id);
+
+            $remoteRaw = $info['updated']
+                ?? $info['updatedOn']
+                ?? $info['modified']
+                ?? $info['modifiedOn']
+                ?? $info['createOn']
+                ?? null;
+
+            if (!$remoteRaw) {
+                return response()->json([
+                    'success' => true,
+                    'hasChanges' => false,
+                    'remoteUpdatedAt' => null,
+                    'localUpdatedAt' => optional($file->updated_at)->toIso8601String(),
+                    'reason' => 'remote_updated_at_missing',
+                ]);
+            }
+
+            $remoteUpdatedAt = \Illuminate\Support\Carbon::parse($remoteRaw);
+            $localUpdatedAt = $file->updated_at;
+
+            // Add small tolerance to avoid flicker due to second-level timestamp precision.
+            $hasChanges = $localUpdatedAt
+                ? $remoteUpdatedAt->gt($localUpdatedAt->copy()->addSeconds(2))
+                : true;
+
+            return response()->json([
+                'success' => true,
+                'hasChanges' => $hasChanges,
+                'remoteUpdatedAt' => $remoteUpdatedAt->toIso8601String(),
+                'localUpdatedAt' => optional($localUpdatedAt)->toIso8601String(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'hasChanges' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function sync(\Illuminate\Http\Request $request, DocumentFile $file)
     {
         abort_if(!$file->docspace_file_id, 404, 'File belum di-upload ke DocSpace');
