@@ -664,7 +664,7 @@
                                 <i class="bi bi-printer"></i> Print
                             </a>
                             <a id="downloadFileBtn" href="#" download
-                                class="btn btn-outline-primary btn-sm d-none">
+                                class="btn btn-outline-primary btn-sm d-none" style="display:none !important;" aria-hidden="true" tabindex="-1">
                                 <i class="bi bi-download"></i> Download PDF
                             </a>
 
@@ -1103,29 +1103,6 @@
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
                         const docStatus = (btn.dataset.docStatus || '').toString().toLowerCase();
                         const isAdminFlag = (btn.dataset.isAdmin || '') === '1';
-                        // LOG DOWNLOAD untuk file non-PDF saat user membuka preview
-                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other']
-                            .includes(sourceFileType)) {
-                            fetch(`/document-review/${currentDocId}/log-download`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]').content,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        action: 'view_file',
-                                        file_type: sourceFileType,
-                                        document_file_id: currentFileId
-                                    })
-                                })
-                                .then(res => res.json())
-                                .then(data => {
-                                    console.log('Preview logged (non-PDF):', data);
-                                })
-                                .catch(err => console.error('Failed to log preview:', err));
-                        }
-
                         let previewUrl = url;
 
                         // For non-PDF sources, request server-side conversion and preview inline as PDF.
