@@ -438,7 +438,7 @@ class DocumentControlController extends Controller
                     $uploader->name,
                     null,
                     $mapping->document->name,
-                    route('document-control.department', $departmentName),
+                    route('document-control.approval', $departmentName),
                     $uploader->department?->name
                 ));
             }
@@ -487,7 +487,7 @@ class DocumentControlController extends Controller
 
         // Restore notes from initial_notes when approving
         $notesToRestore = $mapping->initial_notes ?? $mapping->notes;
-        
+
         $mapping->update([
             'status_id'     => $statusActive->id,
             'obsolete_date' => $newObsolete,

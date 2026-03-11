@@ -209,7 +209,7 @@ class EditorController extends Controller
                     byUser: $uploader->name,
                     documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
                     documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
-                    url: route('document-review.showFolder', [
+                    url: route('document-review.approval', [
                         'plant' => $this->getPlantFromMapping($mapping),
                         'docCode' => base64_encode($mapping->document->code ?? ''),
                     ]),
@@ -312,7 +312,7 @@ class EditorController extends Controller
                     byUser: $uploader->name,
                     documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
                     documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
-                    url: route('document-review.showFolder', [
+                    url: route('document-review.approval', [
                         'plant' => $this->getPlantFromMapping($mapping),
                         'docCode' => base64_encode($mapping->document->code ?? ''),
                     ]),
