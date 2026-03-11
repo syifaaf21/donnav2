@@ -435,13 +435,23 @@
                                             {{-- ================= FILE BUTTON ================= --}}
                                             <div class="relative inline-block overflow-visible">
                                                 @php
-                                                    $files = $doc->files
+                                                    $visibleFiles = $doc->files
+                                                        ->sortByDesc(fn($f) => !empty($f->replaced_by_id))
+                                                        ->values();
+
+                                                    $currentFiles = $visibleFiles
+                                                        ->filter(fn($f) => empty($f->replaced_by_id))
+                                                        ->sortByDesc('created_at')
+                                                        ->values();
+
+                                                    $files = $visibleFiles
                                                         ->map(
                                                             fn($f) => [
                                                                 'id' => $f->id,
                                                                 'file_path' => $f->file_path,
                                                                 'name' => $f->file_name ?? basename($f->file_path),
                                                                 'url' => asset('storage/' . $f->file_path),
+                                                                'replaced_by_id' => $f->replaced_by_id,
                                                             ],
                                                         )
                                                         ->toArray();
@@ -465,7 +475,7 @@
                                                                 <div
                                                                     class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
                                                                     <button type="button" title="View File"
-                                                                        class="flex-1 text-left view-file-btn truncate"
+                                                                        class="flex-1 text-left view-file-btn truncate {{ !empty($file['replaced_by_id']) ? 'text-red-700' : '' }}"
                                                                         data-file="{{ $file['url'] }}"
                                                                         data-doc-id="{{ $doc->id }}"
                                                                         data-doc-status="{{ $status }}"
@@ -475,7 +485,12 @@
                                                                         data-file-path="{{ $file['file_path'] }}">
                                                                         📄 {{ $file['name'] }}
                                                                     </button>
-                                                                    @if ($showDownloadReport)
+                                                                    @if (!empty($file['replaced_by_id']))
+                                                                        <span
+                                                                            class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800 whitespace-nowrap">
+                                                                            Replaced
+                                                                        </span>
+                                                                    @elseif ($showDownloadReport)
                                                                         <button type="button"
                                                                             class="file-download-report-btn text-blue-600 hover:text-blue-800 whitespace-nowrap"
                                                                             data-bs-toggle="modal"
@@ -499,9 +514,10 @@
                                                 @elseif(count($files) === 1)
                                                     @php
                                                         $fileUrl = $files[0]['url'] ?? '#';
+                                                        $isReplacedFile = !empty($files[0]['replaced_by_id']);
                                                     @endphp
                                                     <button type="button" title="View File"
-                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn"
+                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $isReplacedFile ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-gradient-to-tr from-cyan-400 to-blue-500 text-white' }} shadow hover:scale-110 transition-transform duration-200 view-file-btn"
                                                         data-file="{{ $fileUrl }}"
                                                         data-doc-id="{{ $doc->id }}"
                                                         data-doc-status="{{ $status }}"
@@ -510,6 +526,11 @@
                                                         data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
                                                         <i class="bi bi-eye"></i>
+                                                        @if ($isReplacedFile)
+                                                            <span class="ml-1 inline-block rounded-full bg-red-200 px-1 py-0.5 text-[10px] font-semibold text-red-800">
+                                                                Replaced
+                                                            </span>
+                                                        @endif
                                                     </button>
                                                 @endif
 
@@ -539,14 +560,14 @@
                                                         class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
                                                         {{-- Edit actions: separate "Edit Online" (OnlyOffice) and "Edit" (upload/revise) --}}
                                                         @if ($showEdit)
-                                                            @if ($doc->files->isNotEmpty())
+                                                            @if ($currentFiles->isNotEmpty())
                                                                 @php
                                                                     // Prefer the most recent file for direct online edit when single
-                                                                    $latestFile = $doc->files->last();
+                                                                    $latestFile = $currentFiles->first();
                                                                 @endphp
 
                                                                 {{-- Edit Online: if single file, link directly to editor; if multiple, open select-file modal --}}
-                                                                @if ($doc->files->count() === 1 && $latestFile)
+                                                                @if ($currentFiles->count() === 1 && $latestFile)
                                                                     <a href="{{ route('editor.show', $latestFile->id) }}"
                                                                         target="_blank"
                                                                         class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
@@ -581,14 +602,14 @@
                                                         @endif
 
                                                         {{-- Download Report (single file) --}}
-                                                        @if ($showDownloadReport && count($files) === 1)
+                                                        @if ($showDownloadReport && $currentFiles->count() === 1)
                                                             <button type="button"
                                                                 class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-blue-600 file-download-report-btn"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#downloadReportModal"
                                                                 data-doc-id="{{ $doc->id }}"
-                                                                data-file-id="{{ $files[0]['id'] ?? '' }}"
-                                                                data-file-name="{{ $files[0]['name'] ?? '' }}"
+                                                                data-file-id="{{ $currentFiles->first()?->id ?? '' }}"
+                                                                data-file-name="{{ $currentFiles->first()?->file_name ?? basename($currentFiles->first()?->file_path ?? '') }}"
                                                                 title="Download Report for Each File">
                                                                 <i class="bi bi-bar-chart mr-2"></i> Download Report
                                                             </button>
@@ -1055,7 +1076,7 @@
                         const clickedFilePath = btn.dataset.filePath;
                         let url = btn.dataset.file || '';
 
-                        if (docId) {
+                        if (docId && !clickedFilePath) {
                             try {
                                 const res = await fetch(`/document-review/${docId}/files`);
                                 const json = await res.json();

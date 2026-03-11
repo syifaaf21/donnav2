@@ -508,8 +508,18 @@ class DocumentReviewController extends Controller
                 'files',
                 $doc->files
                     ? $doc->files
-                    ->where('is_active', 1)
-                    ->where('pending_approval', 0)
+                    ->filter(function ($file) {
+                        if (!(int) ($file->is_active ?? 0)) {
+                            return false;
+                        }
+
+                        if (!empty($file->marked_for_deletion_at)) {
+                            return false;
+                        }
+
+                        return (int) ($file->pending_approval ?? 0) === 0 || !empty($file->replaced_by_id);
+                    })
+                    ->values()
                     : collect()
             );
             return $doc;
