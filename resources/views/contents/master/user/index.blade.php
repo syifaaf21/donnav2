@@ -187,7 +187,8 @@
                                 try {
                                     new TomSelect(`#role_select_edit_${userId}`, {
                                         create: false,
-                                        maxItems: null
+                                        maxItems: null,
+                                        plugins: ['remove_button']
                                     });
                                 } catch (e) {}
                                 try {
@@ -196,13 +197,18 @@
                                         maxItems: 1
                                     });
                                 } catch (e) {}
-                                try {
-                                    // Ensure audit type select also becomes TomSelect when validation returns the form
-                                    new TomSelect(`#audit_type_select_edit_${userId}`, {
-                                        create: false,
-                                        maxItems: null
-                                    });
-                                } catch (e) {}
+                                // Audit type selects: ID format audit_type_select_edit_{userId}_{roleId}
+                                document.querySelectorAll(`select[id^="audit_type_select_edit_${userId}_"]`).forEach(function(el) {
+                                    try {
+                                        if (!el.tomselect) {
+                                            new TomSelect(el, {
+                                                create: false,
+                                                maxItems: null,
+                                                plugins: ['remove_button']
+                                            });
+                                        }
+                                    } catch (e) {}
+                                });
                             }
                         } catch (e) {
                             console.warn('TomSelect init failed', e);
@@ -265,23 +271,8 @@
                 }
             });
 
-            // TomSelect untuk modal Add - Audit Type
-            new TomSelect('#audit_type_select', {
-                create: false,
-                maxItems: null,
-                valueField: 'id',
-                labelField: 'text',
-                searchField: 'text',
-                preload: true,
-                placeholder: 'Select or search audit types',
-                load: function(query, callback) {
-                    let url = '/api/audit-types?q=' + encodeURIComponent(query);
-                    fetch(url)
-                        .then(response => response.json())
-                        .then(json => callback(json))
-                        .catch(() => callback());
-                }
-            });
+            // Audit type selects (add modal) are initialized lazily inside toggleAuditTypeAndEmail()
+            // when each section becomes visible — do NOT init here while parent is display:none
 
             // TomSelect untuk modal Edit (semua modal edit role select)
             document.querySelectorAll('select[id^="role_select_edit_"]').forEach(function(el) {
@@ -324,23 +315,13 @@
                 });
             });
 
-            // TomSelect untuk modal Edit (semua modal edit audit type select)
+            // TomSelect untuk modal Edit (semua modal edit audit type select, options pre-rendered dari DB)
             document.querySelectorAll('select[id^="audit_type_select_edit_"]').forEach(function(el) {
                 new TomSelect(el, {
                     create: false,
                     maxItems: null,
-                    valueField: 'id',
-                    labelField: 'text',
-                    searchField: 'text',
-                    preload: true,
-                    placeholder: 'Select audit types',
-                    load: function(query, callback) {
-                        let url = '/api/audit-types?q=' + encodeURIComponent(query);
-                        fetch(url)
-                            .then(response => response.json())
-                            .then(json => callback(json))
-                            .catch(() => callback());
-                    }
+                    plugins: ['remove_button'],
+                    placeholder: 'Select audit types'
                 });
             });
         });
@@ -467,6 +448,7 @@
                         new TomSelect(`#role_select_edit_${userId}`, {
                             create: false,
                             maxItems: null,
+                            plugins: ['remove_button'],
                             placeholder: 'Select roles'
                         });
                         new TomSelect(`#department_select_edit_${userId}`, {
@@ -475,15 +457,8 @@
                             placeholder: 'Select departments'
                         });
 
-                        // TomSelect untuk audit type di modal edit
-                        const auditTypeSelect = document.getElementById(`audit_type_select_edit_${userId}`);
-                        if (auditTypeSelect) {
-                            new TomSelect(`#audit_type_select_edit_${userId}`, {
-                                create: false,
-                                maxItems: null,
-                                placeholder: 'Select audit types'
-                            });
-                        }
+                        // Audit type selects (edit modal) are initialized lazily inside updateFieldVisibility()
+                        // when each section becomes visible — do NOT init here while parent may be display:none
 
                         if (typeof feather !== 'undefined') feather.replace();
                     },
@@ -575,6 +550,17 @@
         border-color: #3b82f6 !important;
         /* biru */
         box-shadow: 0 0 0 3px rgba(59, 130, 246, .25) !important;
+    }
+
+    /* Audit type card: allow TomSelect dropdown to overflow the card boundary */
+    .audit-type-role-section-add .card,
+    .audit-type-role-section-edit .card {
+        overflow: visible !important;
+    }
+    .audit-type-role-section-add .ts-dropdown,
+    .audit-type-role-section-edit .ts-dropdown {
+        z-index: 9999 !important;
+        position: absolute !important;
     }
 
 </style>

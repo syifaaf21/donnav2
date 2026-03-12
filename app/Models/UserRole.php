@@ -25,4 +25,9 @@ class UserRole extends Model
     {
         return $this->belongsTo(Role::class, 'role_id');
     }
+
+    public function auditTypes()
+    {
+        return $this->hasMany(UserAuditType::class, 'user_role_id');
+    }
 }

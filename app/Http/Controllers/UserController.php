@@ -6,6 +6,8 @@ use App\Models\Audit;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Department;
+use App\Models\UserAuditType;
+use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -94,8 +96,9 @@ class UserController extends Controller
             ],
             'role_ids' => 'required|array|min:1',
             'department_ids' => 'required|array|min:1',
-            'audit_type_ids' => 'nullable|array',
-            'audit_type_ids.*' => 'exists:tm_audit_types,id',
+            'audit_type_ids_by_role' => 'nullable|array',
+            'audit_type_ids_by_role.*' => 'array',
+            'audit_type_ids_by_role.*.*' => 'exists:tm_audit_types,id',
         ], [
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
@@ -149,9 +152,24 @@ class UserController extends Controller
             $user->departments()->sync(array_values($departmentIds));
         }
 
-        // Sync audit types
-        if ($request->has('audit_type_ids') && is_array($request->audit_type_ids)) {
-            $user->auditTypes()->sync($request->audit_type_ids);
+        // Sync audit types per role (Auditor / Lead Auditor)
+        $user->userAuditTypes()->delete();
+        foreach ((array) $request->input('audit_type_ids_by_role', []) as $roleId => $auditTypeIds) {
+            $role = Role::find($roleId);
+            if (!$role) continue;
+            $isAuditor     = stripos($role->name, 'auditor') !== false && stripos($role->name, 'lead') === false;
+            $isLeadAuditor = stripos($role->name, 'lead auditor') !== false;
+            $userRoleRecord = UserRole::where('user_id', $user->id)->where('role_id', $roleId)->first();
+            if (!$userRoleRecord) continue;
+            foreach (array_unique((array) $auditTypeIds) as $auditId) {
+                UserAuditType::create([
+                    'user_id'         => $user->id,
+                    'audit_id'        => $auditId,
+                    'user_role_id'    => $userRoleRecord->id,
+                    'is_auditor'      => $isAuditor,
+                    'is_lead_auditor' => $isLeadAuditor,
+                ]);
+            }
         }
 
         return redirect()->route('master.users.index')->with('success', 'User successfully added.');
@@ -172,10 +190,19 @@ class UserController extends Controller
             $roles = Role::all();
         }
         $departments = Department::all();
-        $auditTypes = Audit::all();
+        $auditTypes   = Audit::all();
+
+        // Load existing audit type assignments grouped by role_id for pre-selection
+        $auditTypeIdsByRole = [];
+        foreach (UserAuditType::with('userRole')->where('user_id', $user->id)->get() as $record) {
+            $roleId = $record->userRole ? $record->userRole->role_id : null;
+            if ($roleId) {
+                $auditTypeIdsByRole[$roleId][] = $record->audit_id;
+            }
+        }
 
         // Kembalikan partial Blade khusus isi modal
-        return view('contents.master.user.partials.form-edit', compact('user', 'roles', 'departments', 'auditTypes'));
+        return view('contents.master.user.partials.form-edit', compact('user', 'roles', 'departments', 'auditTypes', 'auditTypeIdsByRole'));
     }
 
     public function update(Request $request, User $user)
@@ -201,8 +228,9 @@ class UserController extends Controller
             'email' => ($isDeptHead ? 'required' : 'nullable') . '|email|unique:users,email,' . $user->id,
             'role_ids' => 'required|array|min:1',
             'department_ids' => 'required|array|min:1',
-            'audit_type_ids' => 'nullable|array',
-            'audit_type_ids.*' => 'exists:tm_audit_types,id',
+            'audit_type_ids_by_role' => 'nullable|array',
+            'audit_type_ids_by_role.*' => 'array',
+            'audit_type_ids_by_role.*.*' => 'exists:tm_audit_types,id',
         ];
 
         if ($request->filled('password')) {
@@ -268,11 +296,24 @@ class UserController extends Controller
             $user->roles()->sync(array_values($roleIds));
         }
 
-        // Sync audit types
-        if ($request->has('audit_type_ids') && is_array($request->audit_type_ids)) {
-            $user->auditTypes()->sync($request->audit_type_ids);
-        } else {
-            $user->auditTypes()->detach();
+        // Sync audit types per role (Auditor / Lead Auditor)
+        $user->userAuditTypes()->delete();
+        foreach ((array) $request->input('audit_type_ids_by_role', []) as $roleId => $auditTypeIds) {
+            $role = Role::find($roleId);
+            if (!$role) continue;
+            $isAuditor     = stripos($role->name, 'auditor') !== false && stripos($role->name, 'lead') === false;
+            $isLeadAuditor = stripos($role->name, 'lead auditor') !== false;
+            $userRoleRecord = UserRole::where('user_id', $user->id)->where('role_id', $roleId)->first();
+            if (!$userRoleRecord) continue;
+            foreach (array_unique((array) $auditTypeIds) as $auditId) {
+                UserAuditType::create([
+                    'user_id'         => $user->id,
+                    'audit_id'        => $auditId,
+                    'user_role_id'    => $userRoleRecord->id,
+                    'is_auditor'      => $isAuditor,
+                    'is_lead_auditor' => $isLeadAuditor,
+                ]);
+            }
         }
 
         return redirect()->route('master.users.index')->with('success', 'User updated successfully.');
