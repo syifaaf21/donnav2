@@ -281,7 +281,7 @@ class DocumentConverterService
                 }
 
                 if ($imagePath !== null) {
-                    return $this->pdfWatermarker->stampImage($tempPath, $imagePath, 30.0, 10.0, 100);
+                    return $this->pdfWatermarker->stampImage($tempPath, $imagePath, 30.0, 10.0, 45, true);
                 }
             }
 
