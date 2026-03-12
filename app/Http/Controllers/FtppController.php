@@ -34,31 +34,67 @@ class FtppController extends Controller
 
         // Determine filter type: 'created' (default), 'assigned'
         $filterType = $request->input('filter_type', 'created');
+        $selectedAuditTypeId = $request->filled('audit_type') ? (int) $request->input('audit_type') : null;
+
+        $hasAuditorRole = in_array('auditor', $userRolesLowercase);
+        $hasLeadAuditorRole = in_array('lead auditor', $userRolesLowercase);
+        $hasAuditorLikeRole = $hasAuditorRole || $hasLeadAuditorRole;
+
+        // Role mapping per audit type from tt_user_audit_type.
+        // This is required when one user has Auditor for type A and Lead Auditor for type B.
+        $leadAuditTypeIds = [];
+        if (!empty($user)) {
+            $leadAuditTypeIds = \App\Models\UserAuditType::query()
+                ->where('user_id', $user->id)
+                ->where('is_lead_auditor', true)
+                ->pluck('audit_id')
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->toArray();
+        }
 
         // Super Admin & Admin can see all records (no additional filter)
         if (!empty($user) && (in_array('super admin', $userRolesLowercase) || in_array('admin', $userRolesLowercase))) {
             // no department/audience filter
         }
-        // Lead Auditor: prefer audit-type based view for "created" tab, and auditee-based for "assigned"
-        elseif (!empty($user) && in_array('lead auditor', $userRolesLowercase)) {
-            $userAuditTypeIds = $user->auditTypes->pluck('id')->toArray();
-
+        // Auditor/Lead Auditor (including users who have both roles)
+        elseif (!empty($user) && $hasAuditorLikeRole) {
             if ($filterType === 'assigned') {
-                // Assigned: show findings where user is listed as auditee (similar to Auditor assigned)
+                // Assigned: show findings where user is listed as auditee.
                 $query->whereHas('auditee', function ($q) use ($user) {
                     $q->where('users.id', $user->id);
                 })
-                // auditee view should not see draft findings
                 ->whereHas('status', function ($qs) {
                     $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
                 });
             } else {
-                // Created: show findings that have audit_type matching user's audit types
-                if (!empty($userAuditTypeIds)) {
-                    $query->whereIn('audit_type_id', $userAuditTypeIds);
+                // Created tab behavior:
+                // - If selected audit type is one where user is Lead Auditor => show all findings in that type.
+                // - Otherwise (Auditor perspective) => show only findings where user is assigned auditor.
+                if (!empty($selectedAuditTypeId)) {
+                    if ($hasLeadAuditorRole && in_array($selectedAuditTypeId, $leadAuditTypeIds, true)) {
+                        $query->where('audit_type_id', $selectedAuditTypeId);
+                    } elseif ($hasAuditorRole) {
+                        $query->where('audit_type_id', $selectedAuditTypeId)
+                            ->whereHas('auditors', function ($qa) use ($user) {
+                                $qa->where('users.id', $user->id);
+                            });
+                    } else {
+                        $query->whereRaw('0 = 1');
+                    }
                 } else {
-                    // if user has no audit types assigned, show nothing
-                    $query->whereRaw('0 = 1');
+                    $query->where(function ($q) use ($hasLeadAuditorRole, $hasAuditorRole, $leadAuditTypeIds, $user) {
+                        if ($hasLeadAuditorRole && !empty($leadAuditTypeIds)) {
+                            $q->whereIn('audit_type_id', $leadAuditTypeIds);
+                        }
+
+                        if ($hasAuditorRole) {
+                            $q->orWhereHas('auditors', function ($qa) use ($user) {
+                                $qa->where('users.id', $user->id);
+                            });
+                        }
+                    });
                 }
             }
         }
@@ -78,25 +114,6 @@ class FtppController extends Controller
                 // if dept head has no department assigned, show nothing
                 $query->whereRaw('0 = 1');
             }
-        }
-        // Auditor: apply filter based on filter_type
-        elseif (!empty($user) && in_array('auditor', $userRolesLowercase)) {
-            // Auditor tidak boleh melihat status draft, tapi boleh melihat draft finding
-            if ($filterType === 'assigned') {
-                // Show FTPP where user is in auditee (assigned to them)
-                $query->whereHas('auditee', function ($q) use ($user) {
-                    $q->where('users.id', $user->id);
-                })
-                // auditee view should not see draft findings
-                ->whereHas('status', function ($qs) {
-                    $qs->whereRaw('LOWER(name) <> ?', ['draft finding']);
-                });
-                } else {
-                    // Show FTPP where user is auditor (via pivot table)
-                    $query->whereHas('auditors', function ($qa) use ($user) {
-                        $qa->where('users.id', $user->id);
-                    });
-                }
         }
         // Default: only show FTTP where user is auditor OR listed as auditee
         else {
