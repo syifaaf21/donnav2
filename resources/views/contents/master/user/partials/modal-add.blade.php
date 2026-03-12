@@ -70,7 +70,6 @@
                         <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
                         <input type="email" name="email" id="emailInputAdd" placeholder="Input user Email"
                             class="form-control border-0 shadow-sm rounded-3 @error('email') is-invalid @enderror"
-                            pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                             title="Please enter a valid email address (e.g. user@example.com)"
                             value="{{ old('email') }}" required>
                         @error('email')
@@ -187,39 +186,50 @@
                         @enderror
                     </div>
 
-                    <!-- Audit Type (shown only when Role = Auditor) -->
+                    <!-- Audit Type per Role (shown only when Auditor / Lead Auditor role is selected) -->
                     @php
                         $auditTypes = \App\Models\Audit::select('id', 'name')->get();
-                        // helper to check old role on initial render
-                        $oldRoleName = null;
-                        if (old('role_id')) {
-                            $r = collect($roles)->firstWhere('id', (int) old('role_id'));
-                            $oldRoleName = $r->name ?? null;
-                        }
+                        $auditorRolesList = $roles->filter(fn($r) => stripos($r->name, 'auditor') !== false)->values();
                     @endphp
 
-                    <div class="col-md-6" id="auditTypeContainer" style="display: none;">
-                        <label class="form-label fw-medium">Audit Type <span class="text-danger">*</span></label>
-                        <select id="audit_type_select" name="audit_type_ids[]"
-                            class="form-select rounded-3 @error('audit_type_ids') is-invalid @enderror" multiple>
-                            @foreach ($auditTypes as $a)
-                                <option value="{{ $a->id }}"
-                                    {{ in_array($a->id, (array) old('audit_type_ids', [])) ? 'selected' : '' }}>
-                                    {{ $a->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('audit_type_ids')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                    @foreach ($auditorRolesList as $role)
+                    <div class="col-12 audit-type-role-section-add"
+                        id="auditTypeSection_add_{{ $role->id }}"
+                        data-role-id="{{ $role->id }}"
+                        style="display: none;">
+                        <div class="card border shadow-sm rounded-3" style="overflow:visible;">
+                            <div class="card-header d-flex align-items-center gap-2 py-2 px-3"
+                                style="background: linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%); border-bottom:1px solid #bfdbfe;">
+                                <i class="bi bi-clipboard-check text-primary"></i>
+                                <span class="fw-semibold text-dark" style="font-size:.9rem;">
+                                    Audit Type &mdash; <span class="text-primary">{{ $role->name }}</span>
+                                </span>
+                                <span class="ms-auto badge text-bg-danger" style="font-size:.7rem;">Required</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <select name="audit_type_ids_by_role[{{ $role->id }}][]"
+                                    id="audit_type_select_add_{{ $role->id }}"
+                                    class="form-select rounded-3 @error('audit_type_ids_by_role.' . $role->id) is-invalid @enderror"
+                                    multiple>
+                                    @foreach ($auditTypes as $a)
+                                        <option value="{{ $a->id }}"
+                                            {{ in_array($a->id, (array) old("audit_type_ids_by_role.{$role->id}", [])) ? 'selected' : '' }}>
+                                            {{ $a->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('audit_type_ids_by_role.' . $role->id)
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
+                    @endforeach
                 </div>
             </div>
             <script>
                 (function() {
                     const roleSelect = document.getElementById('role_select');
-                    const auditTypeContainer = document.getElementById('auditTypeContainer');
-                    const auditTypeSelect = document.getElementById('audit_type_select');
                     const emailContainer = document.getElementById('emailContainerAdd');
                     const emailInput = document.getElementById('emailInputAdd');
                     const emailInvalidFeedback = document.getElementById('emailAddInvalidFeedback');
@@ -303,28 +313,60 @@
                     }
 
                     // Audit type & email logic
-                    if (!roleSelect || !auditTypeContainer) return;
+                    if (!roleSelect) return;
+
+                    function getSelectedRoleIdsAdd() {
+                        if (roleSelect.tomselect) {
+                            const val = roleSelect.tomselect.getValue();
+                            return Array.isArray(val) ? val.map(String) : [String(val)].filter(Boolean);
+                        }
+                        return Array.from(roleSelect.selectedOptions).map(o => String(o.value));
+                    }
 
                     function toggleAuditTypeAndEmail() {
-                        const selected = Array.from(roleSelect.selectedOptions).map(o => (o.text || '').toLowerCase());
-                        const hasAuditor = selected.some(t => t.includes('auditor') || t.includes('lead auditor'));
-                        const hasDeptHead = selected.some(t => t.includes('dept head'));
-                        // Audit type
-                        if (hasAuditor) {
-                            auditTypeContainer.style.display = 'block';
-                            if (auditTypeSelect) auditTypeSelect.setAttribute('required', 'required');
-                        } else {
-                            auditTypeContainer.style.display = 'none';
-                            if (auditTypeSelect) auditTypeSelect.removeAttribute('required');
-                        }
-                        // Email: always show and require email for all users
+                        const selectedIds = getSelectedRoleIdsAdd();
+
+                        // Toggle per-role audit type sections
+                        document.querySelectorAll('.audit-type-role-section-add').forEach(function(section) {
+                            const roleId = String(section.dataset.roleId);
+                            const isSelected = selectedIds.includes(roleId);
+                            section.style.display = isSelected ? 'block' : 'none';
+                            const select = section.querySelector('select');
+                            if (select) {
+                                if (isSelected) {
+                                    select.setAttribute('required', 'required');
+                                    // Init TomSelect lazily only when section is visible
+                                    if (!select.tomselect) {
+                                        new TomSelect(select, {
+                                            create: false,
+                                            maxItems: null,
+                                            plugins: ['remove_button'],
+                                            placeholder: 'Select audit types'
+                                        });
+                                    }
+                                } else {
+                                    select.removeAttribute('required');
+                                    if (select.tomselect) select.tomselect.clear();
+                                }
+                            }
+                        });
+
+                        // Email: always visible and required
                         if (emailContainer) {
                             emailContainer.style.display = 'block';
                             if (emailInput) emailInput.setAttribute('required', 'required');
                         }
                     }
+
                     roleSelect.addEventListener('change', toggleAuditTypeAndEmail);
-                    // initial state
+                    // Re-run after TomSelect is fully initialised (DOMContentLoaded)
+                    document.addEventListener('DOMContentLoaded', function() {
+                        toggleAuditTypeAndEmail();
+                        if (roleSelect.tomselect) {
+                            roleSelect.tomselect.on('change', toggleAuditTypeAndEmail);
+                        }
+                    });
+                    // Initial run (before TomSelect)
                     toggleAuditTypeAndEmail();
 
                     // Client-side validation: require email if dept head, and confirm password match

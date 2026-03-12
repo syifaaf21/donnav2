@@ -77,7 +77,14 @@ class User extends Authenticatable
     // Many-to-many relation: users <-> audit types (pivot: tt_user_audit_type)
     public function auditTypes()
     {
-        return $this->belongsToMany(Audit::class, 'tt_user_audit_type', 'user_id', 'audit_id');
+        return $this->belongsToMany(Audit::class, 'tt_user_audit_type', 'user_id', 'audit_id')
+                    ->withPivot('user_role_id', 'is_auditor', 'is_lead_auditor');
+    }
+
+    // Pivot records for tt_user_audit_type (for role-specific operations)
+    public function userAuditTypes()
+    {
+        return $this->hasMany(UserAuditType::class, 'user_id');
     }
 
     protected static function booted()
