@@ -63,11 +63,21 @@ class PdfWatermarker
     /**
      * Stamp an image (PNG/JPG) onto each page of the source PDF at bottom-right.
      * $imagePath must be a filesystem path to the image.
+     *
+     * If $renderBehindContent is true, watermark is painted first and page content
+     * is drawn on top, making watermark appear as background.
      */
-    public function stampImage(string $sourcePath, string $imagePath, float $widthMm = 30.0, float $marginMm = 10.0, int $opacityPercent = 40): string
+    public function stampImage(
+        string $sourcePath,
+        string $imagePath,
+        float $widthMm = 30.0,
+        float $marginMm = 10.0,
+        int $opacityPercent = 40,
+        bool $renderBehindContent = false
+    ): string
     {
         try {
-            return $this->stampImageWithFpdi($sourcePath, $imagePath, $widthMm, $marginMm, $opacityPercent);
+            return $this->stampImageWithFpdi($sourcePath, $imagePath, $widthMm, $marginMm, $opacityPercent, $renderBehindContent);
         } catch (Throwable $e) {
             if (!$this->isLikelyFpdiCompressionError($e)) {
                 throw $e;
@@ -79,14 +89,21 @@ class PdfWatermarker
             }
 
             try {
-                return $this->stampImageWithFpdi($normalized, $imagePath, $widthMm, $marginMm, $opacityPercent);
+                return $this->stampImageWithFpdi($normalized, $imagePath, $widthMm, $marginMm, $opacityPercent, $renderBehindContent);
             } finally {
                 @unlink($normalized);
             }
         }
     }
 
-    private function stampImageWithFpdi(string $sourcePath, string $imagePath, float $widthMm = 30.0, float $marginMm = 10.0, int $opacityPercent = 40): string
+    private function stampImageWithFpdi(
+        string $sourcePath,
+        string $imagePath,
+        float $widthMm = 30.0,
+        float $marginMm = 10.0,
+        int $opacityPercent = 40,
+        bool $renderBehindContent = false
+    ): string
     {
         $pdf = new Fpdi();
 
@@ -108,13 +125,6 @@ class PdfWatermarker
             $srcImg = null;
             $mime = $imgSize['mime'] ?? '';
 
-            // Important: for PNG with transparency, keep original image.
-            // GD + imagecopymerge can flatten alpha and introduce black background.
-            if (stripos($mime, 'png') !== false) {
-                $tmpFile = null;
-                $opacity = 100;
-            }
-
             if (stripos($mime, 'png') !== false) {
                 $srcImg = @imagecreatefrompng($imagePath);
             } elseif (stripos($mime, 'jpeg') !== false || stripos($mime, 'jpg') !== false) {
@@ -126,17 +136,35 @@ class PdfWatermarker
             if ($srcImg && $opacity < 100 && $tmpFile) {
                 $w = imagesx($srcImg);
                 $h = imagesy($srcImg);
-                // keep original image colors (do not alter brightness)
                 $tmp = imagecreatetruecolor($w, $h);
-                // preserve alpha
                 imagealphablending($tmp, false);
                 imagesavealpha($tmp, true);
                 $transparent = imagecolorallocatealpha($tmp, 0, 0, 0, 127);
                 imagefilledrectangle($tmp, 0, 0, $w, $h, $transparent);
 
-                // imagecopymerge uses percentage for opacity; it does not preserve full alpha, but
-                // this approach produces a translucent PNG adequate for watermarking.
-                imagecopymerge($tmp, $srcImg, 0, 0, 0, 0, $w, $h, $opacity);
+                if (stripos($mime, 'png') !== false) {
+                    // Preserve existing PNG transparency and scale alpha by requested opacity.
+                    for ($x = 0; $x < $w; $x++) {
+                        for ($y = 0; $y < $h; $y++) {
+                            $rgba = imagecolorat($srcImg, $x, $y);
+                            $a = ($rgba >> 24) & 0x7F;
+                            $r = ($rgba >> 16) & 0xFF;
+                            $g = ($rgba >> 8) & 0xFF;
+                            $b = $rgba & 0xFF;
+
+                            // Convert desired opacity to additional transparency.
+                            $newAlpha = 127 - (int) round((127 - $a) * ($opacity / 100));
+                            $newAlpha = max(0, min(127, $newAlpha));
+
+                            $color = imagecolorallocatealpha($tmp, $r, $g, $b, $newAlpha);
+                            imagesetpixel($tmp, $x, $y, $color);
+                        }
+                    }
+                } else {
+                    // JPEG/GIF fallback.
+                    imagecopymerge($tmp, $srcImg, 0, 0, 0, 0, $w, $h, $opacity);
+                }
+
                 imagepng($tmp, $tmpFile);
                 imagedestroy($tmp);
                 imagedestroy($srcImg);
@@ -160,7 +188,6 @@ class PdfWatermarker
             $tpl = $pdf->importPage($i);
             $size = $pdf->getTemplateSize($tpl);
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            $pdf->useTemplate($tpl);
 
             // compute image dimensions in user units (FPDF default unit = mm)
             $imgWmm = $widthMm;
@@ -170,9 +197,14 @@ class PdfWatermarker
             $x = $size['width'] - $imgWmm - $marginMm;
             $y = $size['height'] - $imgHmm - $marginMm;
 
-            // Add image with some transparency if supported (FPDF doesn't support alpha natively)
-            // Here we just draw the image.
-            $pdf->Image($useImage, $x, $y, $imgWmm, $imgHmm);
+            if ($renderBehindContent) {
+                // Background watermark: draw image first, then page content on top.
+                $pdf->Image($useImage, $x, $y, $imgWmm, $imgHmm);
+                $pdf->useTemplate($tpl);
+            } else {
+                $pdf->useTemplate($tpl);
+                $pdf->Image($useImage, $x, $y, $imgWmm, $imgHmm);
+            }
         }
 
         $out = $pdf->Output('S');

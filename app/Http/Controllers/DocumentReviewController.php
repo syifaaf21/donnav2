@@ -1016,7 +1016,7 @@ class DocumentReviewController extends Controller
 
                     try {
                         if ($hasWatermarkImage) {
-                            $pdfContent = $pdfWatermarker->stampImage($tempPath, $watermarkImagePath, 28.0, 8.0, 100);
+                            $pdfContent = $pdfWatermarker->stampImage($tempPath, $watermarkImagePath, 28.0, 8.0, 45, true);
                         } else {
                             $pdfContent = $pdfWatermarker->stampText($tempPath, $watermarkText);
                         }
