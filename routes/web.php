@@ -10,6 +10,8 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentMappingController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\DocumentControlWatermarkController;
+use App\Http\Controllers\DocumentConversionController;
+use App\Http\Controllers\DebugConversionController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DepartmentController;
@@ -57,6 +59,34 @@ Route::post('/logout', function () {
     request()->session()->regenerateToken();
     return redirect('/login');
 })->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| Debug Routes (Public - No Auth Required)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('debug')->name('debug.')->group(function () {
+    // Test PDF generation with watermark
+    Route::get('/test-pdf-generation', [DebugConversionController::class, 'testPdfGeneration'])->name('test-pdf');
+    
+    // List all files in storage path
+    Route::get('/list-storage-files', [DebugConversionController::class, 'listStorageFiles'])->name('list-files');
+
+    // Check mapping files and find alternatives
+    Route::get('/check-mapping-files/{id}', [DebugConversionController::class, 'checkMappingFiles'])->name('check-mapping-files');
+
+    // Find file by name
+    Route::get('/find-file', [DebugConversionController::class, 'findFileByName'])->name('find-file');
+
+    // Test document mapping
+    Route::get('/test-mapping/{id}', [DebugConversionController::class, 'testMapping'])->name('test-mapping');
+    
+    // Get mapping info
+    Route::get('/mapping-info/{id}', [DebugConversionController::class, 'getMappingInfo'])->name('mapping-info');
+    
+    // Show latest uploaded files
+    Route::get('/latest-files', [DebugConversionController::class, 'latestFiles'])->name('latest-files');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -150,8 +180,10 @@ Route::prefix('master')->name('master.')->middleware(['auth', 'role:Admin,Super 
 // Recycle bin routes (Super Admin only)
 Route::middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::get('/recycle-bin', [\App\Http\Controllers\RecycleBinController::class, 'index'])->name('recycle.index');
-    Route::post('/recycle-bin/{id}/restore', [\App\Http\Controllers\RecycleBinController::class, 'restore'])->name('recycle.restore');
-    Route::post('/recycle-bin/{id}/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'forceDelete'])->name('recycle.force-delete');
+    Route::post('/recycle-bin/bulk/restore', [\App\Http\Controllers\RecycleBinController::class, 'bulkRestore'])->name('recycle.bulk-restore');
+    Route::post('/recycle-bin/bulk/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'bulkForceDelete'])->name('recycle.bulk-force-delete');
+    Route::post('/recycle-bin/{id}/restore', [\App\Http\Controllers\RecycleBinController::class, 'restore'])->whereNumber('id')->name('recycle.restore');
+    Route::post('/recycle-bin/{id}/force-delete', [\App\Http\Controllers\RecycleBinController::class, 'forceDelete'])->whereNumber('id')->name('recycle.force-delete');
 });
 
 /*
@@ -182,6 +214,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::get('/', [EditorController::class, 'index'])->name('index');
         Route::get('/auth-token', [EditorController::class, 'authToken'])->name('token');  // ← HARUS sebelum /{file}
         Route::get('/{file}', [EditorController::class, 'editor'])->name('show');
+        Route::get('/{file}/sync-status', [EditorController::class, 'syncStatus'])->name('sync-status');
         Route::post('/{file}/sync', [EditorController::class, 'sync'])->name('sync');
         Route::post('/{file}/reupload', [EditorController::class, 'reupload'])->name('reupload');
     });
@@ -198,8 +231,9 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     | Document Review Routes
     |--------------------------------------------------------------------------
     */
-    Route::prefix('document-review')->name('document-review.')->group(function () {
+    Route::prefix('document-review')->name('document-review.')->middleware('role:Admin,Super Admin,Leader,Supervisor,Department Head')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
+        Route::get('/approval', [DocumentReviewController::class, 'approvalIndex'])->name('approval');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
         Route::get('/folder/{plant}/{docCode}', [DocumentReviewController::class, 'showFolder'])
             ->name('showFolder');
@@ -207,6 +241,8 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::post('/{id}/revise', [DocumentReviewController::class, 'revise'])->name('revise');
         Route::get('/{id}/files', [DocumentReviewController::class, 'getFiles'])
             ->name('get-files');
+        Route::post('/store-metadata', [DocumentReviewController::class, 'storeMetadata'])->name('store-metadata');
+        Route::get('/{id}/download-as-pdf', [DocumentReviewController::class, 'downloadAsPdf'])->name('downloadAsPdf');
         Route::get('/file/{file}/download-watermarked', [DocumentControlWatermarkController::class, 'downloadWatermarkedFile'])->name('downloadWatermarkedFile');
         Route::post('/{id}/approve-with-dates', [DocumentReviewController::class, 'approveWithDates'])->name('approveWithDates');
         Route::post('/{id}/reject', [DocumentReviewController::class, 'reject'])->name('reject');
@@ -326,4 +362,24 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     // });
 
     // Route::redirect('/test-editor');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Document Conversion
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('convert')->name('convert.')->group(function () {
+        // Convert file dari OnlyOffice DocSpace ke PDF dengan watermark
+        Route::post('/docspace-to-pdf', [DocumentConversionController::class, 'convertDocspaceToPdf'])->name('docspace-to-pdf');
+        Route::get('/docspace-file/{fileId}/download', [DocumentConversionController::class, 'downloadConverted'])->name('download-docspace');
+        
+        // Convert local file (dari storage Laravel) ke PDF
+        Route::post('/local-file', [DocumentConversionController::class, 'convertLocalFile'])->name('local-file');
+        
+        // Batch convert multiple files
+        Route::post('/multiple', [DocumentConversionController::class, 'convertMultiple'])->name('multiple');
+        
+        // Health check
+        Route::get('/status', [DocumentConversionController::class, 'status'])->name('status');
+    });
 });

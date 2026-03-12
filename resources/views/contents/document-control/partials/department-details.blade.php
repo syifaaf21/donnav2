@@ -2,7 +2,7 @@
 @section('title')
     {{ $department?->name ?? 'Unknown' }}
 @endsection
-@section('subtitle', 'Manage Obsolete Docuemnt Records')
+@section('subtitle', 'Manage Obsolete Document Records')
 @php
     /**
      * approvalMode = false → halaman department biasa
@@ -322,7 +322,7 @@
                                                                     @foreach ($filesToShow as $file)
                                                                         <button type="button"
                                                                             class="w-full flex justify-between items-center px-3 py-2 rounded-md text-sm truncate view-file-btn
-                                                                                {{ ($file['pending_approval'] ?? 0) == 2 ? 'bg-red-50 border border-red-300' : (!empty($file['replaced_by_id']) ? 'bg-red-100 border border-red-400' : '') }}"
+                                                                                {{ !empty($file['replaced_by_id']) ? 'bg-red-100 border border-red-400' : (($file['pending_approval'] ?? 0) == 2 ? 'bg-red-50 border border-red-300' : '') }}"
                                                                             data-file="{{ $file['url'] }}"
                                                                             data-doc-title="{{ $file['name'] }}">
 
@@ -331,15 +331,15 @@
                                                                                 <span class="truncate" style="flex:1 1 auto;min-width:0;">{{ $file['name'] }}</span>
                                                                             </div>
                                                                             <div class="flex items-center gap-2">
-                                                                                @if (($file['pending_approval'] ?? 0) == 2)
-                                                                                    <span
-                                                                                        class="inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
-                                                                                        Rejected
-                                                                                    </span>
-                                                                                @elseif (!empty($file['replaced_by_id']))
+                                                                                @if (!empty($file['replaced_by_id']))
                                                                                     <span
                                                                                         class="inline-block bg-red-300 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
                                                                                         Replaced
+                                                                                    </span>
+                                                                                @elseif (($file['pending_approval'] ?? 0) == 2)
+                                                                                    <span
+                                                                                        class="inline-block bg-red-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap pointer-events-none">
+                                                                                        Rejected
                                                                                     </span>
                                                                                 @else
                                                                                     @if(!empty($file['size']))
@@ -376,13 +376,25 @@
                                                         <i class="bi bi-download"></i>
                                                     </a> --}}
 
-                                                    {{-- UPLOAD ALWAYS APPEARS LEFT WITH OTHER ACTIONS --}}
-                                                    @if (!$approvalMode)
+                                                    {{-- UPLOAD/REVISE hybrid flow: allow Need Review only when pending file exists --}}
+                                                    @php
+                                                        $currentRole = auth()->user()->roles->pluck('name')->first();
+                                                        $isAdminRole = in_array($currentRole, ['Admin', 'Super Admin']);
+                                                        $hasPendingApprovalFile = collect($mapping->files_for_modal_all)->contains(function ($file) {
+                                                            return (int) ($file['pending_approval'] ?? 0) === 1 &&
+                                                                (int) ($file['is_active'] ?? 0) === 1;
+                                                        });
+                                                        $canShowReviseButton =
+                                                            $mapping->status->name !== 'Need Review' ||
+                                                            $hasPendingApprovalFile;
+                                                    @endphp
+                                                    @if (!$approvalMode && $canShowReviseButton)
                                                         <button type="button"
                                                             class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
                                                             data-docid="{{ $mapping->id }}"
                                                             data-doc-title="{{ $mapping->document->name }}"
                                                             data-status="{{ $mapping->status->name }}"
+                                                            data-has-pending-approval="{{ $hasPendingApprovalFile ? '1' : '0' }}"
                                                             data-reminder="{{ $mapping->reminder_date ?? $mapping->reminder ?? '' }}"
                                                             data-files='@json($mapping->files_for_modal_all)'
                                                             onclick="openReviseModal(this)" title="Upload">
@@ -412,6 +424,7 @@
                                                             data-doc-title="{{ $mapping->document->name }}"
                                                             data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
                                                             data-status="{{ $mapping->status->name }}"
+                                                            data-files='@json($mapping->files_for_modal_all)'
                                                             data-reject-url="{{ route('document-control.reject', $mapping) }}"
                                                             title="Reject" aria-label="Reject document">
                                                             <i class="bi bi-x-circle-fill"></i>
@@ -725,15 +738,15 @@
                             right.style.display = 'flex';
                             right.style.alignItems = 'center';
                             right.style.gap = '6px';
-                            if ((f.pending_approval || 0) == 2) {
-                                const badge = document.createElement('span');
-                                badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
-                                badge.textContent = 'Rejected';
-                                right.appendChild(badge);
-                            } else if (f.replaced_by_id) {
+                            if (f.replaced_by_id) {
                                 const badge = document.createElement('span');
                                 badge.className = 'inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full';
                                 badge.textContent = 'Replaced';
+                                right.appendChild(badge);
+                            } else if ((f.pending_approval || 0) == 2) {
+                                const badge = document.createElement('span');
+                                badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
+                                badge.textContent = 'Rejected';
                                 right.appendChild(badge);
                             } else if (f.size) {
                                 const size = document.createElement('span');
@@ -857,13 +870,26 @@
 
                     let enabled = false;
 
+                    const hasPendingApprovalFiles = (() => {
+                        if (btn.dataset.hasPendingApproval === '1') return true;
+                        try {
+                            const files = JSON.parse(btn.dataset.files || '[]');
+                            return files.some(f => Number(f.pending_approval || 0) === 1 && Number(f.is_active || 0) === 1);
+                        } catch (e) {
+                            return false;
+                        }
+                    })();
+
                     // Revise: admins always see it; others see for Rejected/Obsolete/Uncomplete,
+                    // for Need Review only if there is at least one pending approval file,
                     // and for Active only if reminder is today
                     if (type === 'revise') {
                         if (currentUserIsAdmin) {
                             enabled = true;
                         } else if (['Rejected', 'Obsolete', 'Uncomplete'].includes(status)) {
                             enabled = true;
+                        } else if (status === 'Need Review') {
+                            enabled = hasPendingApprovalFiles;
                         } else if (status === 'Active') {
                             // check reminder date on button or row
                             let reminderStr = btn.dataset.reminder;
@@ -1044,12 +1070,13 @@
                         `<div class="mb-2 text-xs text-gray-700 font-semibold">Total size: <span class="${totalSize > 20*1024*1024 ? 'text-red-600' : ''}">${window.formatFileSize(totalSize)} / 20 MB</span></div>`;
                     // Debug: cek isi file lama
                     console.log('Active files for modal:', activeFiles);
-                    reviseFilesContainer.innerHTML = totalSizeHtml + activeFiles.map((f, i) => `
+                        reviseFilesContainer.innerHTML = totalSizeHtml + activeFiles.map((f, i) => `
             <div class="p-3 border rounded bg-gray-50 mb-2">
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <p class="text-sm mb-1"><strong>File ${i+1}:</strong> ${f.name || 'Unnamed'}
                             ${f.replaced_by_id ? `<span class="inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">Replaced</span>` : ''}
+                            ${Number(f.pending_approval) === 2 ? `<span class="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">Rejected</span>` : ''}
                         </p>
                         <p class="text-xs text-gray-500 mb-1">
                             Size: ${
@@ -1236,11 +1263,68 @@
                     const docId = this.dataset.docid;
                     const notes = this.dataset.notes || '';
                     const rejectUrl = this.dataset.rejectUrl; // URL POST dari Blade
+                    const files = JSON.parse(this.dataset.files || '[]');
 
                     // Set doc id
                     rejectDocInput.value = docId;
 
-                    // Set Quill content
+                    // Clear and populate file list
+                    const container = document.getElementById('rejectFilesContainer');
+                    container.innerHTML = '';
+
+                    // Filter eligible files for reject action:
+                    // is_active == 1, pending_approval == 1, replaced_by_id == null, marked_for_deletion_at == null
+                    const eligible = files.filter(f => {
+                        // require is_active === 1
+                        if (Number(f.is_active) !== 1) return false;
+                        // must be root file (not an old file already replaced)
+                        if (f.replaced_by_id !== null && f.replaced_by_id !== undefined && f.replaced_by_id !== 0 && f.replaced_by_id !== '') return false;
+                        // must not be scheduled for deletion
+                        if (f.marked_for_deletion_at && f.marked_for_deletion_at !== null && f.marked_for_deletion_at !== '') return false;
+                        // must be pending approval
+                        if (typeof f.pending_approval !== 'undefined' && f.pending_approval !== null) {
+                            if (Number(f.pending_approval) !== 1) return false;
+                        } else {
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    if (eligible.length === 0) {
+                        container.innerHTML = '<div class="text-xs text-gray-600">No active files available to reject.</div>';
+                        // disable submit button
+                        document.getElementById('submitReject').disabled = true;
+                    } else {
+                        document.getElementById('submitReject').disabled = false;
+                        eligible.forEach(f => {
+                            const id = f.id;
+                            const name = f.name || f.original_name || ('File ' + id);
+                            const size = (f.size ? window.formatFileSize(Number(f.size)) : 'Unknown');
+                            const row = document.createElement('div');
+                            row.className = 'flex items-center justify-between gap-2 p-2 border-b';
+                            row.innerHTML = `
+                                <label class="flex items-center gap-2 flex-1">
+                                    <input type="checkbox" name="reject_file_ids[]" value="${id}" class="form-check-input reject-file-checkbox">
+                                    <span class="text-sm">${name}</span>
+                                </label>
+                                <span class="text-xs text-gray-500">${size}</span>
+                            `;
+                            container.appendChild(row);
+                        });
+
+                        // Add event listener to hide error when checkbox is checked
+                        container.querySelectorAll('.reject-file-checkbox').forEach(checkbox => {
+                            checkbox.addEventListener('change', function() {
+                                const anyChecked = container.querySelectorAll('input[name="reject_file_ids[]"]:checked').length > 0;
+                                const fileError = document.getElementById('rejectFileError');
+                                if (anyChecked && fileError) {
+                                    fileError.classList.add('d-none');
+                                }
+                            });
+                        });
+                    }
+
+                    // Set Quill content (clear)
                     rejectQuill.setText('');
 
                     // Set form action dinamis
@@ -1266,6 +1350,27 @@
                             text: 'Please write rejection notes before submitting.'
                         });
                         return;
+                    }
+
+                    // Cek apakah minimal 1 file dipilih
+                    const checkedFiles = rejectForm.querySelectorAll('input[name="reject_file_ids[]"]:checked');
+                    const fileError = document.getElementById('rejectFileError');
+
+                    if (checkedFiles.length === 0) {
+                        e.preventDefault();
+                        if (fileError) {
+                            fileError.classList.remove('d-none');
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'File Selection Required',
+                            text: 'Please select at least one file to reject.'
+                        });
+                        return;
+                    } else {
+                        if (fileError) {
+                            fileError.classList.add('d-none');
+                        }
                     }
 
                     // Simpan isi Quill
@@ -1335,15 +1440,15 @@
                         right.style.display = 'flex';
                         right.style.alignItems = 'center';
                         right.style.gap = '6px';
-                        if ((f.pending_approval || 0) == 2) {
-                            const badge = document.createElement('span');
-                            badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
-                            badge.textContent = 'Rejected';
-                            right.appendChild(badge);
-                        } else if (f.replaced_by_id) {
+                        if (f.replaced_by_id) {
                             const badge = document.createElement('span');
                             badge.className = 'inline-block bg-red-200 text-red-900 text-xs font-semibold px-2 py-0.5 rounded-full';
                             badge.textContent = 'Replaced';
+                            right.appendChild(badge);
+                        } else if ((f.pending_approval || 0) == 2) {
+                            const badge = document.createElement('span');
+                            badge.className = 'inline-block bg-red-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full';
+                            badge.textContent = 'Rejected';
                             right.appendChild(badge);
                         } else if (f.size) {
                             const size = document.createElement('span');

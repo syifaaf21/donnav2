@@ -1,7 +1,45 @@
-@if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+@php
+    $canShowAddDocumentModal = ($allowAllUsers ?? false)
+        || in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']);
+    $isAdminOrSuper = in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']);
+    $addDocumentFormAction = $formAction ?? route('master.document-review.store2');
+    $plantLabels = [
+        'all' => 'ALL',
+        'body' => 'Body',
+        'unit' => 'Unit',
+        'electric' => 'Electric',
+    ];
+    $allowedPlantValues = collect($allowedPlants ?? array_keys($plantLabels))
+        ->map(fn($p) => strtolower(trim((string) $p)))
+        ->filter(fn($p) => array_key_exists($p, $plantLabels))
+        ->unique()
+        ->values();
+    if ($allowedPlantValues->isEmpty()) {
+        $allowedPlantValues = collect(array_keys($plantLabels));
+    }
+
+    $reviewDocumentOptions = collect($documentsMaster ?? [])
+        ->map(function ($doc) {
+            return [
+                'value' => $doc->id,
+                'text' => $doc->name,
+                'code' => strtoupper((string) $doc->code),
+                'plants' => collect($doc->plants ?? [])
+                    ->pluck('plant')
+                    ->map(fn($plant) => strtolower(trim((string) $plant)))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ];
+        })
+        ->values()
+        ->all();
+@endphp
+
+@if ($canShowAddDocumentModal)
     <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 900px;">
-            <form action="{{ route('master.document-review.store2') }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ $addDocumentFormAction }}" method="POST" enctype="multipart/form-data"
                 class="needs-validation" novalidate>
                 @csrf
                 <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="max-width: 100%;">
@@ -29,37 +67,6 @@
                         style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                         <div class="row g-4">
 
-                            {{-- Document Name --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Document Name <span
-                                        class="text-danger">*</span></label>
-                                <select id="document_select" name="document_id"
-                                    class="form-select border-0 shadow-sm rounded-3 @error('document_id') is-invalid @enderror"
-                                    required>
-                                    <option value="">-- Select Document --</option>
-                                    @foreach ($documentsMaster as $doc)
-                                        <option value="{{ $doc->id }}" data-code="{{ strtoupper($doc->code) }}">
-                                            {{ $doc->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('document_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @else
-                                    <div class="invalid-feedback">Document Name is required.</div>
-                                @enderror
-                            </div>
-
-                            {{-- Document Number --}}
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Document Number <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" name="document_number" id="document_number"
-                                    class="form-control border-0 shadow-sm rounded-3 @error('document_number') is-invalid @enderror"
-                                    placeholder="Enter document number manually" required>
-                                <div class="invalid-feedback">Document Number is required.</div>
-                            </div>
-
                             {{-- Plant --}}
                             <div class="col-md-4">
                                 <label for="plant_select" class="form-label fw-semibold">Plant <span
@@ -68,15 +75,32 @@
                                     class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
                                     required>
                                         <option value="">-- Select Plant --</option>
-                                        <option value="all">ALL</option>
-                                        <option value="body">Body</option>
-                                        <option value="unit">Unit</option>
-                                        <option value="electric">Electric</option>
+                                        @foreach ($allowedPlantValues as $plantValue)
+                                            <option value="{{ $plantValue }}" {{ old('plant') === $plantValue ? 'selected' : '' }}>
+                                                {{ $plantLabels[$plantValue] }}
+                                            </option>
+                                        @endforeach
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @else
                                     <div class="invalid-feedback">Plant is required.</div>
+                                @enderror
+                            </div>
+
+                            {{-- Document Name --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Document Name <span
+                                        class="text-danger">*</span></label>
+                                <select id="document_select" name="document_id"
+                                    class="form-select border-0 shadow-sm rounded-3 @error('document_id') is-invalid @enderror"
+                                    required>
+                                    <option value="">-- Select Plant First --</option>
+                                </select>
+                                @error('document_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @else
+                                    <div class="invalid-feedback">Document Name is required.</div>
                                 @enderror
                             </div>
                             {{-- Department --}}
@@ -142,36 +166,55 @@
                                 </select>
                             </div>
 
-                            {{-- Notes --}}
-                            <div class="col-12 mb-4">
-                                <label class="form-label fw-semibold">Notes</label>
-                                <input type="hidden" name="notes" id="notes_input_add"
-                                    value="{{ old('notes') }}">
-                                <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
-                                    style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
-                                </div>
-                                <small class="text-muted">You can format your notes with bold, italic, underline,
-                                    colors, and more.</small>
-                                @error('notes')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
+
+                            {{-- Document Number --}}
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Document Number <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" name="document_number" id="document_number"
+                                    class="form-control border-0 shadow-sm rounded-3 @error('document_number') is-invalid @enderror"
+                                    placeholder="Automatically generated" required>
+                                <small id="document_number_hint" class="text-muted d-block mt-1"></small>
+                                <small class="text-muted">Document number will be automatically generated and editable.</small>
+                                <div class="invalid-feedback">Document Number is required.</div>
                             </div>
 
-                            {{-- File Upload --}}
-                            {{-- <div class="col-12 mt-10">
-                                <label class="form-label fw-medium">Upload File</label>
-                                <div id="file-upload-container">
-                                    <div class="input-group mb-2">
-                                        <input type="file" name="files[]" class="form-control border-1 shadow-sm"
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx">
+                            @if ($isAdminOrSuper)
+                                {{-- Notes --}}
+                                <div class="col-12 mb-4">
+                                    <label class="form-label fw-semibold">Notes</label>
+                                    <input type="hidden" name="notes" id="notes_input_add"
+                                        value="{{ old('notes') }}">
+                                    <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
+                                        style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
                                     </div>
-                                    <button class="btn btn-outline-success btn-sm mt-2 add-file-btn" type="button">+
-                                        Add
-                                        File</button>
+                                    <small class="text-muted">You can format your notes with bold, italic and underline.</small>
+                                    @error('notes')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <small class="text-muted d-block mt-1">Allowed Format: PDF, DOCX, EXCEL</small>
-                                <div class="invalid-feedback">At least one file is required.</div>
-                            </div> --}}
+                            @endif
+
+                            {{-- File Upload --}}
+                            <div class="col-12 mt-4">
+                                <label class="form-label fw-semibold">Upload File</label>
+                                    <div id="file-upload-container" class="d-flex flex-column gap-2">
+                                        <div class="input-group file-input-group">
+                                            <input type="file" name="files[]"
+                                                class="form-control border-0 shadow-sm rounded-3 @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror"
+                                                accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                            <button class="btn btn-outline-danger remove-file-btn" type="button" style="display:none;">Remove</button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-success btn-sm mt-2" type="button" id="add-file-btn">+ Add File</button>
+                                    <small class="text-muted d-block mt-1">Allowed format: PDF, DOC, DOCX, XLS, XLSX. Max Total File Size: 20MB</small>
+                                    @error('files')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    @error('files.*')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                            </div>
                         </div>
                     </div>
                     {{-- Modal Footer --}}
@@ -219,9 +262,39 @@
                 }
             }
 
+            const allReviewDocuments = @json($reviewDocumentOptions);
+
+            function normalizePlant(plant) {
+                return String(plant || '').trim().toLowerCase();
+            }
+
+            function getDocumentsByPlant(plant) {
+                const normalizedPlant = normalizePlant(plant);
+                if (!normalizedPlant) return [];
+
+                return allReviewDocuments.filter((doc) => {
+                    const docPlants = Array.isArray(doc.plants) ? doc.plants.map(normalizePlant) : [];
+
+                    if (normalizedPlant === 'all') {
+                        return docPlants.includes('all');
+                    }
+
+                    if (docPlants.length === 0) {
+                        return ['body', 'unit', 'electric'].includes(normalizedPlant);
+                    }
+
+                    if (docPlants.includes('all')) {
+                        return false;
+                    }
+
+                    return docPlants.includes(normalizedPlant);
+                });
+            }
+
             // --- Initialize TomSelects ---
             const tsDocument = new TomSelect('#document_select', {
                 create: false,
+                placeholder: 'Select Plant First',
                 sortField: {
                     field: 'text',
                     direction: 'asc'
@@ -287,13 +360,45 @@
             });
 
 
-            tsDocument.setValue(@json(old('document_id')));
+            const oldDocumentId = @json(old('document_id'));
             tsPlant.setValue(@json(old('plant')));
             tsPart.setValue(@json(old('part_number_id')));
             tsProduct.setValue(@json(old('product_id')));
             tsModel.setValue(@json(old('model_id')));
             tsProcess.setValue(@json(old('process_id')));
             tsDept.setValue(@json(old('department_id')));
+
+            function updateDocumentOptionsByPlant(plant, selectedDocumentId = null) {
+                const docs = getDocumentsByPlant(plant);
+
+                tsDocument.clear(true);
+                tsDocument.clearOptions();
+                tsDocument.addOptions(docs);
+                tsDocument.refreshOptions(false);
+
+                if (!plant) {
+                    tsDocument.settings.placeholder = 'Select Plant First';
+                    tsDocument.disable();
+                    return;
+                }
+
+                tsDocument.settings.placeholder = docs.length > 0
+                    ? '-- Select Document --'
+                    : 'No document available for selected plant';
+
+                if (docs.length === 0) {
+                    tsDocument.disable();
+                    return;
+                }
+
+                tsDocument.enable();
+
+                if (selectedDocumentId && docs.some((doc) => String(doc.value) === String(selectedDocumentId))) {
+                    tsDocument.setValue(String(selectedDocumentId), false);
+                }
+            }
+
+            updateDocumentOptionsByPlant(null);
 
             // --- Function: disable all controls initially ---
             function disableAllDetailControls() {
@@ -309,14 +414,20 @@
             tsPlant.on('change', async function(plant) {
                 if (!plant) {
                     // If plant cleared: disable all and clear values
+                    updateDocumentOptionsByPlant(null);
                     disableAllDetailControls();
                     tsPart.clear();
                     tsProduct.clear();
                     tsModel.clear();
                     tsProcess.clear();
                     tsDept.clear();
+                    if (documentNumberInput) {
+                        documentNumberInput.value = '';
+                    }
                     return;
                 }
+
+                updateDocumentOptionsByPlant(plant);
 
                 // Enable all fields once a plant is chosen
                 tsPart.enable();
@@ -377,12 +488,52 @@
             // --- When Part Number selected ---
             tsPart.on('change', async function(partIds) {
                 if (!partIds || partIds.length === 0) {
+                    // Clear values dan reload fresh options berdasarkan plant saat ini
                     tsProduct.clear(true);
                     tsModel.clear(true);
                     tsProcess.clear(true);
-                    tsProduct.disable();
-                    tsModel.disable();
-                    tsProcess.disable();
+                    document.getElementById('document_number').value = '';
+
+                    // Reload options berdasarkan plant yang dipilih saat ini
+                    const currentPlant = tsPlant.getValue();
+                    if (currentPlant) {
+                        let partsUrl, productsUrl, modelsUrl, processesUrl;
+                        if (currentPlant === 'all') {
+                            partsUrl = `/api/part-numbers`;
+                            productsUrl = `/api/products`;
+                            modelsUrl = `/api/models`;
+                            processesUrl = `/api/processes`;
+                        } else {
+                            const p = encodeURIComponent(currentPlant);
+                            partsUrl = `/api/part-numbers?plant=${p}`;
+                            productsUrl = `/api/products?plant=${p}`;
+                            modelsUrl = `/api/models?plant=${p}`;
+                            processesUrl = `/api/processes?plant=${p}`;
+                        }
+
+                        const [parts, products, models, processes] = await Promise.all([
+                            safeFetchJson(partsUrl),
+                            safeFetchJson(productsUrl),
+                            safeFetchJson(modelsUrl),
+                            safeFetchJson(processesUrl)
+                        ]);
+
+                        tsPart.clearOptions();
+                        tsPart.addOptions(parts || []);
+                        tsPart.refreshOptions(false);
+
+                        tsProduct.clearOptions();
+                        tsProduct.addOptions(products || []);
+                        tsProduct.refreshOptions(false);
+
+                        tsModel.clearOptions();
+                        tsModel.addOptions(models || []);
+                        tsModel.refreshOptions(false);
+
+                        tsProcess.clearOptions();
+                        tsProcess.addOptions(processes || []);
+                        tsProcess.refreshOptions(false);
+                    }
                     return;
                 }
 
@@ -431,12 +582,51 @@
                 tsProcess.setValue(uniqueById(allProcesses).map(p => p.id));
                 tsProcess.enable();
 
-
-
+                // Trigger document number generation setelah autofill selesai
+                generateDocumentNumber();
             });
 
             // --- Auto-generate document number when key fields change ---
+            const documentNumberInput = document.getElementById('document_number');
+            const documentNumberHint = document.getElementById('document_number_hint');
+            let isGeneratingDocumentNumber = false;
+            let generateDocumentNumberRequestId = 0;
+
+            function setDocumentNumberHint(message, isError = false) {
+                if (!documentNumberHint) return;
+
+                if (message === 'Generating document number...') {
+                    documentNumberHint.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="width:0.8rem;height:0.8rem;"></span>Generating document number...';
+                } else {
+                    documentNumberHint.textContent = message || '';
+                }
+
+                documentNumberHint.classList.toggle('text-danger', Boolean(isError));
+                documentNumberHint.classList.toggle('text-muted', !isError);
+            }
+
+            function setDocumentNumberGeneratingState(isGenerating) {
+                isGeneratingDocumentNumber = isGenerating;
+                const submitBtn = document.querySelector('#addDocumentModal form button[type="submit"]');
+
+                if (documentNumberInput) {
+                    documentNumberInput.readOnly = isGenerating;
+                }
+
+                if (submitBtn && submitBtn.dataset.isSubmitting !== '1') {
+                    submitBtn.disabled = isGenerating;
+                }
+
+                if (isGenerating) {
+                    setDocumentNumberHint('Generating document number...');
+                } else if (!documentNumberHint?.classList.contains('text-danger')) {
+                    setDocumentNumberHint('');
+                }
+            }
+
             async function generateDocumentNumber() {
+                const requestId = ++generateDocumentNumberRequestId;
                 const documentId = tsDocument.getValue();
                 const departmentId = tsDept.getValue();
                 const productIds = tsProduct.getValue() || [];
@@ -454,10 +644,15 @@
                 };
 
                 if (!payload.document_id || !payload.department_id) {
+                    if (requestId === generateDocumentNumberRequestId) {
+                        setDocumentNumberGeneratingState(false);
+                    }
                     return; // need minimum fields
                 }
 
                 try {
+                    setDocumentNumberGeneratingState(true);
+
                     const res = await fetch('{{ route('document-number.generate') }}', {
                         method: 'POST',
                         headers: {
@@ -469,11 +664,28 @@
 
                     if (!res.ok) throw new Error('Failed to generate');
                     const json = await res.json();
-                    if (json?.success) {
-                        document.getElementById('document_number').value = json.document_number;
+                    if (requestId !== generateDocumentNumberRequestId) {
+                        return;
+                    }
+
+                    if (json?.success && json.document_number) {
+                        if (documentNumberInput) {
+                            documentNumberInput.value = json.document_number;
+                        }
+                        setDocumentNumberHint('');
+                    } else {
+                        setDocumentNumberHint('Failed to generate document number. Please try again.', true);
                     }
                 } catch (err) {
+                    if (requestId !== generateDocumentNumberRequestId) {
+                        return;
+                    }
                     console.error('Generate error:', err);
+                    setDocumentNumberHint('Failed to generate document number. Please try again.', true);
+                } finally {
+                    if (requestId === generateDocumentNumberRequestId) {
+                        setDocumentNumberGeneratingState(false);
+                    }
                 }
             }
 
@@ -485,28 +697,40 @@
             tsModel.on('change', generateDocumentNumber);
 
 
-            const quill = new Quill('#quill_editor', {
-                theme: 'snow',
-                placeholder: 'Write your notes here...',
-                modules: {
-                    toolbar: [
-                        ['bold', 'italic', 'strike',],[
-                        ['clean']]
-                    ]
-                }
-            });
-
             // Pilih form dan hidden input
             const form = document.querySelector('#addDocumentModal form');
             const hiddenInput = document.querySelector('#notes_input_add');
+            const quillEditorEl = document.querySelector('#quill_editor');
+            let quill = null;
 
-            // Set old value jika ada
-            quill.root.innerHTML = hiddenInput.value || '';
+            if (quillEditorEl && hiddenInput) {
+                quill = new Quill('#quill_editor', {
+                    theme: 'snow',
+                    placeholder: 'Write your notes here...',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'strike'],
+                            ['clean']
+                        ]
+                    }
+                });
+
+                // Set old value jika ada
+                quill.root.innerHTML = hiddenInput.value || '';
+            }
 
 
             // Saat submit form, isi hidden input dari Quill dan tampilkan loading pada tombol submit
-            form.addEventListener('submit', function() {
-                hiddenInput.value = quill.root.innerHTML;
+            form.addEventListener('submit', function(event) {
+                if (isGeneratingDocumentNumber) {
+                    event.preventDefault();
+                    setDocumentNumberHint('Please wait until document number generation is complete.', true);
+                    return;
+                }
+
+                if (quill && hiddenInput) {
+                    hiddenInput.value = quill.root.innerHTML;
+                }
 
                 // Do not clear plant 'all' here — allow server to receive 'all' so it can be
                 // handled (we treat 'all' as Other/Manual Entry tab).
@@ -516,6 +740,7 @@
                 if (submitBtn) {
                     // Simpan teks asli
                     submitBtn.dataset.originalText = submitBtn.innerHTML;
+                    submitBtn.dataset.isSubmitting = '1';
                     // Tampilkan spinner dan teks Loading
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
                     submitBtn.disabled = true;
@@ -542,6 +767,44 @@
             //         e.target.parentElement.remove();
             //     }
             // });
+                const fileContainer = document.getElementById('file-upload-container');
+                const addFileBtn = document.getElementById('add-file-btn');
+
+                function refreshRemoveButtons() {
+                    if (!fileContainer) return;
+                    const groups = fileContainer.querySelectorAll('.file-input-group');
+                    groups.forEach((group, index) => {
+                        const removeBtn = group.querySelector('.remove-file-btn');
+                        if (!removeBtn) return;
+                        removeBtn.style.display = groups.length > 1 ? 'inline-block' : 'none';
+                        removeBtn.disabled = groups.length <= 1 && index === 0;
+                    });
+                }
+
+                if (fileContainer && addFileBtn) {
+                    addFileBtn.addEventListener('click', function() {
+                        const newInputGroup = document.createElement('div');
+                        newInputGroup.className = 'input-group file-input-group';
+                        newInputGroup.innerHTML = `
+                            <input type="file" name="files[]" class="form-control border-0 shadow-sm rounded-3" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                            <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
+                        `;
+                        fileContainer.appendChild(newInputGroup);
+                        refreshRemoveButtons();
+                    });
+
+                    fileContainer.addEventListener('click', function(e) {
+                        if (e.target && e.target.classList.contains('remove-file-btn')) {
+                            const group = e.target.closest('.file-input-group');
+                            if (group) {
+                                group.remove();
+                                refreshRemoveButtons();
+                            }
+                        }
+                    });
+
+                    refreshRemoveButtons();
+                }
 
             /* -------------------------------------------------------------------
              * SHOW MODAL IF VALIDATION ERRORS
@@ -554,6 +817,7 @@
                 if (oldPlant) {
                     // Set plant value first
                     tsPlant.setValue(oldPlant, false); // false = don't trigger change yet
+                    updateDocumentOptionsByPlant(oldPlant, oldDocumentId);
 
                     // Trigger change event untuk load data dari API
                     setTimeout(async () => {

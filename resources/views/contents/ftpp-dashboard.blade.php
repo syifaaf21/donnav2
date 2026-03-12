@@ -30,7 +30,7 @@
             </div>
         </div>
         {{-- ===== SUMMARY CARDS ===== --}}
-        <div class="row g-4 mb-5">
+        <div class="row g-3 mb-4 summary-cards-row">
             @php
                 $needAssign = $chartData['Need Assign'] ?? 0;
                 $needCheck = $chartData['Need Check'] ?? 0;
@@ -74,37 +74,29 @@
                     'Need Approval by Lead Auditor' => '#7EA6D1',
                     'Need Revision' => '#F7C6B5',
                     'Close' => '#B7E4C7',
-                    'Checked by Dept Head' => '#BEEAEF',
+                    // 'Checked by Dept Head' => '#BEEAEF',
                 ];
             @endphp
 
             @foreach ($cards as $c)
                 <div class="col-6 col-md-3">
-                    <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                    <div class="card summary-card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
                         transition-all duration-200 border-0 h-100 overflow-hidden"
                         style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
-                        <div class="card-body p-3 d-flex flex-column justify-content-between">
+                        <div class="card-body summary-card-body">
 
-                            {{-- Label --}}
-                            <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
-                                {{ $c['label'] }}
-                            </small>
-
-                            {{-- Value --}}
-                            <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
-                                {{ $c['value'] }}
+                            <div class="summary-card-content">
+                                <small class="text-muted fw-semibold summary-card-label">
+                                    {{ $c['label'] }}
+                                </small>
+                                <div class="fw-bold text-{{ $c['color'] }} summary-card-value">
+                                    {{ $c['value'] }}
+                                </div>
                             </div>
 
-                            {{-- Icon --}}
-                            <div class="ms-auto mt-2"
-                                style="
-                            font-size: 1.7rem;
-                            padding: 8px 12px;
-                            border-radius: 12px;
-                            background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
-                            color: var(--bs-{{ $c['color'] }});
-                        ">
+                            <div class="summary-card-icon"
+                                style="background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12); color: var(--bs-{{ $c['color'] }});">
                                 <i class="bi {{ $c['icon'] }}"></i>
                             </div>
 
@@ -238,48 +230,41 @@
                             }
                         @endphp
 
-                        @if (empty($matrix))
-                            <div class="alert alert-info small mb-0">
-                                Department status breakdown not available. Please provide <strong>$deptStatusMatrix</strong>
-                                from the controller in the format: <em>['Dept Name' => ['Status Name' => count]]</em>.
-                            </div>
-                        @else
-                            {{-- Chart: Department status (stacked bar) --}}
-                            <div class="mb-3" id="deptStatusWrapper">
-                                <canvas id="deptStatusChart" height="140"></canvas>
-                            </div>
+                        {{-- Chart: Department status (stacked bar) --}}
+                        <div class="mb-3" id="deptStatusWrapper">
+                            <canvas id="deptStatusChart" height="140"></canvas>
+                        </div>
 
-                            <div class="table-responsive mt-2" id="deptStatusTableWrapper" style="display:none;">
-                                <table class="table table-sm table-hover mb-0 align-middle"
-                                    style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
-                                    <thead class="table-header-blue">
-                                        <tr>
-                                            <th class="small py-2">Department</th>
-                                            @foreach ($statuses as $s)
-                                                <th class="small py-2 text-center">{{ $s }}</th>
-                                            @endforeach
-                                            <th class="small py-2 text-center">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($matrix as $dept => $map)
-                                            <tr>
-                                                <td class="small py-2">{{ $dept }}</td>
-                                                @php $rowTotal = 0; @endphp
-                                                @foreach ($statuses as $s)
-                                                    @php
-                                                        $val = isset($map[$s]) ? (int) $map[$s] : 0;
-                                                        $rowTotal += $val;
-                                                    @endphp
-                                                    <td class="small py-2 text-center">{{ $val }}</td>
-                                                @endforeach
-                                                <td class="small py-2 text-center fw-semibold">{{ $rowTotal }}</td>
-                                            </tr>
+                        <div class="table-responsive mt-2" id="deptStatusTableWrapper" style="display:none;">
+                            <table class="table table-sm table-hover mb-0 align-middle"
+                                style="border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
+                                <thead class="table-header-blue">
+                                    <tr>
+                                        <th class="small py-2">Department</th>
+                                        @foreach ($statuses as $s)
+                                            <th class="small py-2 text-center">{{ $s }}</th>
                                         @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
+                                        <th class="small py-2 text-center">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($matrix as $dept => $map)
+                                        <tr>
+                                            <td class="small py-2">{{ $dept }}</td>
+                                            @php $rowTotal = 0; @endphp
+                                            @foreach ($statuses as $s)
+                                                @php
+                                                    $val = isset($map[$s]) ? (int) $map[$s] : 0;
+                                                    $rowTotal += $val;
+                                                @endphp
+                                                <td class="small py-2 text-center">{{ $val }}</td>
+                                            @endforeach
+                                            <td class="small py-2 text-center fw-semibold">{{ $rowTotal }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -409,7 +394,7 @@
             'Need Approval by Lead Auditor': '#7EA6D1', // muted blue
             'Need Revision': '#F7C6B5', // light peach
             'Close': '#B7E4C7', // soft mint
-            'Checked by Dept Head': '#BEEAEF' // pale teal
+            // 'Checked by Dept Head': '#BEEAEF' // pale teal
         };
 
         const fallbackColors = corporatePalette.slice();
@@ -417,7 +402,7 @@
         const ftppLabels = [
             'Need Assign',
             'Need Check',
-            'Checked by Dept Head',
+            'Need Approval by Auditor',
             'Need Approval by Lead Auditor',
             'Need Revision',
             'Close'
@@ -469,7 +454,7 @@
                     data: [
                         chartData['Need Assign'] ?? 0,
                         chartData['Need Check'] ?? 0,
-                        chartData['Checked by Dept Head'] ?? 0,
+                        chartData['Need Approval by Auditor'] ?? 0,
                         chartData['Need Approval by Lead Auditor'] ?? 0,
                         chartData['Need Revision'] ?? 0,
                         chartData['Close'] ?? 0,
@@ -926,6 +911,39 @@
             transition: background-color 0.2s;
         }
 
+        .summary-card-body {
+            padding: 0.95rem 0.95rem;
+            min-height: 104px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .summary-card-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.2px;
+            display: block;
+            line-height: 1.2;
+            margin-bottom: 0.35rem;
+        }
+
+        .summary-card-value {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .summary-card-icon {
+            font-size: 1.35rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+
         /* Keep badges and cells tidy */
         .status-badge {
             display: inline-block;
@@ -970,6 +988,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        @media (max-width: 576px) {
+            .summary-card-body {
+                min-height: 94px;
+                padding: 0.8rem 0.8rem;
+            }
+
+            .summary-card-value {
+                font-size: 1.5rem;
+            }
+
+            .summary-card-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 1.1rem;
+            }
         }
     </style>
 @endpush

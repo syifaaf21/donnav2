@@ -90,7 +90,7 @@
             <!-- Status Filter Dropdown -->
             <div class="relative">
                 <button id="filterStatusBtn" type="button"
-                    class="flex items-center gap-2 px-4 h-10 rounded-xl bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors font-semibold text-gray-700 text-sm"
+                    class="modern-pill-btn flex items-center gap-2 px-4 h-10 rounded-xl bg-white border border-gray-200 shadow hover:bg-blue-50 transition-colors font-semibold text-gray-700 text-sm"
                     title="Filter by Status">
                     Status
                     <svg class="w-4 h-4 ml-1 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
@@ -159,7 +159,8 @@
                                             {{ in_array($opt['key'], $selectedStatuses) ? 'checked' : '' }}>
                                         <i class="{{ $opt['icon'] }} {{ $opt['color'] }} text-lg"></i>
                                         <span class="flex-1 text-sm">{{ $opt['label'] }}</span>
-                                        <span class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$opt['key']] ?? 0 }}</span>
+                                        <span
+                                            class="text-xs text-gray-500 font-semibold">{{ $statusCounts[$opt['key']] ?? 0 }}</span>
                                     </label>
                                 </li>
                             @endforeach
@@ -170,7 +171,7 @@
 
             <!-- Filter Button -->
             <button type="button"
-                class="bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition"
+                class="modern-square-btn bg-white border border-gray-200 rounded-xl shadow p-2.5 hover:bg-gray-100 transition"
                 data-bs-toggle="modal" data-bs-target="#filterModal">
                 <i data-feather="filter" class="w-5 h-5"></i>
             </button>
@@ -345,7 +346,8 @@
                                             <span class="{{ $statusClass }} w-max inline-block">
                                                 {{ ucwords($statusName ?: '-') }}
                                             </span>
-                                             <div class="text-xs text-gray-500">{{ optional($doc->department)->name ?? 'Unknown' }}</div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ optional($doc->department)->name ?? 'Unknown' }}</div>
                                         </div>
                                     </td>
                                     <td class="px-2 py-3 text-center text-xs font-medium min-w-[100px]">
@@ -433,13 +435,23 @@
                                             {{-- ================= FILE BUTTON ================= --}}
                                             <div class="relative inline-block overflow-visible">
                                                 @php
-                                                    $files = $doc->files
+                                                    $visibleFiles = $doc->files
+                                                        ->sortByDesc(fn($f) => !empty($f->replaced_by_id))
+                                                        ->values();
+
+                                                    $currentFiles = $visibleFiles
+                                                        ->filter(fn($f) => empty($f->replaced_by_id))
+                                                        ->sortByDesc('created_at')
+                                                        ->values();
+
+                                                    $files = $visibleFiles
                                                         ->map(
                                                             fn($f) => [
                                                                 'id' => $f->id,
                                                                 'file_path' => $f->file_path,
                                                                 'name' => $f->file_name ?? basename($f->file_path),
                                                                 'url' => asset('storage/' . $f->file_path),
+                                                                'replaced_by_id' => $f->replaced_by_id,
                                                             ],
                                                         )
                                                         ->toArray();
@@ -463,7 +475,7 @@
                                                                 <div
                                                                     class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
                                                                     <button type="button" title="View File"
-                                                                        class="flex-1 text-left view-file-btn truncate"
+                                                                        class="flex-1 text-left view-file-btn truncate {{ !empty($file['replaced_by_id']) ? 'text-red-700' : '' }}"
                                                                         data-file="{{ $file['url'] }}"
                                                                         data-doc-id="{{ $doc->id }}"
                                                                         data-doc-status="{{ $status }}"
@@ -473,7 +485,12 @@
                                                                         data-file-path="{{ $file['file_path'] }}">
                                                                         📄 {{ $file['name'] }}
                                                                     </button>
-                                                                    @if ($showDownloadReport)
+                                                                    @if (!empty($file['replaced_by_id']))
+                                                                        <span
+                                                                            class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800 whitespace-nowrap">
+                                                                            Replaced
+                                                                        </span>
+                                                                    @elseif ($showDownloadReport)
                                                                         <button type="button"
                                                                             class="file-download-report-btn text-blue-600 hover:text-blue-800 whitespace-nowrap"
                                                                             data-bs-toggle="modal"
@@ -497,9 +514,10 @@
                                                 @elseif(count($files) === 1)
                                                     @php
                                                         $fileUrl = $files[0]['url'] ?? '#';
+                                                        $isReplacedFile = !empty($files[0]['replaced_by_id']);
                                                     @endphp
                                                     <button type="button" title="View File"
-                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 text-white shadow hover:scale-110 transition-transform duration-200 view-file-btn"
+                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $isReplacedFile ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-gradient-to-tr from-cyan-400 to-blue-500 text-white' }} shadow hover:scale-110 transition-transform duration-200 view-file-btn"
                                                         data-file="{{ $fileUrl }}"
                                                         data-doc-id="{{ $doc->id }}"
                                                         data-doc-status="{{ $status }}"
@@ -508,6 +526,11 @@
                                                         data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
                                                         <i class="bi bi-eye"></i>
+                                                        @if ($isReplacedFile)
+                                                            <span class="ml-1 inline-block rounded-full bg-red-200 px-1 py-0.5 text-[10px] font-semibold text-red-800">
+                                                                Replaced
+                                                            </span>
+                                                        @endif
                                                     </button>
                                                 @endif
 
@@ -520,39 +543,86 @@
                                                 // Only admin or users allowed by canEditDocument can edit
                                                 $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
-                                                $showApproveReject = $isAdmin && $status === 'need review';
+                                                // Approval actions are handled in dedicated approval queue page.
+                                                $showApproveReject = false;
 
-                                                $showMenu = $showEdit || $showApproveReject || $showDownloadReport;
+                                                $showMenu = $showEdit || $showDownloadReport;
                                             @endphp
                                             @if ($showMenu)
                                                 <div class="relative inline-block text-left">
                                                     <button type="button"
                                                         onclick="document.getElementById('actionMenu-{{ $doc->id }}').classList.toggle('hidden')"
-                                                        class="w-8 h-8 flex justify-center items-center rounded-full hover:bg-gray-200">
+                                                        class="modern-action-trigger w-8 h-8 flex justify-center items-center rounded-full hover:bg-gray-200">
                                                         <i class="bi bi-three-dots-vertical text-lg"></i>
                                                     </button>
 
                                                     <div id="actionMenu-{{ $doc->id }}"
                                                         class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm">
-                                                        {{-- Edit --}}
+                                                        {{-- Edit actions: separate "Edit Online" (OnlyOffice) and "Edit" (upload/revise) --}}
                                                         @if ($showEdit)
-                                                            <button type="button"
-                                                                class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
-                                                                data-doc-id="{{ $doc->id }}" title="Edit Document">
-                                                                <i class="bi bi-pencil mr-2"></i> Edit
-                                                            </button>
+                                                            @if ($currentFiles->isNotEmpty())
+                                                                @php
+                                                                    // Prefer the most recent file for direct online edit when single
+                                                                    $latestFile = $currentFiles->first();
+                                                                @endphp
+
+                                                                {{-- Edit Online: if single file, link directly to editor; if multiple, open select-file modal --}}
+                                                                @if ($currentFiles->count() === 1 && $latestFile)
+                                                                    <a href="{{ route('editor.show', $latestFile->id) }}"
+                                                                        target="_blank"
+                                                                        class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
+                                                                        title="Edit File">
+                                                                        <i class="bi bi-pencil mr-2"></i> Edit Online
+                                                                    </a>
+                                                                @else
+                                                                    <button type="button"
+                                                                        class="open-select-file-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
+                                                                        data-mapping-id="{{ $doc->id }}"
+                                                                        title="Select file to edit online">
+                                                                        <i class="bi bi-pencil mr-2"></i> Edit Online
+                                                                    </button>
+                                                                @endif
+
+                                                                {{-- Keep existing Edit (upload/replace) button available --}}
+                                                                <button type="button"
+                                                                    class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
+                                                                    data-doc-id="{{ $doc->id }}"
+                                                                    title="Upload File">
+                                                                    <i class="bi bi-box-arrow-up-right mr-2"></i> Upload
+                                                                </button>
+                                                            @else
+                                                                {{-- No files yet: keep Edit (upload) button only --}}
+                                                                <button type="button"
+                                                                    class="open-revise-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-yellow-600"
+                                                                    data-doc-id="{{ $doc->id }}"
+                                                                    title="Upload fILE">
+                                                                    <i class="bi bi-box-arrow-up-right mr-2"></i> Upload
+                                                                </button>
+                                                            @endif
                                                         @endif
 
                                                         {{-- Download Report (single file) --}}
-                                                        @if ($showDownloadReport && count($files) === 1)
+                                                        @if ($showDownloadReport && $currentFiles->count() === 1)
                                                             <button type="button"
                                                                 class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-blue-600 file-download-report-btn"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#downloadReportModal"
                                                                 data-doc-id="{{ $doc->id }}"
-                                                                data-file-id="{{ $files[0]['id'] ?? '' }}"
-                                                                data-file-name="{{ $files[0]['name'] ?? '' }}">
+                                                                data-file-id="{{ $currentFiles->first()?->id ?? '' }}"
+                                                                data-file-name="{{ $currentFiles->first()?->file_name ?? basename($currentFiles->first()?->file_path ?? '') }}"
+                                                                title="Download Report for Each File">
                                                                 <i class="bi bi-bar-chart mr-2"></i> Download Report
+                                                            </button>
+                                                        @endif
+
+                                                        {{-- Download as PDF (with watermark) - only when approved --}}
+                                                        @if ($status === 'approved')
+                                                            <button type="button"
+                                                                class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-purple-600 download-pdf-btn"
+                                                                data-doc-id="{{ $doc->id }}"
+                                                                data-doc-name="{{ $doc->document_number ?? 'document' }}"
+                                                                title="Download document as PDF (with watermark)">
+                                                                <i class="bi bi-file-pdf mr-2"></i> Download as PDF
                                                             </button>
                                                         @endif
 
@@ -615,7 +685,7 @@
                                 <i class="bi bi-printer"></i> Print
                             </a>
                             <a id="downloadFileBtn" href="#" download
-                                class="btn btn-outline-primary btn-sm d-none">
+                                class="btn btn-outline-primary btn-sm d-none" style="display:none !important;" aria-hidden="true" tabindex="-1">
                                 <i class="bi bi-download"></i> Download PDF
                             </a>
 
@@ -639,7 +709,155 @@
     @include('contents.document-review.partials.modal-edit')
     @include('contents.document-review.partials.modal-reject')
     @include('contents.document-review.partials.modal-download-report')
+    <!-- Modal: Select File to Edit -->
+    <div id="selectFileToEditModal" class="hidden fixed inset-0 flex items-center justify-center z-[9999]">
+        <div class="bg-white rounded-4 shadow-lg w-full max-w-md relative p-4 select-file-dialog">
+            <div class="flex justify-between items-center mb-3">
+                <h5 class="fw-semibold">Pilih File untuk Diedit</h5>
+                <button type="button" id="selectFileCloseBtn" class="btn-close">&times;</button>
+            </div>
+
+            <div id="selectFileList" class="max-h-60 overflow-y-auto mb-3">
+                <p class="text-sm text-gray-500">Loading files...</p>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" id="selectFileCancel"
+                    class="px-4 py-1.5 border border-gray-300 rounded text-gray-700">Batal</button>
+                <button id="selectFileConfirm" type="button" class="px-4 py-1.5 bg-sky-600 text-white rounded"
+                    disabled>Edit</button>
+            </div>
+        </div>
+    </div>
     <style>
+        :root {
+            --btn-ink: #0f172a;
+            --btn-border: #dbe4ef;
+            --btn-primary: #2563eb;
+            --btn-primary-dark: #1d4ed8;
+        }
+
+        .modern-pill-btn {
+            height: 42px !important;
+            border-radius: 999px !important;
+            padding: 0 16px !important;
+            background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+            border: 1px solid var(--btn-border) !important;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .modern-pill-btn:hover {
+            border-color: #93c5fd !important;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2) !important;
+            transform: translateY(-1px);
+        }
+
+        .modern-square-btn {
+            width: 42px;
+            height: 42px;
+            padding: 0 !important;
+            border-radius: 14px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+            border: 1px solid var(--btn-border) !important;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .modern-square-btn:hover {
+            border-color: #93c5fd !important;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2) !important;
+            transform: translateY(-1px);
+        }
+
+        .modern-action-trigger {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 12px !important;
+            border: 1px solid #e2e8f0 !important;
+            background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+            transition: all 0.18s ease;
+        }
+
+        .modern-action-trigger:hover {
+            border-color: #bfdbfe !important;
+            background: #eff6ff !important;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .toggle-files-dropdown {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+            transition: all 0.18s ease;
+        }
+
+        .toggle-files-dropdown:hover {
+            border-color: #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        [id^="actionMenu-"] {
+            border-radius: 12px !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12) !important;
+            overflow: hidden;
+        }
+
+        [id^="actionMenu-"] a,
+        [id^="actionMenu-"] button {
+            font-weight: 600;
+            transition: background-color 0.16s ease;
+        }
+
+        [id^="actionMenu-"] a:hover,
+        [id^="actionMenu-"] button:hover {
+            background: #f8fafc !important;
+        }
+
+        #filterModal .modal-footer #clearFilterBtn {
+            border: 1px solid var(--btn-border);
+            border-radius: 10px;
+            background: #fff;
+            color: #64748b !important;
+        }
+
+        #filterModal .modal-footer button[type="submit"] {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--btn-primary), var(--btn-primary-dark)) !important;
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.28);
+        }
+
+        #selectFileCancel,
+        #selectFileConfirm {
+            border-radius: 10px !important;
+            font-weight: 600;
+        }
+
+        #selectFileConfirm {
+            border: none;
+            background: linear-gradient(135deg, var(--btn-primary), var(--btn-primary-dark)) !important;
+            box-shadow: 0 10px 18px rgba(37, 99, 235, 0.28);
+        }
+
+        #selectFileCancel:hover,
+        #selectFileConfirm:hover {
+            transform: translateY(-1px);
+        }
+
         /* --- Dropdown fix style --- */
         .dropdown-fixed {
             position: fixed !important;
@@ -687,6 +905,39 @@
         /* Slightly soften the horizontal divider to match borders */
         .folder-table tbody tr td {
             border-bottom: 1px solid #f3f4f6;
+        }
+
+        /* Select File Modal: ensure light card style and lighter backdrop */
+        #selectFileToEditModal {
+            background: rgba(10, 12, 20, 0.20);
+        }
+
+        #selectFileToEditModal .select-file-dialog {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.12);
+        }
+
+        #selectFileToEditModal .select-file-dialog h5 {
+            color: #0f172a;
+        }
+
+        #selectFileToEditModal .select-file-dialog .btn-close {
+            background: #f8fafc;
+            border: 1px solid rgba(2, 6, 23, 0.04);
+            color: #475569;
+            border-radius: 999px;
+            padding: 6px 8px;
+        }
+
+        #selectFileToEditModal .select-file-dialog .px-4 {
+            border-radius: 8px;
+        }
+
+        #selectFileToEditModal .select-file-dialog .bg-sky-600 {
+            background: linear-gradient(180deg, #1e90ff, #0f62ff);
         }
     </style>
     @push('scripts')
@@ -791,6 +1042,7 @@
                 let currentDocId = null; // Simpan docId yang sedang dibuka
                 let currentFileId = null; // Simpan fileId yang sedang dibuka
                 let currentFileType = null; // Simpan tipe file (pdf, excel, word, etc)
+                let currentPreviewObjectUrl = null; // Blob URL for converted preview
 
                 // Helper: Deteksi tipe file dari URL/path
                 function getFileType(url) {
@@ -824,7 +1076,7 @@
                         const clickedFilePath = btn.dataset.filePath;
                         let url = btn.dataset.file || '';
 
-                        if (docId) {
+                        if (docId && !clickedFilePath) {
                             try {
                                 const res = await fetch(`/document-review/${docId}/files`);
                                 const json = await res.json();
@@ -859,26 +1111,99 @@
                             currentFileId = clickedFileId || null;
                         }
 
-                        // Deteksi tipe file
-                        currentFileType = getFileType(url);
-                        console.log('File type detected:', currentFileType);
+                        // Deteksi tipe file asli
+                        const sourceFileType = getFileType(url);
+                        currentFileType = sourceFileType;
+                        console.log('File type detected:', sourceFileType);
 
                         // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
-                        const downloadWatermarkedBtn = document.getElementById('downloadWatermarkedBtn');
+                        const downloadWatermarkedBtn = document.getElementById(
+                            'downloadWatermarkedBtn');
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
                         const docStatus = (btn.dataset.docStatus || '').toString().toLowerCase();
                         const isAdminFlag = (btn.dataset.isAdmin || '') === '1';
+                        let previewUrl = url;
+
+                        // For non-PDF sources, request server-side conversion and preview inline as PDF.
+                        if (sourceFileType !== 'pdf' && currentDocId) {
+                            const convertUrl = new URL(`/document-review/${currentDocId}/download-as-pdf`,
+                                window.location.origin);
+                            convertUrl.searchParams.set('inline', '1');
+                            if (currentFileId) {
+                                convertUrl.searchParams.set('file_id', String(currentFileId));
+                            }
+
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Converting file...',
+                                    text: 'Please wait while we prepare PDF preview.',
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    didOpen: () => Swal.showLoading()
+                                });
+                            }
+
+                            try {
+                                const convertRes = await fetch(convertUrl.toString(), {
+                                    method: 'GET',
+                                    headers: {
+                                        'Accept': 'application/pdf, application/json'
+                                    }
+                                });
+
+                                const contentType = convertRes.headers.get('content-type') || '';
+                                if (!convertRes.ok || !contentType.includes('application/pdf')) {
+                                    let errMessage = 'Failed to convert file for preview.';
+                                    try {
+                                        const errJson = await convertRes.json();
+                                        errMessage = errJson.error || errJson.message || errMessage;
+                                    } catch (_) {
+                                        // Keep default message if body is not JSON.
+                                    }
+                                    throw new Error(errMessage);
+                                }
+
+                                const pdfBlob = await convertRes.blob();
+                                if (currentPreviewObjectUrl) {
+                                    URL.revokeObjectURL(currentPreviewObjectUrl);
+                                }
+                                currentPreviewObjectUrl = URL.createObjectURL(pdfBlob);
+                                previewUrl = currentPreviewObjectUrl;
+                                currentFileType = 'pdf';
+                            } catch (convertError) {
+                                console.error('Preview conversion failed:', convertError);
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Conversion failed',
+                                        text: convertError.message ||
+                                            'Unable to convert file to PDF preview.'
+                                    });
+                                } else {
+                                    alert(convertError.message ||
+                                        'Unable to convert file to PDF preview.');
+                                }
+                                return;
+                            } finally {
+                                if (typeof Swal !== 'undefined' && Swal.isLoading()) {
+                                    Swal.close();
+                                }
+                            }
+                        }
+
                         const isPdf = currentFileType === 'pdf';
-                        const canDownloadOrPrint = isPdf && (docStatus === 'approved' || isAdminFlag);
+                        const canDownloadOrPrint = isPdf && (docStatus === 'approved' ||
+                            isAdminFlag);
 
                         if (canDownloadOrPrint) {
                             printBtnToggle.classList.remove('d-none');
                             downloadBtnToggle.classList.remove('d-none');
                             if (downloadWatermarkedBtn) {
                                 downloadWatermarkedBtn.classList.remove('d-none');
-                                if (currentFileId) downloadWatermarkedBtn.href = `/document-review/file/${currentFileId}/download-watermarked`;
+                                if (currentFileId) downloadWatermarkedBtn.href =
+                                    `/document-review/file/${currentFileId}/download-watermarked`;
                             }
                         } else {
                             printBtnToggle.classList.add('d-none');
@@ -896,35 +1221,13 @@
                             viewFullBtnToggle.classList.add('d-none');
                         }
 
-                        // LOG DOWNLOAD untuk Excel/Word/PPT/Image saat button show diklik
-                        if (currentDocId && ['excel', 'word', 'powerpoint', 'image', 'other']
-                            .includes(currentFileType)) {
-                            fetch(`/document-review/${currentDocId}/log-download`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]').content,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        action: 'view_file',
-                                        file_type: currentFileType,
-                                        document_file_id: currentFileId
-                                    })
-                                })
-                                .then(res => res.json())
-                                .then(data => {
-                                    console.log('Download logged (non-PDF):', data);
-                                })
-                                .catch(err => console.error('Failed to log download:', err));
-                        }
-
                         // Untuk iframe PDF, coba sembunyikan toolbar default dengan fragment params
-                        const previewUrl = currentFileType === 'pdf' ? withPdfViewerParams(url) :
-                            url;
-                        previewFrame.dataset.url = previewUrl;
+                        const finalPreviewUrl = currentFileType === 'pdf'
+                            ? withPdfViewerParams(previewUrl)
+                            : previewUrl;
+                        previewFrame.dataset.url = finalPreviewUrl;
                         // Gunakan URL yang sudah disanitasi agar toolbar tetap tersembunyi saat "View Full"
-                        viewFullBtn.href = previewUrl;
+                        viewFullBtn.href = finalPreviewUrl;
                         previewModal.show();
                     });
                 });
@@ -943,6 +1246,10 @@
                         previewFrame.src = '';
                         previewFrame.dataset.url = '';
                         viewFullBtn.href = '#';
+                        if (currentPreviewObjectUrl) {
+                            URL.revokeObjectURL(currentPreviewObjectUrl);
+                            currentPreviewObjectUrl = null;
+                        }
                         currentDocId = null; // Reset docId
                         currentFileId = null; // Reset file id
                         currentFileType = null; // Reset file type
@@ -1067,28 +1374,28 @@
 <h4 class="font-semibold text-gray-700 mb-2">Existing Files</h4>
 <div class="space-y-3">
 ${data.files.map(file => `
-                                                                                            <div class="border rounded p-2 bg-gray-50">
-                                                                                                <div class="flex items-center justify-between">
-                                                                                                    <span class="text-sm">📄 ${file.original_name}</span>
+                                                                                                    <div class="border rounded p-2 bg-gray-50">
+                                                                                                        <div class="flex items-center justify-between">
+                                                                                                            <span class="text-sm">📄 ${file.original_name}</span>
 
-                                                                                                    <div class="flex gap-2">
-                                                                                                        {{-- <a href="/storage/${file.file_path}"
+                                                                                                            <div class="flex gap-2">
+                                                                                                                {{-- <a href="/storage/${file.file_path}"
                                                                                                     target="_blank"
                                                                                                     class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
                                                                                                     View
                                                                                                 </a> --}}
 
-                                                                                                        <button type="button"
-                                                                                                            class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
-                                                                                                            data-file-id="${file.id}">
-                                                                                                            Replace
-                                                                                                        </button>
-                                                                                                    </div>
-                                                                                                </div>
+                                                                                                                <button type="button"
+                                                                                                                    class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded replace-btn"
+                                                                                                                    data-file-id="${file.id}">
+                                                                                                                    Replace
+                                                                                                                </button>
+                                                                                                            </div>
+                                                                                                        </div>
 
-                                                                                                <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
-                                                                                            </div>
-                                                                                        `).join('')}
+                                                                                                        <div class="replace-container mt-2 hidden" id="replace-box-${file.id}"></div>
+                                                                                                    </div>
+                                                                                                `).join('')}
 </div>`;
 
                             })
@@ -1099,6 +1406,231 @@ ${data.files.map(file => `
 
                         // Show modal
                         reviseModal.classList.remove('hidden');
+                    });
+                });
+
+                /**
+                 * DOWNLOAD AS PDF BUTTON
+                 */
+                document.querySelectorAll('.download-pdf-btn').forEach(btn => {
+                    btn.addEventListener('click', async function(e) {
+                        e.preventDefault();
+                        const docId = this.getAttribute('data-doc-id');
+                        const docName = this.getAttribute('data-doc-name') || 'document';
+
+                        // If document has multiple active files, ask user which one to convert/download.
+                        let selectedFileId = null;
+                        try {
+                            const filesRes = await fetch(`/document-review/${docId}/files`, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            if (filesRes.ok) {
+                                const filesJson = await filesRes.json();
+                                const files = Array.isArray(filesJson?.files) ? filesJson.files : [];
+
+                                if (files.length === 1) {
+                                    selectedFileId = files[0]?.id || null;
+                                } else if (files.length > 1) {
+                                    if (typeof Swal !== 'undefined') {
+                                        const escapeHtml = (value) => String(value ?? '')
+                                            .replace(/&/g, '&amp;')
+                                            .replace(/</g, '&lt;')
+                                            .replace(/>/g, '&gt;')
+                                            .replace(/"/g, '&quot;')
+                                            .replace(/'/g, '&#039;');
+
+                                        const radioHtml = files.map((f, idx) => {
+                                            const id = String(f?.id ?? '');
+                                            const label = f?.original_name || f?.file_path || `File ${idx + 1}`;
+                                            const checked = idx === 0 ? 'checked' : '';
+
+                                            return `
+                                                <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin-bottom:8px;">
+                                                    <input type="radio" name="download_pdf_file_choice" value="${escapeHtml(id)}" ${checked} style="margin:0;">
+                                                    <span style="font-size:14px;line-height:1.3;word-break:break-word;">${escapeHtml(label)}</span>
+                                                </label>
+                                            `;
+                                        }).join('');
+
+                                        const pick = await Swal.fire({
+                                            title: 'Pilih File',
+                                            html: `
+                                                <div style="text-align:left;font-size:14px;color:#4b5563;margin-bottom:12px;">
+                                                    Dokumen ini punya beberapa file aktif. Pilih satu untuk Download as PDF.
+                                                </div>
+                                                <div style="max-height:260px;overflow:auto;padding-right:4px;">
+                                                    ${radioHtml}
+                                                </div>
+                                            `,
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Lanjutkan',
+                                            cancelButtonText: 'Batal',
+                                            width: 640,
+                                            focusConfirm: false,
+                                            preConfirm: () => {
+                                                const selected = document.querySelector('input[name="download_pdf_file_choice"]:checked');
+                                                if (!selected) {
+                                                    Swal.showValidationMessage('Pilih salah satu file terlebih dahulu.');
+                                                    return false;
+                                                }
+
+                                                return selected.value;
+                                            }
+                                        });
+
+                                        if (!pick.isConfirmed) {
+                                            return;
+                                        }
+
+                                        selectedFileId = pick.value || null;
+                                    } else {
+                                        // Fallback without Swal: default to latest item.
+                                        selectedFileId = files[files.length - 1]?.id || null;
+                                    }
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Failed to load active files for download selection:', err);
+                        }
+
+                        const downloadUrl = new URL(`/document-review/${docId}/download-as-pdf`, window.location.origin);
+                        if (selectedFileId) {
+                            downloadUrl.searchParams.set('file_id', String(selectedFileId));
+                        }
+
+                        // Show modal loading so user still sees progress when action dropdown auto-closes.
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Converting document...',
+                                text: 'Please wait while PDF is being generated.',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+                        }
+
+                        // Call the download endpoint
+                        fetch(downloadUrl.toString(), {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/pdf, application/json'
+                                }
+                            })
+                            .then(async (response) => {
+                                // Check if response is JSON (error) or PDF (success)
+                                const contentType = response.headers.get('content-type');
+
+                                if (!response.ok) {
+                                    // Handle error response
+                                    if (contentType && contentType.includes(
+                                        'application/json')) {
+                                        const errorData = await response.json();
+                                        throw new Error(errorData.message || errorData.error ||
+                                            `HTTP ${response.status}`);
+                                    } else {
+                                        throw new Error(
+                                            `HTTP ${response.status}: Failed to convert document`
+                                            );
+                                    }
+                                }
+
+                                // Check if response is valid PDF
+                                if (!contentType || !contentType.includes('application/pdf')) {
+                                    const text = await response.text();
+                                    console.error('Invalid content type:', contentType, 'Body:',
+                                        text.substring(0, 200));
+                                    throw new Error(
+                                        'Invalid response type: expected PDF, got ' +
+                                        contentType);
+                                }
+
+                                // Get filename from Content-Disposition header
+                                const contentDisposition = response.headers.get(
+                                    'content-disposition');
+                                let filename =
+                                    `${docName}_${new Date().toISOString().slice(0,10)}.pdf`;
+                                if (contentDisposition) {
+                                    const matches = /filename="([^"]+)"/.exec(
+                                        contentDisposition);
+                                    if (matches) filename = matches[1];
+                                }
+
+                                return response.blob().then(blob => {
+                                    // Verify blob is not empty
+                                    if (blob.size === 0) {
+                                        throw new Error('Received empty PDF file');
+                                    }
+                                    return {
+                                        blob,
+                                        filename
+                                    };
+                                });
+                            })
+                            .then(({
+                                blob,
+                                filename
+                            }) => {
+                                // Verify it's a valid PDF by checking magic bytes
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    const arr = new Uint8Array(reader.result).subarray(0, 4);
+                                    const header = String.fromCharCode.apply(null, arr);
+
+                                    if (header !== '%PDF') {
+                                        console.error('Invalid PDF header:', header);
+                                        alert(
+                                            'Error: Downloaded file is not a valid PDF. Please check the server logs.');
+                                        return;
+                                    }
+
+                                    // Create a download link
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = filename;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    window.URL.revokeObjectURL(url);
+                                    link.remove();
+
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Done',
+                                            text: 'PDF is ready and has been downloaded.',
+                                            timer: 1400,
+                                            showConfirmButton: false
+                                        });
+                                    }
+
+                                    // Show success message
+                                    console.log(`PDF downloaded successfully: ${filename}`);
+                                };
+                                reader.readAsArrayBuffer(blob.slice(0, 4));
+                            })
+                            .catch((error) => {
+                                console.error('PDF download failed:', error);
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Failed',
+                                        text: `Failed to download PDF. ${error.message}`
+                                    });
+                                } else {
+                                    alert(`Failed to download PDF:\n\n${error.message}`);
+                                }
+                            })
+                            .finally(() => {
+                                if (typeof Swal !== 'undefined' && Swal.isLoading()) {
+                                    Swal.close();
+                                }
+                            });
                     });
                 });
 
@@ -1361,6 +1893,105 @@ ${data.files.map(file => `
                         menu.style.left = `${rect.left - 140}px`; // offset sedikit ke kiri
                         menu.style.zIndex = 999999;
                         menu.classList.remove('hidden');
+                    });
+                });
+
+                // === SELECT FILE TO EDIT MODAL LOGIC ===
+                const selectFileModal = document.getElementById('selectFileToEditModal');
+                const selectFileList = document.getElementById('selectFileList');
+                const selectFileConfirm = document.getElementById('selectFileConfirm');
+                let selectedFileId = null;
+
+                function closeSelectFileModal() {
+                    selectFileModal.classList.add('hidden');
+                    selectFileList.innerHTML = '';
+                    selectedFileId = null;
+                    selectFileConfirm.disabled = true;
+                }
+
+                // expose to global so inline onclick calls (if any) work
+                window.closeSelectFileModal = closeSelectFileModal;
+
+                // wire modal close buttons by ID to avoid brittle selectors
+                const selectFileCloseBtn = document.getElementById('selectFileCloseBtn');
+                const selectFileCancelBtn = document.getElementById('selectFileCancel');
+                if (selectFileCloseBtn) selectFileCloseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeSelectFileModal();
+                });
+                if (selectFileCancelBtn) selectFileCancelBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeSelectFileModal();
+                });
+
+                document.querySelectorAll('.open-select-file-modal').forEach(btn => {
+                    btn.addEventListener('click', async function(e) {
+                        e.stopPropagation();
+                        const mappingId = this.getAttribute('data-mapping-id');
+                        if (!mappingId) return;
+
+                        selectFileModal.classList.remove('hidden');
+                        selectFileList.innerHTML =
+                            '<p class="text-sm text-gray-500">Loading files...</p>';
+                        selectFileConfirm.disabled = true;
+
+                        try {
+                            const res = await fetch(`/document-review/${mappingId}/files`);
+                            const json = await res.json();
+                            if (!json.success) {
+                                selectFileList.innerHTML =
+                                    '<p class="text-sm text-red-500">Failed to load files.</p>';
+                                return;
+                            }
+
+                            const files = json.files || [];
+                            if (files.length === 0) {
+                                selectFileList.innerHTML =
+                                    '<p class="text-sm text-gray-500">No files available.</p>';
+                                return;
+                            }
+
+                            // store options for fallback
+                            window._selectFileOptions = files;
+
+                            selectFileList.innerHTML = files.map(f => `
+                                <label class="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="radio" name="selectFileEdit" value="${f.id ?? ''}" class="select-file-radio">
+                                    <span class="text-sm flex-1">${f.original_name || f.file_path}</span>
+                                </label>
+                            `).join('');
+
+                            document.querySelectorAll('.select-file-radio').forEach(r => r
+                                .addEventListener('change', function() {
+                                    selectedFileId = this.value || null;
+                                    selectFileConfirm.disabled = !selectedFileId;
+                                }));
+
+                            // default select first (and ensure selectedFileId set)
+                            const first = document.querySelector('.select-file-radio');
+                            if (first) {
+                                first.checked = true;
+                                first.dispatchEvent(new Event('change'));
+                            }
+
+                            selectFileConfirm.onclick = function() {
+                                // fallback to first file id if selection failed
+                                let targetId = selectedFileId;
+                                if (!targetId && Array.isArray(window._selectFileOptions) &&
+                                    window._selectFileOptions.length) {
+                                    targetId = window._selectFileOptions[0].id;
+                                }
+                                if (!targetId) return;
+                                closeSelectFileModal();
+                                // redirect to editor show (encode to be safe)
+                                window.location.href = '/editor/' + encodeURIComponent(
+                                targetId);
+                            };
+
+                        } catch (err) {
+                            selectFileList.innerHTML =
+                                '<p class="text-sm text-red-500">Failed to load files.</p>';
+                        }
                     });
                 });
 

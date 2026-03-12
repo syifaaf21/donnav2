@@ -1,4 +1,22 @@
 @if (in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
+    @php
+        $reviewDocumentOptions = collect($documentsMaster ?? [])
+            ->map(function ($doc) {
+                return [
+                    'value' => $doc->id,
+                    'text' => $doc->name,
+                    'code' => strtoupper((string) $doc->code),
+                    'plants' => collect($doc->plants ?? [])
+                        ->pluck('plant')
+                        ->map(fn($plant) => strtolower(trim((string) $plant)))
+                        ->filter()
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->values()
+            ->all();
+    @endphp
     @foreach ($groupedByPlant as $plant => $documents)
         @foreach ($documents as $mapping)
             @php
@@ -36,34 +54,10 @@
                             style="font-family: 'Inter', sans-serif; font-size: 0.95rem;">
                             <form id="editForm-{{ $mapping->id }}"
                                 action="{{ route('master.document-review.update2', $mapping->id) }}" method="POST"
-                                class="needs-validation" novalidate>
+                                data-document-id="{{ $mapping->document_id }}" class="needs-validation" novalidate>
                                 @csrf
                                 @method('PUT')
                                 <div class="row g-4">
-
-                                    {{-- Document Name --}}
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold">Document Name <span
-                                                class="text-danger">*</span></label>
-                                        <select name="document_id"
-                                            class="form-select border-0 shadow-sm rounded-3 tom-select" required>
-                                            @foreach ($documentsMaster as $doc)
-                                                <option value="{{ $doc->id }}"
-                                                    @if ($mapping->document_id == $doc->id) selected @endif>
-                                                    {{ $doc->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    {{-- Document Number --}}
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold">Document Number <span
-                                                class="text-danger">*</span></label>
-                                        <input type="text" name="document_number"
-                                            class="form-control border-0 shadow-sm rounded-3"
-                                            value="{{ $mapping->document_number }}">
-                                    </div>
 
                                     {{-- Plant --}}
                                     <div class="col-md-4">
@@ -71,10 +65,24 @@
                                                 class="text-danger">*</span></label>
                                         <select name="plant"
                                             class="form-select border-0 shadow-sm rounded-3 tom-select" required>
-                                            <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>Body</option>
-                                            <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>Unit</option>
-                                            <option value="electric" {{ $mapping->plant == 'electric' ? 'selected' : '' }}>Electric</option>
-                                            <option value="all" {{ $mapping->plant == 'all' ? 'selected' : '' }}>ALL</option>
+                                            <option value="body" {{ $mapping->plant == 'body' ? 'selected' : '' }}>
+                                                Body</option>
+                                            <option value="unit" {{ $mapping->plant == 'unit' ? 'selected' : '' }}>
+                                                Unit</option>
+                                            <option value="electric"
+                                                {{ $mapping->plant == 'electric' ? 'selected' : '' }}>Electric</option>
+                                            <option value="all" {{ $mapping->plant == 'all' ? 'selected' : '' }}>ALL
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    {{-- Document Name --}}
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Document Name <span
+                                                class="text-danger">*</span></label>
+                                        <select name="document_id"
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select" required>
+                                            <option value="">-- Select Plant First --</option>
                                         </select>
                                     </div>
 
@@ -98,7 +106,7 @@
                                         <label class="form-label fw-semibold">Model <span
                                                 class="text-danger">*</span></label>
                                         <select name="model_id[]" multiple
-                                            class="form-select border-0 shadow-sm rounded-3 tom-select">
+                                            class="form-select border-0 shadow-sm rounded-3 tom-select" required>
                                             @foreach ($models as $model)
                                                 <option value="{{ $model->id }}"
                                                     {{ in_array($model->id, $model_ids) ? 'selected' : '' }}>
@@ -138,7 +146,7 @@
 
                                     {{-- Part Number --}}
                                     <div class="col-md-4">
-                                        <label class="form-label fw-semibold">Part Number</label>
+                                        <label class="form-label fw-semibold">Part Number (Optional)</label>
                                         <select name="part_number_id[]" multiple
                                             class="form-select border-0 shadow-sm rounded-3 tom-select">
                                             @foreach ($partNumbers as $part)
@@ -148,6 +156,17 @@
                                                 </option>
                                             @endforeach
                                         </select>
+                                    </div>
+
+                                    {{-- Document Number --}}
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Document Number <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" name="document_number" placeholder="Automatically generated"
+                                            class="form-control border-0 shadow-sm rounded-3"
+                                            value="{{ $mapping->document_number }}">
+                                        <small class="text-muted">Document number will be automatically generated and
+                                            editable.</small>
                                     </div>
 
                                     {{-- Notes --}}
@@ -227,6 +246,35 @@
                 return await requestPromise;
             }
 
+            const allReviewDocuments = @json($reviewDocumentOptions);
+
+            function normalizePlant(plant) {
+                return String(plant || '').trim().toLowerCase();
+            }
+
+            function getDocumentsByPlant(plant) {
+                const normalizedPlant = normalizePlant(plant);
+                if (!normalizedPlant) return [];
+
+                return allReviewDocuments.filter((doc) => {
+                    const docPlants = Array.isArray(doc.plants) ? doc.plants.map(normalizePlant) : [];
+
+                    if (normalizedPlant === 'all') {
+                        return docPlants.includes('all');
+                    }
+
+                    if (docPlants.length === 0) {
+                        return ['body', 'unit', 'electric'].includes(normalizedPlant);
+                    }
+
+                    if (docPlants.includes('all')) {
+                        return false;
+                    }
+
+                    return docPlants.includes(normalizedPlant);
+                });
+            }
+
             function createTS(el, opts = {}) {
                 if (!el) return null;
                 if (el.tomselect) return el.tomselect;
@@ -297,10 +345,12 @@
                     }
 
                     // Cari tombol submit di seluruh dokumen yang memiliki atribut form sesuai id form
-                    const submitBtn = document.querySelector('button[type="submit"][form="' + form.id + '"]');
+                    const submitBtn = document.querySelector('button[type="submit"][form="' + form
+                        .id + '"]');
                     if (submitBtn) {
                         submitBtn.dataset.originalText = submitBtn.innerHTML;
-                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+                        submitBtn.innerHTML =
+                            '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
                         submitBtn.disabled = true;
                     }
                 });
@@ -312,6 +362,7 @@
                 const partEl = form.querySelector('[name="part_number_id[]"]');
                 const deptEl = form.querySelector('[name="department_id"]');
                 const docEl = form.querySelector('[name="document_id"]');
+                const currentDocumentId = form.dataset.documentId || '';
 
                 const tsPlant = createTS(plantEl);
                 const tsModel = createTS(modelEl, {
@@ -329,6 +380,32 @@
                 const tsDept = createTS(deptEl);
                 const tsDoc = createTS(docEl);
 
+                function updateDocumentOptionsByPlant(plant, selectedDocumentId = null) {
+                    if (!tsDoc) return;
+
+                    const docs = getDocumentsByPlant(plant);
+
+                    tsDoc.clear(true);
+                    tsDoc.clearOptions();
+                    docs.forEach(doc => tsDoc.addOption({
+                        value: String(doc.value),
+                        text: doc.text,
+                    }));
+                    tsDoc.refreshOptions(false);
+
+                    if (!plant || docs.length === 0) {
+                        tsDoc.disable();
+                        return;
+                    }
+
+                    tsDoc.enable();
+
+                    if (selectedDocumentId && docs.some((doc) => String(doc.value) === String(
+                            selectedDocumentId))) {
+                        tsDoc.setValue(String(selectedDocumentId), true);
+                    }
+                }
+
                 // --- Helper: debounce ---
                 const debounce = (fn, wait = 200) => {
                     let t;
@@ -342,13 +419,16 @@
                 // Marks auto-added options with data-generated so we can remove them if unselected
                 const syncSelectFromTom = (ts, orig) => {
                     if (!ts || !orig) return;
-                    const vals = (Array.isArray(ts.getValue()) ? ts.getValue() : (ts.getValue() ? [ts.getValue()] : [])) || [];
+                    const vals = (Array.isArray(ts.getValue()) ? ts.getValue() : (ts.getValue() ? [ts
+                        .getValue()
+                    ] : [])) || [];
                     // Ensure options exist for selected values
                     vals.forEach(v => {
                         if (!orig.querySelector('option[value="' + v + '"]')) {
                             const opt = document.createElement('option');
                             opt.value = v;
-                            opt.text = (ts.options && ts.options[v] && (ts.options[v].text || ts.options[v].name)) || v;
+                            opt.text = (ts.options && ts.options[v] && (ts.options[v].text || ts
+                                .options[v].name)) || v;
                             opt.setAttribute('data-generated', '1');
                             orig.appendChild(opt);
                         }
@@ -413,32 +493,32 @@
                         tsDept.disable();
                         return;
                     }
-                        // If plant === 'all' we request unfiltered lists for
-                        // models/products/processes/parts, but departments should be
-                        // requested with plant=all so department filters apply.
-                        let modelsUrl, productsUrl, processesUrl, departmentsUrl, partsUrl;
-                        if (plant === 'all') {
-                            modelsUrl = `/api/models`;
-                            productsUrl = `/api/products`;
-                            processesUrl = `/api/processes`;
-                            partsUrl = `/api/part-numbers`;
-                            departmentsUrl = `/api/departments?plant=all`;
-                        } else {
-                            const p = encodeURIComponent(plant);
-                            modelsUrl = `/api/models?plant=${p}`;
-                            productsUrl = `/api/products?plant=${p}`;
-                            processesUrl = `/api/processes?plant=${p}`;
-                            partsUrl = `/api/part-numbers?plant=${p}`;
-                            departmentsUrl = `/api/departments?plant=${p}`;
-                        }
+                    // If plant === 'all' we request unfiltered lists for
+                    // models/products/processes/parts, but departments should be
+                    // requested with plant=all so department filters apply.
+                    let modelsUrl, productsUrl, processesUrl, departmentsUrl, partsUrl;
+                    if (plant === 'all') {
+                        modelsUrl = `/api/models`;
+                        productsUrl = `/api/products`;
+                        processesUrl = `/api/processes`;
+                        partsUrl = `/api/part-numbers`;
+                        departmentsUrl = `/api/departments?plant=all`;
+                    } else {
+                        const p = encodeURIComponent(plant);
+                        modelsUrl = `/api/models?plant=${p}`;
+                        productsUrl = `/api/products?plant=${p}`;
+                        processesUrl = `/api/processes?plant=${p}`;
+                        partsUrl = `/api/part-numbers?plant=${p}`;
+                        departmentsUrl = `/api/departments?plant=${p}`;
+                    }
 
-                        const [models, products, processes, departments, parts] = await Promise.all([
-                            fetchJson(modelsUrl),
-                            fetchJson(productsUrl),
-                            fetchJson(processesUrl),
-                            fetchJson(departmentsUrl),
-                            fetchJson(partsUrl)
-                        ]);
+                    const [models, products, processes, departments, parts] = await Promise.all([
+                        fetchJson(modelsUrl),
+                        fetchJson(productsUrl),
+                        fetchJson(processesUrl),
+                        fetchJson(departmentsUrl),
+                        fetchJson(partsUrl)
+                    ]);
                     setOptions(tsModel, models || []);
                     setOptions(tsProduct, products || []);
                     setOptions(tsProcess, processes || []);
@@ -454,13 +534,20 @@
                 tsPlant.on("change", async val => {
                     if (isInitializing) return; // Skip during init
 
+                    updateDocumentOptionsByPlant(val);
+
                     disableAndClear(tsModel);
                     disableAndClear(tsProduct);
                     disableAndClear(tsProcess);
                     disableAndClear(tsPart);
                     tsDept.clear(true);
                     tsDept.disable();
-                    if (!val) return;
+                    if (!val) {
+                        if (documentNumberInput) {
+                            documentNumberInput.value = '';
+                        }
+                        return;
+                    }
                     await loadByPlant(val);
                 });
 
@@ -503,33 +590,33 @@
                         text: i.text ?? i.name ?? i.part_number ?? String(i.id),
                     }));
 
-                        // Only auto-fill fields that the user hasn't manually modified
-                        if (!userModified.product) {
-                            tsProduct.clear(true);
-                            tsProduct.clearOptions();
-                            tsProduct.addOptions(formatTS(uniqueById(allProducts)));
-                            tsProduct.setValue(uniqueById(allProducts).map(p => p.id), true);
-                            // sync to original select
-                            syncSelectFromTom(tsProduct, prodEl);
-                        }
+                    // Only auto-fill fields that the user hasn't manually modified
+                    if (!userModified.product) {
+                        tsProduct.clear(true);
+                        tsProduct.clearOptions();
+                        tsProduct.addOptions(formatTS(uniqueById(allProducts)));
+                        tsProduct.setValue(uniqueById(allProducts).map(p => p.id), true);
+                        // sync to original select
+                        syncSelectFromTom(tsProduct, prodEl);
+                    }
 
-                        if (!userModified.model) {
-                            tsModel.clear(true);
-                            tsModel.clearOptions();
-                            tsModel.addOptions(formatTS(uniqueById(allModels)));
-                            tsModel.setValue(uniqueById(allModels).map(m => m.id), true);
-                            // sync to original select
-                            syncSelectFromTom(tsModel, modelEl);
-                        }
+                    if (!userModified.model) {
+                        tsModel.clear(true);
+                        tsModel.clearOptions();
+                        tsModel.addOptions(formatTS(uniqueById(allModels)));
+                        tsModel.setValue(uniqueById(allModels).map(m => m.id), true);
+                        // sync to original select
+                        syncSelectFromTom(tsModel, modelEl);
+                    }
 
-                        if (!userModified.process) {
-                            tsProcess.clear(true);
-                            tsProcess.clearOptions();
-                            tsProcess.addOptions(formatTS(uniqueById(allProcesses)));
-                            tsProcess.setValue(uniqueById(allProcesses).map(p => p.id), true);
-                            // sync to original select
-                            syncSelectFromTom(tsProcess, procEl);
-                        }
+                    if (!userModified.process) {
+                        tsProcess.clear(true);
+                        tsProcess.clearOptions();
+                        tsProcess.addOptions(formatTS(uniqueById(allProcesses)));
+                        tsProcess.setValue(uniqueById(allProcesses).map(p => p.id), true);
+                        // sync to original select
+                        syncSelectFromTom(tsProcess, procEl);
+                    }
 
                     isAutoFillingFromPart = false; // 🔥 release lock
 
@@ -542,6 +629,8 @@
                     isInitializing = true; // Set flag to prevent cascade
 
                     const currentPlant = tsPlant.getValue();
+
+                    updateDocumentOptionsByPlant(currentPlant, currentDocumentId);
 
                     // 1️⃣ FILTER ULANG semua options berdasarkan plant saat ini
                     if (currentPlant) {
@@ -609,7 +698,8 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                'X-CSRF-TOKEN': document.querySelector(
+                                    'meta[name="csrf-token"]').content
                             },
                             body: JSON.stringify(payload)
                         });

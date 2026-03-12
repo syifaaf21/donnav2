@@ -9,11 +9,14 @@ use App\Models\User;
 use App\Notifications\DocumentActionNotification;
 use App\Notifications\DocumentStatusNotification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process;
 
 
 class DocumentControlController extends Controller
@@ -313,7 +316,7 @@ class DocumentControlController extends Controller
                 } else {
                     $fileToDelete->update([
                         'is_active'              => 0,
-                        'marked_for_deletion_at' => now(),
+                        'marked_for_deletion_at' => now()->addYear(),
                     ]);
                 }
             }
@@ -342,6 +345,7 @@ class DocumentControlController extends Controller
                 'file_type'     => $uploadedFile->getClientMimeType(),
                 'uploaded_by'   => Auth::id(),
                 'is_active'     => 1,
+                'pending_approval' => 1,
             ]);
 
             // ==================== AUTO-COMPRESS ====================
@@ -355,14 +359,6 @@ class DocumentControlController extends Controller
             if ($oldFileId) {
                 $oldFile = $mapping->files()->find($oldFileId);
                 if (!$oldFile) continue;
-
-                // Jika file lama rejected (pending_approval = 2): hard delete
-                if ($oldFile->pending_approval == 2) {
-                    Storage::disk('public')->delete($oldFile->file_path);
-                    $oldFile->delete();
-                    continue;
-                }
-
                 // Cari file yang diganti oleh oldFile (file asli sebelum oldFile)
                 $originalFile = $mapping->files()
                     ->where('replaced_by_id', $oldFileId)
@@ -378,20 +374,45 @@ class DocumentControlController extends Controller
                     ]);
                 }
 
+                // Jika file lama rejected (pending_approval = 2): archive the rejected file immediately
+                if ($oldFile->pending_approval == 2) {
+                    // Previously rejected file being replaced: archive it immediately
+                    $oldFile->update([
+                        'replaced_by_id' => $newFile->id,
+                        'pending_approval' => 0,
+                        'is_active' => 0,
+                        'marked_for_deletion_at' => now(),
+                    ]);
+                    continue;
+                }
+
+                if ($currentStatus === 'Need Review') {
+                    // Correction while still in review: do not archive replaced file.
+                    // Keep it hidden from preview and outside archive queries.
+                    $oldFile->update([
+                        'replaced_by_id'         => $newFile->id,
+                        'pending_approval'       => 0,
+                        'is_active'              => 0,
+                        'marked_for_deletion_at' => null,
+                    ]);
+                    continue;
+                }
+
                 if ($currentStatus === 'Rejected') {
-                    Storage::disk('public')->delete($oldFile->file_path);
-                    $oldFile->delete();
-                } elseif ($currentStatus === 'Active') {
+                    // When mapping is Rejected, replace old file by archiving it (1 year)
+                    $oldFile->update([
+                        'replaced_by_id'         => $newFile->id,
+                        'pending_approval'       => 0,
+                        'is_active'              => 0,
+                        'marked_for_deletion_at' => now()->addYear(),
+                    ]);
+                } else {
+                    // For Active and other statuses: keep old file visible but mark pending
+                    // so it will be archived when the replacement is approved
                     $oldFile->update([
                         'replaced_by_id'         => $newFile->id,
                         'pending_approval'       => 1,
                         'is_active'              => 1,
-                        'marked_for_deletion_at' => null,
-                    ]);
-                } else {
-                    $oldFile->update([
-                        'replaced_by_id'         => $newFile->id,
-                        'pending_approval'       => 1,
                         'marked_for_deletion_at' => null,
                     ]);
                 }
@@ -417,7 +438,7 @@ class DocumentControlController extends Controller
                     $uploader->name,
                     null,
                     $mapping->document->name,
-                    route('document-control.department', $departmentName),
+                    route('document-control.approval', $departmentName),
                     $uploader->department?->name
                 ));
             }
@@ -440,26 +461,87 @@ class DocumentControlController extends Controller
 
         $periodYears    = $mapping->period_years ?? 1;
         $lastObsolete   = $mapping->obsolete_date ?? now();
-        $newObsolete    = \Carbon\Carbon::parse($lastObsolete)->addYears($periodYears);
-        $newReminder    = $newObsolete->copy()->subMonth();
+
+        // Snapshot pending files before they are finalized, to determine approval scenario.
+        $pendingFiles = $mapping->files()
+            ->where('pending_approval', 1)
+            ->get();
+
+        $hasPendingUploadedFile = $pendingFiles->contains(function ($f) {
+            return (int) $f->is_active === 1 && empty($f->replaced_by_id);
+        });
+
+        $hasPendingDeletedFile = $pendingFiles->contains(function ($f) {
+            return (int) $f->is_active === 0 && empty($f->replaced_by_id);
+        });
+
+        $isDeleteOnlyApproval = $hasPendingDeletedFile && !$hasPendingUploadedFile;
+
+        $newObsolete = $isDeleteOnlyApproval
+            ? \Carbon\Carbon::parse($lastObsolete)
+            : \Carbon\Carbon::parse($lastObsolete)->addYears($periodYears);
+
+        $newReminder = $isDeleteOnlyApproval
+            ? ($mapping->reminder_date ? \Carbon\Carbon::parse($mapping->reminder_date) : $newObsolete->copy()->subMonth())
+            : $newObsolete->copy()->subMonth();
+
+        // Restore notes from initial_notes when approving
+        $notesToRestore = $mapping->initial_notes ?? $mapping->notes;
 
         $mapping->update([
             'status_id'     => $statusActive->id,
             'obsolete_date' => $newObsolete,
             'reminder_date' => $newReminder,
+            'notes'         => $notesToRestore,  // Restore from initial_notes
         ]);
 
-        // ===== ARCHIVE FILE YANG PENDING (pending_approval = 1) =====
-        $pendingFiles = $mapping->files()
-            ->where('pending_approval', 1)
-            ->get();
+        // ===== FINALIZE PENDING FILES =====
+        // Rule:
+        // - pending file WITH replaced_by_id => superseded old version, move to archive window
+        // - pending file WITHOUT replaced_by_id => approved latest version, keep active
+        $approvedFileIds = [];
 
         foreach ($pendingFiles as $pendingFile) {
+            if (!empty($pendingFile->replaced_by_id)) {
+                $pendingFile->update([
+                    'pending_approval'       => 0,
+                    'is_active'              => 0,
+                    'marked_for_deletion_at' => now()->addYear(),
+                ]);
+                continue;
+            }
+
+            // Active-file deletion request from Active status.
+            // Keep hidden and archive it instead of re-activating.
+            if ((int) $pendingFile->is_active === 0) {
+                $pendingFile->update([
+                    'pending_approval'       => 0,
+                    'is_active'              => 0,
+                    'marked_for_deletion_at' => now()->addYear(),
+                ]);
+                continue;
+            }
+
             $pendingFile->update([
                 'pending_approval'       => 0,
-                'is_active'              => 0,
-                'marked_for_deletion_at' => now()->addYear(),
+                'is_active'              => 1,
+                'marked_for_deletion_at' => null,
             ]);
+
+            $approvedFileIds[] = $pendingFile->id;
+        }
+
+        // If there are hidden files replaced during Need Review correction,
+        // mark them for immediate archive timestamp (not archive window).
+        if (!empty($approvedFileIds)) {
+            $mapping->files()
+                ->whereIn('replaced_by_id', $approvedFileIds)
+                ->where('is_active', 0)
+                ->where('pending_approval', 0)
+                ->whereNull('marked_for_deletion_at')
+                ->update([
+                    'marked_for_deletion_at' => now(),
+                ]);
         }
 
         // ===== HAPUS FILE REJECTED (pending_approval = 2) =====
@@ -476,7 +558,7 @@ class DocumentControlController extends Controller
         $markedFilesToArchive = $mapping->files()
             ->where('is_active', 0)
             ->whereNotNull('marked_for_deletion_at')
-            ->whereNull('pending_approval')
+            ->where('pending_approval', 0)
             ->where('marked_for_deletion_at', '<=', now())
             ->get();
 
@@ -510,6 +592,11 @@ class DocumentControlController extends Controller
 
         $request->validate([
             'notes' => 'required|string',
+            'reject_file_ids' => 'required|array|min:1',
+            'reject_file_ids.*' => 'integer|exists:tt_document_files,id',
+        ], [
+            'reject_file_ids.required' => 'Please select at least one file to reject.',
+            'reject_file_ids.min' => 'Please select at least one file to reject.',
         ]);
 
         $statusRejected = Status::firstOrCreate(
@@ -517,11 +604,59 @@ class DocumentControlController extends Controller
             ['description' => 'Document has been rejected']
         );
 
+        // If admin selected specific files to reject, mark them as rejected (pending_approval = 2)
+        $selectedIds = $request->input('reject_file_ids', []);
+        if (!empty($selectedIds)) {
+            foreach ($selectedIds as $fileId) {
+                $file = $mapping->files()->where('id', $fileId)->first();
+                if (!$file) continue;
+                // Mark as rejected: keep visible (is_active = 1), set pending_approval = 2
+                $file->update([
+                    'pending_approval' => 2,
+                    'is_active' => 1,
+                    'marked_for_deletion_at' => null,
+                ]);
+            }
+        }
+
+        // Restore only originals that are still pending review.
+        // Files that were already superseded during Need Review corrections must stay hidden.
+        if (!empty($selectedIds)) {
+            $originals = $mapping->files()
+                ->whereIn('replaced_by_id', $selectedIds)
+            ->where('pending_approval', 1)
+                ->get();
+
+            foreach ($originals as $orig) {
+                $orig->update([
+                    'pending_approval' => 1,
+                    'is_active' => 1,
+                    'marked_for_deletion_at' => null,
+                ]);
+            }
+
+            // Keep superseded intermediary files hidden and mark immediate deletion timestamp.
+            $supersededOriginals = $mapping->files()
+                ->whereIn('replaced_by_id', $selectedIds)
+                ->where('pending_approval', 0)
+                ->where('is_active', 0)
+                ->whereNull('marked_for_deletion_at')
+                ->get();
+
+            foreach ($supersededOriginals as $file) {
+                $file->update([
+                    'pending_approval'       => 0,
+                    'is_active'              => 0,
+                    'marked_for_deletion_at' => now(),
+                ]);
+            }
+        }
+
         // Hard delete file yang di-mark (non-pending)
         $markedFiles = $mapping->files()
             ->where('is_active', 0)
             ->whereNotNull('marked_for_deletion_at')
-            ->whereNull('pending_approval')
+            ->where('pending_approval', 0)
             ->whereDate('marked_for_deletion_at', '<=', now()->today())
             ->get();
 
@@ -546,9 +681,10 @@ class DocumentControlController extends Controller
             ]);
         }
 
-        // ===== UBAH FILE PENDING LAIN MENJADI REJECTED (pending_approval = 2) =====
-        // Hanya file pending yang masih aktif yang ditampilkan sebagai "Rejected" badge.
+        // ===== UBAH HANYA FILE TERPILIH MENJADI REJECTED (pending_approval = 2) =====
+        // Jangan reject semua file pending; hanya yang dipilih admin di modal reject.
         $pendingFiles = $mapping->files()
+            ->whereIn('id', $selectedIds)
             ->where('pending_approval', 1)
             ->where('is_active', 1)
             ->get();
@@ -566,6 +702,7 @@ class DocumentControlController extends Controller
         // Agar badge "Replaced" muncul dan nanti masuk archive saat approve
         $replacedFiles = $mapping->files()
             ->whereIn('replaced_by_id', $pendingFiles->pluck('id'))
+            ->where('pending_approval', 1)
             ->get();
 
         foreach ($replacedFiles as $file) {
@@ -605,22 +742,294 @@ class DocumentControlController extends Controller
     {
         $fullPath = storage_path("app/public/" . $filePath);
         $tempPath = $fullPath . "_compressed.pdf";
+        $gsTempDir = storage_path('app/gs-temp');
+        $originalSize = is_file($fullPath) ? filesize($fullPath) : 0;
+        $profile = trim((string) env('PDF_GS_PROFILE', '/ebook'));
+        $dpi = (int) env('PDF_GS_IMAGE_DPI', 150);
 
-        // Pastikan Ghostscript tersedia di server
-        $gs = trim(shell_exec("which gs"));
-        if (!$gs) return false;
+        if ($profile === '' || $profile[0] !== '/') {
+            $profile = '/ebook';
+        }
 
-        $cmd = "$gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook "
-            . "-dNOPAUSE -dQUIET -dBATCH -sOutputFile=\"$tempPath\" \"$fullPath\"";
+        if ($dpi < 72 || $dpi > 300) {
+            $dpi = 150;
+        }
 
-        shell_exec($cmd);
+        if (!is_file($fullPath)) {
+            return false;
+        }
+
+        if (!is_dir($gsTempDir) && !@mkdir($gsTempDir, 0775, true) && !is_dir($gsTempDir)) {
+            Log::warning('PDF compression skipped: unable to create Ghostscript temp directory.', [
+                'file_path' => $filePath,
+                'temp_dir' => $gsTempDir,
+            ]);
+            return false;
+        }
+
+        $gs = $this->findGhostscriptBinary();
+        if (!$gs) {
+            Log::warning('PDF compression skipped: Ghostscript binary not found.', [
+                'file_path' => $filePath,
+            ]);
+            return false;
+        }
+
+        $firstPass = $this->runGhostscriptCompressionPass(
+            $gs,
+            $fullPath,
+            $tempPath,
+            $gsTempDir,
+            $profile,
+            $dpi,
+            false,
+            0
+        );
+
+        if (!$firstPass['success']) {
+            Log::warning('PDF compression process failed.', [
+                'file_path' => $filePath,
+                'binary' => $gs,
+                'error_output' => $firstPass['error_output'] ?? '',
+                'output' => $firstPass['output'] ?? '',
+                'message' => $firstPass['message'] ?? null,
+            ]);
+            return false;
+        }
 
         // Jika compress sukses → ganti file asli
         if (file_exists($tempPath)) {
-            rename($tempPath, $fullPath);
+            $compressedSize = filesize($tempPath);
+
+            if ($compressedSize !== false && $originalSize > 0 && $compressedSize >= $originalSize) {
+                @unlink($tempPath);
+
+                // Second pass: more aggressive settings for scanned/image-heavy PDFs.
+                $fallbackDpi = min($dpi, 110);
+                $fallbackQuality = (int) env('PDF_GS_JPEG_QUALITY', 55);
+                if ($fallbackQuality < 20 || $fallbackQuality > 95) {
+                    $fallbackQuality = 55;
+                }
+
+                $tempPathFallback = $fullPath . "_compressed_fallback.pdf";
+                $secondPass = $this->runGhostscriptCompressionPass(
+                    $gs,
+                    $fullPath,
+                    $tempPathFallback,
+                    $gsTempDir,
+                    '/screen',
+                    $fallbackDpi,
+                    true,
+                    $fallbackQuality
+                );
+
+                if ($secondPass['success'] && file_exists($tempPathFallback)) {
+                    $fallbackSize = filesize($tempPathFallback);
+
+                    if ($fallbackSize !== false && $fallbackSize > 0 && $fallbackSize < $originalSize) {
+                        @rename($tempPathFallback, $fullPath);
+
+                        $finalSize = is_file($fullPath) ? filesize($fullPath) : null;
+                        Log::info('PDF compression success (fallback pass).', [
+                            'file_path' => $filePath,
+                            'binary' => $gs,
+                            'profile' => '/screen',
+                            'dpi' => $fallbackDpi,
+                            'jpeg_quality' => $fallbackQuality,
+                            'original_size' => $originalSize,
+                            'final_size' => $finalSize,
+                        ]);
+
+                        return true;
+                    }
+
+                    @unlink($tempPathFallback);
+                }
+
+                Log::info('PDF compression skipped replacement: output is not smaller.', [
+                    'file_path' => $filePath,
+                    'binary' => $gs,
+                    'profile' => $profile,
+                    'dpi' => $dpi,
+                    'original_size' => $originalSize,
+                    'compressed_size' => $compressedSize,
+                    'fallback_attempted' => true,
+                    'fallback_success' => $secondPass['success'] ?? false,
+                ]);
+                return false;
+            }
+
+            @rename($tempPath, $fullPath);
+
+            $finalSize = is_file($fullPath) ? filesize($fullPath) : null;
+            Log::info('PDF compression success.', [
+                'file_path' => $filePath,
+                'binary' => $gs,
+                'profile' => $profile,
+                'dpi' => $dpi,
+                'original_size' => $originalSize,
+                'final_size' => $finalSize,
+            ]);
+
+            return true;
         }
 
-        return true;
+        Log::warning('PDF compression finished without temp file output.', [
+            'file_path' => $filePath,
+            'binary' => $gs,
+        ]);
+
+        return false;
+    }
+
+    private function runGhostscriptCompressionPass(
+        string $gs,
+        string $inputPath,
+        string $outputPath,
+        string $tempDir,
+        string $profile,
+        int $dpi,
+        bool $forceJpeg,
+        int $jpegQuality
+    ): array {
+        $args = [
+            $gs,
+            '-sDEVICE=pdfwrite',
+            '-dCompatibilityLevel=1.4',
+            '-dSAFER',
+            '-dPDFSETTINGS=' . $profile,
+            '-dDetectDuplicateImages=true',
+            '-dCompressFonts=true',
+            '-dSubsetFonts=true',
+            '-dDownsampleColorImages=true',
+            '-dDownsampleGrayImages=true',
+            '-dDownsampleMonoImages=true',
+            '-dColorImageResolution=' . $dpi,
+            '-dGrayImageResolution=' . $dpi,
+            '-dMonoImageResolution=' . $dpi,
+            '-dNOPAUSE',
+            '-dQUIET',
+            '-dBATCH',
+            '-sTMPDIR=' . $tempDir,
+        ];
+
+        if ($forceJpeg) {
+            $args[] = '-dAutoFilterColorImages=false';
+            $args[] = '-dAutoFilterGrayImages=false';
+            $args[] = '-dColorImageFilter=/DCTEncode';
+            $args[] = '-dGrayImageFilter=/DCTEncode';
+            $args[] = '-dJPEGQ=' . $jpegQuality;
+        }
+
+        $args[] = '-sOutputFile=' . $outputPath;
+        $args[] = $inputPath;
+
+        $process = new Process($args);
+        $process->setTimeout(45);
+        $process->setIdleTimeout(45);
+        $process->setEnv([
+            'TMP' => $tempDir,
+            'TEMP' => $tempDir,
+            'TMPDIR' => $tempDir,
+        ]);
+
+        try {
+            $process->run();
+        } catch (ProcessTimedOutException $e) {
+            if (file_exists($outputPath)) {
+                @unlink($outputPath);
+            }
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_output' => '',
+                'output' => '',
+            ];
+        } catch (\Throwable $e) {
+            if (file_exists($outputPath)) {
+                @unlink($outputPath);
+            }
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error_output' => '',
+                'output' => '',
+            ];
+        }
+
+        if (!$process->isSuccessful()) {
+            if (file_exists($outputPath)) {
+                @unlink($outputPath);
+            }
+            return [
+                'success' => false,
+                'message' => null,
+                'error_output' => trim($process->getErrorOutput()),
+                'output' => trim($process->getOutput()),
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => null,
+            'error_output' => '',
+            'output' => '',
+        ];
+    }
+
+    private function findGhostscriptBinary(): ?string
+    {
+        $configuredBinary = trim((string) env('GHOSTSCRIPT_BINARY', ''));
+        if ($configuredBinary !== '' && is_file($configuredBinary)) {
+            return $configuredBinary;
+        }
+
+        $commands = PHP_OS_FAMILY === 'Windows'
+            ? [
+                ['where', 'gswin64c'],
+                ['where', 'gswin32c'],
+                ['where', 'gs'],
+            ]
+            : [
+                ['which', 'gs'],
+            ];
+
+        foreach ($commands as $command) {
+            $process = new Process($command);
+            $process->setTimeout(3);
+
+            try {
+                $process->run();
+            } catch (ProcessTimedOutException $e) {
+                continue;
+            }
+
+            if (!$process->isSuccessful()) {
+                continue;
+            }
+
+            $firstLine = trim((string) strtok($process->getOutput(), PHP_EOL));
+            if ($firstLine !== '' && is_file($firstLine)) {
+                return $firstLine;
+            }
+        }
+
+        if (PHP_OS_FAMILY === 'Windows') {
+            $candidates = array_merge(
+                glob('C:\\Program Files\\gs\\gs*\\bin\\gswin64c.exe') ?: [],
+                glob('C:\\Program Files\\gs\\gs*\\bin\\gswin32c.exe') ?: [],
+                glob('C:\\Program Files (x86)\\gs\\gs*\\bin\\gswin32c.exe') ?: []
+            );
+
+            rsort($candidates);
+            foreach ($candidates as $candidate) {
+                if (is_file($candidate)) {
+                    return $candidate;
+                }
+            }
+        }
+
+        return null;
     }
 
 

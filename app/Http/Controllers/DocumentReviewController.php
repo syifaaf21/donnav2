@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{Department, Document, DocumentFile, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
 use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
-use App\Services\WhatsAppService;
+use App\Services\{WhatsAppService, DocumentConverterService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB, Notification, Storage};
 
@@ -23,7 +23,11 @@ class DocumentReviewController extends Controller
         $allowed = ['body', 'unit', 'electric', 'others'];
         $plants = array_values(array_filter($plants, fn($p) => in_array(strtolower($p), $allowed)));
         // AMBIL SEMUA DOKUMEN DENGAN ANAK-CUCU
-        $documents = Document::with('childrenRecursive')->where('type', 'review')->get();
+        // Exclude documents scheduled for deletion (recycle bin)
+        $documents = Document::with(['childrenRecursive', 'plants'])
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->get();
 
         // ROOT = dokumen yang parent_id nya NULL
         $roots = $documents->where('parent_id', null);
@@ -42,6 +46,7 @@ class DocumentReviewController extends Controller
             'department'
         ])
             ->whereHas('document', fn($q) => $q->where('type', 'review'))
+            ->whereNull('marked_for_deletion_at')
             ->get();
 
         // Tambahkan URL file dengan aman
@@ -58,12 +63,270 @@ class DocumentReviewController extends Controller
 
         $groupedByPlant = $this->groupDocumentsByPlantAndCode($plants, $documents, $documentMappings);
 
+        $roleNames = auth()->check()
+            ? auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))
+            : collect();
+        $allowedAddPlants = collect();
+        if (auth()->check()) {
+            $allowedAddPlants = auth()->user()->departments()
+                ->pluck('tm_departments.plant')
+                ->map(function ($plant) {
+                    $normalized = strtolower(trim((string) $plant));
+                    return $normalized === 'all' ? 'all' : $normalized;
+                })
+                ->filter(fn($plant) => in_array($plant, ['body', 'unit', 'electric', 'all']))
+                ->unique()
+                ->values();
+        }
+
+        $canAddDocumentReview = $roleNames->contains('leader') && $allowedAddPlants->isNotEmpty();
+        $canAccessApprovalQueue = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+
+        $approvalCount = 0;
+        if ($canAccessApprovalQueue) {
+            $approvalCount = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+                ->whereNull('marked_for_deletion_at')
+                ->count();
+        }
+
+        // Data for Add Document modal on main Document Review page.
+        $documentsMaster = Document::with('plants')
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->orderBy('name')
+            ->get();
+        $partNumbers = PartNumber::orderBy('part_number')->get();
+        $departments = Department::orderBy('name')->get();
+        $models = ProductModel::orderBy('name')->get();
+        $products = Product::orderBy('name')->get();
+        $processes = Process::orderBy('name')->get();
+
         return view('contents.document-review.index', compact(
             'plants',
             'documents',
             'groupedByPlant',
             'roots',
+            'canAddDocumentReview',
+            'canAccessApprovalQueue',
+            'approvalCount',
+            'allowedAddPlants',
+            'documentsMaster',
+            'partNumbers',
+            'departments',
+            'models',
+            'products',
+            'processes',
         ));
+    }
+
+    public function approvalIndex(Request $request)
+    {
+        $isAdmin = Auth::user()->roles
+            ->pluck('name')
+            ->map(fn($role) => strtolower(trim((string) $role)))
+            ->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+
+        if (!$isAdmin) {
+            abort(403);
+        }
+
+        $query = DocumentMapping::with([
+            'document',
+            'department',
+            'user',
+            'status',
+            'partNumber.product',
+            'partNumber.productModel',
+            'partNumber.process',
+            'product',
+            'productModel',
+            'process',
+        ])
+            ->whereNull('marked_for_deletion_at')
+            ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
+            ->whereHas('document', fn($q) => $q->where('type', 'review'));
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('document_number', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('document', fn($dq) => $dq->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('department', fn($dq) => $dq->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('user', fn($dq) => $dq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $mappings = $query->latest('updated_at')->paginate(10)->appends($request->query());
+
+        $mappings->getCollection()->transform(function ($mapping) {
+            $mapping->approval_plant = $this->getPlantFromMapping($mapping);
+            $mapping->approval_doc_code = base64_encode($mapping->document->code ?? '');
+            return $mapping;
+        });
+
+        return view('contents.document-review.approval.index', [
+            'mappings' => $mappings,
+        ]);
+    }
+
+    public function storeMetadata(Request $request)
+    {
+        $roleNames = Auth::user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)));
+        if (!$roleNames->contains('leader')) {
+            abort(403, 'Only Leader can add document review metadata.');
+        }
+
+        $allowedPlants = Auth::user()->departments()
+            ->pluck('tm_departments.plant')
+            ->map(function ($plant) {
+                $normalized = strtolower(trim((string) $plant));
+                return $normalized === 'all' ? 'all' : $normalized;
+            })
+            ->filter(fn($plant) => in_array($plant, ['body', 'unit', 'electric', 'all']))
+            ->unique()
+            ->values();
+
+        if ($allowedPlants->isEmpty()) {
+            abort(403, 'You are not assigned to any department plant.');
+        }
+
+        $validated = $request->validate([
+            'document_id' => 'required|exists:tm_documents,id',
+            'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
+            'plant' => 'required|in:body,unit,electric,all',
+            'model_id' => 'required|array|min:1',
+            'model_id.*' => 'required|exists:tm_models,id',
+            'product_id' => 'nullable|array',
+            'product_id.*' => 'nullable|exists:tm_products,id',
+            'process_id' => 'nullable|array',
+            'process_id.*' => 'nullable|exists:tm_processes,id',
+            'part_number_id' => 'nullable|array',
+            'part_number_id.*' => 'nullable|exists:tm_part_numbers,id',
+            'department_id' => 'required|exists:tm_departments,id',
+            'notes' => 'nullable|string|max:500',
+            'parent_id' => 'nullable|exists:tt_document_mappings,id',
+            'files' => 'nullable|array',
+            'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+        ]);
+
+        if (!$allowedPlants->contains($validated['plant'])) {
+            abort(403, 'Selected plant is not allowed for your departments.');
+        }
+
+        $selectedDocument = Document::with('plants')
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->find($validated['document_id']);
+
+        if (!$selectedDocument || !$this->isDocumentAllowedForPlant($selectedDocument, $validated['plant'])) {
+            abort(403, 'Selected document is not available for the chosen plant.');
+        }
+
+        $userDepartment = Auth::user()->departments()
+            ->where('tm_departments.id', $validated['department_id'])
+            ->first();
+
+        if (!$userDepartment) {
+            abort(403, 'Selected department is not assigned to your account.');
+        }
+
+        $departmentPlant = strtolower(trim((string) ($userDepartment->plant ?? '')));
+        if ($departmentPlant !== $validated['plant']) {
+            abort(403, 'Selected department does not match selected plant.');
+        }
+
+        $cleanNotes = trim((string) ($validated['notes'] ?? ''));
+        if ($cleanNotes === '' || $cleanNotes === '<p><br></p>') {
+            $cleanNotes = null;
+        }
+
+        $plantValue = ($validated['plant'] === 'all') ? 'all' : $validated['plant'];
+
+        $uncompleteStatus = Status::where('name', 'Uncomplete')->firstOrFail();
+        $needReviewStatus = Status::where('name', 'Need Review')->first();
+        $hasUploadedFiles = $request->hasFile('files') && count($request->file('files')) > 0;
+        $statusId = ($hasUploadedFiles && $needReviewStatus)
+            ? $needReviewStatus->id
+            : $uncompleteStatus->id;
+
+        $mapping = DocumentMapping::create([
+            'plant' => $plantValue,
+            'document_id' => $validated['document_id'],
+            'document_number' => $validated['document_number'],
+            'parent_id' => $validated['parent_id'] ?? null,
+            'department_id' => $validated['department_id'],
+            'status_id' => $statusId,
+            'notes' => $cleanNotes,
+            'user_id' => Auth::id(),
+            'reminder_date' => null,
+            'deadline' => null,
+            'obsolete_date' => null,
+        ]);
+
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', (string) $mapping->document_number, $matches)) {
+            $mapping->update(['revision' => $matches[2]]);
+        }
+
+        $mapping->partNumber()->sync($validated['part_number_id'] ?? []);
+        $mapping->productModel()->sync($validated['model_id'] ?? []);
+        $mapping->product()->sync($validated['product_id'] ?? []);
+        $mapping->process()->sync($validated['process_id'] ?? []);
+
+        if ($hasUploadedFiles) {
+            foreach ($request->file('files') as $index => $file) {
+                $extension = $file->getClientOriginalExtension();
+                $filename = sprintf(
+                    '%s_rev1_%s_%s.%s',
+                    preg_replace('/[^A-Za-z0-9_\-]/', '_', (string) $mapping->document_number),
+                    now()->format('Ymd_His'),
+                    $index,
+                    $extension
+                );
+
+                $path = $file->storeAs('document-reviews', $filename, 'public');
+
+                $mapping->files()->create([
+                    'document_mapping_id' => $mapping->id,
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'is_active' => 1,
+                    'pending_approval' => 0,
+                ]);
+            }
+        }
+
+        return redirect()->route('document-review.index')
+            ->with('success', $hasUploadedFiles
+                ? 'Document metadata and file uploaded successfully.'
+                : 'Document metadata registered successfully.');
+    }
+
+    private function isDocumentAllowedForPlant(Document $document, string $selectedPlant): bool
+    {
+        $selectedPlant = strtolower(trim($selectedPlant));
+        $docPlants = $document->plants
+            ->pluck('plant')
+            ->map(fn($plant) => strtolower(trim((string) $plant)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($selectedPlant === 'all') {
+            return $docPlants->contains('all');
+        }
+
+        if ($docPlants->isEmpty()) {
+            // Legacy documents without explicit assignment remain available on physical plants.
+            return in_array($selectedPlant, ['body', 'unit', 'electric']);
+        }
+
+        if ($docPlants->contains('all')) {
+            return false;
+        }
+
+        return $docPlants->contains($selectedPlant);
     }
 
     public function showFolder($plant, $docCode, Request $request)
@@ -83,8 +346,25 @@ class DocumentReviewController extends Controller
         $normalizedDocCode = trim(strtolower($docCode));
         $matchedCode = $plantGroup->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
 
-        if (!$matchedCode)
+        if (!$matchedCode) {
+            // Fallback: jika kode dokumen tidak ditemukan pada plant yang diminta,
+            // coba cari di plant lain (berguna ketika master document baru saja diubah plant).
+            $found = null;
+            foreach ($documentsByCode as $p => $group) {
+                $foundKey = $group->keys()->first(fn($code) => trim(strtolower($code)) === $normalizedDocCode);
+                if ($foundKey) {
+                    $found = $p;
+                    break;
+                }
+            }
+
+            if ($found) {
+                // redirect ke plant yang benar supaya user tidak melihat 404
+                return redirect()->route('document-review.showFolder', [$found, $docCode]);
+            }
+
             abort(404);
+        }
 
         $documents = $plantGroup->get($matchedCode, collect());
 
@@ -138,10 +418,10 @@ class DocumentReviewController extends Controller
 
                 // Helper function untuk cek collection
                 $containsInCollection = fn($collection, $property) =>
-                    $collection->contains(
-                        fn($item) =>
-                        str_contains(strtolower($item?->$property ?? ''), $search)
-                    );
+                $collection->contains(
+                    fn($item) =>
+                    str_contains(strtolower($item?->$property ?? ''), $search)
+                );
 
                 return
                     // Dokumen langsung
@@ -227,10 +507,20 @@ class DocumentReviewController extends Controller
             $doc->setRelation(
                 'files',
                 $doc->files
-                ? $doc->files
-                    ->where('is_active', 1)
-                    ->where('pending_approval', 0)
-                : collect()
+                    ? $doc->files
+                    ->filter(function ($file) {
+                        if (!(int) ($file->is_active ?? 0)) {
+                            return false;
+                        }
+
+                        if (!empty($file->marked_for_deletion_at)) {
+                            return false;
+                        }
+
+                        return (int) ($file->pending_approval ?? 0) === 0 || !empty($file->replaced_by_id);
+                    })
+                    ->values()
+                    : collect()
             );
             return $doc;
         });
@@ -334,14 +624,10 @@ class DocumentReviewController extends Controller
                 $hasModelPlant = $item->productModel->contains(fn($model) => strtolower(trim($model->plant ?? '')) === $plantLower);
 
                 if ($plantLower === 'others') {
-                    // include mappings explicitly marked 'all'
-                    if ($mappingPlant === 'all') return true;
-
-                    // include manual mappings without part numbers
-                    if ($item->partNumber->isEmpty()) return true;
-
-                    // otherwise ignore mappings tied to specific plants
-                    return false;
+                    // Only include mappings explicitly marked 'all' for Others tab.
+                    // Do NOT include manual mappings without part numbers here —
+                    // those belong to the Document Mapping (manual) list only.
+                    return $mappingPlant === 'all';
                 }
 
                 // physical plant: ignore mappings explicitly set to 'all'
@@ -362,25 +648,33 @@ class DocumentReviewController extends Controller
             $codesFromDocPlant = $docsFromDocPlant->pluck('code');
             $codesFromMapping = $mappingsByPlant->map(fn($m) => $m->document?->code)->filter();
 
-            // Include master documents that have NO explicit plant assignment (legacy)
-            // so they appear under all physical plant tabs (Body/Unit/Electric).
-            $codesFromMaster = $documentsMaster->filter(function ($doc) use ($docPlantKey, $plantLower) {
-                // If document has explicit plants -> only include when matches current plant
-                $docPlants = $doc->plants->pluck('plant')->map(fn($p) => strtolower(trim($p ?? '')))->unique();
+            // Include master documents depending on plant:
+            // - For 'Others' tab include only documents explicitly assigned to 'all'.
+            // - For physical plants include legacy unassigned docs and those assigned to this plant.
+            if ($plantLower === 'others') {
+                $codesFromMaster = $documentsMaster->filter(function ($doc) {
+                    $docPlants = $doc->plants->pluck('plant')->map(fn($p) => strtolower(trim($p ?? '')))->unique();
+                    return $docPlants->contains('all');
+                })->pluck('code');
+            } else {
+                $codesFromMaster = $documentsMaster->filter(function ($doc) use ($docPlantKey, $plantLower) {
+                    // If document has explicit plants -> only include when matches current plant
+                    $docPlants = $doc->plants->pluck('plant')->map(fn($p) => strtolower(trim($p ?? '')))->unique();
 
-                if ($docPlants->isEmpty()) {
-                    // legacy: no assignment => show on physical plants (not 'all'/Others)
-                    return $plantLower !== 'others';
-                }
+                    if ($docPlants->isEmpty()) {
+                        // legacy: no assignment => show on physical plants (not 'all'/Others)
+                        return $plantLower !== 'others';
+                    }
 
-                // If document explicitly assigned to 'all' -> include only in Others
-                if ($docPlants->contains('all')) {
-                    return $docPlantKey === 'all';
-                }
+                    // If document explicitly assigned to 'all' -> include only in Others
+                    if ($docPlants->contains('all')) {
+                        return $docPlantKey === 'all';
+                    }
 
-                // Otherwise include if docPlants contains this plant
-                return $docPlants->contains($plantLower);
-            })->pluck('code');
+                    // Otherwise include if docPlants contains this plant
+                    return $docPlants->contains($plantLower);
+                })->pluck('code');
+            }
 
             $allCodes = $codesFromDocPlant->merge($codesFromMapping)->merge($codesFromMaster)->unique();
 
@@ -403,7 +697,12 @@ class DocumentReviewController extends Controller
         if (!in_array('Others', $plants)) {
             $plants[] = 'Others';
         }
-        $documentsMaster = Document::where('type', 'review')->get();
+        // Exclude documents scheduled for deletion so tree counts are correct
+        // eager-load plants to avoid N+1 when inspecting assigned plants
+        $documentsMaster = Document::with('plants')
+            ->where('type', 'review')
+            ->whereNull('marked_for_deletion_at')
+            ->get();
         $documentMappings = DocumentMapping::with([
             'document',
             'files',
@@ -448,8 +747,16 @@ class DocumentReviewController extends Controller
             abort(403, 'Unauthorized. Only Leader from the document\'s department can edit.');
         }
 
+        // Accept common office MIME types — Some downloads from OnlyOffice may
+        // report different MIME types (e.g. application/zip). Allow a sensible
+        // set of mimetypes to reduce false negatives when users re-upload.
         $request->validate([
-            'revision_files.*' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            'revision_files.*' => [
+                'required',
+                'file',
+                'max:20480', // in KB (20 MB)
+                'mimetypes:application/pdf,application/msword,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,application/octet-stream'
+            ],
             'revision_file_ids.*' => 'nullable|integer',
             'notes' => 'nullable|string|max:500',
         ]);
@@ -466,7 +773,7 @@ class DocumentReviewController extends Controller
         // Maksimal total 20 MB = 20 * 1024 * 1024
         if ($totalSize > 20 * 1024 * 1024) {
             return back()
-            ->withErrors(['revision_files' => 'Total file upload tidak boleh lebih dari 20 MB'])
+                ->withErrors(['revision_files' => 'Total file upload tidak boleh lebih dari 20 MB'])
                 ->withInput();
         }
 
@@ -548,7 +855,7 @@ class DocumentReviewController extends Controller
                     byUser: $uploader->name,
                     documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
                     documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
-                    url: route('document-review.showFolder', [
+                    url: route('document-review.approval', [
                         'plant' => $this->getPlantFromMapping($mapping),
                         'docCode' => base64_encode($mapping->document->code ?? ''),
                     ]),
@@ -589,6 +896,279 @@ class DocumentReviewController extends Controller
         ]);
     }
 
+    /**
+     * Download dokumen sebagai PDF dengan watermark
+     * Support untuk dokumen DOCX, XLSX, dan format lain yang bisa dikonversi
+     *
+     * GET /document-review/{id}/download-as-pdf?watermark_text=REVIEWED
+     */
+    public function downloadAsPdf($id, Request $request, DocumentConverterService $converter)
+    {
+        try {
+            $mapping = DocumentMapping::with(['files', 'document', 'user'])
+                ->findOrFail($id);
+
+            $requestedFileId = (int) $request->input('file_id', 0);
+
+            // If file_id is provided (multi-file dropdown), use that specific file.
+            if ($requestedFileId > 0) {
+                $file = $mapping->files()->where('id', $requestedFileId)->first();
+            } else {
+                // Ambil file pertama (paling aktual)
+                $file = $mapping->files()
+                    ->where('is_active', 1)
+                    ->where('pending_approval', 0)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+
+            \Log::info('ALL files tanpa filter', [
+                'all_files' => $mapping->files()->withTrashed()->get()->map(fn($f) => [
+                    'id'                  => $f->id,
+                    'file_path'           => $f->file_path,
+                    'is_active'           => $f->is_active,
+                    'pending_approval'    => $f->pending_approval,
+                    'replaced_by_id'      => $f->replaced_by_id,
+                    'marked_for_deletion' => $f->marked_for_deletion_at,
+                    'created_at'          => $f->created_at,
+                ])
+            ]);
+
+            \Log::info('Files in mapping', [
+                'all_files' => $mapping->files()->get()->map(fn($f) => [
+                    'id'               => $f->id,
+                    'file_path'        => $f->file_path,
+                    'is_active'        => $f->is_active,
+                    'pending_approval' => $f->pending_approval,
+                    'created_at'       => $f->created_at,
+                ])
+            ]);
+
+            if (!$file) {
+                return response()->json([
+                    'error' => 'Dokumen tidak ditemukan atau belum diupload.'
+                ], 400);
+            }
+
+            // Tentukan watermark text
+            $watermarkText = $request->input('watermark_text');
+            $watermarkImagePath = public_path('images/ORIGINAL.png');
+            $hasWatermarkImage = is_file($watermarkImagePath);
+
+            // Jika tidak ada custom watermark, gunakan default
+            if (!$watermarkText) {
+                $watermarkText = "Reviewed by " . auth()->user()->name . " - " . now()->format('Y-m-d H:i');
+            }
+
+            $filePath = $file->file_path;
+            $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+            // ✅ TARUH DI SINI
+            \Log::info('Download attempt', [
+                'file_path'          => $filePath,
+                'disk_local_exists'  => Storage::exists($filePath),
+                'disk_public_exists' => Storage::disk('public')->exists($filePath),
+                'full_path'          => storage_path('app/public/' . $filePath),
+                'file_exists_php'    => file_exists(storage_path('app/public/' . $filePath)),
+            ]);
+
+            // Beberapa data lama bisa tersimpan di disk local (storage/app)
+            // sementara data baru ada di disk public (storage/app/public).
+            $storageDisk = Storage::disk('public')->exists($filePath) ? 'public' : (Storage::disk('local')->exists($filePath) ? 'local' : null);
+
+            // Verify file exists di storage
+            if (!$storageDisk) {
+                \Log::error("File not found in storage: {$filePath}");
+                return response()->json([
+                    'error' => 'File tidak ditemukan di storage'
+                ], 404);
+            }
+
+            $pdfContent = null;
+
+            // Jika sudah PDF, langsung watermark. Jika DOCX/XLSX, convert dulu
+            if ($extension === 'pdf') {
+                // File sudah PDF, tinggal watermark
+                \Log::info("Processing PDF file: {$filePath}");
+
+                try {
+                    $pdfContent = Storage::disk($storageDisk)->get($filePath);
+
+                    if (empty($pdfContent)) {
+                        throw new \Exception('PDF file is empty');
+                    }
+
+                    $pdfWatermarker = app(\App\Services\PdfWatermarker::class);
+
+                    // Create temp file dengan full path
+                    $tempDir = sys_get_temp_dir();
+                    $tempPath = tempnam($tempDir, 'doc_review_');
+
+                    if ($tempPath === false) {
+                        throw new \Exception('Failed to create temporary file');
+                    }
+
+                    $bytesWritten = file_put_contents($tempPath, $pdfContent);
+                    if ($bytesWritten === false) {
+                        @unlink($tempPath);
+                        throw new \Exception('Failed to write PDF to temporary file');
+                    }
+
+                    try {
+                        if ($hasWatermarkImage) {
+                            $pdfContent = $pdfWatermarker->stampImage($tempPath, $watermarkImagePath, 28.0, 8.0, 100);
+                        } else {
+                            $pdfContent = $pdfWatermarker->stampText($tempPath, $watermarkText);
+                        }
+
+                        if (empty($pdfContent)) {
+                            throw new \Exception('Watermarked PDF is empty');
+                        }
+                    } catch (\Throwable $e) {
+                        $message = strtolower($e->getMessage());
+                        $isUnsupportedCompression = str_contains($message, 'fpdi-pdf-parser')
+                            || str_contains($message, 'compression technique which is not supported');
+
+                        if ($isUnsupportedCompression) {
+                            \Log::warning('Watermark skipped for existing PDF: unsupported FPDI compression', [
+                                'file_path' => $filePath,
+                                'error' => $e->getMessage(),
+                            ]);
+
+                            // Fallback: return original PDF without watermark
+                        } else {
+                            throw $e;
+                        }
+                    } finally {
+                        if (file_exists($tempPath)) {
+                            @unlink($tempPath);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("PDF watermark error: " . $e->getMessage(), [
+                        'file_path' => $filePath,
+                        'exception' => $e
+                    ]);
+                    throw $e;
+                }
+            } elseif (in_array($extension, ['docx', 'xlsx', 'doc', 'xls', 'xlsm', 'pptx', 'ppt', 'odt', 'ods', 'odp'])) {
+                // File butuh konversi dari DOCX/XLSX ke PDF
+                \Log::info("Converting {$extension} to PDF: {$filePath}");
+
+                try {
+                    // Upload file temporary ke OnlyOffice untuk di-convert
+                    $fileName = $file->original_name ?? "document_{$file->id}";
+
+                    $docSpaceService = app(\App\Services\DocSpaceService::class);
+                    $uploadedFileInfo = $docSpaceService->uploadFile($filePath, $fileName);
+
+                    $docspaceFileId = $uploadedFileInfo['file_id'];
+
+                    // ✅ Tambahkan ini
+                    \Log::info('File uploaded to OnlyOffice', [
+                        'docspace_file_id' => $docspaceFileId,
+                        'upload_info'      => $uploadedFileInfo,
+                    ]);
+
+                    try {
+                        // Convert menggunakan DocumentConverterService
+                        $pdfContent = $converter->convertToPdf(
+                            $docspaceFileId,
+                            addWatermark: true,
+                            watermarkText: $watermarkText,
+                            watermarkImagePath: ($hasWatermarkImage ? $watermarkImagePath : null)
+                        );
+
+                        if (empty($pdfContent)) {
+                            throw new \Exception('Converted PDF is empty');
+                        }
+                    } finally {
+                        // Cleanup file temporary di OnlyOffice
+                        try {
+                            $docSpaceService->deleteFile($docspaceFileId);
+                            \Log::info("Temporary OnlyOffice file deleted: {$docspaceFileId}");
+                        } catch (\Exception $e) {
+                            \Log::warning("Failed to delete temporary OnlyOffice file: " . $e->getMessage());
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Document conversion error: " . $e->getMessage(), [
+                        'file_path' => $filePath,
+                        'extension' => $extension,
+                        'exception' => $e
+                    ]);
+                    throw $e;
+                }
+            } else {
+                return response()->json([
+                    'error' => "Format file {$extension} tidak didukung untuk konversi. " .
+                        "Format yang didukung: PDF, DOCX, XLSX, DOC, XLS, PPTX, ODP"
+                ], 400);
+            }
+
+            // Verify PDF content before returning
+            if (empty($pdfContent)) {
+                \Log::error("PDF content is empty after processing", [
+                    'file_id' => $file->id,
+                    'file_path' => $filePath
+                ]);
+                return response()->json([
+                    'error' => 'PDF generation failed: empty content'
+                ], 500);
+            }
+
+            // Verify it's a valid PDF
+            if (strpos($pdfContent, '%PDF') !== 0) {
+                \Log::error("Invalid PDF header detected", [
+                    'file_id' => $file->id,
+                    'file_path' => $filePath,
+                    'header' => substr($pdfContent, 0, 10)
+                ]);
+                return response()->json([
+                    'error' => 'PDF generation failed: invalid format'
+                ], 500);
+            }
+
+            // Generate nama file output
+            $originalName = pathinfo($file->original_name ?? $file->file_path, PATHINFO_FILENAME);
+            $outputFileName = $originalName . '_' . now()->format('Ymd_Hi') . '.pdf';
+
+            $inlinePreview = $request->boolean('inline') || $request->boolean('preview');
+
+            // Log only in attachment mode (not iframe inline preview).
+            if (!$inlinePreview) {
+                try {
+                    $this->logDownload(new Request([
+                        'mapping_id' => $id,
+                        'document_file_id' => $file->id,
+                        'action' => 'download_pdf',
+                        'file_type' => 'pdf',
+                    ]), $id);
+                } catch (\Exception $e) {
+                    \Log::warning("Failed to log download: " . $e->getMessage());
+                }
+            }
+
+            // Return PDF untuk di-download
+            return response($pdfContent, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Length', strlen($pdfContent))
+                ->header('Content-Disposition', ($inlinePreview ? 'inline' : 'attachment') . "; filename=\"{$outputFileName}\"")
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
+        } catch (\Exception $e) {
+            \Log::error("PDF download error: " . $e->getMessage(), [
+                'mapping_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Gagal mengkonversi dokumen ke PDF',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function approveWithDates(Request $request, $id)
     {
@@ -600,6 +1180,7 @@ class DocumentReviewController extends Controller
 
         $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
         $approvedStatus = Status::where('name', 'Approved')->firstOrFail();
+        $previousApprovedAt = $mapping->last_approved_at;
 
         // === Update Mapping (Status + Dates) ===
         $mapping->timestamps = false;
@@ -607,7 +1188,6 @@ class DocumentReviewController extends Controller
             'status_id' => $approvedStatus->id,
             'reminder_date' => null,
             'deadline' => null,
-            'last_approved_at' => now(),
             'review_notified_at' => null,
         ]);
         $mapping->timestamps = true;
@@ -632,10 +1212,10 @@ class DocumentReviewController extends Controller
             fn($q) =>
             $q->where('tm_departments.id', $mapping->department_id)
         )->whereDoesntHave(
-                'roles',
-                fn($q) =>
-                $q->whereIn('name', ['Admin', 'Super Admin'])
-            )->get();
+            'roles',
+            fn($q) =>
+            $q->whereIn('name', ['Admin', 'Super Admin'])
+        )->get();
 
         $plant = $this->getPlantFromMapping($mapping);
 
@@ -651,6 +1231,58 @@ class DocumentReviewController extends Controller
             url: $url,
             departmentName: $mapping->department?->name,
         ));
+
+        // ===== Increment revision only for online edit approvals (not file upload approvals) =====
+        // Online edit (OnlyOffice sync) updates existing file's `updated_at` without creating new file rows.
+        // Upload revision creates new file rows in the same review cycle, so revision must not auto-increment.
+        $referenceTime = $previousApprovedAt ?? $mapping->created_at;
+
+        $hasNewUploadedFileSinceReference = $mapping->files()
+            ->when(
+                $mapping->last_approved_at,
+                fn($q) => $q->where('created_at', '>', $referenceTime),
+                fn($q) => $q->where('created_at', '>=', $referenceTime)
+            )
+            ->exists();
+
+        $hasOnlineEditTouchSinceReference = $mapping->files()
+            ->where('updated_at', '>', $referenceTime)
+            ->whereColumn('updated_at', '!=', 'created_at')
+            ->exists();
+
+        $shouldIncrementRevision = $hasOnlineEditTouchSinceReference && !$hasNewUploadedFileSinceReference;
+
+        $docNumber = $mapping->document_number;
+        if ($shouldIncrementRevision && preg_match('/-(\d+)-(\d+)$/', $docNumber, $parts)) {
+            $rev = $parts[2];
+            $width = strlen($rev);
+            $newRev = str_pad(((int)$rev) + 1, $width, '0', STR_PAD_LEFT);
+            $newDocNumber = preg_replace('/-(\d+)-(\d+)$/', '-$1-' . $newRev, $docNumber);
+            $mapping->updateQuietly([
+                'document_number' => $newDocNumber,
+                'revision' => $newRev,
+                'last_approved_at' => now(),
+            ]);
+        } elseif ($shouldIncrementRevision && preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $docNumber, $parts2)) {
+            $rev = $parts2[2];
+            if (preg_match('/(.*?)(\d+)$/', $rev, $m)) {
+                $prefix = $m[1];
+                $digits = $m[2];
+                $width = strlen($digits);
+                $newDigits = str_pad(((int)$digits) + 1, $width, '0', STR_PAD_LEFT);
+                $newRev = $prefix . $newDigits;
+            } else {
+                $newRev = $rev . '1';
+            }
+            $newDocNumber = preg_replace('/-(\d+)-([0-9A-Za-z]+)$/', '-$1-' . $newRev, $docNumber);
+            $mapping->updateQuietly([
+                'document_number' => $newDocNumber,
+                'revision' => $newRev,
+                'last_approved_at' => now(),
+            ]);
+        } else {
+            $mapping->updateQuietly(['last_approved_at' => now()]);
+        }
 
         return redirect($url)
             ->with('success', "Document '{$mapping->document_number}' approved successfully!");
@@ -772,7 +1404,6 @@ class DocumentReviewController extends Controller
                 'downloads' => $downloads,
                 'total_downloads' => $downloads->sum('download_count'),
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

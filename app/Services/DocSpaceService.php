@@ -4,6 +4,8 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Client\ConnectionException;
 
 class DocSpaceService
 {
@@ -11,6 +13,10 @@ class DocSpaceService
     protected string $email;
     protected string $password;
     protected string $folderId;
+    protected int $requestTimeout;
+    protected int $connectTimeout;
+    protected int $retryTimes;
+    protected int $retrySleepMs;
 
     public function __construct()
     {
@@ -18,6 +24,19 @@ class DocSpaceService
         $this->email    = config('onlyoffice.docspace_email');
         $this->password = config('onlyoffice.docspace_password');
         $this->folderId = config('onlyoffice.docspace_folder_id');
+        $this->requestTimeout = (int) config('onlyoffice.request_timeout', 120);
+        $this->connectTimeout = (int) config('onlyoffice.connect_timeout', 20);
+        $this->retryTimes = (int) config('onlyoffice.retry_times', 3);
+        $this->retrySleepMs = (int) config('onlyoffice.retry_sleep_ms', 1000);
+    }
+
+    protected function apiClient(?string $token = null)
+    {
+        $client = Http::timeout($this->requestTimeout)
+            ->connectTimeout($this->connectTimeout)
+            ->retry($this->retryTimes, $this->retrySleepMs);
+
+        return $token ? $client->withToken($token) : $client;
     }
 
     /**
@@ -27,7 +46,7 @@ class DocSpaceService
     public function getToken(): string
     {
         return Cache::remember('docspace_token', now()->addHours(8), function () {
-            $response = Http::acceptJson()
+            $response = $this->apiClient()->acceptJson()
                 ->post("{$this->baseUrl}/api/2.0/authentication", [
                     'UserName' => $this->email,
                     'Password' => $this->password,
@@ -49,7 +68,7 @@ class DocSpaceService
     public function getAscAuthKey(): string
     {
         return Cache::remember('docspace_asc_auth_key', now()->addHours(8), function () {
-            $response = Http::acceptJson()
+            $response = $this->apiClient()->acceptJson()
                 ->withOptions(['cookies' => true]) // penting: tangkap cookie
                 ->post("{$this->baseUrl}/api/2.0/authentication", [
                     'UserName' => $this->email,
@@ -94,7 +113,7 @@ class DocSpaceService
             $token = $this->getToken();
 
             // Cek apakah sudah ada external link
-            $response = Http::withToken($token)
+            $response = $this->apiClient($token)
                 ->get("{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}/share");
 
             if ($response->successful()) {
@@ -113,7 +132,7 @@ class DocSpaceService
             }
 
             // Buat share link baru jika belum ada
-            $createResponse = Http::withToken($token)
+            $createResponse = $this->apiClient($token)
                 ->put("{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}/share", [
                     'share' => [
                         [
@@ -151,24 +170,83 @@ class DocSpaceService
     public function uploadFile(string $localPath, string $fileName): array
     {
         $token    = $this->getToken();
-        $fullPath = storage_path('app/public/' . $localPath);
+        $normalizedPath = ltrim(str_replace('\\', '/', $localPath), '/');
 
-        if (!file_exists($fullPath)) {
+        // Coba resolve dari public dulu (default project), lalu local untuk data lama.
+        $fullPath = null;
+
+        if (Storage::disk('public')->exists($normalizedPath)) {
+            $fullPath = Storage::disk('public')->path($normalizedPath);
+        } elseif (Storage::disk('local')->exists($normalizedPath)) {
+            $fullPath = Storage::disk('local')->path($normalizedPath);
+        } else {
+            // Fallback untuk path yang mungkin sudah menyertakan prefix "public/"
+            $publicPrefixedPath = str_starts_with($normalizedPath, 'public/')
+                ? substr($normalizedPath, 7)
+                : $normalizedPath;
+
+            if (Storage::disk('public')->exists($publicPrefixedPath)) {
+                $fullPath = Storage::disk('public')->path($publicPrefixedPath);
+            } elseif (Storage::disk('local')->exists($publicPrefixedPath)) {
+                $fullPath = Storage::disk('local')->path($publicPrefixedPath);
+            }
+        }
+
+        if (!$fullPath || !file_exists($fullPath)) {
             throw new \Exception("File tidak ditemukan di storage: {$localPath}");
         }
 
-        $response = Http::withToken($token)
-            ->attach('file', fopen($fullPath, 'r'), $fileName)
-            ->post("{$this->baseUrl}/api/2.0/files/{$this->folderId}/upload");
+        try {
+            $resource = fopen($fullPath, 'r');
+            if ($resource === false) {
+                throw new \Exception("Gagal membuka file untuk upload: {$localPath}");
+            }
+
+            $response = $this->apiClient($token)
+                ->attach('file', $resource, $fileName)
+                ->post("{$this->baseUrl}/api/2.0/files/{$this->folderId}/upload");
+        } catch (ConnectionException $e) {
+            if (str_contains($e->getMessage(), 'cURL error 28')) {
+                throw new \Exception(
+                    "Timeout saat upload ke DocSpace (>{$this->requestTimeout}s). Coba ulangi, cek koneksi internet/VPN/proxy, atau naikkan ONLYOFFICE_REQUEST_TIMEOUT.",
+                    previous: $e
+                );
+            }
+            throw $e;
+        } finally {
+            if (isset($resource) && is_resource($resource)) {
+                fclose($resource);
+            }
+        }
 
         if (!$response->successful()) {
             if ($response->status() === 401) {
                 Cache::forget('docspace_token');
                 Cache::forget('docspace_asc_auth_key');
                 $token = $this->getToken();
-                $response = Http::withToken($token)
-                    ->attach('file', fopen($fullPath, 'r'), $fileName)
-                    ->post("{$this->baseUrl}/api/2.0/files/{$this->folderId}/upload");
+
+                try {
+                    $resource = fopen($fullPath, 'r');
+                    if ($resource === false) {
+                        throw new \Exception("Gagal membuka file untuk upload: {$localPath}");
+                    }
+
+                    $response = $this->apiClient($token)
+                        ->attach('file', $resource, $fileName)
+                        ->post("{$this->baseUrl}/api/2.0/files/{$this->folderId}/upload");
+                } catch (ConnectionException $e) {
+                    if (str_contains($e->getMessage(), 'cURL error 28')) {
+                        throw new \Exception(
+                            "Timeout saat upload ke DocSpace (>{$this->requestTimeout}s). Coba ulangi, cek koneksi internet/VPN/proxy, atau naikkan ONLYOFFICE_REQUEST_TIMEOUT.",
+                            previous: $e
+                        );
+                    }
+                    throw $e;
+                } finally {
+                    if (isset($resource) && is_resource($resource)) {
+                        fclose($resource);
+                    }
+                }
             }
 
             if (!$response->successful()) {
@@ -191,7 +269,7 @@ class DocSpaceService
     {
         $token = $this->getToken();
 
-        $infoResponse = Http::withToken($token)
+        $infoResponse = $this->apiClient($token)
             ->get("{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}");
 
         if (!$infoResponse->successful()) {
@@ -204,7 +282,7 @@ class DocSpaceService
             throw new \Exception('URL download tidak tersedia dari DocSpace');
         }
 
-        $content  = Http::withToken($token)->get($viewUrl)->body();
+        $content  = $this->apiClient($token)->get($viewUrl)->body();
         $fullPath = storage_path('app/public/' . $localPath);
         $dir      = dirname($fullPath);
 
@@ -224,7 +302,7 @@ class DocSpaceService
     {
         $token = $this->getToken();
 
-        $infoResponse = Http::withToken($token)
+        $infoResponse = $this->apiClient($token)
             ->get("{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}");
 
         if (!$infoResponse->successful()) {
@@ -235,14 +313,35 @@ class DocSpaceService
     }
 
     /**
+     * Get raw file metadata from DocSpace.
+     */
+    public function getFileInfo(string $docspaceFileId): array
+    {
+        $token = $this->getToken();
+
+        $infoResponse = $this->apiClient($token)
+            ->get("{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}");
+
+        if (!$infoResponse->successful()) {
+            throw new \Exception('Gagal ambil metadata file dari DocSpace');
+        }
+
+        return (array) ($infoResponse->json('response') ?? []);
+    }
+
+    /**
      * Hapus file dari DocSpace
      */
     public function deleteFile(string $docspaceFileId): bool
     {
         $token = $this->getToken();
 
-        $response = Http::withToken($token)
-            ->delete("{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}");
+        // DocSpace endpoint ini mengharuskan Content-Type JSON + body non-empty.
+        $response = $this->apiClient($token)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->send('DELETE', "{$this->baseUrl}/api/2.0/files/file/{$docspaceFileId}", [
+                'json' => ['file' => (int) $docspaceFileId],
+            ]);
 
         return $response->successful();
     }

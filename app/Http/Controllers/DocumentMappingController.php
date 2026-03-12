@@ -140,7 +140,7 @@ class DocumentMappingController extends Controller
     public function reviewIndex2(Request $request)
     {
         // Master data
-        $documentsMaster = Document::with('childrenRecursive')
+        $documentsMaster = Document::with(['childrenRecursive', 'plants'])
             ->where('type', 'review')
             ->get();
 
@@ -323,6 +323,9 @@ class DocumentMappingController extends Controller
                   ->orWhereDoesntHave('partNumber');
             });
 
+        // Exclude mappings that are scheduled for deletion (recycle bin)
+        $queryManual->whereNull('marked_for_deletion_at');
+
         if (!empty($search)) {
             $queryManual->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
@@ -442,10 +445,11 @@ class DocumentMappingController extends Controller
         }
 
         $validated = $request->validate([
+            'plant' => 'required|in:body,unit,electric,all',
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => 'required|string|max:255|unique:tt_document_mappings,document_number',
-            'model_id.*' => 'nullable|exists:tm_models,id',
-            'model_id' => 'nullable|array',
+            'model_id' => 'required|array|min:1',
+            'model_id.*' => 'required|exists:tm_models,id',
             'product_id.*' => 'nullable|exists:tm_products,id',
             'product_id' => 'nullable|array',
             'process_id.*' => 'nullable|exists:tm_processes,id',
@@ -465,11 +469,12 @@ class DocumentMappingController extends Controller
         if ($cleanNotes === '<p><br></p>' || $cleanNotes === '')
             $cleanNotes = null;
 
-        // **Validasi: minimal part number atau model/product/process harus diisi**
-        if (empty($validated['part_number_id']) && empty($validated['model_id']) && empty($validated['product_id']) && empty($validated['process_id'])) {
-            return back()->withErrors([
-                'part_number_id' => 'Please select a Part Number or fill at least one of Model, Product, or Process manually.'
-            ])->withInput();
+        $selectedDocument = Document::with('plants')
+            ->where('type', 'review')
+            ->find($validated['document_id']);
+
+        if (!$selectedDocument || !$this->isDocumentAllowedForPlant($selectedDocument, $validated['plant'])) {
+            return back()->withErrors(['document_id' => 'Selected document is not available for the chosen plant.'])->withInput();
         }
 
 
@@ -499,7 +504,7 @@ class DocumentMappingController extends Controller
 
         // Normalize plant: when user selects 'all' we store 'all' in DB so
         // it's visible in the DB enum. Views treat 'all' as Other/Manual Entry.
-        $plantValue = ($request->plant === 'all') ? 'all' : $request->plant;
+        $plantValue = ($validated['plant'] === 'all') ? 'all' : $validated['plant'];
 
         $mapping = DocumentMapping::create([
             'plant' => $plantValue,
@@ -517,6 +522,11 @@ class DocumentMappingController extends Controller
             'status_id' => Status::where('name', 'Uncomplete')->first()->id,
             'notes' => $cleanNotes,
         ]);
+
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        }
 
         $models = $validated['model_id'] ?? [];
         $products = $validated['product_id'] ?? [];
@@ -597,8 +607,8 @@ class DocumentMappingController extends Controller
             'plant' => 'required|in:body,unit,electric,all',
             'document_id' => 'required|exists:tm_documents,id',
             'document_number' => "required|string|max:255|unique:tt_document_mappings,document_number,{$id}",
-            'model_id' => 'nullable|array',
-            'model_id.*' => 'exists:tm_models,id',
+            'model_id' => 'required|array|min:1',
+            'model_id.*' => 'required|exists:tm_models,id',
             'product_id' => 'nullable|array',
             'product_id.*' => 'exists:tm_products,id',
             'process_id' => 'nullable|array',
@@ -616,17 +626,12 @@ class DocumentMappingController extends Controller
             $cleanNotes = null;
         }
 
-        // Validasi minimal input
-        if (
-            empty($validated['part_number_id']) &&
-            empty($validated['model_id']) &&
-            empty($validated['product_id']) &&
-            empty($validated['process_id'])
-        ) {
-            return back()->withErrors([
-                'part_number_id' =>
-                'Please select a Part Number or fill at least one of Model, Product, or Process.'
-            ])->withInput();
+        $selectedDocument = Document::with('plants')
+            ->where('type', 'review')
+            ->find($validated['document_id']);
+
+        if (!$selectedDocument || !$this->isDocumentAllowedForPlant($selectedDocument, $validated['plant'])) {
+            return back()->withErrors(['document_id' => 'Selected document is not available for the chosen plant.'])->withInput();
         }
 
         // Validasi parent document (jika ada)
@@ -672,6 +677,14 @@ class DocumentMappingController extends Controller
         $mapping->product()->sync($validated['product_id'] ?? []);
         $mapping->process()->sync($validated['process_id'] ?? []);
         $mapping->partNumber()->sync($validated['part_number_id'] ?? []);
+
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        } else {
+            // Clear revision when document_number no longer contains revision suffix
+            $mapping->update(['revision' => null]);
+        }
 
         return back()->with('success', 'Document review updated successfully!');
     }
@@ -736,6 +749,11 @@ class DocumentMappingController extends Controller
             'notes' => $cleanNotes,
         ]);
 
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        }
+
         // 6️⃣ Upload file & simpan ke tabel relasi files
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
@@ -759,7 +777,8 @@ class DocumentMappingController extends Controller
             ->whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['Admin', 'Super Admin']))
             ->get();
 
-        $plantSlug = ($plantValue === 'all' || empty($validated['part_number_id'])) ? 'Others' : ucfirst(strtolower($plantValue ?? 'body'));
+        $mappingPlant = strtolower(trim((string) ($mapping->plant ?? '')));
+        $plantSlug = ($mappingPlant === 'all' || empty($validated['part_number_id'])) ? 'Others' : ucfirst($mappingPlant ?: 'body');
         $docCode = $mapping->document?->code ?? null;
         $directUrl = $docCode ? route('document-review.showFolder', [$plantSlug, base64_encode($docCode)], false) : route('document-review.index', [], false);
 
@@ -777,45 +796,119 @@ class DocumentMappingController extends Controller
         return back()->with('success', 'Document review created successfully!');
     }
 
+    private function isDocumentAllowedForPlant(Document $document, string $selectedPlant): bool
+    {
+        $selectedPlant = strtolower(trim($selectedPlant));
+        $docPlants = $document->plants
+            ->pluck('plant')
+            ->map(fn($plant) => strtolower(trim((string) $plant)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($selectedPlant === 'all') {
+            return $docPlants->contains('all');
+        }
+
+        if ($docPlants->isEmpty()) {
+            // Legacy documents without explicit assignment remain available on physical plants.
+            return in_array($selectedPlant, ['body', 'unit', 'electric']);
+        }
+
+        if ($docPlants->contains('all')) {
+            return false;
+        }
+
+        return $docPlants->contains($selectedPlant);
+    }
+
 
     public function generateDocumentNumber(Request $request)
     {
         $request->validate([
             'document_id' => 'required|exists:tm_documents,id',
             'department_id' => 'required|exists:tm_departments,id',
-            'part_number_id' => 'required|exists:tm_part_numbers,id',
+            'part_number_id' => 'nullable|exists:tm_part_numbers,id',
+            'model_id' => 'nullable|exists:tm_models,id',
+            'product_id' => 'nullable|exists:tm_products,id',
+            'process_id' => 'nullable|exists:tm_processes,id',
         ]);
 
         $document = Document::findOrFail($request->document_id);
         $department = Department::findOrFail($request->department_id);
-        $partNumber = PartNumber::with(['product', 'productModel', 'process'])->findOrFail($request->part_number_id);
 
         $docCode = $document->code;
         $deptCode = $department->code;
-        $productCode = $partNumber->product->code ?? '';
-        $processCode = $partNumber->process->code ?? '';
-        $modelName = $partNumber->productModel->name ?? '';
 
-        // ========================
-        // Nomor urut berdasarkan kombinasi
-        // ========================
-        $existingCount = DocumentMapping::where('document_id', $document->id)
-            ->where('department_id', $department->id)
-            ->whereHas('partNumber', function ($q) use ($partNumber) {
-                $q->where('product_id', $partNumber->product_id)
-                    ->where('process_id', $partNumber->process_id)
-                    ->where('model_id', $partNumber->model_id);
-            })
-            ->count();
+        // Prefer part_number when provided (existing UI path). Otherwise use explicit model/product/process ids.
+        if ($request->filled('part_number_id')) {
+            $partNumber = PartNumber::with(['product', 'productModel', 'process'])->findOrFail($request->part_number_id);
+
+            $productCode = $partNumber->product->code ?? '';
+            $processCode = $partNumber->process->code ?? '';
+            $modelName = $partNumber->productModel->name ?? '';
+
+            // Count mappings that are linked to the same partNumber combination
+            $existingCount = DocumentMapping::where('document_id', $document->id)
+                ->where('department_id', $department->id)
+                ->whereHas('partNumber', function ($q) use ($partNumber) {
+                    $q->where('product_id', $partNumber->product_id)
+                        ->where('process_id', $partNumber->process_id)
+                        ->where('model_id', $partNumber->model_id);
+                })
+                ->count();
+        } else {
+            // Use explicit selections (model/product/process) — these are stored on mapping via pivots
+            $modelId = $request->input('model_id');
+            $productId = $request->input('product_id');
+            $processId = $request->input('process_id');
+
+            $productCode = '';
+            $processCode = '';
+            $modelName = '';
+
+            if ($productId) {
+                $product = Product::find($productId);
+                $productCode = $product->code ?? '';
+            }
+            if ($processId) {
+                $process = Process::find($processId);
+                $processCode = $process->code ?? '';
+            }
+            if ($modelId) {
+                $model = ProductModel::find($modelId);
+                $modelName = $model->name ?? '';
+            }
+
+            // Count mappings that match the combination via pivot relations
+            $existingCountQuery = DocumentMapping::where('document_id', $document->id)
+                ->where('department_id', $department->id);
+
+            if ($modelId) {
+                $existingCountQuery->whereHas('productModel', function ($q) use ($modelId) {
+                    $q->where('tm_models.id', $modelId);
+                });
+            }
+            if ($productId) {
+                $existingCountQuery->whereHas('product', function ($q) use ($productId) {
+                    $q->where('tm_products.id', $productId);
+                });
+            }
+            if ($processId) {
+                $existingCountQuery->whereHas('process', function ($q) use ($processId) {
+                    $q->where('tm_processes.id', $processId);
+                });
+            }
+
+            $existingCount = $existingCountQuery->count();
+        }
 
         $noUrut = str_pad($existingCount + 1, 3, '0', STR_PAD_LEFT);
         $noRevisi = '01';
 
         $generatedNumber = "{$docCode}-{$deptCode}-{$productCode}_{$processCode}_{$modelName}-{$noUrut}-{$noRevisi}";
 
-        return response()->json([
-            'document_number' => $generatedNumber
-        ]);
+        return response()->json(['document_number' => $generatedNumber]);
     }
 
     public function generateChildDocumentNumber(Request $request)
@@ -988,6 +1081,13 @@ class DocumentMappingController extends Controller
         ]);
         $mapping->timestamps = true;
 
+        // Parse revision from document_number if present (format: ...-<seq>-<rev>)
+        if (preg_match('/-(\d+)-([0-9A-Za-z]+)$/', $mapping->document_number, $m)) {
+            $mapping->update(['revision' => $m[2]]);
+        } else {
+            $mapping->update(['revision' => null]);
+        }
+
         // Upload files baru jika ada
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $index => $file) {
@@ -1028,9 +1128,13 @@ class DocumentMappingController extends Controller
         }
 
         // Tandai Document utama untuk dihapus 1 tahun kemudian
+        // BUT: do NOT mark the parent tm_documents when the document is of type 'review'
         if ($mapping->document) {
-            $mapping->document->marked_for_deletion_at = $markedForDeletionAt;
-            $mapping->document->save();
+            $docType = strtolower($mapping->document->type ?? '');
+            if ($docType !== 'review') {
+                $mapping->document->marked_for_deletion_at = $markedForDeletionAt;
+                $mapping->document->save();
+            }
         }
 
         // Tandai DocumentMapping untuk dihapus 1 tahun kemudian
@@ -1131,7 +1235,7 @@ class DocumentMappingController extends Controller
             'files' => 'nullable|array',
             'files.*' => 'file|mimes:pdf,doc,docx,xls,xlsx, jpg,jpeg,png|max:20480',
         ], [
-            
+
             'reminder_date.before_or_equal' => 'Reminder Date must be earlier than or equal to Obsolete Date.',
         ]);
         if ($validator->fails()) {
@@ -1169,6 +1273,7 @@ class DocumentMappingController extends Controller
                 'department_id' => $deptId,
                 'version' => 0,
                 'notes' => $cleanNotes,
+                'initial_notes' => $cleanNotes,  // Backup initial notes
                 'period_years' => $validated['period_years'],
             ]);
 
@@ -1253,19 +1358,17 @@ class DocumentMappingController extends Controller
             $cleanNotes = null;
         }
 
-        // Cek status Active
-        $isActive = $mapping->status && strtolower($mapping->status->name) === 'active';
-
         // Data yang boleh diupdate
         $updateData = [
             'department_id' => $validated['department_id'],
             'obsolete_date' => $validated['obsolete_date'],
             'reminder_date' => $validated['reminder_date'],
             'notes' => $cleanNotes,
+            'initial_notes' => $cleanNotes,  // Update backup when admin edits notes
         ];
 
-        // Jika bukan Active → period_years boleh diupdate
-        if (!$isActive && array_key_exists('period_years', $validated)) {
+        // Period can be updated for any status.
+        if (array_key_exists('period_years', $validated)) {
             $updateData['period_years'] = $validated['period_years'];
         }
 
@@ -1305,31 +1408,37 @@ class DocumentMappingController extends Controller
 
         $ids = $data['ids'];
 
+        // Jadwalkan penghapusan 1 tahun dari sekarang (sama seperti delete per item)
+        $markedForDeletionAt = now()->addYear();
+
         // Ambil semua dokumen sekaligus dengan relasi files
-        $docs = DocumentMapping::with('files')->whereIn('id', $ids)->get();
+        $docs = DocumentMapping::with(['files', 'document'])->whereIn('id', $ids)->get();
 
         foreach ($docs as $doc) {
-            // 1️⃣ Hapus semua file di relasi 'files'
+            // 1️⃣ Tandai semua file relasi agar masuk recycle bin
             foreach ($doc->files as $file) {
-                if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
-                    Storage::disk('public')->delete($file->file_path);
+                $file->marked_for_deletion_at = $markedForDeletionAt;
+                $file->save();
+            }
+
+            // 2️⃣ Tandai dokumen master juga (khusus non-review, konsisten dengan delete single)
+            if ($doc->document) {
+                $docType = strtolower($doc->document->type ?? '');
+                if ($docType !== 'review') {
+                    $doc->document->marked_for_deletion_at = $markedForDeletionAt;
+                    $doc->document->save();
                 }
-                $file->delete();
             }
 
-            // 2️⃣ Hapus file utama DocumentMapping
-            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
-                Storage::disk('public')->delete($doc->file_path);
-            }
-
-            // 3️⃣ Hapus data DocumentMapping
-            $doc->delete();
+            // 3️⃣ Tandai data DocumentMapping agar masuk recycle bin
+            $doc->marked_for_deletion_at = $markedForDeletionAt;
+            $doc->save();
 
             // 4️⃣ Opsional: hapus relasi anak-anak jika ini parent
             DocumentMapping::where('parent_id', $doc->id)->update(['parent_id' => null]);
         }
 
         return redirect()->route('master.document-control.index')
-            ->with('success', count($ids) . ' document(s) and related files deleted successfully.');
+            ->with('success', count($ids) . ' document(s) scheduled for deletion in 1 year.');
     }
 }
