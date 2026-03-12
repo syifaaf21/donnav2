@@ -66,10 +66,18 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
+                                <button class="nav-link rounded-t-lg" id="lead-auditor-tab" data-bs-toggle="tab"
+                                    data-bs-target="#lead-auditor-tab-pane" type="button" role="tab"
+                                    aria-controls="lead-auditor-tab-pane" aria-selected="false">
+                                    <i class="bi bi-person-badge me-1"></i>
+                                    <span class="align-middle">Lead Auditors</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
                                 <button class="nav-link rounded-t-lg" id="auditor-tab" data-bs-toggle="tab"
                                     data-bs-target="#auditor-tab-pane" type="button" role="tab"
                                     aria-controls="auditor-tab-pane" aria-selected="false">
-                                    <i class="bi bi-shield-check me-1"></i>
+                                    <i class="bi bi-person-badge me-1"></i>
                                     <span class="align-middle">Auditors</span>
                                 </button>
                             </li>
@@ -98,6 +106,12 @@
                     <div class="tab-pane fade" id="depthead-tab-pane" role="tabpanel" aria-labelledby="depthead-tab">
                         <div id="ajaxUserTableDeptHead" class="space-y-3">
                             @include('contents.master.user.partials.dept-head')
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="lead-auditor-tab-pane" role="tabpanel"
+                        aria-labelledby="lead-auditor-tab">
+                        <div id="ajaxUserTableLeadAuditor" class="space-y-3">
+                            @include('contents.master.user.partials.lead-auditor')
                         </div>
                     </div>
                     <div class="tab-pane fade" id="auditor-tab-pane" role="tabpanel" aria-labelledby="auditor-tab">
@@ -198,17 +212,18 @@
                                     });
                                 } catch (e) {}
                                 // Audit type selects: ID format audit_type_select_edit_{userId}_{roleId}
-                                document.querySelectorAll(`select[id^="audit_type_select_edit_${userId}_"]`).forEach(function(el) {
-                                    try {
-                                        if (!el.tomselect) {
-                                            new TomSelect(el, {
-                                                create: false,
-                                                maxItems: null,
-                                                plugins: ['remove_button']
-                                            });
-                                        }
-                                    } catch (e) {}
-                                });
+                                document.querySelectorAll(`select[id^="audit_type_select_edit_${userId}_"]`)
+                                    .forEach(function(el) {
+                                        try {
+                                            if (!el.tomselect) {
+                                                new TomSelect(el, {
+                                                    create: false,
+                                                    maxItems: null,
+                                                    plugins: ['remove_button']
+                                                });
+                                            }
+                                        } catch (e) {}
+                                    });
                             }
                         } catch (e) {
                             console.warn('TomSelect init failed', e);
@@ -557,10 +572,10 @@
     .audit-type-role-section-edit .card {
         overflow: visible !important;
     }
+
     .audit-type-role-section-add .ts-dropdown,
     .audit-type-role-section-edit .ts-dropdown {
         z-index: 9999 !important;
         position: absolute !important;
     }
-
 </style>

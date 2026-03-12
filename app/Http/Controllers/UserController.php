@@ -20,13 +20,18 @@ class UserController extends Controller
         $tab = $request->input('tab', 'all');
         $perPage = $request->input('per_page', 10); // default 10 per page
 
-        $query = User::with(['roles', 'departments', 'auditTypes']);
+        $query = User::with(['roles', 'departments', 'auditTypes', 'userAuditTypes.userRole.role', 'userAuditTypes.audit']);
 
         // Filter berdasarkan tab
         switch ($tab) {
             case 'depthead':
                 $query->whereHas('roles', fn($q) => $q->where('name', 'Dept Head'));
                 $view = 'contents.master.user.partials.dept-head';
+                break;
+
+            case 'lead-auditor':
+                $query->whereHas('roles', fn($q) => $q->where('name', 'Lead Auditor'));
+                $view = 'contents.master.user.partials.lead-auditor';
                 break;
 
             case 'auditor':

@@ -57,7 +57,16 @@
                             </td>
                             <td class="px-4 py-2 border-r border-gray-200 text-sm font-semibold">{{ $user->npk }}</td>
                             <td class="px-4 py-2 border-r border-gray-200">
-                                {{ $user->auditTypes->pluck('name')->join(', ') ?: '-' }}
+                                @php
+                                    $auditorAuditTypes = $user->userAuditTypes
+                                        ->filter(fn($uat) => $uat->userRole && $uat->userRole->role &&
+                                            $uat->userRole->role->name === 'Auditor')
+                                        ->map(fn($uat) => optional($uat->audit)->name)
+                                        ->filter()
+                                        ->unique()
+                                        ->values();
+                                @endphp
+                                {{ $auditorAuditTypes->join(', ') ?: '-' }}
                             </td>
                             <td class="px-4 py-2 border-r border-gray-200 flex gap-2">
                                 {{-- Edit Button --}}
