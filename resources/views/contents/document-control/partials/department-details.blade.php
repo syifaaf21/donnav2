@@ -36,7 +36,8 @@
 @endsection
 
 @section('content')
-    <div class="mx-auto px-4 space-y-4">
+    <div class="mx-auto px-4">
+        <div class="space-y-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
         {{-- Header --}}
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-3 mt-2 text-white">
@@ -82,7 +83,7 @@
         </div> --}}
 
         <!-- Search & Filter Form -->
-        <div class="flex justify-end w-full mb-2 gap-2 items-start">
+        <div class="flex justify-end w-full mb-2 gap-2 items-start bg-white border border-gray-200 rounded-xl p-3">
             <!-- Filter Dropdown Button -->
             @if (!$approvalMode)
                 <div class="relative">
@@ -444,6 +445,7 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
     <div class="modal fade" id="viewFileModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -475,6 +477,21 @@
     @include('contents.document-control.partials.modal-reject')
 @endsection
 <style>
+    .dc-content-panel {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .dc-toolbar {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 10px;
+    }
+
     /* --- Dropdown fix style --- */
     .dropdown-fixed {
         position: fixed !important;
