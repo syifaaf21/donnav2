@@ -4,6 +4,12 @@
 
 @section('content')
     <div class="px-4 mt-4">
+        <div class="d-flex justify-content-end mb-3">
+            <button id="exportControlBtn" class="btn export-control-btn" onclick="exportControlDashboard()">
+                <i class="bi bi-download me-1"></i> Export
+            </button>
+        </div>
+
         {{-- ===== SUMMARY CARDS ===== --}}
         <div class="row g-3 mb-4 summary-cards-row">
             @php
@@ -460,6 +466,89 @@
         let currentPage = 1;
         const rowsPerPage = 10;
 
+        function showExportAlert(type, message) {
+            const old = document.getElementById('exportAlert');
+            if (old) old.remove();
+
+            const wrap = document.createElement('div');
+            wrap.id = 'exportAlert';
+            wrap.className = 'alert alert-' + (type === 'error' ? 'danger' : type) + ' position-fixed shadow-sm';
+            wrap.style.zIndex = 9999;
+            wrap.style.right = '18px';
+            wrap.style.top = '18px';
+            wrap.style.minWidth = '280px';
+            wrap.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">` +
+                `<div style="flex:1">${message}</div>` +
+                `<button type="button" class="btn-close" aria-label="Close" style="margin-left:8px"></button>` +
+                `</div>`;
+
+            document.body.appendChild(wrap);
+            wrap.querySelector('.btn-close').addEventListener('click', () => wrap.remove());
+            setTimeout(() => {
+                if (wrap.parentNode) wrap.remove();
+            }, 6000);
+        }
+
+        async function exportControlDashboard() {
+            const url = "{{ route('dashboard.control.export') }}";
+            const btn = document.getElementById('exportControlBtn');
+            if (!btn) return window.open(url, '_blank');
+
+            const originalHtml = btn.innerHTML;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML =
+                    `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Exporting...`;
+
+                const resp = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const contentType = resp.headers.get('content-type') || '';
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    showExportAlert('error', 'Export gagal: ' + (text || resp.statusText));
+                    return;
+                }
+
+                if (contentType.indexOf('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') === -1 &&
+                    contentType.indexOf('application/octet-stream') === -1) {
+                    const text = await resp.text();
+                    showExportAlert('error', 'Export gagal (respon server tidak valid).');
+                    console.error('Unexpected export response', text);
+                    return;
+                }
+
+                const blob = await resp.blob();
+                let filename = 'Document_Control_Dashboard.xlsx';
+                const cd = resp.headers.get('content-disposition');
+                if (cd) {
+                    const m = cd.match(/filename\*=UTF-8''(.+)|filename="?([^";]+)"?/i);
+                    if (m) filename = decodeURIComponent((m[1] || m[2]).replace(/\"/g, ''));
+                }
+
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(blobUrl);
+
+                showExportAlert('success', 'Export berhasil. File akan diunduh.');
+            } catch (err) {
+                console.error(err);
+                showExportAlert('error', 'Export gagal: ' + (err.message || err));
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
         const container = document.getElementById("obsoleteTableContainer");
         const content = document.getElementById("obsoleteTableContent");
         const toggleSwitch = document.getElementById("toggleObsoleteSwitch");
@@ -555,6 +644,32 @@
 
 @push('styles')
     <style>
+        .export-control-btn {
+            background: #ffffff;
+            color: #1d4ed8;
+            border: 1px solid rgba(29, 78, 216, 0.18);
+            border-radius: 10px;
+            padding: 0.55rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+        }
+
+        .export-control-btn:hover,
+        .export-control-btn:focus {
+            background: #eff6ff;
+            color: #1e40af;
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+        }
+
+        .export-control-btn:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .summary-card-body {
             padding: 0.95rem 0.95rem;
             min-height: 104px;

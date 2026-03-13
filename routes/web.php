@@ -28,6 +28,7 @@ use App\Http\Controllers\PartNumberController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExportSummaryController;
+use App\Http\Controllers\ExportControlDashboardController;
 use App\Http\Controllers\EditorController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -198,6 +199,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/document-number/generate', [DocumentNumberController::class, 'generate'])->name('document-number.generate');
     Route::get('/dashboard/control', [DashboardController::class, 'controlDashboard'])->name('dashboard.control');
+    Route::get('/dashboard/control/export', [ExportControlDashboardController::class, 'download'])->name('dashboard.control.export');
     Route::get('/dashboard/review', [DashboardController::class, 'reviewDashboard'])->name('dashboard.review');
     Route::get('/dashboard/ftpp', [DashboardController::class, 'ftppDashboard'])->name('dashboard.ftpp');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile.index');
