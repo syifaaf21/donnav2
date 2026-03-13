@@ -1194,11 +1194,16 @@
                         }
 
                         const isPdf = currentFileType === 'pdf';
-                        const canDownloadOrPrint = isPdf && (docStatus === 'approved' ||
-                            isAdminFlag);
+                        const canPrint = isPdf && docStatus === 'approved';
+                        const canDownload = isPdf && (docStatus === 'approved' || isAdminFlag);
 
-                        if (canDownloadOrPrint) {
+                        if (canPrint) {
                             printBtnToggle.classList.remove('d-none');
+                        } else {
+                            printBtnToggle.classList.add('d-none');
+                        }
+
+                        if (canDownload) {
                             downloadBtnToggle.classList.remove('d-none');
                             if (downloadWatermarkedBtn) {
                                 downloadWatermarkedBtn.classList.remove('d-none');
@@ -1206,7 +1211,6 @@
                                     `/document-review/file/${currentFileId}/download-watermarked`;
                             }
                         } else {
-                            printBtnToggle.classList.add('d-none');
                             downloadBtnToggle.classList.add('d-none');
                             if (downloadWatermarkedBtn) {
                                 downloadWatermarkedBtn.classList.add('d-none');
