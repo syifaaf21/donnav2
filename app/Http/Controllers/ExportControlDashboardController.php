@@ -52,7 +52,8 @@ class ExportControlDashboardController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
 
         // Header summary values based on template coordinates.
-        $sheet->setCellValue('C3', 'Periode Date: ' . now()->format('d-m-Y'));
+        // Template uses a merged title row for period date with B3 as the master cell.
+        $sheet->setCellValue('B3', 'Periode Date: ' . now()->format('d-m-Y'));
         $sheet->setCellValue('D6', $totalDocuments);
         $sheet->setCellValue('D7', $activeDocuments);
         $sheet->setCellValue('D8', $obsoleteDocuments->count());
