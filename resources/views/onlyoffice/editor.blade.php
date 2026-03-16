@@ -17,16 +17,19 @@
         --muted:   #6b7490;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
+    .oo-editor-page,
+    .oo-editor-page * {
+        box-sizing: border-box;
         font-family: 'DM Sans', sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        min-height: 100vh;
     }
 
-    .page { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+    .oo-editor-page {
+        width: 100%;
+        max-width: none;
+        margin: 0 auto;
+        padding: 24px 8px 40px;
+        color: var(--text);
+    }
 
     .back-link {
         display: inline-flex; align-items: center; gap: 8px;
@@ -47,8 +50,8 @@
         border-radius: 16px;
         overflow: hidden;
         color: #0f172a;
-        max-width: 820px;
-        margin: 0 auto;
+        width: 100%;
+        margin: 0;
     }
     .file-card__hero {
         background: #f8fafc;
@@ -178,11 +181,43 @@
     .notes-modal textarea::placeholder { color: #94a3b8; }
     .notes-close { background:#f1f5f9; border:0; color:#475569; cursor:pointer; padding:6px; border-radius:999px; box-shadow: 0 2px 6px rgba(2,6,23,0.04); }
     .notes-close:hover { background: #eef2f6; color:#0f172a; }
+
+    @media (max-width: 768px) {
+        .oo-editor-page {
+            padding: 16px 12px 28px;
+        }
+
+        .file-card__hero {
+            padding: 18px 14px;
+            gap: 12px;
+        }
+
+        .file-name {
+            font-size: 16px;
+        }
+
+        .file-meta {
+            grid-template-columns: 1fr;
+        }
+
+        .meta-item {
+            border-right: none;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .meta-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-actions {
+            padding: 16px 14px;
+        }
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="page">
+<div class="oo-editor-page">
 
     @php
         $currentUser = auth()->user();
