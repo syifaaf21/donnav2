@@ -65,6 +65,21 @@ class ExportControlDashboardController extends Controller
 
         // Detail document list starts at row 12 (row 11 is reserved in current template).
         $startRow = 12;
+        $templateLastStyledRow = 464; // Last row in template with predefined styles for detail rows (B-F columns).
+        $requiredLastRow = $startRow + max($allControlDocuments->count(), 1) - 1;
+
+        // If data exceeds the template's designed rows, clone the last styled row
+        // so borders and formatting continue automatically.
+        if ($requiredLastRow > $templateLastStyledRow) {
+            $sourceStyle = $sheet->getStyle('B' . $templateLastStyledRow . ':F' . $templateLastStyledRow);
+            $sourceRowHeight = $sheet->getRowDimension($templateLastStyledRow)->getRowHeight();
+
+            for ($targetRow = $templateLastStyledRow + 1; $targetRow <= $requiredLastRow; $targetRow++) {
+                $sheet->duplicateStyle($sourceStyle, 'B' . $targetRow . ':F' . $targetRow);
+                $sheet->getRowDimension($targetRow)->setRowHeight($sourceRowHeight);
+            }
+        }
+
         $row = $startRow;
         $no = 1;
 
