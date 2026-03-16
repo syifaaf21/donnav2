@@ -17,6 +17,11 @@ class ExportControlDashboardController extends Controller
      */
     public function download(Request $request)
     {
+        $roleName = strtolower(trim((string) (auth()->user()?->roles?->pluck('name')->first() ?? '')));
+        if (!in_array($roleName, ['admin', 'super admin'])) {
+            abort(403, 'Unauthorized access to export document control dashboard.');
+        }
+
         $template = public_path('template_excel/Document-Control.xlsx');
 
         if (!file_exists($template)) {

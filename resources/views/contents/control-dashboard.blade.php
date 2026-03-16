@@ -3,12 +3,18 @@
 @section('subtitle', 'Comprehensive overview of all Document Control activities and statuses.')
 
 @section('content')
-    <div class="px-4 mt-4">
-        <div class="d-flex justify-content-end mb-3">
-            <button id="exportControlBtn" class="btn export-control-btn" onclick="exportControlDashboard()">
-                <i class="bi bi-download me-1"></i> Export
-            </button>
-        </div>
+    <div class="px-4 mt-2">
+        @php
+            $exportRoleName = strtolower(trim((string) (auth()->user()->roles->pluck('name')->first() ?? '')));
+            $canExportControlDashboard = in_array($exportRoleName, ['admin', 'super admin']);
+        @endphp
+        @if ($canExportControlDashboard)
+            <div class="d-flex justify-content-end mb-2">
+                <button id="exportControlBtn" class="btn export-control-btn" onclick="exportControlDashboard()">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+            </div>
+        @endif
 
         {{-- ===== SUMMARY CARDS ===== --}}
         <div class="row g-3 mb-4 summary-cards-row">
