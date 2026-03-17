@@ -551,14 +551,29 @@
                     await loadByPlant(val);
                 });
 
+
                 tsPart.on("change", async val => {
                     if (isInitializing) return;
 
+                    // Jika part number kosong, clear model, product, process
                     if (!val || val.length === 0) {
+                        tsModel.clear(true);
+                        tsModel.clearOptions();
+                        syncSelectFromTom(tsModel, modelEl);
+
+                        tsProduct.clear(true);
+                        tsProduct.clearOptions();
+                        syncSelectFromTom(tsProduct, prodEl);
+
+                        tsProcess.clear(true);
+                        tsProcess.clearOptions();
+                        syncSelectFromTom(tsProcess, procEl);
+
                         const currentPlant = tsPlant.getValue();
                         if (currentPlant) {
                             await loadByPlant(currentPlant);
                         }
+                        generateDocumentNumberEdit();
                         return;
                     }
 
