@@ -291,6 +291,7 @@
                 });
             }
 
+
             // --- Initialize TomSelects ---
             const tsDocument = new TomSelect('#document_select', {
                 create: false,
@@ -358,6 +359,46 @@
                     direction: 'asc'
                 }
             });
+
+            // Reset all fields when modal is closed
+            const addModalEl = document.getElementById('addDocumentModal');
+            if (addModalEl) {
+                addModalEl.addEventListener('hidden.bs.modal', function() {
+                    tsPlant.clear();
+                    tsDocument.clear();
+                    tsPart.clear();
+                    tsProduct.clear();
+                    tsModel.clear();
+                    tsProcess.clear();
+                    tsDept.clear();
+                    // Reset document number
+                    const docNumInput = document.getElementById('document_number');
+                    if (docNumInput) docNumInput.value = '';
+                    // Reset notes
+                    const notesInput = document.getElementById('notes_input_add');
+                    if (notesInput) notesInput.value = '';
+                    // Reset Quill editor notes
+                    if (window.quill) window.quill.root.innerHTML = '';
+                    if (typeof quill !== 'undefined' && quill && quill.root) quill.root.innerHTML = '';
+
+                    // Reset file upload: hapus semua kecuali satu
+                    const fileContainer = document.getElementById('file-upload-container');
+                    if (fileContainer) {
+                        const groups = fileContainer.querySelectorAll('.file-input-group');
+                        groups.forEach((group, idx) => {
+                            if (idx === 0) {
+                                // Reset value file input pertama
+                                const input = group.querySelector('input[type="file"]');
+                                if (input) input.value = '';
+                            } else {
+                                group.remove();
+                            }
+                        });
+                        // Refresh remove button
+                        if (typeof refreshRemoveButtons === 'function') refreshRemoveButtons();
+                    }
+                });
+            }
 
 
             const oldDocumentId = @json(old('document_id'));
