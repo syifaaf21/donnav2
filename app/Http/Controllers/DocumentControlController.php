@@ -737,6 +737,58 @@ class DocumentControlController extends Controller
         return redirect()->back()->with('success', 'Document rejected successfully');
     }
 
+       /**
+     * Handle archive or delete selected files from a document mapping.
+     * Request: file_ids[] (array), archive (1/0)
+     */
+    public function archiveFiles($mappingId, Request $request)
+    {
+        $mapping = DocumentMapping::findOrFail($mappingId);
+        $fileIds = $request->input('file_ids', []);
+        $archive = $request->input('archive', '1');
+
+        if (empty($fileIds)) {
+            return back()->with('error', 'No files selected.');
+        }
+
+        $files = $mapping->files()->whereIn('id', $fileIds)->get();
+        $count = 0;
+        if ($archive == '1') {
+            // Archive: set is_active=0, marked_for_deletion_at=now()->addYear(), pending_approval=0
+            foreach ($files as $file) {
+                $file->update([
+                    'is_active' => 0,
+                    'marked_for_deletion_at' => now()->addYear(),
+                    'pending_approval' => 0,
+                ]);
+                $count++;
+            }
+        } else {
+            // Delete: set is_active=0, marked_for_deletion_at=now(), pending_approval=0
+            foreach ($files as $file) {
+                $file->update([
+                    'is_active' => 0,
+                    'marked_for_deletion_at' => now(),
+                    'pending_approval' => 0,
+                ]);
+                $count++;
+            }
+        }
+
+        // Cek jika tidak ada file aktif tersisa, ubah status ke Uncomplete
+        $activeFilesCount = $mapping->files()->where('is_active', 1)->whereNull('marked_for_deletion_at')->count();
+        if ($activeFilesCount === 0) {
+            $uncompleteStatus = \App\Models\Status::firstOrCreate(['name' => 'Uncomplete']);
+            $mapping->update(['status_id' => $uncompleteStatus->id]);
+        }
+
+        $msg = $archive == '1' ? "$count file(s) have been archived." : "$count file(s) have been deleted (not archived).";
+        if ($activeFilesCount === 0) {
+            $msg .= ' Status set to Uncomplete.';
+        }
+        return back()->with('success', $msg);
+    }
+
     // COMPRESS PDF
     private function compressPdf($filePath)
     {

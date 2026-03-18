@@ -389,19 +389,32 @@
                                                             $mapping->status->name !== 'Need Review' ||
                                                             $hasPendingApprovalFile;
                                                     @endphp
-                                                    @if (!$approvalMode && $canShowReviseButton)
-                                                        <button type="button"
-                                                            class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
-                                                            data-docid="{{ $mapping->id }}"
-                                                            data-doc-title="{{ $mapping->document->name }}"
-                                                            data-status="{{ $mapping->status->name }}"
-                                                            data-has-pending-approval="{{ $hasPendingApprovalFile ? '1' : '0' }}"
-                                                            data-reminder="{{ $mapping->reminder_date ?? $mapping->reminder ?? '' }}"
-                                                            data-files='@json($mapping->files_for_modal_all)'
-                                                            onclick="openReviseModal(this)" title="Upload">
-                                                            <i class="bi bi-upload"></i>
-                                                        </button>
-                                                    @endif
+                                                        @if (!$approvalMode && $canShowReviseButton)
+                                                            <button type="button"
+                                                                class="action-btn btn-revise inline-flex items-center w-8 h-8 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
+                                                                data-docid="{{ $mapping->id }}"
+                                                                data-doc-title="{{ $mapping->document->name }}"
+                                                                data-status="{{ $mapping->status->name }}"
+                                                                data-has-pending-approval="{{ $hasPendingApprovalFile ? '1' : '0' }}"
+                                                                data-reminder="{{ $mapping->reminder_date ?? ($mapping->reminder ?? '') }}"
+                                                                data-files='@json($mapping->files_for_modal_all)'
+                                                                onclick="openReviseModal(this)" title="Upload">
+                                                                <i class="bi bi-upload"></i>
+                                                            </button>
+                                                            @php
+                                                                $currentRole = auth()->user()->roles->pluck('name')->first();
+                                                            @endphp
+                                                            @if (in_array($currentRole, ['Admin', 'Super Admin']) && $mapping->status->name === 'Need Review')
+                                                                <button type="button"
+                                                                    class="action-btn btn-delete-active-files inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ms-1"
+                                                                    data-docid="{{ $mapping->id }}"
+                                                                    data-files='@json($mapping->files_for_modal_all)'
+                                                                    title="Delete Active Files"
+                                                                    onclick="openArchiveFilesModal(this)">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            @endif
+                                                        @endif
 
                                                     {{-- ADMIN ACTIONS --}}
                                                     @if ($approvalMode && in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
@@ -475,6 +488,7 @@
     @include('contents.document-control.partials.modal-revise')
     @include('contents.document-control.partials.modal-approve')
     @include('contents.document-control.partials.modal-reject')
+    @include('contents.document-control.partials.modal-archive-files')
 @endsection
 <style>
     .dc-content-panel {
@@ -1615,6 +1629,86 @@
                 }
             });
         }
+
+        // =========================
+        // Modal Archive Files (Delete/Archive Active Files)
+        // =========================
+        window.openArchiveFilesModal = function(btn) {
+            const files = JSON.parse(btn.dataset.files || '[]');
+            const docId = btn.dataset.docid;
+            const activeFiles = files.filter(f => Number(f.is_active) === 1 && !f.replaced_by_id);
+            const listContainer = document.getElementById('archiveFilesList');
+            const form = document.getElementById('archiveFilesForm');
+            if (!listContainer || !form) return;
+
+            // Clear previous
+            listContainer.innerHTML = '';
+            form.action = `${window.location.origin}/document-control/${docId}/archive-files`;
+
+            if (activeFiles.length === 0) {
+                listContainer.innerHTML = '<div class="text-xs text-gray-500">No active files available.</div>';
+            } else {
+                activeFiles.forEach(f => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center gap-2';
+                    row.innerHTML = `
+                        <input type="checkbox" name="file_ids[]" value="${f.id}" class="form-check-input file-checkbox" id="fileCheck${f.id}">
+                        <label for="fileCheck${f.id}" class="text-sm">${f.name || 'Unnamed'} <span class="text-xs text-gray-400">(${window.formatFileSize(Number(f.size)||0)})</span></label>
+                    `;
+                    listContainer.appendChild(row);
+                });
+            }
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('modal-archive-files'));
+            modal.show();
+
+            // Helper to set archive value as hidden input
+            function setArchiveHiddenInput(val) {
+                let input = form.querySelector('input[name="archive"]');
+                if (!input) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'archive';
+                    form.appendChild(input);
+                }
+                input.value = val;
+            }
+
+            // Helper: show error if no file selected
+            function showArchiveFileError() {
+                let err = document.getElementById('archive-file-error');
+                if (!err) {
+                    err = document.createElement('div');
+                    err.id = 'archive-file-error';
+                    err.className = 'text-danger text-xs mt-2';
+                    err.innerText = 'Please select at least one file.';
+                    document.getElementById('archiveFilesList').appendChild(err);
+                }
+            }
+            function clearArchiveFileError() {
+                let err = document.getElementById('archive-file-error');
+                if (err) err.remove();
+            }
+
+            // Footer button IDs (new layout)
+            const btnArchive = document.getElementById('btnArchiveSelectedFooter') || document.getElementById('btnArchiveSelected');
+            const btnDelete = document.getElementById('btnDeleteSelectedFooter') || document.getElementById('btnDeleteSelected');
+
+            function handleArchiveAction(isArchive) {
+                clearArchiveFileError();
+                const checked = form.querySelectorAll('input[name="file_ids[]"]:checked');
+                if (checked.length === 0) {
+                    showArchiveFileError();
+                    return;
+                }
+                setArchiveHiddenInput(isArchive ? '1' : '0');
+                form.submit();
+            }
+
+            if (btnArchive) btnArchive.onclick = function() { handleArchiveAction(true); };
+            if (btnDelete) btnDelete.onclick = function() { handleArchiveAction(false); };
+        };
 
 
         function showReviseError(message) {

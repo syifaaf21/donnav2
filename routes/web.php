@@ -264,6 +264,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::post('{mapping}/reject', [DocumentControlController::class, 'reject'])->name('reject');
         Route::post('{mapping}/approve', [DocumentControlController::class, 'approve'])->name('approve');
         Route::post('{mapping}/revise', [DocumentControlController::class, 'revise'])->name('revise');
+        Route::post('{mapping}/archive-files', [DocumentControlController::class, 'archiveFiles'])->name('archive-files');
         Route::get('{mapping}/download-watermarked', [DocumentControlWatermarkController::class, 'downloadWatermarked'])->name('downloadWatermarked');
     });
 
