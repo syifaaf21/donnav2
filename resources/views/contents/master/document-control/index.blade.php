@@ -443,30 +443,27 @@
          * ======================= */
         const addModalEl = document.getElementById('addDocumentControlModal');
         if (addModalEl) {
-            addModalEl.addEventListener('shown.bs.modal', () => {
-                initTomSelect(addModalEl);
-                setTimeout(() => {
-                    const editorDiv = document.getElementById('quill_editor_add');
-                    const hiddenInput = document.getElementById('notes_input_add');
-                    initQuill(editorDiv, hiddenInput);
-                }, 100);
-            });
-
-            addModalEl.addEventListener('hidden.bs.modal', () => {
+            const resetAddDocumentForm = () => {
                 const form = addModalEl.querySelector('form');
-                form.reset();
+                if (form) {
+                    form.reset();
+                }
 
                 const editorDiv = document.getElementById('quill_editor_add');
                 const hiddenInput = document.getElementById('notes_input_add');
-                const quill = Quill.find(editorDiv);
-                if (quill) {
+                const quill = editorDiv ? Quill.find(editorDiv) : null;
+                if (quill && hiddenInput) {
                     quill.root.innerHTML = '';
                     hiddenInput.value = '';
                 }
 
-                addModalEl.querySelectorAll('.tomselect').forEach(sel => sel.tomselect.clear());
+                addModalEl.querySelectorAll('.tomselect').forEach(sel => {
+                    if (sel.tomselect) {
+                        sel.tomselect.clear();
+                    }
+                });
 
-                const fileContainer = document.getElementById("file-fields");
+                const fileContainer = document.getElementById('file-fields');
                 if (fileContainer) {
                     fileContainer.innerHTML = `
                     <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
@@ -478,41 +475,23 @@
                 `;
                 }
 
-                addModalEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
-                    'is-invalid'));
+                addModalEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            };
+
+            addModalEl.addEventListener('shown.bs.modal', () => {
+                initTomSelect(addModalEl);
+                setTimeout(() => {
+                    const editorDiv = document.getElementById('quill_editor_add');
+                    const hiddenInput = document.getElementById('notes_input_add');
+                    initQuill(editorDiv, hiddenInput);
+                }, 100);
             });
 
             // CANCEL BUTTON
-            const cancelBtn = addModalEl.querySelector('[data-bs-dismiss="modal"]');
-            const form = addModalEl.querySelector('form');
-            if (cancelBtn && form) {
+            const cancelBtn = addModalEl.querySelector('#add-doc-cancel-btn');
+            if (cancelBtn) {
                 cancelBtn.addEventListener('click', () => {
-                    form.reset();
-
-                    const editorDiv = document.getElementById('quill_editor_add');
-                    const hiddenInput = document.getElementById('notes_input_add');
-                    const quill = Quill.find(editorDiv);
-                    if (quill) {
-                        quill.root.innerHTML = '';
-                        hiddenInput.value = '';
-                    }
-
-                    addModalEl.querySelectorAll('.tomselect').forEach(sel => sel.tomselect.clear());
-
-                    const fileContainer = document.getElementById("file-fields");
-                    if (fileContainer) {
-                        fileContainer.innerHTML = `
-                        <div class="col-md-12 d-flex align-items-center mb-2 file-input-group">
-                            <input type="file" class="form-control" name="files[]" required>
-                            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-file d-none">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    `;
-                    }
-
-                    addModalEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
-                        'is-invalid'));
+                    resetAddDocumentForm();
                 });
             }
         }
@@ -545,8 +524,36 @@
             });
 
             modal.addEventListener('hidden.bs.modal', () => {
-                modal.querySelectorAll('.is-invalid').forEach(el => el.classList.remove(
-                    'is-invalid'));
+                const form = modal.querySelector('form');
+                if (form) {
+                    form.reset();
+                }
+
+                // Keep TomSelect UI aligned with the reset/select default values.
+                modal.querySelectorAll('.tomselect').forEach(selectEl => {
+                    if (!selectEl.tomselect) return;
+
+                    if (selectEl.multiple) {
+                        const selectedValues = Array.from(selectEl.options)
+                            .filter(opt => opt.selected)
+                            .map(opt => opt.value);
+                        selectEl.tomselect.setValue(selectedValues, true);
+                    } else {
+                        selectEl.tomselect.setValue(selectEl.value || '', true);
+                    }
+                });
+
+                const mappingId = modal.dataset.mappingId;
+                if (mappingId) {
+                    const editorDiv = document.getElementById(`quill_editor_edit${mappingId}`);
+                    const hiddenInput = document.getElementById(`notes_input_edit${mappingId}`);
+                    const quill = editorDiv ? Quill.find(editorDiv) : null;
+                    if (quill && hiddenInput) {
+                        quill.root.innerHTML = hiddenInput.value || '';
+                    }
+                }
+
+                modal.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
             });
         });
 

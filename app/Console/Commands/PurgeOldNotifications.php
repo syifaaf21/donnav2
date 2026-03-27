@@ -13,11 +13,13 @@ class PurgeOldNotifications extends Command
 
     public function handle()
     {
-        $oneMonthAgo = Carbon::now()->subMonth();
+
+        // Change to 2 months
+        $twoMonthsAgo = Carbon::now()->subMonths(2);
 
         $deleted = DB::table('notifications')
-            ->where('created_at', '<', $oneMonthAgo)
+            ->where('created_at', '<', $twoMonthsAgo)
             ->delete();
-        $this->info("Deleted $deleted old notifications.");
+        $this->info("Deleted $deleted notifications older than 2 months.");
     }
 }

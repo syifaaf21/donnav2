@@ -32,7 +32,8 @@ class Document extends Model
 
     public function childrenRecursive()
     {
-        return $this->children()->with('childrenRecursive');
+        // return $this->children()->with('childrenRecursive');
+                return $this->children()->whereNull('marked_for_deletion_at')->with('childrenRecursive');
     }
 
     public function mapping()

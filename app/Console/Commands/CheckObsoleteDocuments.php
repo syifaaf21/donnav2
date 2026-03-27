@@ -33,7 +33,7 @@ class CheckObsoleteDocuments extends Command
             $mapping->update(['status_id' => $obsoleteStatus->id]);
 
             // Ambil semua user di department dokumen
-            $departmentUsers = User::whereHas('departments', fn($q) => $q->where('id', $mapping->department_id))->get();
+            $departmentUsers = User::whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))->get();
 
             // Ambil semua admin
             $adminUsers = User::whereHas('roles', fn($q) => $q->where('name', 'Admin'))->get();

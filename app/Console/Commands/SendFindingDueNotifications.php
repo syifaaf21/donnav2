@@ -13,12 +13,18 @@ use Carbon\Carbon;
 class SendFindingDueNotifications extends Command
 {
     protected $signature = 'notify:findings-due';
-    protected $description = 'Send notifications 3 days before due date, on due date, and 1 day after due date for findings';
+    protected $description = 'Send finding due notifications on Tuesday/Wednesday/Friday with weekend-safe overdue calculation';
 
     public function handle(WhatsAppService $wa)
     {
         $today = Carbon::now()->startOfDay();
         $todayDate = $today->toDateString();
+
+        // Send only on Tuesday, Wednesday, and Friday.
+        if (!in_array($today->dayOfWeek, [Carbon::TUESDAY, Carbon::WEDNESDAY, Carbon::FRIDAY], true)) {
+            $this->info("Today is {$today->format('l')}. Skipping; notifications run only on Tuesday, Wednesday, and Friday.");
+            return 0;
+        }
 
         $findings = AuditFinding::whereNotNull('due_date')->get();
 
@@ -29,7 +35,7 @@ class SendFindingDueNotifications extends Command
             'in_3' => [],
             'tomorrow' => [],
             'today' => [],
-            'overdue_1' => [],
+            'overdue' => [],
         ];
 
         foreach ($findings as $finding) {
@@ -37,19 +43,24 @@ class SendFindingDueNotifications extends Command
                 $due = Carbon::parse($finding->due_date)->startOfDay();
                 $days = $today->diffInDays($due, false); // signed difference
 
-                // Only process findings that are 'need assign'
-                $statusName = strtolower(optional($finding->status)->name ?? '');
-                if ($statusName !== 'need assign') {
+                $statusName = optional($finding->status)->name ?? '-';
+                $normalizedStatus = strtolower(trim($statusName));
+                if (in_array($normalizedStatus, ['close', 'draft', 'draft finding'], true)) {
                     continue;
                 }
+
+                $overdueBusinessDays = $this->countBusinessOverdueDays($due, $today);
 
                 $message = match ($days) {
                     3 => "Finding {$finding->registration_number} is due in 3 days ({$due->toDateString()}).",
                     1 => "Finding {$finding->registration_number} is due tomorrow ({$due->toDateString()}).",
                     0 => "Finding {$finding->registration_number} is due today ({$due->toDateString()}).",
-                    -1 => "Finding {$finding->registration_number} is overdue by 1 day (due {$due->toDateString()}).",
                     default => null
                 };
+
+                if ($message === null && $overdueBusinessDays > 0) {
+                    $message = "Finding {$finding->registration_number} is overdue by {$overdueBusinessDays} business day(s) (due {$due->toDateString()}).";
+                }
 
                 if (!$message) {
                     continue;
@@ -87,19 +98,17 @@ class SendFindingDueNotifications extends Command
                     $totalSent++;
                 }
 
-                // Add to WhatsApp buckets (one line per finding)
-                $displayDept = optional($finding->department)->name ? ' | Dept: ' . optional($finding->department)->name : '';
-                $displayAuditor = $finding->auditor?->name ? ' | Auditor: ' . $finding->auditor->name : '';
-                $line = "- {$finding->registration_number} (due {$due->toDateString()}){$displayDept}{$displayAuditor}";
-
                 if ($days === 3) {
-                    $buckets['in_3'][] = $line;
+                    $buckets['in_3'][] = $finding;
                 } elseif ($days === 1) {
-                    $buckets['tomorrow'][] = $line;
+                    $buckets['tomorrow'][] = $finding;
                 } elseif ($days === 0) {
-                    $buckets['today'][] = $line;
-                } elseif ($days === -1) {
-                    $buckets['overdue_1'][] = $line;
+                    $buckets['today'][] = $finding;
+                } elseif ($overdueBusinessDays > 0) {
+                    $buckets['overdue'][] = [
+                        'finding' => $finding,
+                        'days' => $overdueBusinessDays,
+                    ];
                 }
             } catch (\Throwable $e) {
                 Log::error('Error sending finding due notification for id ' . $finding->id . ': ' . $e->getMessage());
@@ -119,20 +128,42 @@ class SendFindingDueNotifications extends Command
             $hasAny = true;
             $waMessage .= "*{$label}*\n";
             $counter = 1;
-            foreach ($items as $line) {
-                $waMessage .= "    {$counter}. {$line}\n";
+            foreach ($items as $item) {
+                $finding = is_array($item) ? ($item['finding'] ?? null) : $item;
+                if (!$finding) {
+                    continue;
+                }
+                $auditeeNames = $finding->auditee()->pluck('name')->filter()->values();
+                $auditeeText = $auditeeNames->isNotEmpty() ? $auditeeNames->implode(', ') : '-';
+                $departmentName = optional($finding->department)->name ?? '-';
+                $auditorName = $finding->auditor?->name ?? '-';
+                $statusName = optional($finding->status)->name ?? '-';
+                $dueDate = Carbon::parse($finding->due_date)->toDateString();
+                $overdueText = is_array($item) && isset($item['days'])
+                    ? "Overdue: {$item['days']} business day(s)\n"
+                    : '';
+
+                $waMessage .= "[{$counter}] {$finding->registration_number}\n";
+                $waMessage .= "Department: {$departmentName}\n";
+                $waMessage .= "Auditee: {$auditeeText}\n";
+                $waMessage .= "Auditor: {$auditorName}\n";
+                $waMessage .= "Status: {$statusName}\n\n";
+                $waMessage .= "Due Date: {$dueDate}\n";
+                $waMessage .= $overdueText;
+                $waMessage .= "\n";
                 $counter++;
             }
-            $waMessage .= "\n";
         };
 
         $appendBucket("Due in 3 days", $buckets['in_3']);
         $appendBucket("Due Tomorrow", $buckets['tomorrow']);
         $appendBucket("Due Today", $buckets['today']);
-        $appendBucket("Overdue by 1 day", $buckets['overdue_1']);
+        $appendBucket("Overdue", $buckets['overdue']);
 
         if ($hasAny && $groupId) {
-            $waMessage .= "-- Automated Notice --";
+            // Footer
+            $waMessage .= "*Action Required:* Please check your FTPP items in *MADONNA* under the *FTPP Menu*.\n";
+            $waMessage .= "------ *BY AISIN BISA* ------";
             try {
                 $sent = $wa->sendGroupMessage($groupId, $waMessage);
                 if ($sent) {
@@ -146,5 +177,27 @@ class SendFindingDueNotifications extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Count overdue days in business days (Saturday/Sunday are not counted).
+     */
+    private function countBusinessOverdueDays(Carbon $due, Carbon $today): int
+    {
+        if ($today->lessThanOrEqualTo($due)) {
+            return 0;
+        }
+
+        $cursor = $due->copy()->addDay();
+        $count = 0;
+
+        while ($cursor->lessThanOrEqualTo($today)) {
+            if (!$cursor->isWeekend()) {
+                $count++;
+            }
+            $cursor->addDay();
+        }
+
+        return $count;
     }
 }

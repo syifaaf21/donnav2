@@ -11,7 +11,7 @@
             </p>
         </div> --}}
         {{-- ===== SUMMARY CARDS ===== --}}
-        <div class="row g-4 mb-5">
+        <div class="row g-3 mb-4 summary-cards-row">
             @php
                 $cards = [
                     [
@@ -19,60 +19,58 @@
                         'value' => $totalDocuments + $totalFtpp,
                         'color' => 'primary',
                         'icon' => 'bi-collection',
+                        'route' => route('dashboard'),
                     ],
                     [
                         'label' => 'FTPP',
                         'value' => $ftpp,
                         'color' => 'warning',
                         'icon' => 'bi-file-earmark-post',
+                        'route' => route('ftpp.index'),
                     ],
                     [
                         'label' => 'Document Control',
                         'value' => $documentControls,
                         'color' => 'success',
                         'icon' => 'bi-calendar-range',
+                        'route' => route('document-control.index'),
                     ],
                     [
                         'label' => 'Document Review',
                         'value' => $documentReviews,
                         'color' => 'danger',
                         'icon' => 'bi-clipboard-check',
+                        'route' => route('document-review.index'),
                     ],
                 ];
             @endphp
 
             @foreach ($cards as $c)
                 <div class="col-6 col-md-3">
-                    <div class="card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
+                    <a href="{{ $c['route'] }}" class="d-block text-decoration-none" style="color:inherit;">
+                    <div class="card summary-card bg-white shadow-2xl shadow-black/40 hover:shadow-xl hover:translate-y-[-4px]
                         transition-all duration-200 border-0 h-100 overflow-hidden"
                         style="border-radius: 14px; border-left: 4px solid var(--bs-{{ $c['color'] }});">
 
-                        <div class="card-body p-3 d-flex flex-column justify-content-between">
+                        <div class="card-body summary-card-body">
 
-                            {{-- Label --}}
-                            <small class="text-muted fw-semibold mb-2" style="font-size: 0.9rem; letter-spacing: 0.3px;">
-                                {{ $c['label'] }}
-                            </small>
-
-                            {{-- Value --}}
-                            <div class="fw-bold mb-2 text-{{ $c['color'] }}" style="font-size: 2.2rem; line-height: 1;">
-                                {{ $c['value'] }}
+                            <div class="summary-card-content">
+                                <small class="text-muted fw-semibold summary-card-label">
+                                    {{ $c['label'] }}
+                                </small>
+                                <div class="fw-bold text-{{ $c['color'] }} summary-card-value">
+                                    {{ $c['value'] }}
+                                </div>
                             </div>
 
-                            {{-- Icon --}}
-                            <div class="ms-auto mt-2"
-                                style="
-                            font-size: 1.7rem;
-                            padding: 8px 12px;
-                            border-radius: 12px;
-                            background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12);
-                            color: var(--bs-{{ $c['color'] }});
-                        ">
+                            <div class="summary-card-icon"
+                                style="background: rgba(var(--bs-{{ $c['color'] }}-rgb), 0.12); color: var(--bs-{{ $c['color'] }});">
                                 <i class="bi {{ $c['icon'] }}"></i>
                             </div>
 
                         </div>
                     </div>
+                    </a>
                 </div>
             @endforeach
         </div>
@@ -299,37 +297,82 @@
 
             /* ===================== BAR CHART ===================== */
             const ctx = document.getElementById('ftppStatusChart').getContext('2d');
+            const ftppStatusData = @json($chartData);
+            const ftppStatusColorMap = {
+                'Need Assign': '#F7A29A',
+                'Need Check': '#FCE9B8',
+                'Need Approval by Auditor': '#9CC2E5',
+                'Need Approval by Lead Auditor': '#7EA6D1',
+                'Need Revision': '#F7C6B5',
+                'Close': '#B7E4C7',
+                'Checked by Dept Head': '#BEEAEF'
+            };
+
+            function ftppHexToRgb(hex) {
+                const v = parseInt(hex.replace('#', ''), 16);
+                return {
+                    r: (v >> 16) & 255,
+                    g: (v >> 8) & 255,
+                    b: v & 255
+                };
+            }
+
+            function ftppRgbToHex(r, g, b) {
+                return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+            }
+
+            function ftppInterpolateHex(a, b, t) {
+                const A = ftppHexToRgb(a);
+                const B = ftppHexToRgb(b);
+                const r = Math.round(A.r + (B.r - A.r) * t);
+                const g = Math.round(A.g + (B.g - A.g) * t);
+                const bl = Math.round(A.b + (B.b - A.b) * t);
+                return ftppRgbToHex(r, g, bl);
+            }
+
+            function ftppGradientColors(startHex, endHex, steps) {
+                if (steps <= 1) return [startHex];
+                return Array.from({
+                    length: steps
+                }, (_, i) => ftppInterpolateHex(startHex, endHex, i / (steps - 1)));
+            }
+
+            const ftppLabels = [
+                'Need Assign',
+                'Need Check',
+                'Need Approve by Auditor',
+                'Need Approve by Lead Auditor',
+                'Need Revision',
+                'Close'
+            ];
+            const ftppBg = ftppGradientColors(ftppStatusColorMap['Need Assign'], ftppStatusColorMap['Close'],
+                ftppLabels.length);
+
+            function getFtppStatusCount(...keys) {
+                for (const key of keys) {
+                    if (typeof ftppStatusData[key] !== 'undefined' && ftppStatusData[key] !== null) {
+                        return Number(ftppStatusData[key]) || 0;
+                    }
+                }
+                return 0;
+            }
 
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: [
-                        'Need Assign',
-                        'Need Check',
-                        'Need Approve by Auditor',
-                        'Need Approve by Lead Auditor',
-                        'Need Revision',
-                        'Close'
-                    ],
+                    labels: ftppLabels,
                     datasets: [{
                         label: 'Total Findings',
                         data: [
-                            {{ $chartData['Need Assign'] ?? 0 }},
-                            {{ $chartData['Need Check'] ?? 0 }},
-                            {{ $chartData['Checked by Dept Head'] ?? 0 }},
-                            {{ $chartData['Need Approve by Lead Auditor'] ?? 0 }},
-                            {{ $chartData['Need Revision'] ?? 0 }},
-                            {{ $chartData['Close'] ?? 0 }},
+                            getFtppStatusCount('Need Assign'),
+                            getFtppStatusCount('Need Check', 'Checked by Dept Head'),
+                            getFtppStatusCount('Need Approval by Auditor', 'Need Approve by Auditor'),
+                            getFtppStatusCount('Need Approval by Lead Auditor', 'Need Approve by Lead Auditor'),
+                            getFtppStatusCount('Need Revision'),
+                            getFtppStatusCount('Close'),
                         ],
 
-                        backgroundColor: [
-                            '#dc3545', // Need Assign
-                            '#fd7e14', // Need Check
-                            '#0d6efd', // Checked
-                            '#198754', // Approved
-                            '#6c757d', // Need Revision
-                            '#6c757d' // Close
-                        ],
+                        backgroundColor: ftppBg,
                         borderWidth: 0,
                         borderRadius: 6,
                         barThickness: 28 // biar lebih rapih
@@ -762,6 +805,39 @@
     @endpush
     @push('styles')
         <style>
+            .summary-card-body {
+                padding: 0.95rem 0.95rem;
+                min-height: 104px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+            }
+
+            .summary-card-label {
+                font-size: 0.78rem;
+                letter-spacing: 0.2px;
+                display: block;
+                line-height: 1.2;
+                margin-bottom: 0.35rem;
+            }
+
+            .summary-card-value {
+                font-size: 1.8rem;
+                line-height: 1;
+            }
+
+            .summary-card-icon {
+                font-size: 1.35rem;
+                width: 44px;
+                height: 44px;
+                border-radius: 11px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 auto;
+            }
+
             /* Small Toggle Switch */
             .toggle-switch {
                 position: relative;
@@ -819,6 +895,23 @@
             .table-header-blue th {
                 background-color: #dbeafe;
                 color: #1f2937;
+            }
+
+            @media (max-width: 576px) {
+                .summary-card-body {
+                    min-height: 94px;
+                    padding: 0.8rem 0.8rem;
+                }
+
+                .summary-card-value {
+                    font-size: 1.5rem;
+                }
+
+                .summary-card-icon {
+                    width: 38px;
+                    height: 38px;
+                    font-size: 1.1rem;
+                }
             }
         </style>
     @endpush

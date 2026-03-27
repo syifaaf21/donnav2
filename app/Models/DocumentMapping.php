@@ -14,6 +14,7 @@ class DocumentMapping extends Model
     protected $fillable = [
         'document_id',
         'document_number',
+        'revision',
         'model_id',
         'product_id',
         'process_id',
@@ -26,6 +27,7 @@ class DocumentMapping extends Model
         'period_years',
         'status_id',
         'notes',
+        'initial_notes',
         'user_id',
         'last_reminder_date',
         'last_approved_at',
@@ -51,28 +53,27 @@ class DocumentMapping extends Model
 
     public function getFilesForModalAttribute()
     {
-        // Cek apakah ada file baru yang pending approval
-        $pendingFile = $this->files()
-            ->where('pending_approval', false)
-            ->latest()
-            ->first();
+        // Kembalikan file-file yang relevan untuk modal beserta metadata
+        // Sertakan file aktif, file yang punya flag pending, dan info pengarsipan
+        $files = $this->files()
+            ->orderBy('created_at', 'asc')
+            ->get();
 
-        if ($pendingFile) {
-            $filesToShow = collect([$pendingFile]);
-        } else {
-            $filesToShow = $this->files()
-                ->where('is_active', true)
-                ->orderBy('created_at', 'asc')
-                ->get();
-        }
-
-        return $filesToShow->map(function ($file) {
+        return $files->map(function ($file) {
             return [
                 'id' => $file->id,
+                'original_name' => $file->original_name,
+                // Backwards compatibility: some views expect 'name'
                 'name' => $file->original_name,
                 'document_name' => $this->document->name,
+                'file_path' => $file->file_path,
                 'url' => Storage::url($file->file_path),
                 'is_active' => (int) $file->is_active,
+                'pending_approval' => $file->pending_approval,
+                'replaced_by_id' => $file->replaced_by_id,
+                'marked_for_deletion_at' => $file->marked_for_deletion_at ? $file->marked_for_deletion_at->toDateTimeString() : null,
+                'file_type' => $file->file_type,
+                'uploaded_by' => $file->uploaded_by,
                 'created_at' => $file->created_at->toDateTimeString(),
                 'size' => Storage::disk('public')->exists($file->file_path) ? Storage::disk('public')->size($file->file_path) : null,
             ];
@@ -87,11 +88,18 @@ class DocumentMapping extends Model
         return $allFiles->map(function ($file) {
             return [
                 'id' => $file->id,
+                'original_name' => $file->original_name,
+                // Backwards compatibility: some views expect 'name'
                 'name' => $file->original_name,
                 'document_name' => $this->document->name,
+                'file_path' => $file->file_path,
                 'url' => Storage::url($file->file_path),
                 'is_active' => (int) $file->is_active,
+                'pending_approval' => $file->pending_approval,
                 'replaced_by_id' => $file->replaced_by_id,
+                'marked_for_deletion_at' => $file->marked_for_deletion_at ? $file->marked_for_deletion_at->toDateTimeString() : null,
+                'file_type' => $file->file_type,
+                'uploaded_by' => $file->uploaded_by,
                 'created_at' => $file->created_at->toDateTimeString(),
                 'size' => Storage::disk('public')->exists($file->file_path) ? Storage::disk('public')->size($file->file_path) : null,
 

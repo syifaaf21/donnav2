@@ -109,9 +109,10 @@ class DocumentController extends Controller
 
         $document->update($validated);
 
-        // Sync plants: delete existing relations and insert new
-        if ($request->has('plants')) {
-            DB::table('document_plant')->where('document_id', $document->id)->delete();
+        // Sync plants: always delete existing and insert new (even if empty to allow clearing all plants)
+        DB::table('document_plant')->where('document_id', $document->id)->delete();
+        
+        if ($request->filled('plants')) {
             $plants = collect($request->input('plants'))->map(fn($p) => strtolower($p))->unique();
             foreach ($plants as $p) {
                 DB::table('document_plant')->insert(['document_id' => $document->id, 'plant' => $p, 'created_at' => now(), 'updated_at' => now()]);

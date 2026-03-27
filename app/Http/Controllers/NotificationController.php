@@ -53,6 +53,26 @@ class NotificationController extends Controller
         // Cek apakah URL terkait masih valid
         $url = $notification->data['url'] ?? '/';
 
+        // Normalize absolute URLs (possibly from outdated APP_URL) to local app-relative paths.
+        if (is_string($url) && preg_match('/^https?:\/\//i', $url)) {
+            $parts = parse_url($url);
+            if (!empty($parts['path'])) {
+                $url = $parts['path'];
+                if (!empty($parts['query'])) {
+                    $url .= '?' . $parts['query'];
+                }
+                if (!empty($parts['fragment'])) {
+                    $url .= '#' . $parts['fragment'];
+                }
+            } else {
+                $url = '/';
+            }
+        }
+
+        if (!is_string($url) || $url === '') {
+            $url = '/';
+        }
+
         // Contoh untuk document: cek apakah document masih ada
         if (isset($notification->data['document_id'])) {
             $documentExists = \App\Models\Document::find($notification->data['document_id']);

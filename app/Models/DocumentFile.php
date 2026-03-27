@@ -26,6 +26,8 @@ class DocumentFile extends Model
         'replaced_by_id',
         'marked_for_deletion_at',
         'pending_approval',
+        'docspace_file_id',
+        'docspace_folder_id',
     ];
 
     protected $table = 'tt_document_files';
@@ -48,5 +50,36 @@ class DocumentFile extends Model
     public function replacedByFile()
     {
         return $this->belongsTo(self::class, 'replaced_by_id');
+    }
+
+    /**
+     * Scope: only active files (not deleted)
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true)
+            ->whereNull('marked_for_deletion_at');
+    }
+
+    public function getExtensionAttribute(): string
+    {
+        return strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->original_name ?? basename($this->file_path);
+    }
+
+    public function getFileTypeAttribute(): string
+    {
+        return match ($this->extension) {
+            'doc', 'docx' => 'word',
+            'xls', 'xlsx' => 'excel',
+            'ppt', 'pptx' => 'powerpoint',
+            'pdf' => 'pdf',
+            'jpg', 'jpeg', 'png', 'gif', 'webp' => 'image',
+            default => 'other',
+        };
     }
 }

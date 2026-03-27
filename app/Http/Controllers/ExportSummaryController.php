@@ -72,6 +72,9 @@ class ExportSummaryController extends Controller
         // P => checklist for need statuses; Q => checklist for close
 
         $startRow = 9;
+        $templateLastStyledRow = 72;
+        $styleFromColumn = 'B';
+        $styleToColumn = 'Q';
 
         $findings = AuditFinding::with(['department', 'subKlausuls', 'auditors', 'auditee', 'findingCategory', 'status', 'audit'])
             ->orderBy('id')
@@ -85,7 +88,21 @@ class ExportSummaryController extends Controller
             'AEO' => $startRow,
         ];
 
-        $writeRow = function ($sheet, $r, AuditFinding $f) {
+        $writeRow = function ($sheet, $r, AuditFinding $f) use ($templateLastStyledRow, $styleFromColumn, $styleToColumn, $startRow) {
+            // Extend style/border beyond template row limit.
+            if ($r > $templateLastStyledRow) {
+                $sourceRange = $styleFromColumn . $templateLastStyledRow . ':' . $styleToColumn . $templateLastStyledRow;
+                $targetRange = $styleFromColumn . $r . ':' . $styleToColumn . $r;
+
+                $sheet->duplicateStyle($sheet->getStyle($sourceRange), $targetRange);
+
+                $sourceRowHeight = $sheet->getRowDimension($templateLastStyledRow)->getRowHeight();
+                $sheet->getRowDimension($r)->setRowHeight($sourceRowHeight);
+            }
+
+            // B: running number (do not depend on pre-filled template numbering)
+            $sheet->setCellValue('B' . $r, ($r - $startRow) + 1);
+
             // C: registration number
             $sheet->setCellValue('C' . $r, $f->registration_number ?? '');
 

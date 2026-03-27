@@ -86,10 +86,18 @@
                 $countDept = count($groupedDocuments);
             @endphp
 
+
             <div id="docList"
                 class="grid gap-6 grid-cols-1 @if ($countDept > 1) md:grid-cols-2 lg:grid-cols-3 @endif">
 
-                @forelse ($groupedDocuments as $department => $mappings)
+                @php
+                    // Filter only departments with at least one document mapping
+                    $filteredDepartments = collect($groupedDocuments)->filter(function($mappings) {
+                        return count($mappings) > 0;
+                    });
+                @endphp
+
+                @forelse ($filteredDepartments as $department => $mappings)
                     <a href="{{ route('document-control.department', ['department' => $department]) }}"
                         class="block p-6 rounded-xl border border-gray-200 shadow-xl hover:shadow-2xl hover:border-sky-300
                        bg-white transition-all duration-200 group department-link">

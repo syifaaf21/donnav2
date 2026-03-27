@@ -29,29 +29,29 @@ class FtppActionNotification extends Notification
             switch ($act) {
                 case 'created':
                     // view auditee action for this finding
-                    $this->url = url('/ftpp/auditee-action/' . ($this->finding->id ?? ''));
+                    $this->url = route('ftpp.auditee-action.create', ['id' => ($this->finding->id ?? '')], false);
                     break;
 
                 case 'assigned':
                 case 'dept_head_checked':
                 case 'auditor_approved':
                     // these actions are managed from the approval list
-                    $this->url = route('approval.index');
+                    $this->url = route('approval.index', [], false);
                     break;
 
                 case 'lead_approved':
                 case 'auditee_revised':
                     // general ftpp listing
-                    $this->url = url('/ftpp');
+                    $this->url = route('ftpp.index', [], false);
                     break;
 
                 case 'auditor_return':
                     // open auditee action edit
-                    $this->url = url('/ftpp/auditee-action/' . ($this->finding->id ?? '') . '/edit');
+                    $this->url = route('ftpp.auditee-action.edit', ['id' => ($this->finding->id ?? '')], false);
                     break;
 
                 default:
-                    $this->url = route('ftpp.index');
+                    $this->url = route('ftpp.index', [], false);
                     break;
             }
         }

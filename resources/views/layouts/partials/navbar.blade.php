@@ -57,7 +57,7 @@
                                     (($notification->data['action'] ?? null) === 'rejected' ||
                                         str_contains(strtolower($notification->data['message'] ?? ''), 'rejected')));
                         @endphp
-                        <a href="{{ $notification->data['url'] ?? '#' }}"
+                        <a href="{{ route('notifications.read', $notification->id) }}"
                             class="notification-item no-underline hover:no-underline flex items-start gap-3 px-4 py-3 {{ $isRedNotif ? 'bg-red-100 hover:bg-red-200' : '' }} hover:bg-gray-50 transition-colors"
                             role="menuitem" data-id="{{ $notification->id }}"
                             data-unread="{{ !$notification->read_at ? 'true' : 'false' }}">

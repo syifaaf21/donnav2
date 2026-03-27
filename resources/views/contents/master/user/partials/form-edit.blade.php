@@ -81,7 +81,6 @@
                     <label class="form-label fw-semibold">Email<span class="text-danger">*</span></label>
                     <input type="email" name="email"
                         class="form-control border-0 shadow-sm rounded-3 @error('email') is-invalid @enderror"
-                        pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                         title="Please enter a valid email address (e.g. user@example.com)"
                         value="{{ old('email', $user->email ?: '') }}" required>
                     @error('email')
@@ -228,46 +227,57 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <!-- Audit Type (shown only when Role = Auditor) -->
+                <!-- Audit Type per Role (shown only when Auditor / Lead Auditor role is selected) -->
                 @php
                     $auditTypes = \App\Models\Audit::select('id', 'name')->get();
-                    $hasAuditorRole =
-                        $user->roles
-                            ->pluck('name')
-                            ->filter(function ($name) {
-                                return stripos($name, 'auditor') !== false;
-                            })
-                            ->count() > 0;
+                    $auditorRolesList = $roles->filter(fn($r) => stripos($r->name, 'auditor') !== false)->values();
                 @endphp
 
-                <div class="col-md-6" id="auditTypeContainerEdit_{{ $user->id }}"
-                    style="display: {{ $hasAuditorRole ? 'block' : 'none' }};">
-                    <label class="form-label fw-semibold">Audit Type<span class="text-danger">*</span></label>
-                    <select name="audit_type_ids[]" id="audit_type_select_edit_{{ $user->id }}"
-                        class="form-select border-0 shadow-sm rounded-3 @error('audit_type_ids') is-invalid @enderror"
-                        multiple {{ $hasAuditorRole ? 'required' : '' }}>
-                        @foreach ($auditTypes as $a)
-                            <option value="{{ $a->id }}"
-                                {{ $user->auditTypes->contains('id', $a->id) ? 'selected' : '' }}>
-                                {{ $a->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('audit_type_ids')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                @foreach ($auditorRolesList as $role)
+                @php
+                    $isRoleActive     = $user->roles->contains('id', $role->id);
+                    $selectedAuditIds = old("audit_type_ids_by_role.{$role->id}", $auditTypeIdsByRole[$role->id] ?? []);
+                @endphp
+                <div class="col-12 audit-type-role-section-edit"
+                    id="auditTypeSection_edit_{{ $user->id }}_{{ $role->id }}"
+                    data-role-id="{{ $role->id }}"
+                    style="display: {{ $isRoleActive ? 'block' : 'none' }};">
+                    <div class="card border shadow-sm rounded-3" style="overflow:visible;">
+                        <div class="card-header d-flex align-items-center gap-2 py-2 px-3"
+                            style="background: linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%); border-bottom:1px solid #bfdbfe;">
+                            <i class="bi bi-clipboard-check text-primary"></i>
+                            <span class="fw-semibold text-dark" style="font-size:.9rem;">
+                                Audit Type &mdash; <span class="text-primary">{{ $role->name }}</span>
+                            </span>
+                            <span class="ms-auto badge text-bg-danger" style="font-size:.7rem;">Required</span>
+                        </div>
+                        <div class="card-body p-3">
+                            <select name="audit_type_ids_by_role[{{ $role->id }}][]"
+                                id="audit_type_select_edit_{{ $user->id }}_{{ $role->id }}"
+                                class="form-select rounded-3 @error('audit_type_ids_by_role.' . $role->id) is-invalid @enderror"
+                                multiple {{ $isRoleActive ? 'required' : '' }}>
+                                @foreach ($auditTypes as $a)
+                                    <option value="{{ $a->id }}"
+                                        {{ in_array($a->id, (array) $selectedAuditIds) ? 'selected' : '' }}>
+                                        {{ $a->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('audit_type_ids_by_role.' . $role->id)
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
+                @endforeach
             </div>
             <script>
                 (function() {
-                    // Delay untuk memastikan TomSelect sudah diinisialisasi
+                    // Delay to ensure TomSelect is fully initialised
                     setTimeout(function() {
                         const roleSelect = document.getElementById('role_select_edit_{{ $user->id }}');
-                        const auditTypeContainer = document.getElementById(
-                            'auditTypeContainerEdit_{{ $user->id }}');
-                        const auditTypeSelect = document.getElementById('audit_type_select_edit_{{ $user->id }}');
                         const emailContainer = document.getElementById('emailContainerEdit_{{ $user->id }}');
-                        const form = roleSelect.closest('form');
+                        const form = roleSelect ? roleSelect.closest('form') : null;
                         const emailInput = emailContainer ? emailContainer.querySelector('input[name="email"]') : null;
 
                         // Password confirmation validation
@@ -296,78 +306,52 @@
                             passwordInput.addEventListener('input', validateConfirmPassword);
                         }
 
-                        if (!roleSelect || !auditTypeContainer || !emailContainer) return;
+                        if (!roleSelect || !emailContainer) return;
+
+                        function getSelectedRoleIdsEdit() {
+                            if (roleSelect.tomselect) {
+                                const val = roleSelect.tomselect.getValue();
+                                return Array.isArray(val) ? val.map(String) : [String(val)].filter(Boolean);
+                            }
+                            return Array.from(roleSelect.selectedOptions).map(o => String(o.value));
+                        }
 
                         function updateFieldVisibility() {
-                            let hasAuditor = false;
-                            let hasDeptHead = false;
-                            const tomSelectInstance = roleSelect.tomselect;
+                            const selectedIds = getSelectedRoleIdsEdit();
 
-                            function checkRoles(selectedValues) {
-                                let foundAuditor = false;
-                                let foundDeptHead = false;
-                                if (Array.isArray(selectedValues)) {
-                                    selectedValues.forEach(val => {
-                                        const option = roleSelect.querySelector(`option[value="${val}"]`);
-                                        if (option) {
-                                            const roleName = (option.textContent || '').toLowerCase();
-                                            if (roleName.includes('auditor')) foundAuditor = true;
-                                            if (roleName.includes('dept head')) foundDeptHead = true;
+                            // Toggle per-role audit type sections for this user
+                            document.querySelectorAll(
+                                '[id^="auditTypeSection_edit_{{ $user->id }}_"]'
+                            ).forEach(function(section) {
+                                const roleId = String(section.dataset.roleId);
+                                const isSelected = selectedIds.includes(roleId);
+                                section.style.display = isSelected ? 'block' : 'none';
+                                const select = section.querySelector('select');
+                                if (select) {
+                                    if (isSelected) {
+                                        select.setAttribute('required', 'required');
+                                        // Init TomSelect lazily only when section is visible
+                                        if (!select.tomselect) {
+                                            new TomSelect(select, {
+                                                create: false,
+                                                maxItems: null,
+                                                plugins: ['remove_button'],
+                                                placeholder: 'Select audit types'
+                                            });
                                         }
-                                    });
-                                } else if (selectedValues) {
-                                    const option = roleSelect.querySelector(`option[value="${selectedValues}"]`);
-                                    if (option) {
-                                        const roleName = (option.textContent || '').toLowerCase();
-                                        if (roleName.includes('auditor')) foundAuditor = true;
-                                        if (roleName.includes('dept head')) foundDeptHead = true;
+                                    } else {
+                                        select.removeAttribute('required');
+                                        if (select.tomselect) select.tomselect.clear();
                                     }
                                 }
-                                return {
-                                    foundAuditor,
-                                    foundDeptHead
-                                };
-                            }
-
-                            if (tomSelectInstance) {
-                                const selectedValues = tomSelectInstance.getValue();
-                                const {
-                                    foundAuditor,
-                                    foundDeptHead
-                                } = checkRoles(selectedValues);
-                                hasAuditor = foundAuditor;
-                                hasDeptHead = foundDeptHead;
-                            } else {
-                                const selectedOptions = Array.from(roleSelect.selectedOptions);
-                                hasAuditor = selectedOptions.some(opt => (opt.text || '').toLowerCase().includes(
-                                    'auditor'));
-                                hasDeptHead = selectedOptions.some(opt => (opt.text || '').toLowerCase().includes(
-                                    'dept head'));
-                            }
-
-                            // Audit Type visibility
-                            if (hasAuditor) {
-                                auditTypeContainer.style.display = 'block';
-                                if (auditTypeSelect) {
-                                    auditTypeSelect.setAttribute('required', 'required');
-                                }
-                            } else {
-                                auditTypeContainer.style.display = 'none';
-                                if (auditTypeSelect) {
-                                    const auditTomSelect = auditTypeSelect.tomselect;
-                                    if (auditTomSelect) {
-                                        auditTomSelect.clear();
-                                    }
-                                    auditTypeSelect.removeAttribute('required');
-                                }
-                            }
+                            });
 
                             // Email: always visible and required
                             emailContainer.style.display = 'block';
                             if (emailInput) emailInput.setAttribute('required', 'required');
                         }
 
-                        // Listen to change event
+                        // Listen to change event (both TomSelect and native)
                         if (roleSelect.tomselect) {
                             roleSelect.tomselect.on('change', updateFieldVisibility);
                         }
@@ -376,43 +360,22 @@
                         // Initial state
                         updateFieldVisibility();
 
-                        // Client-side validation: require email if dept head
+                        // Client-side submit validation
                         if (form) {
                             form.addEventListener('submit', function(e) {
-                                let hasDeptHead = false;
-                                const tomSelectInstance = roleSelect.tomselect;
-                                let selectedValues = [];
-                                if (tomSelectInstance) {
-                                    selectedValues = tomSelectInstance.getValue();
-                                } else {
-                                    selectedValues = Array.from(roleSelect.selectedOptions).map(opt => opt
-                                        .value);
-                                }
-                                if (Array.isArray(selectedValues)) {
-                                    hasDeptHead = selectedValues.some(val => {
-                                        const option = roleSelect.querySelector(
-                                            `option[value="${val}"]`);
-                                        return option && (option.textContent || '').toLowerCase()
-                                            .includes('dept head');
-                                    });
-                                }
-                                if (emailContainer && emailInput) {
-                                    if (!emailInput.value.trim()) {
-                                        e.preventDefault();
-                                        emailInput.classList.add('is-invalid');
-                                        let feedback = emailContainer.querySelector('.invalid-feedback');
-                                        if (!feedback) {
-                                            feedback = document.createElement('div');
-                                            feedback.className = 'invalid-feedback';
-                                            emailInput.parentNode.appendChild(feedback);
-                                        }
-                                        feedback.textContent = 'Email is required.';
-                                        emailInput.focus();
+                                if (emailContainer && emailInput && !emailInput.value.trim()) {
+                                    e.preventDefault();
+                                    emailInput.classList.add('is-invalid');
+                                    let feedback = emailContainer.querySelector('.invalid-feedback');
+                                    if (!feedback) {
+                                        feedback = document.createElement('div');
+                                        feedback.className = 'invalid-feedback';
+                                        emailInput.parentNode.appendChild(feedback);
                                     }
+                                    feedback.textContent = 'Email is required.';
+                                    emailInput.focus();
                                 }
-                                // Confirm password match validation on submit
-                                if (confirmInput && passwordInput && confirmInput.value !== passwordInput
-                                    .value) {
+                                if (confirmInput && passwordInput && confirmInput.value !== passwordInput.value) {
                                     e.preventDefault();
                                     confirmInput.classList.add('is-invalid');
                                     if (confirmFeedback) confirmFeedback.style.display = 'block';
