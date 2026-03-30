@@ -404,16 +404,6 @@
                                                             @php
                                                                 $currentRole = auth()->user()->roles->pluck('name')->first();
                                                             @endphp
-                                                            @if (in_array($currentRole, ['Admin', 'Super Admin']) && $mapping->status->name === 'Need Review')
-                                                                <button type="button"
-                                                                    class="action-btn btn-delete-active-files inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ms-1"
-                                                                    data-docid="{{ $mapping->id }}"
-                                                                    data-files='@json($mapping->files_for_modal_all)'
-                                                                    title="Delete Active Files"
-                                                                    onclick="openArchiveFilesModal(this)">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
-                                                            @endif
                                                         @endif
 
                                                     {{-- ADMIN ACTIONS --}}
@@ -1659,9 +1649,26 @@
                 });
             }
 
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('modal-archive-files'));
+            // Hide modal revise jika sedang terbuka
+            const reviseModal = document.getElementById('modal-revise');
+            let wasReviseOpen = false;
+            if (reviseModal && !reviseModal.classList.contains('hidden')) {
+                wasReviseOpen = true;
+                reviseModal.classList.add('hidden');
+            }
+
+            // Show modal archive
+            const archiveModalEl = document.getElementById('modal-archive-files');
+            const modal = new bootstrap.Modal(archiveModalEl);
             modal.show();
+
+            // Ketika modal archive ditutup, tampilkan kembali modal revise jika sebelumnya terbuka
+            if (wasReviseOpen) {
+                archiveModalEl.addEventListener('hidden.bs.modal', function handler() {
+                    reviseModal.classList.remove('hidden');
+                    archiveModalEl.removeEventListener('hidden.bs.modal', handler);
+                });
+            }
 
             // Helper to set archive value as hidden input
             function setArchiveHiddenInput(val) {
