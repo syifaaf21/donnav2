@@ -276,7 +276,7 @@
                                                 </td>
                                             @endif
                                             <td class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
-                                                {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
+                                                {{ $mapping->status?->name === 'Uncomplete' ? '-' : ucwords(strtolower($mapping->user->name ?? '-')) }}
                                             </td>
                                             {{-- <td class="px-2 py-3 text-xs border-r border-gray-200">
                                                 {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
