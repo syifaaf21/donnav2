@@ -387,7 +387,9 @@
                                                         });
                                                         $canShowReviseButton =
                                                             $mapping->status->name !== 'Need Review' ||
-                                                            $hasPendingApprovalFile;
+                                                            $hasPendingApprovalFile ||
+                                                            ($mapping->status->name === 'Need Review' && $isAdminRole);
+
                                                     @endphp
                                                         @if (!$approvalMode && $canShowReviseButton)
                                                             <button type="button"
@@ -401,10 +403,19 @@
                                                                 onclick="openReviseModal(this)" title="Upload">
                                                                 <i class="bi bi-upload"></i>
                                                             </button>
-                                                            @php
-                                                                $currentRole = auth()->user()->roles->pluck('name')->first();
-                                                            @endphp
                                                         @endif
+
+                                                    {{-- DELETE ACTIVE FILES BUTTON (Admin/Super Admin, Need Review) --}}
+                                                    @if (!$approvalMode && $isAdminRole && $mapping->status->name === 'Need Review')
+                                                        <button type="button"
+                                                            class="action-btn btn-delete-active-files inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                            data-docid="{{ $mapping->id }}"
+                                                            data-files='@json($mapping->files_for_modal_all)'
+                                                            title="Delete Active Files"
+                                                            onclick="openArchiveFilesModal(this); event.stopPropagation(); return false;">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    @endif
 
                                                     {{-- ADMIN ACTIONS --}}
                                                     @if ($approvalMode && in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))

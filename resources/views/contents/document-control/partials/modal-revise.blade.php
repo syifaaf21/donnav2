@@ -48,16 +48,7 @@
                 @php
                     $currentRole = auth()->user()->roles->pluck('name')->first();
                 @endphp
-                @if (in_array($currentRole, ['Admin', 'Super Admin']) && isset($mapping) && $mapping->status->name === 'Need Review')
-                    <button type="button"
-                        class="action-btn btn-delete-active-files inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ms-1"
-                        data-docid="{{ $mapping->id }}"
-                        data-files='@json($mapping->files_for_modal_all)'
-                        title="Delete Active Files"
-                        onclick="openArchiveFilesModal(this); event.stopPropagation(); return false;">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                @endif
+                {{-- Tombol delete active files dipindah ke kolom Actions tabel utama --}}
             </div>
             <div id="reviseFilesContainer" class="mb-4"></div>
 
