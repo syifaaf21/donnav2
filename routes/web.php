@@ -48,8 +48,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn() => redirect()->route('login'));
 
 // Registration
-Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('register', [RegisterController::class, 'register']);
+// Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+// Route::post('register', [RegisterController::class, 'register']);
 
 // Login & Logout
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

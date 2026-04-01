@@ -63,9 +63,9 @@
                 <a href="https://wa.me/081399949961" class="hover:text-blue-700 transition font-medium">
                     Forgot password?
                 </a>
-                <a href="{{ route('register') }}" class="hover:text-blue-700 transition font-medium">
+                {{-- <a href="{{ route('register') }}" class="hover:text-blue-700 transition font-medium">
                     Create account
-                </a>
+                </a> --}}
             </div>
 
             <button type="submit"
