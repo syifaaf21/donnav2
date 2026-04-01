@@ -389,6 +389,25 @@
         </div>
 
         <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
+            {{-- Permission: akses menu utama --}}
+            <div class="w-100 mb-3">
+                <label class="form-label fw-semibold mb-2">Menu Permissions <span class="text-danger">*</span></label>
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_doc_control_edit_{{ $user->id }}" value="document_control" {{ in_array('document_control', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="perm_doc_control_edit_{{ $user->id }}">Document Control</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_doc_review_edit_{{ $user->id }}" value="document_review" {{ in_array('document_review', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="perm_doc_review_edit_{{ $user->id }}">Document Review</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_ftpp_edit_{{ $user->id }}" value="ftpp" {{ in_array('ftpp', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="perm_ftpp_edit_{{ $user->id }}">FTPP</label>
+                    </div>
+                </div>
+                <small class="text-muted fst-italic d-block mt-1">Select which main menus this user can access.</small>
+            </div>
             <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal">
                 Cancel
             </button>

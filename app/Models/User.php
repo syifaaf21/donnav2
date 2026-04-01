@@ -23,6 +23,7 @@ class User extends Authenticatable
         'npk',
         'email',
         'password',
+        'permissions',
     ];
 
     /**
@@ -41,7 +42,8 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime'
+        'email_verified_at' => 'datetime',
+        'permissions' => 'array',
     ];
 
     // Many-to-many relation: users <-> roles (pivot: tt_user_role)
