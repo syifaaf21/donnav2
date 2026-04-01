@@ -446,7 +446,6 @@
                             <p class="text-muted mb-0" style="font-size:.75rem;">Manage Manufacturing docs</p>
                         </div>
                     </label>
-
                     {{-- FTPP --}}
                     <label class="perm-card-edit-{{ $user->id }} d-flex flex-column gap-2 p-3 rounded-3 border"
                         style="cursor: pointer; transition: all .15s; border-color: #dee2e6 !important;">
@@ -467,10 +466,8 @@
                             <p class="text-muted mb-0" style="font-size:.75rem;">Managae Audit Findings</p>
                         </div>
                     </label>
-
                 </div>
             </div>
-
 
             <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal">
                 Cancel
