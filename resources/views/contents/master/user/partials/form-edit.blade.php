@@ -234,41 +234,43 @@
                 @endphp
 
                 @foreach ($auditorRolesList as $role)
-                @php
-                    $isRoleActive     = $user->roles->contains('id', $role->id);
-                    $selectedAuditIds = old("audit_type_ids_by_role.{$role->id}", $auditTypeIdsByRole[$role->id] ?? []);
-                @endphp
-                <div class="col-12 audit-type-role-section-edit"
-                    id="auditTypeSection_edit_{{ $user->id }}_{{ $role->id }}"
-                    data-role-id="{{ $role->id }}"
-                    style="display: {{ $isRoleActive ? 'block' : 'none' }};">
-                    <div class="card border shadow-sm rounded-3" style="overflow:visible;">
-                        <div class="card-header d-flex align-items-center gap-2 py-2 px-3"
-                            style="background: linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%); border-bottom:1px solid #bfdbfe;">
-                            <i class="bi bi-clipboard-check text-primary"></i>
-                            <span class="fw-semibold text-dark" style="font-size:.9rem;">
-                                Audit Type &mdash; <span class="text-primary">{{ $role->name }}</span>
-                            </span>
-                            <span class="ms-auto badge text-bg-danger" style="font-size:.7rem;">Required</span>
-                        </div>
-                        <div class="card-body p-3">
-                            <select name="audit_type_ids_by_role[{{ $role->id }}][]"
-                                id="audit_type_select_edit_{{ $user->id }}_{{ $role->id }}"
-                                class="form-select rounded-3 @error('audit_type_ids_by_role.' . $role->id) is-invalid @enderror"
-                                multiple {{ $isRoleActive ? 'required' : '' }}>
-                                @foreach ($auditTypes as $a)
-                                    <option value="{{ $a->id }}"
-                                        {{ in_array($a->id, (array) $selectedAuditIds) ? 'selected' : '' }}>
-                                        {{ $a->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('audit_type_ids_by_role.' . $role->id)
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                    @php
+                        $isRoleActive = $user->roles->contains('id', $role->id);
+                        $selectedAuditIds = old(
+                            "audit_type_ids_by_role.{$role->id}",
+                            $auditTypeIdsByRole[$role->id] ?? [],
+                        );
+                    @endphp
+                    <div class="col-12 audit-type-role-section-edit"
+                        id="auditTypeSection_edit_{{ $user->id }}_{{ $role->id }}"
+                        data-role-id="{{ $role->id }}" style="display: {{ $isRoleActive ? 'block' : 'none' }};">
+                        <div class="card border shadow-sm rounded-3" style="overflow:visible;">
+                            <div class="card-header d-flex align-items-center gap-2 py-2 px-3"
+                                style="background: linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%); border-bottom:1px solid #bfdbfe;">
+                                <i class="bi bi-clipboard-check text-primary"></i>
+                                <span class="fw-semibold text-dark" style="font-size:.9rem;">
+                                    Audit Type &mdash; <span class="text-primary">{{ $role->name }}</span>
+                                </span>
+                                <span class="ms-auto badge text-bg-danger" style="font-size:.7rem;">Required</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <select name="audit_type_ids_by_role[{{ $role->id }}][]"
+                                    id="audit_type_select_edit_{{ $user->id }}_{{ $role->id }}"
+                                    class="form-select rounded-3 @error('audit_type_ids_by_role.' . $role->id) is-invalid @enderror"
+                                    multiple {{ $isRoleActive ? 'required' : '' }}>
+                                    @foreach ($auditTypes as $a)
+                                        <option value="{{ $a->id }}"
+                                            {{ in_array($a->id, (array) $selectedAuditIds) ? 'selected' : '' }}>
+                                            {{ $a->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('audit_type_ids_by_role.' . $role->id)
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endforeach
             </div>
             <script>
@@ -375,7 +377,8 @@
                                     feedback.textContent = 'Email is required.';
                                     emailInput.focus();
                                 }
-                                if (confirmInput && passwordInput && confirmInput.value !== passwordInput.value) {
+                                if (confirmInput && passwordInput && confirmInput.value !== passwordInput
+                                    .value) {
                                     e.preventDefault();
                                     confirmInput.classList.add('is-invalid');
                                     if (confirmFeedback) confirmFeedback.style.display = 'block';
@@ -390,24 +393,85 @@
 
         <div class="modal-footer border-0 p-4 justify-content-between bg-white rounded-bottom-4">
             {{-- Permission: akses menu utama --}}
+            {{-- Permission: akses menu utama --}}
             <div class="w-100 mb-3">
-                <label class="form-label fw-semibold mb-2">Menu Permissions <span class="text-danger">*</span></label>
-                <div class="d-flex flex-wrap gap-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_doc_control_edit_{{ $user->id }}" value="document_control" {{ in_array('document_control', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="perm_doc_control_edit_{{ $user->id }}">Document Control</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_doc_review_edit_{{ $user->id }}" value="document_review" {{ in_array('document_review', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="perm_doc_review_edit_{{ $user->id }}">Document Review</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="permissions[]" id="perm_ftpp_edit_{{ $user->id }}" value="ftpp" {{ in_array('ftpp', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="perm_ftpp_edit_{{ $user->id }}">FTPP</label>
-                    </div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <label class="form-label fw-semibold mb-0">Menu Permissions</label>
+                    <span class="badge text-bg-danger" style="font-size: .7rem;">Required</span>
                 </div>
-                <small class="text-muted fst-italic d-block mt-1">Select which main menus this user can access.</small>
+                <p class="text-muted" style="font-size: .8rem; margin-bottom: .75rem;">
+                    Select which main menus this user can access.
+                </p>
+
+                <div class="d-grid gap-2" style="grid-template-columns: repeat(3, 1fr); display: grid;">
+
+                    {{-- Document Control --}}
+                    <label class="perm-card-edit-{{ $user->id }} d-flex flex-column gap-2 p-3 rounded-3 border"
+                        style="cursor: pointer; transition: all .15s; border-color: #dee2e6 !important;">
+                        <input class="d-none perm-checkbox-edit-{{ $user->id }}" type="checkbox"
+                            name="permissions[]" value="document_control"
+                            {{ in_array('document_control', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="rounded-2 d-flex align-items-center justify-content-center"
+                                style="width:32px;height:32px;background:#eff6ff;">
+                                <i class="bi bi-file-earmark-text text-primary" style="font-size:15px;"></i>
+                            </div>
+                            <span
+                                class="perm-check-badge rounded-circle border d-flex align-items-center justify-content-center"
+                                style="width:18px;height:18px;border-color:#dee2e6 !important;transition:all .15s;"></span>
+                        </div>
+                        <div>
+                            <p class="fw-semibold mb-0" style="font-size:.85rem;">Document Control</p>
+                            <p class="text-muted mb-0" style="font-size:.75rem;">Manage Non-manufacturing docs</p>
+                        </div>
+                    </label>
+
+                    {{-- Document Review --}}
+                    <label class="perm-card-edit-{{ $user->id }} d-flex flex-column gap-2 p-3 rounded-3 border"
+                        style="cursor: pointer; transition: all .15s; border-color: #dee2e6 !important;">
+                        <input class="d-none perm-checkbox-edit-{{ $user->id }}" type="checkbox"
+                            name="permissions[]" value="document_review"
+                            {{ in_array('document_review', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="rounded-2 d-flex align-items-center justify-content-center"
+                                style="width:32px;height:32px;background:#f0fdf4;">
+                                <i class="bi bi-patch-check text-success" style="font-size:15px;"></i>
+                            </div>
+                            <span
+                                class="perm-check-badge rounded-circle border d-flex align-items-center justify-content-center"
+                                style="width:18px;height:18px;border-color:#dee2e6 !important;transition:all .15s;"></span>
+                        </div>
+                        <div>
+                            <p class="fw-semibold mb-0" style="font-size:.85rem;">Document Review</p>
+                            <p class="text-muted mb-0" style="font-size:.75rem;">Manage Manufacturing docs</p>
+                        </div>
+                    </label>
+
+                    {{-- FTPP --}}
+                    <label class="perm-card-edit-{{ $user->id }} d-flex flex-column gap-2 p-3 rounded-3 border"
+                        style="cursor: pointer; transition: all .15s; border-color: #dee2e6 !important;">
+                        <input class="d-none perm-checkbox-edit-{{ $user->id }}" type="checkbox"
+                            name="permissions[]" value="ftpp"
+                            {{ in_array('ftpp', (array) old('permissions', $user->permissions ?? [])) ? 'checked' : '' }}>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="rounded-2 d-flex align-items-center justify-content-center"
+                                style="width:32px;height:32px;background:#fffbeb;">
+                                <i class="bi bi-star text-warning" style="font-size:15px;"></i>
+                            </div>
+                            <span
+                                class="perm-check-badge rounded-circle border d-flex align-items-center justify-content-center"
+                                style="width:18px;height:18px;border-color:#dee2e6 !important;transition:all .15s;"></span>
+                        </div>
+                        <div>
+                            <p class="fw-semibold mb-0" style="font-size:.85rem;">FTPP</p>
+                            <p class="text-muted mb-0" style="font-size:.75rem;">Managae Audit Findings</p>
+                        </div>
+                    </label>
+
+                </div>
             </div>
+
+
             <button type="button" class="btn btn-link text-secondary fw-semibold px-4 py-2" data-bs-dismiss="modal">
                 Cancel
             </button>
@@ -418,3 +482,45 @@
         </div>
     </div>
 </form>
+<style>
+    .perm-card.active {
+        background-color: #eff6ff !important;
+        border-color: #3b82f6 !important;
+    }
+
+    .perm-card.active .perm-check-badge {
+        background-color: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+    }
+</style>
+<script>
+    (function() {
+        const uid = '{{ $user->id }}';
+        const cards = document.querySelectorAll('.perm-card-edit-' + uid);
+
+        cards.forEach(function(card) {
+            const cb = card.querySelector('.perm-checkbox-edit-' + uid);
+            const badge = card.querySelector('.perm-check-badge');
+
+            function syncState() {
+                if (cb.checked) {
+                    card.style.backgroundColor = '#eff6ff';
+                    card.style.borderColor = '#3b82f6';
+                    badge.style.backgroundColor = '#3b82f6';
+                    badge.style.borderColor = '#3b82f6';
+                    badge.innerHTML =
+                        '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 3.5-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                } else {
+                    card.style.backgroundColor = '';
+                    card.style.borderColor = '#dee2e6';
+                    badge.style.backgroundColor = '';
+                    badge.style.borderColor = '#dee2e6';
+                    badge.innerHTML = '';
+                }
+            }
+
+            cb.addEventListener('change', syncState);
+            syncState(); // sync state awal dari checked/unchecked
+        });
+    })();
+</script>
