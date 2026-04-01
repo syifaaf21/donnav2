@@ -216,6 +216,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
         Route::get('/', [EditorController::class, 'index'])->name('index');
         Route::get('/auth-token', [EditorController::class, 'authToken'])->name('token');  // ← HARUS sebelum /{file}
         Route::get('/{file}', [EditorController::class, 'editor'])->name('show');
+        Route::get('/{file}/onlyoffice-url', [EditorController::class, 'onlyofficeUrl'])->name('onlyoffice-url');
         Route::get('/{file}/sync-status', [EditorController::class, 'syncStatus'])->name('sync-status');
         Route::post('/{file}/sync', [EditorController::class, 'sync'])->name('sync');
         Route::post('/{file}/reupload', [EditorController::class, 'reupload'])->name('reupload');

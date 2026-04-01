@@ -9,8 +9,31 @@ use App\Notifications\DocumentActionNotification;
 use App\Services\DocSpaceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 class EditorController extends Controller
 {
+    // Endpoint: /editor/{file}/onlyoffice-url
+    public function onlyofficeUrl(DocumentFile $file)
+    {
+        abort_if(!$file->is_active, 404);
+        if (!$file->docspace_file_id) {
+            try {
+                $result = $this->docSpace->uploadFile(
+                    $file->file_path,
+                    $file->display_name
+                );
+                $file->update([
+                    'docspace_file_id'   => $result['file_id'],
+                    'docspace_folder_id' => $result['folder_id'],
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Gagal upload ke DocSpace: ' . $e->getMessage()], 500);
+            }
+        }
+        $docspaceUrl  = rtrim(config('onlyoffice.docspace_url'), '/');
+        $docEditorUrl = "{$docspaceUrl}/doceditor?fileId={$file->docspace_file_id}&editorType=desktop&editorGoBack=false&action=view";
+        return response()->json(['url' => $docEditorUrl]);
+    }
     public function __construct(protected DocSpaceService $docSpace) {}
 
     public function index(Request $request)
@@ -84,8 +107,14 @@ class EditorController extends Controller
             }
         }
 
+
         $docspaceUrl  = rtrim(config('onlyoffice.docspace_url'), '/');
+        // Cek apakah request preview (readonly)
+        $isViewOnly = request()->query('view') == '1';
         $docEditorUrl = "{$docspaceUrl}/doceditor?fileId={$file->docspace_file_id}&editorType=desktop&editorGoBack=false";
+        if ($isViewOnly) {
+            $docEditorUrl .= "&action=view";
+        }
 
         try {
             $token    = $this->docSpace->getToken();

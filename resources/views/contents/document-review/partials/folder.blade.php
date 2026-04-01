@@ -1116,6 +1116,22 @@
                         currentFileType = sourceFileType;
                         console.log('File type detected:', sourceFileType);
 
+                        // Tambahan: Jika file Excel (xls, xlsx, xlsm), buka OnlyOffice preview (readonly)
+                        if (sourceFileType === 'excel' && currentFileId) {
+                            // Preview Excel: fetch OnlyOffice URL readonly dari endpoint baru
+                            fetch(`/editor/${currentFileId}/onlyoffice-url`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.url) {
+                                        window.open(data.url, '_blank');
+                                    } else {
+                                        alert('Gagal mendapatkan URL OnlyOffice.');
+                                    }
+                                })
+                                .catch(() => alert('Gagal menghubungi server OnlyOffice.'));
+                            return;
+                        }
+
                         // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
