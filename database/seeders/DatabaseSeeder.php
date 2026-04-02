@@ -39,6 +39,8 @@ class DatabaseSeeder extends Seeder
         AddLeadAuditorRoleSeeder::class,
         AddDraftStatusSeeder::class,
         AddDraftFindingStatusSeeder::class,
+        AddSupervisorDeptHeadStatusesSeeder::class,
+        AdminSuperAdminPermissionSeeder::class,
         ]);
 
     }
