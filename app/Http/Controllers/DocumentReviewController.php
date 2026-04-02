@@ -1338,6 +1338,21 @@ class DocumentReviewController extends Controller
                         departmentName: $mapping->department?->name,
                     ));
                 }
+            } elseif ($isDeptHead) {
+                $admins = User::whereHas(
+                    'roles',
+                    fn($q) => $q->whereRaw('LOWER(name) IN (?, ?)', ['admin', 'super admin'])
+                )->get();
+
+                if ($admins->isNotEmpty()) {
+                    Notification::send($admins, new DocumentActionNotification(
+                        action: 'revised',
+                        byUser: $user->name,
+                        documentNumber: $mapping->document_number,
+                        url: route('document-review.approval'),
+                        departmentName: $mapping->department?->name,
+                    ));
+                }
             }
 
             return redirect()->route('document-review.approval')
@@ -1373,15 +1388,11 @@ class DocumentReviewController extends Controller
         // File dengan pending_approval = false → tetap aktif
         // (contoh: revisi setelah status Rejected)
 
-        // ===== Kirim Notifikasi seperti sebelumnya =====
+        // ===== Admin/Super Admin approval: notify all users in the same department (any role) =====
         $targetUsers = User::whereHas(
             'departments',
             fn($q) =>
             $q->where('tm_departments.id', $mapping->department_id)
-        )->whereDoesntHave(
-            'roles',
-            fn($q) =>
-            $q->whereIn('name', ['Admin', 'Super Admin'])
         )->get();
 
         $plant = $this->getPlantFromMapping($mapping);

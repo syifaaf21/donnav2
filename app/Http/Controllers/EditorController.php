@@ -270,34 +270,59 @@ class EditorController extends Controller
                         $mappingPayload['status_id'] = $targetStatus->id;
                     }
 
+                    $previousStatusId = (int) $mapping->status_id;
                     $mapping->update($mappingPayload);
 
-                     // --- SEND NOTIFICATION TO ADMINS ---
-        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
+                    $statusChangedToNeedCheckBySupervisor = isset($mappingPayload['status_id'])
+                        && (int) $mappingPayload['status_id'] !== $previousStatusId
+                        && strtolower(trim((string) optional($targetStatus)->name)) === 'need check by supervisor';
 
-        if (!in_array($userRole, ['admin', 'super admin'])) {
+                    // Leader edit-online revision that changes status to Need Check by Supervisor:
+                    // notify supervisors in the same department (not admins).
+                    if ($isLeaderOfMappingDepartment && $statusChangedToNeedCheckBySupervisor) {
+                        $supervisors = User::whereHas(
+                            'roles',
+                            fn($q) => $q->whereRaw('LOWER(name) = ?', ['supervisor'])
+                        )
+                            ->whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+                            ->where('id', '!=', $uploader?->id)
+                            ->get();
 
-            $admins = User::whereHas(
-                'roles',
-                fn($q) =>
-                $q->whereIn('name', ['Admin', 'Super Admin'])
-            )->get();
+                        foreach ($supervisors as $supervisor) {
+                            $supervisor->notify(new DocumentActionNotification(
+                                action: 'revised',
+                                byUser: $uploader->name,
+                                documentNumber: $mapping->document_number,
+                                documentName: null,
+                                url: route('document-review.approval'),
+                                departmentName: $mapping->department?->name
+                            ));
+                        }
+                    } else {
+                        // Keep existing notification behavior for other non-admin online revisions.
+                        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
 
-            foreach ($admins as $admin) {
+                        if (!in_array($userRole, ['admin', 'super admin'], true)) {
+                            $admins = User::whereHas(
+                                'roles',
+                                fn($q) => $q->whereIn('name', ['Admin', 'Super Admin'])
+                            )->get();
 
-                $admin->notify(new DocumentActionNotification(
-                    action: 'revised',
-                    byUser: $uploader->name,
-                    documentNumber: $mapping->document_number,
-                    documentName: null,
-                    url: route('document-review.approval', [
-                        'plant' => $this->getPlantFromMapping($mapping),
-                        'docCode' => base64_encode($mapping->document->code ?? ''),
-                    ]),
-                    departmentName: $mapping->department?->name
-                ));
-            }
-        }
+                            foreach ($admins as $admin) {
+                                $admin->notify(new DocumentActionNotification(
+                                    action: 'revised',
+                                    byUser: $uploader->name,
+                                    documentNumber: $mapping->document_number,
+                                    documentName: null,
+                                    url: route('document-review.approval', [
+                                        'plant' => $this->getPlantFromMapping($mapping),
+                                        'docCode' => base64_encode($mapping->document->code ?? ''),
+                                    ]),
+                                    departmentName: $mapping->department?->name
+                                ));
+                            }
+                        }
+                    }
 
                 }
             }
