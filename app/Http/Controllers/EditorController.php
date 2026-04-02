@@ -20,6 +20,12 @@ class EditorController extends Controller
             return false;
         }
 
+        $roleNames = $user->roles->pluck('name')->map(fn($role) => strtolower(trim((string) $role)));
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin'], true));
+        if ($isAdmin) {
+            return true;
+        }
+
         $mapping = $file->mapping()->first();
         if (!$mapping || !$mapping->department_id) {
             // If no department-bound mapping exists, keep access allowed.
