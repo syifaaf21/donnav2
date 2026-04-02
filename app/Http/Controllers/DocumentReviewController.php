@@ -7,6 +7,8 @@ use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, 
 use App\Services\{WhatsAppService, DocumentConverterService, DocSpaceService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB, Notification, Storage, Log};
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 class DocumentReviewController extends Controller
 {
@@ -1006,6 +1008,14 @@ class DocumentReviewController extends Controller
 
             $filePath = $file->file_path;
             $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $requestedOrientation = strtolower((string) $request->input('orientation', ''));
+            
+            // Default to landscape for Excel files if no orientation specified
+            if (in_array($extension, ['xlsx', 'xls', 'xlsm'], true) && empty($requestedOrientation)) {
+                $requestedOrientation = 'landscape';
+            }
+            
+            $applyOrientation = in_array($requestedOrientation, ['portrait', 'landscape'], true);
 
             // ✅ TARUH DI SINI
             \Log::info('Download attempt', [
@@ -1102,9 +1112,47 @@ class DocumentReviewController extends Controller
                 try {
                     // Upload file temporary ke OnlyOffice untuk di-convert
                     $fileName = $file->original_name ?? "document_{$file->id}";
+                    $pathForUpload = $filePath;
+                    $temporaryUploadPath = null;
+
+                    // For Excel files, honor requested orientation by preparing a temporary oriented workbook.
+                    if ($applyOrientation && in_array($extension, ['xlsx', 'xls', 'xlsm'], true)) {
+                        try {
+                            $orientationValue = $requestedOrientation === 'landscape'
+                                ? PageSetup::ORIENTATION_LANDSCAPE
+                                : PageSetup::ORIENTATION_PORTRAIT;
+
+                            $normalizedFilePath = ltrim(str_replace('\\', '/', $filePath), '/');
+                            $sourceAbsolutePath = $storageDisk === 'public'
+                                ? storage_path('app/public/' . $normalizedFilePath)
+                                : storage_path('app/' . $normalizedFilePath);
+                            $spreadsheet = IOFactory::load($sourceAbsolutePath);
+
+                            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                                $sheet->getPageSetup()->setOrientation($orientationValue);
+                            }
+
+                            $tempFilename = 'tmp/oriented_' . $file->id . '_' . now()->format('YmdHis') . '.xlsx';
+                            $tempAbsolutePath = storage_path('app/public/' . $tempFilename);
+
+                            if (!is_dir(dirname($tempAbsolutePath))) {
+                                mkdir(dirname($tempAbsolutePath), 0775, true);
+                            }
+
+                            IOFactory::createWriter($spreadsheet, 'Xlsx')->save($tempAbsolutePath);
+                            $pathForUpload = $tempFilename;
+                            $temporaryUploadPath = $tempFilename;
+                        } catch (\Throwable $orientationError) {
+                            \Log::warning('Failed to apply requested print orientation, fallback to original file.', [
+                                'file_id' => $file->id,
+                                'requested_orientation' => $requestedOrientation,
+                                'error' => $orientationError->getMessage(),
+                            ]);
+                        }
+                    }
 
                     $docSpaceService = app(\App\Services\DocSpaceService::class);
-                    $uploadedFileInfo = $docSpaceService->uploadFile($filePath, $fileName);
+                    $uploadedFileInfo = $docSpaceService->uploadFile($pathForUpload, $fileName);
 
                     $docspaceFileId = $uploadedFileInfo['file_id'];
 
@@ -1133,6 +1181,10 @@ class DocumentReviewController extends Controller
                             \Log::info("Temporary OnlyOffice file deleted: {$docspaceFileId}");
                         } catch (\Exception $e) {
                             \Log::warning("Failed to delete temporary OnlyOffice file: " . $e->getMessage());
+                        }
+
+                        if ($temporaryUploadPath && Storage::disk('public')->exists($temporaryUploadPath)) {
+                            Storage::disk('public')->delete($temporaryUploadPath);
                         }
                     }
                 } catch (\Exception $e) {

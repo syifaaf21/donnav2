@@ -544,14 +544,20 @@
                                                     ? auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))->toArray()
                                                     : [];
                                                 $isSupervisorRole = in_array('supervisor', $roleNames, true);
+                                                $isDeptHeadRole = in_array('dept head', $roleNames, true);
                                                 $canShowEditOnline = !$isSupervisorRole;
                                                 // Only admin or users allowed by canEditDocument can edit
                                                 $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
+                                                // Check if Dept Head can download PDF when their department matches doc's department
+                                                $userDeptIds = auth()->check() ? auth()->user()->departments()->pluck('tm_departments.id')->toArray() : [];
+                                                $canDownloadPdfAsDeptHead = $isDeptHeadRole && $doc->department_id && in_array($doc->department_id, $userDeptIds, true);
+                                                $showDownloadPdf = ($status === 'approved') || ($isAdmin);
+
                                                 // Approval actions are handled in dedicated approval queue page.
                                                 $showApproveReject = false;
 
-                                                $showMenu = $showEdit || $showDownloadReport;
+                                                $showMenu = $showEdit || $showDownloadReport || $showDownloadPdf;
                                             @endphp
                                             @if ($showMenu)
                                                 <div class="relative inline-block text-left">
@@ -620,8 +626,8 @@
                                                             </button>
                                                         @endif
 
-                                                        {{-- Download as PDF (with watermark) - only when approved --}}
-                                                        @if ($status === 'approved')
+                                                        {{-- Download as PDF (with watermark) - only when approved or Dept Head of same department --}}
+                                                        @if ($showDownloadPdf)
                                                             <button type="button"
                                                                 class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-purple-600 download-pdf-btn"
                                                                 data-doc-id="{{ $doc->id }}"
@@ -686,6 +692,10 @@
                                 class="btn btn-outline-info btn-sm d-none">
                                 <i class="bi bi-arrows-fullscreen"></i> View Full
                             </a>
+                            <select id="printOrientation" class="form-select form-select-sm d-none" style="width: 125px;">
+                                <option value="portrait">Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
                             <a id="printFileBtn" href="#" class="btn btn-outline-secondary btn-sm d-none">
                                 <i class="bi bi-printer"></i> Print
                             </a>
@@ -1230,11 +1240,14 @@
                         const isPdf = currentFileType === 'pdf';
                         const canPrint = isPdf && docStatus === 'approved';
                         const canDownload = isPdf && (docStatus === 'approved' || isAdminFlag);
+                        const printOrientationSelect = document.getElementById('printOrientation');
 
                         if (canPrint) {
                             printBtnToggle.classList.remove('d-none');
+                            printOrientationSelect?.classList.remove('d-none');
                         } else {
                             printBtnToggle.classList.add('d-none');
+                            printOrientationSelect?.classList.add('d-none');
                         }
 
                         if (canDownload) {
@@ -1296,9 +1309,11 @@
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                        const printOrientationSelect = document.getElementById('printOrientation');
                         printBtnToggle.classList.add('d-none');
                         downloadBtnToggle.classList.add('d-none');
                         viewFullBtnToggle.classList.add('d-none');
+                        printOrientationSelect?.classList.add('d-none');
                     });
 
                 // === PRINT BUTTON (tidak log download) ===
@@ -1306,22 +1321,54 @@
 
                 printFileBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const frame = document.getElementById('filePreviewFrame');
-                    const fileUrl = frame.src;
-
-                    if (!fileUrl) {
-                        alert('No file loaded.');
+                    if (!currentDocId) {
+                        alert('No document loaded.');
                         return;
                     }
 
-                    // Langsung print tanpa log
-                    frame.focus();
-                    try {
-                        frame.contentWindow.print();
-                    } catch (err) {
-                        console.error('Unable to auto-print:', err);
-                        window.print();
+                    const orientationSelect = document.getElementById('printOrientation');
+                    const orientation = orientationSelect?.value === 'landscape' ? 'landscape' : 'portrait';
+
+                    const printUrl = new URL(`/document-review/${currentDocId}/download-as-pdf`, window.location.origin);
+                    printUrl.searchParams.set('inline', '1');
+                    printUrl.searchParams.set('orientation', orientation);
+                    if (currentFileId) {
+                        printUrl.searchParams.set('file_id', String(currentFileId));
                     }
+
+                    const printWindow = window.open('', '_blank', 'width=980,height=720');
+                                        if (!printWindow) {
+                        alert('Popup blocked. Please allow popups to print.');
+                                                return;
+                                        }
+
+                    const escapedUrl = printUrl.toString().replace(/&/g, '&amp;');
+                                        const html = `<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Print Preview</title>
+    <style>
+        html, body { margin: 0; height: 100%; }
+        iframe { border: 0; width: 100%; height: 100vh; }
+    </style>
+</head>
+<body>
+    <iframe src="${escapedUrl}"></iframe>
+    <script>
+        window.onload = function () {
+            setTimeout(function () {
+                window.focus();
+                window.print();
+            }, 900);
+        };
+    <\/script>
+</body>
+</html>`;
+
+                                        printWindow.document.open();
+                                        printWindow.document.write(html);
+                                        printWindow.document.close();
                 });
 
                 // === DOWNLOAD BUTTON (log download untuk PDF) ===
