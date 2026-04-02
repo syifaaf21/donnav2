@@ -419,8 +419,12 @@
                                     <td class="px-2 py-3 text-xs text-center">
                                         <div class="flex justify-center items-center gap-2 relative">
                                             @php
-                                                $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
+                                                $roleNames = auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))->toArray();
+                                                $role = $roleNames[0] ?? '';
                                                 $isAdmin = in_array($role, ['admin', 'super admin']);
+                                                $isLeaderRole = in_array('leader', $roleNames, true);
+                                                $isSupervisorRowRole = in_array('supervisor', $roleNames, true);
+                                                $isDeptHeadRowRole = in_array('dept head', $roleNames, true) || in_array('department head', $roleNames, true);
                                                 $isAdminOrSuper = $isAdmin;
                                                 $isUser = !$isAdmin;
 
@@ -429,6 +433,10 @@
                                                 $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
 
                                                 $status = strtolower($statusName);
+                                                $shouldDirectOnlyOffice = $sameDepartment && (
+                                                    ($isSupervisorRowRole && $status === 'need check by supervisor') ||
+                                                    ($isDeptHeadRowRole && $status === 'need approval by dept head')
+                                                );
 
                                                 $showDownloadReport = $isAdmin && $status === 'approved';
                                             @endphp
@@ -480,6 +488,9 @@
                                                                         data-doc-id="{{ $doc->id }}"
                                                                         data-doc-status="{{ $status }}"
                                                                         data-is-admin="{{ $isAdmin ? '1' : '0' }}"
+                                                                        data-is-leader="{{ $isLeaderRole ? '1' : '0' }}"
+                                                                        data-same-department="{{ $sameDepartment ? '1' : '0' }}"
+                                                                        data-onlyoffice-direct="{{ $shouldDirectOnlyOffice ? '1' : '0' }}"
                                                                         data-file-id="{{ $file['id'] }}"
                                                                         data-file-name="{{ $file['name'] }}"
                                                                         data-file-path="{{ $file['file_path'] }}">
@@ -522,6 +533,9 @@
                                                         data-doc-id="{{ $doc->id }}"
                                                         data-doc-status="{{ $status }}"
                                                         data-is-admin="{{ $isAdmin ? '1' : '0' }}"
+                                                        data-is-leader="{{ $isLeaderRole ? '1' : '0' }}"
+                                                        data-same-department="{{ $sameDepartment ? '1' : '0' }}"
+                                                        data-onlyoffice-direct="{{ $shouldDirectOnlyOffice ? '1' : '0' }}"
                                                         data-file-id="{{ $files[0]['id'] ?? '' }}"
                                                         data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
@@ -544,8 +558,10 @@
                                                     ? auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))->toArray()
                                                     : [];
                                                 $isSupervisorRole = in_array('supervisor', $roleNames, true);
+                                                $isLeaderRole = in_array('leader', $roleNames, true);
                                                 $isDeptHeadRole = in_array('dept head', $roleNames, true);
-                                                $canShowEditOnline = !$isSupervisorRole;
+                                                $canShowEditOnline = !$isSupervisorRole
+                                                    && (!$isLeaderRole || in_array($status, ['approved', 'rejected'], true));
                                                 // Only admin or users allowed by canEditDocument can edit
                                                 $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
@@ -1131,9 +1147,9 @@
                         currentFileType = sourceFileType;
                         console.log('File type detected:', sourceFileType);
 
-                        // Untuk Excel: coba preview via OnlyOffice (readonly).
-                        // Jika akses ditolak (beda department), fallback ke preview PDF conversion.
-                        if (sourceFileType === 'excel' && currentFileId) {
+                        // Direct to OnlyOffice only for role-status queues requested by business rules.
+                        const shouldDirectOnlyOffice = (btn.dataset.onlyofficeDirect || '') === '1';
+                        if (shouldDirectOnlyOffice && currentFileId) {
                             try {
                                 const ooRes = await fetch(`/editor/${currentFileId}/onlyoffice-url`, {
                                     headers: {
@@ -1149,14 +1165,12 @@
                                     }
                                 }
 
-                                // Jika 403 (beda department), lanjutkan ke fallback convert PDF di bawah.
+                                // Jika 403 atau error lain, lanjutkan fallback preview existing.
                                 if (ooRes.status !== 403) {
-                                    // Untuk error lain, tetap fallback ke convert PDF agar user tetap bisa preview.
-                                    console.warn('OnlyOffice preview unavailable, fallback to PDF conversion.');
+                                    console.warn('OnlyOffice preview unavailable, fallback to existing preview flow.');
                                 }
                             } catch (err) {
-                                // Jika endpoint OnlyOffice gagal, fallback ke convert PDF di bawah.
-                                console.warn('OnlyOffice request failed, fallback to PDF conversion.', err);
+                                console.warn('OnlyOffice request failed, fallback to existing preview flow.', err);
                             }
                         }
 
