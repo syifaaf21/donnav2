@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\{Department, Document, DocumentFile, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
 use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
-use App\Services\{WhatsAppService, DocumentConverterService};
+use App\Services\{WhatsAppService, DocumentConverterService, DocSpaceService};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Auth, DB, Notification, Storage};
+use Illuminate\Support\Facades\{Auth, DB, Notification, Storage, Log};
 
 class DocumentReviewController extends Controller
 {
+    public function __construct(protected DocSpaceService $docSpace) {}
+
     public function index(Request $request)
     {
         $rawPlants = $this->getEnumValues('tm_part_numbers', 'plant');
@@ -80,14 +82,31 @@ class DocumentReviewController extends Controller
         }
 
         $canAddDocumentReview = $roleNames->contains('leader') && $allowedAddPlants->isNotEmpty();
-        $canAccessApprovalQueue = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isSupervisor = $roleNames->contains('supervisor');
+        $isDeptHead = $roleNames->contains(fn($role) => in_array($role, ['dept head', 'department head']));
+        $canAccessApprovalQueue = $isAdmin || $isSupervisor || $isDeptHead;
 
         $approvalCount = 0;
         if ($canAccessApprovalQueue) {
-            $approvalCount = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'review'))
-                ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
-                ->whereNull('marked_for_deletion_at')
-                ->count();
+            $approvalQuery = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereNull('marked_for_deletion_at');
+
+            if ($isAdmin) {
+                $approvalQuery->whereHas('status', fn($q) => $q->where('name', 'Need Review'));
+            } elseif ($isSupervisor) {
+                $departmentIds = auth()->user()->departments()->pluck('tm_departments.id')->toArray();
+                $approvalQuery
+                    ->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Check by Supervisor'));
+            } elseif ($isDeptHead) {
+                $departmentIds = auth()->user()->departments()->pluck('tm_departments.id')->toArray();
+                $approvalQuery
+                    ->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Approval by Dept Head'));
+            }
+
+            $approvalCount = $approvalQuery->count();
         }
 
         // Data for Add Document modal on main Document Review page.
@@ -122,12 +141,16 @@ class DocumentReviewController extends Controller
 
     public function approvalIndex(Request $request)
     {
-        $isAdmin = Auth::user()->roles
+        $user = Auth::user();
+        $roleNames = $user->roles
             ->pluck('name')
-            ->map(fn($role) => strtolower(trim((string) $role)))
-            ->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+            ->map(fn($role) => strtolower(trim((string) $role)));
 
-        if (!$isAdmin) {
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isSupervisor = $roleNames->contains('supervisor');
+        $isDeptHead = $roleNames->contains(fn($role) => in_array($role, ['dept head', 'department head']));
+
+        if (!$isAdmin && !$isSupervisor && !$isDeptHead) {
             abort(403);
         }
 
@@ -144,8 +167,27 @@ class DocumentReviewController extends Controller
             'process',
         ])
             ->whereNull('marked_for_deletion_at')
-            ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
             ->whereHas('document', fn($q) => $q->where('type', 'review'));
+
+        if ($isAdmin) {
+            $query->whereHas('status', fn($q) => $q->where('name', 'Need Review'));
+        } elseif ($isSupervisor) {
+            $departmentIds = $user->departments()->pluck('tm_departments.id')->toArray();
+            if (empty($departmentIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Check by Supervisor'));
+            }
+        } elseif ($isDeptHead) {
+            $departmentIds = $user->departments()->pluck('tm_departments.id')->toArray();
+            if (empty($departmentIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Approval by Dept Head'));
+            }
+        }
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -168,6 +210,8 @@ class DocumentReviewController extends Controller
 
         return view('contents.document-review.approval.index', [
             'mappings' => $mappings,
+            'isSupervisorQueue' => $isSupervisor,
+            'isDeptHeadQueue' => $isDeptHead,
         ]);
     }
 
@@ -1178,7 +1222,78 @@ class DocumentReviewController extends Controller
         // ]);
 
 
-        $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
+        $mapping = DocumentMapping::with(['department', 'files', 'status', 'document'])->findOrFail($id);
+        $user = Auth::user();
+        $roleNames = $user->roles->pluck('name')->map(fn($role) => strtolower(trim((string) $role)));
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isSupervisor = $roleNames->contains('supervisor');
+        $isDeptHead = $roleNames->contains(fn($role) => in_array($role, ['dept head', 'department head']));
+
+        if (!$isAdmin && !$isSupervisor && !$isDeptHead) {
+            abort(403);
+        }
+
+        $currentStatusName = strtolower(trim((string) optional($mapping->status)->name));
+
+        if ($isSupervisor || $isDeptHead) {
+            $departmentIds = $user->departments()->pluck('tm_departments.id')->toArray();
+            if (!in_array((int) $mapping->department_id, array_map('intval', $departmentIds), true)) {
+                abort(403, 'You can only approve documents from your own departments.');
+            }
+
+            if ($isSupervisor && $currentStatusName !== 'need check by supervisor') {
+                abort(403, 'This document is not in Need Check by Supervisor status.');
+            }
+
+            if ($isDeptHead && $currentStatusName !== 'need approval by dept head') {
+                abort(403, 'This document is not in Need Approval by Dept Head status.');
+            }
+
+            // Download files from DocSpace before approval
+            $activeFiles = $mapping->files()->where('is_active', true)->where('pending_approval', false)->get();
+            foreach ($activeFiles as $file) {
+                if ($file->docspace_file_id) {
+                    try {
+                        $this->docSpace->downloadAndSave($file->docspace_file_id, $file->file_path);
+                        $file->touch(); // Update the timestamp
+                    } catch (\Exception $e) {
+                        \Log::warning("Failed to sync file {$file->id} from DocSpace: " . $e->getMessage());
+                    }
+                }
+            }
+
+            $nextStatusName = $isSupervisor ? 'Need Approval by Dept Head' : 'Need Review';
+            $nextStatus = Status::where('name', $nextStatusName)->firstOrFail();
+
+            $mapping->timestamps = false;
+            $mapping->updateQuietly([
+                'status_id' => $nextStatus->id,
+                'review_notified_at' => null,
+            ]);
+            $mapping->timestamps = true;
+
+            if ($isSupervisor) {
+                $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) IN (?, ?)', ['dept head', 'department head']))
+                    ->whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+                    ->get();
+
+                if ($deptHeads->isNotEmpty()) {
+                    Notification::send($deptHeads, new DocumentActionNotification(
+                        action: 'revised',
+                        byUser: $user->name,
+                        documentNumber: $mapping->document_number,
+                        url: route('document-review.approval'),
+                        departmentName: $mapping->department?->name,
+                    ));
+                }
+            }
+
+            return redirect()->route('document-review.approval')
+                ->with('success', $isSupervisor
+                    ? "Document '{$mapping->document_number}' approved by Supervisor and forwarded to Dept Head."
+                    : "Document '{$mapping->document_number}' approved by Dept Head and moved to Need Review.");
+        }
+
         $approvedStatus = Status::where('name', 'Approved')->firstOrFail();
         $previousApprovedAt = $mapping->last_approved_at;
 

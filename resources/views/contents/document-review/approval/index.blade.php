@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('title', 'Document Review Approval')
-@section('subtitle', 'Documents waiting for review approval')
+@section('subtitle', 
+    ($isSupervisorQueue ?? false) ? 'Documents waiting for supervisor check' : 
+    (($isDeptHeadQueue ?? false) ? 'Documents waiting for dept head approval' : 'Documents waiting for review approval')
+)
 @section('breadcrumbs')
     <nav class="text-xs text-gray-500 bg-white rounded-full pr-8 pt-3 pb-1 shadow-sm w-fit" aria-label="Breadcrumb">
         <ol class="list-reset flex space-x-2">
@@ -89,8 +92,18 @@
                                     <div class="flex flex-col gap-1">
                                         <div class="font-semibold">{{ $mapping->document_number ?? '-' }}</div>
                                         <span
-                                            class="inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded w-max">
-                                            Need Review
+                                            class="inline-block px-2 py-1 text-xs font-semibold rounded w-max 
+                                                @php
+                                                    $statusLower = strtolower($mapping->status?->name ?? '');
+                                                    $statusClass = match($statusLower) {
+                                                        'need check by supervisor' => 'text-blue-800 bg-blue-100',
+                                                        'need approval by dept head' => 'text-purple-800 bg-purple-100',
+                                                        default => 'text-yellow-800 bg-yellow-100',
+                                                    };
+                                                    echo $statusClass;
+                                                @endphp
+                                            ">
+                                            {{ $mapping->status?->name ?? '-' }}
                                         </span>
                                         <div class="text-xs text-gray-500">{{ optional($mapping->department)->name ?? 'Unknown' }}</div>
                                     </div>

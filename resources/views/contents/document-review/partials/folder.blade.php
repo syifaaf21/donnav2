@@ -540,6 +540,11 @@
                                             @php
                                                 // Use canEditDocument to determine edit/upload permission
                                                 $canEdit = auth()->check() && auth()->user()->canEditDocument($doc);
+                                                $roleNames = auth()->check()
+                                                    ? auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))->toArray()
+                                                    : [];
+                                                $isSupervisorRole = in_array('supervisor', $roleNames, true);
+                                                $canShowEditOnline = !$isSupervisorRole;
                                                 // Only admin or users allowed by canEditDocument can edit
                                                 $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
 
@@ -567,14 +572,14 @@
                                                                 @endphp
 
                                                                 {{-- Edit Online: if single file, link directly to editor; if multiple, open select-file modal --}}
-                                                                @if ($currentFiles->count() === 1 && $latestFile)
+                                                                @if ($canShowEditOnline && $currentFiles->count() === 1 && $latestFile)
                                                                     <a href="{{ route('editor.show', $latestFile->id) }}"
                                                                         target="_blank"
                                                                         class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
                                                                         title="Edit File">
                                                                         <i class="bi bi-pencil mr-2"></i> Edit Online
                                                                     </a>
-                                                                @else
+                                                                @elseif ($canShowEditOnline)
                                                                     <button type="button"
                                                                         class="open-select-file-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
                                                                         data-mapping-id="{{ $doc->id }}"
@@ -1116,20 +1121,33 @@
                         currentFileType = sourceFileType;
                         console.log('File type detected:', sourceFileType);
 
-                        // Tambahan: Jika file Excel (xls, xlsx, xlsm), buka OnlyOffice preview (readonly)
+                        // Untuk Excel: coba preview via OnlyOffice (readonly).
+                        // Jika akses ditolak (beda department), fallback ke preview PDF conversion.
                         if (sourceFileType === 'excel' && currentFileId) {
-                            // Preview Excel: fetch OnlyOffice URL readonly dari endpoint baru
-                            fetch(`/editor/${currentFileId}/onlyoffice-url`)
-                                .then(res => res.json())
-                                .then(data => {
+                            try {
+                                const ooRes = await fetch(`/editor/${currentFileId}/onlyoffice-url`, {
+                                    headers: {
+                                        'Accept': 'application/json'
+                                    }
+                                });
+
+                                if (ooRes.ok) {
+                                    const data = await ooRes.json();
                                     if (data.url) {
                                         window.open(data.url, '_blank');
-                                    } else {
-                                        alert('Gagal mendapatkan URL OnlyOffice.');
+                                        return;
                                     }
-                                })
-                                .catch(() => alert('Gagal menghubungi server OnlyOffice.'));
-                            return;
+                                }
+
+                                // Jika 403 (beda department), lanjutkan ke fallback convert PDF di bawah.
+                                if (ooRes.status !== 403) {
+                                    // Untuk error lain, tetap fallback ke convert PDF agar user tetap bisa preview.
+                                    console.warn('OnlyOffice preview unavailable, fallback to PDF conversion.');
+                                }
+                            } catch (err) {
+                                // Jika endpoint OnlyOffice gagal, fallback ke convert PDF di bawah.
+                                console.warn('OnlyOffice request failed, fallback to PDF conversion.', err);
+                            }
                         }
 
                         // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved

@@ -12,10 +12,29 @@ use Illuminate\Support\Facades\Auth;
 
 class EditorController extends Controller
 {
+    private function canAccessByDepartment(DocumentFile $file): bool
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        $mapping = $file->mapping()->first();
+        if (!$mapping || !$mapping->department_id) {
+            // If no department-bound mapping exists, keep access allowed.
+            return true;
+        }
+
+        return $user->departments()->where('tm_departments.id', $mapping->department_id)->exists();
+    }
+
     // Endpoint: /editor/{file}/onlyoffice-url
     public function onlyofficeUrl(DocumentFile $file)
     {
         abort_if(!$file->is_active, 404);
+        abort_unless($this->canAccessByDepartment($file), 403, 'Unauthorized department access.');
+
         if (!$file->docspace_file_id) {
             try {
                 $result = $this->docSpace->uploadFile(
@@ -91,6 +110,7 @@ class EditorController extends Controller
     public function editor(DocumentFile $file)
     {
         abort_if(!$file->is_active, 404);
+        abort_unless($this->canAccessByDepartment($file), 403, 'Unauthorized department access.');
 
         if (!$file->docspace_file_id) {
             try {
@@ -195,6 +215,9 @@ class EditorController extends Controller
             if ($file->document_mapping_id) {
                 $mapping = $file->mapping()->first();
                 if ($mapping) {
+                    /** @var \App\Models\User|null $uploader */
+                    $uploader = Auth::user();
+
                     $mappingPayload = [
                         // Important: keep Updated By in main Document Review in sync with online edits.
                         'user_id' => Auth::id(),
@@ -212,15 +235,38 @@ class EditorController extends Controller
                         $mappingPayload['notes'] = $notes;
                     }
 
-                    $needReview = Status::where('name', 'Need Review')->first();
-                    if ($needReview && $mapping->status_id !== $needReview->id) {
-                        $mappingPayload['status_id'] = $needReview->id;
+                    $isLeaderOfMappingDepartment = $uploader
+                        && $mapping->department_id
+                        && $uploader->isLeaderOfDepartment($mapping->department_id);
+
+                    $isSupervisorReviewInSameDepartment = $uploader
+                        && $mapping->department_id
+                        && $uploader->roles()->where('name', 'Supervisor')->exists()
+                        && $uploader->departments()->where('tm_departments.id', $mapping->department_id)->exists()
+                        && strtolower(trim((string) optional($mapping->status)->name)) === 'need check by supervisor';
+
+                    $targetStatusName = 'Need Review';
+                    if ($isLeaderOfMappingDepartment) {
+                        $targetStatusName = 'Need Check by Supervisor';
+                    } elseif ($isSupervisorReviewInSameDepartment) {
+                        // Supervisor reviewing in editor: keep status as "Need Check by Supervisor"
+                        // Approval will happen in Approval Queue page with auto-sync
+                        $targetStatusName = 'Need Check by Supervisor';
+                    }
+
+                    $targetStatus = Status::where('name', $targetStatusName)->first();
+                    if (!$targetStatus && $targetStatusName === 'Need Check by Supervisor') {
+                        // Fallback to existing flow if new status is not seeded yet.
+                        $targetStatus = Status::where('name', 'Need Review')->first();
+                    }
+
+                    if ($targetStatus && $mapping->status_id !== $targetStatus->id) {
+                        $mappingPayload['status_id'] = $targetStatus->id;
                     }
 
                     $mapping->update($mappingPayload);
 
                      // --- SEND NOTIFICATION TO ADMINS ---
-        $uploader = Auth::user();
         $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
 
         if (!in_array($userRole, ['admin', 'super admin'])) {
@@ -236,8 +282,8 @@ class EditorController extends Controller
                 $admin->notify(new DocumentActionNotification(
                     action: 'revised',
                     byUser: $uploader->name,
-                    documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
-                    documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
+                    documentNumber: $mapping->document_number,
+                    documentName: null,
                     url: route('document-review.approval', [
                         'plant' => $this->getPlantFromMapping($mapping),
                         'docCode' => base64_encode($mapping->document->code ?? ''),

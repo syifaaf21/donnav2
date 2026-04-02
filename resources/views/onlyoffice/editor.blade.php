@@ -223,6 +223,9 @@
         $currentUser = auth()->user();
         $roles = $currentUser?->roles?->pluck('name')->map(fn($v) => strtolower($v))->toArray() ?? [];
         $isAdmin = in_array('admin', $roles, true) || in_array('super admin', $roles, true);
+        $isSupervisor = in_array('supervisor', $roles, true);
+        $isDeptHead = in_array('dept head', $roles, true) || in_array('department head', $roles, true);
+        $hideSyncButton = $isSupervisor || $isDeptHead;
     @endphp
     <a href="{{ $isAdmin ? route('editor.index') : route('document-review.index') }}" class="back-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -274,7 +277,11 @@
             <span style="flex-shrink:0">ℹ️</span>
             <span>
                 Editor akan terbuka di <strong>tab baru</strong> ketika Anda klik tombol <strong>Open Editor</strong>. Setelah selesai mengedit dan menyimpan di DocSpace,
-                kembali ke halaman ini lalu klik <strong>Save and Sync</strong> untuk menyinkronkan perubahan ke server.
+                @if($hideSyncButton)
+                    perubahan akan disinkronkan melalui proses <strong>Approve</strong> di halaman Approval Queue.
+                @else
+                    kembali ke halaman ini lalu klik <strong>Save and Sync</strong> untuk menyinkronkan perubahan ke server.
+                @endif
             </span>
         </div>
 
@@ -298,15 +305,17 @@
                         Open Editor
                     </button>
 
-                    {{-- Sync ke Laravel --}}
-                    <button type="button" class="btn btn--secondary hidden-sync" id="btnSync" onclick="syncFile()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="23 4 23 10 17 10"/>
-                            <polyline points="1 20 1 14 7 14"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                        Save and Sync
-                    </button>
+                    @if(!$hideSyncButton)
+                        {{-- Sync ke Laravel --}}
+                        <button type="button" class="btn btn--secondary hidden-sync" id="btnSync" onclick="syncFile()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <polyline points="1 20 1 14 7 14"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
+                            Save and Sync
+                        </button>
+                    @endif
                 @endif
 
                 {{-- Re-upload (only when mapping status != 'need review') --}}
@@ -435,7 +444,7 @@
         btn.disabled = true;
         btn.classList.add('loading');
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Menyimpan...`;
-        // minta revision notes via modal (wajib)
+
         const notes = await openNotesModal();
         if (notes === null) {
             // user batal
@@ -565,6 +574,8 @@
         });
 
         setInterval(refreshSyncButtonVisibility, 15000);
+
+
     });
 
     function openNotesModal() {

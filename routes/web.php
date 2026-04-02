@@ -234,7 +234,7 @@ Route::middleware(['auth', 'password.expired'])->group(function () {
     | Document Review Routes
     |--------------------------------------------------------------------------
     */
-    Route::prefix('document-review')->name('document-review.')->middleware('role:Admin,Super Admin,Leader,Supervisor,Department Head')->group(function () {
+    Route::prefix('document-review')->name('document-review.')->middleware('role:Admin,Super Admin,Leader,Supervisor,Department Head,Dept Head')->group(function () {
         Route::get('/', [DocumentReviewController::class, 'index'])->name('index');
         Route::get('/approval', [DocumentReviewController::class, 'approvalIndex'])->name('approval');
         Route::get('/get-data-by-plant', [DocumentReviewController::class, 'getDataByPlant'])->name('getDataByPlant');
