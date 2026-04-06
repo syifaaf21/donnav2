@@ -98,7 +98,7 @@ class DocumentActionNotification extends Notification
             }
 
             return $mail
-                ->line('Action Required (Supervisor): Login to your account, open menu Document Review, then open Approval Queue and check this document.')
+                ->line('Action Required (Supervisor): Login to your account, open menu Document Review, then open Approval Queue, check this document and approve/reject it.')
                 ->action('Open Approval Queue', $url)
                 ->line('Please review the document as soon as possible.');
         }

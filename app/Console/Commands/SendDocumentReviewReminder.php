@@ -114,7 +114,7 @@ class SendDocumentReviewReminder extends Command
         }
 
         // Footer
-        $message .= "*Action Required:* Please review the revised documents at your earliest convenience and upload to *MADONNA* on *Document Review Menu*.\n\n";
+        $message .= "*Action Required:* Please review the revised documents at your earliest convenience in *MADONNA* *Document Review Menu*.\n\n";
         $message .= "------ *BY AISIN BISA* ------";
 
         // Kirim ke WhatsApp

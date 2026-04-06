@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Department, Document, DocumentFile, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
-use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
+use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification, DocumentRevisionApprovedNotification};
 use App\Services\{WhatsAppService, DocumentConverterService, DocSpaceService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB, Notification, Storage, Log};
@@ -1448,6 +1448,75 @@ class DocumentReviewController extends Controller
             'review_notified_at' => null,
         ]);
         $mapping->timestamps = true;
+
+        $revisionNotes = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? ''))));
+
+        $rawRevisionTargetDepartments = $mapping->revision_notification_department_ids;
+        if (is_string($rawRevisionTargetDepartments)) {
+            $decoded = json_decode($rawRevisionTargetDepartments, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $rawRevisionTargetDepartments = $decoded;
+            } else {
+                $rawRevisionTargetDepartments = array_map('trim', explode(',', $rawRevisionTargetDepartments));
+            }
+        }
+
+        $revisionTargetDepartmentIds = collect((array) $rawRevisionTargetDepartments)
+            ->map(fn($id) => (int) $id)
+            ->filter(fn($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($revisionNotes !== '' && $revisionTargetDepartmentIds->isNotEmpty()) {
+            $products = $mapping->product->pluck('code')->filter();
+            if ($products->isEmpty()) {
+                $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+            }
+
+            $models = $mapping->productModel->pluck('name')->filter();
+            if ($models->isEmpty()) {
+                $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+            }
+
+            $processes = $mapping->process->pluck('code')->filter();
+            if ($processes->isEmpty()) {
+                $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+            }
+
+            $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+            $revisionDetails = [
+                'model' => $models->unique()->values()->join(', '),
+                'product' => $products->unique()->values()->join(', '),
+                'process' => $processes->unique()->values()->join(', '),
+                'part_number' => $partNumbers->unique()->values()->join(', '),
+            ];
+
+            $revisionRecipients = User::whereHas(
+                'departments',
+                fn($q) => $q->whereIn('tm_departments.id', $revisionTargetDepartmentIds->all())
+            )
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->get()
+                ->unique('id');
+
+            if ($revisionRecipients->isNotEmpty()) {
+                $revisionUrl = route('document-review.showFolder', [
+                    'plant' => $this->getPlantFromMapping($mapping),
+                    'docCode' => base64_encode($mapping->document->code ?? ''),
+                ]);
+
+                Notification::send($revisionRecipients, new DocumentRevisionApprovedNotification(
+                    documentNumber: $mapping->document_number,
+                    documentName: $mapping->document?->name,
+                    byUser: auth()->user()->name,
+                    url: $revisionUrl,
+                    details: $revisionDetails,
+                    revisionNotes: $revisionNotes,
+                ));
+            }
+        }
 
         // Ambil semua file lama yang menunggu approval
         $oldFiles = $mapping->files()->where('pending_approval', true)->get();

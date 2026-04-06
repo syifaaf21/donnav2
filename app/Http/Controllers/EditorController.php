@@ -250,6 +250,7 @@ class EditorController extends Controller
                         // Important: keep Updated By in main Document Review in sync with online edits.
                         'user_id' => Auth::id(),
                         'review_notified_at' => null,
+                        'revision_notification_department_ids' => $targetDepartmentIds->values()->all(),
                     ];
 
                     // Simpan catatan revisi: if the frontend submitted the `notes` field
@@ -331,7 +332,7 @@ class EditorController extends Controller
                             'roles',
                             fn($q) => $q->whereRaw('LOWER(name) = ?', ['supervisor'])
                         )
-                            ->whereHas('departments', fn($q) => $q->whereIn('tm_departments.id', $targetDepartmentIds->all()))
+                            ->whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
                             ->where('id', '!=', $uploader?->id)
                             ->get();
 
