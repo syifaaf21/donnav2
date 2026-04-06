@@ -1286,7 +1286,18 @@ class DocumentReviewController extends Controller
         // ]);
 
 
-        $mapping = DocumentMapping::with(['department', 'files', 'status', 'document'])->findOrFail($id);
+        $mapping = DocumentMapping::with([
+            'department',
+            'files',
+            'status',
+            'document',
+            'partNumber.product',
+            'partNumber.productModel',
+            'partNumber.process',
+            'product',
+            'productModel',
+            'process',
+        ])->findOrFail($id);
         $user = Auth::user();
         $roleNames = $user->roles->pluck('name')->map(fn($role) => strtolower(trim((string) $role)));
         $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
@@ -1337,6 +1348,31 @@ class DocumentReviewController extends Controller
             $mapping->timestamps = true;
 
             if ($isSupervisor) {
+                $products = $mapping->product->pluck('code')->filter();
+                if ($products->isEmpty()) {
+                    $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+                }
+
+                $models = $mapping->productModel->pluck('name')->filter();
+                if ($models->isEmpty()) {
+                    $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+                }
+
+                $processes = $mapping->process->pluck('code')->filter();
+                if ($processes->isEmpty()) {
+                    $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+                }
+
+                $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+                $emailDetails = [
+                    'model' => $models->unique()->values()->join(', '),
+                    'product' => $products->unique()->values()->join(', '),
+                    'process' => $processes->unique()->values()->join(', '),
+                    'part_number' => $partNumbers->unique()->values()->join(', '),
+                    'revision_notes' => trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? '')))),
+                ];
+
                 $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) IN (?, ?)', ['dept head', 'department head']))
                     ->whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
                     ->get();
@@ -1348,9 +1384,35 @@ class DocumentReviewController extends Controller
                         documentNumber: $mapping->document_number,
                         url: route('document-review.approval'),
                         departmentName: $mapping->department?->name,
+                        details: $emailDetails,
                     ));
                 }
             } elseif ($isDeptHead) {
+                $products = $mapping->product->pluck('code')->filter();
+                if ($products->isEmpty()) {
+                    $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+                }
+
+                $models = $mapping->productModel->pluck('name')->filter();
+                if ($models->isEmpty()) {
+                    $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+                }
+
+                $processes = $mapping->process->pluck('code')->filter();
+                if ($processes->isEmpty()) {
+                    $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+                }
+
+                $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+                $emailDetails = [
+                    'model' => $models->unique()->values()->join(', '),
+                    'product' => $products->unique()->values()->join(', '),
+                    'process' => $processes->unique()->values()->join(', '),
+                    'part_number' => $partNumbers->unique()->values()->join(', '),
+                    'revision_notes' => trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? '')))),
+                ];
+
                 $admins = User::whereHas(
                     'roles',
                     fn($q) => $q->whereRaw('LOWER(name) IN (?, ?)', ['admin', 'super admin'])
@@ -1363,6 +1425,7 @@ class DocumentReviewController extends Controller
                         documentNumber: $mapping->document_number,
                         url: route('document-review.approval'),
                         departmentName: $mapping->department?->name,
+                        details: $emailDetails,
                     ));
                 }
             }

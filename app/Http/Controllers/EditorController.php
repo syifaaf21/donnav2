@@ -280,6 +280,31 @@ class EditorController extends Controller
                     // Leader edit-online revision that changes status to Need Check by Supervisor:
                     // notify supervisors in the same department (not admins).
                     if ($isLeaderOfMappingDepartment && $statusChangedToNeedCheckBySupervisor) {
+                        $products = $mapping->product->pluck('code')->filter();
+                        if ($products->isEmpty()) {
+                            $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+                        }
+
+                        $models = $mapping->productModel->pluck('name')->filter();
+                        if ($models->isEmpty()) {
+                            $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+                        }
+
+                        $processes = $mapping->process->pluck('code')->filter();
+                        if ($processes->isEmpty()) {
+                            $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+                        }
+
+                        $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+                        $emailDetails = [
+                            'model' => $models->unique()->values()->join(', '),
+                            'product' => $products->unique()->values()->join(', '),
+                            'process' => $processes->unique()->values()->join(', '),
+                            'part_number' => $partNumbers->unique()->values()->join(', '),
+                            'revision_notes' => trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? '')))),
+                        ];
+
                         $supervisors = User::whereHas(
                             'roles',
                             fn($q) => $q->whereRaw('LOWER(name) = ?', ['supervisor'])
@@ -295,7 +320,8 @@ class EditorController extends Controller
                                 documentNumber: $mapping->document_number,
                                 documentName: null,
                                 url: route('document-review.approval'),
-                                departmentName: $mapping->department?->name
+                                departmentName: $mapping->department?->name,
+                                details: $emailDetails
                             ));
                         }
                     } else {
