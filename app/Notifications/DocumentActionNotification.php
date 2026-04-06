@@ -49,6 +49,22 @@ class DocumentActionNotification extends Notification
         $message = '';
 
         switch ($this->action) {
+            case 'checked_by_supervisor':
+                $message = $this->documentNumber
+                    ? "{$title} has been checked by {$byUserFormatted} and need your approval"
+                    : "Document {$title} has been checked by {$byUserFormatted}"
+                    . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
+                    . " and need your approval";
+                break;
+
+            case 'approved_by_dept_head':
+                $message = $this->documentNumber
+                    ? "{$title} has been approved by {$byUserFormatted} and need your approval"
+                    : "Document {$title} has been approved by {$byUserFormatted}"
+                    . ($departmentFormatted ? " on department ({$departmentFormatted})" : "")
+                    . " and need your approval";
+                break;
+
             case 'revised':
                 $message = $this->documentNumber
                     ? "{$title} has been revised by {$byUserFormatted} and need your review"

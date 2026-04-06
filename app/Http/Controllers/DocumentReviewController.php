@@ -1341,7 +1341,7 @@ class DocumentReviewController extends Controller
 
                 if ($deptHeads->isNotEmpty()) {
                     Notification::send($deptHeads, new DocumentActionNotification(
-                        action: 'revised',
+                        action: 'checked_by_supervisor',
                         byUser: $user->name,
                         documentNumber: $mapping->document_number,
                         url: route('document-review.approval'),
@@ -1356,7 +1356,7 @@ class DocumentReviewController extends Controller
 
                 if ($admins->isNotEmpty()) {
                     Notification::send($admins, new DocumentActionNotification(
-                        action: 'revised',
+                        action: 'approved_by_dept_head',
                         byUser: $user->name,
                         documentNumber: $mapping->document_number,
                         url: route('document-review.approval'),
