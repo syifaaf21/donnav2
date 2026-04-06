@@ -156,37 +156,130 @@
                                 <td class="px-2 py-3 text-center text-xs">{{ $mapping->user?->name ?? '-' }}</td>
                                 <td class="px-2 py-3 text-center text-xs">{{ $mapping->updated_at?->format('Y-m-d') ?? '-' }}</td>
                                 <td class="px-2 py-3 text-xs text-center">
-                                    <div class="relative inline-block text-left">
-                                        <button type="button"
-                                            class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-100 transition action-menu-toggle"
-                                            data-target="actionMenu-{{ $mapping->id }}"
-                                            title="Actions">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
+                                    <div class="flex items-center gap-2 relative justify-center">
+                                        @php
+                                            $roleNames = auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))->toArray();
+                                            $isSupervisorRowRole = in_array('supervisor', $roleNames, true);
+                                            $isDeptHeadRowRole = in_array('dept head', $roleNames, true) || in_array('department head', $roleNames, true);
+                                            $userDeptIds = auth()->user()->departments->pluck('id')->toArray();
+                                            $docDeptId = $mapping->department_id ?? ($mapping->department->id ?? null);
+                                            $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
+                                            $status = strtolower($mapping->status?->name ?? '');
+                                            $shouldDirectOnlyOffice = $sameDepartment && (
+                                                ($isSupervisorRowRole && $status === 'need check by supervisor') ||
+                                                ($isDeptHeadRowRole && $status === 'need approval by dept head')
+                                            );
 
-                                        <div id="actionMenu-{{ $mapping->id }}"
-                                            class="hidden absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm action-menu-dropdown">
-                                            <a href="{{ route('document-review.showFolder', [$mapping->approval_plant, $mapping->approval_doc_code]) }}"
-                                                class="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-50 text-slate-700"
-                                                title="Open in folder view">
-                                                <i class="bi bi-box-arrow-up-right"></i>
-                                                Open
-                                            </a>
+                                            $visibleFiles = $mapping->files
+                                                ->sortByDesc(fn($f) => !empty($f->replaced_by_id))
+                                                ->values();
 
-                                            <button type="button"
-                                                class="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-50 text-green-700 btn-approve"
-                                                data-id="{{ $mapping->id }}">
-                                                <i class="bi bi-check2-circle"></i>
-                                                Approve
+                                            $currentFiles = $visibleFiles
+                                                ->filter(fn($f) => empty($f->replaced_by_id))
+                                                ->sortByDesc('created_at')
+                                                ->values();
+
+                                            $files = $visibleFiles
+                                                ->map(
+                                                    fn($f) => [
+                                                        'id' => $f->id,
+                                                        'file_path' => $f->file_path,
+                                                        'name' => $f->file_name ?? basename($f->file_path),
+                                                        'url' => asset('storage/' . $f->file_path),
+                                                        'replaced_by_id' => $f->replaced_by_id,
+                                                    ],
+                                                )
+                                                ->toArray();
+                                        @endphp
+
+                                        {{-- File Button --}}
+                                        @if (count($files) > 1)
+                                            <button id="viewFilesBtn-{{ $mapping->id }}" type="button"
+                                                title="View files"
+                                                class="relative focus:outline-none text-gray-700 hover:text-blue-600 toggle-files-dropdown"
+                                                data-onlyoffice-direct="{{ $shouldDirectOnlyOffice ? '1' : '0' }}"
+                                                data-mapping-id="{{ $mapping->id }}">
+                                                <i data-feather="file-text" class="w-6 h-6"></i>
+                                                <span
+                                                    class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                                                    {{ count($files) }}
+                                                </span>
                                             </button>
 
-                                            <button type="button"
-                                                class="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-50 text-red-700"
-                                                data-bs-toggle="modal" data-bs-target="#rejectModal"
-                                                data-id="{{ $mapping->id }}">
-                                                <i class="bi bi-x-circle"></i>
-                                                Reject
+                                            <div id="viewFilesDropdown-{{ $mapping->id }}"
+                                                class="hidden absolute right-0 bottom-full mb-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] origin-bottom-right translate-x-2">
+                                                <div class="py-1 text-xs max-h-80 overflow-y-auto">
+                                                    @foreach ($files as $file)
+                                                        <div
+                                                            class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 gap-2">
+                                                            <button type="button" title="View File"
+                                                                class="flex-1 text-left view-file-btn truncate {{ !empty($file['replaced_by_id']) ? 'text-red-700' : '' }}"
+                                                                data-file="{{ $file['url'] }}"
+                                                                data-mapping-id="{{ $mapping->id }}"
+                                                                data-file-id="{{ $file['id'] }}"
+                                                                data-file-name="{{ $file['name'] }}"
+                                                                data-file-path="{{ $file['file_path'] }}"
+                                                                data-onlyoffice-direct="{{ $shouldDirectOnlyOffice ? '1' : '0' }}">
+                                                                📄 {{ $file['name'] }}
+                                                            </button>
+                                                            @if (!empty($file['replaced_by_id']))
+                                                                <span
+                                                                    class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800 whitespace-nowrap">
+                                                                    Replaced
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @elseif(count($files) === 1)
+                                            @php
+                                                $fileUrl = $files[0]['url'] ?? '#';
+                                                $isReplacedFile = !empty($files[0]['replaced_by_id']);
+                                            @endphp
+                                            <button type="button" title="View File"
+                                                class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $isReplacedFile ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-gradient-to-tr from-cyan-400 to-blue-500 text-white' }} shadow hover:scale-110 transition-transform duration-200 view-file-btn"
+                                                data-file="{{ $fileUrl }}"
+                                                data-mapping-id="{{ $mapping->id }}"
+                                                data-file-id="{{ $files[0]['id'] ?? '' }}"
+                                                data-file-name="{{ $files[0]['name'] ?? '' }}"
+                                                data-file-path="{{ $files[0]['file_path'] ?? '' }}"
+                                                data-onlyoffice-direct="{{ $shouldDirectOnlyOffice ? '1' : '0' }}">
+                                                <i class="bi bi-eye"></i>
+                                                @if ($isReplacedFile)
+                                                    <span class="ml-1 inline-block rounded-full bg-red-200 px-1 py-0.5 text-[10px] font-semibold text-red-800">
+                                                        Replaced
+                                                    </span>
+                                                @endif
                                             </button>
+                                        @endif
+
+                                        {{-- Action Menu Button --}}
+                                        <div class="relative inline-block text-left">
+                                            <button type="button"
+                                                class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-100 transition action-menu-toggle"
+                                                data-target="actionMenu-{{ $mapping->id }}"
+                                                title="Actions">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+
+                                            <div id="actionMenu-{{ $mapping->id }}"
+                                                class="hidden absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm action-menu-dropdown">
+                                                <button type="button"
+                                                    class="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-50 text-green-700 btn-approve"
+                                                    data-id="{{ $mapping->id }}">
+                                                    <i class="bi bi-check2-circle"></i>
+                                                    Approve
+                                                </button>
+
+                                                <button type="button"
+                                                    class="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-50 text-red-700"
+                                                    data-bs-toggle="modal" data-bs-target="#rejectModal"
+                                                    data-id="{{ $mapping->id }}">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    Reject
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -208,6 +301,41 @@
 
             <div class="mt-4">
                 {{ $mappings->withQueryString()->links('vendor.pagination.tailwind') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview File -->
+    <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title" id="filePreviewLabel">File Preview</h5>
+                    <div class="d-flex gap-2">
+                        <a id="viewFullBtn" href="#" target="_blank" class="btn btn-outline-info btn-sm d-none">
+                            <i class="bi bi-arrows-fullscreen"></i> View Full
+                        </a>
+                        <select id="printOrientation" class="form-select form-select-sm d-none" style="width: 125px;">
+                            <option value="portrait">Portrait</option>
+                            <option value="landscape">Landscape</option>
+                        </select>
+                        <a id="printFileBtn" href="#" class="btn btn-outline-secondary btn-sm d-none">
+                            <i class="bi bi-printer"></i> Print
+                        </a>
+                        <a id="downloadFileBtn" href="#" download
+                            class="btn btn-outline-primary btn-sm d-none" style="display:none !important;" aria-hidden="true"
+                            tabindex="-1">
+                            <i class="bi bi-download"></i> Download PDF
+                        </a>
+
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0">
+                    <iframe id="filePreviewFrame" src="" style="width:100%; height:80vh;" frameborder="0"></iframe>
+                </div>
             </div>
         </div>
     </div>
@@ -293,6 +421,20 @@
             margin-top: 0 !important;
             z-index: 10000 !important;
         }
+
+        .toggle-files-dropdown {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .toggle-files-dropdown:hover {
+            color: #2563eb;
+        }
+
+        .dropdown-fixed {
+            position: fixed !important;
+            z-index: 10000 !important;
+        }
     </style>
 @endpush
 
@@ -301,6 +443,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggles = document.querySelectorAll('.action-menu-toggle');
             const allMenus = document.querySelectorAll('.action-menu-dropdown');
+            let currentDocId = null;
+            let currentFileId = null;
+            let currentFileType = null;
+            let currentPreviewObjectUrl = null;
 
             function closeAllActionMenus() {
                 allMenus.forEach(m => {
@@ -308,6 +454,12 @@
                     m.classList.remove('action-fixed');
                 });
             }
+
+            feather.replace();
+
+            const previewModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+            const previewFrame = document.getElementById('filePreviewFrame');
+            const viewFullBtn = document.getElementById('viewFullBtn');
 
             menuToggles.forEach(btn => {
                 btn.addEventListener('click', function(e) {
@@ -355,6 +507,278 @@
 
             window.addEventListener('scroll', closeAllActionMenus, true);
             window.addEventListener('resize', closeAllActionMenus);
+
+            // === File Dropdown Toggle ===
+            document.querySelectorAll('.toggle-files-dropdown').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const dropdown = document.getElementById(btn.id.replace('Btn', 'Dropdown'));
+
+                    const isVisible = !dropdown.classList.contains('hidden');
+
+                    // Close all other dropdowns
+                    document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add('hidden'));
+
+                    // If clicked dropdown is open, close it
+                    if (isVisible) {
+                        dropdown.classList.add('hidden');
+                        return;
+                    }
+
+                    // Calculate position
+                    const rect = btn.getBoundingClientRect();
+                    const offsetX = -120;
+                    dropdown.style.position = 'fixed';
+                    dropdown.style.top = `${rect.bottom + 6}px`;
+                    dropdown.style.left = `${rect.left + offsetX}px`;
+                    dropdown.classList.remove('hidden');
+                    dropdown.classList.add('dropdown-fixed');
+                });
+            });
+
+            // Close dropdown on scroll
+            window.addEventListener('scroll', () => {
+                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(d => d.classList.add('hidden'));
+            });
+
+            // Close dropdown on outside click
+            document.addEventListener('click', function(e) {
+                document.querySelectorAll('[id^="viewFilesDropdown"]').forEach(dropdown => {
+                    const button = document.getElementById(dropdown.id.replace('Dropdown', 'Btn'));
+                    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            });
+
+            // === File Preview ===
+            const withCacheBuster = (url) => {
+                if (!url) return url;
+                const sep = url.includes('?') ? '&' : '?';
+                return `${url}${sep}_=${Date.now()}`;
+            };
+
+            function getFileType(url) {
+                if (!url) return 'unknown';
+                const ext = url.split('.').pop().toLowerCase().split('?')[0];
+
+                if (ext === 'pdf') return 'pdf';
+                if (['xls', 'xlsx', 'xlsm'].includes(ext)) return 'excel';
+                if (['doc', 'docx'].includes(ext)) return 'word';
+                if (['ppt', 'pptx'].includes(ext)) return 'powerpoint';
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) return 'image';
+
+                return 'other';
+            }
+
+            function withPdfViewerParams(url) {
+                if (!url) return url;
+                if (url.includes('#')) return url;
+                return `${url}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&zoom=page-width`;
+            }
+
+            document.querySelectorAll('.view-file-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const docId = btn.dataset.mappingId;
+                    let url = btn.dataset.file || '';
+                    const clickedFileId = btn.dataset.fileId;
+                    const clickedFilePath = btn.dataset.filePath;
+
+                    if (docId && !clickedFilePath) {
+                        try {
+                            const res = await fetch(`/document-review/${docId}/files`);
+                            const json = await res.json();
+                            const first = json?.files?.[0]?.file_path || '';
+                            if (first) {
+                                url = withCacheBuster(`/storage/${first}`);
+                            }
+                            const list = json?.files || [];
+                            let target =
+                                list.find(f => String(f.id) === String(clickedFileId)) ||
+                                list.find(f => f.file_path === clickedFilePath);
+
+                            if (!target && url) {
+                                const raw = url.replace(/^.*\/storage\//, '');
+                                target = list.find(f => f.file_path === raw);
+                            }
+
+                            if (!target && list.length) {
+                                target = list[0];
+                            }
+
+                            if (target?.file_path) {
+                                url = withCacheBuster(`/storage/${target.file_path}`);
+                            }
+                            currentFileId = target?.id || clickedFileId || null;
+                        } catch (err) {
+                            console.error('Failed to load files', err);
+                            currentFileId = clickedFileId || null;
+                        }
+                    } else {
+                        url = withCacheBuster(url);
+                        currentFileId = clickedFileId || null;
+                    }
+
+                    const sourceFileType = getFileType(url);
+                    currentFileType = sourceFileType;
+
+                    const shouldDirectOnlyOffice = (btn.dataset.onlyofficeDirect || '') === '1';
+                    if (shouldDirectOnlyOffice && currentFileId) {
+                        try {
+                            const ooRes = await fetch(`/editor/${currentFileId}/onlyoffice-url`, {
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            if (ooRes.ok) {
+                                const data = await ooRes.json();
+                                if (data.url) {
+                                    window.open(data.url, '_blank');
+                                    return;
+                                }
+                            }
+
+                            if (ooRes.status !== 403) {
+                                console.warn('OnlyOffice preview unavailable, fallback to existing preview flow.');
+                            }
+                        } catch (err) {
+                            console.warn('OnlyOffice request failed, fallback to existing preview flow.', err);
+                        }
+                    }
+
+                    const printBtnToggle = document.getElementById('printFileBtn');
+                    const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                    const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                    const docStatus = (btn.dataset.docStatus || '').toString().toLowerCase();
+                    const isAdminFlag = (btn.dataset.isAdmin || '') === '1';
+                    let previewUrl = url;
+
+                    if (sourceFileType !== 'pdf' && docId) {
+                        const convertUrl = new URL(`/document-review/${docId}/download-as-pdf`, window.location.origin);
+                        convertUrl.searchParams.set('inline', '1');
+                        if (currentFileId) {
+                            convertUrl.searchParams.set('file_id', String(currentFileId));
+                        }
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Converting file...',
+                                text: 'Please wait while we prepare PDF preview.',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => Swal.showLoading()
+                            });
+                        }
+
+                        try {
+                            const convertRes = await fetch(convertUrl.toString(), {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/pdf, application/json'
+                                }
+                            });
+
+                            const contentType = convertRes.headers.get('content-type') || '';
+                            if (!convertRes.ok || !contentType.includes('application/pdf')) {
+                                let errMessage = 'Failed to convert file for preview.';
+                                try {
+                                    const errJson = await convertRes.json();
+                                    errMessage = errJson.error || errJson.message || errMessage;
+                                } catch (_) {
+                                }
+                                throw new Error(errMessage);
+                            }
+
+                            const pdfBlob = await convertRes.blob();
+                            if (currentPreviewObjectUrl) {
+                                URL.revokeObjectURL(currentPreviewObjectUrl);
+                            }
+                            currentPreviewObjectUrl = URL.createObjectURL(pdfBlob);
+                            previewUrl = currentPreviewObjectUrl;
+                            currentFileType = 'pdf';
+                        } catch (convertError) {
+                            console.error('Preview conversion failed:', convertError);
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Conversion failed',
+                                    text: convertError.message || 'Unable to convert file to PDF preview.'
+                                });
+                            } else {
+                                alert(convertError.message || 'Unable to convert file to PDF preview.');
+                            }
+                            return;
+                        } finally {
+                            if (typeof Swal !== 'undefined' && Swal.isLoading()) {
+                                Swal.close();
+                            }
+                        }
+                    }
+
+                    const isPdf = currentFileType === 'pdf';
+                    const canPrint = isPdf && docStatus === 'approved';
+                    const canDownload = isPdf && (docStatus === 'approved' || isAdminFlag);
+                    const printOrientationSelect = document.getElementById('printOrientation');
+
+                    if (canPrint) {
+                        printBtnToggle.classList.remove('d-none');
+                        printOrientationSelect?.classList.remove('d-none');
+                    } else {
+                        printBtnToggle.classList.add('d-none');
+                        printOrientationSelect?.classList.add('d-none');
+                    }
+
+                    if (canDownload) {
+                        downloadBtnToggle.classList.remove('d-none');
+                    } else {
+                        downloadBtnToggle.classList.add('d-none');
+                    }
+
+                    if (isPdf) {
+                        viewFullBtnToggle.classList.remove('d-none');
+                    } else {
+                        viewFullBtnToggle.classList.add('d-none');
+                    }
+
+                    const finalPreviewUrl = currentFileType === 'pdf'
+                        ? withPdfViewerParams(previewUrl)
+                        : previewUrl;
+                    previewFrame.dataset.url = finalPreviewUrl;
+                    viewFullBtn.href = finalPreviewUrl;
+                    previewModal.show();
+                });
+            });
+
+            document.getElementById('filePreviewModal')
+                .addEventListener('shown.bs.modal', function() {
+                    if (previewFrame.dataset.url) {
+                        previewFrame.src = previewFrame.dataset.url;
+                    }
+                });
+
+            document.getElementById('filePreviewModal')
+                .addEventListener('hidden.bs.modal', () => {
+                    previewFrame.src = '';
+                    previewFrame.dataset.url = '';
+                    viewFullBtn.href = '#';
+                    if (currentPreviewObjectUrl) {
+                        URL.revokeObjectURL(currentPreviewObjectUrl);
+                        currentPreviewObjectUrl = null;
+                    }
+                    currentDocId = null;
+                    currentFileId = null;
+                    currentFileType = null;
+
+                    const printBtnToggle = document.getElementById('printFileBtn');
+                    const downloadBtnToggle = document.getElementById('downloadFileBtn');
+                    const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                    const printOrientationSelect = document.getElementById('printOrientation');
+                    printBtnToggle.classList.add('d-none');
+                    downloadBtnToggle.classList.add('d-none');
+                    viewFullBtnToggle.classList.add('d-none');
+                    printOrientationSelect?.classList.add('d-none');
+                });
 
             // Same wiring as folder page: open approve modal and set action dynamically.
             document.querySelectorAll('.btn-approve').forEach(btn => {

@@ -173,7 +173,9 @@ class DocumentReviewController extends Controller
             'product',
             'productModel',
             'process',
+            'files',
         ])
+            ->withCount(['files'])
             ->whereNull('marked_for_deletion_at')
             ->whereHas('document', fn($q) => $q->where('type', 'review'));
 
