@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentFile;
+use App\Models\Department;
 use App\Models\Status;
 use App\Models\User;
 use App\Notifications\DocumentActionNotification;
@@ -150,7 +151,9 @@ class EditorController extends Controller
             $loginUrl = null;
         }
 
-        return view('onlyoffice.editor', compact('file', 'docEditorUrl', 'loginUrl', 'docspaceUrl'));
+        $allDepartments = Department::orderBy('name')->get();
+
+        return view('onlyoffice.editor', compact('file', 'docEditorUrl', 'loginUrl', 'docspaceUrl', 'allDepartments'));
     }
 
     public function authToken()
@@ -223,6 +226,25 @@ class EditorController extends Controller
                 if ($mapping) {
                     /** @var \App\Models\User|null $uploader */
                     $uploader = Auth::user();
+
+                    $requestedDepartmentIds = collect((array) $request->input('department_ids', []))
+                        ->map(fn($id) => (int) $id)
+                        ->filter(fn($id) => $id > 0)
+                        ->unique()
+                        ->values();
+
+                    $allowedDepartmentIds = Department::query()
+                        ->pluck('id')
+                        ->map(fn($id) => (int) $id)
+                        ->values();
+
+                    $targetDepartmentIds = $requestedDepartmentIds
+                        ->intersect($allowedDepartmentIds)
+                        ->values();
+
+                    if ($targetDepartmentIds->isEmpty() && $mapping->department_id) {
+                        $targetDepartmentIds = collect([(int) $mapping->department_id]);
+                    }
 
                     $mappingPayload = [
                         // Important: keep Updated By in main Document Review in sync with online edits.
@@ -309,7 +331,7 @@ class EditorController extends Controller
                             'roles',
                             fn($q) => $q->whereRaw('LOWER(name) = ?', ['supervisor'])
                         )
-                            ->whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+                            ->whereHas('departments', fn($q) => $q->whereIn('tm_departments.id', $targetDepartmentIds->all()))
                             ->where('id', '!=', $uploader?->id)
                             ->get();
 

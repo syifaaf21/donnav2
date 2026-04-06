@@ -165,22 +165,171 @@
     .toast--success { background: rgba(39,174,96,.95); color: #fff; }
     .toast--error   { background: rgba(224,82,82,.95); color: #fff; }
 
-    /* Notes modal: light card style matching other app modals */
+    /* Notes modal: modern, cleaner structure */
     .notes-modal { display: none; position: fixed; inset: 0; z-index: 9998; align-items: center; justify-content: center; }
     .notes-modal.show { display: flex; }
-    .notes-modal__backdrop { position: absolute; inset: 0; background: rgba(10,12,20,0.25); backdrop-filter: blur(2px); }
-    .notes-modal__dialog { position: relative; width: 760px; max-width: calc(100% - 56px); background: #ffffff; color: #1f2937; border: 1px solid rgba(15,23,42,0.06); border-radius: 12px; padding: 18px; box-shadow: 0 12px 30px rgba(16,24,40,0.12); transform: translateY(-6px) scale(.995); opacity: 0; transition: transform .18s ease, opacity .18s ease; }
+    .notes-modal__backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.45); backdrop-filter: blur(4px); }
+    .notes-modal__dialog {
+        position: relative;
+        width: 860px;
+        max-width: calc(100% - 44px);
+        max-height: calc(100vh - 48px);
+        overflow: hidden;
+        background: #ffffff;
+        color: #1f2937;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 28px 64px rgba(15, 23, 42, 0.22);
+        transform: translateY(-8px) scale(.992);
+        opacity: 0;
+        transition: transform .18s ease, opacity .18s ease;
+    }
     .notes-modal.show .notes-modal__dialog { transform: translateY(0) scale(1); opacity: 1; }
-    .notes-modal__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-    .notes-modal__header h3 { margin:0; font-size:18px; color:#0f172a; font-weight:700; }
-    .notes-modal__meta { font-size:13px; color:#64748b; margin-top:6px }
-    .notes-modal__body { margin-top:12px; }
-    .notes-modal__footer { margin-top: 14px; display:flex; justify-content:flex-end; gap:10px; }
-    .notes-modal .btn--ghost { background: #f8fafc; border:1px solid rgba(2,6,23,0.04); color: #475569; }
-    .notes-modal textarea { width:100%; min-height:140px; resize:vertical; padding:14px; border-radius:8px; border:1px solid #e6e9ef; background: #fbfdff; color:#0f172a; font-size:14px; }
+    .notes-modal__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    }
+    .notes-modal__header h3 { margin: 0; font-size: 20px; color: #0f172a; font-weight: 700; }
+    .notes-modal__sub { margin-top: 4px; font-size: 13px; color: #64748b; }
+    .notes-modal__content { padding: 16px 20px 14px; max-height: calc(100vh - 210px); overflow-y: auto; }
+    .notes-modal__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 20px 16px;
+        border-top: 1px solid #e2e8f0;
+        background: #ffffff;
+    }
+    .notes-modal .btn--ghost { background: #f8fafc; border: 1px solid #dbe4ef; color: #475569; }
+    .notes-modal .btn--primary { box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25); }
+
+    .notes-tips {
+        border: 1px solid #fde68a;
+        background: linear-gradient(180deg, #fffdf4 0%, #fff9e6 100%);
+        border-radius: 10px;
+        padding: 12px 13px;
+    }
+    .notes-tips__title { margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #92400e; }
+    .notes-tips__list { margin: 0; padding-left: 17px; font-size: 12.5px; line-height: 1.55; color: #a16207; }
+
+    .notes-field { margin-top: 14px; }
+    .notes-field__label { display: block; margin: 0 0 7px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #475569; }
+    .notes-modal textarea {
+        width: 100%;
+        min-height: 135px;
+        resize: vertical;
+        padding: 12px 13px;
+        border-radius: 10px;
+        border: 1px solid #dbe4ef;
+        background: #fbfdff;
+        color: #0f172a;
+        font-size: 14px;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .notes-modal textarea:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14); }
     .notes-modal textarea::placeholder { color: #94a3b8; }
-    .notes-close { background:#f1f5f9; border:0; color:#475569; cursor:pointer; padding:6px; border-radius:999px; box-shadow: 0 2px 6px rgba(2,6,23,0.04); }
-    .notes-close:hover { background: #eef2f6; color:#0f172a; }
+    .notes-modal__meta { font-size: 12px; color: #64748b; margin-top: 6px; }
+
+    .dept-checklist {
+        border: 1px solid #dbe4ef;
+        border-radius: 10px;
+        background: #fbfdff;
+        max-height: 186px;
+        overflow-y: auto;
+        padding: 8px;
+    }
+    .dept-checklist__item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background-color .12s ease, border-color .12s ease;
+    }
+    .dept-checklist__item:hover { background: #eff6ff; border-color: #dbeafe; }
+    .dept-checklist__item.is-hidden { display: none; }
+    .dept-checklist__item input { width: 15px; height: 15px; accent-color: #2563eb; }
+    .dept-checklist__name { color: #1e293b; font-size: 14px; }
+    .dept-checklist__empty { color:#64748b; font-size:13px; padding: 10px; }
+    .dept-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 0 8px 0;
+    }
+    .dept-controls__left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .dept-control-btn {
+        border: 1px solid #dbe4ef;
+        border-radius: 999px;
+        padding: 5px 10px;
+        background: #fff;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        line-height: 1;
+    }
+    .dept-control-btn:hover {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+    .dept-selected-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #1d4ed8;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+    }
+    .dept-search {
+        width: 100%;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 13px;
+        color: #0f172a;
+        background: #fff;
+        margin-bottom: 8px;
+    }
+    .dept-search:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+    }
+    .dept-no-result {
+        display: none;
+        color: #64748b;
+        font-size: 12px;
+        padding: 8px 2px;
+    }
+
+    .notes-close {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 999px;
+        box-shadow: 0 2px 8px rgba(2, 6, 23, 0.05);
+    }
+    .notes-close:hover { background: #f8fafc; color: #0f172a; }
 
     @media (max-width: 768px) {
         .oo-editor-page {
@@ -212,6 +361,22 @@
         .file-actions {
             padding: 16px 14px;
         }
+
+        .notes-modal__dialog {
+            max-width: calc(100% - 16px);
+            max-height: calc(100vh - 16px);
+        }
+
+        .notes-modal__header,
+        .notes-modal__content,
+        .notes-modal__footer {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .notes-modal__header h3 {
+            font-size: 18px;
+        }
     }
 </style>
 @endpush
@@ -226,6 +391,7 @@
         $isSupervisor = in_array('supervisor', $roles, true);
         $isDeptHead = in_array('dept head', $roles, true) || in_array('department head', $roles, true);
         $hideSyncButton = $isSupervisor || $isDeptHead;
+        $syncDepartments = $allDepartments ?? collect();
     @endphp
     <a href="{{ $isAdmin ? route('editor.index') : route('document-review.index') }}" class="back-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -289,7 +455,6 @@
 
         {{-- ACTIONS --}}
         <div class="file-actions">
-
             @php
                 $mapping = $file->mapping;
                 $mappingStatus = strtolower($mapping?->status?->name ?? '');
@@ -357,14 +522,7 @@
             <div class="notes-modal__header">
                 <div>
                     <h3>Revision Notes</h3>
-                    <div>
-                    <p class="text-sm text-yellow-800 font-semibold mb-1">Tips!</p>
-                    <ul class="text-xs text-yellow-700 leading-relaxed list-disc ms-4">
-                        <li>Pengisian notes dilakukan khusus untuk perubahan yang terjadi pada file tersebut secara internal, bukan akibat referensi atau relasi dengan dokumen lain.
-                        </li>
-                        <li>Jika perubahan terjadi karena adanya relasi file yang berubah dan tidak ada perubahan internal pada file, biarkan notes kosong dan klik tombol "Save & Sync".</li>
-                    </ul>
-                </div>
+                    <div class="notes-modal__sub">Lengkapi catatan revisi dan tentukan department tujuan sebelum sinkronisasi.</div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center">
                     <button id="notesClose" class="notes-close" aria-label="Tutup">
@@ -372,10 +530,59 @@
                     </button>
                 </div>
             </div>
-            <div class="notes-modal__body">
-                <textarea id="notesTextarea" rows="6" placeholder="Tuliskan catatan revisi..."></textarea>
+            <div class="notes-modal__content">
+                <div class="notes-tips">
+                    <p class="notes-tips__title">Tips</p>
+                    <ul class="notes-tips__list">
+                        <li>Isi notes jika ada perubahan internal pada file.</li>
+                        <li>Jika perubahan hanya karena relasi file lain, notes boleh dikosongkan.</li>
+                    </ul>
+                </div>
+
+                <div class="notes-field">
+                    <label class="notes-field__label" for="notesTextarea">Revision Notes</label>
+                    <textarea id="notesTextarea" rows="6" placeholder="Tuliskan catatan revisi..."></textarea>
+                    <span class="notes-modal__meta">Catatan revisi bersifat opsional.</span>
+                </div>
+
+                <div class="notes-field">
+                    <label class="notes-field__label">Department Tujuan</label>
+                    <div class="notes-modal__meta" style="margin:0 0 8px 0">Pilih 1 atau lebih departmen untuk dikirim notifikasi perubahan</div>
+
+                    <div class="dept-controls">
+                        <div class="dept-controls__left">
+                            <button type="button" class="dept-control-btn" id="deptSelectAllBtn">Pilih Semua</button>
+                            <button type="button" class="dept-control-btn" id="deptClearBtn">Reset</button>
+                        </div>
+                        <span class="dept-selected-pill" id="deptSelectedCount">0 dipilih</span>
+                    </div>
+
+                    <input
+                        type="text"
+                        id="deptSearchInput"
+                        class="dept-search"
+                        placeholder="Cari department..."
+                        autocomplete="off"
+                    >
+
+                    <div class="dept-checklist" id="notesDepartmentChecklist">
+                        @forelse($syncDepartments as $department)
+                            <label class="dept-checklist__item">
+                                <input
+                                    type="checkbox"
+                                    class="notes-department-checkbox"
+                                    value="{{ (int) $department->id }}"
+                                    data-default-checked="0"
+                                >
+                                <span class="dept-checklist__name">{{ $department->name }}</span>
+                            </label>
+                        @empty
+                            <div class="dept-checklist__empty">Tidak ada department yang dapat dipilih.</div>
+                        @endforelse
+                    </div>
+                    <div class="dept-no-result" id="deptNoResult">Department tidak ditemukan untuk kata kunci tersebut.</div>
+                </div>
             </div>
-            <span class="notes-modal__meta">Catatan revisi (opsional) — boleh dikosongkan</span>
             <div class="notes-modal__footer">
                 <button class="btn btn--ghost" id="notesCancel">Batal</button>
                 <button class="btn btn--primary" id="notesSubmit">Save & Sync</button>
@@ -447,8 +654,8 @@
         btn.classList.add('loading');
         btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Menyimpan...`;
 
-        const notes = await openNotesModal();
-        if (notes === null) {
+        const formData = await openNotesModal();
+        if (formData === null) {
             // user batal
             btn.disabled = false;
             btn.classList.remove('loading');
@@ -464,7 +671,10 @@
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ notes })
+                body: JSON.stringify({
+                    notes: formData.notes,
+                    department_ids: formData.departmentIds,
+                })
             });
             const data = await res.json();
             showToast(data.success ? 'success' : 'error', data.message);
@@ -588,6 +798,38 @@
                 const btnSubmit = document.getElementById('notesSubmit');
                 const btnClose = document.getElementById('notesClose');
                 const backdrop = modal.querySelector('.notes-modal__backdrop');
+                const departmentChecks = Array.from(modal.querySelectorAll('.notes-department-checkbox'));
+                const deptSearchInput = document.getElementById('deptSearchInput');
+                const deptSelectAllBtn = document.getElementById('deptSelectAllBtn');
+                const deptClearBtn = document.getElementById('deptClearBtn');
+                const deptSelectedCount = document.getElementById('deptSelectedCount');
+                const deptNoResult = document.getElementById('deptNoResult');
+                const deptItems = Array.from(modal.querySelectorAll('.dept-checklist__item'));
+
+                const updateSelectedCount = () => {
+                    const total = departmentChecks.filter(el => el.checked).length;
+                    if (deptSelectedCount) {
+                        deptSelectedCount.textContent = `${total} dipilih`;
+                    }
+                };
+
+                const applyDepartmentFilter = () => {
+                    const q = (deptSearchInput?.value || '').toLowerCase().trim();
+                    let visibleCount = 0;
+
+                    deptItems.forEach(item => {
+                        const name = (item.querySelector('.dept-checklist__name')?.textContent || '').toLowerCase();
+                        const match = q === '' || name.includes(q);
+                        item.classList.toggle('is-hidden', !match);
+                        if (match) visibleCount += 1;
+                    });
+
+                    if (deptNoResult) {
+                        deptNoResult.style.display = visibleCount === 0 && deptItems.length > 0 ? 'block' : 'none';
+                    }
+                };
+
+                const onDepartmentChange = () => updateSelectedCount();
 
                 const cleanup = (value) => {
                     modal.classList.remove('show');
@@ -596,18 +838,52 @@
                     btnClose.removeEventListener('click', onCancel);
                     backdrop.removeEventListener('click', onCancel);
                     document.removeEventListener('keydown', onKey);
+                    departmentChecks.forEach(el => el.removeEventListener('change', onDepartmentChange));
+                    deptSearchInput?.removeEventListener('input', applyDepartmentFilter);
+                    deptSelectAllBtn?.removeEventListener('click', onSelectAll);
+                    deptClearBtn?.removeEventListener('click', onClear);
                     resolve(value);
                 };
 
                 const onCancel = () => cleanup(null);
                 const onSubmit = () => {
-                    const v = textarea.value.trim();
-                    // notes are optional; allow empty string
-                    cleanup(v);
+                    const notesValue = textarea.value.trim();
+                    const selectedDepartmentIds = departmentChecks
+                        .filter(el => el.checked)
+                        .map(el => Number(el.value))
+                        .filter(v => Number.isInteger(v) && v > 0);
+
+                    cleanup({
+                        notes: notesValue,
+                        departmentIds: selectedDepartmentIds,
+                    });
                 };
                 const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
+                const onSelectAll = () => {
+                    departmentChecks.forEach(el => {
+                        const wrapper = el.closest('.dept-checklist__item');
+                        if (!wrapper || !wrapper.classList.contains('is-hidden')) {
+                            el.checked = true;
+                        }
+                    });
+                    updateSelectedCount();
+                };
+                const onClear = () => {
+                    departmentChecks.forEach(el => {
+                        el.checked = false;
+                    });
+                    updateSelectedCount();
+                };
 
                 textarea.value = '';
+                departmentChecks.forEach(el => {
+                    el.checked = false;
+                });
+                if (deptSearchInput) {
+                    deptSearchInput.value = '';
+                }
+                applyDepartmentFilter();
+                updateSelectedCount();
                 modal.classList.add('show');
                 setTimeout(() => textarea.focus(), 80);
 
@@ -616,6 +892,10 @@
                 btnClose.addEventListener('click', onCancel);
                 backdrop.addEventListener('click', onCancel);
                 document.addEventListener('keydown', onKey);
+                departmentChecks.forEach(el => el.addEventListener('change', onDepartmentChange));
+                deptSearchInput?.addEventListener('input', applyDepartmentFilter);
+                deptSelectAllBtn?.addEventListener('click', onSelectAll);
+                deptClearBtn?.addEventListener('click', onClear);
             });
     }
 </script>
