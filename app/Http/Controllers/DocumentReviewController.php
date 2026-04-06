@@ -118,7 +118,12 @@ class DocumentReviewController extends Controller
             ->orderBy('name')
             ->get();
         $partNumbers = PartNumber::orderBy('part_number')->get();
-        $departments = Department::orderBy('name')->get();
+        $allowedDepartmentIds = auth()->check()
+            ? auth()->user()->departments()->pluck('tm_departments.id')->map(fn($id) => (int) $id)->values()
+            : collect();
+        $departments = $allowedDepartmentIds->isNotEmpty()
+            ? Department::whereIn('id', $allowedDepartmentIds->all())->orderBy('name')->get()
+            : collect();
         $models = ProductModel::orderBy('name')->get();
         $products = Product::orderBy('name')->get();
         $processes = Process::orderBy('name')->get();
@@ -132,6 +137,7 @@ class DocumentReviewController extends Controller
             'canAccessApprovalQueue',
             'approvalCount',
             'allowedAddPlants',
+            'allowedDepartmentIds',
             'documentsMaster',
             'partNumbers',
             'departments',
@@ -275,12 +281,16 @@ class DocumentReviewController extends Controller
             ->first();
 
         if (!$userDepartment) {
-            abort(403, 'Selected department is not assigned to your account.');
+            return back()
+                ->withErrors(['department_id' => 'Selected department is not assigned to your account.'])
+                ->withInput();
         }
 
         $departmentPlant = strtolower(trim((string) ($userDepartment->plant ?? '')));
         if ($departmentPlant !== $validated['plant']) {
-            abort(403, 'Selected department does not match selected plant.');
+            return back()
+                ->withErrors(['department_id' => 'Selected department does not match selected plant.'])
+                ->withInput();
         }
 
         $cleanNotes = trim((string) ($validated['notes'] ?? ''));

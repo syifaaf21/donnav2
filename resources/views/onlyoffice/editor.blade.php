@@ -255,6 +255,8 @@
                         $statusName = strtolower($mapping?->status?->name ?? '');
                         $statusClass = match ($statusName) {
                             'approved' => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
+                            'need check by supervisor' => 'inline-block px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded',
+                            'need approval by dept head' => 'inline-block px-2 py-1 text-xs font-semibold text-purple-800 bg-purple-100 rounded',
                             'need review' => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
                             'rejected' => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
                             default => 'inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded',
