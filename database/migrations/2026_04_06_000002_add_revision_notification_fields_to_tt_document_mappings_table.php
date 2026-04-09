@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tt_document_mappings', function (Blueprint $table) {
-            $table->json('revision_notification_department_ids')->nullable()->after('review_notified_at');
+            $table->text('revision_notification_department_ids')->nullable()->after('review_notified_at');
         });
     }
 
