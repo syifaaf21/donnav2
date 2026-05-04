@@ -1,6 +1,6 @@
 @php
-    $canShowAddDocumentModal = ($allowAllUsers ?? false)
-        || in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']);
+    $canShowAddDocumentModal =
+        ($allowAllUsers ?? false) || in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']);
     $isAdminOrSuper = in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']);
     $addDocumentFormAction = $formAction ?? route('master.document-review.store2');
     $plantLabels = [
@@ -74,12 +74,13 @@
                                 <select name="plant" id="plant_select"
                                     class="form-select border-0 shadow-sm rounded-3 @error('plant') is-invalid @enderror"
                                     required>
-                                        <option value="">-- Select Plant --</option>
-                                        @foreach ($allowedPlantValues as $plantValue)
-                                            <option value="{{ $plantValue }}" {{ old('plant') === $plantValue ? 'selected' : '' }}>
-                                                {{ $plantLabels[$plantValue] }}
-                                            </option>
-                                        @endforeach
+                                    <option value="">-- Select Plant --</option>
+                                    @foreach ($allowedPlantValues as $plantValue)
+                                        <option value="{{ $plantValue }}"
+                                            {{ old('plant') === $plantValue ? 'selected' : '' }}>
+                                            {{ $plantLabels[$plantValue] }}
+                                        </option>
+                                    @endforeach
                                 </select>
                                 @error('plant')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -175,7 +176,8 @@
                                     class="form-control border-0 shadow-sm rounded-3 @error('document_number') is-invalid @enderror"
                                     placeholder="Automatically generated" required>
                                 <small id="document_number_hint" class="text-muted d-block mt-1"></small>
-                                <small class="text-muted">Document number will be automatically generated and editable.</small>
+                                <small class="text-muted">Document number will be automatically generated and
+                                    editable.</small>
                                 <div class="invalid-feedback">Document Number is required.</div>
                             </div>
 
@@ -188,7 +190,8 @@
                                     <div id="quill_editor" class="bg-white rounded-3 shadow-sm p-2"
                                         style="min-height: 120px; max-height: 160px; overflow-y: auto; overflow-x: hidden; border: 1px solid #e2e8f0; word-wrap: break-word; word-break: break-word;">
                                     </div>
-                                    <small class="text-muted">You can format your notes with bold, italic and underline.</small>
+                                    <small class="text-muted">You can format your notes with bold, italic and
+                                        underline.</small>
                                     @error('notes')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -198,22 +201,25 @@
                             {{-- File Upload --}}
                             <div class="col-12 mt-4">
                                 <label class="form-label fw-semibold">Upload File</label>
-                                    <div id="file-upload-container" class="d-flex flex-column gap-2">
-                                        <div class="input-group file-input-group">
-                                            <input type="file" name="files[]"
-                                                class="form-control border-0 shadow-sm rounded-3 @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror"
-                                                accept=".pdf,.doc,.docx,.xls,.xlsx">
-                                            <button class="btn btn-outline-danger remove-file-btn" type="button" style="display:none;">Remove</button>
-                                        </div>
+                                <div id="file-upload-container" class="d-flex flex-column gap-2">
+                                    <div class="input-group file-input-group">
+                                        <input type="file" name="files[]"
+                                            class="form-control border-0 shadow-sm rounded-3 @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror"
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                        <button class="btn btn-outline-danger remove-file-btn" type="button"
+                                            style="display:none;">Remove</button>
                                     </div>
-                                    <button class="btn btn-outline-success btn-sm mt-2" type="button" id="add-file-btn">+ Add File</button>
-                                    <small class="text-muted d-block mt-1">Allowed format: PDF, DOC, DOCX, XLS, XLSX. Max Total File Size: 20MB</small>
-                                    @error('files')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                                    @enderror
-                                    @error('files.*')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                                    @enderror
+                                </div>
+                                <button class="btn btn-outline-success btn-sm mt-2" type="button"
+                                    id="add-file-btn">+ Add File</button>
+                                <small class="text-muted d-block mt-1">Allowed format: PDF, DOC, DOCX, XLS, XLSX. Max
+                                    Total File Size: 20MB</small>
+                                @error('files')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                @error('files.*')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -224,7 +230,8 @@
                             style="text-decoration: none; transition: background-color 0.3s ease;">
                             Cancel
                         </button>
-                        <button type="submit" class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
+                        <button type="submit"
+                            class="btn px-3 py-2 bg-gradient-to-r from-primaryLight to-primaryDark text-white rounded hover:from-primaryDark hover:to-primaryLight transition-colors">
                             Submit
                         </button>
                     </div>
@@ -424,9 +431,9 @@
                     return;
                 }
 
-                tsDocument.settings.placeholder = docs.length > 0
-                    ? '-- Select Document --'
-                    : 'No document available for selected plant';
+                tsDocument.settings.placeholder = docs.length > 0 ?
+                    '-- Select Document --' :
+                    'No document available for selected plant';
 
                 if (docs.length === 0) {
                     tsDocument.disable();
@@ -505,9 +512,15 @@
                     safeFetchJson(departmentsUrl)
                 ]);
 
-                const filteredDepartments = (departments || []).filter((dept) =>
-                    allowedDepartmentIds.includes(Number(dept.value))
-                );
+                // If no allowedDepartmentIds provided, allow all departments
+                let filteredDepartments;
+                if (!Array.isArray(allowedDepartmentIds) || allowedDepartmentIds.length === 0) {
+                    filteredDepartments = (departments || []);
+                } else {
+                    filteredDepartments = (departments || []).filter((dept) =>
+                        allowedDepartmentIds.includes(Number(dept.value))
+                    );
+                }
 
                 // Clear and repopulate each dropdown
                 tsPart.clearOptions();
@@ -770,7 +783,8 @@
             form.addEventListener('submit', function(event) {
                 if (isGeneratingDocumentNumber) {
                     event.preventDefault();
-                    setDocumentNumberHint('Please wait until document number generation is complete.', true);
+                    setDocumentNumberHint('Please wait until document number generation is complete.',
+                        true);
                     return;
                 }
 
@@ -788,7 +802,8 @@
                     submitBtn.dataset.originalText = submitBtn.innerHTML;
                     submitBtn.dataset.isSubmitting = '1';
                     // Tampilkan spinner dan teks Loading
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+                    submitBtn.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
                     submitBtn.disabled = true;
                 }
             });
@@ -802,9 +817,9 @@
             //         const newInputGroup = document.createElement('div');
             //         newInputGroup.className = 'input-group mb-2';
             //         newInputGroup.innerHTML = `
-            //     <input type="file" name="files[]" class="form-control border-1 shadow-sm" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
-            //     <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
-            // `;
+        //     <input type="file" name="files[]" class="form-control border-1 shadow-sm" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+        //     <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
+        // `;
             //         container.prepend(newInputGroup);
 
             //     }
@@ -813,44 +828,44 @@
             //         e.target.parentElement.remove();
             //     }
             // });
-                const fileContainer = document.getElementById('file-upload-container');
-                const addFileBtn = document.getElementById('add-file-btn');
+            const fileContainer = document.getElementById('file-upload-container');
+            const addFileBtn = document.getElementById('add-file-btn');
 
-                function refreshRemoveButtons() {
-                    if (!fileContainer) return;
-                    const groups = fileContainer.querySelectorAll('.file-input-group');
-                    groups.forEach((group, index) => {
-                        const removeBtn = group.querySelector('.remove-file-btn');
-                        if (!removeBtn) return;
-                        removeBtn.style.display = groups.length > 1 ? 'inline-block' : 'none';
-                        removeBtn.disabled = groups.length <= 1 && index === 0;
-                    });
-                }
+            function refreshRemoveButtons() {
+                if (!fileContainer) return;
+                const groups = fileContainer.querySelectorAll('.file-input-group');
+                groups.forEach((group, index) => {
+                    const removeBtn = group.querySelector('.remove-file-btn');
+                    if (!removeBtn) return;
+                    removeBtn.style.display = groups.length > 1 ? 'inline-block' : 'none';
+                    removeBtn.disabled = groups.length <= 1 && index === 0;
+                });
+            }
 
-                if (fileContainer && addFileBtn) {
-                    addFileBtn.addEventListener('click', function() {
-                        const newInputGroup = document.createElement('div');
-                        newInputGroup.className = 'input-group file-input-group';
-                        newInputGroup.innerHTML = `
+            if (fileContainer && addFileBtn) {
+                addFileBtn.addEventListener('click', function() {
+                    const newInputGroup = document.createElement('div');
+                    newInputGroup.className = 'input-group file-input-group';
+                    newInputGroup.innerHTML = `
                             <input type="file" name="files[]" class="form-control border-0 shadow-sm rounded-3" accept=".pdf,.doc,.docx,.xls,.xlsx">
                             <button class="btn btn-outline-danger remove-file-btn" type="button">Remove</button>
                         `;
-                        fileContainer.appendChild(newInputGroup);
-                        refreshRemoveButtons();
-                    });
-
-                    fileContainer.addEventListener('click', function(e) {
-                        if (e.target && e.target.classList.contains('remove-file-btn')) {
-                            const group = e.target.closest('.file-input-group');
-                            if (group) {
-                                group.remove();
-                                refreshRemoveButtons();
-                            }
-                        }
-                    });
-
+                    fileContainer.appendChild(newInputGroup);
                     refreshRemoveButtons();
-                }
+                });
+
+                fileContainer.addEventListener('click', function(e) {
+                    if (e.target && e.target.classList.contains('remove-file-btn')) {
+                        const group = e.target.closest('.file-input-group');
+                        if (group) {
+                            group.remove();
+                            refreshRemoveButtons();
+                        }
+                    }
+                });
+
+                refreshRemoveButtons();
+            }
 
             /* -------------------------------------------------------------------
              * SHOW MODAL IF VALIDATION ERRORS
