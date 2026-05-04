@@ -276,7 +276,7 @@
                                                 </td>
                                             @endif
                                             <td class="px-2 py-3 text-center text-xs truncate border-r border-gray-200">
-                                                {{ ucwords(strtolower($mapping->user->name ?? '-')) }}
+                                                {{ $mapping->status?->name === 'Uncomplete' ? '-' : ucwords(strtolower($mapping->user->name ?? '-')) }}
                                             </td>
                                             {{-- <td class="px-2 py-3 text-xs border-r border-gray-200">
                                                 {{ $mapping->updated_at?->format('d M Y') ?? '-' }}
@@ -387,7 +387,9 @@
                                                         });
                                                         $canShowReviseButton =
                                                             $mapping->status->name !== 'Need Review' ||
-                                                            $hasPendingApprovalFile;
+                                                            $hasPendingApprovalFile ||
+                                                            ($mapping->status->name === 'Need Review' && $isAdminRole);
+
                                                     @endphp
                                                         @if (!$approvalMode && $canShowReviseButton)
                                                             <button type="button"
@@ -401,20 +403,19 @@
                                                                 onclick="openReviseModal(this)" title="Upload">
                                                                 <i class="bi bi-upload"></i>
                                                             </button>
-                                                            @php
-                                                                $currentRole = auth()->user()->roles->pluck('name')->first();
-                                                            @endphp
-                                                            @if (in_array($currentRole, ['Admin', 'Super Admin']) && $mapping->status->name === 'Need Review')
-                                                                <button type="button"
-                                                                    class="action-btn btn-delete-active-files inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ms-1"
-                                                                    data-docid="{{ $mapping->id }}"
-                                                                    data-files='@json($mapping->files_for_modal_all)'
-                                                                    title="Delete Active Files"
-                                                                    onclick="openArchiveFilesModal(this)">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
-                                                            @endif
                                                         @endif
+
+                                                    {{-- DELETE ACTIVE FILES BUTTON (Admin/Super Admin, Need Review) --}}
+                                                    @if (!$approvalMode && $isAdminRole && $mapping->status->name === 'Need Review')
+                                                        <button type="button"
+                                                            class="action-btn btn-delete-active-files inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                            data-docid="{{ $mapping->id }}"
+                                                            data-files='@json($mapping->files_for_modal_all)'
+                                                            title="Delete Active Files"
+                                                            onclick="openArchiveFilesModal(this); event.stopPropagation(); return false;">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    @endif
 
                                                     {{-- ADMIN ACTIONS --}}
                                                     @if ($approvalMode && in_array(auth()->user()->roles->pluck('name')->first(), ['Admin', 'Super Admin']))
@@ -1659,9 +1660,26 @@
                 });
             }
 
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('modal-archive-files'));
+            // Hide modal revise jika sedang terbuka
+            const reviseModal = document.getElementById('modal-revise');
+            let wasReviseOpen = false;
+            if (reviseModal && !reviseModal.classList.contains('hidden')) {
+                wasReviseOpen = true;
+                reviseModal.classList.add('hidden');
+            }
+
+            // Show modal archive
+            const archiveModalEl = document.getElementById('modal-archive-files');
+            const modal = new bootstrap.Modal(archiveModalEl);
             modal.show();
+
+            // Ketika modal archive ditutup, tampilkan kembali modal revise jika sebelumnya terbuka
+            if (wasReviseOpen) {
+                archiveModalEl.addEventListener('hidden.bs.modal', function handler() {
+                    reviseModal.classList.remove('hidden');
+                    archiveModalEl.removeEventListener('hidden.bs.modal', handler);
+                });
+            }
 
             // Helper to set archive value as hidden input
             function setArchiveHiddenInput(val) {

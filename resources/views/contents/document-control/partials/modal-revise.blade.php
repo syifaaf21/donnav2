@@ -5,16 +5,19 @@
         {{-- Header --}}
         <div class="modal-header justify-content-center position-relative p-4 rounded-top-4"
             style="background-color: #f5f5f7;">
-            <h5 class="modal-title fw-semibold text-dark" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;"><i
-                    class="bi bi-cloud-upload text-primary"></i>
-                Upload Document
-            </h5>
-            <button type="button" class="rounded-circle btn btn-light position-absolute top-0 end-0 m-3 p-0 d-flex align-items-center justify-content-center shadow-sm"
-
-                onclick="closeReviseModal()" aria-label="Close"
-                style="width: 36px; height: 36px; border: 1px solid #ddd;">
-                <i class="bi bi-x-lg"></i>
-            </button>
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-2">
+                    <h5 class="modal-title fw-semibold text-dark m-0" style="font-family: 'Inter', sans-serif; font-size: 1.25rem;">
+                        <i class="bi bi-cloud-upload text-primary"></i>
+                        Upload Document
+                    </h5>
+                </div>
+                <button type="button" class="rounded-circle btn btn-light p-0 d-flex align-items-center justify-content-center shadow-sm"
+                    onclick="closeReviseModal()" aria-label="Close"
+                    style="width: 36px; height: 36px; border: 1px solid #ddd;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
         </div>
 
         {{-- Form Body --}}
@@ -40,6 +43,13 @@
             </div>
 
             {{-- Existing Files (dynamic by JS) --}}
+            <div class="flex items-center justify-between mb-1">
+                <div id="reviseTotalSizeContainer"></div>
+                @php
+                    $currentRole = auth()->user()->roles->pluck('name')->first();
+                @endphp
+                {{-- Tombol delete active files dipindah ke kolom Actions tabel utama --}}
+            </div>
             <div id="reviseFilesContainer" class="mb-4"></div>
 
             {{-- Add New Files --}}
@@ -58,7 +68,6 @@
                     onclick="closeReviseModal()">
                     <i class="bi bi-x-circle me-1"></i> Cancel
                 </button>
-
                 <button type="submit" id="reviseSubmitBtn"
                     class="px-4 py-1.5 bg-sky-600 text-white rounded hover:bg-sky-700 fw-semibold transition">
                     <i class="bi bi-check2-circle me-1"></i> Submit

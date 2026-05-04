@@ -779,7 +779,11 @@ class DocumentControlController extends Controller
         $activeFilesCount = $mapping->files()->where('is_active', 1)->whereNull('marked_for_deletion_at')->count();
         if ($activeFilesCount === 0) {
             $uncompleteStatus = \App\Models\Status::firstOrCreate(['name' => 'Uncomplete']);
-            $mapping->update(['status_id' => $uncompleteStatus->id]);
+            $mapping->update([
+                'status_id' => $uncompleteStatus->id,
+                'user_id' => null,
+                'notes' => $mapping->initial_notes,
+            ]);
         }
 
         $msg = $archive == '1' ? "$count file(s) have been archived." : "$count file(s) have been deleted (not archived).";
