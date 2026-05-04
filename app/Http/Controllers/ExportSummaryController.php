@@ -110,14 +110,14 @@ class ExportSummaryController extends Controller
             $sheet->setCellValue('D' . $r, $f->department?->name ?? '-');
 
             // E: finding/issue
-            $sheet->setCellValue('E' . $r, $f->finding_description ?? '-');
+            $sheet->setCellValue('F' . $r, $f->finding_description ?? '-');
 
             // F: klausul (join subKlausuls names)
             $klausul = '-';
             if ($f->subKlausuls && $f->subKlausuls->isNotEmpty()) {
                 $klausul = $f->subKlausuls->pluck('name')->join(', ');
             }
-            $sheet->setCellValue('F' . $r, $klausul);
+            $sheet->setCellValue('E' . $r, $klausul);
 
             // G: auditor (join auditors)
             $auditorNames = '-';
