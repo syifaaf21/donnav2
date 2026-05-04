@@ -25,7 +25,8 @@
 @endsection
 
 @section('content')
-    <div class="p-6 min-h-screen space-y-6">
+    <div class="mx-auto px-4">
+        <div class="space-y-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-6 mt-4 text-white">
                 <div class="mb-4 text-white">
