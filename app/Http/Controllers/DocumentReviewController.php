@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Department, Document, DocumentFile, DocumentMapping, PartNumber, Process, Product, ProductModel, Status, User, DownloadReport};
-use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification};
-use App\Services\{WhatsAppService, DocumentConverterService};
+use App\Notifications\{DocumentRevisedNotification, DocumentStatusNotification, DocumentActionNotification, DocumentRevisionApprovedNotification};
+use App\Services\{WhatsAppService, DocumentConverterService, DocSpaceService};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Auth, DB, Notification, Storage};
+use Illuminate\Support\Facades\{Auth, DB, Notification, Storage, Log};
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 class DocumentReviewController extends Controller
 {
+    public function __construct(protected DocSpaceService $docSpace) {}
+
     public function index(Request $request)
     {
         $rawPlants = $this->getEnumValues('tm_part_numbers', 'plant');
@@ -80,14 +84,31 @@ class DocumentReviewController extends Controller
         }
 
         $canAddDocumentReview = $roleNames->contains('leader') && $allowedAddPlants->isNotEmpty();
-        $canAccessApprovalQueue = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isSupervisor = $roleNames->contains('supervisor');
+        $isDeptHead = $roleNames->contains(fn($role) => in_array($role, ['dept head', 'department head']));
+        $canAccessApprovalQueue = $isAdmin || $isSupervisor || $isDeptHead;
 
         $approvalCount = 0;
         if ($canAccessApprovalQueue) {
-            $approvalCount = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'review'))
-                ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
-                ->whereNull('marked_for_deletion_at')
-                ->count();
+            $approvalQuery = DocumentMapping::whereHas('document', fn($q) => $q->where('type', 'review'))
+                ->whereNull('marked_for_deletion_at');
+
+            if ($isAdmin) {
+                $approvalQuery->whereHas('status', fn($q) => $q->where('name', 'Need Review'));
+            } elseif ($isSupervisor) {
+                $departmentIds = auth()->user()->departments()->pluck('tm_departments.id')->toArray();
+                $approvalQuery
+                    ->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Check by Supervisor'));
+            } elseif ($isDeptHead) {
+                $departmentIds = auth()->user()->departments()->pluck('tm_departments.id')->toArray();
+                $approvalQuery
+                    ->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Approval by Dept Head'));
+            }
+
+            $approvalCount = $approvalQuery->count();
         }
 
         // Data for Add Document modal on main Document Review page.
@@ -97,7 +118,12 @@ class DocumentReviewController extends Controller
             ->orderBy('name')
             ->get();
         $partNumbers = PartNumber::orderBy('part_number')->get();
-        $departments = Department::orderBy('name')->get();
+        $allowedDepartmentIds = auth()->check()
+            ? auth()->user()->departments()->pluck('tm_departments.id')->map(fn($id) => (int) $id)->values()
+            : collect();
+        $departments = $allowedDepartmentIds->isNotEmpty()
+            ? Department::whereIn('id', $allowedDepartmentIds->all())->orderBy('name')->get()
+            : collect();
         $models = ProductModel::orderBy('name')->get();
         $products = Product::orderBy('name')->get();
         $processes = Process::orderBy('name')->get();
@@ -111,6 +137,7 @@ class DocumentReviewController extends Controller
             'canAccessApprovalQueue',
             'approvalCount',
             'allowedAddPlants',
+            'allowedDepartmentIds',
             'documentsMaster',
             'partNumbers',
             'departments',
@@ -122,12 +149,16 @@ class DocumentReviewController extends Controller
 
     public function approvalIndex(Request $request)
     {
-        $isAdmin = Auth::user()->roles
+        $user = Auth::user();
+        $roleNames = $user->roles
             ->pluck('name')
-            ->map(fn($role) => strtolower(trim((string) $role)))
-            ->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+            ->map(fn($role) => strtolower(trim((string) $role)));
 
-        if (!$isAdmin) {
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isSupervisor = $roleNames->contains('supervisor');
+        $isDeptHead = $roleNames->contains(fn($role) => in_array($role, ['dept head', 'department head']));
+
+        if (!$isAdmin && !$isSupervisor && !$isDeptHead) {
             abort(403);
         }
 
@@ -142,10 +173,31 @@ class DocumentReviewController extends Controller
             'product',
             'productModel',
             'process',
+            'files',
         ])
+            ->withCount(['files'])
             ->whereNull('marked_for_deletion_at')
-            ->whereHas('status', fn($q) => $q->where('name', 'Need Review'))
             ->whereHas('document', fn($q) => $q->where('type', 'review'));
+
+        if ($isAdmin) {
+            $query->whereHas('status', fn($q) => $q->where('name', 'Need Review'));
+        } elseif ($isSupervisor) {
+            $departmentIds = $user->departments()->pluck('tm_departments.id')->toArray();
+            if (empty($departmentIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Check by Supervisor'));
+            }
+        } elseif ($isDeptHead) {
+            $departmentIds = $user->departments()->pluck('tm_departments.id')->toArray();
+            if (empty($departmentIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('department_id', $departmentIds)
+                    ->whereHas('status', fn($q) => $q->where('name', 'Need Approval by Dept Head'));
+            }
+        }
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -168,6 +220,8 @@ class DocumentReviewController extends Controller
 
         return view('contents.document-review.approval.index', [
             'mappings' => $mappings,
+            'isSupervisorQueue' => $isSupervisor,
+            'isDeptHeadQueue' => $isDeptHead,
         ]);
     }
 
@@ -229,12 +283,16 @@ class DocumentReviewController extends Controller
             ->first();
 
         if (!$userDepartment) {
-            abort(403, 'Selected department is not assigned to your account.');
+            return back()
+                ->withErrors(['department_id' => 'Selected department is not assigned to your account.'])
+                ->withInput();
         }
 
         $departmentPlant = strtolower(trim((string) ($userDepartment->plant ?? '')));
         if ($departmentPlant !== $validated['plant']) {
-            abort(403, 'Selected department does not match selected plant.');
+            return back()
+                ->withErrors(['department_id' => 'Selected department does not match selected plant.'])
+                ->withInput();
         }
 
         $cleanNotes = trim((string) ($validated['notes'] ?? ''));
@@ -962,6 +1020,14 @@ class DocumentReviewController extends Controller
 
             $filePath = $file->file_path;
             $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $requestedOrientation = strtolower((string) $request->input('orientation', ''));
+            
+            // Default to landscape for Excel files if no orientation specified
+            if (in_array($extension, ['xlsx', 'xls', 'xlsm'], true) && empty($requestedOrientation)) {
+                $requestedOrientation = 'landscape';
+            }
+            
+            $applyOrientation = in_array($requestedOrientation, ['portrait', 'landscape'], true);
 
             // ✅ TARUH DI SINI
             \Log::info('Download attempt', [
@@ -1058,9 +1124,47 @@ class DocumentReviewController extends Controller
                 try {
                     // Upload file temporary ke OnlyOffice untuk di-convert
                     $fileName = $file->original_name ?? "document_{$file->id}";
+                    $pathForUpload = $filePath;
+                    $temporaryUploadPath = null;
+
+                    // For Excel files, honor requested orientation by preparing a temporary oriented workbook.
+                    if ($applyOrientation && in_array($extension, ['xlsx', 'xls', 'xlsm'], true)) {
+                        try {
+                            $orientationValue = $requestedOrientation === 'landscape'
+                                ? PageSetup::ORIENTATION_LANDSCAPE
+                                : PageSetup::ORIENTATION_PORTRAIT;
+
+                            $normalizedFilePath = ltrim(str_replace('\\', '/', $filePath), '/');
+                            $sourceAbsolutePath = $storageDisk === 'public'
+                                ? storage_path('app/public/' . $normalizedFilePath)
+                                : storage_path('app/' . $normalizedFilePath);
+                            $spreadsheet = IOFactory::load($sourceAbsolutePath);
+
+                            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                                $sheet->getPageSetup()->setOrientation($orientationValue);
+                            }
+
+                            $tempFilename = 'tmp/oriented_' . $file->id . '_' . now()->format('YmdHis') . '.xlsx';
+                            $tempAbsolutePath = storage_path('app/public/' . $tempFilename);
+
+                            if (!is_dir(dirname($tempAbsolutePath))) {
+                                mkdir(dirname($tempAbsolutePath), 0775, true);
+                            }
+
+                            IOFactory::createWriter($spreadsheet, 'Xlsx')->save($tempAbsolutePath);
+                            $pathForUpload = $tempFilename;
+                            $temporaryUploadPath = $tempFilename;
+                        } catch (\Throwable $orientationError) {
+                            \Log::warning('Failed to apply requested print orientation, fallback to original file.', [
+                                'file_id' => $file->id,
+                                'requested_orientation' => $requestedOrientation,
+                                'error' => $orientationError->getMessage(),
+                            ]);
+                        }
+                    }
 
                     $docSpaceService = app(\App\Services\DocSpaceService::class);
-                    $uploadedFileInfo = $docSpaceService->uploadFile($filePath, $fileName);
+                    $uploadedFileInfo = $docSpaceService->uploadFile($pathForUpload, $fileName);
 
                     $docspaceFileId = $uploadedFileInfo['file_id'];
 
@@ -1089,6 +1193,10 @@ class DocumentReviewController extends Controller
                             \Log::info("Temporary OnlyOffice file deleted: {$docspaceFileId}");
                         } catch (\Exception $e) {
                             \Log::warning("Failed to delete temporary OnlyOffice file: " . $e->getMessage());
+                        }
+
+                        if ($temporaryUploadPath && Storage::disk('public')->exists($temporaryUploadPath)) {
+                            Storage::disk('public')->delete($temporaryUploadPath);
                         }
                     }
                 } catch (\Exception $e) {
@@ -1178,7 +1286,156 @@ class DocumentReviewController extends Controller
         // ]);
 
 
-        $mapping = DocumentMapping::with(['department', 'files'])->findOrFail($id);
+        $mapping = DocumentMapping::with([
+            'department',
+            'files',
+            'status',
+            'document',
+            'partNumber.product',
+            'partNumber.productModel',
+            'partNumber.process',
+            'product',
+            'productModel',
+            'process',
+        ])->findOrFail($id);
+        $user = Auth::user();
+        $roleNames = $user->roles->pluck('name')->map(fn($role) => strtolower(trim((string) $role)));
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin']));
+        $isSupervisor = $roleNames->contains('supervisor');
+        $isDeptHead = $roleNames->contains(fn($role) => in_array($role, ['dept head', 'department head']));
+
+        if (!$isAdmin && !$isSupervisor && !$isDeptHead) {
+            abort(403);
+        }
+
+        $currentStatusName = strtolower(trim((string) optional($mapping->status)->name));
+
+        if ($isSupervisor || $isDeptHead) {
+            $departmentIds = $user->departments()->pluck('tm_departments.id')->toArray();
+            if (!in_array((int) $mapping->department_id, array_map('intval', $departmentIds), true)) {
+                abort(403, 'You can only approve documents from your own departments.');
+            }
+
+            if ($isSupervisor && $currentStatusName !== 'need check by supervisor') {
+                abort(403, 'This document is not in Need Check by Supervisor status.');
+            }
+
+            if ($isDeptHead && $currentStatusName !== 'need approval by dept head') {
+                abort(403, 'This document is not in Need Approval by Dept Head status.');
+            }
+
+            // Download files from DocSpace before approval
+            $activeFiles = $mapping->files()->where('is_active', true)->where('pending_approval', false)->get();
+            foreach ($activeFiles as $file) {
+                if ($file->docspace_file_id) {
+                    try {
+                        $this->docSpace->downloadAndSave($file->docspace_file_id, $file->file_path);
+                        $file->touch(); // Update the timestamp
+                    } catch (\Exception $e) {
+                        \Log::warning("Failed to sync file {$file->id} from DocSpace: " . $e->getMessage());
+                    }
+                }
+            }
+
+            $nextStatusName = $isSupervisor ? 'Need Approval by Dept Head' : 'Need Review';
+            $nextStatus = Status::where('name', $nextStatusName)->firstOrFail();
+
+            $mapping->timestamps = false;
+            $mapping->updateQuietly([
+                'status_id' => $nextStatus->id,
+                'review_notified_at' => null,
+            ]);
+            $mapping->timestamps = true;
+
+            if ($isSupervisor) {
+                $products = $mapping->product->pluck('code')->filter();
+                if ($products->isEmpty()) {
+                    $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+                }
+
+                $models = $mapping->productModel->pluck('name')->filter();
+                if ($models->isEmpty()) {
+                    $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+                }
+
+                $processes = $mapping->process->pluck('code')->filter();
+                if ($processes->isEmpty()) {
+                    $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+                }
+
+                $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+                $emailDetails = [
+                    'model' => $models->unique()->values()->join(', '),
+                    'product' => $products->unique()->values()->join(', '),
+                    'process' => $processes->unique()->values()->join(', '),
+                    'part_number' => $partNumbers->unique()->values()->join(', '),
+                    'revision_notes' => trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? '')))),
+                ];
+
+                $deptHeads = User::whereHas('roles', fn($q) => $q->whereRaw('LOWER(name) IN (?, ?)', ['dept head', 'department head']))
+                    ->whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+                    ->get();
+
+                if ($deptHeads->isNotEmpty()) {
+                    Notification::send($deptHeads, new DocumentActionNotification(
+                        action: 'checked_by_supervisor',
+                        byUser: $user->name,
+                        documentNumber: $mapping->document_number,
+                        url: route('document-review.approval'),
+                        departmentName: $mapping->department?->name,
+                        details: $emailDetails,
+                    ));
+                }
+            } elseif ($isDeptHead) {
+                $products = $mapping->product->pluck('code')->filter();
+                if ($products->isEmpty()) {
+                    $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+                }
+
+                $models = $mapping->productModel->pluck('name')->filter();
+                if ($models->isEmpty()) {
+                    $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+                }
+
+                $processes = $mapping->process->pluck('code')->filter();
+                if ($processes->isEmpty()) {
+                    $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+                }
+
+                $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+                $emailDetails = [
+                    'model' => $models->unique()->values()->join(', '),
+                    'product' => $products->unique()->values()->join(', '),
+                    'process' => $processes->unique()->values()->join(', '),
+                    'part_number' => $partNumbers->unique()->values()->join(', '),
+                    'revision_notes' => trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? '')))),
+                ];
+
+                $admins = User::whereHas(
+                    'roles',
+                    fn($q) => $q->whereRaw('LOWER(name) IN (?, ?)', ['admin', 'super admin'])
+                )->get();
+
+                if ($admins->isNotEmpty()) {
+                    Notification::send($admins, new DocumentActionNotification(
+                        action: 'approved_by_dept_head',
+                        byUser: $user->name,
+                        documentNumber: $mapping->document_number,
+                        url: route('document-review.approval'),
+                        departmentName: $mapping->department?->name,
+                        details: $emailDetails,
+                    ));
+                }
+            }
+
+            return redirect()->route('document-review.approval')
+                ->with('success', $isSupervisor
+                    ? "Document '{$mapping->document_number}' approved by Supervisor and forwarded to Dept Head."
+                    : "Document '{$mapping->document_number}' approved by Dept Head and moved to Need Review.");
+        }
+
         $approvedStatus = Status::where('name', 'Approved')->firstOrFail();
         $previousApprovedAt = $mapping->last_approved_at;
 
@@ -1191,6 +1448,75 @@ class DocumentReviewController extends Controller
             'review_notified_at' => null,
         ]);
         $mapping->timestamps = true;
+
+        $revisionNotes = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? ''))));
+
+        $rawRevisionTargetDepartments = $mapping->revision_notification_department_ids;
+        if (is_string($rawRevisionTargetDepartments)) {
+            $decoded = json_decode($rawRevisionTargetDepartments, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $rawRevisionTargetDepartments = $decoded;
+            } else {
+                $rawRevisionTargetDepartments = array_map('trim', explode(',', $rawRevisionTargetDepartments));
+            }
+        }
+
+        $revisionTargetDepartmentIds = collect((array) $rawRevisionTargetDepartments)
+            ->map(fn($id) => (int) $id)
+            ->filter(fn($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($revisionNotes !== '' && $revisionTargetDepartmentIds->isNotEmpty()) {
+            $products = $mapping->product->pluck('code')->filter();
+            if ($products->isEmpty()) {
+                $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+            }
+
+            $models = $mapping->productModel->pluck('name')->filter();
+            if ($models->isEmpty()) {
+                $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+            }
+
+            $processes = $mapping->process->pluck('code')->filter();
+            if ($processes->isEmpty()) {
+                $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+            }
+
+            $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+            $revisionDetails = [
+                'model' => $models->unique()->values()->join(', '),
+                'product' => $products->unique()->values()->join(', '),
+                'process' => $processes->unique()->values()->join(', '),
+                'part_number' => $partNumbers->unique()->values()->join(', '),
+            ];
+
+            $revisionRecipients = User::whereHas(
+                'departments',
+                fn($q) => $q->whereIn('tm_departments.id', $revisionTargetDepartmentIds->all())
+            )
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->get()
+                ->unique('id');
+
+            if ($revisionRecipients->isNotEmpty()) {
+                $revisionUrl = route('document-review.showFolder', [
+                    'plant' => $this->getPlantFromMapping($mapping),
+                    'docCode' => base64_encode($mapping->document->code ?? ''),
+                ]);
+
+                Notification::send($revisionRecipients, new DocumentRevisionApprovedNotification(
+                    documentNumber: $mapping->document_number,
+                    documentName: $mapping->document?->name,
+                    byUser: auth()->user()->name,
+                    url: $revisionUrl,
+                    details: $revisionDetails,
+                    revisionNotes: $revisionNotes,
+                ));
+            }
+        }
 
         // Ambil semua file lama yang menunggu approval
         $oldFiles = $mapping->files()->where('pending_approval', true)->get();
@@ -1206,15 +1532,11 @@ class DocumentReviewController extends Controller
         // File dengan pending_approval = false → tetap aktif
         // (contoh: revisi setelah status Rejected)
 
-        // ===== Kirim Notifikasi seperti sebelumnya =====
+        // ===== Admin/Super Admin approval: notify all users in the same department (any role) =====
         $targetUsers = User::whereHas(
             'departments',
             fn($q) =>
             $q->where('tm_departments.id', $mapping->department_id)
-        )->whereDoesntHave(
-            'roles',
-            fn($q) =>
-            $q->whereIn('name', ['Admin', 'Super Admin'])
         )->get();
 
         $plant = $this->getPlantFromMapping($mapping);

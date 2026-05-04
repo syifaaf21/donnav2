@@ -263,6 +263,7 @@
             }
 
             const allReviewDocuments = @json($reviewDocumentOptions);
+            const allowedDepartmentIds = @json(collect($allowedDepartmentIds ?? [])->map(fn($id) => (int) $id)->values()->all());
 
             function normalizePlant(plant) {
                 return String(plant || '').trim().toLowerCase();
@@ -504,6 +505,10 @@
                     safeFetchJson(departmentsUrl)
                 ]);
 
+                const filteredDepartments = (departments || []).filter((dept) =>
+                    allowedDepartmentIds.includes(Number(dept.value))
+                );
+
                 // Clear and repopulate each dropdown
                 tsPart.clearOptions();
                 tsPart.addOptions(parts || []);
@@ -522,7 +527,7 @@
                 tsProcess.refreshOptions(false);
 
                 tsDept.clearOptions();
-                tsDept.addOptions(departments || []);
+                tsDept.addOptions(filteredDepartments);
                 tsDept.refreshOptions(false);
             });
 

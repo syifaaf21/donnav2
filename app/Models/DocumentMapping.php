@@ -32,6 +32,7 @@ class DocumentMapping extends Model
         'last_reminder_date',
         'last_approved_at',
         'review_notified_at',
+        'revision_notification_department_ids',
         'plant',
         'marked_for_deletion_at',
     ];
@@ -41,6 +42,7 @@ class DocumentMapping extends Model
         'deadline' => 'date',
         'last_approved_at' => 'datetime',
         'review_notified_at' => 'datetime',
+        'revision_notification_department_ids' => 'array',
     ];
 
     protected $table = 'tt_document_mappings';

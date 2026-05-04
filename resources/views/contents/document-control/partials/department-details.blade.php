@@ -292,8 +292,8 @@
                                             </td>
                                             {{-- Actions --}}
                                             <td class="px-1 py-2 text-center"
-                                                style="@if ($approvalMode) width:140px; min-width:120px; @else width:120px; min-width:90px; @endif">
-                                                <div class="flex justify-center items-center gap-1 flex-wrap">
+                                                style="@if ($approvalMode) width:170px; min-width:170px; @else width:120px; min-width:90px; @endif">
+                                                <div class="flex justify-center items-center gap-1.5 flex-nowrap whitespace-nowrap">
 
                                                     {{-- VIEW FILES --}}
                                                     @php
@@ -406,9 +406,9 @@
                                                         @endif
 
                                                     {{-- DELETE ACTIVE FILES BUTTON (Admin/Super Admin, Need Review) --}}
-                                                    @if (!$approvalMode && $isAdminRole && $mapping->status->name === 'Need Review')
+                                                    @if ($approvalMode && $isAdminRole && $mapping->status->name === 'Need Review')
                                                         <button type="button"
-                                                            class="action-btn btn-delete-active-files inline-flex items-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                            class="action-btn btn-delete-active-files inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
                                                             data-docid="{{ $mapping->id }}"
                                                             data-files='@json($mapping->files_for_modal_all)'
                                                             title="Delete Active Files"
@@ -424,7 +424,7 @@
                                                             method="POST" class="inline-flex items-center m-0 p-0">
                                                             @csrf
                                                             <button type="button"
-                                                                class="action-btn inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors btn-approve"
+                                                                class="action-btn inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors btn-approve"
                                                                 data-status="{{ $mapping->status->name }}"
                                                                 data-obsolete="{{ $mapping->obsolete_date }}"
                                                                 data-period="{{ $mapping->period_years }}"
@@ -434,7 +434,7 @@
                                                         </form>
 
                                                         <button type="button"
-                                                            class="action-btn inline-flex items-center justify-center w-9 h-9 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors btn-reject"
+                                                            class="action-btn inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors btn-reject"
                                                             data-docid="{{ $mapping->id }}"
                                                             data-doc-title="{{ $mapping->document->name }}"
                                                             data-notes="{{ str_replace('"', '&quot;', $mapping->notes ?? '') }}"
@@ -528,6 +528,7 @@
     .action-btn {
         width: 34px;
         height: 34px;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;

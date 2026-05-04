@@ -3,14 +3,63 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentFile;
+use App\Models\Department;
 use App\Models\Status;
 use App\Models\User;
 use App\Notifications\DocumentActionNotification;
 use App\Services\DocSpaceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 class EditorController extends Controller
 {
+    private function canAccessByDepartment(DocumentFile $file): bool
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        $roleNames = $user->roles->pluck('name')->map(fn($role) => strtolower(trim((string) $role)));
+        $isAdmin = $roleNames->contains(fn($role) => in_array($role, ['admin', 'super admin'], true));
+        if ($isAdmin) {
+            return true;
+        }
+
+        $mapping = $file->mapping()->first();
+        if (!$mapping || !$mapping->department_id) {
+            // If no department-bound mapping exists, keep access allowed.
+            return true;
+        }
+
+        return $user->departments()->where('tm_departments.id', $mapping->department_id)->exists();
+    }
+
+    // Endpoint: /editor/{file}/onlyoffice-url
+    public function onlyofficeUrl(DocumentFile $file)
+    {
+        abort_if(!$file->is_active, 404);
+        abort_unless($this->canAccessByDepartment($file), 403, 'Unauthorized department access.');
+
+        if (!$file->docspace_file_id) {
+            try {
+                $result = $this->docSpace->uploadFile(
+                    $file->file_path,
+                    $file->display_name
+                );
+                $file->update([
+                    'docspace_file_id'   => $result['file_id'],
+                    'docspace_folder_id' => $result['folder_id'],
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Gagal upload ke DocSpace: ' . $e->getMessage()], 500);
+            }
+        }
+        $docspaceUrl  = rtrim(config('onlyoffice.docspace_url'), '/');
+        $docEditorUrl = "{$docspaceUrl}/doceditor?fileId={$file->docspace_file_id}&editorType=desktop&editorGoBack=false&action=view";
+        return response()->json(['url' => $docEditorUrl]);
+    }
     public function __construct(protected DocSpaceService $docSpace) {}
 
     public function index(Request $request)
@@ -68,6 +117,7 @@ class EditorController extends Controller
     public function editor(DocumentFile $file)
     {
         abort_if(!$file->is_active, 404);
+        abort_unless($this->canAccessByDepartment($file), 403, 'Unauthorized department access.');
 
         if (!$file->docspace_file_id) {
             try {
@@ -84,8 +134,14 @@ class EditorController extends Controller
             }
         }
 
+
         $docspaceUrl  = rtrim(config('onlyoffice.docspace_url'), '/');
+        // Cek apakah request preview (readonly)
+        $isViewOnly = request()->query('view') == '1';
         $docEditorUrl = "{$docspaceUrl}/doceditor?fileId={$file->docspace_file_id}&editorType=desktop&editorGoBack=false";
+        if ($isViewOnly) {
+            $docEditorUrl .= "&action=view";
+        }
 
         try {
             $token    = $this->docSpace->getToken();
@@ -95,7 +151,9 @@ class EditorController extends Controller
             $loginUrl = null;
         }
 
-        return view('onlyoffice.editor', compact('file', 'docEditorUrl', 'loginUrl', 'docspaceUrl'));
+        $allDepartments = Department::orderBy('name')->get();
+
+        return view('onlyoffice.editor', compact('file', 'docEditorUrl', 'loginUrl', 'docspaceUrl', 'allDepartments'));
     }
 
     public function authToken()
@@ -166,10 +224,33 @@ class EditorController extends Controller
             if ($file->document_mapping_id) {
                 $mapping = $file->mapping()->first();
                 if ($mapping) {
+                    /** @var \App\Models\User|null $uploader */
+                    $uploader = Auth::user();
+
+                    $requestedDepartmentIds = collect((array) $request->input('department_ids', []))
+                        ->map(fn($id) => (int) $id)
+                        ->filter(fn($id) => $id > 0)
+                        ->unique()
+                        ->values();
+
+                    $allowedDepartmentIds = Department::query()
+                        ->pluck('id')
+                        ->map(fn($id) => (int) $id)
+                        ->values();
+
+                    $targetDepartmentIds = $requestedDepartmentIds
+                        ->intersect($allowedDepartmentIds)
+                        ->values();
+
+                    if ($targetDepartmentIds->isEmpty() && $mapping->department_id) {
+                        $targetDepartmentIds = collect([(int) $mapping->department_id]);
+                    }
+
                     $mappingPayload = [
                         // Important: keep Updated By in main Document Review in sync with online edits.
                         'user_id' => Auth::id(),
                         'review_notified_at' => null,
+                        'revision_notification_department_ids' => $targetDepartmentIds->values()->all(),
                     ];
 
                     // Simpan catatan revisi: if the frontend submitted the `notes` field
@@ -183,40 +264,114 @@ class EditorController extends Controller
                         $mappingPayload['notes'] = $notes;
                     }
 
-                    $needReview = Status::where('name', 'Need Review')->first();
-                    if ($needReview && $mapping->status_id !== $needReview->id) {
-                        $mappingPayload['status_id'] = $needReview->id;
+                    $isLeaderOfMappingDepartment = $uploader
+                        && $mapping->department_id
+                        && $uploader->isLeaderOfDepartment($mapping->department_id);
+
+                    $isSupervisorReviewInSameDepartment = $uploader
+                        && $mapping->department_id
+                        && $uploader->roles()->where('name', 'Supervisor')->exists()
+                        && $uploader->departments()->where('tm_departments.id', $mapping->department_id)->exists()
+                        && strtolower(trim((string) optional($mapping->status)->name)) === 'need check by supervisor';
+
+                    $targetStatusName = 'Need Review';
+                    if ($isLeaderOfMappingDepartment) {
+                        $targetStatusName = 'Need Check by Supervisor';
+                    } elseif ($isSupervisorReviewInSameDepartment) {
+                        // Supervisor reviewing in editor: keep status as "Need Check by Supervisor"
+                        // Approval will happen in Approval Queue page with auto-sync
+                        $targetStatusName = 'Need Check by Supervisor';
                     }
 
+                    $targetStatus = Status::where('name', $targetStatusName)->first();
+                    if (!$targetStatus && $targetStatusName === 'Need Check by Supervisor') {
+                        // Fallback to existing flow if new status is not seeded yet.
+                        $targetStatus = Status::where('name', 'Need Review')->first();
+                    }
+
+                    if ($targetStatus && $mapping->status_id !== $targetStatus->id) {
+                        $mappingPayload['status_id'] = $targetStatus->id;
+                    }
+
+                    $previousStatusId = (int) $mapping->status_id;
                     $mapping->update($mappingPayload);
 
-                     // --- SEND NOTIFICATION TO ADMINS ---
-        $uploader = Auth::user();
-        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
+                    $statusChangedToNeedCheckBySupervisor = isset($mappingPayload['status_id'])
+                        && (int) $mappingPayload['status_id'] !== $previousStatusId
+                        && strtolower(trim((string) optional($targetStatus)->name)) === 'need check by supervisor';
 
-        if (!in_array($userRole, ['admin', 'super admin'])) {
+                    // Leader edit-online revision that changes status to Need Check by Supervisor:
+                    // notify supervisors in the same department (not admins).
+                    if ($isLeaderOfMappingDepartment && $statusChangedToNeedCheckBySupervisor) {
+                        $products = $mapping->product->pluck('code')->filter();
+                        if ($products->isEmpty()) {
+                            $products = $mapping->partNumber->map(fn($pn) => $pn->product?->code)->filter();
+                        }
 
-            $admins = User::whereHas(
-                'roles',
-                fn($q) =>
-                $q->whereIn('name', ['Admin', 'Super Admin'])
-            )->get();
+                        $models = $mapping->productModel->pluck('name')->filter();
+                        if ($models->isEmpty()) {
+                            $models = $mapping->partNumber->map(fn($pn) => $pn->productModel?->name)->filter();
+                        }
 
-            foreach ($admins as $admin) {
+                        $processes = $mapping->process->pluck('code')->filter();
+                        if ($processes->isEmpty()) {
+                            $processes = $mapping->partNumber->map(fn($pn) => $pn->process?->code)->filter();
+                        }
 
-                $admin->notify(new DocumentActionNotification(
-                    action: 'revised',
-                    byUser: $uploader->name,
-                    documentNumber: $mapping->document_number, // ← PAKAI DOCUMENT NUMBER 👍
-                    documentName: null,                        // ← DI REVIEW TIDAK DIPAKAI
-                    url: route('document-review.approval', [
-                        'plant' => $this->getPlantFromMapping($mapping),
-                        'docCode' => base64_encode($mapping->document->code ?? ''),
-                    ]),
-                    departmentName: $mapping->department?->name
-                ));
-            }
-        }
+                        $partNumbers = $mapping->partNumber->pluck('part_number')->filter();
+
+                        $emailDetails = [
+                            'model' => $models->unique()->values()->join(', '),
+                            'product' => $products->unique()->values()->join(', '),
+                            'process' => $processes->unique()->values()->join(', '),
+                            'part_number' => $partNumbers->unique()->values()->join(', '),
+                            'revision_notes' => trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($mapping->notes ?? '')))),
+                        ];
+
+                        $supervisors = User::whereHas(
+                            'roles',
+                            fn($q) => $q->whereRaw('LOWER(name) = ?', ['supervisor'])
+                        )
+                            ->whereHas('departments', fn($q) => $q->where('tm_departments.id', $mapping->department_id))
+                            ->where('id', '!=', $uploader?->id)
+                            ->get();
+
+                        foreach ($supervisors as $supervisor) {
+                            $supervisor->notify(new DocumentActionNotification(
+                                action: 'revised',
+                                byUser: $uploader->name,
+                                documentNumber: $mapping->document_number,
+                                documentName: null,
+                                url: route('document-review.approval'),
+                                departmentName: $mapping->department?->name,
+                                details: $emailDetails
+                            ));
+                        }
+                    } else {
+                        // Keep existing notification behavior for other non-admin online revisions.
+                        $userRole = strtolower($uploader->roles->pluck('name')->first() ?? '');
+
+                        if (!in_array($userRole, ['admin', 'super admin'], true)) {
+                            $admins = User::whereHas(
+                                'roles',
+                                fn($q) => $q->whereIn('name', ['Admin', 'Super Admin'])
+                            )->get();
+
+                            foreach ($admins as $admin) {
+                                $admin->notify(new DocumentActionNotification(
+                                    action: 'revised',
+                                    byUser: $uploader->name,
+                                    documentNumber: $mapping->document_number,
+                                    documentName: null,
+                                    url: route('document-review.approval', [
+                                        'plant' => $this->getPlantFromMapping($mapping),
+                                        'docCode' => base64_encode($mapping->document->code ?? ''),
+                                    ]),
+                                    departmentName: $mapping->department?->name
+                                ));
+                            }
+                        }
+                    }
 
                 }
             }

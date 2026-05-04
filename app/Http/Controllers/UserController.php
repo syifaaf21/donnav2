@@ -147,6 +147,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'password_changed_at' => now(),
+            'permissions' => $request->input('permissions', []),
         ]);
 
         if (!empty($roleIds)) {
@@ -285,6 +286,7 @@ class UserController extends Controller
         }
 
         $data = $request->only(['name', 'npk', 'email']);
+        $data['permissions'] = $request->input('permissions', []);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);

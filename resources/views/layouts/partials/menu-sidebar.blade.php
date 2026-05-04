@@ -48,24 +48,20 @@
         </ul>
     </li>
 
-    <li>
-        <a href="{{ route('document-control.index') }}" data-bs-title="Document Control"
-            class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
-        {{ Route::is('document-control*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
-            {{-- <i data-feather="settings" class="menu-icon w-4 h-4"></i> --}}
-            <i class="bi bi-calendar-range {{ Route::is('document-control*') ? 'mb-2' : '' }}"
-                style="width: 1rem; height: 1rem;"></i>
-            <span class="sidebar-text">Document Control</span>
-        </a>
-    </li>
+    @if (in_array('document_control', (array) (auth()->user()->permissions ?? [])))
+        <li>
+            <a href="{{ route('document-control.index') }}" data-bs-title="Document Control"
+                class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
+            {{ Route::is('document-control*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                {{-- <i data-feather="settings" class="menu-icon w-4 h-4"></i> --}}
+                <i class="bi bi-calendar-range {{ Route::is('document-control*') ? 'mb-2' : '' }}"
+                    style="width: 1rem; height: 1rem;"></i>
+                <span class="sidebar-text">Document Control</span>
+            </a>
+        </li>
+    @endif
 
-    @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), [
-            'super admin',
-            'admin',
-            'supervisor',
-            'leader',
-            'dept head',
-        ]))
+    @if (in_array('document_review', (array) (auth()->user()->permissions ?? [])))
         <li>
             <a href="{{ route('document-review.index') }}" data-bs-title="Document Review"
                 class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
@@ -76,15 +72,17 @@
         </li>
     @endif
 
-    <li>
-        <a href="{{ route('ftpp.index') }}" data-bs-title="FTPP"
-            class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
-            {{ Route::is('ftpp*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
-            <i data-feather="file-text" class="w-4 h-4"></i>
-            {{-- <i class="bi bi-file-earmark-post" style="width: 1rem; height: 1rem;"></i> --}}
-            <span class="sidebar-text">FTPP</span>
-        </a>
-    </li>
+    @if (in_array('ftpp', (array) (auth()->user()->permissions ?? [])))
+        <li>
+            <a href="{{ route('ftpp.index') }}" data-bs-title="FTPP"
+                class="menu-item flex items-center gap-3 px-2 py-[10px] rounded-l-full hover:bg-gray-200
+                {{ Route::is('ftpp*') ? 'bg-gradient-to-r from-primaryDark to-primaryLight shadow-md text-white font-medium' : 'text-gray-700 hover:text-gray-900' }}">
+                <i data-feather="file-text" class="w-4 h-4"></i>
+                {{-- <i class="bi bi-file-earmark-post" style="width: 1rem; height: 1rem;"></i> --}}
+                <span class="sidebar-text">FTPP</span>
+            </a>
+        </li>
+    @endif
 
     @if (in_array(strtolower(auth()->user()->roles->pluck('name')->first() ?? ''), [
             'super admin',

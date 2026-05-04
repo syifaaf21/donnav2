@@ -25,7 +25,8 @@
 @endsection
 
 @section('content')
-    <div class="p-6 min-h-screen space-y-6">
+    <div class="mx-auto px-4">
+        <div class="space-y-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
         {{-- <div class="flex justify-between items-center my-2 pt-4">
             <div class="py-6 mt-4 text-white">
                 <div class="mb-4 text-white">
@@ -337,6 +338,10 @@
                                                         => 'inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded',
                                                     'rejected'
                                                         => 'inline-block px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded',
+                                                    'need check by supervisor'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded',
+                                                    'need approval by dept head'
+                                                        => 'inline-block px-2 py-1 text-xs font-semibold text-purple-800 bg-purple-100 rounded',
                                                     'need review'
                                                         => 'inline-block px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded',
                                                     default
@@ -419,8 +424,12 @@
                                     <td class="px-2 py-3 text-xs text-center">
                                         <div class="flex justify-center items-center gap-2 relative">
                                             @php
-                                                $role = strtolower(auth()->user()->roles->pluck('name')->first() ?? '');
+                                                $roleNames = auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))->toArray();
+                                                $role = $roleNames[0] ?? '';
                                                 $isAdmin = in_array($role, ['admin', 'super admin']);
+                                                $isLeaderRole = in_array('leader', $roleNames, true);
+                                                $isSupervisorRowRole = in_array('supervisor', $roleNames, true);
+                                                $isDeptHeadRowRole = in_array('dept head', $roleNames, true) || in_array('department head', $roleNames, true);
                                                 $isAdminOrSuper = $isAdmin;
                                                 $isUser = !$isAdmin;
 
@@ -429,6 +438,10 @@
                                                 $sameDepartment = $docDeptId && in_array($docDeptId, $userDeptIds);
 
                                                 $status = strtolower($statusName);
+                                                $shouldDirectOnlyOffice = $sameDepartment && (
+                                                    ($isSupervisorRowRole && $status === 'need check by supervisor') ||
+                                                    ($isDeptHeadRowRole && $status === 'need approval by dept head')
+                                                );
 
                                                 $showDownloadReport = $isAdmin && $status === 'approved';
                                             @endphp
@@ -480,6 +493,9 @@
                                                                         data-doc-id="{{ $doc->id }}"
                                                                         data-doc-status="{{ $status }}"
                                                                         data-is-admin="{{ $isAdmin ? '1' : '0' }}"
+                                                                        data-is-leader="{{ $isLeaderRole ? '1' : '0' }}"
+                                                                        data-same-department="{{ $sameDepartment ? '1' : '0' }}"
+                                                                        data-onlyoffice-direct="{{ $shouldDirectOnlyOffice ? '1' : '0' }}"
                                                                         data-file-id="{{ $file['id'] }}"
                                                                         data-file-name="{{ $file['name'] }}"
                                                                         data-file-path="{{ $file['file_path'] }}">
@@ -522,6 +538,9 @@
                                                         data-doc-id="{{ $doc->id }}"
                                                         data-doc-status="{{ $status }}"
                                                         data-is-admin="{{ $isAdmin ? '1' : '0' }}"
+                                                        data-is-leader="{{ $isLeaderRole ? '1' : '0' }}"
+                                                        data-same-department="{{ $sameDepartment ? '1' : '0' }}"
+                                                        data-onlyoffice-direct="{{ $shouldDirectOnlyOffice ? '1' : '0' }}"
                                                         data-file-id="{{ $files[0]['id'] ?? '' }}"
                                                         data-file-name="{{ $files[0]['name'] ?? '' }}"
                                                         data-file-path="{{ $files[0]['file_path'] ?? '' }}">
@@ -540,13 +559,26 @@
                                             @php
                                                 // Use canEditDocument to determine edit/upload permission
                                                 $canEdit = auth()->check() && auth()->user()->canEditDocument($doc);
+                                                $roleNames = auth()->check()
+                                                    ? auth()->user()->roles->pluck('name')->map(fn($r) => strtolower(trim((string) $r)))->toArray()
+                                                    : [];
+                                                $isSupervisorRole = in_array('supervisor', $roleNames, true);
+                                                $isLeaderRole = in_array('leader', $roleNames, true);
+                                                $isDeptHeadRole = in_array('dept head', $roleNames, true);
+                                                $canShowEditOnline = !$isSupervisorRole
+                                                    && (!$isLeaderRole || in_array($status, ['approved', 'rejected'], true));
                                                 // Only admin or users allowed by canEditDocument can edit
                                                 $showEdit = ($isAdmin || $canEdit) && $status !== 'need review';
+
+                                                // Check if Dept Head can download PDF when their department matches doc's department
+                                                $userDeptIds = auth()->check() ? auth()->user()->departments()->pluck('tm_departments.id')->toArray() : [];
+                                                $canDownloadPdfAsDeptHead = $isDeptHeadRole && $doc->department_id && in_array($doc->department_id, $userDeptIds, true);
+                                                $showDownloadPdf = ($status === 'approved') || ($isAdmin);
 
                                                 // Approval actions are handled in dedicated approval queue page.
                                                 $showApproveReject = false;
 
-                                                $showMenu = $showEdit || $showDownloadReport;
+                                                $showMenu = $showEdit || $showDownloadReport || $showDownloadPdf;
                                             @endphp
                                             @if ($showMenu)
                                                 <div class="relative inline-block text-left">
@@ -567,14 +599,14 @@
                                                                 @endphp
 
                                                                 {{-- Edit Online: if single file, link directly to editor; if multiple, open select-file modal --}}
-                                                                @if ($currentFiles->count() === 1 && $latestFile)
+                                                                @if ($canShowEditOnline && $currentFiles->count() === 1 && $latestFile)
                                                                     <a href="{{ route('editor.show', $latestFile->id) }}"
                                                                         target="_blank"
                                                                         class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
                                                                         title="Edit File">
                                                                         <i class="bi bi-pencil mr-2"></i> Edit Online
                                                                     </a>
-                                                                @else
+                                                                @elseif ($canShowEditOnline)
                                                                     <button type="button"
                                                                         class="open-select-file-modal flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-sky-600"
                                                                         data-mapping-id="{{ $doc->id }}"
@@ -615,8 +647,8 @@
                                                             </button>
                                                         @endif
 
-                                                        {{-- Download as PDF (with watermark) - only when approved --}}
-                                                        @if ($status === 'approved')
+                                                        {{-- Download as PDF (with watermark) - only when approved or Dept Head of same department --}}
+                                                        @if ($showDownloadPdf)
                                                             <button type="button"
                                                                 class="flex items-center w-full px-3 py-2 text-left hover:bg-gray-50 text-purple-600 download-pdf-btn"
                                                                 data-doc-id="{{ $doc->id }}"
@@ -681,6 +713,10 @@
                                 class="btn btn-outline-info btn-sm d-none">
                                 <i class="bi bi-arrows-fullscreen"></i> View Full
                             </a>
+                            <select id="printOrientation" class="form-select form-select-sm d-none" style="width: 125px;">
+                                <option value="portrait">Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
                             <a id="printFileBtn" href="#" class="btn btn-outline-secondary btn-sm d-none">
                                 <i class="bi bi-printer"></i> Print
                             </a>
@@ -1116,6 +1152,33 @@
                         currentFileType = sourceFileType;
                         console.log('File type detected:', sourceFileType);
 
+                        // Direct to OnlyOffice only for role-status queues requested by business rules.
+                        const shouldDirectOnlyOffice = (btn.dataset.onlyofficeDirect || '') === '1';
+                        if (shouldDirectOnlyOffice && currentFileId) {
+                            try {
+                                const ooRes = await fetch(`/editor/${currentFileId}/onlyoffice-url`, {
+                                    headers: {
+                                        'Accept': 'application/json'
+                                    }
+                                });
+
+                                if (ooRes.ok) {
+                                    const data = await ooRes.json();
+                                    if (data.url) {
+                                        window.open(data.url, '_blank');
+                                        return;
+                                    }
+                                }
+
+                                // Jika 403 atau error lain, lanjutkan fallback preview existing.
+                                if (ooRes.status !== 403) {
+                                    console.warn('OnlyOffice preview unavailable, fallback to existing preview flow.');
+                                }
+                            } catch (err) {
+                                console.warn('OnlyOffice request failed, fallback to existing preview flow.', err);
+                            }
+                        }
+
                         // Toggle tombol Print & Download hanya untuk PDF dan ketika dokumen berstatus Approved
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
@@ -1196,11 +1259,14 @@
                         const isPdf = currentFileType === 'pdf';
                         const canPrint = isPdf && docStatus === 'approved';
                         const canDownload = isPdf && (docStatus === 'approved' || isAdminFlag);
+                        const printOrientationSelect = document.getElementById('printOrientation');
 
                         if (canPrint) {
                             printBtnToggle.classList.remove('d-none');
+                            printOrientationSelect?.classList.remove('d-none');
                         } else {
                             printBtnToggle.classList.add('d-none');
+                            printOrientationSelect?.classList.add('d-none');
                         }
 
                         if (canDownload) {
@@ -1262,9 +1328,11 @@
                         const printBtnToggle = document.getElementById('printFileBtn');
                         const downloadBtnToggle = document.getElementById('downloadFileBtn');
                         const viewFullBtnToggle = document.getElementById('viewFullBtn');
+                        const printOrientationSelect = document.getElementById('printOrientation');
                         printBtnToggle.classList.add('d-none');
                         downloadBtnToggle.classList.add('d-none');
                         viewFullBtnToggle.classList.add('d-none');
+                        printOrientationSelect?.classList.add('d-none');
                     });
 
                 // === PRINT BUTTON (tidak log download) ===
@@ -1272,22 +1340,54 @@
 
                 printFileBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const frame = document.getElementById('filePreviewFrame');
-                    const fileUrl = frame.src;
-
-                    if (!fileUrl) {
-                        alert('No file loaded.');
+                    if (!currentDocId) {
+                        alert('No document loaded.');
                         return;
                     }
 
-                    // Langsung print tanpa log
-                    frame.focus();
-                    try {
-                        frame.contentWindow.print();
-                    } catch (err) {
-                        console.error('Unable to auto-print:', err);
-                        window.print();
+                    const orientationSelect = document.getElementById('printOrientation');
+                    const orientation = orientationSelect?.value === 'landscape' ? 'landscape' : 'portrait';
+
+                    const printUrl = new URL(`/document-review/${currentDocId}/download-as-pdf`, window.location.origin);
+                    printUrl.searchParams.set('inline', '1');
+                    printUrl.searchParams.set('orientation', orientation);
+                    if (currentFileId) {
+                        printUrl.searchParams.set('file_id', String(currentFileId));
                     }
+
+                    const printWindow = window.open('', '_blank', 'width=980,height=720');
+                                        if (!printWindow) {
+                        alert('Popup blocked. Please allow popups to print.');
+                                                return;
+                                        }
+
+                    const escapedUrl = printUrl.toString().replace(/&/g, '&amp;');
+                                        const html = `<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Print Preview</title>
+    <style>
+        html, body { margin: 0; height: 100%; }
+        iframe { border: 0; width: 100%; height: 100vh; }
+    </style>
+</head>
+<body>
+    <iframe src="${escapedUrl}"></iframe>
+    <script>
+        window.onload = function () {
+            setTimeout(function () {
+                window.focus();
+                window.print();
+            }, 900);
+        };
+    <\/script>
+</body>
+</html>`;
+
+                                        printWindow.document.open();
+                                        printWindow.document.write(html);
+                                        printWindow.document.close();
                 });
 
                 // === DOWNLOAD BUTTON (log download untuk PDF) ===
